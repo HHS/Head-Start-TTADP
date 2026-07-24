@@ -24,6 +24,7 @@ import Dropzone from '../../../components/FileUploader/Dropzone';
 import FileTable from '../../../components/FileUploader/FileTable';
 import FormItem from '../../../components/FormItem';
 import PlusButton from '../../../components/GoalForm/PlusButton';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import QuestionTooltip from '../../../components/QuestionTooltip';
@@ -539,14 +540,15 @@ const SessionSummary = ({ datePickerKey, event }) => {
       </Fieldset>
 
       <FormItem label="TTA provided " name="ttaProvided" required>
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
+        <div className="margin-top-1">
+          <HookFormRichEditor
+            ariaLabel="TTA provided"
+            id="ttaProvided"
+            name="ttaProvided"
+            required
+            errorMessage="Describe the tta provided"
+          />
+        </div>
       </FormItem>
 
       <div className="margin-bottom-4">
@@ -686,7 +688,12 @@ const ReviewSection = () => {
           customValue: { objectiveResources: resources },
         },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
-        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        {
+          label: 'TTA provided',
+          name: 'ttaProvided',
+          customValue: { ttaProvided },
+          isRichText: true,
+        },
         {
           label: 'Support type',
           name: 'objectiveSupportType',

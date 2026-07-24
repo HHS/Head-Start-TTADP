@@ -89,7 +89,12 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
 
-  await page.locator('#ttaProvided').fill('TTA');
+  await page
+await page
+  .getByRole('textbox', { name: 'TTA provided', exact: true })
+  .locator('div')
+  .nth(2)
+  .fill('TTA');
 
   await page.locator('select.usa-select').selectOption('Introducing');
   await blur(page);
