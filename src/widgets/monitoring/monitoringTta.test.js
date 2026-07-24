@@ -1682,16 +1682,24 @@ describe('monitoringTta', () => {
   });
 
   it('ignores invalid objective end dates when calculating last tta date', async () => {
-    jest.spyOn(GrantCitation, 'findAndCountAll').mockResolvedValueOnce({
-      rows: [
+    jest.spyOn(GrantCitation, 'findAndCountAll');
+    jest.spyOn(GrantCitation, 'findAll').mockImplementation(async ({ attributes }) => {
+      const isCountQuery =
+        Array.isArray(attributes) &&
+        attributes.some((attribute) => Array.isArray(attribute) && attribute[1] === 'total');
+
+      if (isCountQuery) {
+        return [{ total: 1 }];
+      }
+
+      return [
         {
           citationId: 999,
           recipientId: 501,
           recipientName: 'Recipient Under Test',
           regionId: 1,
         },
-      ],
-      count: [{ count: 1 }],
+      ];
     });
     jest.spyOn(Citation, 'findAll').mockResolvedValueOnce([
       {
@@ -1802,6 +1810,8 @@ describe('monitoringTta', () => {
         },
       ],
     }); // close toMatchObject
+
+    expect(GrantCitation.findAndCountAll).not.toHaveBeenCalled();
   });
 
   it('paginates citation results 10 at a time using offset', async () => {
@@ -1841,6 +1851,21 @@ describe('monitoringTta', () => {
 
     expect(thirdPage).toEqual([]);
     expect(thirdTotal).toBe(12);
+  });
+
+  it('uses a scalar count strategy (no grouped findAndCountAll)', async () => {
+    const findAndCountAllSpy = jest.spyOn(GrantCitation, 'findAndCountAll');
+
+    const { total, data } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      perPage: 10,
+      offset: 0,
+    });
+
+    expect(findAndCountAllSpy).not.toHaveBeenCalled();
+    expect(typeof total).toBe('number');
+    expect(total).toBeGreaterThan(0);
+    expect(data.length).toBeGreaterThan(0);
   });
 
   it('returns one recipient-scoped card per citation and filters nested data to that recipient', async () => {
@@ -2198,5 +2223,43 @@ describe('monitoringTta', () => {
 
     const citationKey = (r) => `${r.recipientId}:${r.citation}`;
     expect(paged.map(citationKey)).toEqual(allAtOnce.map(citationKey));
+  });
+
+  it('monitoringTtaCsvGenerator defaults to export-sized paging when perPage is omitted', async () => {
+    const findAllSpy = jest.spyOn(GrantCitation, 'findAll');
+    const rows = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes())) {
+      rows.push(row);
+    }
+
+    expect(rows.length).toBeGreaterThan(0);
+
+    const pagedQueryCalls = findAllSpy.mock.calls.filter(([query]) => Array.isArray(query?.group));
+    expect(pagedQueryCalls).toHaveLength(1);
+  });
+
+  it('monitoringTtaCsvGenerator performs grouped count once and preserves exact row ordering', async () => {
+    const findAllSpy = jest.spyOn(GrantCitation, 'findAll');
+    const rows = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes(), { perPage: 2 })) {
+      rows.push(row);
+    }
+
+    const countQueryCalls = findAllSpy.mock.calls.filter(([query]) => {
+      const attributes = query?.attributes;
+      return (
+        Array.isArray(attributes) &&
+        attributes.some((attribute) => Array.isArray(attribute) && attribute[1] === 'total')
+      );
+    });
+
+    expect(countQueryCalls).toHaveLength(1);
+
+    const allAtOnce = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes(), { perPage: 500 })) {
+      allAtOnce.push(row);
+    }
+
+    expect(rows).toEqual(allAtOnce);
   });
 });

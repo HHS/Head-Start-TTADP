@@ -596,68 +596,109 @@ type PagedRecipientCitationCardsResult = {
   total: number;
 };
 
-async function findPagedRecipientCitationCards(
+type PagedRecipientCitationRow = {
+  citationId: number;
+  recipientId: number;
+  recipientName: string;
+  regionId: number;
+};
+
+function recipientCitationCardInclude(scopes: IScopes) {
+  return [
+    {
+      model: Grant.unscoped(),
+      as: 'grant',
+      required: true,
+      attributes: [],
+    },
+    {
+      model: Citation,
+      as: 'citation',
+      required: true,
+      attributes: [],
+      where: {
+        calculated_finding_type: {
+          [Op.in]: ['Area of Concern', 'Noncompliance', 'Deficiency'],
+        },
+      },
+      include: [
+        {
+          model: DeliveredReviewCitation,
+          as: 'deliveredReviewCitations',
+          required: true,
+          attributes: [],
+          include: [
+            {
+              model: DeliveredReview,
+              as: 'deliveredReview',
+              required: true,
+              attributes: [],
+              where: {
+                [Op.and]: [...scopes.deliveredReview],
+              },
+              include: [
+                {
+                  model: GrantDeliveredReview,
+                  as: 'grantDeliveredReviews',
+                  required: true,
+                  attributes: [],
+                  where: {
+                    grantId: {
+                      [Op.eq]: db.sequelize.col('GrantCitation.grantId'),
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+function cardsFromRows(rows: PagedRecipientCitationRow[]): RecipientCitationCard[] {
+  return rows.map((row) => ({
+    id: `${row.citationId}:${row.recipientId}:${row.regionId}`,
+    citationId: row.citationId,
+    recipientId: row.recipientId,
+    recipientName: row.recipientName,
+    regionId: row.regionId,
+  }));
+}
+
+async function countRecipientCitationCards(scopes: IScopes): Promise<number> {
+  const [result] = (await GrantCitation.findAll({
+    attributes: [
+      [
+        db.sequelize.literal(
+          'COUNT(DISTINCT ("GrantCitation"."citationId", "GrantCitation"."recipient_id", "GrantCitation"."region_id"))'
+        ),
+        'total',
+      ],
+    ],
+    logging: false,
+    where: [...scopes.grantCitation],
+    include: recipientCitationCardInclude(scopes),
+    raw: true,
+    subQuery: false,
+  })) as { total: string | number }[];
+
+  return Number(result?.total || 0);
+}
+
+async function findRecipientCitationCardsPage(
   scopes: IScopes,
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
   perPage: number = PAGE_SIZE
-): Promise<PagedRecipientCitationCardsResult> {
-  const { rows, count } = (await GrantCitation.findAndCountAll({
+): Promise<RecipientCitationCard[]> {
+  const rows = (await GrantCitation.findAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     logging: false,
     where: [...scopes.grantCitation],
-    include: [
-      {
-        model: Grant.unscoped(),
-        as: 'grant',
-        required: true,
-        attributes: [],
-      },
-      {
-        model: Citation,
-        as: 'citation',
-        required: true,
-        attributes: [],
-        where: {
-          calculated_finding_type: {
-            [Op.in]: ['Area of Concern', 'Noncompliance', 'Deficiency'],
-          },
-        },
-        include: [
-          {
-            model: DeliveredReviewCitation,
-            as: 'deliveredReviewCitations',
-            required: true,
-            attributes: [],
-            include: [
-              {
-                model: DeliveredReview,
-                as: 'deliveredReview',
-                required: true,
-                attributes: [],
-                where: {
-                  [Op.and]: [...scopes.deliveredReview],
-                },
-                include: [
-                  {
-                    model: GrantDeliveredReview,
-                    as: 'grantDeliveredReviews',
-                    required: true,
-                    attributes: [],
-                    where: {
-                      grantId: {
-                        [Op.eq]: db.sequelize.col('GrantCitation.grantId'),
-                      },
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
+    include: recipientCitationCardInclude(scopes),
     group: [
       'GrantCitation.citationId',
       'GrantCitation.recipient_id',
@@ -673,38 +714,22 @@ async function findPagedRecipientCitationCards(
     offset,
     raw: true,
     subQuery: false,
-  })) as {
-    count:
-      | {
-          citationId: number;
-          recipient_id: number;
-          region_id: number;
-          id: number;
-          citation: string;
-          calculated_finding_type: string;
-          calculated_category: string;
-          count: number;
-        }[]
-      | number;
-    rows: {
-      citationId: number;
-      recipientId: number;
-      recipientName: string;
-      regionId: number;
-    }[];
-  };
+  })) as PagedRecipientCitationRow[];
 
-  const cards = rows.map((row) => ({
-    id: `${row.citationId}:${row.recipientId}:${row.regionId}`,
-    citationId: row.citationId,
-    recipientId: row.recipientId,
-    recipientName: row.recipientName,
-    regionId: row.regionId,
-  }));
+  return cardsFromRows(rows);
+}
 
-  // With GROUP BY, Sequelize returns count as an array of per-group counts.
-  // count.length is the total number of distinct (citationId, recipientId) groups before paging.
-  const total = Array.isArray(count) ? count.length : count;
+async function findPagedRecipientCitationCards(
+  scopes: IScopes,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+  offset: number,
+  perPage: number = PAGE_SIZE
+): Promise<PagedRecipientCitationCardsResult> {
+  const [cards, total] = await Promise.all([
+    findRecipientCitationCardsPage(scopes, sortBy, direction, offset, perPage),
+    countRecipientCitationCards(scopes),
+  ]);
 
   return { cards, total };
 }
@@ -747,6 +772,7 @@ async function findCitationsByIds(
                 model: Program,
                 attributes: ['id', 'programType'],
                 as: 'programs',
+                separate: true,
               },
             ],
           },
@@ -787,6 +813,7 @@ async function findCitationsByIds(
                     attributes: [],
                   },
                 ],
+                separate: true,
               },
             ],
           },
@@ -797,6 +824,7 @@ async function findCitationsByIds(
         as: 'activityReportObjectiveCitations',
         required: false,
         attributes: ['id', 'grantId', 'grantNumber', 'reviewName'],
+        separate: true,
         include: [
           {
             model: ActivityReportObjective,
@@ -815,6 +843,7 @@ async function findCitationsByIds(
                     as: 'topic',
                   },
                 ],
+                separate: true,
               },
               {
                 model: ActivityReport,
@@ -842,6 +871,7 @@ async function findCitationsByIds(
                         ],
                       },
                     ],
+                    separate: true,
                   },
                   {
                     model: User,
@@ -1007,19 +1037,38 @@ export async function* monitoringTtaCsvGenerator(
   query: {
     sortBy?: MonitoringTtaSortBy;
     direction?: MonitoringTtaDirection;
+    perPage?: number;
   } = {}
 ): AsyncGenerator<MonitoringTtaCsvResponse> {
-  const { sortBy, direction } = parseQuery(query);
+  const { sortBy, direction } = parseQuery({
+    sortBy: query.sortBy,
+    direction: query.direction,
+  });
+  const parsedExportPerPage = Number(query.perPage);
+  const exportPageSize =
+    Number.isInteger(parsedExportPerPage) && parsedExportPerPage > 0
+      ? Math.min(parsedExportPerPage, MAX_PAGE_SIZE)
+      : MAX_PAGE_SIZE;
+  const total = await countRecipientCitationCards(scopes);
   let offset = 0;
 
-  while (true) {
+  while (offset < total) {
     // eslint-disable-next-line no-await-in-loop
-    const { data, total } = await monitoringTta(scopes, {
+    const cards = await findRecipientCitationCardsPage(
+      scopes,
       sortBy,
       direction,
       offset,
-      perPage: MAX_PAGE_SIZE,
-    });
+      exportPageSize
+    );
+    // eslint-disable-next-line no-await-in-loop
+    const data = await monitoringTtaDataForCards(scopes, cards);
+
+    if (cards.length === 0) {
+      break;
+    }
+
+    offset += exportPageSize;
 
     for (const item of data) {
       yield {
@@ -1033,12 +1082,32 @@ export async function* monitoringTtaCsvGenerator(
         lastTTADate: item.lastTTADate,
       };
     }
-
-    offset += MAX_PAGE_SIZE;
-    if (offset >= total) {
-      break;
-    }
   }
+}
+
+async function monitoringTtaDataForCards(
+  scopes: IScopes,
+  cards: RecipientCitationCard[]
+): Promise<MonitoringTTAData[]> {
+  if (cards.length === 0) {
+    return [];
+  }
+
+  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId))).map(
+    (citationId) => Number(citationId)
+  );
+  const citations = await findCitationsByIds(scopes, citationIds);
+  const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
+
+  return cards
+    .map((card) => {
+      const citation = citationsById.get(card.citationId);
+      if (!citation) {
+        return null;
+      }
+      return monitoringTtaDataForRecipientCitationCard(citation, card);
+    })
+    .filter((d): d is MonitoringTTAData => d !== null);
 }
 
 export default async function monitoringTta(
@@ -1059,21 +1128,7 @@ export default async function monitoringTta(
     perPage
   );
 
-  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId))).map(
-    (citationId) => Number(citationId)
-  );
-  const citations = await findCitationsByIds(scopes, citationIds);
-  const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
-
-  const data = cards
-    .map((card) => {
-      const citation = citationsById.get(card.citationId);
-      if (!citation) {
-        return null;
-      }
-      return monitoringTtaDataForRecipientCitationCard(citation, card);
-    })
-    .filter((d): d is MonitoringTTAData => d !== null);
+  const data = await monitoringTtaDataForCards(scopes, cards);
 
   return { data, total };
 }
