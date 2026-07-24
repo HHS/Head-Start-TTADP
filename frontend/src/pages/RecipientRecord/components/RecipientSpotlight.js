@@ -35,7 +35,7 @@ const mappedData = (data) => [
     'FEI',
     'FEI',
     data.FEI,
-    'Recipient grant is currently in the Full Enrollment Initiative (FEI)'
+    'Recipient grant is currently in the Full Enrollment Initiative (FEI) including 6-month evaluation and designated chronically underenrolled (DCU) periods'
   ),
   createRowForEachIndicator(
     'newRecipients',

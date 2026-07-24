@@ -22,7 +22,7 @@ const INDICATOR_DETAILS = {
   },
   FEI: {
     label: 'FEI',
-    description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
+    description: 'Recipient is currently in the Full Enrollment Initiative (FEI) including 6-month evaluation and designated chronically underenrolled (DCU) periods',
   },
   // Temporarily hidden - will be added back later
   // DRS: {
