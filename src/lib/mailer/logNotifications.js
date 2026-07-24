@@ -21,11 +21,12 @@ export default async function logEmailNotification(job, success, result) {
   let newCollaborator;
   let newApprover;
   let collabArray;
+  let approverArray;
   let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
-  const { report } = data;
-  const { author, activityReportCollaborators } = report;
+  const { report, approversWithSettings: approvers = [] } = data;
+  const { author, activityReportCollaborators = [] } = report;
 
   try {
     switch (job.name) {
@@ -41,7 +42,8 @@ export default async function logEmailNotification(job, success, result) {
         break;
       case EMAIL_ACTIONS.NEEDS_ACTION:
         collabArray = activityReportCollaborators.map((c) => c.user.email);
-        emailTo = [author ? author.email : '', ...collabArray];
+        approverArray = approvers.map((a) => a.user.email);
+        emailTo = [author ? author.email : '', ...collabArray, ...approverArray];
         template = path.resolve(emailTemplatePath, 'changes_requested_by_manager', 'subject.pug');
         break;
       case EMAIL_ACTIONS.APPROVED:

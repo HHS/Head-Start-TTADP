@@ -453,7 +453,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'fullName'],
+            attributes: ['id', 'name', 'fullName', 'email'],
             include: [
               {
                 model: Role,
