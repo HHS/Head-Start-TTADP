@@ -30,15 +30,15 @@ describe('Email Notifications', () => {
             },
           },
         ],
-        approvers: [
-          {
-            user: {
-              email: 'mockApprover@test.gov',
-              name: 'Mock Approver',
-            },
-          },
-        ],
       },
+      approversWithSettings: [
+        {
+          user: {
+            email: 'mockApprover@test.gov',
+            name: 'Mock Approver',
+          },
+        },
+      ],
       newCollaborator: {
         email: 'mockNewCollaborator@test.gov',
         name: 'Mock New Collaborator',
@@ -182,7 +182,7 @@ describe('Email Notifications', () => {
         emailTo: [
           mockJob.data.report.author.email,
           mockJob.data.report.activityReportCollaborators[0].user.email,
-          mockJob.data.report.approvers[0].user.email,
+          mockJob.data.approversWithSettings[0].user.email,
         ],
         action: mockJob.name,
         subject: 'Activity Report AR-04-1235: Changes requested',
@@ -209,7 +209,7 @@ describe('Email Notifications', () => {
         emailTo: [
           '',
           mockJob.data.report.activityReportCollaborators[0].user.email,
-          mockJob.data.report.approvers[0].user.email,
+          mockJob.data.approversWithSettings[0].user.email,
         ],
         action: mockJob.name,
         subject: 'Activity Report AR-04-1235: Changes requested',
@@ -234,6 +234,15 @@ describe('Email Notifications', () => {
         ...mockJob,
         data: {
           ...mockJob.data,
+          approversWithSettings: [
+            ...mockJob.data.approversWithSettings,
+            {
+              user: {
+                email: 'mockApprover2@test.gov',
+                name: 'Mock Approver 2',
+              },
+            },
+          ],
           report: {
             ...mockJob.data.report,
             activityReportCollaborators: [
@@ -242,15 +251,6 @@ describe('Email Notifications', () => {
                 user: {
                   email: 'mockCollaborator2@test.gov',
                   name: 'Mock Collaborator 2',
-                },
-              },
-            ],
-            approvers: [
-              ...mockJob.data.report.approvers,
-              {
-                user: {
-                  email: 'mockApprover2@test.gov',
-                  name: 'Mock Approver 2',
                 },
               },
             ],
@@ -263,8 +263,8 @@ describe('Email Notifications', () => {
           orderedJob.data.report.author.email,
           orderedJob.data.report.activityReportCollaborators[0].user.email,
           orderedJob.data.report.activityReportCollaborators[1].user.email,
-          orderedJob.data.report.approvers[0].user.email,
-          orderedJob.data.report.approvers[1].user.email,
+          orderedJob.data.approversWithSettings[0].user.email,
+          orderedJob.data.approversWithSettings[1].user.email,
         ],
         action: orderedJob.name,
         subject: 'Activity Report AR-04-1235: Changes requested',

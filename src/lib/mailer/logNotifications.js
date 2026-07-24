@@ -25,8 +25,8 @@ export default async function logEmailNotification(job, success, result) {
   let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
-  const { report } = data;
-  const { author, activityReportCollaborators = [], approvers = [] } = report;
+  const { report, approversWithSettings: approvers = [] } = data;
+  const { author, activityReportCollaborators = [] } = report;
 
   try {
     switch (job.name) {
