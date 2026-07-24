@@ -731,6 +731,158 @@ describe('save standard goals for report', () => {
     });
   });
 
+  describe('reused objectives on activity reports', () => {
+    let grant;
+    let goalTemplate;
+    let report;
+    let sourceReport;
+    let existingGoal;
+    let existingObjective;
+
+    beforeAll(async () => {
+      grant = await createGrant({
+        recipientId: recipient1.id,
+      });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Reuse objective template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      report = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+
+      sourceReport = await ActivityReport.create({
+        activityRecipientType: 'recipient',
+        regionId: 1,
+        ECLKCResourcesUsed: ['test'],
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 0,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        version: 2,
+      });
+
+      existingGoal = await Goal.create({
+        name: goalTemplate.templateName,
+        status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        goalTemplateId: goalTemplate.id,
+        createdVia: 'rtr',
+      });
+
+      existingObjective = await Objective.create({
+        title: 'existing objective reused by title',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: existingGoal.id,
+        createdVia: 'activityReport',
+        createdViaActivityReportId: sourceReport.id,
+      });
+    });
+
+    afterAll(async () => {
+      await cleanUpGoalAndAllAssociations(goalTemplate.id, report.id, [grant.id]);
+      await ActivityReport.destroy({ where: { id: sourceReport.id } });
+    });
+
+    it('uses existing objective status when a new objective payload matches an existing objective by title', async () => {
+      const goals = [
+        {
+          goalIds: [existingGoal.id],
+          grantIds: [grant.id],
+          goalTemplateId: goalTemplate.id,
+          name: goalTemplate.templateName,
+          status: GOAL_STATUS.IN_PROGRESS,
+          timeframe: null,
+          source: [],
+          prompts: [],
+          objectives: [
+            {
+              id: null,
+              isNew: true,
+              ttaProvided: 'tta for reused objective',
+              title: existingObjective.title,
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              closeSuspendReason: null,
+              closeSuspendContext: null,
+              supportType: 'Implementing',
+              goalId: existingGoal.id,
+              createdHere: true,
+            },
+          ],
+        },
+      ];
+
+      await saveStandardGoalsForReport(goals, report);
+
+      const reusedObjectives = await Objective.findAll({
+        where: {
+          goalId: existingGoal.id,
+          title: existingObjective.title,
+        },
+      });
+      expect(reusedObjectives).toHaveLength(1);
+
+      const aro = await ActivityReportObjective.findOne({
+        where: {
+          activityReportId: report.id,
+          objectiveId: existingObjective.id,
+        },
+      });
+
+      expect(aro).toBeTruthy();
+      expect(aro.status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(aro.objectiveCreatedHere).toBe(false);
+      expect(aro.ttaProvided).toBe('tta for reused objective');
+      expect(aro.supportType).toBe('Implementing');
+
+      const staleFormGoals = [
+        {
+          ...goals[0],
+          objectives: [
+            {
+              ...goals[0].objectives[0],
+              id: existingObjective.id,
+              ids: [existingObjective.id],
+              isNew: false,
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              createdHere: true,
+              ttaProvided: 'updated tta for reused objective',
+            },
+          ],
+        },
+      ];
+
+      await saveStandardGoalsForReport(staleFormGoals, report);
+
+      const updatedAro = await ActivityReportObjective.findOne({
+        where: {
+          activityReportId: report.id,
+          objectiveId: existingObjective.id,
+        },
+      });
+
+      expect(updatedAro.status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(updatedAro.objectiveCreatedHere).toBe(false);
+      expect(updatedAro.ttaProvided).toBe('updated tta for reused objective');
+    });
+  });
+
   describe('goal field responses', () => {
     let grant;
     let goalTemplate;
