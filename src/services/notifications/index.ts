@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { NOTIFICATION_CONFIGURATION } from '../../constants';
-import { auditLogger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import db from '../../models';
 import type {
   NotificationMetadata,
@@ -14,6 +14,7 @@ import { userSettingOverridesById } from '../userSettings';
 
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
+const EXPIRED_NOTIFICATION_DAYS = 30;
 
 // all is just sorting by "createdAt"
 // action_needed sorts by actionable notifications first, then by createdAt
@@ -286,6 +287,41 @@ async function deleteNotificationsByEntityAndType(
 }
 
 /**
+ * Deletes user-scoped notifications that were archived more than the expiration window ago.
+ * Not to be called from HTTP handlers — use programmatically (e.g. scheduled cleanup job).
+ * @returns {Promise<number>} The number of deleted notifications.
+ */
+async function deleteExpiredArchivedNotifications(): Promise<number> {
+  logger.info('Deleting expired archived notifications');
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - EXPIRED_NOTIFICATION_DAYS);
+
+  const escapedCutoffDate = db.sequelize.escape(cutoffDate.toISOString().slice(0, 10));
+
+  const deletedCount = await Notification.destroy({
+    where: {
+      id: {
+        [Op.in]: db.sequelize.literal(`(
+          SELECT nus."notificationId"
+          FROM "NotificationUserStates" nus
+          INNER JOIN "Notifications" n
+            ON n."id" = nus."notificationId"
+           AND n."userId" = nus."userId"
+          WHERE n."userId" IS NOT NULL
+            AND nus."archivedAt" IS NOT NULL
+            AND nus."archivedAt" < ${escapedCutoffDate}
+        )`),
+      },
+    },
+  });
+
+  auditLogger.info(`Deleted ${deletedCount} expired archived notifications.`);
+  logger.info(`Deleted ${deletedCount} expired archived notifications`);
+
+  return deletedCount;
+}
+/*
  * Archives all notifications for a given entity and one or more notification types.
  * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
  * rows intact and instead marks each recipient's NotificationUserState as archived. It is
@@ -461,6 +497,7 @@ export {
   archiveNotificationsByEntityAndType,
   createGlobalNotification,
   createNotification,
+  deleteExpiredArchivedNotifications,
   deleteNotification,
   deleteNotificationsByEntityAndType,
   getNotifications,

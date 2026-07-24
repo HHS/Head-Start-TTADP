@@ -5,6 +5,7 @@ import {
   archiveNotificationsByEntityAndType,
   createGlobalNotification,
   createNotification,
+  deleteExpiredArchivedNotifications,
   deleteNotification,
   deleteNotificationsByEntityAndType,
   getNotifications,
@@ -790,6 +791,174 @@ describe('Notification service', () => {
     });
   });
 
+  describe('deleteExpiredArchivedNotifications', () => {
+    const daysAgo = (days) => {
+      const date = new Date();
+      date.setDate(date.getDate() - days);
+      return date;
+    };
+
+    const notificationDate = (days) => daysAgo(days);
+    const archivedDate = (days) => daysAgo(days).toISOString().slice(0, 10);
+
+    it('deletes only notifications archived more than 30 days ago', async () => {
+      const recentlyArchivedOldNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(60),
+      });
+      const expiredArchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const justOverBoundaryArchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const boundaryArchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const oldUnarchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const oldGlobalNotification = await createTrackedNotification({
+        userId: null,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+
+      const [
+        recentlyArchivedOldState,
+        expiredArchivedState,
+        justOverBoundaryArchivedState,
+        boundaryArchivedState,
+        oldUnarchivedState,
+        oldGlobalArchivedState,
+      ] = await Promise.all([
+        NotificationUserState.create({
+          notificationId: recentlyArchivedOldNotification.id,
+          userId: user.id,
+          archivedAt: archivedDate(5),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: expiredArchivedNotification.id,
+          userId: user.id,
+          archivedAt: archivedDate(35),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: justOverBoundaryArchivedNotification.id,
+          userId: user.id,
+          archivedAt: archivedDate(31),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: boundaryArchivedNotification.id,
+          userId: user.id,
+          archivedAt: archivedDate(30),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: oldUnarchivedNotification.id,
+          userId: user.id,
+          archivedAt: null,
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: oldGlobalNotification.id,
+          userId: otherUser.id,
+          archivedAt: archivedDate(35),
+          viewedAt: null,
+        }),
+      ]);
+
+      const deletedCount = await deleteExpiredArchivedNotifications();
+
+      expect(deletedCount).toBe(2);
+
+      const [
+        remainingRecentlyArchivedOldNotification,
+        remainingRecentlyArchivedOldState,
+        deletedNotification,
+        deletedState,
+        deletedJustOverBoundaryNotification,
+        deletedJustOverBoundaryState,
+        remainingBoundaryArchivedNotification,
+        remainingBoundaryArchivedState,
+        remainingOldUnarchivedNotification,
+        remainingOldUnarchivedState,
+        remainingOldGlobalNotification,
+        remainingOldGlobalState,
+      ] = await Promise.all([
+        Notification.findByPk(recentlyArchivedOldNotification.id),
+        NotificationUserState.findByPk(recentlyArchivedOldState.id),
+        Notification.findByPk(expiredArchivedNotification.id),
+        NotificationUserState.findByPk(expiredArchivedState.id),
+        Notification.findByPk(justOverBoundaryArchivedNotification.id),
+        NotificationUserState.findByPk(justOverBoundaryArchivedState.id),
+        Notification.findByPk(boundaryArchivedNotification.id),
+        NotificationUserState.findByPk(boundaryArchivedState.id),
+        Notification.findByPk(oldUnarchivedNotification.id),
+        NotificationUserState.findByPk(oldUnarchivedState.id),
+        Notification.findByPk(oldGlobalNotification.id),
+        NotificationUserState.findByPk(oldGlobalArchivedState.id),
+      ]);
+
+      expect(remainingRecentlyArchivedOldNotification).not.toBeNull();
+      expect(remainingRecentlyArchivedOldState).not.toBeNull();
+      expect(deletedNotification).toBeNull();
+      expect(deletedState).toBeNull();
+      expect(deletedJustOverBoundaryNotification).toBeNull();
+      expect(deletedJustOverBoundaryState).toBeNull();
+      expect(remainingBoundaryArchivedNotification).not.toBeNull();
+      expect(remainingBoundaryArchivedState).not.toBeNull();
+      expect(remainingOldUnarchivedNotification).not.toBeNull();
+      expect(remainingOldUnarchivedState).not.toBeNull();
+      expect(remainingOldGlobalNotification).not.toBeNull();
+      expect(remainingOldGlobalState).not.toBeNull();
+    });
+
+    it("does not delete a user-scoped notification when only another user's state is archived", async () => {
+      const notification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+
+      const mismatchedState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: otherUser.id,
+        archivedAt: archivedDate(35),
+        viewedAt: null,
+      });
+
+      const deletedCount = await deleteExpiredArchivedNotifications();
+
+      expect(deletedCount).toBe(0);
+
+      const [remainingNotification, remainingState] = await Promise.all([
+        Notification.findByPk(notification.id),
+        NotificationUserState.findByPk(mismatchedState.id),
+      ]);
+
+      expect(remainingNotification).not.toBeNull();
+      expect(remainingState).not.toBeNull();
+    });
+  });
   describe('archiveNotificationsByEntityAndType', () => {
     it('archives existing user states for matching notifications and leaves other types untouched', async () => {
       const entityId = faker.datatype.number({ min: 99001, max: 99999 });

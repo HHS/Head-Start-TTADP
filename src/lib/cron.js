@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ } from '../constants';
 import { isTrue } from '../envParser';
 import { auditLogger, logger } from '../logger';
+import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
 import {
   DIGEST_CONFIG,
@@ -117,6 +118,21 @@ const runDBCleanupJob = () =>
     }
   })();
 
+const runNotificationCleanupJob = () =>
+  (async () => {
+    logger.info('Starting expired archived notification cleanup');
+    try {
+      const deletedCount = await deleteExpiredArchivedNotifications();
+      logger.info(`Completed expired archived notification cleanup (${deletedCount} deleted)`);
+    } catch (error) {
+      logCronError(
+        'Error processing Notification Cleanup job',
+        'Notification Cleanup Error',
+        error
+      );
+    }
+  })();
+
 /**
  * Runs the application's cron jobs
  */
@@ -140,6 +156,14 @@ function runCronJobs() {
     monthlyJob.start();
     const dbCleanupJob = new CronJob(dailyNightSched, runDBCleanupJob, null, true, timezone);
     dbCleanupJob.start();
+    const notificationCleanupJob = new CronJob(
+      dailyNightSched,
+      runNotificationCleanupJob,
+      null,
+      true,
+      timezone
+    );
+    notificationCleanupJob.start();
     logger.info('Cron jobs scheduled');
   }
 }
