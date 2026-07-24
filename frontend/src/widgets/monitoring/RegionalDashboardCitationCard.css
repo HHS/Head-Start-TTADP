@@ -2,8 +2,18 @@
   display: none;
 }
 
+.ttahub-monitoring-citation-card-checkbox .usa-checkbox__label {
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .ttahub-monitoring-citation-card-checkbox--mobile {
   align-self: flex-start;
+}
+
+.ttahub-monitoring-citation-card-checkbox--mobile .usa-checkbox__label {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 @media (min-width: 1445px) {
