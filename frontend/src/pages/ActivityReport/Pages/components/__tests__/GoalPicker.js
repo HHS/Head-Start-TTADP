@@ -12,7 +12,7 @@ import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { mockRSSData } from '../../../../../testHelpers';
 import UserContext from '../../../../../UserContext';
-import GoalPicker from '../GoalPicker';
+import GoalPicker, { buildUniqueCitationOptions } from '../GoalPicker';
 
 const defaultSelectedGoals = [
   {
@@ -97,6 +97,48 @@ describe('GoalPicker', () => {
   });
 
   afterEach(() => fetchMock.restore());
+
+  it('keeps all standardIds when deduplicating citation options', () => {
+    const uniqueCitationOptions = buildUniqueCitationOptions([
+      {
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+      {
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
+
+    expect(uniqueCitationOptions).toEqual([
+      {
+        label: 'Noncompliance',
+        options: [
+          {
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+            id: 205833,
+            standardIds: [205833, 205834],
+          },
+        ],
+      },
+    ]);
+  });
 
   it('you can select a goal', async () => {
     const availableGoals = [

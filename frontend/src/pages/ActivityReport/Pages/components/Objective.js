@@ -35,6 +35,52 @@ import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/Fo
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 
+function getSelectedCitationStandardIds(selectedCitation) {
+  const standardIds = Array.isArray(selectedCitation.standardIds)
+    ? selectedCitation.standardIds.filter((standardId) => Number.isInteger(standardId))
+    : [];
+
+  if (standardIds.length > 0) {
+    return Array.from(new Set(standardIds));
+  }
+
+  return Number.isInteger(selectedCitation.id) ? [selectedCitation.id] : [];
+}
+
+export function buildSelectedCitationObjects(newCitations, rawCitations) {
+  return newCitations.flatMap((selectedCitation) => {
+    const selectedStandardIds = getSelectedCitationStandardIds(selectedCitation);
+    const matchingRawCitations = rawCitations.filter((rawCitation) =>
+      selectedStandardIds.includes(rawCitation.standardId)
+    );
+
+    if (matchingRawCitations.length === 0) {
+      return [];
+    }
+
+    const monitoringReferences = matchingRawCitations.flatMap((rawCitation) =>
+      rawCitation.grants.map((grant) => ({
+        ...grant,
+        standardId: rawCitation.standardId,
+        name: selectedCitation.name,
+      }))
+    );
+
+    if (monitoringReferences.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        ...matchingRawCitations[0],
+        id: selectedStandardIds[0] ?? matchingRawCitations[0].standardId,
+        name: selectedCitation.name,
+        monitoringReferences,
+      },
+    ];
+  });
+}
+
 export default function Objective({
   objective,
   topicOptions,
@@ -393,25 +439,7 @@ export default function Objective({
 
   // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
   const selectedCitationsChanged = (newCitations) => {
-    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
-    // From rawCitations get all the raw citations with the same standardId as the newCitations.
-    const newCitationsObjects = rawCitations
-      .filter((rawCitation) => newCitationStandardIds.includes(rawCitation.standardId))
-      .map((rawCitation) => ({
-        ...rawCitation,
-        id: rawCitation.standardId,
-        name: newCitations.find((newCitation) => newCitation.id === rawCitation.standardId).name,
-        monitoringReferences: [
-          ...rawCitation.grants.map((grant) => ({
-            ...grant,
-            standardId: rawCitation.standardId,
-            name: newCitations.find((newCitation) => newCitation.id === rawCitation.standardId)
-              .name,
-          })),
-        ],
-      }));
-
-    onChangeCitations([...newCitationsObjects]);
+    onChangeCitations(buildSelectedCitationObjects(newCitations, rawCitations));
   };
 
   useDeepCompareEffect(() => {
@@ -680,8 +708,14 @@ Objective.propTypes = {
   ),
   citationOptions: PropTypes.arrayOf(
     PropTypes.shape({
-      value: PropTypes.number,
       label: PropTypes.string,
+      options: PropTypes.arrayOf(
+        PropTypes.shape({
+          name: PropTypes.string,
+          id: PropTypes.number,
+          standardIds: PropTypes.arrayOf(PropTypes.number),
+        })
+      ),
     })
   ),
   isMonitoringGoal: PropTypes.bool,

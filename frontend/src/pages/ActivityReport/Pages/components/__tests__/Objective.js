@@ -14,7 +14,7 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
 import { mockRSSData } from '../../../../../testHelpers';
 import UserContext from '../../../../../UserContext';
-import Objective from '../Objective';
+import Objective, { buildSelectedCitationObjects } from '../Objective';
 
 const history = createMemoryHistory();
 
@@ -178,6 +178,78 @@ describe('Objective', () => {
   it("renders an objective that doesn't have a status", async () => {
     render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
+  it('expands a shared citation option across all standardIds', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        standardIds: [205833, 205834],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    expect(buildSelectedCitationObjects(newCitations, rawCitations)).toEqual([
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+            standardId: 205833,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+            standardId: 205834,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
   });
 
   it('renders the citations dropdown when there are citations available', async () => {
@@ -434,5 +506,96 @@ describe('Objective', () => {
     expect(
       await screen.findByText(/To avoid errors when submitting the report, you can either/i)
     ).toBeVisible();
+  });
+
+  it('does not show a warning when a shared citation option covers all grants', async () => {
+    const citationOptions = [
+      {
+        label: 'Noncompliance',
+        options: [
+          {
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+            id: 205833,
+            standardIds: [205833, 205834],
+          },
+        ],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-1',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 1,
+            grantNumber: '12345',
+            monitoringFindingStatusName: 'Active',
+            reportDeliveryDate: '2024-12-03',
+            reviewName: 'review-1',
+            severity: 2,
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-2',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 2,
+            grantNumber: '67890',
+            monitoringFindingStatusName: 'Active',
+            reportDeliveryDate: '2024-12-03',
+            reviewName: 'review-2',
+            severity: 2,
+          },
+        ],
+      },
+    ];
+
+    const additionalHookFormData = {
+      activityRecipients: [
+        {
+          id: 1,
+          activityRecipientId: 1,
+          name: 'Recipient 1',
+        },
+        {
+          id: 2,
+          activityRecipientId: 2,
+          name: 'Recipient 2',
+        },
+      ],
+    };
+
+    render(
+      <RenderObjective
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        additionalHookFormData={additionalHookFormData}
+        isMonitoringGoal
+      />
+    );
+
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
+    await selectEvent.select(citationSelect, [
+      /ANC - 1302\.47\(b\)\(7\)\(vi\) - Findings Outside the Protocol/i,
+    ]);
+
+    expect(
+      screen.queryByText(/This grant does not have any of the citations selected/i)
+    ).toBeNull();
+    expect(screen.queryByText(/Recipient 1/i)).toBeNull();
+    expect(screen.queryByText(/Recipient 2/i)).toBeNull();
   });
 });
