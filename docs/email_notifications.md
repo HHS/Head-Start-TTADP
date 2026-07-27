@@ -137,6 +137,7 @@ Triggered synchronously by an application event, processed once per job.
 | `APPROVED` | `reportApprovedNotification` | `notifyReportApproved` | `report_approved` |
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
+| `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
 
 All instant handlers share the same shape:
 
@@ -161,6 +162,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `CHANGE_REQUESTED` | `NEEDS_ACTION_DIGEST` | `emailWhenChangeRequested` |
 | `SUBMITTED_FOR_REVIEW` | `SUBMITTED_DIGEST` | `emailWhenReportSubmittedForReview` |
 | `APPROVAL` | `APPROVED_DIGEST` | `emailWhenReportApproval` |
+| `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
 
@@ -365,12 +367,27 @@ export const myNewEventNotification = (report, someUser) => {
 };
 ```
 
-**6. Invoke the trigger** from your service or route handler:
+**6. Invoke the trigger** from your service or route handler.
+
+When the notification targets a set of users (e.g. collaborators), filter by preference _before_ calling the helper to avoid notifying users who opted out:
 
 ```js
 import { myNewEventNotification } from '../lib/mailer';
-myNewEventNotification(report, someUser);
+import { userSettingOverridesById } from '../services/users';
+
+// Fan-out to multiple recipients with preference check
+const settings = await Promise.all(
+  collaborators.map((c) =>
+    userSettingOverridesById(c.userId, EMAIL_ACTIONS.MY_NEW_EVENT)
+  )
+);
+const toNotify = collaborators.filter((_c, i) =>
+  settings[i]?.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY
+);
+myNewEventNotification(report, toNotify);
 ```
+
+For single-recipient cases (e.g. report author) the preference is typically checked inside the handler itself.
 
 ---
 
@@ -417,14 +434,18 @@ export const DIGEST_CONFIG = {
 };
 ```
 
-**4. Add the action to `DIGEST_EMAIL_ACTIONS`** (same file, near `processNotificationQueue`):
+**4. ~~Add the action to `DIGEST_EMAIL_ACTIONS`~~** — skip this step.
+
+`DIGEST_EMAIL_ACTIONS` is auto-derived from `DIGEST_CONFIG` keys:
 
 ```js
 const DIGEST_EMAIL_ACTIONS = [
-  // ... existing
-  EMAIL_ACTIONS.MY_DIGEST,   // add here
+  ...Object.keys(DIGEST_CONFIG),  // ← new DIGEST_CONFIG entries are included automatically
+  EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,  // special case added manually
 ];
 ```
+
+Adding a new entry to `DIGEST_CONFIG` in step 3 is sufficient — **do not** also add it to `DIGEST_EMAIL_ACTIONS` directly or it will double-register on the Bull queue.
 
 **5. Export a thin wrapper** (preserves named public API):
 

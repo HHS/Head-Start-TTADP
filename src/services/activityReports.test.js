@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { GOAL_STATUS } from '../constants';
+import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
@@ -12,6 +12,7 @@ import db, {
   Goal,
   Grant,
   NextStep,
+  Notification,
   Objective,
   OtherEntity,
   Permission,
@@ -2334,6 +2335,9 @@ describe('Activity report service', () => {
     let goal;
     let alternateGoal;
     let unrelatedGoal;
+    let reportNotification;
+    let reportSystemNotification;
+    let unrelatedReportNotification;
 
     beforeAll(async () => {
       user = await User.create({
@@ -2407,11 +2411,38 @@ describe('Activity report service', () => {
         activityReportId: alternateReport.id,
         goalId: alternateGoal.id,
       });
+      reportNotification = await Notification.create({
+        userId: user.id,
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        text: 'report notification to delete',
+      });
+      reportSystemNotification = await Notification.create({
+        userId: user.id,
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: 'system notification should remain',
+      });
+      unrelatedReportNotification = await Notification.create({
+        userId: user.id,
+        entityId: unrelatedReport.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        text: 'other report notification should remain',
+      });
     });
 
     afterAll(async () => {
       const reports = [report.id, alternateReport.id, unrelatedReport.id];
       const goals = [goal.id, alternateGoal.id, unrelatedGoal.id];
+      await Notification.destroy({
+        where: {
+          id: [
+            reportNotification?.id,
+            reportSystemNotification?.id,
+            unrelatedReportNotification?.id,
+          ].filter(Boolean),
+        },
+      });
       await ActivityReportGoal.destroy({
         where: {
           activityReportId: reports,
@@ -2454,6 +2485,19 @@ describe('Activity report service', () => {
       const unrelated = await Goal.findByPk(unrelatedGoal.id, { paranoid: false });
       expect(unrelated).not.toBeNull();
       expect(unrelated.deletedAt).toBeNull();
+
+      const remainingNotifications = await Notification.findAll({
+        where: {
+          id: [reportNotification.id, reportSystemNotification.id, unrelatedReportNotification.id],
+        },
+      });
+
+      expect(remainingNotifications.map((notification) => notification.id)).toEqual(
+        expect.arrayContaining([reportSystemNotification.id, unrelatedReportNotification.id])
+      );
+      expect(remainingNotifications.map((notification) => notification.id)).not.toContain(
+        reportNotification.id
+      );
     });
   });
 });

@@ -18,7 +18,14 @@ const createEvent = ({
 
 let nextUserId = 0;
 
-const createUser = ({ write = false, read = false, admin = false, poc = false, regionId = 1 }) => {
+const createUser = ({
+  write = false,
+  read = false,
+  admin = false,
+  poc = false,
+  regionId = 1,
+  roles = [],
+}) => {
   const permissions = [];
 
   nextUserId += 1;
@@ -39,7 +46,7 @@ const createUser = ({ write = false, read = false, admin = false, poc = false, r
     permissions.push({ scopeId: SCOPES.POC_TRAINING_REPORTS, regionId });
   }
 
-  return { id: nextUserId, permissions };
+  return { id: nextUserId, permissions, roles };
 };
 
 const authorRegion1 = createUser({ write: true, regionId: 1 });
@@ -226,14 +233,14 @@ describe('Event Report policies', () => {
       expect(policy.canCreateSession()).toBe(true);
     });
 
-    it('is false if the user is a POC', () => {
+    it('is true if the user is a POC', () => {
       const eventRegion1 = createEvent({
         ownerId: authorRegion1,
         regionId: 1,
         pocIds: [authorRegion1Collaborator.id],
       });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
-      expect(policy.canCreateSession()).toBe(false);
+      expect(policy.canCreateSession()).toBe(true);
     });
 
     it('is false otherwise', () => {
@@ -243,6 +250,190 @@ describe('Event Report policies', () => {
       });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canCreateSession()).toBe(false);
+    });
+
+    it('is true if the user has the NC role', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const ncUser = createUser({ roles: [{ name: 'NC' }] });
+      const policy = new EventReport(ncUser, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(true);
+    });
+
+    it('is false if the user does not have the NC role', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const nonNcUser = createUser({ roles: [{ name: 'COR' }] });
+      const policy = new EventReport(nonNcUser, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(false);
+    });
+
+    it('isNationalCenterUser is false when user.roles is undefined', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const userWithoutRoles = { ...createUser({}), roles: undefined };
+      const policy = new EventReport(userWithoutRoles, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(false);
+    });
+
+    it('is false when user has POC scope but is not in eventReport.pocIds', () => {
+      // Guards that canCreateSession is event-scoped: having the POC permission
+      // scope does not grant access unless the user is explicitly listed in pocIds.
+      const pocUserNotInEvent = createUser({ poc: true, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        pocIds: [], // user NOT listed
+      });
+      const policy = new EventReport(pocUserNotInEvent, eventRegion1);
+      expect(policy.canCreateSession()).toBe(false);
+    });
+  });
+
+  describe('isSubmitted', () => {
+    const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+    const newFlowEvent = createEvent({
+      ownerId: authorRegion1.id,
+      regionId: 1,
+      data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+    });
+    const approverId = 999;
+
+    it('returns false when there is no session', () => {
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('returns false when approverId is not set', () => {
+      const session = { data: { pocComplete: true, collabComplete: true } };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('returns true in the standard flow when approverId && pocComplete && collabComplete', () => {
+      const session = { approverId, data: { pocComplete: true, collabComplete: true } };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(true);
+    });
+
+    it('returns false in the standard flow when only one side is complete', () => {
+      const sessionA = { approverId, data: { pocComplete: true, collabComplete: false } };
+      const sessionB = { approverId, data: { pocComplete: false, collabComplete: true } };
+      expect(new EventReport(authorRegion1, eventRegion1, sessionA).isSubmitted()).toBe(false);
+      expect(new EventReport(authorRegion1, eventRegion1, sessionB).isSubmitted()).toBe(false);
+    });
+
+    it('returns true in the national center facilitation flow when ownerComplete && collabComplete', () => {
+      const session = {
+        approverId,
+        data: {
+          ownerComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(true);
+    });
+
+    it('returns true in the national center facilitation flow for a POC-created session (pocComplete && collabComplete)', () => {
+      // POCs can create NC-flow sessions; they record completion via pocComplete
+      // rather than ownerComplete. The model treats these as submitted, so the
+      // policy must too — otherwise approvers cannot edit and the UI shows
+      // the submit form instead of approve/needs-action controls.
+      const session = {
+        approverId,
+        data: {
+          pocComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(true);
+    });
+
+    it('returns false in the national center facilitation flow when only ownerComplete is set', () => {
+      const session = {
+        approverId,
+        data: {
+          ownerComplete: true,
+          collabComplete: false,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('returns false in the national center facilitation flow when only collabComplete is set', () => {
+      const session = {
+        approverId,
+        data: {
+          ownerComplete: false,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('ownerComplete alone does not count as submitted in the standard flow', () => {
+      // Ensures the new-flow predicate only applies when eventOrganizer is set
+      const session = { approverId, data: { ownerComplete: true, collabComplete: true } };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      // standard flow checks pocComplete, which is falsy → not submitted
+      expect(policy.isSubmitted()).toBe(false);
+    });
+  });
+
+  describe('canEditAsSessionApprover', () => {
+    const newFlowEvent = createEvent({
+      ownerId: authorRegion1.id,
+      regionId: 1,
+      data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+    });
+
+    it('allows the approver to edit a POC-created NC-flow session that has been submitted', () => {
+      const approver = createUser({ read: true });
+      const session = {
+        approverId: approver.id,
+        data: {
+          pocComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(approver, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(true);
+      expect(policy.canEditAsSessionApprover()).toBe(true);
+    });
+
+    it('allows the approver to edit an owner-created NC-flow session that has been submitted', () => {
+      const approver = createUser({ read: true });
+      const session = {
+        approverId: approver.id,
+        data: {
+          ownerComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(approver, newFlowEvent, session);
+      expect(policy.canEditAsSessionApprover()).toBe(true);
+    });
+
+    it('does not allow a non-approver to edit as approver even when submitted', () => {
+      const approver = createUser({ read: true });
+      const other = createUser({ read: true });
+      const session = {
+        approverId: approver.id,
+        data: {
+          pocComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(other, newFlowEvent, session);
+      expect(policy.canEditAsSessionApprover()).toBe(false);
     });
   });
 

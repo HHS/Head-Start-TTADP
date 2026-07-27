@@ -7,11 +7,13 @@ case type
     when 'changesRequestedDigest'
         p Changes were requested to these activity reports:
     when 'approverAssignedDigest'
-        p These activity reports were submitted for your review:
+        p These activity reports were submitted for your approval:
     when 'reportApprovedDigest'
         p These activity reports were approved:
     when 'recipientReportApprovedDigest'
         p Activity Reports associated with your recipients were approved:
+    when 'collaboratorReportSubmittedForReviewDigest'
+        p The following Activity Reports, on which you are a collaborator, have been submitted for approval:
     default
         p
 ul

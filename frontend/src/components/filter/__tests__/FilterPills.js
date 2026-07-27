@@ -3,7 +3,17 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import { activityReportGoalResponseFilter, specialistRoleFilter } from '../activityReportFilters';
 import FilterPills from '../FilterPills';
+
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterPills tests continue to exercise those filter types.
+const FILTER_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
 
 describe('Filter Pills', () => {
   afterAll(() => {
@@ -15,7 +25,7 @@ describe('Filter Pills', () => {
       render(
         <FilterPills
           filters={filters}
-          filterConfig={TTAHISTORY_FILTER_CONFIG}
+          filterConfig={FILTER_CONFIG}
           onRemoveFilter={onRemoveFilter}
         />
       );
@@ -53,7 +63,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
       expect(
         await screen.findByRole('button', {
-          name: /this button removes the filter: date started \(ar\) is within/i,
+          name: /this button removes the filter: date started is within/i,
         })
       ).toBeVisible();
     });
@@ -86,7 +96,7 @@ describe('Filter Pills', () => {
 
       // Remove filter pill.
       const remoteButton = await screen.findByRole('button', {
-        name: /this button removes the filter: date started \(ar\) is on or after /i,
+        name: /this button removes the filter: date started is on or after /i,
       });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');
@@ -133,6 +143,34 @@ describe('Filter Pills', () => {
       renderFilterMenu(filters);
       // Check we keep the correct case for I'm.
       expect(await screen.findByText("where I'm the")).toBeVisible();
+    });
+
+    it('uses the Region label when no matching filter configuration is present', () => {
+      renderFilterMenu([
+        {
+          id: 'region-1',
+          topic: 'region',
+          condition: 'is',
+          query: '1',
+        },
+      ]);
+
+      expect(screen.getByText('Region')).toBeVisible();
+    });
+
+    it('omits condition text when a filter has no condition', () => {
+      renderFilterMenu([
+        {
+          id: 'role-1',
+          topic: 'role',
+          condition: null,
+          query: [],
+        },
+      ]);
+
+      expect(screen.getByText('Specialist roles')).toBeVisible();
+      expect(screen.queryByText('null')).not.toBeInTheDocument();
+      expect(screen.getByRole('button')).toBeVisible();
     });
   });
 });

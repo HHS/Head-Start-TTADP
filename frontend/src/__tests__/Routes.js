@@ -259,8 +259,8 @@ describe('Routes', () => {
     expect(await screen.findByText('Goal Dashboard Print Preview Page')).toBeInTheDocument();
   });
 
-  it('renders the Course Dashboard page for "/dashboards/ipd-courses"', async () => {
-    await RenderRoutes('/dashboards/ipd-courses');
+  it('renders the Course Dashboard page for "/dashboards/eep-courses"', async () => {
+    await RenderRoutes('/dashboards/eep-courses');
     expect(await screen.findByText('Course Dashboard Page')).toBeInTheDocument();
   });
 

@@ -15,7 +15,6 @@ import {
 import monitoringOverview from './monitoringOverview';
 
 const {
-  ActivityReport,
   Citation,
   GrantCitation,
   Objective,
@@ -212,19 +211,25 @@ describe('monitoringOverview', () => {
         mrid: mfidSeed + 100,
         review_type: 'Follow-up',
         outcome: 'Compliant',
-        report_delivery_date: '2025-01-20',
+        report_delivery_date: '2025-03-20',
+        complete_date: '2025-03-31',
+        corrected: true,
       }),
       DeliveredReview.create({
         mrid: mfidSeed + 101,
         review_type: 'Follow-up',
         outcome: 'Compliant',
-        report_delivery_date: '2025-02-20',
+        report_delivery_date: '2025-03-22',
+        complete_date: '2025-03-31',
+        corrected: true,
       }),
       DeliveredReview.create({
         mrid: mfidSeed + 102,
         review_type: 'Follow-up',
         outcome: 'Compliant',
-        report_delivery_date: '2025-03-20',
+        report_delivery_date: '2025-03-25',
+        complete_date: '2025-03-31',
+        corrected: true,
       }),
     ]);
 
@@ -384,18 +389,24 @@ describe('monitoringOverview', () => {
         review_type: 'Follow-up',
         outcome: 'Compliant',
         report_delivery_date: '2025-04-10',
+        complete_date: '2025-04-30',
+        corrected: true,
       }),
       DeliveredReview.create({
         mrid: mfidSeed + 104,
         review_type: 'Follow-up',
         outcome: 'Compliant',
         report_delivery_date: '2024-12-10',
+        complete_date: '2024-12-31',
+        corrected: true,
       }),
       DeliveredReview.create({
         mrid: mfidSeed + 105,
         review_type: 'Follow-up',
         outcome: 'Compliant',
         report_delivery_date: '2025-04-12',
+        complete_date: '2025-04-30',
+        corrected: true,
       }),
     ]);
 
@@ -471,12 +482,13 @@ describe('monitoringOverview', () => {
 
   it('returns the expected object shape with compliant and citation counts', async () => {
     fixture = await createOverviewFixture();
+    const grantCitationFindAllSpy = jest.spyOn(GrantCitation, 'findAll');
 
     const data = await monitoringOverview({
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grantCitation: [],
+      grantCitation: [{ grantId: fixture.grant.id }],
     });
 
     expect(data).toEqual({
@@ -490,13 +502,15 @@ describe('monitoringOverview', () => {
       totalActiveNoncompliantCitationsWithTtaSupport: '1',
       totalActiveNoncompliantCitations: '2',
     });
+    expect(grantCitationFindAllSpy).toHaveBeenCalledTimes(1);
+    expect(grantCitationFindAllSpy).toHaveBeenCalledWith(expect.objectContaining({ raw: true }));
   });
 
   it('returns 0% when follow-up review and citation denominators are zero', async () => {
     fixture = await createOverviewFixture();
 
     const data = await monitoringOverview({
-      deliveredReview: [{ report_delivery_date: { [Op.lt]: '2025-01-01' } }],
+      deliveredReview: [{ complete_date: { [Op.lt]: '2025-01-01' } }],
       citation: [],
       activityReport: [
         {
@@ -525,7 +539,7 @@ describe('monitoringOverview', () => {
     const data = await monitoringOverview({
       deliveredReview: [
         {
-          report_delivery_date: {
+          complete_date: {
             [Op.between]: ['2025-01-01', '2025-06-30'],
           },
         },
@@ -554,9 +568,8 @@ describe('monitoringOverview', () => {
     });
   });
 
-  it('defaults missing aggregate counts to zero', async () => {
-    jest.spyOn(DeliveredReview, 'findAll').mockResolvedValue([{}]);
-    jest.spyOn(ActivityReport, 'findAll').mockResolvedValue([]);
+  it('returns zero counts when no grant citations match', async () => {
+    jest.spyOn(GrantCitation, 'findAll').mockResolvedValue([]);
 
     const data = await monitoringOverview({
       deliveredReview: [],

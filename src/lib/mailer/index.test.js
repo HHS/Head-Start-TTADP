@@ -18,6 +18,8 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorDigest,
+  collaboratorReportSubmittedForReviewDigest,
+  collaboratorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
@@ -26,6 +28,7 @@ import {
   notifyApproverAssigned,
   notifyChangesRequested,
   notifyCollaboratorAssigned,
+  notifyCollaboratorReportSubmittedForReview,
   notifyDigest,
   notifyRecipientReportApproved,
   notifyReportApproved,
@@ -540,9 +543,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Submitted for review`);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
       expect(message.text).toContain(
-        `Activity Report ${mockReport.displayId} was submitted for your review.`
+        `Activity Report ${mockReport.displayId} has been submitted for your approval.`
       );
       expect(message.text).toContain(reportPath);
     });
@@ -585,7 +590,7 @@ describe('mailer tests', () => {
         `Activity Report ${mockReport.displayId}: Added as collaborator`
       );
       expect(message.text).toContain(
-        `You've been added as a collaborator on Activity Report ${mockReport.displayId}.`
+        `You have been added as a collaborator on Activity Report ${mockReport.displayId}.`
       );
       expect(message.text).toContain(reportPath);
     });
@@ -609,6 +614,68 @@ describe('mailer tests', () => {
         jsonTransport
       );
       expect(email).toBeNull();
+    });
+  });
+
+  describe('Collaborator: Report submitted for approval', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId}, on which you are a collaborator, has been submitted for approval.`
+      );
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('Returns null if there are no toEmails', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: { email: null } },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('enqueues one job per collaborator', () => {
+      jest.spyOn(notificationQueueMock, 'add');
+      const collaborators = [
+        { user: { email: 'collab1@test.gov' }, userId: 10 },
+        { user: { email: 'collab2@test.gov' }, userId: 11 },
+      ];
+      collaboratorReportSubmittedForReviewNotification(mockReport, collaborators);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[0].user })
+      );
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[1].user })
+      );
     });
   });
 
@@ -1002,10 +1069,10 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub daily digest: reports for review');
+      expect(message.subject).toBe('TTA Hub daily digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for today.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1024,10 +1091,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub weekly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub weekly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1046,10 +1113,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1068,9 +1135,9 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
-      expect(message.text).toContain('No reports were submitted for your review this month.');
+      expect(message.text).toContain('No reports were submitted for your approval this month.');
       expect(message.text).not.toContain(reportPath);
     });
   });
@@ -1337,9 +1404,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 4 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 5 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(4);
+        expect(entries).toHaveLength(5);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -1609,6 +1676,34 @@ describe('mailer tests', () => {
 
     it('"approved" digest which logs on bad date', async () => {
       await expect(approvedDigest('')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
+      const result = await collaboratorReportSubmittedForReviewDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"collaborator report submitted for review" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something went wrong')));
+      await expect(collaboratorReportSubmittedForReviewDigest('this month')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest which logs on bad date', async () => {
+      await expect(collaboratorReportSubmittedForReviewDigest('')).rejects.toThrow();
     });
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {

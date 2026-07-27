@@ -1,15 +1,15 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
+import type { EmailFrequencyValue } from '@ttahub/common/src/notifications';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
-import { getEmailSettings, updateSettings } from '../../fetchers/settings';
+import { getSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
 import UserContext from '../../UserContext';
-import { emailTypesMap } from '.';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
 import CollabReportNotifications from './components/notifications/CollabReportNotifications';
 import CommunicationLogNotifications from './components/notifications/CommunicationLogNotification';
@@ -18,14 +18,12 @@ import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
 import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
 
-type EmailFrequency = 'never' | 'immediately' | 'today' | 'this week' | 'this month';
-
 interface SettingFormData {
-  emailWhenAppointedCollaborator: EmailFrequency;
-  emailWhenChangeRequested: EmailFrequency;
-  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequency;
-  emailWhenReportApproval: EmailFrequency;
-  emailWhenReportSubmittedForReview: EmailFrequency;
+  emailWhenAppointedCollaborator: EmailFrequencyValue;
+  emailWhenChangeRequested: EmailFrequencyValue;
+  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequencyValue;
+  emailWhenReportApproval: EmailFrequencyValue;
+  emailWhenReportSubmittedForReview: EmailFrequencyValue;
   inAppWhenAppointedCollaborator: boolean;
   inAppWhenChangeRequested: boolean;
   inAppWhenRecipientReportApprovedProgramSpecialist: boolean;
@@ -162,6 +160,7 @@ export default function ManageNotifications({
 
   const methods = useForm({
     defaultValues: {
+      // TODO: blow up into a complete list of all notification settings, with defaults for each
       emailWhenAppointedCollaborator: 'never',
       emailWhenChangeRequested: 'never',
       emailWhenRecipientReportApprovedProgramSpecialist: 'never',
@@ -193,8 +192,8 @@ export default function ManageNotifications({
     async function fetchSettings() {
       setIsAppLoading(true);
       try {
-        const res = await getEmailSettings();
-        res.forEach(({ key, value }) => {
+        const settings = await getSettings();
+        settings.forEach(({ key, value }) => {
           setValue(key, value);
         });
       } catch (_error) {
@@ -208,19 +207,24 @@ export default function ManageNotifications({
   }, [setValue, setIsAppLoading]);
 
   const onSubmit = async (formData: SettingFormData) => {
-    // TODO: For now, simply return early if no email validation
-    if (!emailValidated) {
-      return;
-    }
+    const settingsData = Object.entries(formData).map(([key, value]) => ({
+      key,
+      value,
+    }));
 
-    // TODO: this will eventually need to handle in-app settings as well, but for now the only options are email settings
-    const newSettings = Object.entries(emailTypesMap).reduce((acc, entry) => {
-      const options = entry[1];
-      options.forEach((option) => {
-        acc.push({ key: option.keyName, value: formData[option.keyName] });
-      });
-      return acc;
-    }, []);
+    const newSettings = [];
+
+    settingsData.forEach(({ key, value }) => {
+      // note that the backend validates these settings
+      // against existing UserSettings
+      if (!emailValidated && key.startsWith('email')) {
+        // if the email is not validated, don't send email settings to the backend
+        // but still send in-app notification settings
+        return;
+      }
+
+      newSettings.push({ key, value });
+    });
 
     try {
       setIsAppLoading(true);

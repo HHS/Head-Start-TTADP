@@ -1,6 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
+import compliantFollowUpReviewsDetails from '../../services/compliantFollowUpReviewsDetails';
 import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
@@ -13,6 +14,7 @@ import { checkRecipientAccessAndExistence } from '../utils';
 import { onlyAllowedKeys } from '../widgets/utils';
 import {
   getClassScore,
+  getCompliantFollowUpReviewsDetails,
   getMonitoringData,
   getMonitoringRelatedTtaCsv,
   getTtaByCitation,
@@ -27,14 +29,16 @@ jest.mock('../../services/accessValidation');
 jest.mock('../../scopes');
 jest.mock('../widgets/utils');
 jest.mock('../../widgets/monitoring/monitoringTta');
+jest.mock('../../services/compliantFollowUpReviewsDetails', () => jest.fn());
 
 // Mock the Stringifier class from csv-stringify so we can inspect stream interactions
 let mockStringifierInstance;
+let mockStringifierWriteImplementation;
 jest.mock('csv-stringify', () => {
   const MockStringifier = jest.fn().mockImplementation(() => {
     mockStringifierInstance = {
       pipe: jest.fn().mockReturnThis(),
-      write: jest.fn(),
+      write: jest.fn((...args) => mockStringifierWriteImplementation?.(...args)),
       end: jest.fn(),
       destroy: jest.fn(),
     };
@@ -319,6 +323,34 @@ describe('monintoring handlers', () => {
       expect(mockStringifierInstance.end).toHaveBeenCalled();
     });
 
+    it('sanitizes spreadsheet formulas in yielded CSV rows', async () => {
+      const rows = [
+        {
+          recipientName: '=Test Recipient',
+          citation: '+1302.12',
+          status: 'Active',
+          findingType: 'Deficiency',
+          category: '@Health',
+          grantNumbers: '\n-01CH123456',
+          lastTTADate: '2024-01-01',
+        },
+      ];
+      mockGeneratorRows(rows);
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        recipientName: "'=Test Recipient",
+        citation: "'+1302.12",
+        status: 'Active',
+        findingType: 'Deficiency',
+        category: "'@Health",
+        grantNumbers: "'\n-01CH123456",
+        lastTTADate: '2024-01-01',
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
+    });
+
     it('calls handleErrors if setup (pre-stream) throws', async () => {
       const error = new Error('scope error');
       filtersToScopes.mockRejectedValue(error);
@@ -357,6 +389,234 @@ describe('monintoring handlers', () => {
 
       expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
       expect(handleErrors).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCompliantFollowUpReviewsDetails', () => {
+    let req;
+    let res;
+
+    beforeEach(() => {
+      req = {
+        query: { 'region.in': ['1'] },
+      };
+
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        attachment: jest.fn(),
+        headersSent: false,
+      };
+
+      mockStringifierWriteImplementation = undefined;
+      currentUserId.mockResolvedValue(42);
+      setReadRegions.mockResolvedValue({ 'region.in': ['1'] });
+      onlyAllowedKeys.mockReturnValue({ 'region.in': ['1'] });
+      filtersToScopes.mockResolvedValue({ deliveredReview: [], grantCitation: [] });
+      compliantFollowUpReviewsDetails.mockResolvedValue([]);
+    });
+
+    it('filters query context and returns compliant follow-up details', async () => {
+      const details = [
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientName: 'Recipient A',
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [456],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: 'Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        },
+      ];
+
+      compliantFollowUpReviewsDetails.mockResolvedValue(details);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(currentUserId).toHaveBeenCalledWith(req, res);
+      expect(setReadRegions).toHaveBeenCalledWith(req.query, 42);
+      expect(onlyAllowedKeys).toHaveBeenCalledWith({ 'region.in': ['1'] });
+      expect(filtersToScopes).toHaveBeenCalledWith(
+        { 'region.in': ['1'] },
+        {
+          grant: { subset: true },
+          userId: 42,
+        }
+      );
+      expect(compliantFollowUpReviewsDetails).toHaveBeenCalledWith({
+        deliveredReview: [],
+        grantCitation: [],
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(details);
+    });
+
+    it('returns CSV attachment when format=csv is requested', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      const details = [
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientName: 'Recipient A',
+          regionId: 1,
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [
+            456,
+            'AR-457',
+            'R02-AR-458',
+            { id: 459, regionId: 4 },
+            { id: 460, regionId: 4, displayId: 'LEGACY-AR-460' },
+          ],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: 'Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+            {
+              reviewId: 790,
+              reviewName: 'Second Initial Review',
+              reviewReceivedDate: '2024-12-01',
+            },
+          ],
+        },
+      ];
+      compliantFollowUpReviewsDetails.mockResolvedValue(details);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(res.attachment).toHaveBeenCalledWith('compliant-follow-up-reviews.csv');
+      expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(res);
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        compliantFollowUpReview: 'Compliant Follow-Up Review',
+        recipient: 'Recipient A',
+        grantsOnReview: '01CH12345',
+        citationNumber: '1302.12(d)(1)',
+        hadTta: 'Yes',
+        lastTta: '03/01/2025',
+        activityReports: 'R01-AR-456\nR01-AR-457\nR02-AR-458\nR04-AR-459\nLEGACY-AR-460',
+        compliantFollowUpReviewReceivedDate: '02/15/2025',
+        initialReviewReceivedDate: '11/10/2024\n12/01/2024',
+        initialReview: 'Initial Review\nSecond Initial Review',
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('does not use initial review IDs as CSV display fallbacks', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientName: 'Recipient A',
+          regionId: 1,
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: false,
+          associatedActivityReports: [],
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: null,
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        },
+      ]);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          initialReviewReceivedDate: '11/10/2024',
+          initialReview: '',
+        })
+      );
+    });
+
+    it('sanitizes spreadsheet formulas in CSV cells', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: '=Compliant Follow-Up Review',
+          recipientName: '+Recipient A',
+          regionId: 1,
+          grantsOnReview: ['-01CH12345'],
+          citationNumbers: ['@1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [456],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: '\n=Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        },
+      ]);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          compliantFollowUpReview: "'=Compliant Follow-Up Review",
+          recipient: "'+Recipient A",
+          grantsOnReview: "'-01CH12345",
+          citationNumber: "'@1302.12(d)(1)",
+          initialReview: "'\n=Initial Review",
+        })
+      );
+    });
+
+    it('destroys the CSV stream and handles errors when CSV writing fails', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      const error = new Error('csv write failed');
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+        },
+      ]);
+      mockStringifierWriteImplementation = () => {
+        throw error;
+      };
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
+      expect(mockStringifierInstance.end).not.toHaveBeenCalled();
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
+    });
+
+    it('calls handleErrors if the details service fails', async () => {
+      const error = new Error('boom');
+      compliantFollowUpReviewsDetails.mockRejectedValue(error);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
 });

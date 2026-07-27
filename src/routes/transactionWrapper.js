@@ -24,6 +24,9 @@ export default function transactionWrapper(
     const startTime = Date.now();
     try {
       httpContext.set('auditDescriptor', originalFunction.name);
+      if (req) {
+        req.inTransactionWrapper = true;
+      }
       // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(transactionOptions, async (transaction) => {
         httpContext.set('transactionId', transaction.id);
@@ -49,15 +52,23 @@ export default function transactionWrapper(
 
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
-          removeFromAuditedTransactions();
           return result;
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${err.message}`);
           throw err;
+        } finally {
+          removeFromAuditedTransactions();
         }
       });
     } catch (err) {
+      if (req) {
+        req.inTransactionWrapper = false;
+      }
       return handleErrors(req, res, err, logContext);
+    } finally {
+      if (req) {
+        delete req.inTransactionWrapper;
+      }
     }
   };
 }

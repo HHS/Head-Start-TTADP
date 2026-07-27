@@ -1,13 +1,25 @@
 import { Alert } from '@trussworks/react-uswds';
-import PropTypes from 'prop-types';
+import type { Notification } from '@ttahub/common/src/notifications';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCard from './NotificationCard';
 
-export default function NotificationList({ notifications, error, isArchive }) {
+interface NotificationListProps {
+  notifications: Notification[];
+  error?: string;
+  isArchive?: boolean;
+  onArchive: (notificationId: number | string) => void;
+}
+
+export default function NotificationList({
+  notifications,
+  error,
+  isArchive,
+  onArchive,
+}: NotificationListProps): React.ReactElement {
   if (error) {
     return (
-      <Alert slim type="error">
+      <Alert slim type="error" headingLevel="h3" className="margin-bottom-2">
         Error loading notifications
       </Alert>
     );
@@ -17,7 +29,7 @@ export default function NotificationList({ notifications, error, isArchive }) {
     return (
       <div className="text-center padding-10">
         <h2 className="font-serif-md text-center">You're all caught up!</h2>
-        <p className="usa-prose text-center bold">
+        <p className="usa-prose text-center">
           You don't have any {isArchive ? 'archived' : 'new'} notifications.
         </p>
         <Link className="usa-button display-inline-block margin-auto" to="/account/notifications">
@@ -30,31 +42,8 @@ export default function NotificationList({ notifications, error, isArchive }) {
   return (
     <ul className="usa-list--unstyled margin-y-3 margin-x-2">
       {notifications.map((notification) => (
-        <NotificationCard key={notification.id} notification={notification} />
+        <NotificationCard key={notification.id} notification={notification} onArchive={onArchive} />
       ))}
     </ul>
   );
 }
-
-NotificationList.propTypes = {
-  error: PropTypes.string,
-  isArchive: PropTypes.bool,
-  notifications: PropTypes.arrayOf(
-    PropTypes.shape({
-      archivedAt: PropTypes.string,
-      displayId: PropTypes.string,
-      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-      label: PropTypes.string,
-      link: PropTypes.string,
-      text: PropTypes.string,
-      type: PropTypes.string,
-      viewedAt: PropTypes.string,
-    })
-  ),
-};
-
-NotificationList.defaultProps = {
-  error: '',
-  notifications: [],
-  isArchive: false,
-};
