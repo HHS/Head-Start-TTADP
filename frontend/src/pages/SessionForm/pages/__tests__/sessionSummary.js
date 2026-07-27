@@ -50,7 +50,12 @@ const flushPromises = async (rerender, ui) => {
 
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
-    const makeHookForm = ({ useIpdCourses = false, trainers = [], otherTrainers = '' } = {}) => ({
+    const makeHookForm = ({
+      useIpdCourses = false,
+      trainers = [],
+      otherTrainers = '',
+      ttaProvided = 'filled',
+    } = {}) => ({
       getValues: jest.fn((field) => {
         if (!field) {
           return { useIpdCourses, trainers };
@@ -66,6 +71,10 @@ describe('sessionSummary', () => {
 
         if (field === 'otherTrainers') {
           return otherTrainers;
+        }
+
+        if (field === 'ttaProvided') {
+          return ttaProvided;
         }
 
         return 'filled';
@@ -95,6 +104,31 @@ describe('sessionSummary', () => {
       const hookForm = makeHookForm({
         trainers: [{ id: 'other', fullName: 'Other' }],
         otherTrainers: 'Custom Trainer',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when ttaProvided is semantically empty (%s)', (_label, ttaProvided) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when ttaProvided has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided: '<p>Provided coaching on ERSEA.</p>',
       });
 
       expect(isPageComplete(hookForm)).toBe(true);
@@ -368,10 +402,6 @@ describe('sessionSummary', () => {
         userEvent.click(noIsaidNoIsaidNoFilesSir);
       });
 
-      act(() => {
-        userEvent.type(screen.getByLabelText(/TTA provided/i), 'TTA provided');
-      });
-
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
         userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
@@ -380,6 +410,23 @@ describe('sessionSummary', () => {
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
+    });
+
+    it('exposes required-field semantics for the TTA provided rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field should use a fieldset/legend structure so screen
+      // readers announce it the way the previous native textarea did.
+      const legend = await screen.findByText(/TTA provided/i, { selector: 'legend' });
+      expect(legend).toBeInTheDocument();
+
+      // The editor's contenteditable should advertise the required semantics.
+      await waitFor(() => {
+        const editable = document.querySelector('[contenteditable="true"]');
+        expect(editable).not.toBeNull();
+        expect(editable).toHaveAttribute('aria-required', 'true');
+        expect(editable).toHaveAttribute('aria-invalid', 'false');
+      });
     });
 
     it('shows validation error when EEP courses is yes but no courses selected', async () => {
@@ -801,6 +848,47 @@ describe('sessionSummary', () => {
         expect(screen.getByText(/Course One/i)).toBeInTheDocument();
         expect(screen.getByText(/Course Two/i)).toBeInTheDocument();
       });
+    });
+
+    it('renders legacy ttaProvided with unsupported markup without crashing', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [],
+          // Legacy value stored before render-time sanitization: contains atomic
+          // markup that would otherwise crash the read-only Draft renderer.
+          ttaProvided:
+            '<p>Legacy content</p><iframe src="https://evil.example"></iframe><img src="x" onerror="alert(1)" />',
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Legacy content/i)).toBeInTheDocument();
+      });
+
+      expect(document.querySelector('iframe')).toBeNull();
+      expect(document.querySelector('img')).toBeNull();
     });
   });
 });

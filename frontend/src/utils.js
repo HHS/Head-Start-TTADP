@@ -1,4 +1,5 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import DOMPurify from 'dompurify';
 import { ContentState, EditorState } from 'draft-js';
 import htmlToDraft from 'html-to-draftjs';
 import moment from 'moment';
@@ -71,6 +72,89 @@ export const getEditorState = (name) => {
   const { contentBlocks, entityMap } = htmlToDraft(name || '');
   const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
   return EditorState.createWithContent(contentState);
+};
+
+/**
+ * Determine whether a rich-text (HTML) value is semantically empty.
+ *
+ * React Draft emits several "empty" variants beyond a bare `<p></p>` — for
+ * example `<p></p>\n`, `<p>&nbsp;</p>`, or multiple empty paragraphs. A naive
+ * check against a single sentinel string misses these, so we strip tags,
+ * decode non-breaking spaces, collapse whitespace and check for remaining text.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {boolean} true when the value contains no visible text content
+ */
+export const isEmptyRichText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return true;
+  }
+
+  const textContent = html
+    // drop all HTML tags
+    .replace(/<[^>]*>/g, '')
+    // decode common whitespace entities that Draft emits
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/g, ' ')
+    // normalize remaining whitespace (including newlines)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return textContent.length === 0;
+};
+
+/**
+ * Strict allowlist for read-only rich-text rendering. Intentionally excludes
+ * embedded/atomic content such as `img` and `iframe`, which `html-to-draftjs`
+ * converts into atomic blocks that can crash the read-only Draft renderer.
+ */
+export const RICH_TEXT_ALLOWED_TAGS = [
+  'p',
+  'br',
+  'strong',
+  'em',
+  'del',
+  'ins',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'a',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'code',
+  'pre',
+  'span',
+  'div',
+];
+
+export const RICH_TEXT_ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];
+
+/**
+ * Sanitize stored rich-text HTML with the strict read-only allowlist above.
+ *
+ * Backend hooks only sanitize on create/update, so legacy values (or values
+ * authored before a sanitization change) can still contain unsupported markup.
+ * Sanitizing at render time strips it before the value reaches the Draft
+ * renderer, preventing crashes from atomic content like `iframe`/`img`.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} sanitized HTML (non-string input is returned unchanged)
+ */
+export const sanitizeRichText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return html;
+  }
+
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: RICH_TEXT_ALLOWED_TAGS,
+    ALLOWED_ATTR: RICH_TEXT_ALLOWED_ATTR,
+  });
 };
 
 export const getDistinctSortedArray = (arr) => {
