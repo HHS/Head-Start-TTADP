@@ -66,6 +66,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
       {
         recipientId: 1,
         recipientName: 'Test Recipient 1',
+        'region id': 1,
         createdAt: '2021-09-01T13:05:17.944+00:00',
         goalId: 20628,
         goalStatus: GOAL_STATUS.IN_PROGRESS,
@@ -75,6 +76,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
       {
         recipientId: 2,
         recipientName: 'Test Recipient 2',
+        'region id': 2,
         createdAt: '2021-09-02T13:05:17.944+00:00',
         goalId: 359813,
         goalStatus: GOAL_STATUS.NOT_STARTED,
@@ -84,6 +86,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
       {
         recipientId: 3,
         recipientName: 'Test Recipient 3',
+        'region id': 3,
         createdAt: '2021-09-03T13:05:17.944+00:00',
         goalId: 457825,
         goalStatus: GOAL_STATUS.IN_PROGRESS,
@@ -163,6 +166,10 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         expect(screen.getByText('09/03/2021')).toBeInTheDocument();
 
         expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /G-20628/i })).toHaveAttribute(
+          'href',
+          '/recipient-tta-records/1/region/1/goals/standard?goalId=20628'
+        );
         expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
         expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
 

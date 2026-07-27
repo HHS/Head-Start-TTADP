@@ -1,9 +1,11 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { NOTIFICATION_TYPES } from '../../constants';
-import db, { Notification, NotificationUserState, User } from '..';
+import db, { ActivityReport, Notification, NotificationUserState, User } from '..';
 
 describe('Notification model', () => {
   let user;
+  let activityReport;
 
   beforeAll(async () => {
     user = await User.create({
@@ -15,10 +17,36 @@ describe('Notification model', () => {
       role: ['Specialist'],
       lastLogin: new Date(),
     });
+
+    // Notification.beforeValidate requires entityId to reference a real
+    // ActivityReport when type is an ACTIVITY_REPORT_NOTIFICATION_TYPES value.
+    activityReport = await ActivityReport.create({
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      numberOfParticipants: 1,
+      deliveryMethod: 'method',
+      activityRecipientType: 'test',
+      creatorRole: 'COR',
+      language: ['Spanish'],
+      participants: ['test'],
+      duration: 0,
+      endDate: '2020-01-01T12:00:00Z',
+      startDate: '2020-01-01T12:00:00Z',
+      requester: 'requester',
+      programTypes: ['type'],
+      reason: ['reason'],
+      ttaType: ['type'],
+      regionId: 2,
+      activityReason: 'recipient request',
+      targetPopulations: ['target pop'],
+      userId: user.id,
+      version: 2,
+    });
   });
 
   afterAll(async () => {
     await Notification.destroy({ where: { userId: user.id } });
+    await ActivityReport.destroy({ where: { id: activityReport.id }, force: true });
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
@@ -26,20 +54,20 @@ describe('Notification model', () => {
   it('creates a notification with all required fields', async () => {
     const notification = await Notification.create({
       userId: user.id,
-      entityId: 42,
+      entityId: activityReport.id,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
-      link: '/activity-reports/42/review',
-      label: 'Activity Report #42',
+      link: `/activity-reports/${activityReport.id}/review`,
+      label: `Activity Report #${activityReport.id}`,
       text: 'Changes were requested.',
-      displayId: 'AR-42',
+      displayId: `AR-${activityReport.id}`,
     });
 
     expect(notification.id).toBeDefined();
     expect(notification.userId).toEqual(user.id);
-    expect(notification.entityId).toEqual(42);
+    expect(notification.entityId).toEqual(activityReport.id);
     expect(notification.type).toEqual(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION);
-    expect(notification.link).toEqual('/activity-reports/42/review');
-    expect(notification.label).toEqual('Activity Report #42');
+    expect(notification.link).toEqual(`/activity-reports/${activityReport.id}/review`);
+    expect(notification.label).toEqual(`Activity Report #${activityReport.id}`);
     expect(notification.text).toEqual('Changes were requested.');
 
     await notification.destroy();

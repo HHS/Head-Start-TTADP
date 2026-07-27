@@ -119,11 +119,17 @@ describe('eventSummary', () => {
       );
     };
 
+    const adminUser = {
+      ...defaultUser,
+      permissions: [{ regionId: 1, scopeId: ADMIN }],
+    };
+
+    const nonAdminUser = {
+      ...defaultUser,
+      permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
+    };
+
     it('renders event summary', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: ADMIN }],
-      };
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
@@ -166,11 +172,36 @@ describe('eventSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('admin users can edit all fields', async () => {
+    it('filters the event owner out of grouped collaborator options', async () => {
       const adminUser = {
         ...defaultUser,
         permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
+
+      fetchMock.restore();
+      fetchMock.get('/api/users/trainers/regional/region/1', []);
+      fetchMock.getOnce('/api/users/trainers/national-center/region/1', [
+        { id: 2, fullName: 'Owner Collaborator' },
+        { id: 3, fullName: 'Tedwina User' },
+      ]);
+
+      const formValues = {
+        ...defaultFormValues,
+        ownerId: 2,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={adminUser} defaultValues={formValues} />);
+      });
+
+      const collaborators = await screen.findByLabelText(/Event collaborators/i);
+      userEvent.click(collaborators);
+
+      expect(await screen.findByText('Tedwina User')).toBeVisible();
+      expect(screen.queryByText('Owner Collaborator')).not.toBeInTheDocument();
+    });
+
+    it('admin users can edit all fields', async () => {
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
@@ -226,11 +257,6 @@ describe('eventSummary', () => {
     });
 
     it('displays additional states', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
-      };
-
       act(() => {
         render(<RenderEventSummary user={nonAdminUser} />);
       });
@@ -239,10 +265,6 @@ describe('eventSummary', () => {
     });
 
     it('non admin users cant edit certain fields', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
-      };
       act(() => {
         render(<RenderEventSummary user={nonAdminUser} />);
       });
@@ -256,10 +278,6 @@ describe('eventSummary', () => {
       expect(screen.queryAllByTestId('read-only-label').length).toBe(10);
     });
     it('handles null creators', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: ADMIN }],
-      };
       act(() => {
         render(<RenderEventSummary user={adminUser} creators={null} />);
       });
@@ -271,11 +289,6 @@ describe('eventSummary', () => {
     });
 
     it('hides poc readonly field when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
-      };
-
       const defaultValues = {
         ...defaultFormValues,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
@@ -293,11 +306,6 @@ describe('eventSummary', () => {
     });
 
     it('hides poc editable field for admins when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: ADMIN }],
-      };
-
       const defaultValues = {
         ...defaultFormValues,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
@@ -316,11 +324,6 @@ describe('eventSummary', () => {
     });
 
     it('short-circuits pocIds validation when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [{ regionId: 1, scopeId: ADMIN }],
-      };
-
       const defaultValues = {
         ...defaultFormValues,
       };
@@ -358,6 +361,150 @@ describe('eventSummary', () => {
       expect(
         screen.queryByText('Select at least one event region point of contact')
       ).not.toBeInTheDocument();
+    });
+
+    describe('additionalRegions checkboxes', () => {
+      it('renders Region 11 checkbox', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
+        expect(checkbox).toBeInTheDocument();
+        expect(checkbox).toHaveAttribute('id', 'additionalRegions-11');
+        expect(checkbox).toHaveAttribute('value', '11');
+      });
+
+      it('renders Region 12 checkbox', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText(
+          'Region 12 (Migrant and Seasonal Head Start)'
+        );
+        expect(checkbox).toBeInTheDocument();
+        expect(checkbox).toHaveAttribute('id', 'additionalRegions-12');
+        expect(checkbox).toHaveAttribute('value', '12');
+      });
+
+      it('checkboxes register under additionalRegions field name', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toHaveAttribute(
+          'name',
+          'additionalRegions'
+        );
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toHaveAttribute('name', 'additionalRegions');
+      });
+
+      it('checking Region 11 checkbox updates form value', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
+        await userEvent.click(checkbox);
+
+        expect(checkbox).toBeChecked();
+      });
+
+      it('pre-populated additionalRegions renders checkboxes as checked', async () => {
+        act(() => {
+          render(
+            <RenderEventSummary
+              user={adminUser}
+              defaultValues={{
+                ...defaultFormValues,
+                additionalRegions: ['11', '12'],
+              }}
+            />
+          );
+        });
+
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toBeChecked();
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toBeChecked();
+      });
+    });
+
+    describe('optional chaining tidy-ups preserve behavior', () => {
+      it('renders gracefully when owner is null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  owner: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when pocs is empty array', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  pocIds: [],
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when reasons is empty/null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  reasons: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when targetPopulations is empty/null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  targetPopulations: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
     });
   });
 });

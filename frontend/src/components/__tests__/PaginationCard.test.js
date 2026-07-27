@@ -229,6 +229,44 @@ describe('PaginationCard', () => {
       const dropdown = screen.getByTestId('perPage');
       expect(dropdown).toHaveAttribute('aria-label', 'Select per page');
     });
+
+    it('supports a distinct controlled value for showing all rows', () => {
+      const mockPerPageChange = jest.fn();
+      render(
+        <PaginationCard
+          currentPage={1}
+          totalCount={20}
+          offset={0}
+          perPage={20}
+          handlePageChange={mockHandlePageChange}
+          perPageChange={mockPerPageChange}
+          perPageSelectValue="all"
+          allOptionValue="all"
+        />
+      );
+
+      expect(screen.getByLabelText('Select per page')).toHaveValue('all');
+      expect(screen.getByRole('option', { name: 'all' })).toHaveValue('all');
+    });
+
+    it('can show the page-size control without top page navigation', () => {
+      render(
+        <PaginationCard
+          currentPage={1}
+          totalCount={20}
+          offset={0}
+          perPage={10}
+          handlePageChange={mockHandlePageChange}
+          perPageChange={jest.fn()}
+          hidePagination
+          className="margin-bottom-4"
+        />
+      );
+
+      expect(screen.getByLabelText('Select per page')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      expect(screen.getByTestId('pagination-card')).toHaveClass('margin-bottom-4');
+    });
   });
 
   describe('edge cases', () => {

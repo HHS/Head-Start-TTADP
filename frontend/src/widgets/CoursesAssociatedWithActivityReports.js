@@ -190,8 +190,8 @@ function CoursesAssociatedWithActivityReports({
 
   return (
     <WidgetContainer
-      title="iPD courses cited on Activity Reports"
-      subtitle="Unique iPD courses cited within Activity Reports."
+      title="EEP courses cited on Activity Reports"
+      subtitle="Unique EEP courses cited within Activity Reports."
       loading={loading || localLoading}
       loadingLabel="Courses associated with Activity Reports loading"
       showPagingBottom
@@ -201,7 +201,7 @@ function CoursesAssociatedWithActivityReports({
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
       menuItems={menuItems}
-      footNote="* Collection of iPD courses in the TTA Hub began on March 7, 2024."
+      footNote="* Collection of EEP courses in the TTA Hub began on March 7, 2024."
       titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget

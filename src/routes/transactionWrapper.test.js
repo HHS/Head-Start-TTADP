@@ -3,9 +3,17 @@ import handleErrors from '../lib/apiErrorHandler';
 import { hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
 import db from '../models';
+import { removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
 
-jest.mock('../lib/apiErrorHandler', () => jest.fn((_req, _res, _err, context) => context));
+jest.mock('../lib/apiErrorHandler', () =>
+  jest.fn((req, _res, err, context) => {
+    if (req?.inTransactionWrapper) {
+      throw err;
+    }
+    return context;
+  })
+);
 jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
   hasModifiedData: jest.fn(),
@@ -40,6 +48,24 @@ describe('transactionWrapper', () => {
     wrapper = transactionWrapper(originalFunction);
     await wrapper();
     expect(originalFunction).toHaveBeenCalled();
+  });
+
+  it('marks the request as running inside transactionWrapper during handler execution', async () => {
+    let inTransactionWrapper;
+    originalFunction = jest.fn().mockImplementation((req) => {
+      inTransactionWrapper = req.inTransactionWrapper;
+      return 'result';
+    });
+    wrapper = transactionWrapper(originalFunction);
+    const req = {};
+    const res = {};
+    const next = jest.fn();
+
+    await wrapper(req, res, next);
+
+    expect(inTransactionWrapper).toBe(true);
+    expect(req.inTransactionWrapper).toBeUndefined();
+    expect(originalFunction).toHaveBeenCalledWith(req, res, next);
   });
 
   it('should log the execution time of the original function', async () => {
@@ -78,6 +104,45 @@ describe('transactionWrapper', () => {
     expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
       namespace: 'SERVICE:WRAPPER',
     });
+    expect(removeFromAuditedTransactions).toHaveBeenCalled();
+    expect(req.inTransactionWrapper).toBeUndefined();
+  });
+
+  it('rejects the transaction callback when a wrapped handler catches and delegates to handleErrors', async () => {
+    const error = new Error('Test Error');
+    let transactionCallbackRejected = false;
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      try {
+        return await callback({ id: 'transaction-id' });
+      } catch (err) {
+        transactionCallbackRejected = true;
+        throw err;
+      }
+    });
+    originalFunction = jest.fn(async (req, res) => {
+      try {
+        req.writeHappened = true;
+        throw error;
+      } catch (err) {
+        return handleErrors(req, res, err, { namespace: 'INNER_HANDLER' });
+      }
+    });
+    wrapper = transactionWrapper(originalFunction);
+    const req = {};
+    const res = {};
+    const next = jest.fn();
+
+    await wrapper(req, res, next);
+
+    expect(transactionCallbackRejected).toBe(true);
+    expect(handleErrors).toHaveBeenNthCalledWith(1, req, res, error, {
+      namespace: 'INNER_HANDLER',
+    });
+    expect(handleErrors).toHaveBeenNthCalledWith(2, req, res, error, {
+      namespace: 'SERVICE:WRAPPER',
+    });
+    expect(removeFromAuditedTransactions).toHaveBeenCalled();
+    expect(req.inTransactionWrapper).toBeUndefined();
   });
 
   it('should call hasModifiedData and throw error if data is modified in readOnlyTransactionWrapper', async () => {

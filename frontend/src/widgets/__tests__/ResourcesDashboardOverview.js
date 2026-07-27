@@ -24,7 +24,7 @@ describe('Resource Dashboard Overview Widget', () => {
     expect(screen.getByText(/headstart.gov resources/i)).toBeInTheDocument();
     expect(screen.getByText(/recipients reached/i)).toBeInTheDocument();
     expect(screen.getByText(/participants reached/i)).toBeInTheDocument();
-    expect(screen.getByText(/reports citing ipd courses/i)).toBeInTheDocument();
+    expect(screen.getByText(/reports citing eep courses/i)).toBeInTheDocument();
   });
 
   it('shows the correct data', async () => {
@@ -58,6 +58,6 @@ describe('Resource Dashboard Overview Widget', () => {
     expect(await screen.findByText(/765/)).toBeVisible();
     expect(await screen.findByText(/participants reached/i)).toBeVisible();
     expect(await screen.findByText(/88.88%/)).toBeVisible();
-    expect(await screen.findByText(/reports citing ipd courses/i)).toBeVisible();
+    expect(await screen.findByText(/reports citing eep courses/i)).toBeVisible();
   });
 });

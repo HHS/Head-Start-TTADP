@@ -76,12 +76,20 @@ describe('session fetchers', () => {
     const result = await deleteSessionObjectiveFile(sessionId, fileId);
     expect(result).toEqual(200);
   });
-  it('getPossibleSessionParticipants', async () => {
-    const regionId = '1';
-    const response = [{ id: 1 }];
-    fetchMock.get(join(sessionsUrl, 'participants', regionId), response);
-    const result = await getPossibleSessionParticipants(regionId);
-    expect(result).toEqual(response);
+  describe('getPossibleSessionParticipants', () => {
+    afterEach(() => fetchMock.restore());
+
+    it('fetches participants by session report id', async () => {
+      const sessionReportId = 42;
+      const expectedUrl = join(sessionsUrl, 'participants', String(sessionReportId));
+      const response = [{ id: 1 }];
+      fetchMock.get(expectedUrl, response);
+
+      const result = await getPossibleSessionParticipants(sessionReportId);
+
+      expect(result).toEqual(response);
+      expect(fetchMock.lastUrl()).toBe(expectedUrl);
+    });
   });
   it('returns the groups', async () => {
     const expected = { id: 1 };

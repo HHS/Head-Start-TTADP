@@ -27,6 +27,8 @@ export default function ActivityReportNotifications({
           'WhenAppointedCollaborator',
           'WhenRecipientReportApprovedProgramSpecialist',
           'WhenReportApproval',
+          'WhenCollaboratorReportSubmittedForReview',
+          'WhenCreatorReportSubmittedForReview',
         ],
       }}
       items={[
@@ -45,7 +47,7 @@ export default function ActivityReportNotifications({
         {
           id: 'WhenChangeRequested',
           label:
-            'A manager requests changes to an activity report that I created or collaborated on.',
+            'A manager requests changes to an Activity Report that I created, collaborated on, or am assigned to approve.',
         },
         {
           id: 'WhenReportApproval',

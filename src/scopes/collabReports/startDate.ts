@@ -1,18 +1,18 @@
 import { Op } from 'sequelize';
 import db from '../../models';
-import { normalizeDateInput } from '../utils';
+import { dateInputForQuery } from '../utils';
 
 const { sequelize } = db;
 
-function normalizeValidDates(dates: string[]): string[] {
+function validDatesForQuery(dates: string[]): string[] {
   return dates
     .filter((date): date is string => typeof date === 'string' && date.trim().length > 0)
-    .map((date) => normalizeDateInput(date.trim(), 'start'))
+    .map((date) => dateInputForQuery(date.trim(), 'start'))
     .filter((date): date is string => date !== null);
 }
 
 export function beforeStartDate(dates: string[]) {
-  const validDates = normalizeValidDates(dates);
+  const validDates = validDatesForQuery(dates);
   if (validDates.length === 0) {
     return {};
   }
@@ -27,7 +27,7 @@ export function beforeStartDate(dates: string[]) {
 }
 
 export function afterStartDate(dates: string[]) {
-  const validDates = normalizeValidDates(dates);
+  const validDates = validDatesForQuery(dates);
   if (validDates.length === 0) {
     return {};
   }
@@ -53,8 +53,8 @@ export function withinStartDate(dates: string[]) {
     .map(
       ([startDate, endDate]) =>
         [
-          normalizeDateInput(startDate.trim(), 'start'),
-          normalizeDateInput(endDate.trim(), 'end'),
+          dateInputForQuery(startDate.trim(), 'start'),
+          dateInputForQuery(endDate.trim(), 'end'),
         ] as const
     )
     .filter((pair): pair is [string, string] => pair[0] !== null && pair[1] !== null);

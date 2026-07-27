@@ -17,8 +17,8 @@ const context = 'sessionReports';
 router.get('/', transactionWrapper(getSessionReportsHandler, `${context} /`));
 router.get('/id/:id', transactionWrapper(getHandler, `${context} /id/:id`));
 router.get(
-  '/participants/:regionId',
-  (req, res, next) => checkIdParam(req, res, next, 'regionId'),
+  '/participants/:sessionReportId',
+  (req, res, next) => checkIdParam(req, res, next, 'sessionReportId'),
   transactionWrapper(getParticipants)
 );
 router.get('/eventId/:eventId', transactionWrapper(getHandler, `${context} /eventId/:eventId`));

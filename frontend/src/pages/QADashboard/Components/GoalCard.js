@@ -4,6 +4,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DataRow from '../../../components/DataRow';
 
+export const getGoalLink = (goal, recipientId, regionId) => {
+  return `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${goal.id}`;
+};
+
 function GoalCard({ goal, recipientId, regionId, expanded }) {
   return (
     <>
@@ -12,13 +16,7 @@ function GoalCard({ goal, recipientId, regionId, expanded }) {
           <DataRow label="Last AR start date" value={goal.lastARStartDate || '--'} />
           <DataRow
             label="Goal number"
-            value={
-              <Link
-                to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}
-              >
-                {goal.goalNumber}
-              </Link>
-            }
+            value={<Link to={getGoalLink(goal, recipientId, regionId)}>{goal.goalNumber}</Link>}
           />
           <DataRow label="Goal status" value={goal.status} />
           <DataRow label="Creator" value={goal.creator} />

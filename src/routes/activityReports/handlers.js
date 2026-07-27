@@ -1,13 +1,14 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   approverAssignedNotification,
   changesRequestedNotification,
   collaboratorAssignedNotification,
+  collaboratorReportSubmittedForReviewNotification,
   programSpecialistRecipientReportApprovedNotification,
   reportApprovedNotification,
 } from '../../lib/mailer';
@@ -42,6 +43,13 @@ import {
 } from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
+import {
+  archiveNeedsActionNotifications,
+  createApproverSubmittedNotification,
+  createChangesRequestedNotification,
+  createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
+} from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -463,6 +471,7 @@ async function checkEmailSettings(report, setting) {
 export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
+
     const { status, note, approvedAtTimezone } = req.body;
     const userId = await currentUserId(req, res);
 
@@ -518,6 +527,46 @@ export async function reviewReport(req, res) {
         authorWithSetting,
         collabsWithSettings
       );
+    }
+
+    if (status === REPORT_STATUSES.NEEDS_ACTION) {
+      const {
+        author,
+        // activityReportCollaborators,
+        // approvers
+      } = reviewedReport;
+
+      // add in-app notification
+      // - for creator
+      await createChangesRequestedNotification({ userId: author.id }, 'creator', {
+        ...reviewedReport.toJSON(),
+        activityRecipients,
+        approver: savedApprover,
+      });
+
+      // - for collaborators
+      // await Promise.all(
+      //   activityReportCollaborators.map((collab) =>
+      //     createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
+      //       ...reviewedReport.toJSON(),
+      //       activityRecipients,
+      //       approver: savedApprover,
+      //     })
+      //   )
+      // );
+
+      // - for approvers, excluding the one who just reviewed
+      // await Promise.all(
+      //   approvers
+      //     .filter((approver) => approver.user.id !== userId)
+      //     .map((approver) =>
+      //       createChangesRequestedNotification({ userId: approver.user.id }, 'approver', {
+      //         ...reviewedReport.toJSON(),
+      //         activityRecipients,
+      //         approver: savedApprover,
+      //       })
+      //     )
+      // );
     }
 
     res.json(savedApprover);
@@ -679,6 +728,27 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
+    await createApproverSubmittedNotification(currentApprovers, savedReport);
+
+    await createCollaboratorSubmittedNotification(
+      report.activityReportCollaborators || [],
+      savedReport
+    );
+
+    // Notify collaborators that the report has been submitted for approval
+    if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {
+      const settingsForCollabs = await Promise.all(
+        report.activityReportCollaborators.map((c) =>
+          userSettingOverridesById(c.userId, EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW)
+        )
+      );
+      const collabsToNotify = report.activityReportCollaborators.filter((_value, index) => {
+        if (!settingsForCollabs[index]) return false;
+        return settingsForCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+      collaboratorReportSubmittedForReviewNotification(savedReport, collabsToNotify);
+    }
+
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(
       { status: null },
@@ -687,6 +757,10 @@ export async function submitReport(req, res) {
         individualHooks: true,
       }
     );
+
+    // Resubmitting from "needs action" makes the pending needs-action in-app
+    // notifications obsolete, so archive them for the report.
+    await archiveNeedsActionNotifications(Number(activityReportId));
 
     // on submit, we should inform the backend that we
     // are no longer editing any goals (since we are submitting)
@@ -943,6 +1017,17 @@ export async function saveReport(req, res) {
       });
 
       collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
+
+      /*
+       * If a user is added as a collaborator and then removed, the notification will persist. The user can click the CTA to clear it. OHS confirmed this shouldn't happen so frequently that we need to conditionally clear the notification if the user is removed as a collaborator.
+       * If a user is added as a collaborator and then removed and then added back, a new notification should trigger UNLESS they haven't cleared the original notification.
+       * We should not resend notifications if a report is unlocked.
+       */
+      // send IN-APP notifications to collaborators who were added
+      await createNotificationForCollaborators(
+        savedReport.activityReportCollaborators,
+        savedReport
+      );
     }
 
     res.json(savedReport);

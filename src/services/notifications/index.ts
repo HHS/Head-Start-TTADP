@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
-import { NOTIFICATION_CONFIGURATION } from '../constants';
-import db from '../models';
+import { NOTIFICATION_CONFIGURATION } from '../../constants';
+import { auditLogger } from '../../logger';
+import db from '../../models';
 import type {
   NotificationMetadata,
   NotificationModel,
@@ -8,7 +9,8 @@ import type {
   NotificationType,
   NotificationUserStateModel,
   NotificationWithState,
-} from './types/notifications';
+} from '../types/notifications';
+import { userSettingOverridesById } from '../userSettings';
 
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
@@ -68,11 +70,33 @@ async function createNotification(
   userId: number,
   entityId: number,
   notificationType: NotificationType,
-  { metadata }: { metadata: NotificationMetadata }
-): Promise<NotificationModel> {
+  {
+    metadata,
+    skipExisting = 'all',
+  }: { metadata: NotificationMetadata; skipExisting?: 'all' | 'archived' }
+): Promise<NotificationModel | null> {
   const notificationConfig = NOTIFICATION_CONFIGURATION[notificationType];
   if (!notificationConfig) {
     throw new Error(`No notification configuration found for type ${notificationType}`);
+  }
+
+  if (!notificationConfig.settingsKey) {
+    throw new Error(
+      `Notification configuration for type ${notificationType} is missing a settingsKey`
+    );
+  }
+
+  // Check user settings for this notification type/user ID combination
+  const result = await userSettingOverridesById(userId, notificationConfig.settingsKey);
+
+  const { value: setting } = result || { value: 'true' }; // default to true if no setting found since in-apps are enabled by default
+
+  if (setting === false || setting === 'false') {
+    // User has disabled this notification type, so we don't create it
+    auditLogger.info(
+      `Notification of type ${notificationType} for user ${userId} and entity ${entityId} not created due to user settings.`
+    );
+    return null;
   }
 
   const notificationText = notificationConfig.textFn(metadata);
@@ -88,6 +112,49 @@ async function createNotification(
     : undefined;
 
   const actionable = Boolean(notificationConfig.actionable);
+
+  const skipArchived = skipExisting === 'archived';
+
+  let existing: NotificationModel | null;
+
+  // if skipArchived is true
+  if (skipArchived) {
+    existing = await Notification.findOne({
+      where: {
+        [Op.and]: [
+          {
+            userId,
+            type: notificationType,
+            entityId,
+          },
+          db.sequelize.literal('("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'),
+        ],
+      },
+      include: [
+        {
+          model: NotificationUserState,
+          as: 'userStates',
+          where: {
+            userId,
+          },
+          required: false,
+        },
+      ],
+      subQuery: false,
+    });
+  } else {
+    existing = await Notification.findOne({
+      where: {
+        userId,
+        type: notificationType,
+        entityId,
+      },
+    });
+  }
+
+  if (existing) {
+    return existing;
+  }
 
   return Notification.create({
     userId,
@@ -219,6 +286,93 @@ async function deleteNotificationsByEntityAndType(
 }
 
 /**
+ * Archives all notifications for a given entity and one or more notification types.
+ * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
+ * rows intact and instead marks each recipient's NotificationUserState as archived. It is
+ * used when a state change makes notifications obsolete but they should remain visible in
+ * the user's archived list (e.g. an Activity Report re-submitted from "needs action"
+ * archives the pending needs-action notifications for that report).
+ *
+ * For notifications that already have a NotificationUserState, the state's `archivedAt` is
+ * set (only when currently null, so existing archive timestamps are preserved). For
+ * notifications that carry a `userId` but have no state row yet, an archived + viewed state
+ * row is created.
+ *
+ * Not to be called from Sequelize model hooks — call it inline in the same service function
+ * that performs the state change.
+ * @param {number} entityId The ID of the entity whose notifications should be archived.
+ * @param {NotificationType | NotificationType[]} notificationType The notification type(s) to target.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ * @throws {Error} Throws when entityId or notificationType is falsy/empty.
+ */
+async function archiveNotificationsByEntityAndType(
+  entityId: number,
+  notificationType: NotificationType | NotificationType[]
+): Promise<void> {
+  if (!entityId) {
+    throw new Error('entityId is required');
+  }
+
+  const notificationTypes = Array.isArray(notificationType) ? notificationType : [notificationType];
+
+  if (!notificationTypes.length || notificationTypes.some((type) => !type)) {
+    throw new Error('notificationType is required');
+  }
+
+  const notifications = (await Notification.findAll({
+    attributes: ['id', 'userId'],
+    where: {
+      entityId,
+      type: { [Op.in]: notificationTypes },
+    },
+    raw: true,
+  })) as unknown as { id: number; userId: number | null }[];
+
+  if (!notifications.length) {
+    return;
+  }
+
+  const notificationIds = notifications.map((n) => n.id);
+  const archivedAt = new Date();
+
+  await NotificationUserState.update(
+    { archivedAt },
+    {
+      where: {
+        notificationId: notificationIds,
+        archivedAt: null,
+      },
+    }
+  );
+
+  const existingStates = (await NotificationUserState.findAll({
+    attributes: ['notificationId', 'userId'],
+    where: { notificationId: notificationIds },
+    raw: true,
+  })) as unknown as { notificationId: number; userId: number }[];
+
+  const existingSet = new Set(
+    existingStates.map((state) => `${state.notificationId}-${state.userId}`)
+  );
+
+  const missingStates = notifications
+    .filter(
+      (notification) =>
+        notification.userId && !existingSet.has(`${notification.id}-${notification.userId}`)
+    )
+    .map((notification) => ({
+      notificationId: notification.id,
+      userId: notification.userId,
+      archivedAt,
+      viewedAt: archivedAt,
+    }));
+
+  if (missingStates.length) {
+    await NotificationUserState.bulkCreate(missingStates, { ignoreDuplicates: true });
+  }
+}
+
+/**
  * Retrieves notifications matching the provided scopes with pagination and sorting.
  * @param {number} userId Current user ID used for scoped and global notifications.
  * @param {NotificationScope[]} scopes Query scopes combined with AND filtering.
@@ -304,6 +458,7 @@ async function getNotifications(
 }
 
 export {
+  archiveNotificationsByEntityAndType,
   createGlobalNotification,
   createNotification,
   deleteNotification,
