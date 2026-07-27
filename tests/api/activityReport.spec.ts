@@ -37,7 +37,7 @@ test.describe('post /activity-reports/goals', () => {
   test('does not save not started when a draft save reuses an in progress objective', async ({
     request,
   }) => {
-    const suffix = Date.now().toString();
+    const suffix = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
     const recipientId = Number(`18${suffix.slice(-7)}`);
     const grantId = Number(`19${suffix.slice(-7)}`);
     const objectiveTitle = `Playwright reused objective ${suffix}`;
