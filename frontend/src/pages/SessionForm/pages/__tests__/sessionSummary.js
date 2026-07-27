@@ -849,5 +849,46 @@ describe('sessionSummary', () => {
         expect(screen.getByText(/Course Two/i)).toBeInTheDocument();
       });
     });
+
+    it('renders legacy ttaProvided with unsupported markup without crashing', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [],
+          // Legacy value stored before render-time sanitization: contains atomic
+          // markup that would otherwise crash the read-only Draft renderer.
+          ttaProvided:
+            '<p>Legacy content</p><iframe src="https://evil.example"></iframe><img src="x" onerror="alert(1)" />',
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Legacy content/i)).toBeInTheDocument();
+      });
+
+      expect(document.querySelector('iframe')).toBeNull();
+      expect(document.querySelector('img')).toBeNull();
+    });
   });
 });

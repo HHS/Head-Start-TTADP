@@ -34,7 +34,7 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
-import { isEmptyRichText } from '../../../utils';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import SessionTrainers from '../components/SessionTrainers';
@@ -692,7 +692,7 @@ const ReviewSection = () => {
         {
           label: 'TTA provided',
           name: 'ttaProvided',
-          customValue: { ttaProvided },
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
           isRichText: true,
         },
         {
