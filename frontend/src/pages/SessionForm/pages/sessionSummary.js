@@ -34,6 +34,7 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { isEmptyRichText } from '../../../utils';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import SessionTrainers from '../components/SessionTrainers';
@@ -539,7 +540,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         ) : null}
       </Fieldset>
 
-      <FormItem label="TTA provided " name="ttaProvided" required>
+      <FormItem label="TTA provided " name="ttaProvided" required fieldSetWrapper>
         <div className="margin-top-1">
           <HookFormRichEditor
             ariaLabel="TTA provided"
@@ -720,7 +721,16 @@ export const isPageComplete = (hookForm) => {
     required.push('otherTrainers');
   }
 
-  return pageComplete(hookForm, required);
+  // ttaProvided is a rich-text field: the generic string check treats any HTML
+  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
+  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided')
+  );
 };
 
 export default {

@@ -1,5 +1,30 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { getCollabReportStatusDisplayAndClassnames } from '../utils';
+import { getCollabReportStatusDisplayAndClassnames, isEmptyRichText } from '../utils';
+
+describe('isEmptyRichText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['non-string', 123],
+    ['empty string', ''],
+    ['single empty paragraph', '<p></p>'],
+    ['empty paragraph with newline', '<p></p>\n'],
+    ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+    ['numeric nbsp entity', '<p>&#160;</p>'],
+    ['spaces only', '<p>   </p>'],
+    ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+  ])('returns true for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(true);
+  });
+
+  it.each([
+    ['plain text wrapped in a paragraph', '<p>Hello</p>'],
+    ['text alongside empty paragraphs', '<p></p><p>Some content</p>'],
+    ['formatted text', '<p><strong>Bold</strong> content</p>'],
+  ])('returns false for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(false);
+  });
+});
 
 describe('getCollabReportStatusDisplayAndClassnames', () => {
   const mockUserId = 1;

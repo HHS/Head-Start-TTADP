@@ -73,6 +73,35 @@ export const getEditorState = (name) => {
   return EditorState.createWithContent(contentState);
 };
 
+/**
+ * Determine whether a rich-text (HTML) value is semantically empty.
+ *
+ * React Draft emits several "empty" variants beyond a bare `<p></p>` — for
+ * example `<p></p>\n`, `<p>&nbsp;</p>`, or multiple empty paragraphs. A naive
+ * check against a single sentinel string misses these, so we strip tags,
+ * decode non-breaking spaces, collapse whitespace and check for remaining text.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {boolean} true when the value contains no visible text content
+ */
+export const isEmptyRichText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return true;
+  }
+
+  const textContent = html
+    // drop all HTML tags
+    .replace(/<[^>]*>/g, '')
+    // decode common whitespace entities that Draft emits
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/g, ' ')
+    // normalize remaining whitespace (including newlines)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return textContent.length === 0;
+};
+
 export const getDistinctSortedArray = (arr) => {
   let distinctList = arr.filter((a) => a !== null);
   distinctList = [...new Set(distinctList)];
