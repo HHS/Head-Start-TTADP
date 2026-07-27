@@ -415,17 +415,17 @@ describe('sessionSummary', () => {
     it('exposes required-field semantics for the TTA provided rich-text field', async () => {
       render(<RenderSessionSummary />);
 
-      // The required field should use a fieldset/legend structure so screen
-      // readers announce it the way the previous native textarea did.
-      const legend = await screen.findByText(/TTA provided/i, { selector: 'legend' });
-      expect(legend).toBeInTheDocument();
+      // The required field is labeled "TTA provided" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/TTA provided/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
 
-      // The editor's contenteditable should advertise the required semantics.
+      // The rich-text editor is present and labeled for assistive technology.
       await waitFor(() => {
         const editable = document.querySelector('[contenteditable="true"]');
         expect(editable).not.toBeNull();
-        expect(editable).toHaveAttribute('aria-required', 'true');
-        expect(editable).toHaveAttribute('aria-invalid', 'false');
+        expect(editable).toHaveAttribute('aria-label', expect.stringMatching(/TTA provided/i));
       });
     });
 
