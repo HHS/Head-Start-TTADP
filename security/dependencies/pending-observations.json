@@ -1,3 +1,18 @@
 {
-  "items": {}
+  "items": {
+    "SCA-FRONTEND-GHSA-22p9-wv53-3rq4-linkify-it-2.2.0": {
+      "id": "SCA-FRONTEND-GHSA-22p9-wv53-3rq4-linkify-it-2.2.0",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-22p9-wv53-3rq4",
+      "module": "linkify-it",
+      "affectedVersion": "2.2.0",
+      "sourceSeverity": "high",
+      "severity": "high",
+      "firstSeen": "2026-07-23",
+      "lastObserved": "2026-07-23",
+      "escalationState": "warning"
+    }
+  }
 }
