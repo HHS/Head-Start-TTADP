@@ -132,6 +132,7 @@ describe('GoalPicker', () => {
         options: [
           {
             name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+            findingType: 'Noncompliance',
             id: 205833,
             standardIds: [205833, 205834],
           },

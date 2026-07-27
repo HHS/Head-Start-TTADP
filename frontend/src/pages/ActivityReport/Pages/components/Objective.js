@@ -34,6 +34,7 @@ import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import formatMonitoringCitationName from './formatMonitoringCitationName';
 
 function getSelectedCitationStandardIds(selectedCitation) {
   const standardIds = Array.isArray(selectedCitation.standardIds)
@@ -47,12 +48,53 @@ function getSelectedCitationStandardIds(selectedCitation) {
   return Number.isInteger(selectedCitation.id) ? [selectedCitation.id] : [];
 }
 
+// Derive the canonical display name for a raw grant, mirroring the logic used to
+// build the displayed citation options in GoalPicker.buildUniqueCitationOptions.
+function getGrantCitationName(grant) {
+  if (typeof grant.name === 'string' && grant.name.trim()) {
+    return grant.name.trim();
+  }
+
+  return formatMonitoringCitationName({
+    acro: grant.acro,
+    citation: grant.citation,
+    findingSource: grant.findingSource,
+  });
+}
+
+// A raw citation record is grouped by standardId + citation text only, so its
+// grants array can contain grants that belong to different displayed options
+// (different finding type / source / name) that happen to share a standardId.
+// Only keep grants that match the selected option so we don't attach unrelated
+// findings.
+function grantMatchesSelectedCitation(grant, selectedCitation) {
+  if (getGrantCitationName(grant) !== selectedCitation.name) {
+    return false;
+  }
+
+  const selectedFindingType =
+    typeof selectedCitation.findingType === 'string' ? selectedCitation.findingType.trim() : '';
+  const grantFindingType = typeof grant.findingType === 'string' ? grant.findingType.trim() : '';
+
+  if (selectedFindingType && grantFindingType) {
+    return selectedFindingType === grantFindingType;
+  }
+
+  return true;
+}
+
 export function buildSelectedCitationObjects(newCitations, rawCitations) {
   return newCitations.flatMap((selectedCitation) => {
     const selectedStandardIds = getSelectedCitationStandardIds(selectedCitation);
-    const matchingRawCitations = rawCitations.filter((rawCitation) =>
-      selectedStandardIds.includes(rawCitation.standardId)
-    );
+    const matchingRawCitations = rawCitations
+      .filter((rawCitation) => selectedStandardIds.includes(rawCitation.standardId))
+      .map((rawCitation) => ({
+        ...rawCitation,
+        grants: rawCitation.grants.filter((grant) =>
+          grantMatchesSelectedCitation(grant, selectedCitation)
+        ),
+      }))
+      .filter((rawCitation) => rawCitation.grants.length > 0);
 
     if (matchingRawCitations.length === 0) {
       return [];
@@ -712,6 +754,7 @@ Objective.propTypes = {
       options: PropTypes.arrayOf(
         PropTypes.shape({
           name: PropTypes.string,
+          findingType: PropTypes.string,
           id: PropTypes.number,
           standardIds: PropTypes.arrayOf(PropTypes.number),
         })

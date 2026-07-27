@@ -69,6 +69,7 @@ export function buildUniqueCitationOptions(retrievedCitationOptions) {
         if (!option) {
           acc[findingType].options.push({
             name: findingKey,
+            findingType,
             id: current.standardId,
             standardIds: [current.standardId],
           });
