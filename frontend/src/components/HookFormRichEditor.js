@@ -12,7 +12,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import RichEditor from './RichEditor';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
@@ -24,26 +24,39 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
  * defaultValue: Default value for the editor
  * ariaLabel: Label describing the editor read by a screen reader
  */
-const HookFormRichEditor = ({ name, id, defaultValue, ariaLabel, required, errorMessage }) => (
-  <Controller
-    name={name}
-    id={id}
-    defaultValue={defaultValue}
-    rules={
-      required
-        ? {
-            validate: {
-              notEmptyTag: (value) =>
-                (value && value.trim() !== '<p></p>') || errorMessage || 'This field is required',
-            },
-          }
-        : {}
-    }
-    render={({ onChange, value, onBlur }) => (
-      <RichEditor value={value} onChange={onChange} onBlur={onBlur} ariaLabel={ariaLabel} />
-    )}
-  />
-);
+const HookFormRichEditor = ({ name, id, defaultValue, ariaLabel, required, errorMessage }) => {
+  const formContext = useFormContext();
+  const fieldError = formContext?.formState?.errors?.[name];
+
+  return (
+    <Controller
+      name={name}
+      id={id}
+      defaultValue={defaultValue}
+      rules={
+        required
+          ? {
+              validate: {
+                notEmptyTag: (value) =>
+                  (value && value.trim() !== '<p></p>') || errorMessage || 'This field is required',
+              },
+            }
+          : {}
+      }
+      render={({ onChange, value, onBlur }) => (
+        <RichEditor
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          ariaLabel={ariaLabel}
+          ariaRequired={required}
+          ariaInvalid={!!fieldError}
+          ariaDescribedBy={fieldError ? `${name}-error` : undefined}
+        />
+      )}
+    />
+  );
+};
 
 HookFormRichEditor.propTypes = {
   name: PropTypes.string.isRequired,

@@ -40,7 +40,15 @@ const createEditorState = (html) => {
   return getEditorState(html);
 };
 
-const RichEditor = ({ ariaLabel, value, onChange, onBlur }) => {
+const RichEditor = ({
+  ariaLabel,
+  value,
+  onChange,
+  onBlur,
+  ariaRequired,
+  ariaInvalid,
+  ariaDescribedBy,
+}) => {
   const [editorState, setEditorState] = useState(() => createEditorState(value));
   const lastHtmlRef = useRef(value || '');
   const editorWrapperRef = useRef(null);
@@ -64,6 +72,19 @@ const RichEditor = ({ ariaLabel, value, onChange, onBlur }) => {
     }
   }, [value]);
 
+  // react-draft-wysiwyg only forwards a subset of aria-* props to the underlying
+  // contenteditable, and does not support aria-required/aria-invalid. Apply them
+  // directly to the editable node so required fields expose the same semantics a
+  // native <textarea required aria-invalid> would.
+  useEffect(() => {
+    const editable = editorWrapperRef.current?.querySelector('[contenteditable="true"]');
+    if (!editable) {
+      return;
+    }
+    editable.setAttribute('aria-required', ariaRequired ? 'true' : 'false');
+    editable.setAttribute('aria-invalid', ariaInvalid ? 'true' : 'false');
+  }, [ariaRequired, ariaInvalid]);
+
   const handleEditorChange = (state) => {
     setEditorState(state);
     const html = toHtml(state);
@@ -80,6 +101,7 @@ const RichEditor = ({ ariaLabel, value, onChange, onBlur }) => {
         spellCheck
         onEditorStateChange={handleEditorChange}
         ariaLabel={ariaLabel}
+        ariaDescribedBy={ariaDescribedBy}
         handlePastedText={() => false}
         tabIndex="0"
         editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
@@ -111,11 +133,17 @@ RichEditor.propTypes = {
   onChange: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string.isRequired,
   onBlur: PropTypes.func,
+  ariaRequired: PropTypes.bool,
+  ariaInvalid: PropTypes.bool,
+  ariaDescribedBy: PropTypes.string,
 };
 
 RichEditor.defaultProps = {
   value: '',
   onBlur: () => {},
+  ariaRequired: false,
+  ariaInvalid: false,
+  ariaDescribedBy: undefined,
 };
 
 export default RichEditor;
