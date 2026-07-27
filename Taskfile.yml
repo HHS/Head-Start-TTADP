@@ -41,53 +41,58 @@ tasks:
     vars:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
-      - yarn deps:install
-      - cmd: docker compose -f {{.COMPOSE_FILE}} down
-        ignore_error: true
       - |
-        echo "Initializing database..."
-        docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
-        docker/scripts/dev-db-init.sh
-      - |
-        echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
-          (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
-            docker ps && \
-            echo "Stack failed to start." && exit 1)
+          set -e
+          yarn deps:install
+          echo "Starting stack..."
+          docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
+          docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
+            (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
+              docker ps && \
+              echo "Stack failed to start." && exit 1)
+      - cmd: docker compose -f {{.COMPOSE_FILE}} logs -n 50
       - cmd: docker compose -f {{.COMPOSE_FILE}} logs --follow
         ignore_error: true
-
-  # --- Stack Down ---
 
   stack-down:
     desc: Stop compose stacks for this repo
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
 
-  reseed:
-    desc: Reseed the database via testing server
-    cmds:
-      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
-      - curl http://localhost:9999/testingOnly/reseed
-
   refresh:
     desc: Rebuild frontend and backend code, reinstall deps, restart stack
     cmds: 
       - task: stack-down
-      - yarn deps:install
-      - yarn build
+      - task: rebuild
+      - task: migrate
       - task: reseed
-      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
       - task: stack-up
 
   reset:
     desc: Remove containers, images, networks, volumes and reinitialize stack
     cmds:
       - task: stack-down
-      - docker compose -f {{.COMPOSE_FILE}} down --volumes --rmi all --remove-orphans
+      - cmd: docker compose -f {{.COMPOSE_FILE}} down --volumes --rmi all --remove-orphans
+      - task: refresh
 
   # --- Utility ---
+
+  rebuild:
+    desc: Rebuild frontend and backend code
+    cmds:
+      - yarn deps:install
+      - yarn build
+      - docker compose -f {{.COMPOSE_FILE}} build --no-cache
+
+  migrate:
+    desc: Run database migrations
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait db redis
+      - docker compose -f {{.COMPOSE_FILE}} run --rm backend yarn db:migrate
+  reseed:
+    desc: Reseed the database via testing server
+      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
+      - curl --fail --silent --show-error http://localhost:9999/testingOnly/reseed
 
   stack-logs:
     desc: Tail current running stack logs
