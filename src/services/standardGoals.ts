@@ -20,15 +20,10 @@ const OBJECTIVE_STATUSES_AFTER_NOT_STARTED = [
   OBJECTIVE_STATUS.COMPLETE,
 ];
 
-function statusForActivityReportObjective(
-  savedObjective,
-  submittedStatus,
-  reusedExistingObjectiveByTitle
-) {
+function statusForActivityReportObjective(savedObjective, submittedStatus) {
   if (
-    reusedExistingObjectiveByTitle ||
-    (submittedStatus === OBJECTIVE_STATUS.NOT_STARTED &&
-      OBJECTIVE_STATUSES_AFTER_NOT_STARTED.includes(savedObjective.status))
+    submittedStatus === OBJECTIVE_STATUS.NOT_STARTED &&
+    OBJECTIVE_STATUSES_AFTER_NOT_STARTED.includes(savedObjective.status)
   ) {
     return savedObjective.status;
   }
@@ -230,7 +225,6 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
         };
         // Check if objective exists.
         let savedObjective;
-        let reusedExistingObjectiveByTitle = false;
         if (!isNew && id) {
           // I think this is readable as is, so ignoring no-nested-ternary for now
           // eslint-disable-next-line no-nested-ternary
@@ -282,17 +276,12 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
             });
           } else {
             savedObjective = existingObjective;
-            reusedExistingObjectiveByTitle = true;
           }
         }
 
         return {
           ...savedObjective.toJSON(),
-          status: statusForActivityReportObjective(
-            savedObjective,
-            status,
-            reusedExistingObjectiveByTitle
-          ),
+          status: statusForActivityReportObjective(savedObjective, status),
           topics,
           citations, // Not saved for objective only ARO (pass through).
           resources,

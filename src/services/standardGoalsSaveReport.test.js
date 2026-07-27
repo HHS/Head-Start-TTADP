@@ -881,6 +881,125 @@ describe('save standard goals for report', () => {
       expect(updatedAro.objectiveCreatedHere).toBe(false);
       expect(updatedAro.ttaProvided).toBe('updated tta for reused objective');
     });
+
+    it('honors submitted status when a new objective payload matches an existing objective by title', async () => {
+      const intentionalStatusReport = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+
+      try {
+        const goals = [
+          {
+            goalIds: [existingGoal.id],
+            grantIds: [grant.id],
+            goalTemplateId: goalTemplate.id,
+            name: goalTemplate.templateName,
+            status: GOAL_STATUS.IN_PROGRESS,
+            timeframe: null,
+            source: [],
+            prompts: [],
+            objectives: [
+              {
+                id: null,
+                isNew: true,
+                ttaProvided: 'tta for reused objective with intentional status',
+                title: existingObjective.title,
+                status: OBJECTIVE_STATUS.COMPLETE,
+                topics: [],
+                resources: [],
+                files: [],
+                courses: [],
+                closeSuspendReason: null,
+                closeSuspendContext: null,
+                supportType: 'Implementing',
+                goalId: existingGoal.id,
+                createdHere: true,
+              },
+            ],
+          },
+        ];
+
+        await saveStandardGoalsForReport(goals, intentionalStatusReport);
+
+        const aro = await ActivityReportObjective.findOne({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+            objectiveId: existingObjective.id,
+          },
+        });
+
+        expect(aro).toBeTruthy();
+        expect(aro.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+        expect(aro.objectiveCreatedHere).toBe(false);
+        expect(aro.ttaProvided).toBe('tta for reused objective with intentional status');
+      } finally {
+        const activityReportObjectives = await ActivityReportObjective.findAll({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        const activityReportObjectiveIds = activityReportObjectives.map(
+          (activityReportObjective) => activityReportObjective.id
+        );
+        const activityReportGoals = await ActivityReportGoal.findAll({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+
+        await ActivityReportObjectiveTopic.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveCourse.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveFile.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveResource.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveCitation.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjective.destroy({
+          where: {
+            id: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportGoalFieldResponse.destroy({
+          where: {
+            activityReportGoalId: activityReportGoals.map((g) => g.id),
+          },
+        });
+        await ActivityReportGoal.destroy({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        await ActivityRecipient.destroy({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        await ActivityReport.destroy({
+          where: {
+            id: intentionalStatusReport.id,
+          },
+        });
+      }
+    });
   });
 
   describe('goal field responses', () => {
