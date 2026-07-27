@@ -80,10 +80,9 @@ const SessionSummary = ({ datePickerKey, event }) => {
     name: `ttaProvided`,
     rules: {
       validate: {
-        notEmptyTag: (value) =>
-          (value && value.trim() !== '<p></p>') || 'Describe the tta provided',
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
       },
-    },
+    }
     defaultValue: '<p></p>',
   });
 
