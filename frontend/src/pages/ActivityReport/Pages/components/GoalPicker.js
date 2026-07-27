@@ -72,6 +72,7 @@ export function buildUniqueCitationOptions(retrievedCitationOptions) {
             findingType,
             id: current.standardId,
             standardIds: [current.standardId],
+            selectKey: `${findingType}::${findingKey}`,
           });
           return;
         }

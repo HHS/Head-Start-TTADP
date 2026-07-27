@@ -180,6 +180,40 @@ describe('Objective', () => {
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
   });
 
+  it('preserves the selected option selectKey on the built citation object', () => {
+    const newCitations = [
+      {
+        id: 100,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [100],
+        selectKey: 'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 100,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+    expect(built.selectKey).toBe(
+      'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol'
+    );
+  });
+
   it('expands a shared citation option across all standardIds', () => {
     const newCitations = [
       {

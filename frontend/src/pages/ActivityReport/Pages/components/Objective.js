@@ -117,6 +117,7 @@ export function buildSelectedCitationObjects(newCitations, rawCitations) {
         ...matchingRawCitations[0],
         id: selectedStandardIds[0] ?? matchingRawCitations[0].standardId,
         name: selectedCitation.name,
+        selectKey: selectedCitation.selectKey,
         monitoringReferences,
       },
     ];
@@ -757,6 +758,7 @@ Objective.propTypes = {
           findingType: PropTypes.string,
           id: PropTypes.number,
           standardIds: PropTypes.arrayOf(PropTypes.number),
+          selectKey: PropTypes.string,
         })
       ),
     })
