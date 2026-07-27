@@ -82,7 +82,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       validate: {
         notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
       },
-    }
+    },
     defaultValue: '<p></p>',
   });
 
