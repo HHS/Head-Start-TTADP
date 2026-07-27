@@ -33,6 +33,7 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
 import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
 import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
@@ -565,10 +566,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         status="Not Started"
         isOnApprovedReport={false}
         error={errors.ttaProvided ? ERROR_FORMAT(errors.ttaProvided.message) : NO_ERROR}
-        validateTta={(e) => {
-          console.log(e);
-          onBlurTta(e);
-        }}
+        validateTta={onBlurTta}
       />
 
       <div className="margin-bottom-4">
@@ -711,7 +709,7 @@ const ReviewSection = () => {
         {
           label: 'TTA provided',
           name: 'ttaProvided',
-          customValue: { ttaProvided },
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
           isRichText: true,
         },
         {
@@ -740,7 +738,16 @@ export const isPageComplete = (hookForm) => {
     required.push('otherTrainers');
   }
 
-  return pageComplete(hookForm, required);
+  // ttaProvided is a rich-text field: the generic string check treats any HTML
+  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
+  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided')
+  );
 };
 
 export default {
