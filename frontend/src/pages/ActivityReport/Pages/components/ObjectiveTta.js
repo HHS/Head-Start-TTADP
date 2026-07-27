@@ -19,6 +19,8 @@ export default function ObjectiveTta({
   inputName,
 }) {
   const drawerTriggerRef = useRef(null);
+  const hasError = !!error.props.children;
+  const errorId = `${inputName}-error`;
   if (isOnApprovedReport) {
     const defaultEditorState = getEditorState(ttaProvided || '');
     return (
@@ -51,11 +53,14 @@ export default function ObjectiveTta({
           Get help writing TTA provided
         </DrawerTriggerButton>
       </div>
-      {error}
+      {hasError ? React.cloneElement(error, { id: errorId }) : error}
       <div className="smart-hub--text-area__resize-vertical margin-top-1">
         <input type="hidden" name={inputName} value={ttaProvided} />
         <RichEditor
-          ariaLabel="TTA provided for objective, required"
+          ariaLabel="TTA provided"
+          ariaRequired
+          ariaInvalid={hasError}
+          ariaDescribedBy={hasError ? errorId : undefined}
           defaultValue={ttaProvided}
           value={ttaProvided}
           onChange={onChangeTTA}
