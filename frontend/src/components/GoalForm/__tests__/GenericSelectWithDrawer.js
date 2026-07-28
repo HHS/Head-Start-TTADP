@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import React from 'react';
+import React, { useState } from 'react';
+import selectEvent from 'react-select-event';
 import GenericSelectWithDrawer from '../GenericSelectWithDrawer';
 
 describe('GenericSelectWithDrawer', () => {
@@ -87,5 +88,60 @@ describe('GenericSelectWithDrawer', () => {
     expect(screen.getByText('Get help')).toBeInTheDocument();
     expect(screen.getByText('Value 1')).toBeInTheDocument();
     expect(screen.getByText('Value 2')).toBeInTheDocument();
+  });
+
+  it('treats options sharing an id but with distinct selectKeys as independent items', async () => {
+    // Both options share standardId 100 but represent different findings.
+    // Without a unique selectKey, react-select would treat them as the same
+    // item, so selecting one would visually select both.
+    const sharedIdOptions = [
+      {
+        id: 100,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        selectKey: 'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      },
+      {
+        id: 100,
+        name: 'DEF - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Deficiency',
+        selectKey: 'Deficiency::DEF - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      },
+    ];
+
+    const Harness = () => {
+      const [values, setValues] = useState([]);
+      return (
+        <>
+          <GenericSelectWithDrawer
+            error={<></>}
+            name="Citation"
+            inputName="shared-id-select"
+            options={sharedIdOptions}
+            validateValues={jest.fn()}
+            values={values}
+            onChangeValues={setValues}
+            drawerButtonText="Get help"
+            drawerContent={<div>Drawer Content</div>}
+            drawerTitle="Drawer Title"
+          />
+          <div data-testid="selected-count">{values.length}</div>
+        </>
+      );
+    };
+
+    render(<Harness />);
+
+    const select = await screen.findByRole('combobox', { name: /citations/i });
+
+    // Selecting the Noncompliance option must not also select the Deficiency one.
+    // The menu stays open (closeMenuOnSelect is false), so assert on the
+    // selection count rather than option text still visible in the dropdown.
+    await selectEvent.select(select, [/ANC - 1302\.47/i]);
+    expect(screen.getByTestId('selected-count')).toHaveTextContent('1');
+
+    // The Deficiency option can be selected independently, giving two selections.
+    await selectEvent.select(select, [/DEF - 1302\.47/i]);
+    expect(screen.getByTestId('selected-count')).toHaveTextContent('2');
   });
 });
