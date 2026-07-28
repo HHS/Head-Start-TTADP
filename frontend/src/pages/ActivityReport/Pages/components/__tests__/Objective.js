@@ -271,6 +271,8 @@ describe('Objective', () => {
         ],
         id: 205833,
         name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        standardIds: [205833, 205834],
+        findingType: 'Noncompliance',
         monitoringReferences: [
           {
             acro: 'ANC',
@@ -295,6 +297,112 @@ describe('Objective', () => {
         ],
       },
     ]);
+  });
+
+  it('round-trips shared citation options without losing additional standardIds', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [205833, 205834],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+    const [rebuilt] = buildSelectedCitationObjects([built], rawCitations);
+
+    expect(rebuilt.standardIds).toEqual([205833, 205834]);
+    expect(rebuilt.monitoringReferences.map((grant) => grant.grantId)).toEqual([15764, 15401]);
+  });
+
+  it('falls back to monitoringReferences when standardIds are missing on a selected citation', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        monitoringReferences: [
+          {
+            grantId: 15764,
+            standardId: 205833,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+          {
+            grantId: 15401,
+            standardId: 205834,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+
+    expect(built.standardIds).toEqual([205833, 205834]);
+    expect(built.monitoringReferences.map((grant) => grant.grantId)).toEqual([15764, 15401]);
   });
 
   it('only attaches grants matching the selected option when a standardId spans multiple options', () => {

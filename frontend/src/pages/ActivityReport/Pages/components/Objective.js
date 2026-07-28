@@ -45,6 +45,16 @@ function getSelectedCitationStandardIds(selectedCitation) {
     return Array.from(new Set(standardIds));
   }
 
+  const monitoringReferenceStandardIds = Array.isArray(selectedCitation.monitoringReferences)
+    ? selectedCitation.monitoringReferences
+        .map((reference) => reference.standardId)
+        .filter((standardId) => Number.isInteger(standardId))
+    : [];
+
+  if (monitoringReferenceStandardIds.length > 0) {
+    return Array.from(new Set(monitoringReferenceStandardIds));
+  }
+
   return Number.isInteger(selectedCitation.id) ? [selectedCitation.id] : [];
 }
 
@@ -117,6 +127,8 @@ export function buildSelectedCitationObjects(newCitations, rawCitations) {
         ...matchingRawCitations[0],
         id: selectedStandardIds[0] ?? matchingRawCitations[0].standardId,
         name: selectedCitation.name,
+        standardIds: selectedStandardIds,
+        findingType: selectedCitation.findingType,
         selectKey: selectedCitation.selectKey,
         monitoringReferences,
       },

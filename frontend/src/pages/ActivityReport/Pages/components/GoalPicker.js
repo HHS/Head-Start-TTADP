@@ -137,6 +137,7 @@ const GoalPicker = ({ grantIds, reportId, goalTemplates }) => {
 
         if (retrievedCitationOptions) {
           const uniqueCitationOptions = buildUniqueCitationOptions(retrievedCitationOptions);
+
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }
