@@ -20,6 +20,7 @@ const mockSpotlightData = {
       noTTA: true,
       DRS: false,
       FEI: false,
+      underenrolled: false,
     },
   ],
   overview: {
@@ -44,6 +45,7 @@ const noIndicatorsMockData = {
       noTTA: false,
       DRS: false,
       FEI: false,
+      underenrolled: false,
     },
   ],
   overview: {
@@ -107,7 +109,7 @@ describe('RecipientSpotlight', () => {
       expect(
         screen.getByText(/Recipient grant may need prioritized attention/i)
       ).toBeInTheDocument();
-      expect(screen.getByText(/3 of 5 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/3 of 7 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -121,7 +123,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/No priority indicators identified/i)).toBeInTheDocument();
-      expect(screen.getByText(/0 of 5 priority indicators/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 of 7 priority indicators/i)).toBeInTheDocument();
     });
   });
 
@@ -141,11 +143,11 @@ describe('RecipientSpotlight', () => {
       expect(badIndicators).toHaveLength(3);
 
       // Find all indicators with good-indicator class (false)
-      // FEI and DRS are now hidden, so only 2 good indicators remain (deficiency and newStaff)
+      // DRS is hidden; the 4 falsy indicators are deficiency, FEI, newStaff, and underenrolled
       const goodIndicators = document.querySelectorAll(
         '.ttahub-recipient-spotlight-content-cell-good-indicator'
       );
-      expect(goodIndicators).toHaveLength(2);
+      expect(goodIndicators).toHaveLength(4);
     });
 
     // Verify specific indicators from our mock data
@@ -334,8 +336,8 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       // In our mockSpotlightData, we have:
-      // childIncidents: true, deficiency: false, newRecipients: true,
-      // newStaff: false, noTTA: true
+      // childIncidents: true, deficiency: false, FEI: false, newRecipients: true,
+      // newStaff: false, noTTA: true, underenrolled: false
 
       // Check that cells with true values get the bad-indicator class
       const trueIndicatorCells = document.querySelectorAll(
@@ -344,10 +346,11 @@ describe('RecipientSpotlight', () => {
       expect(trueIndicatorCells).toHaveLength(3);
 
       // Check that cells with false values get the good-indicator class
+      // (deficiency, FEI, newStaff, underenrolled)
       const falseIndicatorCells = document.querySelectorAll(
         '.ttahub-recipient-spotlight-content-cell-good-indicator'
       );
-      expect(falseIndicatorCells).toHaveLength(2);
+      expect(falseIndicatorCells).toHaveLength(4);
     });
   });
 });
