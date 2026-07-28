@@ -132,7 +132,7 @@ Triggered synchronously by an application event, processed once per job.
 
 | `EMAIL_ACTIONS` key | Trigger helper | Handler | Template |
 |---------------------|----------------|---------|----------|
-| `NEEDS_ACTION` | `changesRequestedNotification` | `notifyChangesRequested` | `changes_requested_by_manager` |
+| `NEEDS_ACTION` | `changesRequestedNotification` | `notifyChangesRequested` | `changes_requested_by_manager` (author/collaborators), `changes_requested_by_manager_approver` (other approvers) |
 | `SUBMITTED` | `approverAssignedNotification` | `notifyApproverAssigned` | `manager_approval_requested` |
 | `APPROVED` | `reportApprovedNotification` | `notifyReportApproved` | `report_approved` |
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
@@ -261,6 +261,7 @@ Templates are Pug files located in `email_templates/` (repo root). Each template
 ```
 email_templates/
 ├── changes_requested_by_manager/
+├── changes_requested_by_manager_approver/
 ├── collaborator_added/
 ├── digest/
 ├── digest_empty/
