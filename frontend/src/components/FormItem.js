@@ -115,7 +115,7 @@ function FormItem({
         <ReactHookFormError
           errors={errors}
           name={name}
-          render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+          render={({ message }) => <ErrorMessage id={`${name}-error`}>{message}</ErrorMessage>}
         />
         {children}
       </LabelType>

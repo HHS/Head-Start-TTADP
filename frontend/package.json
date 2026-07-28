@@ -115,8 +115,9 @@
     "ip-address": "^10.1.1",
     "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
+    "postcss": "8.5.18",
     "sass/immutable": ">=5.1.8",
-    "tar": "^7.5.18",
+    "tar": "^7.5.21",
     "ws": "^8.21.0"
   },
   "browserslist": {
