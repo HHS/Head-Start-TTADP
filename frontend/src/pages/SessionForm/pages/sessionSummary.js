@@ -24,6 +24,7 @@ import Dropzone from '../../../components/FileUploader/Dropzone';
 import FileTable from '../../../components/FileUploader/FileTable';
 import FormItem from '../../../components/FormItem';
 import PlusButton from '../../../components/GoalForm/PlusButton';
+import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import QuestionTooltip from '../../../components/QuestionTooltip';
@@ -33,6 +34,7 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import SessionTrainers from '../components/SessionTrainers';
@@ -538,15 +540,16 @@ const SessionSummary = ({ datePickerKey, event }) => {
         ) : null}
       </Fieldset>
 
-      <FormItem label="TTA provided " name="ttaProvided" required>
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
+      <FormItem label="TTA provided " name="ttaProvided" required fieldSetWrapper>
+        <div className="margin-top-1">
+          <HookFormRichEditor
+            ariaLabel="TTA provided"
+            id="ttaProvided"
+            name="ttaProvided"
+            required
+            errorMessage="Describe the tta provided"
+          />
+        </div>
       </FormItem>
 
       <div className="margin-bottom-4">
@@ -686,7 +689,12 @@ const ReviewSection = () => {
           customValue: { objectiveResources: resources },
         },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
-        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        {
+          label: 'TTA provided',
+          name: 'ttaProvided',
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
+          isRichText: true,
+        },
         {
           label: 'Support type',
           name: 'objectiveSupportType',
@@ -713,7 +721,16 @@ export const isPageComplete = (hookForm) => {
     required.push('otherTrainers');
   }
 
-  return pageComplete(hookForm, required);
+  // ttaProvided is a rich-text field: the generic string check treats any HTML
+  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
+  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided')
+  );
 };
 
 export default {
