@@ -114,7 +114,7 @@ A new goal is created if:
 * Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`)
 * A monitoring review was delivered between 2025-01-21 and now
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
-          'FA1-PSR', 'FA-2', 'FA2-CR', 'FA2-CSR', 'Special'
+          'FA1-PSR', 'FA-2', 'FA2-CR', 'FA2-CSR', 'Special','Comprehensive Review'
 * There is at least one open finding linked to the grant
   * A finding is considered open if it is currently 'Active' or 'Elevated Deficiency', or if its most recent linked review is not yet delivered.
   * A finding is excluded when a Monitoring Goal was closed after that finding's latest delivered review date.

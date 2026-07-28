@@ -74,7 +74,7 @@ const createMonitoringGoals = async () => {
           'Follow-up',
           'FA-1', 'FA1-FR', 'FA1-PSR',
           'FA-2', 'FA2-CR', 'FA2-CSR',
-          'Special'
+          'Special', 'Comprehensive Review'
         )
         AND (clv.last_closed_goal IS NULL
           OR clv.last_closed_goal <= c.latest_report_delivery_date)
