@@ -44,6 +44,49 @@ const components = {
   SingleValue,
 };
 
+export function buildUniqueCitationOptions(retrievedCitationOptions) {
+  return Object.values(
+    retrievedCitationOptions.reduce((acc, current) => {
+      current.grants.forEach((currentGrant) => {
+        const { findingType } = currentGrant;
+        if (!acc[findingType]) {
+          acc[findingType] = { label: findingType, options: [] };
+        }
+
+        const findingKey =
+          typeof currentGrant.name === 'string' && currentGrant.name.trim()
+            ? currentGrant.name.trim()
+            : formatMonitoringCitationName({
+                acro: currentGrant.acro,
+                citation: currentGrant.citation,
+                findingSource: currentGrant.findingSource,
+              });
+        if (!findingKey) {
+          return;
+        }
+
+        const option = acc[findingType].options.find((candidate) => candidate.name === findingKey);
+        if (!option) {
+          acc[findingType].options.push({
+            name: findingKey,
+            findingType,
+            id: current.standardId,
+            standardIds: [current.standardId],
+            selectKey: `${findingType}::${findingKey}`,
+          });
+          return;
+        }
+
+        if (!option.standardIds.includes(current.standardId)) {
+          option.standardIds.push(current.standardId);
+        }
+      });
+
+      return acc;
+    }, {})
+  ).filter((group) => group.options.length > 0);
+}
+
 const GoalPicker = ({ grantIds, reportId, goalTemplates }) => {
   const { control, setValue, watch } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
@@ -93,37 +136,8 @@ const GoalPicker = ({ grantIds, reportId, goalTemplates }) => {
         const retrievedCitationOptions = await fetchCitationsByGrant(regionId, grantIds, startDate);
 
         if (retrievedCitationOptions) {
-          // Reduce the citation options to only unique values.
-          const uniqueCitationOptions = Object.values(
-            retrievedCitationOptions.reduce((acc, current) => {
-              current.grants.forEach((currentGrant) => {
-                const { findingType } = currentGrant;
-                if (!acc[findingType]) {
-                  acc[findingType] = { label: findingType, options: [] };
-                }
+          const uniqueCitationOptions = buildUniqueCitationOptions(retrievedCitationOptions);
 
-                const findingKey =
-                  typeof currentGrant.name === 'string' && currentGrant.name.trim()
-                    ? currentGrant.name.trim()
-                    : formatMonitoringCitationName({
-                        acro: currentGrant.acro,
-                        citation: currentGrant.citation,
-                        findingSource: currentGrant.findingSource,
-                      });
-                if (!findingKey) {
-                  return;
-                }
-                if (!acc[findingType].options.find((option) => option.name === findingKey)) {
-                  acc[findingType].options.push({
-                    name: findingKey,
-                    id: current.standardId,
-                  });
-                }
-              });
-
-              return acc;
-            }, {})
-          ).filter((group) => group.options.length > 0);
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }
