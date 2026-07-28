@@ -42,7 +42,7 @@ tasks:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
       - yarn deps:install
-      - cmd: docker compose -f {{.COMPOSE_FILE}} down
+      - cmd: docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
         ignore_error: true
       - |
         echo "Initializing database..."
