@@ -62,6 +62,7 @@ const createEmailSender = (transport = defaultTransport) => {
     send,
     transport,
     htmlToText: { wordwrap: 120 },
+    preview: false,
   });
 };
 
@@ -169,8 +170,13 @@ export const onCompletedNotification = (job, result) => {
 export const notifyChangesRequested = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const addresses = [];
-  const { report, approver, authorWithSetting, collabsWithSettings } = job.data;
+  const {
+    report,
+    approver,
+    authorWithSetting,
+    collabsWithSettings = [],
+    approversWithSettings = [],
+  } = job.data;
   const { id, displayId } = report;
   const approverEmail = approver.user.email;
   const approverName = approver.user.name;
@@ -180,28 +186,46 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
   );
 
   const collabArray = collabsWithSettings.map((c) => c.user.email);
+  const approverArray = approversWithSettings.map((a) => a.user.email);
   const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+
+  const locals = {
+    managerName: approverName,
+    reportPath,
+    displayId,
+    comments: approverNote,
+  };
+
+  // The author and collaborators need to make changes and resubmit, while the
+  // remaining approvers need to review/approve, so each group gets its own template.
+  const authorCollabAddresses = [];
   if (authorWithSetting) {
-    addresses.push(authorWithSetting.email);
+    authorCollabAddresses.push(authorWithSetting.email);
   }
   if (collabArray && collabArray.length > 0) {
-    addresses.push(collabArray);
+    authorCollabAddresses.push(collabArray);
   }
 
-  return sendIfEnabled(addresses, (toEmails) =>
-    createEmailSender(transport).send({
-      template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
-      message: {
-        to: toEmails,
-      },
-      locals: {
-        managerName: approverName,
-        reportPath,
-        displayId,
-        comments: approverNote,
-      },
-    })
-  );
+  return Promise.all([
+    sendIfEnabled(authorCollabAddresses, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(approverArray, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager_approver'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+  ]);
 };
 
 /**
@@ -625,13 +649,15 @@ export const changesRequestedNotification = (
   report,
   approver,
   authorWithSetting,
-  collabsWithSettings
+  collabsWithSettings,
+  approversWithSettings
 ) => {
   enqueueNotification(EMAIL_ACTIONS.NEEDS_ACTION, {
     report,
     approver,
     authorWithSetting,
     collabsWithSettings,
+    approversWithSettings,
   });
 };
 
