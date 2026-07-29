@@ -259,7 +259,7 @@ function HeaderUserMenu({
   const stopImpersonating = () => {
     setIsImpersonating(false);
     window.sessionStorage.removeItem(SESSION_STORAGE_IMPERSONATION_KEY);
-    window.location.href = '/';
+    window.location.href = '/admin/users';
   };
 
   return (

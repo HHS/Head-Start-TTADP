@@ -504,7 +504,7 @@ const ActivityReportNavigator = ({
         // goalForEditing back into the goals array at its original position so the
         // read-only list renders every goal in one pass.
         const editingGoal = savedData.goalForEditing;
-        let mergedGoals = Array.isArray(savedData.goals) ? [...savedData.goals] : [];
+        const mergedGoals = Array.isArray(savedData.goals) ? [...savedData.goals] : [];
         if (editingGoal && typeof editingGoal === 'object' && editingGoal.id) {
           const insertIndex =
             typeof editingGoal.originalIndex === 'number'
