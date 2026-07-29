@@ -34,6 +34,107 @@ import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import formatMonitoringCitationName from './formatMonitoringCitationName';
+
+function getSelectedCitationStandardIds(selectedCitation) {
+  const standardIds = Array.isArray(selectedCitation.standardIds)
+    ? selectedCitation.standardIds.filter((standardId) => Number.isInteger(standardId))
+    : [];
+
+  if (standardIds.length > 0) {
+    return Array.from(new Set(standardIds));
+  }
+
+  const monitoringReferenceStandardIds = Array.isArray(selectedCitation.monitoringReferences)
+    ? selectedCitation.monitoringReferences
+        .map((reference) => reference.standardId)
+        .filter((standardId) => Number.isInteger(standardId))
+    : [];
+
+  if (monitoringReferenceStandardIds.length > 0) {
+    return Array.from(new Set(monitoringReferenceStandardIds));
+  }
+
+  return Number.isInteger(selectedCitation.id) ? [selectedCitation.id] : [];
+}
+
+// Derive the canonical display name for a raw grant, mirroring the logic used to
+// build the displayed citation options in GoalPicker.buildUniqueCitationOptions.
+function getGrantCitationName(grant) {
+  if (typeof grant.name === 'string' && grant.name.trim()) {
+    return grant.name.trim();
+  }
+
+  return formatMonitoringCitationName({
+    acro: grant.acro,
+    citation: grant.citation,
+    findingSource: grant.findingSource,
+  });
+}
+
+// A raw citation record is grouped by standardId + citation text only, so its
+// grants array can contain grants that belong to different displayed options
+// (different finding type / source / name) that happen to share a standardId.
+// Only keep grants that match the selected option so we don't attach unrelated
+// findings.
+function grantMatchesSelectedCitation(grant, selectedCitation) {
+  if (getGrantCitationName(grant) !== selectedCitation.name) {
+    return false;
+  }
+
+  const selectedFindingType =
+    typeof selectedCitation.findingType === 'string' ? selectedCitation.findingType.trim() : '';
+  const grantFindingType = typeof grant.findingType === 'string' ? grant.findingType.trim() : '';
+
+  if (selectedFindingType && grantFindingType) {
+    return selectedFindingType === grantFindingType;
+  }
+
+  return true;
+}
+
+export function buildSelectedCitationObjects(newCitations, rawCitations) {
+  return newCitations.flatMap((selectedCitation) => {
+    const selectedStandardIds = getSelectedCitationStandardIds(selectedCitation);
+    const matchingRawCitations = rawCitations
+      .filter((rawCitation) => selectedStandardIds.includes(rawCitation.standardId))
+      .map((rawCitation) => ({
+        ...rawCitation,
+        grants: rawCitation.grants.filter((grant) =>
+          grantMatchesSelectedCitation(grant, selectedCitation)
+        ),
+      }))
+      .filter((rawCitation) => rawCitation.grants.length > 0);
+
+    if (matchingRawCitations.length === 0) {
+      return [];
+    }
+
+    const monitoringReferences = matchingRawCitations.flatMap((rawCitation) =>
+      rawCitation.grants.map((grant) => ({
+        ...grant,
+        standardId: rawCitation.standardId,
+        name: selectedCitation.name,
+      }))
+    );
+
+    if (monitoringReferences.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        ...matchingRawCitations[0],
+        id: selectedStandardIds[0] ?? matchingRawCitations[0].standardId,
+        name: selectedCitation.name,
+        standardIds: selectedStandardIds,
+        findingType: selectedCitation.findingType,
+        selectKey: selectedCitation.selectKey,
+        monitoringReferences,
+      },
+    ];
+  });
+}
 
 const DEFAULT_OBJECTIVE_OPTIONS = [];
 
@@ -410,25 +511,7 @@ export default function Objective({
 
   // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
   const selectedCitationsChanged = (newCitations) => {
-    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
-    // From rawCitations get all the raw citations with the same standardId as the newCitations.
-    const newCitationsObjects = rawCitations
-      .filter((rawCitation) => newCitationStandardIds.includes(rawCitation.standardId))
-      .map((rawCitation) => ({
-        ...rawCitation,
-        id: rawCitation.standardId,
-        name: newCitations.find((newCitation) => newCitation.id === rawCitation.standardId).name,
-        monitoringReferences: [
-          ...rawCitation.grants.map((grant) => ({
-            ...grant,
-            standardId: rawCitation.standardId,
-            name: newCitations.find((newCitation) => newCitation.id === rawCitation.standardId)
-              .name,
-          })),
-        ],
-      }));
-
-    onChangeCitations([...newCitationsObjects]);
+    onChangeCitations(buildSelectedCitationObjects(newCitations, rawCitations));
   };
 
   useDeepCompareEffect(() => {
@@ -697,8 +780,16 @@ Objective.propTypes = {
   ),
   citationOptions: PropTypes.arrayOf(
     PropTypes.shape({
-      value: PropTypes.number,
       label: PropTypes.string,
+      options: PropTypes.arrayOf(
+        PropTypes.shape({
+          name: PropTypes.string,
+          findingType: PropTypes.string,
+          id: PropTypes.number,
+          standardIds: PropTypes.arrayOf(PropTypes.number),
+          selectKey: PropTypes.string,
+        })
+      ),
     })
   ),
   isMonitoringGoal: PropTypes.bool,

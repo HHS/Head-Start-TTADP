@@ -749,6 +749,7 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0]).toHaveProperty('noTTA');
       expect(result.recipients[0]).toHaveProperty('DRS');
       expect(result.recipients[0]).toHaveProperty('FEI');
+      expect(result.recipients[0]).toHaveProperty('underenrolled');
       expect(result.overview).toHaveProperty('numRecipients');
       expect(result.overview).toHaveProperty('totalRecipients');
       expect(result.overview).toHaveProperty('recipientPercentage');
@@ -1199,7 +1200,7 @@ describe('recipientSpotlight service', () => {
       }
     });
 
-    it('confirms DRS and FEI are set to false for MVP', async () => {
+    it('confirms DRS is set to false (not yet implemented)', async () => {
       // Use a recipient with an indicator since we filter out 0-indicator recipients
       const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
       const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
@@ -1210,7 +1211,308 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].DRS).toBe(false);
+      // childIncidentsGrant has no FEI status, so FEI and underenrolled are false
       expect(result.recipients[0].FEI).toBe(false);
+      expect(result.recipients[0].underenrolled).toBe(false);
+    });
+
+    // Helper to create a recipient with one or more grants that carry FEI statuses.
+    // Returns the created recipient, grants, and a cleanup function.
+    const createFeiRecipient = async (name, grantConfigs) => {
+      const recipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 30001, max: 49999 })),
+        name,
+        regionId: REGION_ID,
+      });
+      await db.MonitoringGranteeLink.create({ granteeId: recipient.id.toString() });
+
+      const grantNumbers = grantConfigs.map(
+        (_, index) => `G-FEI-${faker.datatype.number({ min: 100000, max: 999999 })}-${index}`
+      );
+      await db.GrantNumberLink.bulkCreate(grantNumbers.map((grantNumber) => ({ grantNumber })));
+
+      const grants = await Promise.all(
+        grantConfigs.map((config, index) =>
+          Grant.create({
+            id: faker.unique(() => faker.datatype.number({ min: 30001, max: 49999 })),
+            number: grantNumbers[index],
+            recipientId: recipient.id,
+            regionId: REGION_ID,
+            status: config.status || 'Active',
+            startDate: pastFiveYears,
+            endDate: createDate,
+            feiHsStatus: config.feiHsStatus || null,
+            feiEhsStatus: config.feiEhsStatus || null,
+            cdi: false,
+          })
+        )
+      );
+
+      const cleanup = async () => {
+        await Grant.destroy({
+          where: { id: grants.map((g) => g.id) },
+          force: true,
+          individualHooks: true,
+        });
+        await db.MonitoringGranteeLink.destroy({
+          where: { granteeId: recipient.id.toString() },
+          force: true,
+        });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: grantNumbers }, force: true });
+      };
+
+      return { recipient, grants, cleanup };
+    };
+
+    it('identifies FEI via feiHsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI HS Recipient', [
+        { feiHsStatus: 'Month X of 12 Month Period' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+        expect(result.recipients[0].underenrolled).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies FEI via feiEhsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI EHS Recipient', [
+        { feiEhsStatus: 'Central Office Review' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('flags FEI for DCU evaluation-period statuses', async () => {
+      const dcuStatuses = [
+        'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+        'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+      ];
+      // eslint-disable-next-line no-restricted-syntax
+      for (const status of dcuStatuses) {
+        // eslint-disable-next-line no-await-in-loop
+        const { recipient, cleanup } = await createFeiRecipient(`DCU FEI Recipient ${status}`, [
+          { feiHsStatus: status },
+        ]);
+        try {
+          const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+          // eslint-disable-next-line no-await-in-loop
+          const result = await getRecipientSpotlightIndicators(
+            scopes,
+            'recipientName',
+            'ASC',
+            0,
+            10,
+            [REGION_ID]
+          );
+          expect(result.recipients.length).toBe(1);
+          expect(result.recipients[0].FEI).toBe(true);
+        } finally {
+          // eslint-disable-next-line no-await-in-loop
+          await cleanup();
+        }
+      }
+    });
+
+    it('does not flag FEI for a non-initiative FEI status', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Fully Enrolled Recipient', [
+        { feiHsStatus: 'Fully Enrolled' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(false);
+        expect(result.recipients[0].underenrolled).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('flags FEI at the recipient level when at least one grant is in FEI', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Mixed FEI Recipient', [
+        { feiHsStatus: 'Fully Enrolled' },
+        { feiEhsStatus: 'Notified of 12 Month Period' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('scopes FEI to the specific grant in grant mode', async () => {
+      const { recipient, grants, cleanup } = await createFeiRecipient('Grant Mode FEI Recipient', [
+        { feiHsStatus: 'Central Office Review' },
+        { feiHsStatus: 'Fully Enrolled' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+
+        // Grant mode on the in-FEI grant -> FEI true
+        const inFeiResult = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          grants[0].id
+        );
+        expect(inFeiResult.recipients.length).toBe(1);
+        expect(inFeiResult.recipients[0].FEI).toBe(true);
+
+        // Grant mode on the fully-enrolled grant -> FEI false
+        const notInFeiResult = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          grants[1].id
+        );
+        expect(notInFeiResult.recipients.length).toBe(1);
+        expect(notInFeiResult.recipients[0].FEI).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies underenrolled via feiHsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled HS Recipient', [
+        { feiHsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].underenrolled).toBe(true);
+        // "Underenrolled less than 4 Months" is not an in-FEI status
+        expect(result.recipients[0].FEI).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies underenrolled via feiEhsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled EHS Recipient', [
+        { feiEhsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].underenrolled).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('filters recipients by the FEI priority indicator', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI Filter Recipient', [
+        { feiHsStatus: 'DCU Month X of 6 Month DCU Evaluation' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          ['FEI']
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientId).toBe(recipient.id);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('filters recipients by the Underenrolled priority indicator', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled Filter Recipient', [
+        { feiHsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          ['Underenrolled']
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientId).toBe(recipient.id);
+        expect(result.recipients[0].underenrolled).toBe(true);
+      } finally {
+        await cleanup();
+      }
     });
 
     it('filters by singleGrantId correctly', async () => {
