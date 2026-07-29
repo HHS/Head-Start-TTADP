@@ -900,10 +900,56 @@ describe('ActivityReportNavigator goals page saves', () => {
       expect(defaultProps.onSave).toHaveBeenCalled();
     });
 
+    // The goal form fields are cleared as part of the single reset() payload
+    // (not via post-reset setValue calls) so the read-only goals list renders
+    // consistently in one pass.
     await waitFor(() => {
-      expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
+      expect(hookForm.reset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          goalForEditing: '',
+          goalName: '',
+          goalEndDate: '',
+          goalPrompts: [],
+        })
+      );
+    });
+  });
+
+  it('folds a backend-split goalForEditing into the goals list when closing the form', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    // Backend still reports the just-saved goal as actively edited, so onSave
+    // returns it split out into goalForEditing with the goals array missing it.
+    // Because "Save goal" closes the form, the goal must be folded back into
+    // goals at its original index so the read-only list renders it.
+    defaultProps.onSave.mockResolvedValue({
+      id: 1,
+      goals: [{ id: 5, name: 'Existing goal' }],
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+    });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    // reset() alone does not propagate to the useController-bound `goals` field,
+    // so the handler also calls setValue('goals', ...) with the folded goal at its
+    // original index to force the read-only list to render it.
+    await waitFor(() => {
+      expect(hookForm.setValue).toHaveBeenCalledWith('goals', [
+        { id: 5, name: 'Existing goal' },
+        { id: 7, name: 'Goal', originalIndex: 1 },
+      ]);
       expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
-      expect(hookForm.reset).toHaveBeenCalled();
     });
   });
 
