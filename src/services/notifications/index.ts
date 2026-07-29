@@ -124,6 +124,7 @@ async function createNotification(
         [Op.and]: [
           {
             userId,
+            text: notificationText,
             type: notificationType,
             entityId,
           },
@@ -146,6 +147,7 @@ async function createNotification(
     existing = await Notification.findOne({
       where: {
         userId,
+        text: notificationText,
         type: notificationType,
         entityId,
       },
