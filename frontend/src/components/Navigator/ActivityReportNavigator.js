@@ -487,22 +487,66 @@ const ActivityReportNavigator = ({
 
       // Update RHF with saved data
       if (savedData) {
+        // "Save goal" finalizes the goal and CLOSES the edit form. The read-only
+        // goals list renders from the `goals` array, so the just-saved goal must
+        // live there.
+        //
+        // However, the backend still reports the goal as actively edited (its
+        // isActivelyEdited flag was set when the user opened it for editing and is
+        // not cleared by this report save). As a result convertGoalsToFormData
+        // (run inside onSave) splits that goal out into `goalForEditing`, leaving
+        // `goals` empty. If we then close the form, nothing renders: the read-only
+        // list is empty and the edit form (which shows goalForEditing) is hidden.
+        // That is exactly the "blank goals after save" bug — a page refresh only
+        // "works" because the form re-initializes OPEN when goalForEditing is set.
+        //
+        // Since we are explicitly closing the form here, fold any split-out
+        // goalForEditing back into the goals array at its original position so the
+        // read-only list renders every goal in one pass.
+        const editingGoal = savedData.goalForEditing;
+        let mergedGoals = Array.isArray(savedData.goals) ? [...savedData.goals] : [];
+        if (editingGoal && typeof editingGoal === 'object' && editingGoal.id) {
+          const insertIndex =
+            typeof editingGoal.originalIndex === 'number'
+              ? Math.min(editingGoal.originalIndex, mergedGoals.length)
+              : mergedGoals.length;
+          mergedGoals.splice(insertIndex, 0, editingGoal);
+        }
+
+        // Clear the goal form fields as part of the SAME reset payload rather than
+        // mutating them with setValue() calls AFTER reset(). Calling
+        // setValue('goalForEditing.objectives', []) on a goalForEditing that reset()
+        // just set to '' re-creates goalForEditing as a truthy { objectives: [] }
+        // object and leaves the read-only goals list rendering against a stale/empty
+        // snapshot until the next full reload. Folding the clears into a single reset
+        // keeps the form state consistent in one render pass.
         const normalizedSavedData = {
           ...savedData,
-          goalForEditing: savedData.goalForEditing || '',
+          goals: mergedGoals,
+          goalForEditing: '',
+          goalName: '',
+          goalEndDate: '',
+          goalPrompts: [],
         };
 
         reset(normalizedSavedData);
 
-        // On save goal re-evaluate page status.
-        updateGoalsObjectivesPageState(normalizedSavedData);
-
-        // clear out the goal form after a successful save
-        setValue('goalForEditing.objectives', []);
+        // reset() alone does NOT reliably update the `goals` field that the goals
+        // page renders from — that field is bound with useController() in the
+        // child, and in this react-hook-form v6 setup the controller value does
+        // not pick up the reset. The working draft-save handler (onSaveDraftGoal)
+        // updates the read-only list via explicit setValue('goals', ...), so we do
+        // the same here to force the controlled field (and therefore the read-only
+        // list) to reflect the just-saved goals. Without this the list stays blank
+        // until a full page reload re-initializes the form.
+        setValue('goals', mergedGoals);
         setValue('goalForEditing', '');
         setValue('goalName', '');
         setValue('goalEndDate', '');
         setValue('goalPrompts', []);
+
+        // On save goal re-evaluate page status.
+        updateGoalsObjectivesPageState(normalizedSavedData);
 
         // close the goal form
         toggleGoalForm(true);
