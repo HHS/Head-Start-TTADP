@@ -149,7 +149,7 @@ A: The intent is for citations to be available to select within the time period 
 ## Monitoring Goal Creation Logic (Current)
 Monitoring goals are created only when all of the following are true:
 - Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`).
-- The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA1-PSR`, `FA-2`, `FA2-CR`, `FA2-CSR`, `Special`.
+- The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA1-PSR`, `FA-2`, `FA2-CR`, `FA2-CSR`, `Special`, `Comprehensive Review`.
 - The review `reportDeliveryDate` is between the cutoff date (`2025-01-21`) and now.
 - There is at least one open finding linked to the review and grantee. "Open" means either:
   - Finding status is `Active` or `Elevated Deficiency`, or
