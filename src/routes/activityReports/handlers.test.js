@@ -375,12 +375,14 @@ describe('Activity Report handlers', () => {
           approvers: [
             {
               user: {
-                id: 1,
+                id: mockRequest.session.userId,
+                email: 'reviewing.approver@tta.gov',
               },
             },
             {
               user: {
-                id: 890,
+                id: secondMockManager.id,
+                email: 'other.approver@tta.gov',
               },
             },
           ],
@@ -418,6 +420,20 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
       expect(createNotification).toHaveBeenCalledTimes(4);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        [
+          {
+            user: {
+              id: secondMockManager.id,
+              email: 'other.approver@tta.gov',
+            },
+          },
+        ]
+      );
       expect(createNotification).toHaveBeenNthCalledWith(
         1,
         777,
@@ -435,7 +451,7 @@ describe('Activity Report handlers', () => {
       );
       expect(createNotification).toHaveBeenNthCalledWith(
         2,
-        890,
+        secondMockManager.id,
         999999,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         {
@@ -567,6 +583,89 @@ describe('Activity Report handlers', () => {
           },
           skipExisting: 'archived',
         }
+      );
+    });
+    it('excludes approvers with non-immediate change requested email settings', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [
+            {
+              user: {
+                id: mockRequest.session.userId,
+                email: 'reviewing.approver@tta.gov',
+              },
+            },
+            {
+              user: {
+                id: secondMockManager.id,
+                email: 'other.approver@tta.gov',
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockImplementation((userId, key) => {
+        if (key === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED && userId === secondMockManager.id) {
+          return Promise.resolve({
+            key: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+            value: USER_SETTINGS.EMAIL.VALUES.NEVER,
+          });
+        }
+        return Promise.resolve({
+          key,
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        []
       );
     });
     it('sends the in-app needs action notification when an approver requests changes but the report is not yet in needs action status', async () => {
