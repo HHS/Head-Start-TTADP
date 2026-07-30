@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import db from '../../models';
+import { createGrant, createRecipient, getUniqueId } from '../../testUtils';
 import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
 
 const { Citation, Grant, GrantCitation, Recipient } = db;
@@ -27,31 +28,21 @@ describe('grantCitation/programSpecialist', () => {
   };
 
   beforeAll(async () => {
-    const seed = Math.floor(Math.random() * 900_000) + 100_000;
+    recipient = await createRecipient({});
 
-    recipient = await Recipient.create({
-      id: seed,
-      name: `Test Recipient ${seed}`,
-      uei: `UEI${seed}`.padEnd(12, '0').slice(0, 12),
-    });
-
-    patGrant = await Grant.create({
-      id: seed,
-      number: `TEST-GRANT-PAT-${seed}`,
+    patGrant = await createGrant({
       recipientId: recipient.id,
       regionId: 1,
       programSpecialistName: 'Pat Bowman',
     });
 
-    jonGrant = await Grant.create({
-      id: seed + 1,
-      number: `TEST-GRANT-JON-${seed}`,
+    jonGrant = await createGrant({
       recipientId: recipient.id,
       regionId: 1,
       programSpecialistName: 'Jon Jones',
     });
 
-    const mfidSeed = Math.floor(Math.random() * 1_000_000_000);
+    const mfidSeed = getUniqueId();
 
     patCitation = await Citation.create({
       mfid: mfidSeed,
