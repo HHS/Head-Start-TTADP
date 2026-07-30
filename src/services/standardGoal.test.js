@@ -1430,7 +1430,7 @@ describe('standardGoal service', () => {
         isNew: true,
         ttaProvided: 'TTA provided details',
         title: 'Objective title 2',
-        status: 'NOT_STARTED',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
         topics: ['topic2'],
         resources: ['resource2'],
         files: ['file2'],
@@ -1533,13 +1533,13 @@ describe('standardGoal service', () => {
           return Promise.resolve({
             id: 2,
             title: 'Objective title 2',
-            status: OBJECTIVE_STATUS.NOT_STARTED,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
             update: jest.fn().mockResolvedValue(true),
             save: jest.fn().mockResolvedValue(true),
             toJSON: () => ({
               id: 2,
               title: 'Objective title 2',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
               goalId: goal.id,
             }),
           });
@@ -1568,6 +1568,90 @@ describe('standardGoal service', () => {
       expect(result).toHaveLength(2);
       expect(result[1].id).toBe(2);
       expect(result[1].title).toBe('Objective title 2');
+      expect(result[1].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[1].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should honor submitted status when reusing an existing objective by title', async () => {
+      const reportId = 456;
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        if (where.title === 'Objective title 2') {
+          return Promise.resolve({
+            id: 2,
+            title: 'Objective title 2',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            createdVia: 'activityReport',
+            createdViaActivityReportId: 123,
+            update: jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
+            toJSON: () => ({
+              id: 2,
+              title: 'Objective title 2',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              goalId: goal.id,
+              createdVia: 'activityReport',
+              createdViaActivityReportId: 123,
+            }),
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[1],
+            status: OBJECTIVE_STATUS.COMPLETE,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(2);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(result[0].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should keep existing objective status when stale form data submits not started by id', async () => {
+      const reportId = 456;
+      const existingObj = {
+        id: 1,
+        title: 'Objective title 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        createdVia: 'activityReport',
+        createdViaActivityReportId: 123,
+        onApprovedAR: false,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          goalId: goal.id,
+          createdVia: 'activityReport',
+          createdViaActivityReportId: 123,
+        }),
+      };
+
+      Objective.findOne = jest.fn().mockResolvedValue(existingObj);
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[0],
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            createdHere: true,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[0].objectiveCreatedHere).toBe(false);
     });
 
     it('should handle undefined fields without throwing an error', async () => {
