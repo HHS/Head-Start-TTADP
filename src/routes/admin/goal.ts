@@ -5,6 +5,7 @@ import {
   closeMultiRecipientGoalsFromAdmin,
   createMultiRecipientGoalsFromAdmin,
 } from '../../goalServices/goals';
+import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
 import { handleError } from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
 import { getCuratedTemplates } from '../../services/goalTemplates';
@@ -57,6 +58,17 @@ export async function closeGoalsFromAdmin(req: Request, res: Response) {
     const data = await closeMultiRecipientGoalsFromAdmin(body, userId);
     res.status(httpCodes.OK).json(data);
   } catch (err) {
+    if (err instanceof GoalStatusChangeBlockedError) {
+      if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+        throw err;
+      }
+      res.status(httpCodes.CONFLICT).json({
+        code: err.code,
+        reasons: err.reasons,
+      });
+      return;
+    }
+
     await handleError(req, res, err, logContext);
   }
 }
