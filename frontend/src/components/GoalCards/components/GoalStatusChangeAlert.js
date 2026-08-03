@@ -1,3 +1,4 @@
+import { Alert } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -18,31 +19,31 @@ export default function GoalStatusChangeAlert({
   const hasMultipleReasons = activeActivityReport && incompleteObjectives;
 
   return (
-    <div
-      className={`usa-alert usa-alert--info ${internalLeftMargin} margin-bottom-2`}
-      role="status"
+    <Alert
+      type="info"
+      role="alert"
+      validation={hasMultipleReasons}
+      className={`${internalLeftMargin} margin-bottom-2`}
     >
-      <div className="usa-alert__body">
-        {hasMultipleReasons ? (
-          <>
-            <p className="usa-alert__text">
-              The goal status cannot be changed for the following reasons:
-            </p>
-            <ul className="usa-list margin-bottom-0">
-              <li>{activeReportMessage}</li>
-              <li>{incompleteObjectivesMessage}</li>
-            </ul>
-          </>
-        ) : (
+      {hasMultipleReasons ? (
+        <>
           <p className="usa-alert__text">
-            The goal status cannot be changed because{' '}
-            {activeActivityReport
-              ? activeReportMessage.replace(/^This goal /, 'this goal ')
-              : incompleteObjectivesMessage.replace(/^This goal /, 'this goal ')}
+            The goal status cannot be changed for the following reasons:
           </p>
-        )}
-      </div>
-    </div>
+          <ul className="usa-list margin-bottom-0">
+            <li>{activeReportMessage}</li>
+            <li>{incompleteObjectivesMessage}</li>
+          </ul>
+        </>
+      ) : (
+        <>
+          The goal status cannot be changed because{' '}
+          {activeActivityReport
+            ? activeReportMessage.replace(/^This goal /, 'this goal ')
+            : incompleteObjectivesMessage.replace(/^This goal /, 'this goal ')}
+        </>
+      )}
+    </Alert>
   );
 }
 

@@ -1059,9 +1059,14 @@ describe('StandardGoalCard', () => {
       userEvent.click(closed);
     });
 
-    expect(
-      await screen.findByText(/The goal status cannot be changed for the following reasons:/i)
-    ).toBeVisible();
+    const blockingReasonsHeading = await screen.findByText(
+      /The goal status cannot be changed for the following reasons:/i
+    );
+    expect(blockingReasonsHeading).toBeVisible();
+    const statusChangeAlert = blockingReasonsHeading.closest('[role="alert"]');
+    expect(statusChangeAlert).toBeVisible();
+    expect(statusChangeAlert).toHaveAttribute('data-testid', 'alert');
+    expect(statusChangeAlert.querySelector('ul')).toBeInTheDocument();
     expect(
       screen.getByText(
         /This goal is on a draft activity report, an activity report that is awaiting approval, or an activity report that needs action./i
