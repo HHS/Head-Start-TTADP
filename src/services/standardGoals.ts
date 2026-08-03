@@ -1004,6 +1004,20 @@ export async function standardGoalsForRecipient(
         'isReopened',
       ],
       [sequelize.literal('"goalTemplate"."standard"'), 'standard'],
+      [
+        sequelize.literal(`EXISTS (
+          SELECT 1
+          FROM "ActivityReportGoals" arg
+          JOIN "ActivityReports" ar ON ar.id = arg."activityReportId"
+          WHERE arg."goalId" = "Goal"."id"
+            AND ar."calculatedStatus" IN (
+              '${REPORT_STATUSES.DRAFT}',
+              '${REPORT_STATUSES.SUBMITTED}',
+              '${REPORT_STATUSES.NEEDS_ACTION}'
+            )
+        )`),
+        'hasActiveActivityReports',
+      ],
     ],
     where: {
       id: ids,
