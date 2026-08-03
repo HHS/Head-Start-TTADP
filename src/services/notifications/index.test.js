@@ -1,5 +1,9 @@
 import faker from '@faker-js/faker';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../../constants';
+import {
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  NOTIFICATION_CONFIGURATION,
+  NOTIFICATION_TYPES,
+} from '../../constants';
 import db from '../../models';
 import {
   archiveNotificationsByEntityAndType,
@@ -40,6 +44,10 @@ describe('Notification service', () => {
     userName: faker.name.findName(),
     date: '01/15/2026 12:00 PM ET',
   };
+
+  // Derives the exact text createNotification will generate for a given type/metadata,
+  // so seeded "existing" notifications match the text qualifier used by the dedup lookup.
+  const notificationTextFor = (type, metadata) => NOTIFICATION_CONFIGURATION[type].textFn(metadata);
 
   const trackNotification = (notification) => {
     createdNotificationIds.push(notification.id);
@@ -217,6 +225,7 @@ describe('Notification service', () => {
           userId: user.id,
           entityId: metadata.id,
           type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          text: notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata),
         });
 
         const result = await createNotification(
@@ -245,6 +254,7 @@ describe('Notification service', () => {
           userId: user.id,
           entityId: metadata.id,
           type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          text: notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata),
         });
         await NotificationUserState.create({
           notificationId: existing.id,
@@ -268,6 +278,40 @@ describe('Notification service', () => {
           },
         });
         expect(count).toBe(1);
+      });
+
+      it('creates a new notification when an existing one has different text', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        const existing = await createTrackedNotification({
+          userId: user.id,
+          entityId: metadata.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          text: 'Some stale, mismatched notification text.',
+        });
+
+        const result = trackNotification(
+          await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata }
+          )
+        );
+
+        expect(result.id).not.toBe(existing.id);
+        expect(result.text).toBe(
+          notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata)
+        );
+        const count = await Notification.count({
+          where: {
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          },
+        });
+        expect(count).toBe(2);
       });
 
       describe('skipExisting option', () => {
@@ -314,6 +358,7 @@ describe('Notification service', () => {
             userId: user.id,
             entityId: metadata.id,
             type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            text: notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata),
           });
           await NotificationUserState.create({
             notificationId: existing.id,
@@ -347,6 +392,7 @@ describe('Notification service', () => {
             userId: user.id,
             entityId: metadata.id,
             type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            text: notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata),
           });
 
           const result = await createNotification(
@@ -375,6 +421,7 @@ describe('Notification service', () => {
             userId: user.id,
             entityId: metadata.id,
             type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            text: notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata),
           });
           await NotificationUserState.create({
             notificationId: existing.id,
@@ -398,6 +445,45 @@ describe('Notification service', () => {
             },
           });
           expect(count).toBe(1);
+        });
+
+        it('creates a new notification when an existing non-archived one has different text', async () => {
+          const metadata = activityMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const existing = await createTrackedNotification({
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            text: 'Some stale, mismatched notification text.',
+          });
+          await NotificationUserState.create({
+            notificationId: existing.id,
+            userId: user.id,
+            archivedAt: null,
+          });
+
+          const result = trackNotification(
+            await createNotification(
+              user.id,
+              metadata.id,
+              NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+              { metadata, skipExisting: 'archived' }
+            )
+          );
+
+          expect(result.id).not.toBe(existing.id);
+          expect(result.text).toBe(
+            notificationTextFor(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, metadata)
+          );
+          const count = await Notification.count({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            },
+          });
+          expect(count).toBe(2);
         });
       });
     });
