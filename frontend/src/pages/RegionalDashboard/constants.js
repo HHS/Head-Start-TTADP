@@ -32,6 +32,7 @@ const MONITORING_FILTER_CONFIG = [
   findingTypeFilter,
   reviewTypeFilter,
   regionFilter,
+  stateCodeFilter,
   {
     ...startDateFilter,
     display: 'Date',
