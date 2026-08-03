@@ -13,11 +13,7 @@ export function withStateCode(stateCodes: string[]) {
   const sanitizedStateCodes = sanitizeStateCodes(stateCodes);
 
   if (!sanitizedStateCodes.length) {
-    return {
-      grantId: {
-        [Op.in]: [],
-      },
-    };
+    return;
   }
 
   const escapedStateCodes = sanitizedStateCodes.map((stateCode) => sequelize.escape(stateCode));
