@@ -7,6 +7,7 @@ import {
   beforeReportDeliveryDate,
   withinReportDeliveryDates,
 } from './reportDeliveryDate';
+import { withStateCode } from './stateCode';
 
 export const topicToQuery = {
   citationRecipient: {
@@ -19,6 +20,9 @@ export const topicToQuery = {
   findingType: {
     in: (query: string[]) => withFindingType(query),
     nin: (query: string[]) => withoutFindingType(query),
+  },
+  stateCode: {
+    ctn: (query: string[]) => withStateCode(query),
   },
   reportDeliveryDate: {
     bef: (query: string[]) => beforeReportDeliveryDate(query),
