@@ -33,6 +33,7 @@ const MONITORING_FILTER_CONFIG = [
   programSpecialistFilter,
   reviewTypeFilter,
   regionFilter,
+  stateCodeFilter,
   {
     ...startDateFilter,
     display: 'Date',

@@ -73,6 +73,11 @@ describe('RegionalDashboard constants', () => {
       expect(filterIds).toContain('programSpecialist');
     });
 
+    it('includes state or territory filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('stateCode');
+    });
+
     it('filters are sorted alphabetically by display name', () => {
       const displays = MONITORING_FILTER_CONFIG.map((filter) => filter.display);
       const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
