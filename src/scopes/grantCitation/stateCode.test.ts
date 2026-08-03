@@ -114,9 +114,9 @@ describe('grantCitation/stateCode', () => {
     expect(ids).toContain(nyGrantCitation.id);
   });
 
-  it('returns no matches when no valid state codes are provided', async () => {
-    const ids = await findGrantCitationIds(withStateCode(['invalid']));
+  it('returns undefined when no valid state codes are provided', () => {
+    const scope = withStateCode(['invalid']);
 
-    expect(ids).toHaveLength(0);
+    expect(scope).toBeUndefined();
   });
 });
