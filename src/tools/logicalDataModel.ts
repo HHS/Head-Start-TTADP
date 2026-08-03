@@ -86,6 +86,35 @@ export function processEnum(name, table, schemaEnum, modelEnum) {
   return uml;
 }
 
+/**
+ * Normalize a Postgres column default so it can be compared against a Sequelize
+ * model's `defaultValue`. `information_schema.column_default` reports string
+ * literals with surrounding quotes and an explicit type cast — e.g. `'alert'::text`,
+ * `'x'::character varying`, or an enum default `'active'::"enum_Table_status"` —
+ * whereas a model declares the bare value (`'alert'`, `'active'`).
+ *
+ * Two conservative steps:
+ *  1. Strip a single trailing `::type` cast, where the type is a plain name
+ *     (optionally with a length like `character varying(255)`) or a double-quoted
+ *     user-defined type such as an enum. Only a cast at the very end is removed.
+ *  2. If what remains is entirely a single-quoted string literal, unquote it and
+ *     unescape doubled quotes.
+ *
+ * Anything that isn't a plain quoted literal after de-casting keeps its shape:
+ * function calls like `now()`, booleans, and numbers are returned untouched, and a
+ * parenthesized expression like `('now'::text)::date` may lose only its trailing
+ * cast (`('now'::text)`) but never collapses to a bare value. Because both the DB
+ * default and a `sequelize.literal` model default are run through this same
+ * normalization, and the default's cast is redundant with the column-type check
+ * above, this can never mask a genuine mismatch.
+ */
+export function normalizeColumnDefault(dbDefault) {
+  if (typeof dbDefault !== 'string') return dbDefault;
+  const withoutCast = dbDefault.replace(/::(?:"[^"]+"|[a-z_][a-z0-9_ ]*(?:\([0-9, ]*\))?)$/i, '');
+  const match = withoutCast.match(/^'((?:[^']|'')*)'$/s);
+  return match ? match[1].replace(/''/g, "'") : withoutCast;
+}
+
 export function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
@@ -134,11 +163,15 @@ export function processClassDefinition(schema, key) {
     }
 
     if (modelField) {
+      const normalizedDefault = normalizeColumnDefault(field.default);
+      // A model default can be a bare value (`'alert'`) or a `sequelize.literal`
+      // carrying the fully-cast form on `.val` (`'IDENTIFIED'::"enum_..."`).
+      // Normalize both sides so either style compares equal to the DB default.
       if (
         !(
-          field.default === modelField.defaultValue ||
-          field.default === modelField.defaultValue?.toString() ||
-          field.default === modelField.defaultValue?.val
+          normalizedDefault === modelField.defaultValue ||
+          normalizedDefault === modelField.defaultValue?.toString() ||
+          normalizedDefault === normalizeColumnDefault(modelField.defaultValue?.val)
         ) &&
         field.default !== '<generated>' &&
         !(

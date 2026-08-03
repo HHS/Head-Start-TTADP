@@ -1399,6 +1399,7 @@ class ValidationAlerts{
  * createdAt : timestamp with time zone : now()
  * message : text
  * run_id : bigint
+ * severity : text : 'alert'::text
  * updatedAt : timestamp with time zone : now()
  context : jsonb
 }
