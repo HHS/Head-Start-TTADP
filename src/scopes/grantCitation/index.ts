@@ -1,5 +1,6 @@
 import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
+import { withFindingCategory, withoutFindingCategory } from './findingCategory';
 import { withFindingType, withoutFindingType } from './findingType';
 import { withoutRegion, withRegion } from './regionId';
 import {
@@ -19,6 +20,10 @@ export const topicToQuery = {
   findingType: {
     in: (query: string[]) => withFindingType(query),
     nin: (query: string[]) => withoutFindingType(query),
+  },
+  findingCategory: {
+    in: (query: string[]) => withFindingCategory(query),
+    nin: (query: string[]) => withoutFindingCategory(query),
   },
   reportDeliveryDate: {
     bef: (query: string[]) => beforeReportDeliveryDate(query),

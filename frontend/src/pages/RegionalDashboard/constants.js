@@ -25,10 +25,14 @@ import {
 } from '../../components/filter/activityReportFilters';
 import { reviewTypeFilter } from '../../components/filter/deliveredReviewFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
-import { findingTypeFilter } from '../../components/filter/grantCitationFilters';
+import {
+  findingCategoryFilter,
+  findingTypeFilter,
+} from '../../components/filter/grantCitationFilters';
 import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
 
 const MONITORING_FILTER_CONFIG = [
+  findingCategoryFilter,
   findingTypeFilter,
   reviewTypeFilter,
   regionFilter,
