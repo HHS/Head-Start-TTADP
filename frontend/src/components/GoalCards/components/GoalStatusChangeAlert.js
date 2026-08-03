@@ -13,7 +13,7 @@ export default function GoalStatusChangeAlert({
   }
 
   const activeReportMessage =
-    'This goal is on a draft activity report, an activity report that is awaiting approval, or an activity report that needs action.';
+    'This goal is on an activity report that is in a draft status, awaiting approval, or needs action.';
   const incompleteObjectivesMessage =
     'This goal has In progress objectives. Update the objective status to complete them.';
   const hasMultipleReasons = activeActivityReport && incompleteObjectives;

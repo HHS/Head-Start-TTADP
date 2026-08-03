@@ -984,9 +984,10 @@ describe('StandardGoalCard', () => {
 
     expect(
       await screen.findByText(
-        /The goal status cannot be changed because this goal is on a draft activity report, an activity report that is awaiting approval, or an activity report that needs action./i
+        /The goal status cannot be changed because this goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
       )
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Why are you closing this goal?/i)).not.toBeInTheDocument();
   });
 
   it('shows active report blockers returned after a stale page status change', async () => {
@@ -1027,7 +1028,7 @@ describe('StandardGoalCard', () => {
 
     expect(
       await screen.findByText(
-        /The goal status cannot be changed because this goal is on a draft activity report, an activity report that is awaiting approval, or an activity report that needs action./i
+        /The goal status cannot be changed because this goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
       )
     ).toBeInTheDocument();
   });
@@ -1069,7 +1070,7 @@ describe('StandardGoalCard', () => {
     expect(statusChangeAlert.querySelector('ul')).toBeInTheDocument();
     expect(
       screen.getByText(
-        /This goal is on a draft activity report, an activity report that is awaiting approval, or an activity report that needs action./i
+        /This goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
       )
     ).toBeVisible();
     expect(
