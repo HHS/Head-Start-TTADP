@@ -1385,6 +1385,95 @@ describe('Activity Report handlers', () => {
         );
       });
     });
+
+    describe('creator submitted email notification', () => {
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+        author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+      };
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue([]);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: [],
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+      });
+
+      it('emails the creator when they are opted into IMMEDIATELY and a collaborator submits', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(savedReport, {
+          id: 99,
+          name: 'Creator User',
+          email: 'creator@test.gov',
+        });
+      });
+
+      it('does not email the creator when they are not opted into IMMEDIATELY', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
+      });
+
+      it('does not email the creator when the creator submits their own report', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 1, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Creator User' });
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('createReport', () => {
