@@ -62,7 +62,7 @@ const Navigator = ({
 
   const context = useFormContext();
 
-  const { watch, formState } = context;
+  const { watch, formState, getValues } = context;
 
   const pageState = watch('pageState');
 
@@ -140,6 +140,22 @@ const Navigator = ({
       Object.keys(goalForEditing).length > 0;
 
     if (p.position === GOALS_AND_OBJECTIVES_POSITION && hasGoalBeingEdited) {
+      stateOfPage = IN_PROGRESS;
+    }
+
+    // STALE COMPLETE GUARD: a page can be persisted as Complete and later fail its
+    // own completion rules if a field became required after it was last saved (e.g.
+    // objective support type). Because submit/return gates read this stored state,
+    // such a report could be submitted—or an approver blocked from returning it—while
+    // actually incomplete. Re-run the page's own isPageComplete (the single source of
+    // truth) and downgrade a stale Complete to In progress. This only ever downgrades,
+    // so a page that still passes its check is unaffected.
+    if (
+      p.path === 'goals-objectives' &&
+      stateOfPage === COMPLETE &&
+      typeof p.isPageComplete === 'function' &&
+      !p.isPageComplete(getValues(), formState)
+    ) {
       stateOfPage = IN_PROGRESS;
     }
 
