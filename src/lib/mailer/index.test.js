@@ -20,6 +20,7 @@ import {
   collaboratorDigest,
   collaboratorReportSubmittedForReviewDigest,
   collaboratorReportSubmittedForReviewNotification,
+  creatorReportSubmittedForReviewDigest,
   creatorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
@@ -1499,9 +1500,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 5 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 6 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(5);
+        expect(entries).toHaveLength(6);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -1808,6 +1809,42 @@ describe('mailer tests', () => {
 
     it('"collaborator report submitted for review" digest which logs on bad date', async () => {
       await expect(collaboratorReportSubmittedForReviewDigest('')).rejects.toThrow();
+    });
+
+    it('"creator report submitted for review" digest on the notificationDigestQueue', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.resolve([{ id: mockUser.id }]));
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      const result = await creatorReportSubmittedForReviewDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"creator report submitted for review" digest excludes reports since approved', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.resolve([{ id: mockUser.id }]));
+      await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      });
+
+      const result = await creatorReportSubmittedForReviewDigest('today');
+      expect(result[0].reports.length).toBe(0);
+    });
+
+    it('"creator report submitted for review" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something went wrong')));
+      await expect(creatorReportSubmittedForReviewDigest('this month')).rejects.toThrow();
+    });
+
+    it('"creator report submitted for review" digest which logs on bad date', async () => {
+      await expect(creatorReportSubmittedForReviewDigest('')).rejects.toThrow();
     });
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {
