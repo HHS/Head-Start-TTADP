@@ -138,6 +138,7 @@ Triggered synchronously by an application event, processed once per job.
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
+| `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `creatorReportSubmittedForReviewNotification` | `notifyCreatorReportSubmittedForReview` | `creator_report_submitted_for_review` |
 
 All instant handlers share the same shape:
 
