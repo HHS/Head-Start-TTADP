@@ -1,5 +1,27 @@
 # Regional dashboard monitoring widgets
 
+## Dashboard date filters
+
+The frontend shows one Monitoring **Date** filter, but the backend applies that date to different
+columns for different datasets:
+
+- Activity report widgets use `ActivityReports.startDate`.
+- Delivered-review widgets and details use `DeliveredReviews.complete_date`.
+- Monitoring-related TTA cards still use delivered-review `report_delivery_date`, applied through
+  the `grantCitation.reportDeliveryDate` scope so it does not overload delivered-review scopes.
+
+Date values in filter state and query strings should stay in `YYYY/MM/DD` query format. Display
+formatting (`MM/DD/YYYY`) should be limited to labels, pills, tables, and CSV output.
+
+## Compliant follow-up reviews with TTA support
+
+The overview/widget denominator counts delivered reviews that have been made compliant:
+`DeliveredReviews.corrected = true` and `complete_date >= MIN_MONITORING_DATE`.
+
+The "Had TTA" classification uses approved, non-deleted Activity Reports linked to one of the
+review's scoped citations, where `ActivityReports.endDate` is after the initial review delivery date
+and before the compliant follow-up review delivery date.
+
 ## Active deficient citations with TTA support
 
 This widget returns two monthly traces:

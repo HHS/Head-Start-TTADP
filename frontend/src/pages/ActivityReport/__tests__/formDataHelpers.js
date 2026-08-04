@@ -529,6 +529,36 @@ describe('FormDataHelpers', () => {
       });
     });
 
+    it('keeps an actively-edited goal in the goals list when the report status does not allow goal editing', () => {
+      // Regression: when an approved report is re-saved, the goal's isActivelyEdited
+      // flag can still be set. If we default the status to DRAFT (an allowed editing
+      // status), the goal is wrongly routed into goalForEditing, leaving the goals
+      // array empty and the read-only list blank until a full refresh. Passing the
+      // real (non-editing) status keeps the goal in the read-only goals list.
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
+          {
+            id: 1,
+            objectives: [],
+            activityReportGoals: [{ id: 1, isActivelyEdited: true }],
+          },
+        ],
+        [1],
+        REPORT_STATUSES.APPROVED
+      );
+
+      expect(goalForEditing).toBeNull();
+      expect(goals).toEqual([
+        {
+          id: 1,
+          grantIds: [1],
+          prompts: [],
+          objectives: [],
+          activityReportGoals: [{ id: 1, isActivelyEdited: true }],
+        },
+      ]);
+    });
+
     it('keeps useIpdCourses true even when there are no courses', () => {
       const { goalForEditing } = convertGoalsToFormData(
         [

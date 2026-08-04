@@ -3,11 +3,21 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import { activityReportGoalResponseFilter, specialistRoleFilter } from '../activityReportFilters';
 import FilterErrorContext from '../FilterErrorContext';
 import FilterItem from '../FilterItem';
 
-const selectedTopic = TTAHISTORY_FILTER_CONFIG[0];
-const topicOptions = TTAHISTORY_FILTER_CONFIG.map(({ id: filterId, display }) => (
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterItem tests continue to exercise those filter types.
+const FILTER_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
+
+const selectedTopic = FILTER_CONFIG[0];
+const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
   <option key={filterId} value={filterId}>
     {display}
   </option>

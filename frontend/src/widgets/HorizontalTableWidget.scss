@@ -153,26 +153,28 @@
   position: relative;
 }
 
-// First footer cell sticky.
-.smarthub-horizontal-table-widget tfoot td:first-child {
+// Footer checkbox placeholder sticky when selection checkboxes are enabled.
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-checkbox-column {
   left: 0;
   position: sticky;
   z-index: 1;
   min-width: 64px;
 }
 
-// Second footer cell sticky — mirrors sticky first column in tbody.
-.smarthub-horizontal-table-widget tfoot td:nth-child(2) {
+// Footer label sticky — mirrors sticky first column in tbody. This must be
+// class-driven because the label is the first footer cell without checkboxes
+// and the second footer cell with checkboxes.
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-first-column {
+  left: var(--smarthub-horizontal-table-footer-first-column-left, 0px);
   position: sticky;
   z-index: 1;
   max-width: 330px;
-  left: 44px;
 }
 
 // Right border on the first (label) footer cell — continues the first-column divider.
 // When enableCheckboxes=false, the label is at td:first-child.
 // When enableCheckboxes=true, the label is at td:nth-child(2).
-.smarthub-horizontal-table-widget tfoot td:first-child::after {
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-first-column::after {
   content: '';
   position: absolute;
   top: 0;

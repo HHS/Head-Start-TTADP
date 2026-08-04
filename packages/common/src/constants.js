@@ -113,9 +113,30 @@ const PRIORITY_INDICATORS = [
   'New recipient',
   'New staff',
   'No TTA',
+  'Underenrolled',
 ];
 
 exports.PRIORITY_INDICATORS = PRIORITY_INDICATORS;
+
+// Possible values for a grant's fei_hs_status, imported from HSES grant_award.xml.
+const FEI_HS_STATUSES = [
+  'Fully Enrolled',
+  'DCU Month X of 6 Month DCU Evaluation',
+  'Month X of 12 Month Period',
+  'Month X of 6 Month Evaluation Period',
+  'Underenrolled less than 4 Months',
+  'Underenrolled',
+  'Central Office Review',
+  'Not Reported',
+  'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+  'Appealed OHS Initiated Reduction',
+  'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+  'DCU + OHS Initiated Reduction (X days left to Appeal Reduction)',
+  'Notified of 12 Month Period',
+  'Undetermined',
+];
+
+exports.FEI_HS_STATUSES = FEI_HS_STATUSES;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -602,7 +623,7 @@ exports.ALL_STATES_FLATTENED = ALL_STATES_FLATTENED;
 
 // ─── Notification constants ──────────────────────────────────────────────────
 // Canonical runtime source for notification-related literals. The matching
-// TypeScript unions live in packages/types/src/notifications.ts and are
+// TypeScript unions live in packages/common/src/notifications.d.ts and are
 // derived from these objects via `typeof`, so each list is maintained in
 // exactly one place. See packages/common/src/constants.d.ts for the
 // literal-type overlay.
@@ -613,8 +634,11 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned',
   // AR-6/8: Approver requests changes (existing)
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
+  //
+  ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
   // Recipient notified when their AR is approved (existing)
