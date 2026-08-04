@@ -48,6 +48,7 @@ export default function StandardGoalCard({
     isReopened,
     standard,
     createdAt,
+    hasActiveActivityReports = false,
   } = goal;
   const cardRecipientName = recipientName || grant?.recipient?.name || '';
 
@@ -68,6 +69,11 @@ export default function StandardGoalCard({
   const [resetModalValues, setResetModalValues] = useState(false);
 
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
+  const [statusChangeBlockingReasons, setStatusChangeBlockingReasons] = useState({
+    activeActivityReport: false,
+    incompleteObjectives: false,
+    fromApi: false,
+  });
   const sortedObjectives = [...localObjectives];
   sortedObjectives.sort((a, b) => (new Date(a.endDate) < new Date(b.endDate) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -80,10 +86,25 @@ export default function StandardGoalCard({
   }, [status]);
 
   useEffect(() => {
-    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompleted) {
+    if (
+      invalidStatusChangeAttempted === true &&
+      !statusChangeBlockingReasons.fromApi &&
+      !hasActiveActivityReports &&
+      !atLeastOneObjectiveIsNotCompleted
+    ) {
       setInvalidStatusChangeAttempted(false);
+      setStatusChangeBlockingReasons({
+        activeActivityReport: false,
+        incompleteObjectives: false,
+        fromApi: false,
+      });
     }
-  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted]);
+  }, [
+    atLeastOneObjectiveIsNotCompleted,
+    hasActiveActivityReports,
+    invalidStatusChangeAttempted,
+    statusChangeBlockingReasons.fromApi,
+  ]);
 
   const [deleteError, setDeleteError] = useState(false);
 
@@ -120,6 +141,7 @@ export default function StandardGoalCard({
       // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
       await updateGoalStatus(ids, newStatus, localStatus, reason, context);
       setLocalStatus(newStatus);
+      setInvalidStatusChangeAttempted(false);
       if (newStatus === GOAL_STATUS.SUSPENDED) {
         const statusesNeedUpdating = [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
         setLocalObjectives((prevObjectives) =>
@@ -136,6 +158,16 @@ export default function StandardGoalCard({
         );
       }
     } catch (err) {
+      if (err.data?.code === 'GOAL_STATUS_CHANGE_BLOCKED' && Array.isArray(err.data.reasons)) {
+        setStatusChangeBlockingReasons({
+          activeActivityReport: err.data.reasons.includes('ACTIVE_ACTIVITY_REPORT'),
+          incompleteObjectives: err.data.reasons.includes('INCOMPLETE_OBJECTIVES'),
+          fromApi: true,
+        });
+        setInvalidStatusChangeAttempted(true);
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.error('Error updating goal status:', err);
       setStatusChangeError(true);
@@ -143,8 +175,17 @@ export default function StandardGoalCard({
   };
 
   const onUpdateGoalStatus = (newStatus) => {
-    // prevent closing if objectives aren't complete/suspended
-    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompleted) {
+    const blocksActiveReportStatusChange =
+      newStatus === GOAL_STATUS.CLOSED && hasActiveActivityReports;
+    const blocksIncompleteObjectiveStatusChange =
+      newStatus === GOAL_STATUS.CLOSED && atLeastOneObjectiveIsNotCompleted;
+
+    if (blocksActiveReportStatusChange || blocksIncompleteObjectiveStatusChange) {
+      setStatusChangeBlockingReasons({
+        activeActivityReport: blocksActiveReportStatusChange,
+        incompleteObjectives: blocksIncompleteObjectiveStatusChange,
+        fromApi: false,
+      });
       setInvalidStatusChangeAttempted(true);
       return;
     }
@@ -429,6 +470,8 @@ export default function StandardGoalCard({
           <GoalStatusChangeAlert
             internalLeftMargin="3rem"
             invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+            activeActivityReport={statusChangeBlockingReasons.activeActivityReport}
+            incompleteObjectives={statusChangeBlockingReasons.incompleteObjectives}
           />
           <div className="grid-row mobile-tablet-space-y-2">
             {/* Left section - Goal number and name */}
@@ -455,13 +498,17 @@ export default function StandardGoalCard({
               <div className="grid-container padding-0">
                 <div className="grid-row space-y-2 mobile-lg:space-y-0">
                   {showRecipientColumn && (
-                    <div className={`${wideDetailColumnClassName} ttahub-goal-card__recipient-column`}>
+                    <div
+                      className={`${wideDetailColumnClassName} ttahub-goal-card__recipient-column`}
+                    >
                       <p className="usa-prose text-bold margin-y-0">Recipient</p>
                       <p className="usa-prose margin-y-0 text-wrap">{cardRecipientName || 'N/A'}</p>
                     </div>
                   )}
 
-                  <div className={`${standardDetailColumnClassName} ttahub-goal-card__grant-number-column`}>
+                  <div
+                    className={`${standardDetailColumnClassName} ttahub-goal-card__grant-number-column`}
+                  >
                     <p className="usa-prose text-bold margin-y-0">Grant number</p>
                     <p className="usa-prose margin-y-0 text-wrap">{grant.number || 'N/A'}</p>
                   </div>

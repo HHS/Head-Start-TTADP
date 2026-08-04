@@ -20,6 +20,7 @@ export const goalPropTypes = PropTypes.shape({
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
   onAR: PropTypes.bool,
+  hasActiveActivityReports: PropTypes.bool,
   grant: PropTypes.shape({
     number: PropTypes.string,
   }),

@@ -34,6 +34,7 @@ import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
 import { reduceGoals } from './reduceGoals';
+import { validateGoalStatusChange } from './validateGoalStatusChange';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 // the page state location of the goals and objective page
@@ -1025,6 +1026,8 @@ export async function updateGoalStatusById(
     return false;
   }
 
+  await validateGoalStatusChange(goalIds, newStatus);
+
   return Promise.all(
     goalIds.map((goalId) =>
       changeGoalStatus({
@@ -1033,6 +1036,7 @@ export async function updateGoalStatusById(
         newStatus,
         reason,
         context: closeSuspendContext,
+        skipGoalStatusValidation: true,
       })
     )
   );
@@ -1439,7 +1443,7 @@ export async function getGoalHistory(id) {
       goalTemplateId: goal.goalTemplateId,
       grantId: goal.grantId,
       prestandard: goal.prestandard,
-     [Op.or]: [
+      [Op.or]: [
         {
           id: goal.id,
         },
@@ -1657,6 +1661,10 @@ export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const { selectedGoal, closeSuspendContext, closeSuspendReason } = data;
 
   const { goalIds, status } = selectedGoal;
+
+  await validateGoalStatusChange(goalIds, GOAL_STATUS.CLOSED, {
+    treatApprovedArObjectivesAsComplete: true,
+  });
 
   /**
    * 1) Complete all objectives that have been

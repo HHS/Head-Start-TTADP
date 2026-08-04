@@ -1585,6 +1585,7 @@ describe('Recipient DB service', () => {
     let objectives;
     let topics;
     let report;
+    let activeReport;
 
     beforeAll(async () => {
       recipient = await createRecipient();
@@ -1692,6 +1693,20 @@ describe('Recipient DB service', () => {
         activityReportId: report.id,
         goalId: goal1.id,
       });
+      activeReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: grant.id,
+          },
+        ],
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        regionId: grant.regionId,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: activeReport.id,
+        goalId: goal2.id,
+      });
     });
 
     afterAll(async () => {
@@ -1713,6 +1728,7 @@ describe('Recipient DB service', () => {
         individualHooks: true,
       });
       await destroyReport(report);
+      await destroyReport(activeReport);
 
       await Topic.destroy({
         where: {
@@ -1760,6 +1776,7 @@ describe('Recipient DB service', () => {
       // Select the first goal by goal id.
       const goal = goalsForRecord.goalRows.find((g) => g.id === goals[0].id);
       expect(goal).toBeTruthy();
+      expect(goal.hasActiveActivityReports).toBe(false);
 
       // Assert the goal has the correct number of objectives.
       expect(goal.objectives.length).toBe(1);
@@ -1781,6 +1798,7 @@ describe('Recipient DB service', () => {
       // Assert the second goal by id.
       const goal2 = goalsForRecord.goalRows.find((g) => g.id === goals[1].id);
       expect(goal2).toBeTruthy();
+      expect(goal2.hasActiveActivityReports).toBe(true);
 
       // Assert the second goal has the correct number of objectives.
       expect(goal2.objectives.length).toBe(1);
