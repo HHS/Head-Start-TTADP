@@ -9,7 +9,7 @@ import {
   createGlobalNotification,
   getNotifications,
   updateNotificationState,
-} from '../../services/notifications';
+} from '../../services/notifications/index';
 import { userById } from '../../services/users';
 
 const { Notification } = db;

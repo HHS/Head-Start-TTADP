@@ -25,7 +25,8 @@ export default function useUrlFilters(defaultFilters) {
   }, [defaultFilters, location.search]);
 
   const updateUrl = (filters) => {
-    const search = `?${filtersToQueryString(filters)}`;
+    const query = filtersToQueryString(filters);
+    const search = query ? `?${query}` : '';
     if (search === location.search) return;
     history.push({ ...location, search });
   };

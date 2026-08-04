@@ -31,6 +31,14 @@ describe('Email Notifications', () => {
           },
         ],
       },
+      approversWithSettings: [
+        {
+          user: {
+            email: 'mockApprover@test.gov',
+            name: 'Mock Approver',
+          },
+        },
+      ],
       newCollaborator: {
         email: 'mockNewCollaborator@test.gov',
         name: 'Mock New Collaborator',
@@ -174,6 +182,7 @@ describe('Email Notifications', () => {
         emailTo: [
           mockJob.data.report.author.email,
           mockJob.data.report.activityReportCollaborators[0].user.email,
+          mockJob.data.approversWithSettings[0].user.email,
         ],
         action: mockJob.name,
         subject: 'Activity Report AR-04-1235: Changes requested',
@@ -183,9 +192,10 @@ describe('Email Notifications', () => {
       });
       const mailerLog = await logEmailNotification(mockJob, success, result);
       expect(mailerLog).not.toBeNull();
-      expect(mailerLog.emailTo.length).toEqual(2);
+      expect(mailerLog.emailTo.length).toEqual(3);
       expect(mailerLog.emailTo[0]).toEqual('mockAuthor@test.gov');
       expect(mailerLog.emailTo[1]).toEqual('mockCollaborator@test.gov');
+      expect(mailerLog.emailTo[2]).toEqual('mockApprover@test.gov');
       expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Changes requested');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
@@ -196,7 +206,11 @@ describe('Email Notifications', () => {
       mockJob.name = EMAIL_ACTIONS.NEEDS_ACTION;
       createMailerLogMock.mockResolvedValueOnce({
         jobId: mockJob.id,
-        emailTo: ['', mockJob.data.report.activityReportCollaborators[0].user.email],
+        emailTo: [
+          '',
+          mockJob.data.report.activityReportCollaborators[0].user.email,
+          mockJob.data.approversWithSettings[0].user.email,
+        ],
         action: mockJob.name,
         subject: 'Activity Report AR-04-1235: Changes requested',
         activityReports: [mockJob.data.report.id],
@@ -205,13 +219,72 @@ describe('Email Notifications', () => {
       });
       const mailerLog = await logEmailNotification(mockJob, success, result);
       expect(mailerLog).not.toBeNull();
-      expect(mailerLog.emailTo.length).toEqual(2);
+      expect(mailerLog.emailTo.length).toEqual(3);
       expect(mailerLog.emailTo[0]).toEqual('');
       expect(mailerLog.emailTo[1]).toEqual('mockCollaborator@test.gov');
+      expect(mailerLog.emailTo[2]).toEqual('mockApprover@test.gov');
       expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Changes requested');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       mockJob.data.report.author = auth;
+    });
+    it('orders needs action mailer log recipients as author, collaborators, then approvers', async () => {
+      mockJob.name = EMAIL_ACTIONS.NEEDS_ACTION;
+      const orderedJob = {
+        ...mockJob,
+        data: {
+          ...mockJob.data,
+          approversWithSettings: [
+            ...mockJob.data.approversWithSettings,
+            {
+              user: {
+                email: 'mockApprover2@test.gov',
+                name: 'Mock Approver 2',
+              },
+            },
+          ],
+          report: {
+            ...mockJob.data.report,
+            activityReportCollaborators: [
+              ...mockJob.data.report.activityReportCollaborators,
+              {
+                user: {
+                  email: 'mockCollaborator2@test.gov',
+                  name: 'Mock Collaborator 2',
+                },
+              },
+            ],
+          },
+        },
+      };
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: orderedJob.id,
+        emailTo: [
+          orderedJob.data.report.author.email,
+          orderedJob.data.report.activityReportCollaborators[0].user.email,
+          orderedJob.data.report.activityReportCollaborators[1].user.email,
+          orderedJob.data.approversWithSettings[0].user.email,
+          orderedJob.data.approversWithSettings[1].user.email,
+        ],
+        action: orderedJob.name,
+        subject: 'Activity Report AR-04-1235: Changes requested',
+        activityReports: [orderedJob.data.report.id],
+        success,
+        result,
+      });
+      const mailerLog = await logEmailNotification(orderedJob, success, result);
+      expect(mailerLog).not.toBeNull();
+      expect(createMailerLogMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emailTo: [
+            'mockAuthor@test.gov',
+            'mockCollaborator@test.gov',
+            'mockCollaborator2@test.gov',
+            'mockApprover@test.gov',
+            'mockApprover2@test.gov',
+          ],
+        })
+      );
     });
     it('create a mailer log entry for an approved report', async () => {
       mockJob.name = EMAIL_ACTIONS.APPROVED;

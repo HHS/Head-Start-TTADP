@@ -14,6 +14,37 @@ import {
 } from './reportCache';
 
 const GOALS_PER_PAGE = 10;
+const OBJECTIVE_STATUSES_AFTER_NOT_STARTED = [
+  OBJECTIVE_STATUS.IN_PROGRESS,
+  OBJECTIVE_STATUS.SUSPENDED,
+  OBJECTIVE_STATUS.COMPLETE,
+];
+
+function statusForActivityReportObjective(savedObjective, submittedStatus) {
+  if (
+    submittedStatus === OBJECTIVE_STATUS.NOT_STARTED &&
+    OBJECTIVE_STATUSES_AFTER_NOT_STARTED.includes(savedObjective.status)
+  ) {
+    return savedObjective.status;
+  }
+
+  return submittedStatus;
+}
+
+function objectiveCreatedHereForActivityReportObjective(
+  savedObjective,
+  reportId,
+  submittedCreatedHere
+) {
+  if (!submittedCreatedHere) {
+    return submittedCreatedHere;
+  }
+
+  return (
+    savedObjective.createdVia === 'activityReport' &&
+    Number(savedObjective.createdViaActivityReportId) === Number(reportId)
+  );
+}
 
 const {
   sequelize,
@@ -250,7 +281,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
 
         return {
           ...savedObjective.toJSON(),
-          status,
+          status: statusForActivityReportObjective(savedObjective, status),
           topics,
           citations, // Not saved for objective only ARO (pass through).
           resources,
@@ -261,7 +292,11 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
           closeSuspendContext,
           index,
           supportType,
-          objectiveCreatedHere,
+          objectiveCreatedHere: objectiveCreatedHereForActivityReportObjective(
+            savedObjective,
+            reportId,
+            objectiveCreatedHere
+          ),
           useIpdCourses: objective.useIpdCourses,
           useFiles: objective.useFiles,
         };

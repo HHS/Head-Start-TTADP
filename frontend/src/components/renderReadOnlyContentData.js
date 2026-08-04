@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { RICH_TEXT_ALLOWED_ATTR, RICH_TEXT_ALLOWED_TAGS } from '../utils';
 
 /**
  * Checks if a string contains HTML tags
@@ -34,31 +35,8 @@ export function renderEditor(heading, data) {
    * for rich HTML content, sanitize with DOMPurify and convert to React elements
    */
   const sanitized = DOMPurify.sanitize(data || '', {
-    ALLOWED_TAGS: [
-      'p',
-      'br',
-      'strong',
-      'em',
-      'del',
-      'ins',
-      'u',
-      'ul',
-      'ol',
-      'li',
-      'a',
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      'blockquote',
-      'code',
-      'pre',
-      'span',
-      'div',
-    ],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+    ALLOWED_TAGS: RICH_TEXT_ALLOWED_TAGS,
+    ALLOWED_ATTR: RICH_TEXT_ALLOWED_ATTR,
   });
 
   return (

@@ -1,5 +1,69 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { getCollabReportStatusDisplayAndClassnames } from '../utils';
+import {
+  getCollabReportStatusDisplayAndClassnames,
+  isEmptyRichText,
+  sanitizeRichText,
+} from '../utils';
+
+describe('sanitizeRichText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['empty string', ''],
+    ['non-string', 42],
+  ])('returns %s unchanged', (_label, value) => {
+    expect(sanitizeRichText(value)).toBe(value);
+  });
+
+  it('preserves allowed formatting markup', () => {
+    const html = '<p><strong>Bold</strong> and <em>italic</em> text</p>';
+    expect(sanitizeRichText(html)).toBe(html);
+  });
+
+  it('strips unsupported atomic markup (iframe)', () => {
+    const result = sanitizeRichText('<p>Before</p><iframe src="https://evil.example"></iframe>');
+    expect(result).not.toContain('iframe');
+    expect(result).toContain('Before');
+  });
+
+  it('strips unsupported atomic markup (img)', () => {
+    const result = sanitizeRichText('<p>Legacy</p><img src="x" onerror="alert(1)" />');
+    expect(result).not.toContain('<img');
+    expect(result).not.toContain('onerror');
+    expect(result).toContain('Legacy');
+  });
+
+  it('strips script tags', () => {
+    const result = sanitizeRichText('<p>Safe</p><script>alert(1)</script>');
+    expect(result).not.toContain('script');
+    expect(result).toContain('Safe');
+  });
+});
+
+describe('isEmptyRichText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['non-string', 123],
+    ['empty string', ''],
+    ['single empty paragraph', '<p></p>'],
+    ['empty paragraph with newline', '<p></p>\n'],
+    ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+    ['numeric nbsp entity', '<p>&#160;</p>'],
+    ['spaces only', '<p>   </p>'],
+    ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+  ])('returns true for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(true);
+  });
+
+  it.each([
+    ['plain text wrapped in a paragraph', '<p>Hello</p>'],
+    ['text alongside empty paragraphs', '<p></p><p>Some content</p>'],
+    ['formatted text', '<p><strong>Bold</strong> content</p>'],
+  ])('returns false for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(false);
+  });
+});
 
 describe('getCollabReportStatusDisplayAndClassnames', () => {
   const mockUserId = 1;

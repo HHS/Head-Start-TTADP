@@ -23,6 +23,7 @@ import {
   recipientFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,
+  specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
@@ -43,6 +44,15 @@ import {
 } from '../trainingReportFilters';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
+
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterMenu tests continue to exercise those filter types.
+const TTA_HISTORY_TEST_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
 
 describe('Filter Menu', () => {
   afterAll(() => {
@@ -101,7 +111,7 @@ describe('Filter Menu', () => {
   const renderFilterMenu = (
     filters = [],
     onApplyFilters = jest.fn(),
-    filterConfig = TTAHISTORY_FILTER_CONFIG
+    filterConfig = TTA_HISTORY_TEST_CONFIG
   ) => {
     const user = {
       permissions: [

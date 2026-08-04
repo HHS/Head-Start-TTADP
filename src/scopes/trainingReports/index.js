@@ -5,6 +5,7 @@ import { withCreators } from './creator';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEventId, withoutEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
+import { withoutTrMyReports, withTrMyReports } from './myReports';
 import { withoutRegion, withRegion } from './region';
 import { withoutStandard, withStandard } from './standard';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
@@ -43,6 +44,10 @@ export const topicToQuery = {
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDates(query),
     in: (query) => withinEndDates(query),
+  },
+  myReports: {
+    in: (query, options, userId) => withTrMyReports(query, options, userId),
+    nin: (query, options, userId) => withoutTrMyReports(query, options, userId),
   },
 };
 

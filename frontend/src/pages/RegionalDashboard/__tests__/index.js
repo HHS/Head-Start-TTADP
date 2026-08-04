@@ -621,16 +621,12 @@ describe('Regional Dashboard page', () => {
     });
 
     // Initial table response: 10 rows out of 17 total → enables Page 2 button.
-    fetchMock.get(
-      initialAllRegionsUrl,
-      convertToResponse(generateXFakeReports(10), false, 17),
-      { overwriteRoutes: true }
-    );
-    fetchMock.get(
-      page2AllRegionsUrl,
-      convertToResponse(generateXFakeReports(10), false, 17),
-      { overwriteRoutes: true }
-    );
+    fetchMock.get(initialAllRegionsUrl, convertToResponse(generateXFakeReports(10), false, 17), {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(page2AllRegionsUrl, convertToResponse(generateXFakeReports(10), false, 17), {
+      overwriteRoutes: true,
+    });
 
     // Sibling widgets — narrowed (region 1 only)
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse, { overwriteRoutes: true });

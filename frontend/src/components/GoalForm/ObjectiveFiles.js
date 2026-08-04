@@ -182,7 +182,10 @@ ObjectiveFiles.propTypes = {
   onBlur: PropTypes.func,
   reportId: PropTypes.number,
   forceObjectiveSave: PropTypes.bool,
-  selectedObjectiveId: PropTypes.number,
+  // A newly created (not yet saved) objective has a client-side uuid string id, while a
+  // persisted objective has a numeric id. The showSaveDraftInfo logic already guards on
+  // `typeof selectedObjectiveId === 'number'`, so accept both to avoid a spurious warning.
+  selectedObjectiveId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   useFiles: PropTypes.bool,
   onChangeUseFiles: PropTypes.func,
 };

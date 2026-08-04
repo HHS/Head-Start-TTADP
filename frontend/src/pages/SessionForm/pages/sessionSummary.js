@@ -33,6 +33,9 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
+import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
+import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import SessionTrainers from '../components/SessionTrainers';
@@ -65,6 +68,23 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const courses = watch('courses');
+
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -538,16 +558,15 @@ const SessionSummary = ({ datePickerKey, event }) => {
         ) : null}
       </Fieldset>
 
-      <FormItem label="TTA provided " name="ttaProvided" required>
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status="Not Started"
+        isOnApprovedReport={false}
+        error={errors.ttaProvided ? ERROR_FORMAT(errors.ttaProvided.message) : NO_ERROR}
+        validateTta={onBlurTta}
+      />
 
       <div className="margin-bottom-4">
         <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
@@ -676,7 +695,7 @@ const ReviewSection = () => {
             ]
           : []),
         {
-          label: 'iPD courses',
+          label: 'EEP Courses',
           name: 'courses',
           customValue: { courses: (courses || []).map((c) => c.name) },
         },
@@ -686,7 +705,12 @@ const ReviewSection = () => {
           customValue: { objectiveResources: resources },
         },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
-        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        {
+          label: 'TTA provided',
+          name: 'ttaProvided',
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
+          isRichText: true,
+        },
         {
           label: 'Support type',
           name: 'objectiveSupportType',
@@ -713,7 +737,16 @@ export const isPageComplete = (hookForm) => {
     required.push('otherTrainers');
   }
 
-  return pageComplete(hookForm, required);
+  // ttaProvided is a rich-text field: the generic string check treats any HTML
+  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
+  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided')
+  );
 };
 
 export default {

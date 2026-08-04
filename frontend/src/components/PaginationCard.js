@@ -22,6 +22,10 @@ function PaginationCard({
   accessibleLandmarkName,
   paginationClassName,
   noXofX,
+  perPageSelectValue,
+  allOptionValue,
+  hidePagination,
+  className,
 }) {
   const el = useRef();
   const isMobile = useMediaQuery({ maxWidth: MAX_WIDTH_MOBILE });
@@ -76,7 +80,11 @@ function PaginationCard({
   const shouldBeUnbounded = totalPages > MIN_UNBOUNDED_PAGES;
 
   return (
-    <div ref={el} className="smart-hub--pagination-card flex-align-self-end display-block">
+    <div
+      ref={el}
+      data-testid="pagination-card"
+      className={`smart-hub--pagination-card flex-align-self-end display-block ${className}`.trim()}
+    >
       {!hideInfo && (
         <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
           {perPageChange ? (
@@ -94,11 +102,12 @@ function PaginationCard({
                 data-testid="perPage"
                 onChange={perPageChange}
                 aria-label="Select per page"
+                value={perPageSelectValue}
               >
                 <option value="10">10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
-                <option value={totalCount}>all</option>
+                <option value={allOptionValue ?? totalCount}>all</option>
               </Dropdown>
             </div>
           ) : null}
@@ -112,7 +121,7 @@ function PaginationCard({
           )}
         </div>
       )}
-      {totalPages > 1 && (
+      {!hidePagination && totalPages > 1 && (
         <Pagination
           className={paginationClassName}
           currentPage={currentPage}
@@ -139,6 +148,10 @@ PaginationCard.propTypes = {
   paginationClassName: PropTypes.string,
   hideCountHeaderOnEmpty: PropTypes.bool,
   noXofX: PropTypes.bool,
+  perPageSelectValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  allOptionValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  hidePagination: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 PaginationCard.defaultProps = {
@@ -153,6 +166,10 @@ PaginationCard.defaultProps = {
   paginationClassName: 'margin-bottom-0 margin-top-0',
   hideCountHeaderOnEmpty: false,
   noXofX: false,
+  perPageSelectValue: undefined,
+  allOptionValue: undefined,
+  hidePagination: false,
+  className: '',
 };
 
 export default PaginationCard;
