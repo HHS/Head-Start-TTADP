@@ -53,6 +53,11 @@ grep -n "^export const.*Notification" src/lib/mailer/index.js
 
 # See how existing notifications are invoked at the call site
 grep -n "Notification\|EMAIL_ACTIONS" <trigger_location_file>
+
+# Check whether a corresponding in-app notification (or its trigger call) already
+# exists for this event — email and in-app notifications for the same event are
+# sometimes built in separate tickets
+grep -rn "<event-related-keyword>" src/services/notifications/ src/routes/<domain>/handlers.js
 ```
 
 Also read `docs/email_notifications.md` (the "New instant notification" recipe section) for full architectural context.
@@ -61,6 +66,12 @@ Understand:
 - The naming convention for similar existing notifications
 - Whether there is an existing `USER_SETTINGS.EMAIL.KEYS` entry for this event
 - Whether the recipient is a single user or a set of users (changes the fan-out approach)
+- **Whether an `EMAIL_ACTIONS` constant, in-app notification, or call-site trigger for
+  this exact event already exists from a related prior ticket.** Email and in-app
+  notifications for the same trigger are sometimes implemented separately — if the
+  constant or in-app piece already exists, reuse it rather than adding a duplicate
+  constant, and only build the missing email touch points (template, handler,
+  registration, trigger helper, call-site wiring).
 
 ---
 
