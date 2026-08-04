@@ -68,6 +68,11 @@ describe('RegionalDashboard constants', () => {
       expect(MONITORING_FILTER_CONFIG).toBeDefined();
     });
 
+    it('includes program specialist filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('programSpecialist');
+    });
+
     it('includes state or territory filtering', () => {
       const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
       expect(filterIds).toContain('stateCode');

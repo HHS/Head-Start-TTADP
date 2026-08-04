@@ -1,6 +1,7 @@
 import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
 import { withFindingType, withoutFindingType } from './findingType';
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
 import { withoutRegion, withRegion } from './regionId';
 import {
   afterReportDeliveryDate,
@@ -20,6 +21,10 @@ export const topicToQuery = {
   findingType: {
     in: (query: string[]) => withFindingType(query),
     nin: (query: string[]) => withoutFindingType(query),
+  },
+  programSpecialist: {
+    ctn: (query: string[]) => withProgramSpecialist(query),
+    nctn: (query: string[]) => withoutProgramSpecialist(query),
   },
   stateCode: {
     ctn: (query: string[]) => withStateCode(query),
