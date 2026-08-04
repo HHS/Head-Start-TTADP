@@ -215,6 +215,7 @@ describe('Activity Reports model', () => {
           activityReportId: report.id,
           objectiveId: objective.id,
           status: objective.status,
+          supportType: 'Planning',
         })
       )
     );

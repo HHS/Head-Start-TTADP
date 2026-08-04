@@ -435,30 +435,35 @@ describe('activity report model hooks', () => {
         activityReportId: reportForClosedGoalTest.id,
         status: 'In Progress',
         objectiveId: closedObjectiveForClosedGoalTest.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: reportForClosedGoalTest.id,
         status: 'In Progress',
         objectiveId: inProgressObjectiveForClosedGoalTest.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: submittedReportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: submittedReportClosedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: reportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: closedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: approvedReportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: approvedReportClosedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityRecipient.create({
@@ -832,6 +837,7 @@ describe('activity report model hooks', () => {
         activityReportId: report.id,
         status: 'In Progress',
         objectiveId: objective.id,
+        supportType: 'Planning',
       });
 
       const testGoal = await Goal.findByPk(goal.id);
@@ -907,6 +913,7 @@ describe('activity report model hooks', () => {
         objectiveId: objective2.id,
         closeSuspendReason: 'Recipient request',
         closeSuspendContext: 'It was a request from the recipient',
+        supportType: 'Planning',
       });
 
       let testGoal = await Goal.findByPk(goal.id);
