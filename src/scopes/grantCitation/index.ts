@@ -2,12 +2,14 @@ import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
 import { withFindingCategory, withoutFindingCategory } from './findingCategory';
 import { withFindingType, withoutFindingType } from './findingType';
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
 import { withoutRegion, withRegion } from './regionId';
 import {
   afterReportDeliveryDate,
   beforeReportDeliveryDate,
   withinReportDeliveryDates,
 } from './reportDeliveryDate';
+import { withStateCode } from './stateCode';
 
 export const topicToQuery = {
   citationRecipient: {
@@ -24,6 +26,13 @@ export const topicToQuery = {
   findingCategory: {
     in: (query: string[]) => withFindingCategory(query),
     nin: (query: string[]) => withoutFindingCategory(query),
+  },
+  programSpecialist: {
+    ctn: (query: string[]) => withProgramSpecialist(query),
+    nctn: (query: string[]) => withoutProgramSpecialist(query),
+  },
+  stateCode: {
+    ctn: (query: string[]) => withStateCode(query),
   },
   reportDeliveryDate: {
     bef: (query: string[]) => beforeReportDeliveryDate(query),

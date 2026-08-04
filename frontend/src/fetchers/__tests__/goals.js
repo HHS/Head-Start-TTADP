@@ -22,6 +22,24 @@ describe('goals fetcher', () => {
     expect(fetchMock.called()).toBeTruthy();
   });
 
+  it('includes structured validation details when a goal status update is blocked', async () => {
+    fetchMock.put('/api/goals/changeStatus', {
+      status: 409,
+      body: {
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      },
+    });
+
+    await expect(updateGoalStatus([4598], GOAL_STATUS.CLOSED)).rejects.toMatchObject({
+      status: 409,
+      data: {
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      },
+    });
+  });
+
   it('gets missing data', async () => {
     const url = '/api/goals/region/123/incomplete?goalIds=1&goalIds=2';
     fetchMock.get(url, { res: 'ok' });

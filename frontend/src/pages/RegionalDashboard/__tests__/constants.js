@@ -1,4 +1,8 @@
-import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from '../constants';
+import {
+  DASHBOARD_FILTER_CONFIG,
+  MONITORING_FILTER_CONFIG,
+  RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
+} from '../constants';
 
 describe('RegionalDashboard constants', () => {
   describe('RECIPIENT_SPOTLIGHT_FILTER_CONFIG', () => {
@@ -53,6 +57,29 @@ describe('RegionalDashboard constants', () => {
 
     it('filters are sorted alphabetically by display name', () => {
       const displays = DASHBOARD_FILTER_CONFIG.map((filter) => filter.display);
+      const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
+
+      expect(displays).toEqual(sortedDisplays);
+    });
+  });
+
+  describe('MONITORING_FILTER_CONFIG', () => {
+    it('exports MONITORING_FILTER_CONFIG', () => {
+      expect(MONITORING_FILTER_CONFIG).toBeDefined();
+    });
+
+    it('includes program specialist filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('programSpecialist');
+    });
+
+    it('includes state or territory filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('stateCode');
+    });
+
+    it('filters are sorted alphabetically by display name', () => {
+      const displays = MONITORING_FILTER_CONFIG.map((filter) => filter.display);
       const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
 
       expect(displays).toEqual(sortedDisplays);

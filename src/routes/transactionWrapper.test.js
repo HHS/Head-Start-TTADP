@@ -145,6 +145,40 @@ describe('transactionWrapper', () => {
     expect(req.inTransactionWrapper).toBeUndefined();
   });
 
+  it('rolls back before returning a structured HTTP error', async () => {
+    const error = Object.assign(new Error('Blocked'), {
+      statusCode: 409,
+      responseBody: {
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      },
+    });
+    let transactionCallbackRejected = false;
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      try {
+        return await callback({ id: 'transaction-id' });
+      } catch (err) {
+        transactionCallbackRejected = true;
+        throw err;
+      }
+    });
+    originalFunction = jest.fn().mockRejectedValue(error);
+    wrapper = transactionWrapper(originalFunction);
+    const json = jest.fn();
+    const req = {};
+    const res = {
+      status: jest.fn(() => ({ json })),
+    };
+
+    await wrapper(req, res, jest.fn());
+
+    expect(transactionCallbackRejected).toBe(true);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(json).toHaveBeenCalledWith(error.responseBody);
+    expect(handleErrors).not.toHaveBeenCalled();
+    expect(req.inTransactionWrapper).toBeUndefined();
+  });
+
   it('should call hasModifiedData and throw error if data is modified in readOnlyTransactionWrapper', async () => {
     originalFunction = jest.fn().mockResolvedValue('result');
     wrapper = readOnlyTransactionWrapper(originalFunction);
