@@ -2,6 +2,7 @@ const httpContext = require('express-http-context');
 const { Op, ValidationError, ValidationErrorItem } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const activityReportSchema = require('../schemas/activityReport');
+const activityReportObjectivesSchema = require('../schemas/activityReportObjective');
 const {
   OBJECTIVE_STATUS,
   GOAL_COLLABORATORS,
@@ -1115,9 +1116,37 @@ const validateForApproval = (instance) => {
   }
 };
 
+const validateObjectiveSupportTypesForSubmission = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (
+    !Array.isArray(changed) ||
+    !changed.includes('submissionStatus') ||
+    instance.submissionStatus !== REPORT_STATUSES.SUBMITTED
+  ) {
+    return;
+  }
+
+  const objectives = await sequelize.models.ActivityReportObjective.findAll({
+    attributes: ['id', 'supportType'],
+    where: { activityReportId: instance.id },
+    transaction: options?.transaction,
+    raw: true,
+  });
+
+  const { error } = activityReportObjectivesSchema.validate(objectives, { abortEarly: true });
+  if (error) {
+    const items = error.details.map(
+      (d) =>
+        new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value)
+    );
+    throw new ValidationError('Activity report validation failed', items);
+  }
+};
+
 const beforeUpdate = async (sequelize, instance, options) => {
   validateForSubmission(instance);
   validateForApproval(instance);
+  await validateObjectiveSupportTypesForSubmission(sequelize, instance, options);
   copyStatus(instance);
   purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
@@ -1162,4 +1191,5 @@ export {
   setSubmittedDate,
   validateForApproval,
   validateForSubmission,
+  validateObjectiveSupportTypesForSubmission,
 };

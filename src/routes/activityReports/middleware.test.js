@@ -1,24 +1,10 @@
 import { APPROVER_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
-import db from '../../models';
-import {
-  checkReportObjectiveSupportType,
-  checkReviewReportBody,
-  checkSubmitReportBody,
-} from './middleware';
+import { checkReviewReportBody, checkSubmitReportBody } from './middleware';
 
 jest.mock('../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
-  },
-}));
-
-jest.mock('../../models', () => ({
-  __esModule: true,
-  default: {
-    ActivityReportObjective: {
-      count: jest.fn(),
-    },
   },
 }));
 
@@ -242,69 +228,6 @@ describe('activityReports submitReport middleware', () => {
     checkSubmitReportBody(mockRequest, res, mockNext);
 
     expect(mockNext).toHaveBeenCalled();
-    expect(res.status).not.toHaveBeenCalled();
-  });
-});
-
-describe('activityReports checkReportObjectiveSupportType middleware', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockResponse = () => {
-    const send = jest.fn();
-    return {
-      send,
-      res: {
-        status: jest.fn(() => ({ send })),
-      },
-    };
-  };
-
-  it('returns 400 when an objective is missing a support type', async () => {
-    db.ActivityReportObjective.count.mockResolvedValueOnce(1);
-    const mockRequest = { params: { activityReportId: '65265' } };
-    const { res, send } = mockResponse();
-    const mockNext = jest.fn();
-
-    await checkReportObjectiveSupportType(mockRequest, res, mockNext);
-
-    expect(db.ActivityReportObjective.count).toHaveBeenCalledWith({
-      where: {
-        activityReportId: '65265',
-        supportType: expect.anything(),
-      },
-    });
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(send).toHaveBeenCalledWith(
-      'Unable to submit report: all objectives must have a support type',
-    );
-    expect(auditLogger.error).toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  it('calls next when all objectives have a support type', async () => {
-    db.ActivityReportObjective.count.mockResolvedValueOnce(0);
-    const mockRequest = { params: { activityReportId: '65265' } };
-    const { res } = mockResponse();
-    const mockNext = jest.fn();
-
-    await checkReportObjectiveSupportType(mockRequest, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith();
-    expect(res.status).not.toHaveBeenCalled();
-  });
-
-  it('passes errors to next when the count query fails', async () => {
-    const dbError = new Error('db exploded');
-    db.ActivityReportObjective.count.mockRejectedValueOnce(dbError);
-    const mockRequest = { params: { activityReportId: '65265' } };
-    const { res } = mockResponse();
-    const mockNext = jest.fn();
-
-    await checkReportObjectiveSupportType(mockRequest, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(dbError);
     expect(res.status).not.toHaveBeenCalled();
   });
 });

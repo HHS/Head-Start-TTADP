@@ -16,7 +16,12 @@ import db, {
   Recipient,
   User,
 } from '..';
-import { copyStatus, validateForApproval, validateForSubmission } from '../hooks/activityReport';
+import {
+  copyStatus,
+  validateForApproval,
+  validateForSubmission,
+  validateObjectiveSupportTypesForSubmission,
+} from '../hooks/activityReport';
 
 jest.mock('bull');
 
@@ -342,6 +347,87 @@ describe('Activity Reports model', () => {
         hybridDataValues
       );
       expect(() => validateForSubmission(instance)).toThrow(ValidationError);
+    });
+  });
+
+  describe('validateObjectiveSupportTypesForSubmission', () => {
+    const makeSequelize = (objectives) => ({
+      models: {
+        ActivityReportObjective: {
+          findAll: jest.fn().mockResolvedValue(objectives),
+        },
+      },
+    });
+
+    const makeInstance = (submissionStatus, changed) => ({
+      id: 123,
+      submissionStatus,
+      changed: () => changed,
+    });
+
+    it('does not query when the status change is not to SUBMITTED', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.DRAFT, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).not.toHaveBeenCalled();
+    });
+
+    it('does not query when submissionStatus is not in changed fields', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['duration']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when every objective has a support type', async () => {
+      const sequelize = makeSequelize([
+        { id: 1, supportType: 'Planning' },
+        { id: 2, supportType: 'Implementing' },
+      ]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { activityReportId: 123 } })
+      );
+    });
+
+    it('does not throw when the report has no objectives', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+    });
+
+    it('throws ValidationError when an objective is missing a support type', async () => {
+      const sequelize = makeSequelize([
+        { id: 1, supportType: 'Planning' },
+        { id: 2, supportType: null },
+      ]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when an objective has an invalid support type', async () => {
+      const sequelize = makeSequelize([{ id: 1, supportType: 'NotARealSupportType' }]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).rejects.toThrow(ValidationError);
     });
   });
 

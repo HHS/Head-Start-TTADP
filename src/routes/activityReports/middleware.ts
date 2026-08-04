@@ -3,11 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment-timezone';
-import { Op } from 'sequelize';
 import { auditLogger } from '../../logger';
-import db from '../../models';
-
-const { ActivityReportObjective } = db;
 
 const errorMessage = 'Received malformed request body';
 
@@ -66,41 +62,4 @@ export function checkSubmitReportBody(req: Request, res: Response, next: NextFun
   }
 
   return next();
-}
-
-/**
- * Ensures every objective on the report has a support type before the report can be
- * submitted for review. This is enforced server-side because the client-side page
- * completeness check is the only other guard, and reports can otherwise enter review
- * (or block a manager from returning them) with a missing support type.
- *
- * The `activityReportId` param is validated as a positive integer by
- * `checkActivityReportIdParam`, which runs earlier in the route chain.
- */
-export async function checkReportObjectiveSupportType(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
-    const { activityReportId } = req.params;
-
-    // supportType is an enum column, so it can only be NULL or a valid value.
-    const objectivesMissingSupportType = await ActivityReportObjective.count({
-      where: {
-        activityReportId,
-        supportType: { [Op.is]: null },
-      },
-    });
-
-    if (objectivesMissingSupportType > 0) {
-      const msg = 'Unable to submit report: all objectives must have a support type';
-      auditLogger.error(`${msg} (activityReportId: ${activityReportId})`);
-      return res.status(httpCodes.BAD_REQUEST).send(msg);
-    }
-
-    return next();
-  } catch (err) {
-    return next(err);
-  }
 }
