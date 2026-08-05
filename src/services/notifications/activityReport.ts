@@ -128,6 +128,28 @@ async function createCollaboratorSubmittedNotification(
   );
 }
 
+async function createCreatorSubmittedNotification(
+  creatorUserId: number,
+  savedReport: {
+    id: number;
+    displayId: string;
+  },
+  submitterName: string
+) {
+  return createNotification(
+    creatorUserId,
+    savedReport.id,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+    {
+      metadata: {
+        id: savedReport.id,
+        displayId: savedReport.displayId,
+        author: submitterName,
+      },
+    }
+  );
+}
+
 /**
  * Archives the "needs action" in-app notifications for an activity report.
  * Called when a report is (re)submitted for approval so that any pending needs-action
@@ -147,5 +169,6 @@ export {
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
+  createCreatorSubmittedNotification,
   createNotificationForCollaborators,
 };

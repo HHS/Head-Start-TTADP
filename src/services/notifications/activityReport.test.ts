@@ -4,6 +4,7 @@ import {
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
+  createCreatorSubmittedNotification,
   createNotificationForCollaborators,
 } from './activityReport';
 
@@ -137,6 +138,46 @@ describe('activityReport notification helpers', () => {
       const result = await createCollaboratorSubmittedNotification([], reportWithAuthor);
       expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createCreatorSubmittedNotification', () => {
+    const reportBase = {
+      id: 1,
+      displayId: 'AR-123',
+    };
+
+    it('calls createNotification once with the ACTIVITY_REPORT_SUBMITTED_CREATOR type', async () => {
+      const creatorUserId = 42;
+      const submitterName = 'Bob Smith';
+      await createCreatorSubmittedNotification(creatorUserId, reportBase, submitterName);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        creatorUserId,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+        expect.objectContaining({ metadata: expect.any(Object) })
+      );
+    });
+
+    it('passes id, displayId and author (submitterName) in metadata', async () => {
+      const creatorUserId = 42;
+      const submitterName = 'Bob Smith';
+      await createCreatorSubmittedNotification(creatorUserId, reportBase, submitterName);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        creatorUserId,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            author: submitterName,
+          },
+        }
+      );
     });
   });
 

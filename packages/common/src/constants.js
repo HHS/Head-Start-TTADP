@@ -639,6 +639,8 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   //
   ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator',
+  // AR-3c: Collaborator submits report that creator created (new)
+  ACTIVITY_REPORT_SUBMITTED_CREATOR: 'approverAssignedCreator',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
   // Recipient notified when their AR is approved (existing)

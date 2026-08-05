@@ -49,6 +49,7 @@ import {
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
+  createCreatorSubmittedNotification,
   createNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -746,6 +747,11 @@ export async function submitReport(req, res) {
       report.activityReportCollaborators || [],
       savedReport
     );
+
+    // Notify creator when a collaborator (not the creator) submits the report
+    if (report.author && report.author.id !== userId) {
+      await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+    }
 
     // Notify collaborators that the report has been submitted for approval
     if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {
