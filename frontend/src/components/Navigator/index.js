@@ -17,7 +17,7 @@ import Container from '../Container';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import NavigatorHeader from './components/NavigatorHeader';
 import SideNav from './components/SideNav';
-import { COMPLETE, IN_PROGRESS } from './constants';
+import { COMPLETE, GOALS_OBJECTIVES_PATH, IN_PROGRESS } from './constants';
 
 const Navigator = ({
   formData,
@@ -151,7 +151,7 @@ const Navigator = ({
     // truth) and downgrade a stale Complete to In progress. This only ever downgrades,
     // so a page that still passes its check is unaffected.
     if (
-      p.path === 'goals-objectives' &&
+      p.path === GOALS_OBJECTIVES_PATH &&
       stateOfPage === COMPLETE &&
       typeof p.isPageComplete === 'function' &&
       !p.isPageComplete(getValues(), formState)
