@@ -10,6 +10,7 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorReportSubmittedForReviewNotification,
+  creatorReportSubmittedForReviewNotification,
   programSpecialistRecipientReportApprovedNotification,
   reportApprovedNotification,
 } from '../../lib/mailer';
@@ -751,6 +752,14 @@ export async function submitReport(req, res) {
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {
       await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+
+      const creatorSetting = await userSettingOverridesById(
+        report.author.id,
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW
+      );
+      if (creatorSetting && creatorSetting.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
+        creatorReportSubmittedForReviewNotification(savedReport, report.author);
+      }
     }
 
     // Notify collaborators that the report has been submitted for approval

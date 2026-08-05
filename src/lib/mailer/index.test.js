@@ -20,6 +20,7 @@ import {
   collaboratorDigest,
   collaboratorReportSubmittedForReviewDigest,
   collaboratorReportSubmittedForReviewNotification,
+  creatorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
@@ -29,6 +30,7 @@ import {
   notifyChangesRequested,
   notifyCollaboratorAssigned,
   notifyCollaboratorReportSubmittedForReview,
+  notifyCreatorReportSubmittedForReview,
   notifyDigest,
   notifyRecipientReportApproved,
   notifyReportApproved,
@@ -714,6 +716,60 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
         expect.objectContaining({ report: mockReport, collaborator: collaborators[1].user })
+      );
+    });
+  });
+
+  describe('Creator: Report submitted for approval', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockAuthor.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId}, which you created, has been submitted for approval.`
+      );
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('Returns null if there are no toEmails', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: { email: null } },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('enqueues one job for the creator', () => {
+      jest.spyOn(notificationQueueMock, 'add').mockClear();
+      creatorReportSubmittedForReviewNotification(mockReport, mockAuthor);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, creator: mockAuthor })
       );
     });
   });
