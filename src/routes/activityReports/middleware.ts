@@ -4,6 +4,7 @@ import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment-timezone';
 import { auditLogger } from '../../logger';
+import { getObjectiveSupportTypeSubmissionError } from '../../services/activityReports';
 
 const errorMessage = 'Received malformed request body';
 
@@ -57,6 +58,19 @@ export function checkSubmitReportBody(req: Request, res: Response, next: NextFun
 
   if (error) {
     const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  return next();
+}
+
+export async function checkObjectiveSupportTypes(req: Request, res: Response, next: NextFunction) {
+  const { activityReportId } = req.params;
+
+  const msg = await getObjectiveSupportTypeSubmissionError(activityReportId);
+
+  if (msg) {
     auditLogger.error(msg);
     return res.status(httpCodes.BAD_REQUEST).send(msg);
   }

@@ -30,7 +30,11 @@ import {
   unlockReport,
   updateLegacyFields,
 } from './handlers';
-import { checkReviewReportBody, checkSubmitReportBody } from './middleware';
+import {
+  checkObjectiveSupportTypes,
+  checkReviewReportBody,
+  checkSubmitReportBody,
+} from './middleware';
 
 const router = express.Router();
 
@@ -93,6 +97,7 @@ router.put(
   '/:activityReportId/submit',
   checkActivityReportIdParam,
   checkSubmitReportBody,
+  checkObjectiveSupportTypes,
   transactionWrapper(submitReport)
 );
 router.put(
