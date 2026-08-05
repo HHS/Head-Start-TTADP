@@ -1,5 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { DECIMAL_BASE } from '@ttahub/common';
+import stringify from 'csv-stringify/lib/sync';
+import moment from 'moment';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -13,11 +15,68 @@ const logContext = {
   namespace,
 };
 
+// CSV export column definitions. The first three are the recipient identity
+// columns, followed by the seven priority indicators (DRS is intentionally
+// excluded — it is hidden in the UI and only returned as a placeholder).
+const CSV_COLUMNS = [
+  { key: 'recipientName', header: 'Recipient name' },
+  { key: 'regionId', header: 'Region' },
+  { key: 'lastTTA', header: 'Last TTA' },
+  { key: 'childIncidents', header: 'Child incidents' },
+  { key: 'deficiency', header: 'Deficiency' },
+  { key: 'FEI', header: 'FEI' },
+  { key: 'newRecipients', header: 'New recipient' },
+  { key: 'newStaff', header: 'New staff' },
+  { key: 'noTTA', header: 'No TTA' },
+  { key: 'underenrolled', header: 'Underenrolled' },
+];
+
+const INDICATOR_KEYS = [
+  'childIncidents',
+  'deficiency',
+  'FEI',
+  'newRecipients',
+  'newStaff',
+  'noTTA',
+  'underenrolled',
+];
+
+// Prevent CSV formula injection by prefixing values that Excel/Sheets would
+// otherwise evaluate as a formula with a single quote.
+function sanitizeCsvValue(value) {
+  if (typeof value !== 'string' || value.length === 0) {
+    return value;
+  }
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
+function formatLastTTAForCsv(lastTTA) {
+  if (!lastTTA) {
+    return '';
+  }
+  const date = moment(lastTTA, 'YYYY-MM-DD', true);
+  return date.isValid() ? date.format('MM/DD/YYYY') : '';
+}
+
+function recipientToCsvRecord(recipient) {
+  const record = {
+    recipientName: sanitizeCsvValue(recipient.recipientName || ''),
+    regionId: recipient.regionId,
+    lastTTA: formatLastTTAForCsv(recipient.lastTTA),
+  };
+  INDICATOR_KEYS.forEach((key) => {
+    record[key] = recipient[key] ? 'Yes' : 'No';
+  });
+  return record;
+}
+
 /*
 getRecipientSpotLight():
  Get the recipient spotlights (indicators) for a region,
  the recipient param is optional and if not defined will return all
  recipients in that region.
+ When `format=csv` is supplied, the full (unpaginated) result set is
+ returned as a downloadable CSV file instead of JSON.
 */
 export async function getRecipientSpotLight(req, res) {
   try {
@@ -26,13 +85,19 @@ export async function getRecipientSpotLight(req, res) {
       direction,
       offset,
       limit,
+      format,
       mustHaveIndicators: rawMustHaveIndicators,
     } = req.query;
     const mustHaveIndicators = rawMustHaveIndicators === 'true';
+    const isCsv = format === 'csv';
 
-    // Parse pagination params to integers
-    const parsedOffset = offset ? parseInt(offset, DECIMAL_BASE) : 0;
-    const parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+    // Parse pagination params to integers. For CSV exports we return every row
+    // that matches the current filters/sort, so pagination is bypassed.
+    const parsedOffset = isCsv || !offset ? 0 : parseInt(offset, DECIMAL_BASE);
+    let parsedLimit = null;
+    if (!isCsv) {
+      parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+    }
 
     // Parse and validate parsedGrantId to prevent SQL injection;
     // treat missing or non-numeric values as null
@@ -74,6 +139,22 @@ export async function getRecipientSpotLight(req, res) {
       res.sendStatus(404);
       return;
     }
+
+    if (isCsv) {
+      const records = (recipientSpotlightData.recipients || []).map(recipientToCsvRecord);
+      const csv = stringify(records, {
+        header: true,
+        columns: CSV_COLUMNS,
+        quoted: true,
+        quoted_empty: true,
+      });
+      res.attachment('recipient-spotlight.csv');
+      res.type('text/csv');
+      // Prepend a BOM so Excel opens UTF-8 content correctly.
+      res.send(`\ufeff${csv}`);
+      return;
+    }
+
     res.json(recipientSpotlightData);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
