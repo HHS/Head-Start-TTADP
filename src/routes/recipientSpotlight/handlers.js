@@ -96,7 +96,8 @@ export async function getRecipientSpotLight(req, res) {
     const parsedOffset = isCsv || !offset ? 0 : parseInt(offset, DECIMAL_BASE);
     let parsedLimit = null;
     if (!isCsv) {
-      parsedLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+      const candidateLimit = limit ? parseInt(limit, DECIMAL_BASE) : 10;
+      parsedLimit = Number.isInteger(candidateLimit) && candidateLimit > 0 ? candidateLimit : 10;
     }
 
     // Parse and validate parsedGrantId to prevent SQL injection;
