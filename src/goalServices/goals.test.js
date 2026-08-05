@@ -40,11 +40,15 @@ import {
   verifyAllowedGoalStatusTransition,
 } from './goals';
 import { reduceGoals } from './reduceGoals';
+import { validateGoalStatusChange } from './validateGoalStatusChange';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
   default: jest.fn(),
+}));
+jest.mock('./validateGoalStatusChange', () => ({
+  validateGoalStatusChange: jest.fn(),
 }));
 
 jest.mock('../services/citations');
@@ -1090,6 +1094,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: mockReason,
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
       expect(changeGoalStatus).toHaveBeenCalledWith({
         goalId: mockGoalIds[1],
@@ -1097,6 +1102,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: mockReason,
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
     });
 
@@ -1117,6 +1123,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: 'Unknown',
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
     });
 
@@ -1153,6 +1160,32 @@ describe('Goals DB service', () => {
       );
 
       expect(changeGoalStatus).toHaveBeenCalledTimes(2);
+    });
+
+    it('blocks closure before changing any goals when an active report exists', async () => {
+      validateGoalStatusChange.mockRejectedValueOnce(
+        Object.assign(new Error('Goal status change blocked'), {
+          code: 'GOAL_STATUS_CHANGE_BLOCKED',
+          reasons: ['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'],
+        })
+      );
+
+      await expect(
+        updateGoalStatusById(
+          mockGoalIds,
+          mockUserId,
+          mockOldStatus,
+          mockNewStatus,
+          mockReason,
+          mockContext,
+          mockPreviousStatus
+        )
+      ).rejects.toMatchObject({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'],
+      });
+
+      expect(changeGoalStatus).not.toHaveBeenCalled();
     });
   });
 

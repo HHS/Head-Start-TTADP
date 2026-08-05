@@ -296,6 +296,47 @@ describe('objectives handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
     });
 
+    it('prevents moving a completed objective back to in progress when its goal is closed', async () => {
+      const user = {
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      userById.mockResolvedValue(user);
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.COMPLETE,
+          goal: {
+            status: 'Closed',
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(
+        {
+          ...mockRequest,
+          body: {
+            ids: [1],
+            regionId: 1,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+          },
+        },
+        mockResponse
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(updateObjectiveStatusByIds).not.toHaveBeenCalled();
+    });
+
     it('successfully updates status for a user with regional permissions', async () => {
       const user = {
         id: 1,

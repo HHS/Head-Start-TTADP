@@ -30,8 +30,10 @@ import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
 
 const MONITORING_FILTER_CONFIG = [
   findingTypeFilter,
+  programSpecialistFilter,
   reviewTypeFilter,
   regionFilter,
+  stateCodeFilter,
   {
     ...startDateFilter,
     display: 'Date',

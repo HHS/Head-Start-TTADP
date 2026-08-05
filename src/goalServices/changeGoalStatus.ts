@@ -1,6 +1,7 @@
 import moment from 'moment';
 import type * as Sequelize from 'sequelize';
 import db from '../models';
+import { validateGoalStatusChange } from './validateGoalStatusChange';
 
 interface GoalStatusChangeParams {
   goalId: number;
@@ -10,6 +11,7 @@ interface GoalStatusChangeParams {
   context: string;
   performedAt?: string;
   forceStatusChange?: boolean;
+  skipGoalStatusValidation?: boolean;
   transaction?: Sequelize.Transaction;
 }
 
@@ -18,9 +20,10 @@ export async function changeGoalStatusWithSystemUser({
   newStatus,
   reason,
   context,
+  transaction,
 }: GoalStatusChangeParams) {
   // Lookup goal.
-  const goal = await db.Goal.findByPk(goalId);
+  const goal = await db.Goal.findByPk(goalId, { transaction });
 
   // Error if goal not found.
   if (!goal) {
@@ -29,19 +32,24 @@ export async function changeGoalStatusWithSystemUser({
 
   // Only create status change if status is actually changing
   if (goal.status !== newStatus) {
-    await db.GoalStatusChange.create({
-      goalId: goal.id,
-      userId: null, // For now we will use null to prevent FK constraint violation.
-      userName: 'system',
-      userRoles: null,
-      oldStatus: goal.status,
-      newStatus,
-      reason,
-      context,
-      performedAt: null,
-    });
+    await validateGoalStatusChange(goalId, newStatus, { transaction });
 
-    await goal.reload();
+    await db.GoalStatusChange.create(
+      {
+        goalId: goal.id,
+        userId: null, // For now we will use null to prevent FK constraint violation.
+        userName: 'system',
+        userRoles: null,
+        oldStatus: goal.status,
+        newStatus,
+        reason,
+        context,
+        performedAt: null,
+      },
+      { transaction }
+    );
+
+    await goal.reload({ transaction });
   }
 
   return goal;
@@ -55,6 +63,8 @@ export default async function changeGoalStatus({
   context,
   performedAt,
   forceStatusChange = false,
+  skipGoalStatusValidation = false,
+  transaction,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -70,12 +80,17 @@ export default async function changeGoalStatus({
           },
         },
       ],
+      transaction,
     }),
-    db.Goal.findByPk(goalId),
+    db.Goal.findByPk(goalId, { transaction }),
   ]);
 
   if (!goal || !user) {
     throw new Error('Goal or user not found');
+  }
+
+  if (!skipGoalStatusValidation && (goal.status !== newStatus || forceStatusChange)) {
+    await validateGoalStatusChange(goalId, newStatus, { transaction });
   }
 
   const oldStatus = goal.status;
@@ -93,8 +108,8 @@ export default async function changeGoalStatus({
   };
 
   if (oldStatus !== newStatus || forceStatusChange) {
-    await db.GoalStatusChange.create(change);
-    await goal.reload();
+    await db.GoalStatusChange.create(change, { transaction });
+    await goal.reload({ transaction });
   }
 
   return goal;
