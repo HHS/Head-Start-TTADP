@@ -52,6 +52,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createReportApprovedNotification,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -537,6 +538,15 @@ export async function reviewReport(req, res) {
         report,
         programSpecialists,
         activityRecipients
+      );
+
+      await createReportApprovedNotification(
+        reviewedReport.author.id,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
       );
     }
 

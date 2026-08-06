@@ -699,6 +699,41 @@ describe('Notification service', () => {
           expect(dbNotification).toBeNull();
         });
       });
+
+      describe('ACTIVITY_REPORT_APPROVED (settingsKey: inAppWhenReportApproval)', () => {
+        const approvedMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
+          id,
+          displayId: `R01-AR-${id}`,
+          recipientName: faker.company.companyName(),
+          approver: faker.name.findName(),
+        });
+
+        it('returns null and does not create a notification when user setting is "false"', async () => {
+          const metadata = approvedMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          await createTrackedUserSettingOverride('inAppWhenReportApproval', 'false');
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+            { metadata }
+          );
+
+          expect(result).toBeNull();
+
+          const dbNotification = await Notification.findOne({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+            },
+          });
+
+          expect(dbNotification).toBeNull();
+        });
+      });
     });
   });
 

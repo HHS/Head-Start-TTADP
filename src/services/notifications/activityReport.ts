@@ -150,6 +150,35 @@ async function createCreatorSubmittedNotification(
   );
 }
 
+async function createReportApprovedNotification(
+  creatorUserId: number,
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+  },
+  approverName: string
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return createNotification(
+    creatorUserId,
+    savedReport.id,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+    {
+      metadata: {
+        id: savedReport.id,
+        displayId: savedReport.displayId,
+        recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+        approver: approverName,
+      },
+      skipExisting: 'archived',
+    }
+  );
+}
+
 /**
  * Archives the "needs action" in-app notifications for an activity report.
  * Called when a report is (re)submitted for approval so that any pending needs-action
@@ -171,4 +200,5 @@ export {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createReportApprovedNotification,
 };
