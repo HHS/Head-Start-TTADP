@@ -7,9 +7,7 @@ import { filterSelectProps } from './props';
 export default function FilterFindingCategory({ onApply, inputId, query }) {
   const { data } = useFetch(
     [],
-    async () => {
-      return getFindingCategories();
-    },
+getFindingCategories,
     [],
     'Error fetching finding categories'
   );
