@@ -21,7 +21,7 @@ export async function withFindingCategory(categories: string[]) {
   const ids = await resolveValidCategoryIds(categories);
 
   if (!ids.length) {
-    return { id: { [Op.in]: [] } };
+    return;
   }
 
   return {
