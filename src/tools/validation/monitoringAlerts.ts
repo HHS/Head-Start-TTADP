@@ -25,7 +25,11 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       AND r.process_name = :processName
     ;
     `,
-    { raw: true, transaction, replacements: { processName: VALIDATION_PROCESS.MONITORING } }
+    {
+      raw: true,
+      transaction,
+      replacements: { processName: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+    }
   );
 
   await sequelize.query(

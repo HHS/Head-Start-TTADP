@@ -35,6 +35,18 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
+      // Soft reference to the import this run validated (ImportFiles.id); null when
+      // not tied to an import. Non-unique - runs of one cycle share a value.
+      import_id: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+      // The import's source data date (ImportFiles.ftpFileInfo.date, the value the
+      // import writes to the raw rows' sourceUpdatedAt).
+      source_updated_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       completed_at: {
         type: DataTypes.DATE,
         allowNull: true,

@@ -1,5 +1,6 @@
 import { VALIDATION_PROCESS } from '../constants';
 import refreshMonitoringAlerts from './validation/monitoringAlerts';
+import { getMonitoringImportCycle } from './validation/monitoringImportCycle';
 import refreshMonitoringObservations from './validation/monitoringObservations';
 import updateMonitoringTimeSeries from './validation/monitoringTimeSeries';
 import runValidation from './validation/runValidation';
@@ -22,10 +23,12 @@ import runValidation from './validation/runValidation';
  * (src/tools/validateMonitoringGate.ts).
  */
 const validateMonitoringData = async (): Promise<void> => {
+  const cycle = await getMonitoringImportCycle();
   await runValidation({
-    processName: VALIDATION_PROCESS.MONITORING,
+    processName: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
     logLabel: 'Monitoring Validation Alerts',
     steps: [updateMonitoringTimeSeries, refreshMonitoringObservations, refreshMonitoringAlerts],
+    cycle,
   });
 };
 

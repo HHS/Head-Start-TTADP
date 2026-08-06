@@ -15,34 +15,55 @@ import { sequelize } from '../../models';
  * The current run id is read from the validation_run temp table created by the
  * orchestrator (src/tools/validateMonitoringData.ts).
  *
- * Retention: this table holds one row per entity per observation per retained
- * run, so it would grow much too fast if every run were kept. For now only the
- * current run and the immediately previous run are retained (the previous run
- * enables run-over-run comparison). NOTE: a fuller retention/archival strategy
- * is future work.
+ * Retention is CYCLE-aware: this table keeps the current run and the latest run
+ * of the previous cycle (a different import_id, i.e. a different version of the
+ * imported data), so comparison is always against a different data version rather
+ * than a re-run over the same data. Re-running a process on the same cycle
+ * therefore replaces that cycle's prior run here. NOTE: a fuller retention /
+ * archival strategy is future work.
  *
  * Skeleton: four example observations.
  */
 const refreshMonitoringObservations = async (transaction: Transaction): Promise<void> => {
-  // Delete this process's observations from runs older than the immediately
-  // previous one (scoped through ValidationRuns.process_name so other
-  // validation processes are untouched). If there is no previous run the
-  // subquery is NULL and nothing is deleted.
+  // Keep only the current run and the latest run of the most recent EARLIER cycle
+  // (a different import_id / data version), scoped through
+  // ValidationRuns.process_name so other processes are untouched. This drops any
+  // prior run of the CURRENT cycle (a same-cycle re-run replaces its data) while
+  // preserving a different data version to compare against.
   await sequelize.query(
     `
-    DELETE FROM "ValidationRecords" vr
-    USING "ValidationRuns" r, validation_run cur
-    WHERE vr.run_id = r.id
+    WITH cur AS (
+      SELECT r.id AS run_id, r.import_id
+      FROM "ValidationRuns" r
+      JOIN validation_run v ON v.run_id = r.id
+    ),
+    prev_cycle_run AS (
+      SELECT r.id AS run_id
+      FROM "ValidationRuns" r
+      CROSS JOIN cur
+      WHERE r.process_name = :processName
+        AND r.id <> cur.run_id
+        AND r.import_id IS DISTINCT FROM cur.import_id
+      ORDER BY r.id DESC
+      LIMIT 1
+    ),
+    keep AS (
+      SELECT run_id FROM cur
+      UNION
+      SELECT run_id FROM prev_cycle_run
+    )
+    DELETE FROM "ValidationRecords" rec
+    USING "ValidationRuns" r
+    WHERE rec.run_id = r.id
       AND r.process_name = :processName
-      AND vr.run_id < (
-        SELECT MAX(id)
-        FROM "ValidationRuns"
-        WHERE process_name = :processName
-          AND id < cur.run_id
-      )
+      AND rec.run_id NOT IN (SELECT run_id FROM keep)
     ;
     `,
-    { raw: true, transaction, replacements: { processName: VALIDATION_PROCESS.MONITORING } }
+    {
+      raw: true,
+      transaction,
+      replacements: { processName: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+    }
   );
 
   await sequelize.query(

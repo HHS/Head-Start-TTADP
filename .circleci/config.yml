@@ -163,7 +163,8 @@ workflows:
     - run_import_job:
         serial-group: import-data/prod
         target_env: "prod"
-        slack_channel: acf-ohs-ttahub--contractor-customer-team
+        slack_channel: acf-head-start-alerts
+        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -188,7 +189,8 @@ workflows:
     jobs:
     - run_validation_watchdog:
         target_env: "prod"
-        slack_channel: acf-ohs-ttahub--contractor-customer-team
+        slack_channel: acf-head-start-alerts
+        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state
@@ -1390,6 +1392,9 @@ jobs:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
+      ohs_channel:
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1495,6 +1500,7 @@ jobs:
         step_when: always
         message_text_file: monitoring-updates.txt
         slack_channel: << parameters.slack_channel >>
+        ohs_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: import-artifacts
@@ -1532,6 +1538,9 @@ jobs:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
+      ohs_channel:
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1601,6 +1610,7 @@ jobs:
         step_when: always
         message_text_file: watchdog-summary.txt
         slack_channel: << parameters.slack_channel >>
+        ohs_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: watchdog-artifacts
@@ -2311,6 +2321,10 @@ commands:
         description: "Slack channel name to post the message to"
         default: "acf-head-start-alerts-lower"
         type: string
+      ohs_channel:
+        description: "Optional OHS contractor-customer channel to ALSO post the same message to, gated by the OHS_MONITORING_ALERTS_ENABLED env var. Empty = base channel only. See docs/monitoring-data-validation.md (Channels)."
+        type: string
+        default: ""
       message_text:
         description: "Message text to post to Slack"
         type: string
@@ -2352,6 +2366,31 @@ commands:
             exit 1
           else
             echo "Slack notification sent successfully"
+          fi
+
+          # Optionally mirror the same message to the OHS contractor-customer
+          # channel. Two independent guards so a lower environment can never leak
+          # there: the caller must pass a non-empty ohs_channel (only the prod
+          # invocations do), AND the OHS_MONITORING_ALERTS_ENABLED env var must be
+          # truthy (off by default). See docs/monitoring-data-validation.md
+          # (Channels).
+          OHS_CHANNEL="<< parameters.ohs_channel >>"
+          OHS_ENABLED=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
+          if [ -n "$OHS_CHANNEL" ] && { [ "$OHS_ENABLED" = "true" ] || [ "$OHS_ENABLED" = "1" ] || [ "$OHS_ENABLED" = "yes" ]; }; then
+            echo "OHS_MONITORING_ALERTS_ENABLED set; mirroring to ${OHS_CHANNEL}"
+            ohs_response=$(curl -s -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                \"channel\": \"${OHS_CHANNEL}\",
+                \"text\": \"$MESSAGE\"
+              }" \
+              https://slack.com/api/chat.postMessage)
+            if [ "$(echo $ohs_response | jq -r '.ok')" != "true" ]; then
+              echo "OHS Slack notification failed: $(echo $ohs_response | jq -r '.error')"
+            else
+              echo "OHS Slack notification sent successfully"
+            fi
           fi
 
 

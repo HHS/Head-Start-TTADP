@@ -10,8 +10,18 @@ import {
   ValidationRun,
 } from '../models';
 import validateMonitoringGate from './validateMonitoringGate';
+import { resolveGateHalt } from './validation/gateHaltPolicy';
 
 jest.mock('../logger');
+// The gate resolves an import cycle for its run; give it a fixed one (the resolver
+// itself is tested in monitoringImportCycle.test.js). Without this the test DB has
+// no processed import and the run would have no data version.
+jest.mock('./validation/monitoringImportCycle', () => ({
+  getMonitoringImportCycle: jest.fn().mockResolvedValue({
+    import_id: 95000,
+    source_updated_at: new Date('2026-08-01T00:00:00.000Z'),
+  }),
+}));
 
 // A status the seeded findings can reference. High id to avoid colliding with
 // seed data (shared test database).
@@ -106,11 +116,30 @@ describe('validateMonitoringGate', () => {
     expect(alert.severity).toBe(VALIDATION_ALERT_SEVERITY.CRITICAL);
   });
 
-  it('returns a critical verdict, which is what pauses the import', async () => {
-    // The runner only reports; validateMonitoringGateCLI acts on this count by
-    // exiting nonzero, which breaks the CI import phase loop before
-    // update_fact_tables. Asserting the verdict is asserting the gate decision.
+  it('returns a critical verdict, which is what the halt policy acts on', async () => {
+    // The runner only reports; the caller decides. validateMonitoringGateCLI feeds
+    // this verdict to resolveGateHalt (below) to decide whether to exit nonzero and
+    // block update_fact_tables.
     expect(firstResult.criticalCount).toBeGreaterThan(0);
+    expect(firstResult.alerts.map((a) => a.check_name)).toContain('findings_mass_source_deletion');
+  });
+
+  it('is report-only by default, so the critical does not block the fact-table refresh', () => {
+    // MONITORING_GATE_HALT_CHECKS unset -> the real critical is surfaced but not
+    // enforced. See docs/monitoring-data-validation.md ("Enforcement controls").
+    const decision = resolveGateHalt(firstResult.alerts, undefined);
+    expect(decision.mode).toBe('none');
+    expect(decision.shouldHalt).toBe(false);
+    expect(decision.criticalChecks).toContain('findings_mass_source_deletion');
+    expect(decision.haltingChecks).toEqual([]);
+  });
+
+  it('blocks when MONITORING_GATE_HALT_CHECKS opts the critical in', () => {
+    // The exact check name halts, as does 'all' appearing anywhere in a list.
+    expect(resolveGateHalt(firstResult.alerts, 'findings_mass_source_deletion').shouldHalt).toBe(
+      true
+    );
+    expect(resolveGateHalt(firstResult.alerts, 'open_ar_findings_gone, all').mode).toBe('all');
   });
 
   // PLACEHOLDER: open_ar_findings_gone is only smoke-covered here. Its SQL runs as

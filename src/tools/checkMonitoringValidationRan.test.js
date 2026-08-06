@@ -10,7 +10,7 @@ describe('checkMonitoringValidationRan', () => {
 
   const createRun = async (status, startedAt) => {
     const run = await ValidationRun.create({
-      process_name: VALIDATION_PROCESS.MONITORING,
+      process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
       status,
       started_at: startedAt,
       completed_at: status === VALIDATION_RUN_STATUS.STARTED ? null : startedAt,
@@ -27,7 +27,7 @@ describe('checkMonitoringValidationRan', () => {
       { started_at: new Date(Date.now() - 48 * 60 * 60 * 1000) },
       {
         where: {
-          process_name: VALIDATION_PROCESS.MONITORING,
+          process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
           started_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         },
       }

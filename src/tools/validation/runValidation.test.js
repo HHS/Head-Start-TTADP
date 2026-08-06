@@ -5,6 +5,10 @@ import runValidation from './runValidation';
 // A synthetic process name so cleanup never touches real validation runs.
 const PROCESS = 'test_run_validation';
 
+// A valid cycle for tests that don't care about cycle specifics (the runner
+// requires one - see the both-null rejection test).
+const CYCLE = { import_id: 4242, source_updated_at: new Date('2026-08-01T00:00:00.000Z') };
+
 // A step that inserts one critical and one non-critical alert for the current
 // run (read from the validation_run temp table the runner sets up).
 const insertAlertsStep = async (transaction) => {
@@ -51,6 +55,7 @@ describe('runValidation', () => {
       processName: PROCESS,
       logLabel: 'Test Validation',
       steps: [insertAlertsStep],
+      cycle: CYCLE,
     });
 
     expect(result.alertCount).toBe(2);
@@ -65,11 +70,54 @@ describe('runValidation', () => {
     expect(run.completed_at).not.toBeNull();
   });
 
+  it('stamps the run with the cycle it was given', async () => {
+    const result = await runValidation({
+      processName: PROCESS,
+      logLabel: 'Test Validation',
+      steps: [async () => {}],
+      cycle: { import_id: 4242, source_updated_at: new Date('2026-08-01T00:00:00.000Z') },
+    });
+
+    const run = await ValidationRun.findByPk(result.runId);
+    // BIGINT comes back as a string
+    expect(Number(run.import_id)).toBe(4242);
+    expect(new Date(run.source_updated_at).toISOString()).toBe('2026-08-01T00:00:00.000Z');
+  });
+
+  it('rejects a run with no identifiable data version (both cycle fields null)', async () => {
+    await expect(
+      runValidation({
+        processName: PROCESS,
+        logLabel: 'Test Validation',
+        steps: [async () => {}],
+        cycle: { import_id: null, source_updated_at: null },
+      })
+    ).rejects.toThrow(/data version/);
+
+    // nothing was recorded
+    const count = await ValidationRun.count({ where: { process_name: PROCESS } });
+    expect(count).toBe(0);
+  });
+
+  it('accepts a cycle with only a source date (no import id)', async () => {
+    const result = await runValidation({
+      processName: PROCESS,
+      logLabel: 'Test Validation',
+      steps: [async () => {}],
+      cycle: { import_id: null, source_updated_at: new Date('2026-08-01T00:00:00.000Z') },
+    });
+
+    const run = await ValidationRun.findByPk(result.runId);
+    expect(run.import_id).toBeNull();
+    expect(new Date(run.source_updated_at).toISOString()).toBe('2026-08-01T00:00:00.000Z');
+  });
+
   it('rolls numeric step return values up into stats_upserted', async () => {
     const result = await runValidation({
       processName: PROCESS,
       logLabel: 'Test Validation',
       steps: [async () => 3, async () => 4, async () => {}],
+      cycle: CYCLE,
     });
 
     expect(result.statsUpserted).toBe(7);
@@ -87,6 +135,7 @@ describe('runValidation', () => {
             throw new Error('step exploded');
           },
         ],
+        cycle: CYCLE,
       })
     ).rejects.toThrow('step exploded');
 

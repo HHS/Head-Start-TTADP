@@ -38,7 +38,7 @@ const easternTime = (date: Date): string =>
 const checkMonitoringValidationRan = async (): Promise<WatchdogResult> => {
   const run = await ValidationRun.findOne({
     where: {
-      process_name: VALIDATION_PROCESS.MONITORING,
+      process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
       started_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
     order: [['started_at', 'DESC']],

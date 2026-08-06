@@ -149,6 +149,44 @@ append_validation_summary() {
   printf 'Monitoring Validation: no result found\n' >> "$SUMMARY_FILE"
 }
 
+# Surface the gate's criticals alongside the alerts on every successful run, so
+# they always reach the alert channel whether or not gating is enabled - a
+# critical can fire without blocking (report-only, or a check not in the halt
+# list), and reaching this success path means nothing blocked. A critical that
+# DID block would have failed the phase and gone through append_gate_block_summary
+# instead. Parsed from the gate's single "Monitoring Gate: {...}" line so engineers
+# can see it in Slack without opening the logs. See
+# docs/monitoring-data-validation.md ("Enforcement controls").
+append_gate_summary() {
+  local results
+  local json_data
+  local critical_count
+  local critical
+  local as_of
+
+  if [[ -f "$gate_log" ]]; then
+    results=$(grep -o "Monitoring Gate: .*" "$gate_log" | tail -n 1 || true)
+    if [[ -n "$results" ]]; then
+      json_data=${results#*: }
+      as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
+      critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
+      if [[ "${critical_count:-0}" -gt 0 ]]; then
+        critical=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "critical") | .message, "\n"' 2>/dev/null || true)
+        {
+          printf 'Monitoring Gate Criticals (as of %s) - did not block the fact-table refresh: ```\n' "${as_of:-unknown}"
+          printf '%s\n' "$critical"
+          printf '```\n'
+        } >> "$SUMMARY_FILE"
+      else
+        printf 'Monitoring Gate: no critical findings (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+      fi
+      return
+    fi
+  fi
+
+  printf 'Monitoring Gate: no result found\n' >> "$SUMMARY_FILE"
+}
+
 write_success_summary() {
   local results
   local json_data
@@ -166,6 +204,7 @@ write_success_summary() {
           printf '```\n'
         } > "$SUMMARY_FILE"
         append_validation_summary
+        append_gate_summary
         return
       fi
     fi
@@ -173,6 +212,7 @@ write_success_summary() {
 
   printf 'Monitoring Updates: none\n' > "$SUMMARY_FILE"
   append_validation_summary
+  append_gate_summary
 }
 
 write_failure_summary() {

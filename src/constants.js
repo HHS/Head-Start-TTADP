@@ -350,7 +350,9 @@ const VALIDATION_RUN_STATUS = {
 };
 
 const VALIDATION_PROCESS = {
-  MONITORING: 'monitoring',
+  // post-refresh, non-blocking: time series + observations + threshold alerts
+  MONITORING_POST_REFRESH: 'monitoring_post_refresh',
+  // pre-refresh gate: critical-capable checks that can block the fact-table refresh
   MONITORING_GATE: 'monitoring_gate',
 };
 

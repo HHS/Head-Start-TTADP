@@ -25,8 +25,17 @@ import {
   ValidationTimeSeries,
 } from '../models';
 import validateMonitoringData from './validateMonitoringData';
+import { getMonitoringImportCycle } from './validation/monitoringImportCycle';
 
 jest.mock('../logger');
+// Control which import cycle each run is stamped with (resolver is exercised for
+// real in monitoringImportCycle.test.js). Defaults to one cycle; the retention
+// test overrides per call to simulate distinct data versions.
+jest.mock('./validation/monitoringImportCycle', () => ({
+  getMonitoringImportCycle: jest.fn(),
+}));
+
+const DEFAULT_CYCLE = { import_id: 90000, source_updated_at: new Date('2026-07-20T00:00:00.000Z') };
 
 // High ids to avoid colliding with seed data (shared test database)
 const REVIEW_STATUS_COMPLETE_ID = 90001;
@@ -73,6 +82,7 @@ describe('validateMonitoringData', () => {
   const reportDeliveryDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
   beforeAll(async () => {
+    getMonitoringImportCycle.mockResolvedValue(DEFAULT_CYCLE);
     await MonitoringReviewStatusLink.findOrCreate({
       where: { statusId: REVIEW_STATUS_COMPLETE_ID },
       defaults: linkTimestamps,
@@ -196,7 +206,7 @@ describe('validateMonitoringData', () => {
   afterAll(async () => {
     const runIds = (
       await ValidationRun.findAll({
-        where: { process_name: VALIDATION_PROCESS.MONITORING },
+        where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
         attributes: ['id'],
         raw: true,
       })
@@ -244,7 +254,7 @@ describe('validateMonitoringData', () => {
     await validateMonitoringData();
 
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING },
+      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
       order: [['id', 'DESC']],
     });
     expect(run.status).toBe(VALIDATION_RUN_STATUS.SUCCESS);
@@ -291,7 +301,7 @@ describe('validateMonitoringData', () => {
 
   it('captures per-entity observations for the seeded findings and review', async () => {
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING },
+      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
       order: [['id', 'DESC']],
     });
     const [closedFinding, noCategoryFinding] = await Promise.all([
@@ -347,7 +357,7 @@ describe('validateMonitoringData', () => {
 
   it('raises alerts derived from the observations', async () => {
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING },
+      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
       order: [['id', 'DESC']],
     });
     const alerts = await ValidationAlert.findAll({
@@ -359,16 +369,11 @@ describe('validateMonitoringData', () => {
     expect(checkNames).toContain('finding_active_with_closed_date');
   });
 
-  it('is idempotent for stats and retains only current and previous run observations', async () => {
-    const firstRun = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING },
-      order: [['id', 'DESC']],
-    });
-
+  it('is idempotent for stats across runs', async () => {
     await validateMonitoringData();
     await validateMonitoringData();
 
-    // stats: still exactly one row for our weekly slice
+    // stats: still exactly one row for our weekly slice (the unique upsert key)
     const periodStart = lastCompleteWeekDate(0).toISOString().slice(0, 10);
     const statRows = await ValidationTimeSeries.findAll({
       where: {
@@ -382,22 +387,60 @@ describe('validateMonitoringData', () => {
       raw: true,
     });
     expect(statRows.length).toBe(1);
+  });
 
-    // observations: first run's records were deleted (older than previous run)
-    const firstRunRecords = await ValidationRecord.count({ where: { run_id: firstRun.id } });
-    expect(firstRunRecords).toBe(0);
+  it('retains by cycle: replaces a same-cycle re-run, keeps a different cycle, rolls off old ones', async () => {
+    const latestRun = () =>
+      ValidationRun.findOne({
+        where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+        order: [['id', 'DESC']],
+      });
+    const recordCount = (runId) => ValidationRecord.count({ where: { run_id: runId } });
 
-    // latest two runs retain their records
-    const runs = await ValidationRun.findAll({
-      where: { process_name: VALIDATION_PROCESS.MONITORING },
-      order: [['id', 'DESC']],
-      limit: 2,
-      raw: true,
+    // Cycle A, then cycle B (distinct import ids = distinct data versions).
+    getMonitoringImportCycle.mockResolvedValueOnce({
+      import_id: 90001,
+      source_updated_at: new Date('2026-07-20T00:00:00.000Z'),
     });
-    const latestCounts = await Promise.all(
-      runs.map((r) => ValidationRecord.count({ where: { run_id: r.id } }))
-    );
-    expect(latestCounts[0]).toBeGreaterThan(0);
-    expect(latestCounts[1]).toBeGreaterThan(0);
+    await validateMonitoringData();
+    const runA = await latestRun();
+
+    getMonitoringImportCycle.mockResolvedValueOnce({
+      import_id: 90002,
+      source_updated_at: new Date('2026-07-27T00:00:00.000Z'),
+    });
+    await validateMonitoringData();
+    const runB = await latestRun();
+
+    // grouping: each run is stamped with its own cycle
+    expect(Number(runA.import_id)).toBe(90001);
+    expect(Number(runB.import_id)).toBe(90002);
+    // a different cycle is never collateral damage
+    expect(await recordCount(runA.id)).toBeGreaterThan(0);
+    expect(await recordCount(runB.id)).toBeGreaterThan(0);
+
+    // Re-run cycle B: replaces runB's data, leaves cycle A untouched.
+    getMonitoringImportCycle.mockResolvedValueOnce({
+      import_id: 90002,
+      source_updated_at: new Date('2026-07-27T00:00:00.000Z'),
+    });
+    await validateMonitoringData();
+    const runB2 = await latestRun();
+
+    expect(await recordCount(runB2.id)).toBeGreaterThan(0);
+    expect(await recordCount(runB.id)).toBe(0); // same-cycle predecessor deleted
+    expect(await recordCount(runA.id)).toBeGreaterThan(0); // different cycle preserved
+
+    // Cycle C: cycle A (now two back) rolls off; previous cycle (B2) stays.
+    getMonitoringImportCycle.mockResolvedValueOnce({
+      import_id: 90003,
+      source_updated_at: new Date('2026-08-03T00:00:00.000Z'),
+    });
+    await validateMonitoringData();
+    const runC = await latestRun();
+
+    expect(await recordCount(runC.id)).toBeGreaterThan(0);
+    expect(await recordCount(runB2.id)).toBeGreaterThan(0); // previous cycle kept
+    expect(await recordCount(runA.id)).toBe(0); // rolled off
   });
 });

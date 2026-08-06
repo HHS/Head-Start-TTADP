@@ -51,7 +51,17 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-report_updates.log'),
-      'Recent Monitoring Updates: [{"recipient":"New Goals: COMMUNITY CONCEPTS, INCORPORATED","region":1},{"recipient":"New Goals: University of Pittsburgh, The","region":3}]\n'
+      'Recent Monitoring Updates: [{"recipient":"New Goals: Example Recipient Alpha","region":1},{"recipient":"New Goals: Example Recipient Bravo","region":3}]\n'
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+    );
+    // report-only critical: criticalCount > 0 but the phase succeeded (nothing
+    // blocked), so it must still be surfaced alongside the alerts
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '2');
@@ -59,8 +69,14 @@ describe('build_import_summary.sh', () => {
     const summary = fs.readFileSync(summaryFile, 'utf-8');
     expect(summary).toBe(
       'Monitoring Updates: ```\n' +
-        'New Goals: COMMUNITY CONCEPTS, INCORPORATED (Region 1)\n' +
-        'New Goals: University of Pittsburgh, The (Region 3)\n' +
+        'New Goals: Example Recipient Alpha (Region 1)\n' +
+        'New Goals: Example Recipient Bravo (Region 3)\n' +
+        '```\n' +
+        'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+        'Region 5 created no monitoring reviews in the last four complete weeks\n' +
+        '```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
   });
@@ -102,7 +118,12 @@ describe('build_import_summary.sh', () => {
     runSummaryScript(artifactDir, summaryFile, '1');
 
     const summary = fs.readFileSync(summaryFile, 'utf-8');
-    expect(summary).toBe('Monitoring Updates: none\n');
+    // with no validation or gate logs present, each section reports "no result"
+    expect(summary).toBe(
+      'Monitoring Updates: none\n' +
+        'Monitoring Validation: no result found\n' +
+        'Monitoring Gate: no result found\n'
+    );
   });
 
   it('writes a concise failure message from the failed phase log', () => {

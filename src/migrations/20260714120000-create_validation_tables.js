@@ -38,6 +38,18 @@ module.exports = {
             type: Sequelize.DATE,
             allowNull: false,
           },
+          import_id: {
+            // Soft reference to the import this run validated; null when not tied to
+            // an import. See the non-unique index below.
+            type: Sequelize.BIGINT,
+            allowNull: true,
+          },
+          source_updated_at: {
+            // The source's own data date for that import (ImportFiles.ftpFileInfo.date,
+            // the same value the import writes to the raw rows' sourceUpdatedAt).
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
           completed_at: {
             type: Sequelize.DATE,
             allowNull: true,
@@ -255,6 +267,12 @@ module.exports = {
 
       await queryInterface.addIndex('ValidationRuns', ['process_name', 'started_at'], {
         name: 'ValidationRuns_process_name_started_at',
+        transaction,
+      });
+
+      // Not unique - purely for performance - so any integer id can be stored.
+      await queryInterface.addIndex('ValidationRuns', ['import_id'], {
+        name: 'ValidationRuns_import_id',
         transaction,
       });
 

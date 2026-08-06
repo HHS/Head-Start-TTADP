@@ -55,11 +55,23 @@ const runValidation = async ({
   processName,
   steps,
   logLabel,
+  cycle,
 }: {
   processName: string;
   steps: ValidationStep[];
   logLabel: string;
+  // Which data version this run validated, so runs bucket and compare correctly.
+  // The runner just records it; callers resolve it (e.g. getMonitoringImportCycle).
+  cycle: { import_id: number | null; source_updated_at: Date | null };
 }): Promise<RunValidationResult> => {
+  // A run that can't be tied to a data version can't be bucketed or compared, so
+  // neither identifier being set is an error rather than a silently-stored row.
+  if (cycle == null || (cycle.import_id == null && cycle.source_updated_at == null)) {
+    throw new Error(
+      `runValidation(${processName}): a cycle identifying the data version is required (import_id and/or source_updated_at)`
+    );
+  }
+
   console.info(`Starting validation: ${processName}`);
 
   // Created (and committed) before any validation work so an external watchdog
@@ -69,6 +81,8 @@ const runValidation = async ({
     process_name: processName,
     status: VALIDATION_RUN_STATUS.STARTED,
     started_at: new Date(),
+    import_id: cycle?.import_id ?? null,
+    source_updated_at: cycle?.source_updated_at ?? null,
   });
   const runId = run.id;
 

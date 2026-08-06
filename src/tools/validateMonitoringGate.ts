@@ -1,5 +1,6 @@
 import { VALIDATION_PROCESS } from '../constants';
 import monitoringGateChecks from './validation/monitoringGateChecks';
+import { getMonitoringImportCycle } from './validation/monitoringImportCycle';
 import type { RunValidationResult } from './validation/runValidation';
 import runValidation from './validation/runValidation';
 
@@ -16,11 +17,14 @@ import runValidation from './validation/runValidation';
  * would instead throw inside updateMonitoringFactTables' transaction to roll
  * back a bad swap.
  */
-const validateMonitoringGate = (): Promise<RunValidationResult> =>
-  runValidation({
+const validateMonitoringGate = async (): Promise<RunValidationResult> => {
+  const cycle = await getMonitoringImportCycle();
+  return runValidation({
     processName: VALIDATION_PROCESS.MONITORING_GATE,
     logLabel: 'Monitoring Gate',
     steps: [monitoringGateChecks],
+    cycle,
   });
+};
 
 export default validateMonitoringGate;

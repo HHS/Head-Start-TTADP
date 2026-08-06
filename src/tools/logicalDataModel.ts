@@ -501,6 +501,7 @@ export default async function generateUMLFromDB() {
                       WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
                       ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
                     END || '[]'
+                  WHEN data_type = 'numeric' AND numeric_precision IS NULL THEN 'decimal'
                   WHEN data_type = 'numeric' THEN CONCAT('decimal(', numeric_precision, ',', numeric_scale, ')')
                   WHEN data_type = 'int4' THEN 'integer'
                   ELSE data_type
