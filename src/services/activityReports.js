@@ -1099,8 +1099,8 @@ export async function createOrUpdate(newActivityReport, report, userId) {
   };
 }
 
-export async function setStatus(report, status) {
-  await report.update({ submissionStatus: status });
+export async function setStatus(report, status, transaction = undefined) {
+  await report.update({ submissionStatus: status }, { transaction });
   return activityReportAndRecipientsById(report.id);
 }
 
@@ -1116,8 +1116,9 @@ export async function setStatus(report, status) {
  * deleted report is removed.
  *
  * @param {number} reportId - id of the report being soft-deleted
+ * @param {import('sequelize').Transaction} [transaction] - optional transaction to run within
  */
-export async function cleanupOrphanedObjectivesAndAROs(reportId) {
+export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = undefined) {
   // Objectives linked to this report, captured before the AROs are removed.
   const linkedObjectiveIds = [
     ...new Set(
@@ -1126,6 +1127,7 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId) {
           attributes: ['objectiveId'],
           where: { activityReportId: reportId },
           raw: true,
+          transaction,
         })
       ).map((aro) => aro.objectiveId)
     ),
@@ -1135,6 +1137,7 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId) {
   await ActivityReportObjective.destroy({
     where: { activityReportId: reportId },
     individualHooks: true,
+    transaction,
   });
 
   if (!linkedObjectiveIds.length) {
@@ -1159,6 +1162,7 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId) {
           },
         ],
         raw: true,
+        transaction,
       })
     ).map((aro) => aro.objectiveId)
   );
@@ -1176,60 +1180,67 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId) {
       createdVia: 'activityReport',
     },
     individualHooks: true,
+    transaction,
   });
 }
 
 export async function handleSoftDeleteReport(report) {
-  const goalsToCleanup = (
-    await Goal.findAll({
-      attributes: ['id'],
+  return sequelize.transaction(async (transaction) => {
+    const goalsToCleanup = (
+      await Goal.findAll({
+        attributes: ['id'],
+        where: {
+          createdVia: 'activityReport',
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`
+            ),
+          },
+        },
+        include: [
+          {
+            model: ActivityReportGoal,
+            as: 'activityReportGoals',
+            attributes: ['id', 'goalId'],
+          },
+        ],
+        transaction,
+      })
+    )
+      .filter((goal) => goal.activityReportGoals.length === 1)
+      .map((goal) => goal.id);
+
+    if (goalsToCleanup.length) {
+      // these goals and objectives will also be soft-deleted
+      await Objective.destroy({
+        where: {
+          goalId: goalsToCleanup,
+        },
+        transaction,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goalsToCleanup,
+        },
+        transaction,
+      });
+    }
+
+    await Notification.destroy({
       where: {
-        createdVia: 'activityReport',
-        id: {
-          [Op.in]: sequelize.literal(
-            `(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`
-          ),
+        entityId: report.id,
+        type: {
+          [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
         },
       },
-      include: [
-        {
-          model: ActivityReportGoal,
-          as: 'activityReportGoals',
-          attributes: ['id', 'goalId'],
-        },
-      ],
-    })
-  )
-    .filter((goal) => goal.activityReportGoals.length === 1)
-    .map((goal) => goal.id);
-
-  if (goalsToCleanup.length) {
-    // these goals and objectives will also be soft-deleted
-    await Objective.destroy({
-      where: {
-        goalId: goalsToCleanup,
-      },
+      transaction,
     });
 
-    await Goal.destroy({
-      where: {
-        id: goalsToCleanup,
-      },
-    });
-  }
+    await cleanupOrphanedObjectivesAndAROs(report.id, transaction);
 
-  await Notification.destroy({
-    where: {
-      entityId: report.id,
-      type: {
-        [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
-      },
-    },
+    return setStatus(report, REPORT_STATUSES.DELETED, transaction);
   });
-
-  await cleanupOrphanedObjectivesAndAROs(report.id);
-
-  return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
 /*
