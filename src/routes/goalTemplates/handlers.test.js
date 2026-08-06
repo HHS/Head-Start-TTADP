@@ -145,6 +145,7 @@ describe('goalTemplates handlers', () => {
         },
       };
 
+      currentUserId.mockResolvedValue(42);
       newStandardGoal.mockRejectedValue(new Error('error'));
 
       await useStandardGoal(req, mockResponse);
@@ -173,6 +174,7 @@ describe('goalTemplates handlers', () => {
         },
       ],
     ])('returns structured %s conflicts from the service', async (_code, responseBody) => {
+      currentUserId.mockResolvedValue(42);
       const req = {
         params: {
           goalTemplateId: 1,
