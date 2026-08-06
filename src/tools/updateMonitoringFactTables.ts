@@ -486,8 +486,8 @@ const updateMonitoringFactTables = async () => {
     GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ;
 
-    -- FUTURE mid-refresh gate (see
-    -- ~/.claude/plans/monitoring-validation-critical-gate.md): this is the point
+    -- FUTURE mid-refresh gate (see docs/monitoring-data-validation.md, "In-refresh
+    -- gate" under Future work): this is the point
     -- where the staged temp tables (delivered_reviews, full_citations, ...) exist
     -- but the live DeliveredReviews / Citations have not yet been overwritten, so
     -- their pre-refresh contents are still available to diff against. Because the

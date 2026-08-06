@@ -48,8 +48,8 @@ const easternTime = (date: Date): string =>
  * in-transaction caller (a check inside updateMonitoringFactTables) would throw
  * to roll back. Keeping the gate decision out of the runner is what lets the
  * same machinery serve the pre-refresh gate, the post-refresh observational
- * run, and a future mid-refresh gate. See
- * ~/.claude/plans/monitoring-validation-critical-gate.md for the rationale.
+ * run, and a future mid-refresh gate. See docs/monitoring-data-validation.md
+ * for the rationale.
  */
 const runValidation = async ({
   processName,

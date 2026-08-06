@@ -241,4 +241,85 @@ describe('build_import_summary.sh', () => {
     const summary = fs.readFileSync(summaryFile, 'utf-8');
     expect(summary).toBe('Monitoring job failure: ```\nCloud Foundry login failed\n```');
   });
+
+  it('reports a block when the gate ran and found a critical', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-gate-block-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-validate_monitoring_gate-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              startedAt: '2026-03-24T10:05:00Z',
+              finishedAt: '2026-03-24T10:06:00Z',
+              logFile: path.join(logDir, 'phase-validate_monitoring_gate.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+    );
+
+    runSummaryScript(artifactDir, summaryFile, '6');
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    expect(summary).toBe(
+      'Monitoring import BLOCKED - fact-table refresh prevented by critical validation (as of 2026-03-24 06:00 EDT): ```\n' +
+        '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
+        '```'
+    );
+  });
+
+  it('does not report a block when the gate phase errored (execution failure, not a block)', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-gate-error-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-validate_monitoring_gate-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              startedAt: '2026-03-24T10:05:00Z',
+              finishedAt: '2026-03-24T10:06:00Z',
+              logFile: path.join(logDir, 'phase-validate_monitoring_gate.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    // The runner still prints its greppable line on failure, but with status=failure
+    // and no criticals - this must NOT be mislabeled as a critical block.
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+    );
+
+    runSummaryScript(artifactDir, summaryFile, '6');
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    expect(summary).not.toContain('BLOCKED');
+    expect(summary).toContain('Monitoring job failure:');
+  });
 });

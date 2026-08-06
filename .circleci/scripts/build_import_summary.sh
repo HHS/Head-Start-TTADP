@@ -97,6 +97,8 @@ gate_log="${ARTIFACT_DIR}/logs/phase-validate_monitoring_gate.log"
 append_gate_block_summary() {
   local results
   local json_data
+  local status
+  local critical_count
   local critical
   local as_of
 
@@ -105,15 +107,17 @@ append_gate_block_summary() {
   [[ -n "$results" ]] || return 1
 
   json_data=${results#*: }
+  status=$(echo "$json_data" | jq -r '.status // empty' 2>/dev/null || true)
+  critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
+
+  # Return nonzero (generic failure message) unless there's really a blocking critical.
+  [[ "$status" == "success" && "${critical_count:-0}" -gt 0 ]] || return 1
+
   as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
   critical=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "critical") | .message, "\n"' 2>/dev/null || true)
   {
     printf 'Monitoring import BLOCKED - fact-table refresh prevented by critical validation (as of %s): ```\n' "${as_of:-unknown}"
-    if [[ -n "$critical" ]]; then
-      printf '%s\n' "$critical"
-    else
-      printf '%s\n' "$json_data"
-    fi
+    printf '%s\n' "$critical"
     printf '```'
   } > "$SUMMARY_FILE"
 }
