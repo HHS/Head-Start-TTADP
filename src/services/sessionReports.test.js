@@ -17,6 +17,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
   validateFields,
 } from './sessionReports';
@@ -1312,6 +1313,160 @@ describe('session reports service', () => {
           expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
       });
+    });
+  });
+
+  describe('getSessionReportsByRecipient', () => {
+    let recipient;
+    let otherRecipient;
+    let recipientGrantInRegion1;
+    let recipientGrantInRegion2;
+    let otherRecipientGrant;
+    let regionOneEvent;
+    let regionTwoEvent;
+    let createdSessions = [];
+
+    beforeAll(async () => {
+      recipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: `Recipient-${faker.datatype.uuid()}`,
+      });
+
+      otherRecipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: `Recipient-${faker.datatype.uuid()}`,
+      });
+
+      recipientGrantInRegion1 = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        status: 'Active',
+      });
+
+      recipientGrantInRegion2 = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      otherRecipientGrant = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: otherRecipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      regionOneEvent = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R01-PD-RECIPIENT-${faker.datatype.number()}`,
+          eventName: 'Recipient Filter Region 1',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      regionTwoEvent = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: 2,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R02-PD-RECIPIENT-${faker.datatype.number()}`,
+          eventName: 'Recipient Filter Region 2',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      createdSessions = await Promise.all([
+        createSession({
+          eventId: regionOneEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 1',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Grant 1', value: recipientGrantInRegion1.id }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 2',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            // store as string to validate cast guard logic
+            recipients: [{ label: 'Grant 2', value: String(recipientGrantInRegion2.id) }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Other Recipient Session',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Other Grant', value: otherRecipientGrant.id }],
+          },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all(createdSessions.map((s) => destroySession(s.id)));
+
+      await destroyEvent(regionOneEvent.id);
+      await destroyEvent(regionTwoEvent.id);
+
+      await db.Grant.destroy({
+        where: {
+          id: [recipientGrantInRegion1.id, recipientGrantInRegion2.id, otherRecipientGrant.id],
+        },
+        individualHooks: true,
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: [recipient.id, otherRecipient.id],
+        },
+      });
+    });
+
+    it('returns sessions where the recipient grant ids are listed in session recipients', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
+      expect(names).not.toContain('Other Recipient Session');
+    });
+
+    it('ignores region restrictions and still returns sessions from all regions', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+        // Deliberately restrictive; cloned function should ignore region filters.
+        'region.in': ['1'],
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
     });
   });
 });

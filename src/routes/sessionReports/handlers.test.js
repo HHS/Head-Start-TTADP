@@ -10,6 +10,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
 } from '../../services/sessionReports';
 import { userById } from '../../services/users';
@@ -646,6 +647,27 @@ describe('session report handlers', () => {
       await getSessionReportsHandler(mockRequest, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+
+    it('uses recipient-specific service and skips region scoping when recipientId is provided', async () => {
+      getSessionReportsByRecipient.mockResolvedValue(mockTrainingReportResponse);
+      const readRegionCallsBefore = setTrainingReportReadRegions.mock.calls.length;
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: {
+          recipientId: '123',
+          'region.in': ['1'],
+        },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(setTrainingReportReadRegions.mock.calls.length).toBe(readRegionCallsBefore);
+      expect(getSessionReportsByRecipient).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientId: '123' })
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(mockTrainingReportResponse);
     });
   });
 });
