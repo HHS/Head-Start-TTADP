@@ -16,7 +16,7 @@ export async function getGoalTemplates(grantIds, options = {}) {
   if (includeBlockingActivityReports) {
     params.push('includeBlockingActivityReports=true');
   }
-  const url = join(goalTemplatesUrl, `?${params.join('&')}`);
+  const url = params.length ? join(goalTemplatesUrl, `?${params.join('&')}`) : goalTemplatesUrl;
   const response = await get(url);
   return response.json();
 }

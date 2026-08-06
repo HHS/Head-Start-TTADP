@@ -75,7 +75,14 @@ export async function getGoalTemplates(req: Request, res: Response) {
 
     const shouldIncludeBlockingActivityReports = includeBlockingActivityReports === 'true';
     const shouldIncludeClosedAndSuspendedGoals = includeClosedSuspendedGoals === 'true';
-    const userId = shouldIncludeBlockingActivityReports ? await currentUserId(req, res) : undefined;
+    let userId: number | undefined;
+    if (shouldIncludeBlockingActivityReports) {
+      userId = await currentUserId(req, res);
+      if (!Number.isInteger(userId)) {
+        if (!res.headersSent) res.sendStatus(401);
+        return;
+      }
+    }
     const templates = await getCuratedTemplates(parsedGrantIds, {
       includeBlockingActivityReports: shouldIncludeBlockingActivityReports,
       includeClosedAndSuspendedGoals: shouldIncludeClosedAndSuspendedGoals,
@@ -95,6 +102,10 @@ export async function useStandardGoal(req: Request, res: Response) {
     const { grantId, goalTemplateId } = req.params;
     const { objectives, rootCauses, status } = req.body;
     const userId = await currentUserId(req, res);
+    if (!Number.isInteger(userId)) {
+      if (!res.headersSent) res.sendStatus(401);
+      return;
+    }
 
     const standards = await newStandardGoal(
       Number(grantId),
