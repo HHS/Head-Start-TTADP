@@ -9,6 +9,8 @@ import db, {
   ActivityReportApprover,
   ActivityReportCollaborator,
   ActivityReportGoal,
+  ActivityReportObjective,
+  ActivityReportObjectiveTopic,
   Goal,
   Grant,
   NextStep,
@@ -20,6 +22,7 @@ import db, {
   Recipient,
   Region,
   Role,
+  Topic,
   User,
   UserRole,
 } from '../models';
@@ -36,6 +39,7 @@ import {
   batchQuery,
   createOrUpdate,
   formatResources,
+  cleanupOrphanedObjectivesAndAROs,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
@@ -2500,4 +2504,205 @@ describe('Activity report service', () => {
       );
     });
   });
+
+  describe('cleanupOrphanedObjectivesAndAROs', () => {
+    let user;
+    let recipient;
+    let grant;
+    let goal;
+    let deletedReport;
+    let liveReport;
+    let otherDeletedReport;
+    let topic;
+
+    // objective created via AR, linked only to the report being deleted
+    let objOnlyOnDeleted;
+    let aroOnlyOnDeleted;
+    let aroTopic;
+    // objective created via AR, shared between the deleted report and a live report
+    let objShared;
+    let aroSharedLive;
+    // objective created via RTR, linked only to the report being deleted
+    let objRtr;
+    // objective created via AR, linked to two deleted reports
+    let objTwoDeleted;
+
+    beforeAll(async () => {
+      user = await User.create({
+        ...mockUserFour,
+        hsesUserId: faker.datatype.string(10),
+        id: faker.datatype.number({ min: 90000 }),
+      });
+      recipient = await createRecipient({});
+      grant = await createGrant({ recipientId: recipient.id });
+      topic = await Topic.create({ name: faker.lorem.words(3) });
+
+      goal = await Goal.create({
+        name: 'Orphan cleanup goal',
+        createdVia: 'rtr',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+
+      deletedReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      liveReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      otherDeletedReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.DELETED,
+        calculatedStatus: REPORT_STATUSES.DELETED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+
+      objOnlyOnDeleted = await Objective.create({
+        title: 'AR objective on deleted report only',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'activityReport',
+      });
+      objShared = await Objective.create({
+        title: 'AR objective shared with a live report',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'activityReport',
+      });
+      objRtr = await Objective.create({
+        title: 'RTR objective on deleted report only',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'rtr',
+      });
+      objTwoDeleted = await Objective.create({
+        title: 'AR objective on two deleted reports',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'activityReport',
+      });
+
+      aroOnlyOnDeleted = await ActivityReportObjective.create({
+        activityReportId: deletedReport.id,
+        objectiveId: objOnlyOnDeleted.id,
+        status: 'Not Started',
+      });
+      aroTopic = await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aroOnlyOnDeleted.id,
+        topicId: topic.id,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: deletedReport.id,
+        objectiveId: objShared.id,
+        status: 'Not Started',
+      });
+      aroSharedLive = await ActivityReportObjective.create({
+        activityReportId: liveReport.id,
+        objectiveId: objShared.id,
+        status: 'Not Started',
+      });
+      await ActivityReportObjective.create({
+        activityReportId: deletedReport.id,
+        objectiveId: objRtr.id,
+        status: 'Not Started',
+      });
+      await ActivityReportObjective.create({
+        activityReportId: deletedReport.id,
+        objectiveId: objTwoDeleted.id,
+        status: 'Not Started',
+      });
+      await ActivityReportObjective.create({
+        activityReportId: otherDeletedReport.id,
+        objectiveId: objTwoDeleted.id,
+        status: 'Not Started',
+      });
+    });
+
+    afterAll(async () => {
+      const objectiveIds = [
+        objOnlyOnDeleted.id,
+        objShared.id,
+        objRtr.id,
+        objTwoDeleted.id,
+      ];
+      const reportIds = [deletedReport.id, liveReport.id, otherDeletedReport.id];
+      await ActivityReportObjectiveTopic.destroy({
+        where: { topicId: topic.id },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({
+        where: { objectiveId: objectiveIds },
+        force: true,
+      });
+      await Objective.destroy({ where: { id: objectiveIds }, force: true });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
+      await ActivityReport.unscoped().destroy({ where: { id: reportIds }, force: true });
+      await Topic.destroy({ where: { id: topic.id }, force: true });
+      await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, force: true });
+      await User.destroy({ where: { id: user.id }, force: true });
+    });
+
+    it('cleans up orphaned AROs and objectives for a soft-deleted report', async () => {
+      await cleanupOrphanedObjectivesAndAROs(deletedReport.id);
+
+      // Every ARO linked to the deleted report is hard-deleted...
+      const arosOnDeletedReport = await ActivityReportObjective.findAll({
+        where: { activityReportId: deletedReport.id },
+      });
+      expect(arosOnDeletedReport).toHaveLength(0);
+
+      // ...including the ARO metadata (destroy hooks propagate to children).
+      const remainingTopic = await ActivityReportObjectiveTopic.findByPk(aroTopic.id);
+      expect(remainingTopic).toBeNull();
+
+      // The ARO linking the shared objective to the live report is untouched.
+      const liveAro = await ActivityReportObjective.findByPk(aroSharedLive.id);
+      expect(liveAro).not.toBeNull();
+
+      // AR objective linked only to the deleted report is soft-deleted.
+      const deletedOnly = await Objective.findByPk(objOnlyOnDeleted.id, { paranoid: false });
+      expect(deletedOnly.deletedAt).not.toBeNull();
+
+      // AR objective still used by a live report is kept.
+      const shared = await Objective.findByPk(objShared.id, { paranoid: false });
+      expect(shared.deletedAt).toBeNull();
+
+      // RTR objective is kept even though its only report was deleted.
+      const rtr = await Objective.findByPk(objRtr.id, { paranoid: false });
+      expect(rtr.deletedAt).toBeNull();
+
+      // AR objective only linked to deleted reports is soft-deleted.
+      const twoDeleted = await Objective.findByPk(objTwoDeleted.id, { paranoid: false });
+      expect(twoDeleted.deletedAt).not.toBeNull();
+    });
+
+    it('is a no-op for a report with no linked objectives', async () => {
+      const emptyReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+
+      await expect(cleanupOrphanedObjectivesAndAROs(emptyReport.id)).resolves.not.toThrow();
+
+      await ActivityReport.unscoped().destroy({ where: { id: emptyReport.id }, force: true });
+    });
+  });
 });
+
