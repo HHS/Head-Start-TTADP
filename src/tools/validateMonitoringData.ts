@@ -10,10 +10,10 @@ import runValidation from './validation/runValidation';
  * three validation steps (each in its own module under ./validation) through
  * the shared runner:
  *
- * 1. updateMonitoringTimeSeries - upserts time-series aggregated statistics into
+ * 1. refreshMonitoringObservations - rebuilds per-entity observations in
+ *    ValidationRecords. Runs first so later steps can build on the observations.
+ * 2. updateMonitoringTimeSeries - upserts time-series aggregated statistics into
  *    ValidationTimeSeries.
- * 2. refreshMonitoringObservations - rebuilds per-entity observations in
- *    ValidationRecords.
  * 3. refreshMonitoringAlerts - rebuilds ValidationAlerts from threshold checks
  *    over the time series and validity checks over the observations.
  *
@@ -27,7 +27,7 @@ const validateMonitoringData = async (): Promise<void> => {
   await runValidation({
     processName: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
     logLabel: 'Monitoring Validation Alerts',
-    steps: [updateMonitoringTimeSeries, refreshMonitoringObservations, refreshMonitoringAlerts],
+    steps: [refreshMonitoringObservations, updateMonitoringTimeSeries, refreshMonitoringAlerts],
     cycle,
   });
 };

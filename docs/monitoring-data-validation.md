@@ -63,14 +63,7 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 
 `monitoring_post_refresh` (`src/tools/validateMonitoringData.ts`) runs three steps through the runner. It records a run, raises alerts, and builds the baseline for future modeling, but never pauses the import. Its steps run in sequence, each feeding the next:
 
-**Step 1 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. The full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run, so late-arriving data self-corrects; the unique key makes recomputation idempotent. Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats.
-
-| Stat (`feature_set` / `stat_name`) | Grain | Notes |
-|---|---|---|
-| `monitoring_reviews` / `reviews_created` | weekly, per region/geo | Bucketed on `MonitoringReviews.sourceCreatedAt` (upstream activity), not `createdAt` (our import time), so backfills don't register as spikes. A review spanning regions counts once per region slice. |
-| `monitoring_findings` / `findings_delivered` | monthly, per region/geo | Distinct findings by first delivery date (earliest delivered review via `MonitoringFindingHistories`). |
-
-**Step 2 — `monitoringObservations.ts` → `ValidationRecords`.** Rebuilds one row per entity per observation (scalars in `scalar`, categories in `category`). **Every observation is recorded for every entity it applies to, whether or not the value is alert-worthy** — the on-time reviews and the `consistent` findings are stored alongside the outliers. The current threshold alerts are only a filtered view over these rows; consumers are not expected to stay limited to that, so the full distribution is kept so later work (e.g. anomaly-detection models needing means, quantiles, or z-scores) has the complete data, not just the flagged entities. Observations also let a human drill from an aggregate alert down to the specific entities behind it.
+**Step 1 — `monitoringObservations.ts` → `ValidationRecords`.** Rebuilds one row per entity per observation (scalars in `scalar`, categories in `category`). Runs first so later steps can build on the observations. **Every observation is recorded for every entity it applies to, whether or not the value is alert-worthy** — the on-time reviews and the `consistent` findings are stored alongside the outliers. The current threshold alerts are only a filtered view over these rows; consumers are not expected to stay limited to that, so the full distribution is kept so later work (e.g. anomaly-detection models needing means, quantiles, or z-scores) has the complete data, not just the flagged entities. Observations also let a human drill from an aggregate alert down to the specific entities behind it.
 
 | Observation (`observation_name`) | Entity | Kind | Meaning |
 |---|---|---|---|
@@ -78,6 +71,13 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 | `delivery_report_lag_days` | `MonitoringReviews` | scalar | Days between a review's `reportDeliveryDate` and when that date first appeared in the imported data (from `ZALMonitoringReviews` audit rows). |
 | `finding_count` | `MonitoringReviews` | scalar | Distinct findings linked to the review. |
 | `closure_state` | `MonitoringFindings` | category | `active_with_closed_date` when an Active finding carries a `closedDate`, else `consistent`. |
+
+**Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. The full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run, so late-arriving data self-corrects; the unique key makes recomputation idempotent. Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
+
+| Stat (`feature_set` / `stat_name`) | Grain | Notes |
+|---|---|---|
+| `monitoring_reviews` / `reviews_created` | weekly, per region/geo | Bucketed on `MonitoringReviews.sourceCreatedAt` (upstream activity), not `createdAt` (our import time), so backfills don't register as spikes. A review spanning regions counts once per region slice. |
+| `monitoring_findings` / `findings_delivered` | monthly, per region/geo | Distinct findings by first delivery date (earliest delivered review via `MonitoringFindingHistories`). |
 
 **Step 3 — `monitoringAlerts.ts` → `ValidationAlerts`.** Raises alerts from threshold checks over the time series and validity checks over the observations, both produced earlier in the same run. Threshold checks look at **complete** periods only (the current partial week/month would always false-alarm). Every alert here is severity `alert`.
 
