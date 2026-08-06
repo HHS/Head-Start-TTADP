@@ -1,37 +1,53 @@
 import { Op } from 'sequelize';
-import { sequelize } from '../../models';
+import db from '../../models';
 
-export function withFindingCategory(categories: string[]) {
-  const escaped = categories.map((c) => sequelize.escape(c));
+const { FindingCategory } = db;
 
-  if (!escaped.length) {
+async function resolveValidCategoryIds(names: string[]): Promise<number[]> {
+  if (!names.length) return [];
+  const rows = await FindingCategory.findAll({
+    where: { name: { [Op.in]: names } },
+    attributes: ['id'],
+    raw: true,
+  });
+  return rows.map((r: { id: number }) => r.id);
+}
+
+export async function withFindingCategory(categories: string[]) {
+  if (!categories.length) {
+    return { id: { [Op.in]: [] } };
+  }
+
+  const ids = await resolveValidCategoryIds(categories);
+
+  if (!ids.length) {
     return { id: { [Op.in]: [] } };
   }
 
   return {
     citationId: {
-      [Op.in]: sequelize.literal(
-        `(SELECT c.id FROM "Citations" c
-          JOIN "FindingCategories" fc ON fc.id = c."findingCategoryId"
-          WHERE fc.name IN (${escaped.join(',')}))`
+      [Op.in]: db.sequelize.literal(
+        `(SELECT id FROM "Citations" WHERE "findingCategoryId" IN (${ids.join(',')}))`
       ),
     },
   };
 }
 
-export function withoutFindingCategory(categories: string[]) {
-  const escaped = categories.map((c) => sequelize.escape(c));
+export async function withoutFindingCategory(categories: string[]) {
+  if (!categories.length) {
+    return {};
+  }
 
-  if (!escaped.length) {
+  const ids = await resolveValidCategoryIds(categories);
+
+  if (!ids.length) {
     return {};
   }
 
   return {
     citationId: {
-      [Op.notIn]: sequelize.literal(
-        `(SELECT c.id FROM "Citations" c
-          JOIN "FindingCategories" fc ON fc.id = c."findingCategoryId"
-          WHERE fc.name IN (${escaped.join(',')}))`
+      [Op.notIn]: db.sequelize.literal(
+        `(SELECT id FROM "Citations" WHERE "findingCategoryId" IN (${ids.join(',')}))`
       ),
     },
   };

@@ -42,6 +42,7 @@ export const topicToQuery = {
   },
 };
 
-export function grantCitationFiltersToScopes(filters, options, userId, validTopics) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+export async function grantCitationFiltersToScopes(filters, options, userId, validTopics) {
+  const scopes = createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+  return Promise.all(scopes);
 }
