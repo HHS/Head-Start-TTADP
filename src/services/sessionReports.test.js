@@ -1328,7 +1328,6 @@ describe('session reports service', () => {
 
     beforeAll(async () => {
       recipient = await db.Recipient.create({
-        id: faker.datatype.number(),
         name: `Recipient-${faker.datatype.uuid()}`,
       });
 
