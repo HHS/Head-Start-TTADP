@@ -1,5 +1,6 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { GOAL_STATUS } from '../../constants';
+import { currentUserId } from '../../services/currentUser';
 import {
   getCuratedTemplates,
   getFieldPromptsForActivityReports,
@@ -26,19 +27,32 @@ import {
 
 jest.mock('../../services/goalTemplates');
 jest.mock('../../services/standardGoals');
+jest.mock('../../services/currentUser');
 
-const mockResponse = {
-  attachment: jest.fn(),
-  json: jest.fn(),
-  send: jest.fn(),
-  sendStatus: jest.fn(),
-  status: jest.fn(() => ({
+let mockResponse;
+let mockStatusJson;
+
+const createMockResponse = () => {
+  const response = {
+    attachment: jest.fn(),
     end: jest.fn(),
+    json: jest.fn(),
     send: jest.fn(),
-  })),
+    sendStatus: jest.fn(),
+    status: jest.fn(),
+    locals: {},
+  };
+  response.status.mockReturnValue(response);
+  return response;
 };
 
 describe('goalTemplates handlers', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockResponse = createMockResponse();
+    mockStatusJson = mockResponse.json;
+  });
+
   describe('getStandardGoal', () => {
     it('handles success', async () => {
       const req = {
@@ -102,6 +116,7 @@ describe('goalTemplates handlers', () => {
           goalTemplateId: 1,
           grantId: 1,
         },
+        session: { userId: 42 },
         body: {
           objectives: [],
           rootCauses: [],
@@ -109,10 +124,12 @@ describe('goalTemplates handlers', () => {
       };
 
       const goal = { id: 1, name: 'Goal 1' };
+      currentUserId.mockResolvedValue(42);
       newStandardGoal.mockResolvedValue(goal);
 
       await useStandardGoal(req, mockResponse);
 
+      expect(newStandardGoal).toHaveBeenCalledWith(1, 1, [], [], undefined, { userId: 42 });
       expect(mockResponse.json).toHaveBeenCalledWith(goal);
     });
 
@@ -133,6 +150,50 @@ describe('goalTemplates handlers', () => {
       await useStandardGoal(req, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+
+    it.each([
+      [
+        'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+        {
+          blockingActivityReports: [
+            {
+              displayId: 'R14-AR-67433',
+              creatorName: 'Annika Lewis, GS',
+              href: '/activity-reports/123',
+            },
+          ],
+          code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+        },
+      ],
+      [
+        'STANDARD_GOAL_ALREADY_USED',
+        {
+          code: 'STANDARD_GOAL_ALREADY_USED',
+        },
+      ],
+    ])('returns structured %s conflicts from the service', async (_code, responseBody) => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        body: {
+          objectives: [],
+          rootCauses: [],
+        },
+      };
+      newStandardGoal.mockRejectedValue(
+        Object.assign(new Error('Standard goal conflict'), {
+          statusCode: 409,
+          responseBody,
+        })
+      );
+
+      await useStandardGoal(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockStatusJson).toHaveBeenCalledWith(responseBody);
     });
   });
 
@@ -274,10 +335,10 @@ describe('goalTemplates handlers', () => {
   });
 
   describe('getGoalTemplates', () => {
-    it('handles success', async () => {
+    it('does not enrich templates when both flags are omitted', async () => {
       const req = {
         query: {
-          grantIds: '1,2,3',
+          grantIds: ['1', '2', '3'],
         },
       };
 
@@ -286,7 +347,51 @@ describe('goalTemplates handlers', () => {
 
       await getGoalTemplates(req, mockResponse);
 
+      expect(getCuratedTemplates).toHaveBeenCalledWith([1, 2, 3], {
+        includeBlockingActivityReports: false,
+        includeClosedAndSuspendedGoals: false,
+      });
       expect(mockResponse.json).toHaveBeenCalledWith(templates);
+    });
+
+    it('treats explicit false query values as false', async () => {
+      const req = {
+        query: {
+          grantIds: '1',
+          includeBlockingActivityReports: 'false',
+          includeClosedSuspendedGoals: 'false',
+        },
+      };
+      getCuratedTemplates.mockResolvedValue([]);
+
+      await getGoalTemplates(req, mockResponse);
+
+      expect(getCuratedTemplates).toHaveBeenCalledWith([1], {
+        includeBlockingActivityReports: false,
+        includeClosedAndSuspendedGoals: false,
+      });
+      expect(currentUserId).not.toHaveBeenCalled();
+    });
+
+    it('opts into blocking report enrichment with the current user', async () => {
+      const req = {
+        query: {
+          grantIds: '1',
+          includeBlockingActivityReports: 'true',
+          includeClosedSuspendedGoals: 'true',
+        },
+      };
+      currentUserId.mockResolvedValue(42);
+      getCuratedTemplates.mockResolvedValue([]);
+
+      await getGoalTemplates(req, mockResponse);
+
+      expect(currentUserId).toHaveBeenCalledWith(req, mockResponse);
+      expect(getCuratedTemplates).toHaveBeenCalledWith([1], {
+        includeBlockingActivityReports: true,
+        includeClosedAndSuspendedGoals: true,
+        userId: 42,
+      });
     });
 
     it('handles error', async () => {

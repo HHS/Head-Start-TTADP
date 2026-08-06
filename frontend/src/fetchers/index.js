@@ -67,7 +67,13 @@ export const post = async (url, data) => {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new HTTPError(res.status, res.statusText);
+    const error = new HTTPError(res.status, res.statusText);
+    try {
+      error.data = await res.json();
+    } catch {
+      // Some existing endpoints return an empty or non-JSON error response.
+    }
+    throw error;
   }
   return res;
 };
