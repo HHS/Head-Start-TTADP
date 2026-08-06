@@ -4,6 +4,9 @@ import { Model } from 'sequelize';
 // Populated by src/tools/validateMonitoringData.ts.
 export default (sequelize, DataTypes) => {
   class ValidationRun extends Model {
+    // Validation tables are high churn, purely operational tables
+    static noAudit = true;
+
     static associate(models) {
       models.ValidationRun.hasMany(models.ValidationRecord, {
         foreignKey: 'run_id',
@@ -18,7 +21,7 @@ export default (sequelize, DataTypes) => {
   ValidationRun.init(
     {
       id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
@@ -38,7 +41,7 @@ export default (sequelize, DataTypes) => {
       // Soft reference to the import this run validated (ImportFiles.id); null when
       // not tied to an import. Non-unique - runs of one cycle share a value.
       import_id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
       // The import's source data date (ImportFiles.ftpFileInfo.date, the value the

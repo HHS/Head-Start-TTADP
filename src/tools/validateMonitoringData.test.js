@@ -413,8 +413,8 @@ describe('validateMonitoringData', () => {
     const runB = await latestRun();
 
     // grouping: each run is stamped with its own cycle
-    expect(Number(runA.import_id)).toBe(90001);
-    expect(Number(runB.import_id)).toBe(90002);
+    expect(runA.import_id).toBe(90001);
+    expect(runB.import_id).toBe(90002);
     // a different cycle is never collateral damage
     expect(await recordCount(runA.id)).toBeGreaterThan(0);
     expect(await recordCount(runB.id)).toBeGreaterThan(0);

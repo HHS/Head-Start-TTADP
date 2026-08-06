@@ -79,8 +79,7 @@ describe('runValidation', () => {
     });
 
     const run = await ValidationRun.findByPk(result.runId);
-    // BIGINT comes back as a string
-    expect(Number(run.import_id)).toBe(4242);
+    expect(run.import_id).toBe(4242);
     expect(new Date(run.source_updated_at).toISOString()).toBe('2026-08-01T00:00:00.000Z');
   });
 

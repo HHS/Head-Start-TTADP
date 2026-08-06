@@ -1396,30 +1396,30 @@ class ValidFor{
 }
 
 class ValidationAlerts{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * check_name : text
  * createdAt : timestamp with time zone : now()
  * message : text
- * run_id : bigint
+ * run_id : integer
  * severity : text : 'alert'::text
  * updatedAt : timestamp with time zone : now()
  context : jsonb
 }
 
 class ValidationRecords{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone : now()
  * entity_id : integer
  * entity_type : text
  * observation_name : text
- * run_id : bigint
+ * run_id : integer
  * updatedAt : timestamp with time zone : now()
  category : text
  scalar : decimal
 }
 
 class ValidationRuns{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone : now()
  * process_name : text
  * started_at : timestamp with time zone
@@ -1428,14 +1428,14 @@ class ValidationRuns{
  alert_count : integer
  completed_at : timestamp with time zone
  error : text
- import_id : bigint
+ import_id : integer
  observation_count : integer
  source_updated_at : timestamp with time zone
  stats_upserted : integer
 }
 
 class ValidationTimeSeries{
- * id : bigint : <generated>
+ * id : integer : <generated>
  * createdAt : timestamp with time zone : now()
  * feature_set : text
  * geo_id : integer : 0

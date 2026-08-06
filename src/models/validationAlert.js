@@ -5,6 +5,9 @@ import { Model } from 'sequelize';
 // contextual information applies (previous values, entity id samples, etc.).
 export default (sequelize, DataTypes) => {
   class ValidationAlert extends Model {
+    // Validation tables are high churn, purely operational tables
+    static noAudit = true;
+
     static associate(models) {
       models.ValidationAlert.belongsTo(models.ValidationRun, {
         foreignKey: 'run_id',
@@ -15,13 +18,13 @@ export default (sequelize, DataTypes) => {
   ValidationAlert.init(
     {
       id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
       },
       run_id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       check_name: {

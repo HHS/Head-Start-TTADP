@@ -21,7 +21,7 @@ module.exports = {
         'ValidationRuns',
         {
           id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,
@@ -41,7 +41,7 @@ module.exports = {
           import_id: {
             // Soft reference to the import this run validated; null when not tied to
             // an import. See the non-unique index below.
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: true,
           },
           source_updated_at: {
@@ -88,7 +88,7 @@ module.exports = {
         'ValidationTimeSeries',
         {
           id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,
@@ -152,13 +152,13 @@ module.exports = {
         'ValidationRecords',
         {
           id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,
           },
           run_id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             references: {
               model: { tableName: 'ValidationRuns' },
@@ -208,13 +208,13 @@ module.exports = {
         'ValidationAlerts',
         {
           id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             primaryKey: true,
             autoIncrement: true,
           },
           run_id: {
-            type: Sequelize.BIGINT,
+            type: Sequelize.INTEGER,
             allowNull: false,
             references: {
               model: { tableName: 'ValidationRuns' },

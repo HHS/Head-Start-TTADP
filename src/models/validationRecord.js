@@ -6,6 +6,9 @@ import { Model } from 'sequelize';
 // Validations compare observations to expectations and raise ValidationAlerts.
 export default (sequelize, DataTypes) => {
   class ValidationRecord extends Model {
+    // Validation tables are high churn, purely operational tables
+    static noAudit = true;
+
     static associate(models) {
       models.ValidationRecord.belongsTo(models.ValidationRun, {
         foreignKey: 'run_id',
@@ -16,13 +19,13 @@ export default (sequelize, DataTypes) => {
   ValidationRecord.init(
     {
       id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
       },
       run_id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       entity_type: {

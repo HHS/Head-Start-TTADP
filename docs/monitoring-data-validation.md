@@ -150,7 +150,7 @@ How it is wired:
 
 ## Tables
 
-All four tables are created by migration `20260714120000-create_validation_tables.js`. Ids are `BIGINT` autoincrement; `createdAt`/`updatedAt` are present on every table.
+All four tables are created by migration `20260806120000-create_validation_tables.js`. Ids are `INTEGER` autoincrement; `createdAt`/`updatedAt` are present on every table.
 
 ### ValidationRuns
 
@@ -158,11 +158,11 @@ One row per run of a process.
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | BIGINT | Primary key |
+| `id` | INTEGER | Primary key |
 | `process_name` | TEXT | The process (`monitoring_post_refresh`, `monitoring_gate`) |
 | `status` | TEXT | `started` → `success` \| `failure` (see `VALIDATION_RUN_STATUS`) |
 | `started_at` | TIMESTAMPTZ | When the run began (row committed before work starts) |
-| `import_id` | BIGINT | The [cycle](#architecture)'s import: a soft reference (non-unique, no FK) to the `ImportFiles` row this run validated. Runs of one cycle share it; NULL when not tied to an import (e.g. future application-data validation) |
+| `import_id` | INTEGER | The [cycle](#architecture)'s import: a soft reference (non-unique, no FK) to the `ImportFiles` row this run validated. Runs of one cycle share it; NULL when not tied to an import (e.g. future application-data validation) |
 | `source_updated_at` | TIMESTAMPTZ | The cycle's source data date (`ImportFiles.ftpFileInfo.date`, the value the import writes to the raw rows' `sourceUpdatedAt`) |
 | `completed_at` | TIMESTAMPTZ | When the run finished; NULL while `started` |
 | `stats_upserted` | INTEGER | Rows upserted by steps that report a count (time series) |
@@ -178,7 +178,7 @@ Long/narrow aggregated statistics, progressively upserted across runs (not tied 
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | BIGINT | Primary key |
+| `id` | INTEGER | Primary key |
 | `feature_set` | TEXT | Group of related stats (e.g. `monitoring_reviews`) |
 | `period_type` | TEXT | `week` \| `month` |
 | `period_start` | DATE | Start of the bucket |
@@ -195,8 +195,8 @@ Per-entity observations for a run.
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | BIGINT | Primary key |
-| `run_id` | BIGINT | FK to `ValidationRuns` |
+| `id` | INTEGER | Primary key |
+| `run_id` | INTEGER | FK to `ValidationRuns` |
 | `entity_type` | TEXT | Polymorphic entity table name (e.g. `MonitoringFindings`) |
 | `entity_id` | INTEGER | The entity's id |
 | `observation_name` | TEXT | What is being observed (e.g. `finding_count`) |
@@ -211,8 +211,8 @@ Alerts raised by checks. Holds only the latest run per process.
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | BIGINT | Primary key |
-| `run_id` | BIGINT | FK to `ValidationRuns` |
+| `id` | INTEGER | Primary key |
+| `run_id` | INTEGER | FK to `ValidationRuns` |
 | `check_name` | TEXT | The check that fired (e.g. `open_ar_findings_gone`) |
 | `message` | TEXT | Human-readable summary (rendered into Slack) |
 | `severity` | TEXT | `alert` \| `critical` (default `alert`; see `VALIDATION_ALERT_SEVERITY`) |
@@ -264,6 +264,6 @@ Split logic that different future consumers will use (e.g. anomaly-detection mod
 - **Watchdog**: `src/tools/checkMonitoringValidationRan.ts`, `src/tools/checkMonitoringValidationRanCLI.ts`
 - **Models**: `src/models/validationRun.js`, `src/models/validationTimeSeries.js`, `src/models/validationRecord.js`, `src/models/validationAlert.js`
 - **Constants**: `VALIDATION_PROCESS`, `VALIDATION_RUN_STATUS`, `VALIDATION_ALERT_SEVERITY` in `src/constants.js`
-- **Migration**: `src/migrations/20260714120000-create_validation_tables.js`
+- **Migration**: `src/migrations/20260806120000-create_validation_tables.js`
 - **CI**: `.circleci/config.yml` (import phases), `.circleci/scripts/build_import_summary.sh` (Slack summary)
 </content>

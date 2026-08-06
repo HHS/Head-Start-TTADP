@@ -8,8 +8,7 @@ const { ValidationRun } = db;
 export interface WatchdogResult {
   ok: boolean;
   reason?: string;
-  // string, not number: Postgres BIGINT ids arrive as strings
-  runId?: string;
+  runId?: number;
   status?: string;
   startedAt?: Date;
   // startedAt as human-readable Eastern time, for the Slack message

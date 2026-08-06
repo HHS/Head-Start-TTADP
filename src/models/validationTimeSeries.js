@@ -5,12 +5,15 @@ import { Model } from 'sequelize';
 // "not applicable/unknown" sentinel because they participate in the upsert key.
 export default (sequelize, DataTypes) => {
   class ValidationTimeSeries extends Model {
+    // Validation tables are high churn, purely operational tables
+    static noAudit = true;
+
     static associate() {}
   }
   ValidationTimeSeries.init(
     {
       id: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
