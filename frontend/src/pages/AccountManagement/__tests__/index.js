@@ -104,7 +104,7 @@ describe('AccountManagement', () => {
         ).toBeInTheDocument();
         expect(
           screen.queryByText(
-            'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.'
+            'Managers approve an activity report that I created or collaborated on.'
           )
         ).toBeInTheDocument();
         expect(
@@ -129,7 +129,7 @@ describe('AccountManagement', () => {
         ).toBeInTheDocument();
         expect(
           screen.queryByText(
-            'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.'
+            'Managers approve an activity report that I created or collaborated on.'
           )
         ).toBeInTheDocument();
         expect(
@@ -154,7 +154,7 @@ describe('AccountManagement', () => {
         ).toBe(0);
         expect(
           screen.queryAllByText(
-            'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.'
+            'Managers approve an activity report that I created or collaborated on.'
           ).length
         ).toBe(0);
         expect(
@@ -179,7 +179,7 @@ describe('AccountManagement', () => {
         ).toBe(0);
         expect(
           screen.queryAllByText(
-            'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.'
+            'Managers approve an activity report that I created or collaborated on.'
           ).length
         ).toBe(0);
         expect(
