@@ -14,7 +14,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
-import { logger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReportApprover,
@@ -38,6 +38,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
+  getObjectiveSupportTypeSubmissionError,
   handleSoftDeleteReport,
   possibleRecipients,
   setStatus,
@@ -707,6 +708,13 @@ export async function submitReport(req, res) {
 
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
+      return;
+    }
+
+    const supportTypeError = await getObjectiveSupportTypeSubmissionError(activityReportId);
+    if (supportTypeError) {
+      auditLogger.error(supportTypeError);
+      res.status(400).send(supportTypeError);
       return;
     }
 

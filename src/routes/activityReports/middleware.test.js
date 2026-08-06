@@ -1,20 +1,11 @@
 import { APPROVER_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
-import { getObjectiveSupportTypeSubmissionError } from '../../services/activityReports';
-import {
-  checkObjectiveSupportTypes,
-  checkReviewReportBody,
-  checkSubmitReportBody,
-} from './middleware';
+import { checkReviewReportBody, checkSubmitReportBody } from './middleware';
 
 jest.mock('../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
   },
-}));
-
-jest.mock('../../services/activityReports', () => ({
-  getObjectiveSupportTypeSubmissionError: jest.fn(),
 }));
 
 describe('activityReports reviewReport middleware', () => {
@@ -238,49 +229,5 @@ describe('activityReports submitReport middleware', () => {
 
     expect(mockNext).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
-  });
-});
-
-describe('activityReports checkObjectiveSupportTypes middleware', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockResponse = () => {
-    const send = jest.fn();
-    return {
-      send,
-      res: {
-        status: jest.fn(() => ({ send })),
-      },
-    };
-  };
-
-  it('calls next when every objective has a support type', async () => {
-    getObjectiveSupportTypeSubmissionError.mockResolvedValue(null);
-    const mockRequest = { params: { activityReportId: '1' } };
-    const { res } = mockResponse();
-    const mockNext = jest.fn();
-
-    await checkObjectiveSupportTypes(mockRequest, res, mockNext);
-
-    expect(mockNext).toHaveBeenCalled();
-    expect(res.status).not.toHaveBeenCalled();
-  });
-
-  it('returns 400 when an objective is missing a support type', async () => {
-    getObjectiveSupportTypeSubmissionError.mockResolvedValue(
-      'all objectives must have a support type'
-    );
-    const mockRequest = { params: { activityReportId: '1' } };
-    const { res, send } = mockResponse();
-    const mockNext = jest.fn();
-
-    await checkObjectiveSupportTypes(mockRequest, res, mockNext);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(send).toHaveBeenCalledWith('all objectives must have a support type');
-    expect(auditLogger.error).toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
   });
 });
