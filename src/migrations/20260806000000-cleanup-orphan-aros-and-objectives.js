@@ -28,12 +28,17 @@ module.exports = {
         --    longer used by any non-deleted report (their only AROs were on
         --    deleted reports, or they have no ARO at all). Objectives is
         --    paranoid, so this sets "deletedAt".
+        -- 3) Resync Objectives."onAR" for objectives that survive the delete
+        --    (shared with a live report, or createdVia='rtr'). The raw delete
+        --    bypasses the ARO destroy hook that normally recalculates onAR, so
+        --    we replicate it here to avoid a stale flag.
         --------------------------------------------------------------------
 
-        -- 1: AROs whose ActivityReport is deleted
+        -- 1: AROs whose ActivityReport is deleted. We capture objectiveId so we
+        -- can resync Objectives."onAR" for surviving objectives after the delete.
         DROP TABLE IF EXISTS aros_to_delete;
         CREATE TEMP TABLE aros_to_delete AS
-        SELECT aro.id AS aro_id
+        SELECT aro.id AS aro_id, aro."objectiveId" AS objective_id
         FROM "ActivityReportObjectives" aro
         JOIN "ActivityReports" ar
           ON ar.id = aro."activityReportId"
@@ -91,10 +96,35 @@ module.exports = {
         )
         SELECT id FROM upd;
 
+        -- 3: Resync "onAR" for objectives whose AROs were removed but the
+        -- objective itself survives (still used by a live report, or a non-AR
+        -- objective such as createdVia='rtr'). onAR reflects whether the
+        -- objective is linked to any ActivityReportObjective at all. Soft-deleted
+        -- objectives are excluded via the "deletedAt" filter.
+        DROP TABLE IF EXISTS resynced_objectives;
+        CREATE TEMP TABLE resynced_objectives AS
+        WITH upd AS (
+          UPDATE "Objectives" o
+          SET "onAR" = EXISTS (
+                SELECT 1 FROM "ActivityReportObjectives" aro
+                WHERE aro."objectiveId" = o.id
+              ),
+              "updatedAt" = NOW()
+          WHERE o.id IN (SELECT DISTINCT objective_id FROM aros_to_delete)
+            AND o."deletedAt" IS NULL
+            AND o."onAR" IS DISTINCT FROM EXISTS (
+                SELECT 1 FROM "ActivityReportObjectives" aro
+                WHERE aro."objectiveId" = o.id
+              )
+          RETURNING o.id
+        )
+        SELECT id FROM upd;
+
         -- Validation output
         SELECT
           (SELECT COUNT(*) FROM deleted_aros) AS aros_deleted,
-          (SELECT COUNT(*) FROM soft_deleted_objectives) AS objectives_soft_deleted;
+          (SELECT COUNT(*) FROM soft_deleted_objectives) AS objectives_soft_deleted,
+          (SELECT COUNT(*) FROM resynced_objectives) AS objectives_onar_resynced;
         `,
         { transaction },
       );
