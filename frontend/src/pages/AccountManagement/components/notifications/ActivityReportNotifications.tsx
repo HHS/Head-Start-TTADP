@@ -51,7 +51,8 @@ export default function ActivityReportNotifications({
         },
         {
           id: 'WhenReportApproval',
-          label: 'A manager approves an Activity Report that I created or collaborated on.',
+          label:
+            'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.',
         },
         {
           id: 'WhenAppointedCollaborator',

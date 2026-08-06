@@ -59,7 +59,8 @@ export const emailTypesMap = {
     },
     {
       name: '',
-      description: 'Managers approve an activity report that I created or collaborated on.',
+      description:
+        'Managers approve an Activity report that I created, collaborated on, or am assigned to approve.',
       keyName: 'emailWhenReportApproval',
     },
     {
