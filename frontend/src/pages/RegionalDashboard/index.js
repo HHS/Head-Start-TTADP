@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
@@ -19,6 +19,7 @@ import {
   MONITORING_FILTER_CONFIG,
   RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
 } from './constants';
+import { formatMonitoringFiltersForQuery } from './monitoringFilters';
 import './index.css';
 
 const filterConfiguration = {
@@ -138,6 +139,24 @@ function RegionalDashboardContent({ match }) {
     filterConfig,
   } = useFilters(user, filterKey, true, defaultFiltersTouse, config, onFiltersChange);
 
+  const filtersForQuery = useMemo(() => {
+    if (reportType !== 'monitoring') {
+      return filters;
+    }
+
+    return formatMonitoringFiltersForQuery(filters);
+  }, [filters, reportType]);
+
+  useEffect(() => {
+    if (reportType !== 'monitoring') {
+      return;
+    }
+
+    if (JSON.stringify(filters) !== JSON.stringify(filtersForQuery)) {
+      setFilters(filtersForQuery);
+    }
+  }, [filters, filtersForQuery, reportType, setFilters]);
+
   const {
     h1Text,
     showFilters,
@@ -161,10 +180,10 @@ function RegionalDashboardContent({ match }) {
   return (
     <div className="ttahub-dashboard">
       <RegionPermissionModal
-        filters={filters}
+        filters={filtersForQuery}
         user={user}
         showFilterWithMyRegions={() =>
-          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          showFilterWithMyRegions(allRegionsFilters, filtersForQuery, setFilters)
         }
       />
       <TabsNav ariaLabel="Dashboard navigation" links={links} />
@@ -173,7 +192,7 @@ function RegionalDashboardContent({ match }) {
         <FilterPanelContainer>
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
-            filters={filters}
+            filters={filtersForQuery}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
             filterConfig={filtersToUse}
@@ -184,7 +203,7 @@ function RegionalDashboardContent({ match }) {
       <Dashboard
         reportType={reportType}
         setResetPagination={setResetPagination}
-        filters={filters}
+        filters={filtersForQuery}
         filterKey={filterKey}
         resetPagination={resetPagination}
         userHasOnlyOneRegion={userHasOnlyOneRegion}

@@ -102,6 +102,15 @@ export const MY_REPORT_ROLES = ['Creator', 'Collaborator', 'Approver'];
 
 export const MY_CL_REPORT_ROLES = ['Creator', 'Other TTA staff'];
 
+export const TTA_HISTORY_REPORT_ROLES = [
+  'AR creator',
+  'AR collaborator',
+  'AR approver',
+  'TR event creator',
+  'TR event collaborator',
+  'TR POC',
+];
+
 export const OTHER_ENTITY_TYPES = [
   'CCDF / Child Care Administrator',
   'Head Start Collaboration Office',

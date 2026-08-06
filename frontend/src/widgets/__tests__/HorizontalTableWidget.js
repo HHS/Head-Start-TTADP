@@ -560,6 +560,38 @@ describe('Horizontal Table Widget', () => {
     ).toHaveLength(1);
   });
 
+  it('does not make the first footer data cell sticky when checkboxes are disabled', () => {
+    const headers = ['Aug 2025', 'Sep 2025'];
+    const data = [
+      {
+        heading: 'Follow-up reviews with TTA',
+        data: [
+          { title: 'Aug 2025', value: '45' },
+          { title: 'Sep 2025', value: '28' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Follow-up reviews"
+          showTotalColumn={false}
+          footerData={['Total', '118', '92']}
+          enableCheckboxes={false}
+        />
+      </Router>
+    );
+
+    const footerCells = container.querySelectorAll('tfoot td');
+
+    expect(footerCells[0]).toHaveClass('smarthub-horizontal-table-footer-first-column');
+    expect(footerCells[1]).not.toHaveClass('smarthub-horizontal-table-footer-first-column');
+    expect(footerCells[1]).not.toHaveClass('smarthub-horizontal-table-footer-checkbox-column');
+  });
+
   it('applies first column max width as a css variable when provided', () => {
     const headers = ['Number'];
     const data = [
@@ -699,6 +731,9 @@ describe('Horizontal Table Widget', () => {
     );
     expect(
       container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(1);
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')
     ).toHaveLength(1);
   });
 

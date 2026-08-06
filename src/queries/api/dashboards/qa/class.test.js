@@ -325,6 +325,7 @@ describe('class.sql dataset selection', () => {
           recipientId: recipient.id,
           classReviewCardId: `${grant.id}:${review.reviewId}`,
           grantNumber: grant.number,
+          goalId: goal.id,
           reportDeliveryDate: expect.any(String),
           lastARStartDate: expect.any(String),
         }),
@@ -434,6 +435,7 @@ describe('class.sql dataset selection', () => {
             recipientId: noArRecipient.id,
             classReviewCardId: `${noArGrant.id}:${noArReview.reviewId}`,
             grantNumber: noArGrant.number,
+            goalId: noArGoal.id,
             lastARStartDate: null,
             reportDeliveryDate: expect.any(String),
           }),
@@ -1237,8 +1239,11 @@ describe('class.sql dataset selection', () => {
   it('associates a goal created before a newer class review with the older review window', async () => {
     let earlierWindowGoal;
     let laterReviewData;
+    const originalGoalStatus = goal.status;
 
     try {
+      await goal.update({ status: 'Closed' });
+
       earlierWindowGoal = await createGoal({
         grantId: grant.id,
         goalTemplateId: CLASS_TEMPLATE_ID,
@@ -1281,6 +1286,7 @@ describe('class.sql dataset selection', () => {
           individualHooks: true,
         });
       }
+      await goal.update({ status: originalGoalStatus });
     }
   });
 

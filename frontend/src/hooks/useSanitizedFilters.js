@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 
 /**
  * useSanitizedFilters wraps useSessionFiltersAndReflectInUrl and removes any
@@ -15,7 +15,6 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
  * @returns {[ Object[], Function ]}
  */
 export default function useSanitizedFilters(key, defaultFilters, validTopics) {
-
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(key, defaultFilters);
 
   const sanitizedFilters = useMemo(() => {

@@ -2,13 +2,22 @@ import { isNaN } from 'lodash';
 import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
 
 export class HTTPError extends Error {
-  constructor(statusCode, message, ...params) {
+  constructor(statusCode, message, data = null, ...params) {
     super(message, ...params);
     this.name = 'HTTPError';
     this.status = statusCode;
     this.statusText = message;
+    this.data = data;
   }
 }
+
+const errorResponseData = async (response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
 
 const impersonationHeader = () => {
   if (!window.sessionStorage) return {};
@@ -51,7 +60,7 @@ export const put = async (url, data) => {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new HTTPError(res.status, res.statusText);
+    throw new HTTPError(res.status, res.statusText, await errorResponseData(res));
   }
   return res;
 };

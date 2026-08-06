@@ -559,10 +559,21 @@ function ActivityReport({ match, location, region }) {
       let reportData = updatedReport;
 
       // format the goals and objectives appropriately, as well as divide them
-      // by which one is open and which one is not
+      // by which one is open and which one is not.
+      //
+      // We must pass calculatedStatus and goalOrder here (matching the new-report
+      // branch above and convertReportToFormData used on page refresh). Without
+      // calculatedStatus, it defaults to DRAFT, which is an allowed
+      // goal-editing status. A just-saved goal whose isActivelyEdited flag is still
+      // set then gets routed into goalForEditing (leaving the goals array empty),
+      // so the read-only goals list renders blank until a full page refresh runs
+      // the conversion with the real status. Passing the real status/order makes
+      // the post-save state identical to the refreshed state.
       const { goalForEditing, goals } = convertGoalsToFormData(
         updatedReport.goalsAndObjectives,
-        updatedReport.activityRecipients.map((r) => r.activityRecipientId)
+        updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+        updatedReport.calculatedStatus,
+        updatedReport.goalOrder
       );
 
       reportData = {

@@ -183,11 +183,19 @@ describe('Recipients With Class and Scores and Goals', () => {
     goalsButton.click();
 
     expect(screen.getByText('G-45641')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'G-45641' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/1/goals/standard?goalId=45641'
+    );
     expect(screen.getAllByText('01/02/2021').length).toBeGreaterThan(0);
     expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('G-25858')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'G-25858' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/1/goals/standard?goalId=25858'
+    );
     expect(screen.getByText(GOAL_STATUS.SUSPENDED)).toBeInTheDocument();
     expect(screen.getByText('Bill Smith')).toBeInTheDocument();
     expect(screen.getByText('Bob Jones')).toBeInTheDocument();

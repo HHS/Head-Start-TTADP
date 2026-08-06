@@ -12,7 +12,7 @@ import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { mockRSSData } from '../../../../../testHelpers';
 import UserContext from '../../../../../UserContext';
-import GoalPicker from '../GoalPicker';
+import GoalPicker, { buildUniqueCitationOptions } from '../GoalPicker';
 
 const defaultSelectedGoals = [
   {
@@ -97,6 +97,87 @@ describe('GoalPicker', () => {
   });
 
   afterEach(() => fetchMock.restore());
+
+  it('keeps all standardIds when deduplicating citation options', () => {
+    const uniqueCitationOptions = buildUniqueCitationOptions([
+      {
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+      {
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
+
+    expect(uniqueCitationOptions).toEqual([
+      {
+        label: 'Noncompliance',
+        options: [
+          {
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            id: 205833,
+            standardIds: [205833, 205834],
+            selectKey: 'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('gives options that share a standardId distinct selectKeys', () => {
+    const uniqueCitationOptions = buildUniqueCitationOptions([
+      {
+        standardId: 100,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+          {
+            acro: 'DEF',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Deficiency',
+            name: 'DEF - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
+
+    const allOptions = uniqueCitationOptions.flatMap((group) => group.options);
+    // Both findings share standardId 100 but must be independently selectable.
+    expect(allOptions).toHaveLength(2);
+    expect(allOptions.every((option) => option.id === 100)).toBe(true);
+    const selectKeys = allOptions.map((option) => option.selectKey);
+    expect(new Set(selectKeys).size).toBe(2);
+    expect(selectKeys).toEqual(
+      expect.arrayContaining([
+        'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        'Deficiency::DEF - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      ])
+    );
+  });
 
   it('you can select a goal', async () => {
     const availableGoals = [
