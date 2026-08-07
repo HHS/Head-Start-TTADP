@@ -163,7 +163,8 @@ workflows:
     - run_import_job:
         serial-group: import-data/prod
         target_env: "prod"
-        slack_channel: acf-ohs-ttahub--contractor-customer-team
+        slack_channel: acf-head-start-alerts
+        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -173,6 +174,23 @@ workflows:
         serial-group: import-data/<< pipeline.parameters.target_env >>
         target_env: "<< pipeline.parameters.target_env >>"
         slack_channel: acf-head-start-alerts-lower
+
+  validation_watchdog_cron:
+    # verify the monitoring data validation ran; one hour after import_data_cron
+    # (the whole import including validation should take well under ten minutes,
+    # and we don't want to wait long to find out something went wrong)
+    triggers:
+    - schedule:
+        cron: "0 14 * * *" # 2PM UTC = 10AM EST
+        filters:
+          branches:
+            only:
+            - production
+    jobs:
+    - run_validation_watchdog:
+        target_env: "prod"
+        slack_channel: acf-head-start-alerts
+        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state
@@ -1374,6 +1392,9 @@ jobs:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
+      ohs_channel:
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1399,18 +1420,22 @@ jobs:
           PHASE_NAMES=(
             "download"
             "process"
+            "validate_monitoring_gate"
             "update_fact_tables"
             "create_monitoring_goals"
             "maintain_monitoring_data"
+            "validate_monitoring_data"
             "report_updates"
           )
 
           PHASE_COMMANDS=(
             "yarn cli:import-system download 1"
             "yarn cli:import-system process 1"
+            "yarn cli:validate-monitoring-gate"
             "yarn cli:updateMonitoringFactTables"
             "yarn cli:create-monitoring-goals"
             "yarn cli:maintain-monitoring-data"
+            "yarn cli:validate-monitoring-data"
             "yarn cli:query-monitoring-data"
           )
 
@@ -1470,11 +1495,12 @@ jobs:
         name: Create monitoring updates summary
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
-          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 6
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8
     - notify_slack:
         step_when: always
         message_text_file: monitoring-updates.txt
         slack_channel: << parameters.slack_channel >>
+        ohs_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: import-artifacts
@@ -1486,7 +1512,7 @@ jobs:
         name: Fail if any import phase failed
         command: |
           STATUS_FILE="import-artifacts/import-status.json"
-          EXPECTED_TASKS=6
+          EXPECTED_TASKS=8
 
           if [[ ! -f "${STATUS_FILE}" ]]; then
             echo "Import status file not found."
@@ -1498,6 +1524,115 @@ jobs:
 
           if [[ "${task_count}" -ne "${EXPECTED_TASKS}" || "${failed_count}" -ne 0 ]]; then
             echo "Import data cron failed or ran partially."
+            exit 1
+          fi
+
+  run_validation_watchdog:
+    # verify the daily monitoring data validation actually ran; scheduled a few
+    # hours after import_data_cron so it also catches the case where that cron
+    # never fired at all
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
+      ohs_channel:
+        type: string
+        default: ""
+    steps:
+    - checkout
+    - install_cf_tools
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Run monitoring validation watchdog
+        no_output_timeout: 10m
+        command: |
+          set -u
+          set -o pipefail
+
+          TARGET_ENV="<< parameters.target_env >>"
+          APP_NAME="tta-smarthub-${TARGET_ENV}"
+          ARTIFACT_DIR="watchdog-artifacts"
+          STATUS_FILE="${ARTIFACT_DIR}/watchdog-status.json"
+          LOG_DIR="${ARTIFACT_DIR}/logs"
+          LOG_FILE="${LOG_DIR}/phase-watchdog.log"
+          mkdir -p "${LOG_DIR}"
+
+          jq -n \
+            --arg target_env "${TARGET_ENV}" \
+            --arg app_name "${APP_NAME}" \
+            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            '{
+              metadata: {
+                targetEnv: $target_env,
+                appName: $app_name,
+                startedAt: $started_at
+              },
+              taskRuns: []
+            }' > "${STATUS_FILE}"
+
+          if ! cf login -a "${cg_api}" \
+            -u "${cg_username}" \
+            -p "${cg_password}" \
+            -o "${cg_org}" \
+            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+            exit 1
+          fi
+
+          ./bin/run-task.js "${APP_NAME}" \
+            --status-file "${STATUS_FILE}" \
+            --log-file "${LOG_FILE}" \
+            --command "yarn cli:check-monitoring-validation-ran" \
+            --name "validation-watchdog-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}" \
+            -m 2GB \
+            -k 2GB >>"${LOG_FILE}" 2>&1 || true
+
+          cf logout >/dev/null 2>&1 || true
+    - run:
+        when: always
+        name: Create watchdog summary
+        command: |
+          LOG_FILE="watchdog-artifacts/logs/phase-watchdog.log"
+          SUMMARY_FILE="watchdog-summary.txt"
+
+          result=$(grep -o "Monitoring Validation Watchdog: .*" "${LOG_FILE}" 2>/dev/null | tail -n 1 || true)
+          if [[ -n "${result}" ]]; then
+            echo "${result}" > "${SUMMARY_FILE}"
+          else
+            echo "Monitoring Validation Watchdog: no result (task failed to run)" > "${SUMMARY_FILE}"
+          fi
+          cat "${SUMMARY_FILE}"
+    - notify_slack:
+        step_when: always
+        message_text_file: watchdog-summary.txt
+        slack_channel: << parameters.slack_channel >>
+        ohs_channel: << parameters.ohs_channel >>
+    - store_artifacts:
+        when: always
+        path: watchdog-artifacts
+    - store_artifacts:
+        when: always
+        path: watchdog-summary.txt
+    - run:
+        when: always
+        name: Fail if the validation did not run cleanly
+        command: |
+          STATUS_FILE="watchdog-artifacts/watchdog-status.json"
+
+          if [[ ! -f "${STATUS_FILE}" ]]; then
+            echo "Watchdog status file not found."
+            exit 1
+          fi
+
+          task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
+          failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+
+          if [[ "${task_count}" -ne 1 || "${failed_count}" -ne 0 ]]; then
+            echo "Monitoring validation watchdog reported a problem."
             exit 1
           fi
 
@@ -2186,6 +2321,10 @@ commands:
         description: "Slack channel name to post the message to"
         default: "acf-head-start-alerts-lower"
         type: string
+      ohs_channel:
+        description: "Optional OHS contractor-customer channel to ALSO post the same message to, gated by the OHS_MONITORING_ALERTS_ENABLED env var. Empty = base channel only. See docs/monitoring-data-validation.md (Channels)."
+        type: string
+        default: ""
       message_text:
         description: "Message text to post to Slack"
         type: string
@@ -2227,6 +2366,31 @@ commands:
             exit 1
           else
             echo "Slack notification sent successfully"
+          fi
+
+          # Optionally mirror the same message to the OHS contractor-customer
+          # channel. Two independent guards so a lower environment can never leak
+          # there: the caller must pass a non-empty ohs_channel (only the prod
+          # invocations do), AND the OHS_MONITORING_ALERTS_ENABLED env var must be
+          # truthy (off by default). See docs/monitoring-data-validation.md
+          # (Channels).
+          OHS_CHANNEL="<< parameters.ohs_channel >>"
+          OHS_ENABLED=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
+          if [ -n "$OHS_CHANNEL" ] && { [ "$OHS_ENABLED" = "true" ] || [ "$OHS_ENABLED" = "1" ] || [ "$OHS_ENABLED" = "yes" ]; }; then
+            echo "OHS_MONITORING_ALERTS_ENABLED set; mirroring to ${OHS_CHANNEL}"
+            ohs_response=$(curl -s -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                \"channel\": \"${OHS_CHANNEL}\",
+                \"text\": \"$MESSAGE\"
+              }" \
+              https://slack.com/api/chat.postMessage)
+            if [ "$(echo $ohs_response | jq -r '.ok')" != "true" ]; then
+              echo "OHS Slack notification failed: $(echo $ohs_response | jq -r '.error')"
+            else
+              echo "OHS Slack notification sent successfully"
+            fi
           fi
 
 
