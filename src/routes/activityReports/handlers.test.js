@@ -293,7 +293,7 @@ describe('Activity Report handlers', () => {
         },
       },
     };
-    userById.mockResolvedValue({});
+    userById.mockResolvedValue({ name: 'Approver Name' });
 
     it('returns the new approved status', async () => {
       // here
@@ -303,20 +303,28 @@ describe('Activity Report handlers', () => {
         activityReportId: approvedReportRequest.params.activityReportId,
         status: approvedReportRequest.body.status,
         note: approvedReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
       };
       activityReportAndRecipientsById.mockResolvedValue([
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
           activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
           author: {
             id: 777,
           },
           activityReportCollaborators: [],
           id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
         },
         [
           {
-            activityRecipientId: 10,
+            name: 'Recipient A',
           },
         ],
       ]);
@@ -342,6 +350,20 @@ describe('Activity Report handlers', () => {
         { where: { id: approvedReportRequest.params.activityReportId } }
       );
       expect(approvalNotification).toHaveBeenCalled();
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
     });
     it('returns the new needs action status', async () => {
       const mockApproverRecord = {
