@@ -539,15 +539,6 @@ export async function reviewReport(req, res) {
         programSpecialists,
         activityRecipients
       );
-
-      await createReportApprovedNotification(
-        reviewedReport.author.id,
-        {
-          ...reviewedReport.toJSON(),
-          activityRecipients,
-        },
-        user.name
-      );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
@@ -561,6 +552,17 @@ export async function reviewReport(req, res) {
         collabsWithSettings,
         // approvers, minus the approver whose review triggered this workflow
         approversWithSettings.filter((a) => a.user.id !== userId)
+      );
+    }
+
+    if (status === REPORT_STATUSES.APPROVED) {
+      await createReportApprovedNotification(
+        reviewedReport.author.id,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
       );
     }
 
