@@ -1414,21 +1414,25 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await Promise.all(createdSessions.map((s) => destroySession(s.id)));
+      await Promise.all((createdSessions || []).map((s) => destroySession(s.id)));
 
-      await destroyEvent(regionOneEvent.id);
-      await destroyEvent(regionTwoEvent.id);
+      if (regionOneEvent) await destroyEvent(regionOneEvent.id);
+      if (regionTwoEvent) await destroyEvent(regionTwoEvent.id);
 
       await db.Grant.destroy({
         where: {
-          id: [recipientGrantInRegion1.id, recipientGrantInRegion2.id, otherRecipientGrant.id],
+          id: [
+            recipientGrantInRegion1?.id,
+            recipientGrantInRegion2?.id,
+            otherRecipientGrant?.id,
+          ].filter(Boolean),
         },
         individualHooks: true,
       });
 
       await db.Recipient.destroy({
         where: {
-          id: [recipient.id, otherRecipient.id],
+          id: [recipient?.id, otherRecipient?.id].filter(Boolean),
         },
       });
     });
