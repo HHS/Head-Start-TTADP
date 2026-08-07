@@ -3,6 +3,7 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import { respondWithServiceError } from '../../lib/serviceError';
 import { currentUserId } from '../../services/currentUser';
 import {
   getCuratedTemplates,
@@ -18,19 +19,6 @@ import {
   standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from '../../services/standardGoals';
-
-function respondWithServiceError(res: Response, error) {
-  if (!Number.isInteger(error?.statusCode) || error.statusCode < 400 || error.statusCode >= 500) {
-    return false;
-  }
-
-  if (error.responseBody) {
-    res.status(error.statusCode).json(error.responseBody);
-  } else {
-    res.sendStatus(error.statusCode);
-  }
-  return true;
-}
 
 export async function getStandardGoal(req: Request, res: Response) {
   try {

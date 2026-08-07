@@ -1,6 +1,7 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op, Sequelize } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
+import { serviceError } from '../lib/serviceError';
 import db from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
 import { userById } from './users';
@@ -82,13 +83,6 @@ interface PromptResponse {
   response: string[] | null;
   goalIds: number[];
   grantId: number;
-}
-
-function serviceError(statusCode: number, message: string, responseBody?: object) {
-  return Object.assign(new Error(message), {
-    statusCode,
-    ...(responseBody ? { responseBody } : {}),
-  });
 }
 
 async function authorizeGoalTemplateEnrichment(grantIds: number[], userId?: number) {

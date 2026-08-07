@@ -30,7 +30,6 @@ export default function GoalGrantSingleSelect({
             required
           >
             <Select
-              aria-label="Recipient grant numbers"
               placeholder=""
               inputId="selectedGrant"
               onChange={onChange}

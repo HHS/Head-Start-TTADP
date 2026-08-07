@@ -329,12 +329,12 @@ describe('StandardGoalForm', () => {
       );
       renderStandardGoalForm(mockUser, recipientWithTwoGrants);
 
-      await selectEvent.select(screen.getByLabelText('Recipient grant numbers'), 'Grant-123');
+      await selectEvent.select(screen.getByLabelText(/Recipient grant numbers/i), 'Grant-123');
       const goalSelect = await screen.findByLabelText("Select recipient's goal");
       await selectEvent.select(goalSelect, blockedGoalTemplate.name);
       expect(await screen.findByText(inaccessibleReport.displayId)).toBeInTheDocument();
 
-      await selectEvent.select(screen.getByLabelText('Recipient grant numbers'), 'Grant-456');
+      await selectEvent.select(screen.getByLabelText(/Recipient grant numbers/i), 'Grant-456');
 
       await waitFor(() => {
         expect(screen.getByLabelText("Select recipient's goal")).toHaveValue('');

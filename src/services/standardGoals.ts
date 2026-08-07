@@ -3,6 +3,7 @@ import { uniqBy } from 'lodash';
 import { Op, UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import { serviceError } from '../lib/serviceError';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import {
@@ -695,10 +696,7 @@ function standardGoalConflict(code: string, blockingActivityReports = undefined)
     code,
     ...(blockingActivityReports ? { blockingActivityReports } : {}),
   };
-  return Object.assign(new Error('Standard goal is already in use'), {
-    responseBody,
-    statusCode: 409,
-  });
+  return serviceError(409, 'Standard goal is already in use', responseBody);
 }
 
 async function validateStandardGoalAvailability(
