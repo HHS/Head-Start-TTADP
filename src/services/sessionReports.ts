@@ -5,6 +5,7 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import type {
+  GetSessionReportsForRecipientParams,
   GetSessionReportsParams,
   GetSessionReportsResponse,
   SessionReportShape,
@@ -18,6 +19,7 @@ const {
   SessionReportPilotSupportingAttachment,
   SessionReportPilotGoalTemplate,
   SessionReportPilotTrainer,
+  Grant,
 } = db;
 
 type WhereOptions = {
@@ -394,6 +396,31 @@ function sessionReportDateSort(field: string): string {
   END`;
 }
 
+function removeRegionFilters(filters: Record<string, unknown>): Record<string, unknown> {
+  return Object.keys(filters || {}).reduce((acc, key) => {
+    if (key === 'region.in' || key === 'region.in[]' || key === 'region.nin') {
+      return acc;
+    }
+
+    return {
+      ...acc,
+      [key]: filters[key],
+    };
+  }, {});
+}
+
+function recipientGrantFilter(grantIds: number[]) {
+  return sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements("SessionReportPilot"."data"->'recipients') elem
+    WHERE (
+      jsonb_typeof(elem->'value') = 'number'
+      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
+    )
+    AND (elem->>'value')::integer IN (${grantIds.join(', ')})
+  )`);
+}
+
 /**
  * Get training reports (sessions) with pagination, sorting, and filtering
  * @param params Query parameters including pagination, sorting, filtering, and format
@@ -545,6 +572,214 @@ export async function getSessionReports(
     attributes: queryOptions.attributes,
     where: {
       [Op.and]: [{ id: sessionIds }, ...sessionReportScopes],
+    },
+    include: queryOptions.include,
+    order: orderClause,
+    subQuery: false,
+  });
+
+  // Transform rows to plain objects with goalTemplates included
+  const rows = result.map((row: Model) => {
+    const plain = row.get({ plain: true });
+    return {
+      id: plain.id,
+      eventId: plain.eventId,
+      eventName: plain.eventName,
+      sessionName: plain.sessionName,
+      startDate: plain.startDate,
+      endDate: plain.endDate,
+      objectiveTopics: plain.objectiveTopics,
+      goalTemplates: plain.goalTemplates || [],
+      duration: plain.duration,
+      recipients: plain.recipients,
+      participants: plain.participants,
+    };
+  });
+
+  return {
+    count,
+    rows,
+  };
+}
+
+/**
+ * Clone of getSessionReports that filters rows to sessions listing grants
+ * from a specific recipient, and ignores any region restrictions.
+ */
+export async function getSessionReportsByRecipient(
+  params: GetSessionReportsForRecipientParams
+): Promise<GetSessionReportsResponse> {
+  const {
+    recipientId,
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    ...filterParams
+  } = params;
+
+  const parsedRecipientId = Number(recipientId);
+  if (!Number.isInteger(parsedRecipientId) || parsedRecipientId <= 0) {
+    throw new Error('recipientId must be a positive integer');
+  }
+
+  const grants = (await Grant.findAll({
+    attributes: ['id'],
+    where: { recipientId: parsedRecipientId },
+    raw: true,
+  })) as { id: number }[];
+
+  // Validate grant ids independently before interpolation into SQL literal.
+  const grantIds = [...new Set(grants.map((g) => Number(g.id)))].filter(
+    (id) => Number.isInteger(id) && id > 0
+  );
+
+  if (grantIds.length === 0) {
+    return {
+      count: 0,
+      rows: [],
+    };
+  }
+
+  const recipientFilter = recipientGrantFilter(grantIds);
+
+  // Map frontend column header keys to backend sort keys
+  // The frontend HorizontalTableWidget sends displayName.replaceAll(' ', '_') as sortBy
+  const sortByAliases: Record<string, string> = {
+    Session_name: 'sessionName',
+    Session_start_date: 'startDate',
+    Session_end_date: 'endDate',
+    Event_ID: 'eventId',
+    Event_title: 'eventName',
+    Supporting_goals: 'supportingGoals',
+    Topics: 'topics',
+  };
+
+  const resolvedSortBy = sortByAliases[sortBy] || sortBy;
+
+  // Define allowed sort columns with their actual database paths
+  const sortMap: SessionReportSortSortMap = {
+    id: ['id'],
+    sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
+    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
+    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
+    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    eventName: ['event', sequelize.literal("data->>'eventName'::text")],
+    supportingGoals: [
+      sequelize.literal(
+        '(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)'
+      ),
+    ],
+    topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
+  };
+
+  // Use the requested sort column or default to id descending
+  const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
+  const orderClause = [[...sortEntry, sortDir]];
+
+  // Explicitly ignore all region filters/restrictions for recipient-based query.
+  const regionlessFilterParams = removeRegionFilters(filterParams as Record<string, unknown>);
+
+  // Get scopes from filters
+  const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
+    await filtersToScopes(regionlessFilterParams, {});
+
+  // Get events to pass into session query
+  // (the scopes construction makes this necessary, sadly)
+  const events = await EventReportPilot.findAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [
+        ...trainingReportScopes,
+        {
+          data: {
+            status: {
+              [Op.in]: [TRAINING_REPORT_STATUSES.COMPLETE, TRAINING_REPORT_STATUSES.IN_PROGRESS],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  // Build query options
+  const queryOptions = {
+    attributes: [
+      'id',
+      [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+      [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
+      [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
+    ],
+    where: {
+      eventId: events.map(({ id }) => id),
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
+    },
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+      {
+        model: db.GoalTemplate,
+        as: 'goalTemplates',
+        attributes: ['standard'],
+        through: { attributes: [] },
+        required: false,
+      },
+    ],
+    order: orderClause,
+    subQuery: true,
+    distinct: true,
+  } as Record<string, unknown>;
+
+  queryOptions.offset = offset;
+
+  if (limit !== 'all') {
+    queryOptions.limit = limit;
+  }
+
+  // First get the IDs of sessions for this page (without the goalTemplates join
+  // which inflates row counts and breaks LIMIT/OFFSET)
+  const idQuery = {
+    attributes: ['id'],
+    where: {
+      [Op.and]: [queryOptions.where, ...sessionReportScopes, recipientFilter],
+    },
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+    ],
+    order: orderClause,
+    subQuery: false,
+    offset,
+  } as Record<string, unknown>;
+
+  if (limit !== 'all') {
+    idQuery.limit = limit;
+  }
+
+  const { count, rows: idRows } = await SessionReportPilot.findAndCountAll(idQuery);
+  const sessionIds = idRows.map((r: Model) => r.get('id'));
+
+  // Now fetch full data for just those IDs (with goalTemplates)
+  const result = await SessionReportPilot.findAll({
+    attributes: queryOptions.attributes,
+    where: {
+      [Op.and]: [{ id: sessionIds }, ...sessionReportScopes, recipientFilter],
     },
     include: queryOptions.include,
     order: orderClause,
