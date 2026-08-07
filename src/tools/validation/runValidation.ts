@@ -102,7 +102,7 @@ const runValidation = async ({
       await sequelize.query(
         `
         SET LOCAL TIME ZONE 'UTC';
-        DROP TABLE IF EXISTS validation_run;
+        DROP TABLE IF EXISTS pg_temp.validation_run;
         CREATE TEMP TABLE validation_run
         ON COMMIT DROP
         AS
