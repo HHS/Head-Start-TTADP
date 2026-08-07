@@ -7,7 +7,7 @@ import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
-import { createGoal, createGrant, destroyGoal } from '../testUtils';
+import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -1327,12 +1327,11 @@ describe('session reports service', () => {
     let createdSessions = [];
 
     beforeAll(async () => {
-      recipient = await db.Recipient.create({
+      recipient = await createRecipient({
         name: `Recipient-${faker.datatype.uuid()}`,
       });
 
-      otherRecipient = await db.Recipient.create({
-        id: faker.datatype.number(),
+      otherRecipient = await createRecipient({
         name: `Recipient-${faker.datatype.uuid()}`,
       });
 
