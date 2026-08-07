@@ -5,7 +5,7 @@ set -euo pipefail
 ARTIFACT_DIR="${1:-import-artifacts}"
 STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
 SUMMARY_FILE="${2:-monitoring-updates.txt}"
-EXPECTED_TASKS="${3:-7}"
+EXPECTED_TASKS="${3:-8}"
 LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
