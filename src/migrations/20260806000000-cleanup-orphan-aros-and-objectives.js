@@ -21,9 +21,13 @@ module.exports = {
         -- 1) Hard-delete AROs linked to a deleted ActivityReport.
         --    ActivityReportObjectives is not paranoid, so this is a true
         --    delete; history is retained in the ZALActivityReportObjectives
-        --    audit log. The ARO child records are removed first because the
-        --    ActivityReportObjectiveFiles FK is NO ACTION (the rest cascade,
-        --    but we clear them explicitly to mirror the model destroy hooks).
+        --    audit log. The ARO child link rows (Files/Resources/Topics/Courses/
+        --    Citations) are removed first because their FKs are NO ACTION.
+        --    NOTE: the underlying Files and Resources themselves are
+        --    intentionally NOT deleted here -- orphaned Files/Resources are
+        --    reclaimed by the maintenance jobs from the dangling link rows,
+        --    consistent with existing migrations (see
+        --    20240708000000-remove_national_center_ars).
         -- 2) Soft-delete Objectives created via an activity report that are no
         --    longer used by any non-deleted report (their only AROs were on
         --    deleted reports, or they have no ARO at all). Objectives is
@@ -32,19 +36,28 @@ module.exports = {
         --    (shared with a live report, or createdVia='rtr'). The raw delete
         --    bypasses the ARO destroy hook that normally recalculates onAR, so
         --    we replicate it here to avoid a stale flag.
+        -- 4) Mirror the ARO beforeDestroy hook (autoCleanupLinker): trim the
+        --    deleted report ids out of the "Linker" ObjectiveCollaborator
+        --    linkBack ({"activityReportIds":[...]}), and soft-delete any Linker
+        --    collaborator left with no remaining report links.
         --------------------------------------------------------------------
 
-        -- 1: AROs whose ActivityReport is deleted. We capture objectiveId so we
-        -- can resync Objectives."onAR" for surviving objectives after the delete.
+        -- 1: AROs whose ActivityReport is deleted. We capture objectiveId and
+        -- activityReportId so we can resync Objectives."onAR" and clean up the
+        -- Linker collaborators for surviving objectives after the delete.
         DROP TABLE IF EXISTS aros_to_delete;
         CREATE TEMP TABLE aros_to_delete AS
-        SELECT aro.id AS aro_id, aro."objectiveId" AS objective_id
+        SELECT
+          aro.id AS aro_id,
+          aro."objectiveId" AS objective_id,
+          aro."activityReportId" AS activity_report_id
         FROM "ActivityReportObjectives" aro
         JOIN "ActivityReports" ar
           ON ar.id = aro."activityReportId"
         WHERE ar."calculatedStatus" = 'deleted';
 
-        -- Remove ARO metadata children first
+        -- Remove ARO metadata child link rows first (their FKs are NO ACTION).
+        -- The Files/Resources themselves are left for the maintenance jobs.
         DELETE FROM "ActivityReportObjectiveFiles"
         WHERE "activityReportObjectiveId" IN (SELECT aro_id FROM aros_to_delete);
         DELETE FROM "ActivityReportObjectiveResources"
@@ -120,11 +133,76 @@ module.exports = {
         )
         SELECT id FROM upd;
 
+        -- 4: Mirror the ARO beforeDestroy hook (autoCleanupLinker). Remove the
+        -- deleted report ids from the "Linker" ObjectiveCollaborator linkBack so
+        -- no linker points at a deleted report.
+        DROP TABLE IF EXISTS linker_report_removals;
+        CREATE TEMP TABLE linker_report_removals AS
+        SELECT objective_id, ARRAY_AGG(DISTINCT activity_report_id) AS removed_ar_ids
+        FROM aros_to_delete
+        GROUP BY objective_id;
+
+        DROP TABLE IF EXISTS trimmed_linkers;
+        CREATE TEMP TABLE trimmed_linkers AS
+        WITH upd AS (
+          UPDATE "ObjectiveCollaborators" oc
+          SET "linkBack" = jsonb_set(
+                oc."linkBack",
+                '{activityReportIds}',
+                COALESCE(
+                  (
+                    SELECT jsonb_agg(elem::int)
+                    FROM jsonb_array_elements_text(oc."linkBack"->'activityReportIds') AS elem
+                    WHERE (elem::int) <> ALL (lrr.removed_ar_ids)
+                  ),
+                  '[]'::jsonb
+                )
+              ),
+              "updatedAt" = NOW()
+          FROM linker_report_removals lrr
+          JOIN "CollaboratorTypes" ct ON ct.name = 'Linker'
+          JOIN "ValidFor" vf ON vf.id = ct."validForId" AND vf.name = 'Objectives'
+          WHERE oc."collaboratorTypeId" = ct.id
+            AND oc."objectiveId" = lrr.objective_id
+            AND oc."deletedAt" IS NULL
+            AND oc."linkBack" ? 'activityReportIds'
+            AND EXISTS (
+              SELECT 1
+              FROM jsonb_array_elements_text(oc."linkBack"->'activityReportIds') e
+              WHERE (e::int) = ANY (lrr.removed_ar_ids)
+            )
+          RETURNING oc.id
+        )
+        SELECT id FROM upd;
+
+        -- Soft-delete Linker collaborators whose only link was to the deleted
+        -- report(s) (activityReportIds is now empty and no other keys remain).
+        -- ObjectiveCollaborators is paranoid, mirroring the runtime destroy.
+        DROP TABLE IF EXISTS deleted_linkers;
+        CREATE TEMP TABLE deleted_linkers AS
+        WITH del AS (
+          UPDATE "ObjectiveCollaborators" oc
+          SET "deletedAt" = NOW(), "updatedAt" = NOW()
+          FROM "CollaboratorTypes" ct
+          JOIN "ValidFor" vf ON vf.id = ct."validForId" AND vf.name = 'Objectives'
+          WHERE ct.name = 'Linker'
+            AND oc."collaboratorTypeId" = ct.id
+            AND oc."deletedAt" IS NULL
+            AND oc."linkBack" ? 'activityReportIds'
+            AND jsonb_array_length(oc."linkBack"->'activityReportIds') = 0
+            AND (oc."linkBack" - 'activityReportIds') = '{}'::jsonb
+            AND oc."objectiveId" IN (SELECT DISTINCT objective_id FROM aros_to_delete)
+          RETURNING oc.id
+        )
+        SELECT id FROM del;
+
         -- Validation output
         SELECT
           (SELECT COUNT(*) FROM deleted_aros) AS aros_deleted,
           (SELECT COUNT(*) FROM soft_deleted_objectives) AS objectives_soft_deleted,
-          (SELECT COUNT(*) FROM resynced_objectives) AS objectives_onar_resynced;
+          (SELECT COUNT(*) FROM resynced_objectives) AS objectives_onar_resynced,
+          (SELECT COUNT(*) FROM trimmed_linkers) AS linkers_trimmed,
+          (SELECT COUNT(*) FROM deleted_linkers) AS linkers_soft_deleted;
         `,
         { transaction },
       );
