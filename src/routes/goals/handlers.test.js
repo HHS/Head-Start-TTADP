@@ -1,4 +1,4 @@
-import { BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
+import { BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import {
   createOrUpdateGoals,
@@ -9,6 +9,7 @@ import {
   goalsByIdsAndActivityReport,
   updateGoalStatusById,
 } from '../../goalServices/goals';
+import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import { currentUserId } from '../../services/currentUser';
@@ -54,6 +55,7 @@ jest.mock('../../services/users', () => ({
 
 jest.mock('../../services/accessValidation');
 
+const mockStatusJson = jest.fn();
 const mockResponse = {
   attachment: jest.fn(),
   json: jest.fn(),
@@ -61,6 +63,7 @@ const mockResponse = {
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
+    json: mockStatusJson,
     send: jest.fn(),
   })),
 };
@@ -332,6 +335,123 @@ describe('goal handlers', () => {
 
       await changeGoalStatus(req, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST);
+    });
+
+    it('blocks closing a goal that is on an active activity report', async () => {
+      const req = {
+        body: {
+          goalIds: [100000],
+          newStatus: 'Closed',
+          oldStatus: 'In Progress',
+          closeSuspendReason: 'TTA complete',
+          closeSuspendContext: 'Sample context.',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+        objectives: [],
+        statusChanges: [],
+        grant: { regionId: 2 },
+      });
+      updateGoalStatusById.mockRejectedValueOnce(
+        new GoalStatusChangeBlockedError(['ACTIVE_ACTIVITY_REPORT'])
+      );
+
+      await changeGoalStatus(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(CONFLICT);
+      expect(mockStatusJson).toHaveBeenCalledWith({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      });
+      expect(updateGoalStatusById).toHaveBeenCalled();
+    });
+
+    it('returns all reasons that block closing a goal', async () => {
+      const req = {
+        body: {
+          goalIds: [100000],
+          newStatus: 'Closed',
+          oldStatus: 'In Progress',
+          closeSuspendReason: 'TTA complete',
+          closeSuspendContext: 'Sample context.',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+        objectives: [],
+        statusChanges: [],
+        grant: { regionId: 2 },
+      });
+      updateGoalStatusById.mockRejectedValueOnce(
+        new GoalStatusChangeBlockedError(['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'])
+      );
+
+      await changeGoalStatus(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(CONFLICT);
+      expect(mockStatusJson).toHaveBeenCalledWith({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'],
+      });
+      expect(updateGoalStatusById).toHaveBeenCalled();
+    });
+
+    it('does not block suspending a goal that is on an active activity report', async () => {
+      db.Objective.update = jest.fn();
+      const req = {
+        body: {
+          goalIds: [100000],
+          newStatus: 'Suspended',
+          oldStatus: 'In Progress',
+          closeSuspendReason: 'Temporarily paused',
+          closeSuspendContext: 'Sample context.',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+        activityReports: [{ id: 1, calculatedStatus: 'needs_action' }],
+        objectives: [{ id: 1, status: 'In Progress' }],
+        statusChanges: [],
+        grant: { regionId: 2 },
+      });
+      updateGoalStatusById.mockResolvedValueOnce({ id: 100000, status: 'Suspended' });
+
+      await changeGoalStatus(req, mockResponse);
+
+      expect(mockResponse.status).not.toHaveBeenCalledWith(CONFLICT);
+      expect(db.Objective.update).toHaveBeenCalled();
+      expect(updateGoalStatusById).toHaveBeenCalled();
     });
 
     it('returns a 401 based on permissions checks', async () => {

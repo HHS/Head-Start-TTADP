@@ -1103,6 +1103,31 @@ describe('recipientSpotlight service', () => {
       expect(firstPage.recipients[0].recipientId).not.toBe(secondPage.recipients[0].recipientId);
     });
 
+    it('returns all rows when limit is null (used for CSV export)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+
+      // A small limit should truncate the result set...
+      const limited = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 1, [
+        REGION_ID,
+      ]);
+
+      // ...while a null limit returns every matching row.
+      const unlimited = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        null,
+        [REGION_ID]
+      );
+
+      expect(limited.recipients.length).toBeLessThanOrEqual(1);
+      // The total count is unaffected by the limit; the unlimited query should
+      // return as many rows as that count.
+      expect(unlimited.recipients.length).toBe(unlimited.count);
+      expect(unlimited.recipients.length).toBeGreaterThanOrEqual(limited.recipients.length);
+    });
+
     it('handles sorting correctly', async () => {
       // Create multiple recipients with different names to ensure sorting works
       const recipientA = await Recipient.create({

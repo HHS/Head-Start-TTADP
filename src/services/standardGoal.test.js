@@ -1318,6 +1318,36 @@ describe('standardGoal service', () => {
       expect(result.statuses).toBeDefined();
     });
 
+    it.each([
+      REPORT_STATUSES.DRAFT,
+      REPORT_STATUSES.SUBMITTED,
+      REPORT_STATUSES.NEEDS_ACTION,
+    ])('identifies goals on %s activity reports', async (calculatedStatus) => {
+      await db.ActivityReport.update(
+        { calculatedStatus },
+        { where: { id: activityReportTwo.id }, hooks: false }
+      );
+
+      try {
+        const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+        const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+        expect(goal.hasActiveActivityReports).toBe(true);
+      } finally {
+        await db.ActivityReport.update(
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          { where: { id: activityReportTwo.id }, hooks: false }
+        );
+      }
+    });
+
+    it('does not identify goals on approved activity reports as active', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+      const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+      expect(goal.hasActiveActivityReports).toBe(false);
+    });
+
     it('paginates standard goals correctly using limit and offset', async () => {
       // Get all goals for reference
       const allGoals = await standardGoalsForRecipient(recipient.id, grant.regionId, {

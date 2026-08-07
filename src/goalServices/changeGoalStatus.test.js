@@ -1,6 +1,7 @@
 import faker from '@faker-js/faker';
-import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
+import { createReport, destroyReport } from '../testUtils';
 import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 
 const fakeName = faker.name.firstName() + faker.name.lastName();
@@ -18,6 +19,8 @@ describe('changeGoalStatus service', () => {
   let role;
   let goal;
   let additionalGoal;
+  let activeReportGoal;
+  let activeReport;
   let systemChangedGoal;
   let grant;
   let recipient;
@@ -54,6 +57,22 @@ describe('changeGoalStatus service', () => {
       status: 'Draft',
       grantId: grant.id,
     });
+    activeReportGoal = await db.Goal.create({
+      name: 'Goal on an active report',
+      status: 'In Progress',
+      grantId: grant.id,
+    });
+    activeReport = await createReport({
+      regionId: grant.regionId,
+      activityRecipients: [{ grantId: grant.id }],
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+    });
+    await db.ActivityReportGoal.create({
+      activityReportId: activeReport.id,
+      goalId: activeReportGoal.id,
+      status: activeReportGoal.status,
+    });
     role = await db.Role.create({
       id: faker.datatype.number(),
       name: 'Astronaut',
@@ -65,10 +84,20 @@ describe('changeGoalStatus service', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   afterAll(async () => {
+    await db.ActivityReportGoal.destroy({
+      where: {
+        activityReportId: activeReport.id,
+      },
+    });
+    await destroyReport(activeReport);
     await db.Goal.destroy({
       where: {
-        id: [goal.id, systemChangedGoal.id, additionalGoal.id],
+        id: [goal.id, systemChangedGoal.id, additionalGoal.id, activeReportGoal.id],
       },
       force: true,
     });
@@ -107,13 +136,14 @@ describe('changeGoalStatus service', () => {
   });
 
   it('overrides performedAt', async () => {
+    const performedAt = '2025-01-01T00:00:00.000Z';
     await changeGoalStatus({
       goalId: additionalGoal.id,
       userId: mockUser.id,
       newStatus,
       reason,
       context,
-      performedAt: '2025/01/01',
+      performedAt,
     });
 
     const updatedGoal = await db.Goal.findByPk(additionalGoal.id);
@@ -130,13 +160,15 @@ describe('changeGoalStatus service', () => {
     expect(statusChangeLog.userId).toBe(mockUser.id);
     expect(statusChangeLog.userName).toBe(user.name);
     expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
-    expect(statusChangeLog.performedAt).toStrictEqual(moment('2025/01/01').toDate());
+    expect(statusChangeLog.performedAt).toStrictEqual(new Date(performedAt));
   });
 
   it('should throw an error if the goal does not exist', async () => {
+    jest.spyOn(db.Goal, 'findByPk').mockResolvedValueOnce(null);
+
     await expect(
       changeGoalStatus({
-        goalId: 9999, // non-existent goalId
+        goalId: goal.id,
         userId: mockUser.id,
         newStatus,
         reason,
@@ -146,10 +178,12 @@ describe('changeGoalStatus service', () => {
   });
 
   it('should throw an error if the user does not exist', async () => {
+    jest.spyOn(db.User, 'findOne').mockResolvedValueOnce(null);
+
     await expect(
       changeGoalStatus({
         goalId: goal.id,
-        userId: 9999, // non-existent userId
+        userId: mockUser.id,
         newStatus,
         reason,
         context,
@@ -182,14 +216,57 @@ describe('changeGoalStatus service', () => {
   });
 
   it('changeGoalStatusWithSystemUser should throw an error if the goal does not exist', async () => {
+    jest.spyOn(db.Goal, 'findByPk').mockResolvedValueOnce(null);
+
     await expect(
       changeGoalStatusWithSystemUser({
-        goalId: 9999, // non-existent goalId
+        goalId: goal.id,
         newStatus,
         reason,
         context,
       })
     ).rejects.toThrow('Goal not found');
+  });
+
+  it.each([
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ])('blocks direct closure when the goal is on a %s report', async (calculatedStatus) => {
+    await activeReport.update({ calculatedStatus }, { hooks: false });
+    const statusChange = {
+      goalId: activeReportGoal.id,
+      newStatus: 'Closed',
+      reason,
+      context,
+    };
+
+    await expect(
+      changeGoalStatus({
+        ...statusChange,
+        userId: mockUser.id,
+      })
+    ).rejects.toMatchObject({
+      code: 'GOAL_STATUS_CHANGE_BLOCKED',
+      reasons: ['ACTIVE_ACTIVITY_REPORT'],
+    });
+
+    await activeReportGoal.reload();
+    expect(activeReportGoal.status).toBe('In Progress');
+  });
+
+  it('blocks system closure when the goal is on an active report', async () => {
+    await expect(
+      changeGoalStatusWithSystemUser({
+        goalId: activeReportGoal.id,
+        newStatus: 'Closed',
+        reason,
+        context,
+      })
+    ).rejects.toMatchObject({
+      code: 'GOAL_STATUS_CHANGE_BLOCKED',
+      reasons: ['ACTIVE_ACTIVITY_REPORT'],
+    });
   });
 
   it('should not create a status change record when new status matches current status', async () => {
