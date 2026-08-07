@@ -1,6 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import type { Transaction } from 'sequelize';
-import { VALIDATION_ALERT_SEVERITY, VALIDATION_PROCESS } from '../../constants';
+import { VALIDATION_PROCESS } from '../../constants';
 import { sequelize } from '../../models';
 
 // Activity reports still in flight - findings cited on these are live user work,
@@ -13,24 +13,10 @@ const OPEN_REPORT_STATUSES = [
 ];
 
 /**
- * Pre-refresh critical gate checks over the raw Monitoring* tables and the
- * wider Hub. Run by validateMonitoringGate before update_fact_tables; each
- * check self-inserts a ValidationAlert (severity 'alert' or 'critical'). The
- * runner counts critical alerts and the CLI exits nonzero on any, which stops
- * the import phase loop before the fact-table refresh.
- *
- * Both checks are motivated by a real incident where ~90% of findings were
- * suddenly and erroneously source-deleted. Both carry a minimum-denominator
- * guard so a small/empty dataset cannot false-block, and both compare with
- * multiplication (not division) so that guard can never hit a divide-by-zero.
- * Thresholds are illustrative and meant to be tuned against real data.
- *
- * Both checks read the source signal (sourceDeletedAt) directly rather than the
- * local deletedAt, so they are correct regardless of whether the monitoring
- * maintenance job (which propagates sourceDeletedAt into deletedAt) has run yet.
- *
- * The current run id is read from the validation_run temp table created by the
- * runner (src/tools/validation/runValidation.ts).
+ * Pre-refresh gate checks over the raw Monitoring* tables and the wider Hub, run
+ * before update_fact_tables. Each check self-inserts a ValidationAlert; it only
+ * sets a severity ('alert' or 'critical') and is not responsible for behavior -
+ * the caller acts on the result. See docs/monitoring-data-validation.md.
  */
 const monitoringGateChecks = async (transaction: Transaction): Promise<void> => {
   // Keep only the latest gate run's alerts (scoped through
@@ -96,7 +82,7 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
       ROUND(100.0 * s.gone / s.total, 1)
         || '% of monitoring findings from the last year have no live row ('
         || s.gone::bigint || ' of ' || s.total::bigint || ')',
-      CASE WHEN s.gone > 0.50 * s.total THEN :critical ELSE :alert END,
+      CASE WHEN s.gone > 0.50 * s.total THEN cur.critical ELSE cur.alert END,
       jsonb_build_object(
         'window', '1 year',
         'total', s.total::bigint,
@@ -155,7 +141,7 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
       ROUND(100.0 * s.gone / s.total, 1)
         || '% of findings cited on open activity reports are missing from the import ('
         || s.gone::bigint || ' of ' || s.total::bigint || ')',
-      CASE WHEN s.gone > 0.20 * s.total THEN :critical ELSE :alert END,
+      CASE WHEN s.gone > 0.20 * s.total THEN cur.critical ELSE cur.alert END,
       jsonb_build_object(
         'total', s.total::bigint,
         'gone', s.gone::bigint,
@@ -178,8 +164,6 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
       raw: true,
       transaction,
       replacements: {
-        critical: VALIDATION_ALERT_SEVERITY.CRITICAL,
-        alert: VALIDATION_ALERT_SEVERITY.ALERT,
         openStatuses: OPEN_REPORT_STATUSES,
       },
     }

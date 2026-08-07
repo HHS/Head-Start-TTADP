@@ -14,11 +14,9 @@ export interface MonitoringImportCycle {
 /**
  * Resolve the current monitoring import "cycle": the most recently PROCESSED
  * ImportFile for the ITAMS monitoring import, as its id plus the source data date
- * decomposed from the zip filename (ftpFileInfo.date - the same value the import
- * writes to sourceUpdatedAt on the raw rows). Both the pre-refresh and the
- * post-refresh validation runs stamp this on their ValidationRun so observations
- * and alerts from one import bucket together, and a same-day re-import is
- * distinguished by a new import id. Returns nulls when no processed import exists.
+ * from the zip filename (ftpFileInfo.date, what the import writes to
+ * sourceUpdatedAt). Returns nulls when no processed import exists. See
+ * docs/monitoring-data-validation.md.
  */
 export const getMonitoringImportCycle = async (): Promise<MonitoringImportCycle> => {
   const rows = await sequelize.query<{ import_id: number; source_updated_at: Date | null }>(

@@ -37,19 +37,13 @@ const easternTime = (date: Date): string =>
   moment(date).tz('America/New_York').format('YYYY-MM-DD HH:mm z');
 
 /**
- * Shared runner for validation processes. Records a ValidationRun, runs the
- * given steps in order inside one transaction (each step self-inserts its
- * alerts / observations), then reads back the run's counts and alerts and
- * prints one greppable summary line ("<logLabel>: {...}") that CI forwards to
- * Slack.
+ * Shared runner for validation processes. Records a ValidationRun, runs the given
+ * steps in order in one transaction (each self-inserts its alerts / observations),
+ * reads back the counts, and prints one greppable "<logLabel>: {...}" line that CI
+ * forwards to Slack.
  *
- * The runner NEVER decides to gate: it returns a verdict (including
- * criticalCount) and lets the caller act - a CLI exits nonzero, and a future
- * in-transaction caller (a check inside updateMonitoringFactTables) would throw
- * to roll back. Keeping the gate decision out of the runner is what lets the
- * same machinery serve the pre-refresh gate, the post-refresh observational
- * run, and a future mid-refresh gate. See docs/monitoring-data-validation.md
- * for the rationale.
+ * Never gates: it returns a verdict (incl. criticalCount) and lets the caller act.
+ * See docs/monitoring-data-validation.md.
  */
 const runValidation = async ({
   processName,
@@ -101,9 +95,10 @@ const runValidation = async ({
         'RunValidation'
       );
 
-      // Make the current run id available to every query in this transaction
-      // without interpolating it into each one. ON COMMIT DROP so no stale run
-      // id can be seen by a later transaction on the same pooled connection.
+      // Make the current run id and the severity constants available to every
+      // query in this transaction without interpolating them into each one, so a
+      // check's SQL can also be run by hand. ON COMMIT DROP so no stale values can
+      // be seen by a later transaction on the same pooled connection.
       await sequelize.query(
         `
         SET LOCAL TIME ZONE 'UTC';
@@ -111,10 +106,18 @@ const runValidation = async ({
         CREATE TEMP TABLE validation_run
         ON COMMIT DROP
         AS
-        SELECT :runId::bigint run_id
+        SELECT :runId::bigint run_id, :critical::text critical, :alert::text alert
         ;
         `,
-        { raw: true, transaction, replacements: { runId } }
+        {
+          raw: true,
+          transaction,
+          replacements: {
+            runId,
+            critical: VALIDATION_ALERT_SEVERITY.CRITICAL,
+            alert: VALIDATION_ALERT_SEVERITY.ALERT,
+          },
+        }
       );
 
       // steps run in order; later steps may depend on temp tables / rows an

@@ -72,7 +72,7 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 | `finding_count` | `MonitoringReviews` | scalar | Distinct findings linked to the review. |
 | `closure_state` | `MonitoringFindings` | category | `active_with_closed_date` when an Active finding carries a `closedDate`, else `consistent`. |
 
-**Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. The full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run, so late-arriving data self-corrects; the unique key makes recomputation idempotent. Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
+**Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. As of MVP, the full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run: the upsert key makes it idempotent, and it self-corrects late-arriving source data (IT-AMS can source-update old records, which shifts historical buckets since stats bucket on source activity). This is simple but its cost grows with the full history — a bounded/incremental recompute is [future work](#future-work). Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
 
 | Stat (`feature_set` / `stat_name`) | Grain | Notes |
 |---|---|---|
@@ -224,7 +224,7 @@ Indexes on `(check_name)` and `(run_id, severity)`.
 
 - **Column naming**: snake_case (e.g., `process_name`, `feature_set`) on data columns, matching the fact-table style; Sequelize's `createdAt`/`updatedAt` are kept as-is.
 - **Timezone**: each run sets `SET LOCAL TIME ZONE 'UTC'` inside its transaction, matching HSES's interpretation of the imported data.
-- **Run context via temp table**: steps read the current `run_id` from the `validation_run` temp table (`CROSS JOIN validation_run`) rather than interpolating it into every statement.
+- **Run context via temp table**: steps read the current `run_id` and the severity constants (`critical` / `alert`) from the `validation_run` temp table (`CROSS JOIN validation_run`) rather than interpolating them into every statement, which would complicate manual running during investigations.
 - **Source-truth deletes**: checks read `sourceDeletedAt` (the upstream signal) directly, not the local `deletedAt`, so they are correct regardless of whether the monitoring maintenance job (which propagates `sourceDeletedAt` into `deletedAt`) has run yet. A row is "live" only when both are NULL.
 - **Minimum-denominator guards**: every gate check requires a floor number of rows before it can fire, and compares fractions with multiplication (`gone > 0.5 * total`), never division, so the guard can never divide by zero.
 - **Cycle-aware retention**: a run deletes its process's prior alerts first, so `ValidationAlerts` holds only the latest run per process. `ValidationRecords` keeps the current run and the latest run of the previous *cycle* (a different `import_id` / data version), so comparison is always against a different version of the data rather than a re-run over the same data; re-running a process on the same cycle therefore replaces that cycle's prior records instead of accumulating, and older cycles roll off.
@@ -253,6 +253,7 @@ Split logic that different future consumers will use (e.g. anomaly-detection mod
 
 - **Statistical anomaly detection**: compare the current period against the trailing distribution in `ValidationTimeSeries` (z-score / % deviation) rather than fixed thresholds — a richer everyday-detection form. Deliberately kept alert-only and out of the critical tier for now.
 - **In-refresh gate** (documented, not built): a marked point in `src/tools/updateMonitoringFactTables.ts` (just before the "Primary Entity Table Upserts") where the staged temp tables exist but the live fact tables have not yet been overwritten — so a check could diff the new import against last-good linkage and, being inside one transaction, get true rollback for free by throwing on `criticalCount > 0`.
+- **Incremental time-series recompute**: as of MVP, `monitoringTimeSeries` recomputes the full range since `TIME_SERIES_START` every run — simple and self-correcting for late source updates, but its cost grows with the full history. The endstate is likely a bounded trailing-window recompute plus a periodic full backfill.
 - **Retention/archival**: `ValidationRecords` keeps only the current + previous cycle today; a fuller strategy is future work.
 
 ## Source Code

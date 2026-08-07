@@ -3,24 +3,14 @@ import { VALIDATION_PROCESS } from '../../constants';
 import { sequelize } from '../../models';
 
 /**
- * Rebuilds per-entity observations in ValidationRecords for the monitoring
- * process. Each row records one observation about one entity
- * (entity_type/entity_id): a continuous measurement in "scalar" (e.g. the
- * number of findings on a review) or a categorization in "category" (e.g. a
- * finding's closure consistency). Observations are raw material for
- * validations - the checks in ./monitoringAlerts and, in the future,
- * anomaly-detection models - and let a human drill into the specific entities
- * behind an alert.
+ * Rebuilds per-entity observations in ValidationRecords: one row per observation
+ * about one entity. Measurements can be both scalar/numeric and categorical.
+ * Observations are raw material for the alert checks and future models, and let a
+ * human drill into the entities behind an alert.
  *
- * The current run id is read from the validation_run temp table created by the
- * orchestrator (src/tools/validateMonitoringData.ts).
- *
- * Retention is CYCLE-aware: this table keeps the current run and the latest run
- * of the previous cycle (a different import_id, i.e. a different version of the
- * imported data), so comparison is always against a different data version rather
- * than a re-run over the same data. Re-running a process on the same cycle
- * therefore replaces that cycle's prior run here. NOTE: a fuller retention /
- * archival strategy is future work.
+ * Retention is cycle-aware: keeps the current run and the previous cycle's run, so
+ * a same-cycle re-run replaces rather than accumulates. See
+ * docs/monitoring-data-validation.md.
  *
  * Skeleton: four example observations.
  */

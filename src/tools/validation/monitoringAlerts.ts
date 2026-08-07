@@ -3,16 +3,10 @@ import { VALIDATION_PROCESS } from '../../constants';
 import { sequelize } from '../../models';
 
 /**
- * Rebuilds ValidationAlerts for the monitoring process: threshold checks over
- * ValidationTimeSeries and validity checks over the ValidationRecords
- * observations, both produced earlier in the same run. Alert "context" is
- * intentionally generic JSONB so each check can attach whatever contextual
- * information applies (previous values, entity id samples, etc.).
- *
- * The current run id is read from the validation_run temp table created by the
- * orchestrator (src/tools/validateMonitoringData.ts). The previous monitoring
- * run's alerts are deleted first (scoped through ValidationRuns.process_name
- * so other validation processes are untouched).
+ * Rebuilds ValidationAlerts for the post-refresh process: threshold checks over
+ * ValidationTimeSeries and validity checks over ValidationRecords, both produced
+ * earlier in the run. This process's previous alerts are deleted first. See
+ * docs/monitoring-data-validation.md.
  *
  * Skeleton: two threshold checks and three observation-derived checks.
  */

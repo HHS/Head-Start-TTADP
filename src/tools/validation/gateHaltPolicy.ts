@@ -13,21 +13,10 @@ export interface GateHaltDecision {
 }
 
 /**
- * Decide whether a gate run's critical alerts should actually halt the
- * fact-table refresh, based on the `MONITORING_GATE_HALT_CHECKS` env var. This is
- * THE switch that turns the monitoring gate from report-only into enforcing; the
- * full explanation lives in docs/monitoring-data-validation.md ("Enforcement
- * controls"). Whatever it decides, criticals are always recorded and logged - the
- * env var only controls the CLI's exit code.
- *
- * - unset / empty / 'none'  -> report-only (safe default): nothing halts.
- * - 'all' (alone or anywhere in the list) -> halt on any critical.
- * - comma-separated check_names -> halt only on those checks (enable one at a
- *   time). Matched case-insensitively, tolerant of surrounding whitespace.
- *
- * The decision is kept here in a caller-side policy, not in the runner or the
- * checks: the runner only reports, and the same checks feed both the report-only
- * observation and the enforced gate.
+ * Uses the MONITORING_GATE_HALT_CHECKS value (passed in by the CLI as `rawEnv`) to
+ * decide whether criticals halt fact table refreshes via the CLI's exit code. Kept
+ * out of the CLI so this parsing is unit-testable, since the CLI runs and exits on
+ * import. See docs/monitoring-data-validation.md ("Enforcement controls").
  */
 export const resolveGateHalt = (
   alerts: ValidationAlertSummary[],

@@ -15,18 +15,13 @@ const affectedRows = (meta: any): number => {
 const TIME_SERIES_START = '2025-01-01';
 
 /**
- * Upserts time-series aggregated statistics describing Monitoring data activity
- * into ValidationTimeSeries (long/narrow; sliced by region_id / geo_id, where
- * 0 = not applicable/unknown). The full range since TIME_SERIES_START is
- * recomputed every run, so late-arriving data self-corrects; new stats are
- * added by inserting new feature_set/stat_name values, no schema change
- * required.
+ * Upserts long/narrow time-series statistics describing Monitoring activity into
+ * ValidationTimeSeries. As of MVP, the full range since TIME_SERIES_START is
+ * recomputed every run. New stats are just new feature_set/stat_name values, no
+ * schema change. Shared intermediates (e.g. finding_deliveries) are temp tables
+ * reused by later stats. See docs/monitoring-data-validation.md.
  *
- * Shared intermediate results are built as temp tables (finding_deliveries)
- * so future time series calculations can reuse them.
- *
- * Skeleton: two example statistics. Consumers include the threshold checks in
- * ./monitoringAlerts and, in the future, anomaly-detection models.
+ * Skeleton: two example statistics.
  *
  * @returns number of ValidationTimeSeries rows inserted or updated
  */
