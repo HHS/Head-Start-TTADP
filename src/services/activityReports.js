@@ -1099,12 +1099,95 @@ export async function createOrUpdate(newActivityReport, report, userId) {
   };
 }
 
-export async function setStatus(report, status) {
-  await report.update({ submissionStatus: status });
+export async function setStatus(report, status, transaction = undefined) {
+  await report.update({ submissionStatus: status }, { transaction });
   return activityReportAndRecipientsById(report.id);
 }
 
+/**
+ * Removes ActivityReportObjectives and Objectives that become orphaned when a
+ * report is soft-deleted.
+ *
+ * ActivityReportObjectives are not paranoid, so the links to the deleted report
+ * are hard-deleted (history is retained in the ZALActivityReportObjectives audit
+ * log). Objectives that were created via an activity report and are no longer
+ * used by any non-deleted report are soft-deleted. Objectives that are still
+ * shared with a live report are left in place — only the ARO pointing at the
+ * deleted report is removed.
+ *
+ * @param {number} reportId - id of the report being soft-deleted
+ * @param {import('sequelize').Transaction} [transaction] - optional transaction to run within
+ */
+export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = undefined) {
+  // Objectives linked to this report, captured before the AROs are removed.
+  const linkedObjectiveIds = [
+    ...new Set(
+      (
+        await ActivityReportObjective.findAll({
+          attributes: ['objectiveId'],
+          where: { activityReportId: reportId },
+          raw: true,
+          transaction,
+        })
+      ).map((aro) => aro.objectiveId)
+    ),
+  ];
+
+  // Hard-delete the AROs that linked this (now deleted) report to its objectives.
+  await ActivityReportObjective.destroy({
+    where: { activityReportId: reportId },
+    individualHooks: true,
+    transaction,
+  });
+
+  if (!linkedObjectiveIds.length) {
+    return;
+  }
+
+  // Of those objectives, find the ones that are still used by a non-deleted report.
+  const objectivesStillInUse = new Set(
+    (
+      await ActivityReportObjective.findAll({
+        attributes: ['objectiveId'],
+        where: { objectiveId: { [Op.in]: linkedObjectiveIds } },
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            attributes: [],
+            required: true,
+            where: {
+              calculatedStatus: { [Op.ne]: REPORT_STATUSES.DELETED },
+            },
+          },
+        ],
+        raw: true,
+        transaction,
+      })
+    ).map((aro) => aro.objectiveId)
+  );
+
+  const orphanedObjectiveIds = linkedObjectiveIds.filter((id) => !objectivesStillInUse.has(id));
+
+  if (!orphanedObjectiveIds.length) {
+    return;
+  }
+
+  // Soft-delete only objectives that were created via an activity report.
+  await Objective.destroy({
+    where: {
+      id: { [Op.in]: orphanedObjectiveIds },
+      createdVia: 'activityReport',
+    },
+    individualHooks: true,
+    transaction,
+  });
+}
+
 export async function handleSoftDeleteReport(report) {
+  // The soft-delete endpoint is already wrapped by `transactionWrapper`, and the
+  // project enables `Sequelize.useCLS`, so every model operation below automatically
+  // joins the ambient transaction. No explicit transaction is needed here.
   const goalsToCleanup = (
     await Goal.findAll({
       attributes: ['id'],
@@ -1151,6 +1234,8 @@ export async function handleSoftDeleteReport(report) {
       },
     },
   });
+
+  await cleanupOrphanedObjectivesAndAROs(report.id);
 
   return setStatus(report, REPORT_STATUSES.DELETED);
 }
