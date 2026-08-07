@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import httpContext from 'express-http-context';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
 import { auditLogger } from '../logger';
@@ -11,11 +12,13 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
+  CollaboratorType,
   Goal,
   Grant,
   NextStep,
   Notification,
   Objective,
+  ObjectiveCollaborator,
   OtherEntity,
   Permission,
   Program,
@@ -2594,39 +2597,47 @@ describe('Activity report service', () => {
         createdVia: 'activityReport',
       });
 
-      aroOnlyOnDeleted = await ActivityReportObjective.create({
-        activityReportId: deletedReport.id,
-        objectiveId: objOnlyOnDeleted.id,
-        status: 'Not Started',
-      });
-      aroTopic = await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: aroOnlyOnDeleted.id,
-        topicId: topic.id,
-      });
-      await ActivityReportObjective.create({
-        activityReportId: deletedReport.id,
-        objectiveId: objShared.id,
-        status: 'Not Started',
-      });
-      aroSharedLive = await ActivityReportObjective.create({
-        activityReportId: liveReport.id,
-        objectiveId: objShared.id,
-        status: 'Not Started',
-      });
-      await ActivityReportObjective.create({
-        activityReportId: deletedReport.id,
-        objectiveId: objRtr.id,
-        status: 'Not Started',
-      });
-      await ActivityReportObjective.create({
-        activityReportId: deletedReport.id,
-        objectiveId: objTwoDeleted.id,
-        status: 'Not Started',
-      });
-      await ActivityReportObjective.create({
-        activityReportId: otherDeletedReport.id,
-        objectiveId: objTwoDeleted.id,
-        status: 'Not Started',
+      // Run the ARO creation inside an http context with a logged user so the
+      // afterCreate hook (autoPopulateLinker) creates the "Linker"
+      // ObjectiveCollaborator rows, matching the runtime behavior the cleanup
+      // is written to unwind.
+      await httpContext.ns.runPromise(async () => {
+        httpContext.set('loggedUser', user.id);
+
+        aroOnlyOnDeleted = await ActivityReportObjective.create({
+          activityReportId: deletedReport.id,
+          objectiveId: objOnlyOnDeleted.id,
+          status: 'Not Started',
+        });
+        aroTopic = await ActivityReportObjectiveTopic.create({
+          activityReportObjectiveId: aroOnlyOnDeleted.id,
+          topicId: topic.id,
+        });
+        await ActivityReportObjective.create({
+          activityReportId: deletedReport.id,
+          objectiveId: objShared.id,
+          status: 'Not Started',
+        });
+        aroSharedLive = await ActivityReportObjective.create({
+          activityReportId: liveReport.id,
+          objectiveId: objShared.id,
+          status: 'Not Started',
+        });
+        await ActivityReportObjective.create({
+          activityReportId: deletedReport.id,
+          objectiveId: objRtr.id,
+          status: 'Not Started',
+        });
+        await ActivityReportObjective.create({
+          activityReportId: deletedReport.id,
+          objectiveId: objTwoDeleted.id,
+          status: 'Not Started',
+        });
+        await ActivityReportObjective.create({
+          activityReportId: otherDeletedReport.id,
+          objectiveId: objTwoDeleted.id,
+          status: 'Not Started',
+        });
       });
     });
 
@@ -2643,6 +2654,10 @@ describe('Activity report service', () => {
         force: true,
       });
       await ActivityReportObjective.destroy({
+        where: { objectiveId: objectiveIds },
+        force: true,
+      });
+      await ObjectiveCollaborator.destroy({
         where: { objectiveId: objectiveIds },
         force: true,
       });
@@ -2687,6 +2702,44 @@ describe('Activity report service', () => {
       // AR objective only linked to deleted reports is soft-deleted.
       const twoDeleted = await Objective.findByPk(objTwoDeleted.id, { paranoid: false });
       expect(twoDeleted.deletedAt).not.toBeNull();
+
+      // onAR is resynced after the raw ARO removal (afterDestroy hook): the
+      // shared objective is still linked to the live report, so it stays true...
+      await shared.reload({ paranoid: false });
+      expect(shared.onAR).toBe(true);
+      // ...while the objective whose only ARO was removed is no longer on any
+      // report, so its stale onAR flag is cleared.
+      await deletedOnly.reload({ paranoid: false });
+      expect(deletedOnly.onAR).toBe(false);
+
+      // The "Linker" ObjectiveCollaborator (created by the ARO afterCreate hook)
+      // is cleaned up by the ARO beforeDestroy hook (autoCleanupLinker).
+      const findLinker = async (objectiveId) =>
+        ObjectiveCollaborator.findOne({
+          where: { objectiveId },
+          paranoid: false,
+          include: [
+            {
+              model: CollaboratorType,
+              as: 'collaboratorType',
+              required: true,
+              where: { name: 'Linker' },
+            },
+          ],
+        });
+
+      // The linker for the objective only on the deleted report had no remaining
+      // report links, so it is soft-deleted.
+      const orphanLinker = await findLinker(objOnlyOnDeleted.id);
+      expect(orphanLinker).not.toBeNull();
+      expect(orphanLinker.deletedAt).not.toBeNull();
+
+      // The linker for the shared objective survives with only the live report id
+      // remaining in its linkBack.
+      const sharedLinker = await findLinker(objShared.id);
+      expect(sharedLinker).not.toBeNull();
+      expect(sharedLinker.deletedAt).toBeNull();
+      expect(sharedLinker.linkBack.activityReportIds).toEqual([liveReport.id]);
     });
 
     it('is a no-op for a report with no linked objectives', async () => {

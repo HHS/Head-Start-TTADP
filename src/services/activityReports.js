@@ -1185,62 +1185,59 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = u
 }
 
 export async function handleSoftDeleteReport(report) {
-  return sequelize.transaction(async (transaction) => {
-    const goalsToCleanup = (
-      await Goal.findAll({
-        attributes: ['id'],
-        where: {
-          createdVia: 'activityReport',
-          id: {
-            [Op.in]: sequelize.literal(
-              `(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`
-            ),
-          },
-        },
-        include: [
-          {
-            model: ActivityReportGoal,
-            as: 'activityReportGoals',
-            attributes: ['id', 'goalId'],
-          },
-        ],
-        transaction,
-      })
-    )
-      .filter((goal) => goal.activityReportGoals.length === 1)
-      .map((goal) => goal.id);
-
-    if (goalsToCleanup.length) {
-      // these goals and objectives will also be soft-deleted
-      await Objective.destroy({
-        where: {
-          goalId: goalsToCleanup,
-        },
-        transaction,
-      });
-
-      await Goal.destroy({
-        where: {
-          id: goalsToCleanup,
-        },
-        transaction,
-      });
-    }
-
-    await Notification.destroy({
+  // The soft-delete endpoint is already wrapped by `transactionWrapper`, and the
+  // project enables `Sequelize.useCLS`, so every model operation below automatically
+  // joins the ambient transaction. No explicit transaction is needed here.
+  const goalsToCleanup = (
+    await Goal.findAll({
+      attributes: ['id'],
       where: {
-        entityId: report.id,
-        type: {
-          [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
+        createdVia: 'activityReport',
+        id: {
+          [Op.in]: sequelize.literal(
+            `(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`
+          ),
         },
       },
-      transaction,
+      include: [
+        {
+          model: ActivityReportGoal,
+          as: 'activityReportGoals',
+          attributes: ['id', 'goalId'],
+        },
+      ],
+    })
+  )
+    .filter((goal) => goal.activityReportGoals.length === 1)
+    .map((goal) => goal.id);
+
+  if (goalsToCleanup.length) {
+    // these goals and objectives will also be soft-deleted
+    await Objective.destroy({
+      where: {
+        goalId: goalsToCleanup,
+      },
     });
 
-    await cleanupOrphanedObjectivesAndAROs(report.id, transaction);
+    await Goal.destroy({
+      where: {
+        id: goalsToCleanup,
+      },
+    });
+  }
 
-    return setStatus(report, REPORT_STATUSES.DELETED, transaction);
+  await Notification.destroy({
+    where: {
+      entityId: report.id,
+      type: {
+        [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
+      },
+    },
   });
+
+  await cleanupOrphanedObjectivesAndAROs(report.id);
+
+  return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
 /*
