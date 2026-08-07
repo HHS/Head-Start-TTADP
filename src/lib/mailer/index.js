@@ -236,7 +236,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
   const addresses = [];
-  const { report, authorWithSetting, collabsWithSettings, approverName } = job.data;
+  const { report, authorWithSetting, collabsWithSettings = [], approverName } = job.data;
   const { id, displayId } = report;
   logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
   const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
