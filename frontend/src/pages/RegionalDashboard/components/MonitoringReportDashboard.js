@@ -1,6 +1,9 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Drawer from '../../../components/Drawer';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FeatureFlag from '../../../components/FeatureFlag';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
@@ -11,6 +14,8 @@ import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReport
 import { formatMonitoringFiltersForQuery } from '../monitoringFilters';
 
 export default function MonitoringReportDashboard({ filtersToApply }) {
+  const pageDrawerRef = useRef(null);
+
   const detailsFilters = useMemo(
     () => formatMonitoringFiltersForQuery(filtersToApply, { includeCompleteDate: true }),
     [filtersToApply]
@@ -22,6 +27,15 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
 
   return (
     <>
+      <div className="margin-bottom-3">
+        <DrawerTriggerButton drawerTriggerRef={pageDrawerRef}>
+          Learn how filters impact the data displayed
+        </DrawerTriggerButton>
+        <Drawer title="Filter guidance" triggerRef={pageDrawerRef}>
+          <ContentFromFeedByTag tagName="ttahub-regional-dash-monitoring-filters" />
+        </Drawer>
+      </div>
+
       <Grid row gap>
         <MonitoringReportDashboardOverview filters={filtersToApply} loading={false} />
       </Grid>

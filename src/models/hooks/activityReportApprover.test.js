@@ -759,5 +759,46 @@ describe('activityReportApprover hooks', () => {
       await Notification.destroy({ where: { id: notification.id } });
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
+
+    it('archives ACTIVITY_REPORT_SUBMITTED_CREATOR notifications when report transitions to APPROVED', async () => {
+      const ar = await ActivityReport.create({
+        ...draftObject,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      const notification = await Notification.create({
+        entityId: ar.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+      });
+
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockUserIds[0],
+        archivedAt: null,
+      });
+
+      const approvals = mockUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
+
+      const mockInstance = {
+        activityReportId: ar.id,
+        status: APPROVER_STATUSES.APPROVED,
+      };
+
+      await afterUpdate(sequelize, mockInstance);
+
+      const updatedUserState = await NotificationUserState.findByPk(userState.id);
+      expect(updatedUserState.archivedAt).not.toBeNull();
+
+      await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
+      await NotificationUserState.destroy({ where: { id: userState.id } });
+      await Notification.destroy({ where: { id: notification.id } });
+      await ActivityReport.destroy({ where: { id: ar.id } });
+    });
   });
 });

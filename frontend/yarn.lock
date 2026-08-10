@@ -2403,10 +2403,10 @@
   resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-5.1.0.tgz#3f8cb9cc31660933f75fbc3b0aa17d4f7ae21f4e"
   integrity sha512-XREY9vIQxgZHsa5Vwf8exTwsTCPIr9Au3/TDm76mjnq+hNnHUiGt1qWAaI9Yj7oUU+F4lg0TNuzKLNZLf3tXVw==
 
-"@ttahub/common@2.4.2":
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.2.tgz#2b1a68ab83b118d1201f8589136fd05517764031"
-  integrity sha512-P3a6nYsKiokSKU0husSSlMBx8kaEMM5wdOGX92BW/k9RhC288e5M0kKK0mmBxFF2j81vEZw/ItZ0V1I+d66B9Q==
+"@ttahub/common@2.4.3":
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.3.tgz#808f233eaa7b01d4144769581f7d85b26384f6d0"
+  integrity sha512-XditcWLX0VXFVOqXEGRTdxcwnSFz6PqkVUODOodDAQZC71El1TDPLTrmNtqM82Bw0T5O9kKALuCQWaC7phE1UA==
 
 "@turf/area@^7.1.0":
   version "7.3.5"
@@ -4070,10 +4070,10 @@ domhandler@5.0.3, domhandler@^5.0.2, domhandler@^5.0.3:
   dependencies:
     domelementtype "^2.3.0"
 
-dompurify@^2.4.3, dompurify@^3.4.12:
-  version "3.4.12"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.12.tgz#6fa2265e9bbdce882c4ace4107626051b448ffa8"
-  integrity sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==
+dompurify@^2.4.3, dompurify@^3.4.13:
+  version "3.4.13"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.13.tgz#fc28949d59f92d62e28a3a764bcbeee35897a1be"
+  integrity sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==
   optionalDependencies:
     "@types/trusted-types" "^2.0.7"
 
