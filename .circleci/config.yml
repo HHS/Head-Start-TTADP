@@ -98,6 +98,10 @@ workflows:
         requires:
         - build_done
         filters: *branch_build_filters
+    - release_inventory_check:
+        requires:
+        - build_done
+        filters: *branch_build_filters
     - dynamic_security_scan:
         requires:
         - build_done
@@ -111,6 +115,7 @@ workflows:
         - test_e2e_utils
         - test_cucumber
         - sast_scan
+        - release_inventory_check
         - dynamic_security_scan
         filters: *branch_build_filters
     - deploy_job:
@@ -677,6 +682,33 @@ jobs:
     - store_artifacts:
         path: reports/semgrep
 
+  release_inventory_check:
+    executor: docker-executor
+    resource_class: small
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Test release inventory tooling
+        command: yarn jest tools/releaseInventory.test.js --runInBand
+    - run:
+        name: Reconcile declared inventory against repository state
+        command: |
+          # Repository scope only. This job never contacts a live space, so it
+          # needs no platform credentials and runs on every branch build.
+          #
+          # Reporting mode until the first clean production reconciliation is
+          # accepted as the starting baseline, at which point --enforce is added
+          # here and the job is scoped to the paths that define the deployed
+          # shape. See ADR 0029.
+          node ./tools/releaseInventory.js verify \
+            --scope repository \
+            --out reports/release-inventory/inventoryReconciliation.json
+    - store_artifacts:
+        path: reports/release-inventory
+        destination: release-inventory
+
   deploy_job:
     executor: docker-executor
     resource_class: large
@@ -984,6 +1016,48 @@ jobs:
                 buildTimestamp: $buildTimestamp
               }
             }' > "${RELEASE_MANIFEST_PATH}"
+    - run:
+        name: Reconcile release inventory
+        command: |
+          if [ -z "${BUILD_RELEASE_TAG}" ]; then
+            echo "No inventory reconciliation required for this deploy"
+            exit 0
+          fi
+
+          if [ "<< parameters.target_env >>" != "prod" ]; then
+            echo "Live space reconciliation targets production only"
+            exit 0
+          fi
+
+          # The cf session established by the deploy step is still active, so no
+          # additional login is required. Reporting mode until the first clean
+          # production reconciliation is accepted as the baseline, per ADR 0029.
+          #
+          # The repository half reads the deployed checkout rather than the release
+          # tag, because the tag is not fetched into this job. The content is the
+          # same commit. Auditors reproduce this later with --tag against the
+          # published tag.
+          node ./tools/releaseInventory.js verify \
+            --scope all \
+            --out release-artifacts/inventoryReconciliation.json
+
+          cp release/inventory.json release-artifacts/inventory.json
+
+          inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
+          manifest_with_inventory=$(mktemp)
+          jq \
+            --arg inventoryHash "${inventory_hash}" \
+            --slurpfile reconciliation release-artifacts/inventoryReconciliation.json \
+            '.schemaVersion = 2
+             | .inventory = {
+                 declaredPath: "release/inventory.json",
+                 declaredSha256: $inventoryHash,
+                 reconciliationPath: "release-artifacts/inventoryReconciliation.json",
+                 enforcement: $reconciliation[0].enforcement,
+                 validationErrorCount: ($reconciliation[0].validationErrors | length),
+                 scopes: ($reconciliation[0].scopes | map_values(.summary))
+               }' "${RELEASE_MANIFEST_PATH}" > "${manifest_with_inventory}"
+          mv "${manifest_with_inventory}" "${RELEASE_MANIFEST_PATH}"
     - store_artifacts:
         path: release-artifacts
         destination: release-artifacts
@@ -1269,6 +1343,8 @@ jobs:
 
             upload_release_asset "${RELEASE_MANIFEST_PATH}" "application/json" || return 1
             upload_release_asset "release-artifacts/build-checksums.txt" "text/plain" || return 1
+            upload_release_asset "release-artifacts/inventory.json" "application/json" || return 1
+            upload_release_asset "release-artifacts/inventoryReconciliation.json" "application/json" || return 1
           }
 
           set +e
