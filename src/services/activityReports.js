@@ -1671,7 +1671,17 @@ export async function activityReportsApprovedByDate(userId, date) {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
         userId && {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [
+            { userId },
+            { '$activityReportCollaborators.userId$': userId },
+            {
+              id: {
+                [Op.in]: sequelize.literal(
+                  `(SELECT "activityReportId" FROM "ActivityReportApprovers" WHERE "userId" = ${Number(userId)} AND "deletedAt" IS NULL)`
+                ),
+              },
+            },
+          ],
         },
         {
           id: {
