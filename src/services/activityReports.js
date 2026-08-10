@@ -1664,7 +1664,7 @@ export async function activityReportsSubmittedWhereCollaboratorByDate(userId, da
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
-  const safeUserId = sequelize.escape(safeParseInt(userId));
+  const safeUserId = safeParseInt(userId);
 
   if (!safeUserId) {
     throw new Error('Invalid userId provided');
@@ -1679,12 +1679,12 @@ export async function activityReportsApprovedByDate(userId, date) {
         },
         safeUserId && {
           [Op.or]: [
-            { userId: safeUserId },
-            { '$activityReportCollaborators.userId$': safeUserId },
+            { userId: sequelize.escape(safeUserId) },
+            { '$activityReportCollaborators.userId$': sequelize.escape(safeUserId) },
             {
               id: {
                 [Op.in]: sequelize.literal(
-                  `(SELECT "activityReportId" FROM "ActivityReportApprovers" WHERE "userId" = ${safeUserId} AND "deletedAt" IS NULL)`
+                  `(SELECT "activityReportId" FROM "ActivityReportApprovers" WHERE "userId" = ${sequelize.escape(safeUserId)} AND "deletedAt" IS NULL)`
                 ),
               },
             },
