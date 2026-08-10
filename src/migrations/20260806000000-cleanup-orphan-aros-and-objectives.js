@@ -151,19 +151,25 @@ module.exports = {
         -- objectives are excluded via the "deletedAt" filter.
         DROP TABLE IF EXISTS resynced_objectives;
         CREATE TEMP TABLE resynced_objectives AS
-        WITH upd AS (
+        WITH targets AS (
+          SELECT
+            o.id,
+            BOOL_OR(aro."objectiveId" IS NOT NULL) AS has_aro
+          FROM "Objectives" o
+          JOIN (SELECT DISTINCT objective_id FROM aros_to_delete) d
+            ON d.objective_id = o.id
+          LEFT JOIN "ActivityReportObjectives" aro
+            ON aro."objectiveId" = o.id
+          WHERE o."deletedAt" IS NULL
+          GROUP BY o.id
+        ),
+        upd AS (
           UPDATE "Objectives" o
-          SET "onAR" = EXISTS (
-                SELECT 1 FROM "ActivityReportObjectives" aro
-                WHERE aro."objectiveId" = o.id
-              ),
+          SET "onAR" = t.has_aro,
               "updatedAt" = NOW()
-          WHERE o.id IN (SELECT DISTINCT objective_id FROM aros_to_delete)
-            AND o."deletedAt" IS NULL
-            AND o."onAR" IS DISTINCT FROM EXISTS (
-                SELECT 1 FROM "ActivityReportObjectives" aro
-                WHERE aro."objectiveId" = o.id
-              )
+          FROM targets t
+          WHERE o.id = t.id
+            AND o."onAR" IS DISTINCT FROM t.has_aro
           RETURNING o.id
         )
         SELECT id FROM upd;
