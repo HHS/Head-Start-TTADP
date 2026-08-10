@@ -139,6 +139,16 @@
       "description": "What authorizes this component. A component without a resolvable authorization reference is not a documented item.",
       "required": ["type", "reference"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "none" } },
+            "required": ["type"]
+          },
+          "then": { "properties": { "reference": { "const": "none" } } },
+          "else": { "properties": { "reference": { "not": { "const": "none" } } } }
+        }
+      ],
       "properties": {
         "type": {
           "type": "string",
@@ -154,7 +164,7 @@
         "reference": {
           "type": "string",
           "minLength": 1,
-          "description": "Resolvable locator: a repository path, a JIRA key, or an ATO artifact identifier. The literal string 'none' is only valid when type is none, which requires a disposition."
+          "description": "Resolvable locator: a repository path, a JIRA key, or an ATO artifact identifier. Type none requires the literal string 'none' and a disposition; other authorization types may not use that value."
         },
         "note": { "type": "string" },
         "approval": { "$ref": "#/definitions/approval" }

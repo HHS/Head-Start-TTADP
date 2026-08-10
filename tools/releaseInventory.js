@@ -233,6 +233,71 @@ function cfCurl(apiPath, { allowFailure = false } = {}) {
   }
 }
 
+function paginationApiPath(href, currentApiPath) {
+  try {
+    const currentUrl = new URL(currentApiPath, 'https://cloud-controller.invalid');
+    const nextUrl = new URL(href, currentUrl);
+
+    return `${nextUrl.pathname}${nextUrl.search}`;
+  } catch (error) {
+    throw new Error(
+      `Cloud Foundry returned an invalid pagination link "${href}": ${error.message}`
+    );
+  }
+}
+
+/**
+ * Follows a Cloud Foundry v3 collection through every pagination.next link.
+ * Included resources are accumulated as well because service plan metadata is
+ * returned alongside each page of service instances.
+ */
+function fetchPaginatedCfCollection(apiPath, { fetchPage = cfCurl } = {}) {
+  const resources = [];
+  const included = {};
+  const visited = new Set();
+  let nextApiPath = apiPath;
+
+  while (nextApiPath) {
+    if (visited.has(nextApiPath)) {
+      throw new Error(`Cloud Foundry pagination repeated ${nextApiPath}`);
+    }
+
+    visited.add(nextApiPath);
+    const page = fetchPage(nextApiPath);
+
+    if (
+      !page ||
+      !Array.isArray(page.resources) ||
+      !page.pagination ||
+      !Object.hasOwn(page.pagination, 'next')
+    ) {
+      throw new Error(`Cloud Foundry collection ${nextApiPath} returned an invalid response`);
+    }
+
+    resources.push(...page.resources);
+
+    Object.entries(page.included || {}).forEach(([resourceType, values]) => {
+      if (!Array.isArray(values)) {
+        throw new Error(
+          `Cloud Foundry collection ${nextApiPath} returned invalid included.${resourceType}`
+        );
+      }
+
+      included[resourceType] = [...(included[resourceType] || []), ...values];
+    });
+
+    const next = page.pagination.next;
+
+    if (next && !next.href) {
+      throw new Error(`Cloud Foundry collection ${nextApiPath} returned an invalid next page`);
+    }
+
+    nextApiPath = next?.href ? paginationApiPath(next.href, nextApiPath) : null;
+  }
+
+  return { resources, included };
+}
+
 function resolveSpaceGuid(spaceName) {
   return runCommand('cf', ['space', spaceName, '--guid']).trim();
 }
@@ -246,12 +311,16 @@ function resolveSpaceGuid(spaceName) {
  */
 function collectSpaceState(spaceName) {
   const spaceGuid = resolveSpaceGuid(spaceName);
-  const apps = cfCurl(`/v3/apps?space_guids=${spaceGuid}&per_page=200`).resources;
-  const routes = cfCurl(`/v3/routes?space_guids=${spaceGuid}&per_page=200`).resources;
+  const apps = fetchPaginatedCfCollection(
+    `/v3/apps?space_guids=${spaceGuid}&per_page=200`
+  ).resources;
+  const routes = fetchPaginatedCfCollection(
+    `/v3/routes?space_guids=${spaceGuid}&per_page=200`
+  ).resources;
 
   // include=service_plan resolves plan names in one call. A plan change alters
   // the authorized shape of a service, so the plan is part of the record.
-  const serviceResponse = cfCurl(
+  const serviceResponse = fetchPaginatedCfCollection(
     `/v3/service_instances?space_guids=${spaceGuid}&per_page=200&include=service_plan`
   );
   const plansByGuid = new Map(
@@ -263,10 +332,12 @@ function collectSpaceState(spaceName) {
   }));
 
   const processes = apps.flatMap((app) =>
-    cfCurl(`/v3/apps/${app.guid}/processes?per_page=200`).resources.map((process) => ({
-      ...process,
-      appName: app.name,
-    }))
+    fetchPaginatedCfCollection(`/v3/apps/${app.guid}/processes?per_page=200`).resources.map(
+      (process) => ({
+        ...process,
+        appName: app.name,
+      })
+    )
   );
 
   const droplets = apps.reduce((collected, app) => {
@@ -296,6 +367,7 @@ function collectSpaceState(spaceName) {
  */
 function deriveSpaceComponents(spaceState, { primaryAppName = null } = {}) {
   const observed = [];
+  const appNamesByGuid = new Map(spaceState.apps.map((app) => [app.guid, app.name]));
 
   spaceState.apps.forEach((app) => {
     observed.push({
@@ -339,12 +411,15 @@ function deriveSpaceComponents(spaceState, { primaryAppName = null } = {}) {
   });
 
   spaceState.routes.forEach((route) => {
+    const boundAppGuid = route.destinations?.[0]?.app?.guid || null;
+
     observed.push({
       class: 'route',
       name: route.url,
       locator: { type: 'cloudFoundryRoute', value: route.url },
       guid: route.guid,
-      boundAppName: route.destinations?.[0]?.app?.guid || null,
+      boundAppGuid,
+      boundAppName: boundAppGuid ? appNamesByGuid.get(boundAppGuid) || null : null,
     });
   });
 
@@ -757,6 +832,7 @@ module.exports = {
   componentIdentity,
   deriveRepositoryComponents,
   deriveSpaceComponents,
+  fetchPaginatedCfCollection,
   hashContent,
   main,
   overdueDispositions,

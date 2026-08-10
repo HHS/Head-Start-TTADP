@@ -7,6 +7,7 @@ const {
   componentIdentity,
   deriveRepositoryComponents,
   deriveSpaceComponents,
+  fetchPaginatedCfCollection,
   hashContent,
   overdueDispositions,
   reconcile,
@@ -267,6 +268,61 @@ describe('deriveRepositoryComponents', () => {
   });
 });
 
+describe('fetchPaginatedCfCollection', () => {
+  it('follows next links and accumulates resources and included records', () => {
+    const fetchPage = jest
+      .fn()
+      .mockReturnValueOnce({
+        resources: [{ guid: 'service-1' }],
+        included: { service_plans: [{ guid: 'plan-1', name: 'small' }] },
+        pagination: {
+          next: {
+            href: 'https://api.example.gov/v3/service_instances?page=2&per_page=200',
+          },
+        },
+      })
+      .mockReturnValueOnce({
+        resources: [{ guid: 'service-2' }],
+        included: { service_plans: [{ guid: 'plan-2', name: 'medium' }] },
+        pagination: { next: null },
+      });
+
+    const result = fetchPaginatedCfCollection(
+      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      { fetchPage }
+    );
+
+    expect(fetchPage.mock.calls.map(([apiPath]) => apiPath)).toEqual([
+      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      '/v3/service_instances?page=2&per_page=200',
+    ]);
+    expect(result.resources).toEqual([{ guid: 'service-1' }, { guid: 'service-2' }]);
+    expect(result.included.service_plans).toEqual([
+      { guid: 'plan-1', name: 'small' },
+      { guid: 'plan-2', name: 'medium' },
+    ]);
+  });
+
+  it('fails instead of looping when the API repeats a pagination link', () => {
+    const fetchPage = jest.fn().mockReturnValue({
+      resources: [],
+      pagination: { next: { href: '/v3/apps?per_page=200' } },
+    });
+
+    expect(() => fetchPaginatedCfCollection('/v3/apps?per_page=200', { fetchPage })).toThrow(
+      /pagination repeated/
+    );
+  });
+
+  it('fails on a collection response without pagination state', () => {
+    expect(() =>
+      fetchPaginatedCfCollection('/v3/apps?per_page=200', {
+        fetchPage: () => ({ resources: [], pagination: {} }),
+      })
+    ).toThrow(/invalid response/);
+  });
+});
+
 describe('deriveSpaceComponents', () => {
   const observed = deriveSpaceComponents(productionSpaceState, {
     primaryAppName: 'tta-smarthub-prod',
@@ -295,6 +351,34 @@ describe('deriveSpaceComponents', () => {
     const buildpack = observed.find((c) => c.locator.type === 'cloudFoundryBuildpack');
 
     expect(buildpack.locator.value).toBe('1.9.4');
+  });
+
+  it('records a route destination app name and GUID in their corresponding fields', () => {
+    const route = observed.find(
+      (component) => component.class === 'route' && component.name === 'ttahub.ohs.acf.hhs.gov'
+    );
+
+    expect(route.boundAppName).toBe('tta-smarthub-prod');
+    expect(route.boundAppGuid).toBe('app-1');
+  });
+
+  it('retains an unresolved route destination GUID without calling it an app name', () => {
+    const [route] = deriveSpaceComponents({
+      apps: [],
+      processes: [],
+      services: [],
+      droplets: [],
+      routes: [
+        {
+          guid: 'route-unknown',
+          url: 'unknown.app.cloud.gov',
+          destinations: [{ app: { guid: 'unknown-app-guid' } }],
+        },
+      ],
+    });
+
+    expect(route.boundAppName).toBeNull();
+    expect(route.boundAppGuid).toBe('unknown-app-guid');
   });
 
   it('does not capture credentials or environment values', () => {
@@ -743,6 +827,36 @@ describe('schemaErrors', () => {
     expect(errors).toEqual(
       expect.arrayContaining([expect.stringMatching(/approvalDate.*must match format/)])
     );
+  });
+
+  it.each([
+    ['a non-none type with the none reference', { type: 'adr', reference: 'none' }],
+    [
+      'the none type with a resolvable reference',
+      { type: 'none', reference: 'docs/adr/0029-release-inventory-baseline-reconciliation.md' },
+    ],
+  ])('rejects authorization using %s', (_description, authorization) => {
+    const invalid = {
+      ...inventory,
+      components: inventory.components.map((component, index) =>
+        index === 0 ? { ...component, authorization } : component
+      ),
+    };
+
+    expect(schemaErrors(inventorySchema, invalid, 'inventory.json').length).toBeGreaterThan(0);
+  });
+
+  it('accepts the none authorization type with the literal none reference', () => {
+    const pending = {
+      ...inventory,
+      components: inventory.components.map((component, index) =>
+        index === 0
+          ? { ...component, authorization: { type: 'none', reference: 'none' } }
+          : component
+      ),
+    };
+
+    expect(schemaErrors(inventorySchema, pending, 'inventory.json')).toEqual([]);
   });
 
   it('rejects a disposition missing a required field', () => {
