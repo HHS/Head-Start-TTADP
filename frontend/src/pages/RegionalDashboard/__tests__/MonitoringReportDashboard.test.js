@@ -149,7 +149,7 @@ describe('MonitoringReportDashboard', () => {
     );
   });
 
-  it('does not pass completeDate to Monitoring Related TTA', () => {
+  it('does not pass completeDate or reportDeliveryDate to Monitoring Related TTA', () => {
     const incomingFilters = [
       {
         id: 'date-start',
@@ -177,11 +177,6 @@ describe('MonitoringReportDashboard', () => {
           {
             id: 'date-start',
             topic: 'startDate',
-            condition: 'is within',
-            query: '2026/07/01-2026/07/08',
-          },
-          {
-            topic: 'reportDeliveryDate',
             condition: 'is within',
             query: '2026/07/01-2026/07/08',
           },

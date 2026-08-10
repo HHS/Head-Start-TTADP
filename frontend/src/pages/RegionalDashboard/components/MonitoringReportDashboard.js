@@ -16,7 +16,7 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
     [filtersToApply]
   );
   const relatedTtaFilters = useMemo(
-    () => filtersToApply.filter((filter) => filter.topic !== 'completeDate'),
+    () => formatMonitoringFiltersForQuery(filtersToApply),
     [filtersToApply]
   );
 
