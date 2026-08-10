@@ -2144,8 +2144,6 @@ describe('Activity report service', () => {
     });
 
     describe('activityReportsApprovedByDate', () => {
-      // Use a unique approver fixture to avoid hsesUserId/hsesUsername conflicts
-      // with digestMockCollabOne (both share 'b' for those fields).
       const approvedDigestApprover = {
         id: 21161530,
         homeRegionId: 1,
