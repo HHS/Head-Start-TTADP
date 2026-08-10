@@ -2,6 +2,7 @@ const httpContext = require('express-http-context');
 const { Op, ValidationError, ValidationErrorItem } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const activityReportSchema = require('../schemas/activityReport');
+const activityReportObjectivesSchema = require('../schemas/activityReportObjective');
 const {
   OBJECTIVE_STATUS,
   GOAL_COLLABORATORS,
@@ -142,15 +143,9 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
 };
 
 /**
- * When a report is approved and a goal referenced by this report is closed,
- * we need to create a new iteration of the goal's life-cycle.
- * Because we already have the code written to create a new iteration
- * and update all linked tables, lets call it like it was a save.
- * This should handle two edge cases:
- * 1. When a reports goal is closed after the report is created or submitted.
- * 2. When a reports goal is closed and the report is unlocked (re-opened).
- *  Note: That if the user happens to save the AR goals and objectives
- *  page before submitting this will have already occurred through a normal save.
+ * Reconcile standard goal life cycles when a report changes workflow state.
+ * The save service keeps a closed goal selected before its close event, but creates
+ * or reuses an active life cycle when the report selected the goal after it was closed.
  * @param {*} _sequelize
  * @param {*} instance
  * @param {*} _options
@@ -863,6 +858,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
           {
             where: {
               activityReportId: instance.id,
+              goalId: goal.id,
             },
             transaction: options.transaction,
             individualHooks: true,
@@ -1115,9 +1111,37 @@ const validateForApproval = (instance) => {
   }
 };
 
+const validateObjectiveSupportTypesForSubmission = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (
+    !Array.isArray(changed) ||
+    !changed.includes('submissionStatus') ||
+    instance.submissionStatus !== REPORT_STATUSES.SUBMITTED
+  ) {
+    return;
+  }
+
+  const objectives = await sequelize.models.ActivityReportObjective.findAll({
+    attributes: ['id', 'supportType'],
+    where: { activityReportId: instance.id },
+    transaction: options?.transaction,
+    raw: true,
+  });
+
+  const { error } = activityReportObjectivesSchema.validate(objectives, { abortEarly: true });
+  if (error) {
+    const items = error.details.map(
+      (d) =>
+        new ValidationErrorItem(d.message, 'Validation error', d.path.join('.'), d.context?.value)
+    );
+    throw new ValidationError('Activity report validation failed', items);
+  }
+};
+
 const beforeUpdate = async (sequelize, instance, options) => {
   validateForSubmission(instance);
   validateForApproval(instance);
+  await validateObjectiveSupportTypesForSubmission(sequelize, instance, options);
   copyStatus(instance);
   purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
@@ -1131,6 +1155,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatus(sequelize, instance, options);
+  await checkForNewGoalCycleOnApproval(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
@@ -1138,7 +1163,6 @@ const afterUpdate = async (sequelize, instance, options) => {
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await checkForNewGoalCycleOnApproval(sequelize, instance, options);
   await automaticUnsuspendGoalOnApproval(instance);
   await forceStatusEventOnReopenedGoal(instance);
   await revisionBumpBroadcast(sequelize, instance);
@@ -1162,4 +1186,5 @@ export {
   setSubmittedDate,
   validateForApproval,
   validateForSubmission,
+  validateObjectiveSupportTypesForSubmission,
 };
