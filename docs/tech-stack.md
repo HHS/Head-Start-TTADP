@@ -1,7 +1,7 @@
 # Technical Details for the TTAHUB
 
 ## Backend
-- Node.js (22.22.3)
+- Node.js (24.19.0)
 - TypeScript & Javascript (mixed)
 - PostgreSQL (15.12) via Sequelize ORM
 
