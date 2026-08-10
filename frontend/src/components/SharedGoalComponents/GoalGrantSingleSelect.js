@@ -23,7 +23,12 @@ export default function GoalGrantSingleSelect({
           label="Recipient grant numbers"
           value={value ? value.numberWithProgramTypes : ''}
         >
-          <FormItem label="Recipient grant numbers" name="selectedGrant" required>
+          <FormItem
+            label="Recipient grant numbers"
+            name="selectedGrant"
+            htmlFor="selectedGrant"
+            required
+          >
             <Select
               placeholder=""
               inputId="selectedGrant"

@@ -412,6 +412,20 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
+    it('loads global goal templates when the session has no grants', async () => {
+      fetchMock.get('/api/goal-templates', [{ id: 1, standard: 'Family engagement' }], {
+        overwriteRoutes: true,
+      });
+      render(<RenderSessionSummary />);
+
+      await waitFor(() => expect(fetchMock.called('/api/goal-templates')).toBe(true));
+      const goalSelect = document.getElementById('goalTemplates');
+      expect(goalSelect).not.toBeNull();
+      await selectEvent.select(goalSelect, 'Family engagement');
+
+      expect(screen.getByText('Family engagement')).toBeInTheDocument();
+    });
+
     it('exposes required-field semantics for the TTA provided rich-text field', async () => {
       render(<RenderSessionSummary />);
 

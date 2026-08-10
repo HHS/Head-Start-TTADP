@@ -1,11 +1,15 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { uniqBy } from 'lodash';
-import { Op } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import { serviceError } from '../lib/serviceError';
 import db from '../models';
 import filtersToScopes from '../scopes';
-import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
+import {
+  getBlockingActivityReportsForGoals,
+  setFieldPromptsForCuratedTemplate,
+} from './goalTemplates';
 import { reduceObjectivesForRecipientRecord } from './recipient';
 import {
   cacheGoalMetadata,
@@ -747,6 +751,62 @@ export async function getStardard(
 }
 type GoalStatusType = (typeof GOAL_STATUS)[keyof typeof GOAL_STATUS];
 
+interface StandardGoalRequestContext {
+  userId?: number;
+}
+
+function standardGoalConflict(code: string, blockingActivityReports = undefined) {
+  const responseBody = {
+    code,
+    ...(blockingActivityReports ? { blockingActivityReports } : {}),
+  };
+  return serviceError(409, 'Standard goal is already in use', responseBody);
+}
+
+async function validateStandardGoalAvailability(
+  grantId: number,
+  standardGoalId: number,
+  userId?: number
+) {
+  const existingGoals = await Goal.findAll({
+    attributes: ['id', 'createdVia', 'onApprovedAR'],
+    where: {
+      grantId,
+      goalTemplateId: standardGoalId,
+      status: { [Op.ne]: GOAL_STATUS.CLOSED },
+    },
+  });
+
+  if (existingGoals.length === 0) {
+    return;
+  }
+
+  const reportsByGoalId = await getBlockingActivityReportsForGoals(existingGoals, userId);
+  const blockingActivityReports = uniqBy(
+    existingGoals.flatMap((goal) => reportsByGoalId.get(goal.id) || []),
+    'displayId'
+  );
+
+  if (blockingActivityReports.length > 0) {
+    throw standardGoalConflict('STANDARD_GOAL_ON_ACTIVITY_REPORT', blockingActivityReports);
+  }
+
+  throw standardGoalConflict('STANDARD_GOAL_ALREADY_USED');
+}
+
+function isStandardGoalUniquenessError(error) {
+  if (!(error instanceof UniqueConstraintError)) {
+    return false;
+  }
+
+  const parent = error.parent as { constraint?: string };
+  const original = error.original as { constraint?: string };
+  return (
+    parent?.constraint === 'unique_grantId_goalTemplateId' ||
+    original?.constraint === 'unique_grantId_goalTemplateId'
+  );
+}
+
 // This function will handle
 // - creating a new standard goal
 // - based on the design, this will not unsuspend or "restart" a closed goal
@@ -759,21 +819,27 @@ export async function newStandardGoal(
   // todo: if we ever add more prompt responses, we will need to make this next param generic
   rootCauses?: Array<string>,
   // default to not started
-  status: GoalStatusType = GOAL_STATUS.NOT_STARTED // default to not started
+  status: GoalStatusType = GOAL_STATUS.NOT_STARTED, // default to not started
+  requestContext: StandardGoalRequestContext = {}
 ) {
+  await validateStandardGoalAvailability(grantId, standardGoalId, requestContext.userId);
   const { standard, requiresPrompts } = await getStardard(standardGoalId, grantId, rootCauses);
 
-  if (standard.goals.length > 0) {
-    throw new Error('Standard goal has already been utilized');
+  let newGoal;
+  try {
+    newGoal = await Goal.create({
+      status,
+      name: standard.templateName,
+      grantId,
+      goalTemplateId: standard.id,
+      createdVia: 'rtr',
+    });
+  } catch (error) {
+    if (isStandardGoalUniquenessError(error)) {
+      throw standardGoalConflict('STANDARD_GOAL_ALREADY_USED');
+    }
+    throw error;
   }
-
-  const newGoal = await Goal.create({
-    status,
-    name: standard.templateName,
-    grantId,
-    goalTemplateId: standard.id,
-    createdVia: 'rtr',
-  });
 
   // a new goal does not require objectives, but may include them
   if (objectives && objectives.length) {

@@ -1,16 +1,43 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import { Op, Sequelize } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
+import { serviceError } from '../lib/serviceError';
 import db from '../models';
+import ActivityReportPolicy from '../policies/activityReport';
+import { userById } from './users';
 
 const {
   GoalTemplate: GoalTemplateModel,
   GoalTemplateFieldPrompt: GoalTemplateFieldPromptModel,
   GoalFieldResponse: GoalFieldResponseModel,
   Goal: GoalModel,
+  ActivityReport: ActivityReportModel,
+  ActivityReportApprover: ActivityReportApproverModel,
+  ActivityReportCollaborator: ActivityReportCollaboratorModel,
+  ActivityReportGoal: ActivityReportGoalModel,
   Grant,
   Region,
+  User: UserModel,
   sequelize,
 } = db;
+
+const BLOCKING_ACTIVITY_REPORT_STATUSES = [
+  REPORT_STATUSES.DRAFT,
+  REPORT_STATUSES.SUBMITTED,
+  REPORT_STATUSES.NEEDS_ACTION,
+];
+
+export interface BlockingActivityReportSummary {
+  creatorName: string;
+  displayId: string;
+  href: string | null;
+}
+
+interface CuratedTemplateOptions {
+  includeBlockingActivityReports?: boolean;
+  includeClosedAndSuspendedGoals?: boolean;
+  userId?: number;
+}
 
 interface GoalTemplate {
   id: number;
@@ -25,6 +52,13 @@ interface GoalTemplate {
   oldGrantIds: [];
   isNew: false;
   isCurated: true;
+  goals?: Array<{
+    id: number;
+    createdVia?: string;
+    onApprovedAR?: boolean;
+    prestandard?: boolean;
+  }>;
+  blockingActivityReports?: BlockingActivityReportSummary[];
 }
 interface Validation {
   [key: string]: number | string | boolean;
@@ -51,6 +85,118 @@ interface PromptResponse {
   grantId: number;
 }
 
+async function authorizeGoalTemplateEnrichment(grantIds: number[], userId?: number) {
+  if (!Number.isInteger(userId) || grantIds.length === 0) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  const uniqueGrantIds = [...new Set(grantIds)];
+  const [user, grants] = await Promise.all([
+    userById(userId),
+    Grant.unscoped().findAll({
+      attributes: ['id', 'regionId'],
+      where: { id: uniqueGrantIds },
+    }),
+  ]);
+
+  if (!user || grants.length !== uniqueGrantIds.length) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  const canAccessAllGrants = grants.every((grant) => {
+    const policy = new ActivityReportPolicy(user, { regionId: grant.regionId });
+    return policy.isAdmin() || policy.canWriteInRegion();
+  });
+
+  if (!canAccessAllGrants) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  return user;
+}
+
+export function isHiddenActivityReportGoal(goal) {
+  return goal.createdVia === 'activityReport' && goal.onApprovedAR === false;
+}
+
+export async function getBlockingActivityReportsForGoals(
+  goals,
+  userId?: number,
+  authorizedUser = null
+): Promise<Map<number, BlockingActivityReportSummary[]>> {
+  const hiddenGoalIds = goals.filter(isHiddenActivityReportGoal).map((goal) => goal.id);
+  const reportsByGoalId = new Map<number, BlockingActivityReportSummary[]>();
+
+  if (hiddenGoalIds.length === 0) {
+    return reportsByGoalId;
+  }
+
+  const user = authorizedUser || (Number.isInteger(userId) ? await userById(userId) : null);
+  const activityReportGoals = await ActivityReportGoalModel.findAll({
+    attributes: ['activityReportId', 'goalId'],
+    where: { goalId: hiddenGoalIds },
+    include: [
+      {
+        model: ActivityReportModel,
+        as: 'activityReport',
+        attributes: [
+          'id',
+          'legacyId',
+          'regionId',
+          'userId',
+          'creatorRole',
+          'calculatedStatus',
+          'submissionStatus',
+        ],
+        required: true,
+        where: {
+          calculatedStatus: { [Op.in]: BLOCKING_ACTIVITY_REPORT_STATUSES },
+        },
+        include: [
+          {
+            model: UserModel,
+            as: 'author',
+            attributes: ['id', 'name'],
+          },
+          {
+            model: ActivityReportCollaboratorModel,
+            as: 'activityReportCollaborators',
+            attributes: ['id', 'userId'],
+            include: [{ model: UserModel, as: 'user', attributes: ['id'] }],
+          },
+          {
+            model: ActivityReportApproverModel,
+            as: 'approvers',
+            attributes: ['id', 'userId'],
+            include: [{ model: UserModel, as: 'user', attributes: ['id'] }],
+          },
+        ],
+      },
+    ],
+  });
+
+  const seenGoalReports = new Set<string>();
+  activityReportGoals.forEach((activityReportGoal) => {
+    const report = activityReportGoal.activityReport;
+    const deduplicationKey = `${activityReportGoal.goalId}:${report.id}`;
+    if (seenGoalReports.has(deduplicationKey)) {
+      return;
+    }
+    seenGoalReports.add(deduplicationKey);
+
+    const reports = reportsByGoalId.get(activityReportGoal.goalId) || [];
+    const canViewReport = user ? new ActivityReportPolicy(user, report).canGet() : false;
+    reports.push({
+      creatorName: report.creatorNameWithRole,
+      displayId: report.displayId,
+      href: canViewReport ? `/activity-reports/${report.id}` : null,
+    });
+    reportsByGoalId.set(activityReportGoal.goalId, reports);
+  });
+
+  return reportsByGoalId;
+}
+
 /**
 Retrieves all curated goal templates that either have a null regionId or a grant within the
 specified region.
@@ -59,8 +205,19 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
-  includeClosedAndSuspendedGoals = false
+  options: CuratedTemplateOptions | boolean = {}
 ): Promise<GoalTemplate[]> {
+  const normalizedOptions =
+    typeof options === 'boolean' ? { includeClosedAndSuspendedGoals: options } : options;
+  const {
+    includeBlockingActivityReports = false,
+    includeClosedAndSuspendedGoals = false,
+    userId,
+  } = normalizedOptions;
+  const authorizedUser = includeBlockingActivityReports
+    ? await authorizeGoalTemplateEnrichment(grantIds || [], userId)
+    : null;
+
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
 
@@ -93,7 +250,7 @@ export async function getCuratedTemplates(
     };
   }
 
-  return GoalTemplateModel.findAll({
+  const templates = await GoalTemplateModel.findAll({
     attributes: [
       'id',
       'source',
@@ -131,7 +288,17 @@ export async function getCuratedTemplates(
       {
         model: GoalModel,
         as: 'goals',
-        attributes: ['id', 'name', 'source', 'status', 'grantId', 'goalTemplateId', 'prestandard'],
+        attributes: [
+          'id',
+          'name',
+          'source',
+          'status',
+          'grantId',
+          'goalTemplateId',
+          'prestandard',
+          'createdVia',
+          'onApprovedAR',
+        ],
         required: false,
         where: goalWhere,
       },
@@ -155,6 +322,36 @@ export async function getCuratedTemplates(
       ],
     },
     order: [['templateName', 'ASC']],
+  });
+
+  if (!includeBlockingActivityReports) {
+    return templates;
+  }
+
+  const hiddenGoals = templates.flatMap((template) =>
+    (template.goals || []).filter(isHiddenActivityReportGoal)
+  );
+  const reportsByGoalId = await getBlockingActivityReportsForGoals(
+    hiddenGoals,
+    userId,
+    authorizedUser
+  );
+
+  return templates.filter((template) => {
+    const reportsByDisplayId = new Map<string, BlockingActivityReportSummary>();
+    (template.goals || []).forEach((goal) => {
+      (reportsByGoalId.get(goal.id) || []).forEach((report) => {
+        reportsByDisplayId.set(report.displayId, report);
+      });
+    });
+    const blockingActivityReports = [...reportsByDisplayId.values()];
+    template.setDataValue('blockingActivityReports', blockingActivityReports);
+
+    const isAvailableTemplate =
+      !template.goals ||
+      template.goals.length === 0 ||
+      template.goals.every((goal) => goal.prestandard === true);
+    return isAvailableTemplate || blockingActivityReports.length > 0;
   });
 }
 
