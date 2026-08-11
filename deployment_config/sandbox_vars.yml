@@ -1,15 +1,9 @@
 env: sandbox
 web_instances: 1
 web_memory: 3GB
-# 80% of web_memory (MB), passed to node --max-old-space-size
-web_max_old_space_size: 2457
 web_disk_quota: 2GB
 worker_instances: 2
 worker_memory: 1GB
-# 80% of worker_memory (MB), passed to node --max-old-space-size
-worker_max_old_space_size: 819
-# Forked worker processes (throng); default matches src/worker.ts.
-worker_concurrency: 2
 worker_disk_quota: 2GB
 
 app_name: tta-smarthub-sandbox
