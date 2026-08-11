@@ -41,6 +41,7 @@ import {
   Topic,
   User,
 } from '../models';
+import activityReportObjectivesSchema from '../models/schemas/activityReportObjective';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
@@ -453,7 +454,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'fullName'],
+            attributes: ['id', 'name', 'fullName', 'email'],
             include: [
               {
                 model: Role,
@@ -939,6 +940,22 @@ export function formatResources(resources) {
     // its a string
     return [...acc, resource];
   }, []);
+}
+
+/**
+ * Validates that every objective on a report has a support type, the
+ * requirement enforced at the submission gate. Returns a user-facing error
+ * message when validation fails, or null when the report's objectives are valid.
+ */
+export async function getObjectiveSupportTypeSubmissionError(activityReportId) {
+  const objectives = await ActivityReportObjective.findAll({
+    attributes: ['id', 'supportType'],
+    where: { activityReportId },
+    raw: true,
+  });
+
+  const { error } = activityReportObjectivesSchema.validate(objectives, { abortEarly: true });
+  return error ? error.details[0].message : null;
 }
 
 export async function createOrUpdate(newActivityReport, report, userId) {

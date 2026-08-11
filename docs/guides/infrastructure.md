@@ -84,6 +84,31 @@ The bulk of CI configurations can be found in this repo's [.circleci/config.yml]
 - The `main` branch is automatically deployed to `staging` on merge, after tests pass
 - The `production` branch is automatically deployed to `production` on merge, after tests pass
 
+### Approving and merging the production PR
+
+Reviewing, approving, or merging a production PR requires a GitHub account added to the HHS org with permission to approve and merge on the `production` branch. A new account can be created at [github.com/join](https://github.com/join). Confirm the required role with an existing repo admin.
+
+The production PR follows the checklist already captured in [.github/pull_request_template.md](../../.github/pull_request_template.md) under "Production Deploy":
+
+1. An engineer opens a PR from `main` into `production` as a Draft.
+2. A staging smoke test is completed.
+3. The PR is transitioned from Draft to Open. This automatically posts a notice in the `acf-ohs-ttahub--contractor-customer-team` Slack channel with the PR title, description, and linked issues (see [.github/workflows/pr-notifications.yml](../../.github/workflows/pr-notifications.yml)).
+4. A reviewer is added only after the PR is Open, so the Slack notice fires correctly.
+
+What the approver checks before signing off:
+
+- The "Staging smoke test completed" checkbox in the PR body is checked. The other checklist items belong to earlier steps in the process and are not the approver's responsibility.
+
+To approve and merge:
+
+1. Open the PR on GitHub and use "Review changes" then "Approve".
+2. Scroll down to the bottom of the PR page to find the "Merge" button. Merging to `production` triggers an automatic build, test, and deploy to the prod environment (see [.circleci/config.yml](../../.circleci/config.yml)).
+3. Watch for the deploy success notice in the same Slack channel once CircleCI finishes.
+
+Note that time can pass between the Slack notice that a production PR is ready and the approval. If another change is added to the PR in that window, the Merge button may not be available right after approving. Wait about 30 minutes, then come back to the PR to merge.
+
+If something fails after merge, notify someone in the `acf-ohs-ttahub--contractor-customer-team` Slack channel for help.
+
 ### Production release provenance
 
 Production deploys keep the existing production branch deployment automation. At the start of the production branch pipeline, CircleCI creates a local annotated release tag, checks out that tag for the build, and continues through the existing production deploy job. Before deployment, CircleCI verifies that any existing remote release tag is annotated and points to the same commit. After the production deploy, migrations, and existing deploy notifications run, CircleCI publishes the annotated tag to GitHub and attaches release evidence to that tag's GitHub Release.
