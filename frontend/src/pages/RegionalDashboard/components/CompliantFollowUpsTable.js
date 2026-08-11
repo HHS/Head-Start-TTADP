@@ -478,11 +478,8 @@ export default function CompliantFollowUpsTable({ title }) {
   const visibleFilterPills = useMemo(
     () =>
       dedupeVisibleFilters(
-        selectedFiltersForQuery.filter(
-          (filter) =>
-            filter.topic !== 'region' &&
-            filter.topic !== 'reportDeliveryDate' &&
-            filter.topic !== 'completeDate'
+        formatMonitoringFiltersForQuery(selectedFiltersForQuery).filter(
+          (filter) => filter.topic !== 'region'
         )
       ),
     [selectedFiltersForQuery]
