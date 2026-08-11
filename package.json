@@ -11,10 +11,10 @@
   "scripts": {
     "build": "tsc -p src",
     "server": "tsx watch src/index.ts",
-    "start:be": "node ./build/server/src/index.js",
+    "start:be": "bash bin/start-node ./build/server/src/index.js",
     "start:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "start:fe": "yarn --cwd frontend start",
-    "start:worker": "node ./build/server/src/worker.js",
+    "start:worker": "bash bin/start-node ./build/server/src/worker.js",
     "start:worker:watch": "tsx watch src/worker.ts",
     "start:stack:local": "concurrently \"yarn server\" \"yarn start:fe\" \"yarn start:worker:watch\"",
     "start:stack:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:be\" \"yarn start:fe\" \"yarn start:testingonly\"",

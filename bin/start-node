@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+# start-node: launch a Node.js process with V8 heap limits derived from the
+# container's memory cgroup.
+#
+# The deployed web and worker processes otherwise run `node <entrypoint>` with
+# V8's default heap sizing. Node's defaults do not account for the container's
+# cgroup memory limit, so on small instances (e.g. the 512 MB worker) baseline
+# RSS can exceed the limit and the platform OOM-kills the process (exit 137).
+# This wrapper caps `--max-old-space-size` to 80% of the cgroup limit so V8
+# stays within the container.
+#
+# When no cgroup memory limit can be determined (local macOS dev, unconstrained
+# CI), it falls back to a plain `node` invocation.
+#
+# Usage: bin/start-node <path-to-js> [args...]
+
+set -euo pipefail
+
+if [ "$#" -lt 1 ]; then
+  echo "Usage: bin/start-node <path-to-js> [args...]" >&2
+  exit 1
+fi
+
+# Read the container memory limit (in bytes) from the cgroup, supporting both
+# cgroup v1 and v2. Echoes an empty string when no finite limit is found.
+detect_memory_limit_bytes() {
+  local v1="/sys/fs/cgroup/memory/memory.limit_in_bytes"
+  local v2="/sys/fs/cgroup/memory.max"
+  local value=""
+
+  if [ -r "$v1" ]; then
+    value=$(cat "$v1" 2>/dev/null || echo "")
+  elif [ -r "$v2" ]; then
+    value=$(cat "$v2" 2>/dev/null || echo "")
+  fi
+
+  # cgroup v2 reports "max" for an unlimited memory limit.
+  if [ "$value" = "max" ]; then
+    value=""
+  fi
+
+  # Only accept a plain positive integer.
+  if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+    value=""
+  fi
+
+  # cgroup v1 uses a very large sentinel (~PAGE_COUNTER_MAX) to mean unlimited.
+  # Anything at/above ~1 PB is treated as "no limit".
+  if [ -n "$value" ] && [ "$value" -ge 1000000000000000 ]; then
+    value=""
+  fi
+
+  echo "$value"
+}
+
+MEMORY_LIMIT_BYTES=$(detect_memory_limit_bytes)
+
+if [ -n "$MEMORY_LIMIT_BYTES" ]; then
+  MEMORY_LIMIT_MB=$((MEMORY_LIMIT_BYTES / 1024 / 1024))
+
+  # 80% of the limit for the old space.
+  MAX_OLD_SPACE_SIZE=$((MEMORY_LIMIT_MB * 8 / 10))
+
+  # 1% of the limit for the semi (new) space, with a 16 MB floor.
+  MAX_SEMI_SPACE_SIZE=$((MEMORY_LIMIT_MB / 100))
+  if [ "$MAX_SEMI_SPACE_SIZE" -lt 16 ]; then
+    MAX_SEMI_SPACE_SIZE=16
+  fi
+
+  if [ "$MAX_OLD_SPACE_SIZE" -gt 0 ]; then
+    echo "start-node: cgroup limit ${MEMORY_LIMIT_MB}MB -> --max-old-space-size=${MAX_OLD_SPACE_SIZE} --max-semi-space-size=${MAX_SEMI_SPACE_SIZE}" >&2
+    exec node \
+      "--max-old-space-size=${MAX_OLD_SPACE_SIZE}" \
+      "--max-semi-space-size=${MAX_SEMI_SPACE_SIZE}" \
+      "$@"
+  fi
+fi
+
+echo "start-node: no cgroup memory limit detected, using node defaults" >&2
+exec node "$@"
