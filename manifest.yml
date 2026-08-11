@@ -62,10 +62,10 @@ applications:
     processes:
       - type: web
         instances: ((web_instances))
-        command: yarn start:be
+        command: NODE_MAX_OLD_SPACE_SIZE=((web_max_old_space_size)) yarn start:be
         memory: ((web_memory))
         disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
-        command: yarn start:worker
+        command: NODE_MAX_OLD_SPACE_SIZE=((worker_max_old_space_size)) yarn start:worker
         memory: ((worker_memory))

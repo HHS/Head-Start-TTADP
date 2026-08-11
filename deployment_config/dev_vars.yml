@@ -1,8 +1,12 @@
 env: ${full_env}
 web_instances: 1
 web_memory: 2GB
+# 80% of web_memory (MB), passed to node --max-old-space-size
+web_max_old_space_size: 1638
 worker_instances: 1
 worker_memory: 512M
+# 80% of worker_memory (MB), passed to node --max-old-space-size
+worker_max_old_space_size: 409
 app_disk_quota: 4GB
 
 app_name: tta-smarthub-${full_env}
