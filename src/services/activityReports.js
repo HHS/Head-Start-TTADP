@@ -1144,7 +1144,10 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = u
     return;
   }
 
-  // Of those objectives, find the ones that are still used by a non-deleted report.
+  // Of those objectives, find the ones that are still used by a non-deleted
+  // report. This is derived from the actual ActivityReportObjective/ActivityReport
+  // rows (the join), never from the cached onAR/onApprovedAR flags, which can be
+  // stale. Keep it that way.
   const objectivesStillInUse = new Set(
     (
       await ActivityReportObjective.findAll({

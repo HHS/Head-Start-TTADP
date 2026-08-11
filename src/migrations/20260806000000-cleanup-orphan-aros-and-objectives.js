@@ -28,10 +28,13 @@ module.exports = {
         --    reclaimed by the maintenance jobs from the dangling link rows,
         --    consistent with existing migrations (see
         --    20240708000000-remove_national_center_ars).
-        -- 2) Soft-delete Objectives created via an activity report that are no
-        --    longer used by any non-deleted report (their only AROs were on
-        --    deleted reports, or they have no ARO at all). Objectives is
-        --    paranoid, so this sets "deletedAt".
+        -- 2) Soft-delete Objectives created via an activity report that were
+        --    linked to one of the deleted reports and are no longer used by any
+        --    non-deleted report (their only AROs were on deleted reports). This
+        --    matches the runtime cleanup (cleanupOrphanedObjectivesAndAROs),
+        --    which only considers objectives linked to the report being
+        --    deleted; objectives orphaned through other paths are left alone.
+        --    Objectives is paranoid, so this sets "deletedAt".
         -- 3) Resync Objectives."onAR" for objectives that survive the delete
         --    (shared with a live report, or createdVia='rtr'). The raw delete
         --    bypasses the ARO destroy hook that normally recalculates onAR, so
@@ -115,13 +118,23 @@ module.exports = {
         )
         SELECT id FROM del;
 
-        -- 2: Objectives created via an activity report that are no longer used
-        -- by any non-deleted report. Evaluated after the ARO cleanup above so
-        -- that objectives whose only AROs were just removed are also captured.
+        -- 2: Objectives created via an activity report that were linked to one
+        -- of the deleted reports (captured in aros_to_delete) and are no longer
+        -- used by any non-deleted report. The JOIN to aros_to_delete restricts
+        -- the sweep to objectives that were actually on a deleted report,
+        -- mirroring the runtime cleanup and leaving objectives orphaned through
+        -- other paths (e.g. unlinked during normal editing while their report
+        -- stays live) untouched. Whether an objective is still in use is decided
+        -- from the ActivityReportObjective/ActivityReport rows -- never from the
+        -- cached "onAR"/"onApprovedAR" flags, which can be stale. Evaluated after
+        -- the ARO cleanup above so that objectives whose only AROs were just
+        -- removed are captured.
         DROP TABLE IF EXISTS objectives_to_delete;
         CREATE TEMP TABLE objectives_to_delete AS
         SELECT o.id AS objective_id
         FROM "Objectives" o
+        JOIN (SELECT DISTINCT objective_id FROM aros_to_delete) d
+          ON d.objective_id = o.id
         LEFT JOIN "ActivityReportObjectives" aro
           ON aro."objectiveId" = o.id
         LEFT JOIN "ActivityReports" ar

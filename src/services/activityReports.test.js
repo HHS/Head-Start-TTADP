@@ -2742,6 +2742,108 @@ describe('Activity report service', () => {
       expect(sharedLinker.linkBack.activityReportIds).toEqual([liveReport.id]);
     });
 
+    it('decides from the ARO/AR tables, not the cached onAR/onApprovedAR flags', async () => {
+      // Regression guard: the cleanup must derive "is this objective still used
+      // by a live report?" from the actual ActivityReportObjective/ActivityReport
+      // rows (the join) and never from the cached onAR/onApprovedAR flags, which
+      // can be stale. We deliberately corrupt those flags so they contradict the
+      // real table state and assert the join wins.
+      const staleDeletedReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.DELETED,
+        calculatedStatus: REPORT_STATUSES.DELETED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      const staleLiveReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+
+      // AR objective on the deleted report only -- but flagged as if it were on
+      // an approved report and on an AR. The edit flow would keep it (onApprovedAR
+      // gate); the delete cleanup must ignore the flags and soft-delete it.
+      const staleOrphan = await Objective.create({
+        title: 'stale-flag AR objective only on a deleted report',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'activityReport',
+      });
+      // AR objective genuinely shared with a live report -- but flagged onAR:false.
+      // The cleanup must keep it because the join finds the live ARO.
+      const staleShared = await Objective.create({
+        title: 'stale-flag AR objective shared with a live report',
+        goalId: goal.id,
+        status: 'Not Started',
+        createdVia: 'activityReport',
+      });
+
+      await httpContext.ns.runPromise(async () => {
+        httpContext.set('loggedUser', user.id);
+        await ActivityReportObjective.create({
+          activityReportId: staleDeletedReport.id,
+          objectiveId: staleOrphan.id,
+          status: 'Not Started',
+        });
+        await ActivityReportObjective.create({
+          activityReportId: staleDeletedReport.id,
+          objectiveId: staleShared.id,
+          status: 'Not Started',
+        });
+        await ActivityReportObjective.create({
+          activityReportId: staleLiveReport.id,
+          objectiveId: staleShared.id,
+          status: 'Not Started',
+        });
+      });
+
+      // Corrupt the cached flags so they contradict the actual table state.
+      await Objective.update(
+        { onApprovedAR: true, onAR: true },
+        { where: { id: staleOrphan.id }, hooks: false },
+      );
+      await Objective.update(
+        { onAR: false },
+        { where: { id: staleShared.id }, hooks: false },
+      );
+
+      await cleanupOrphanedObjectivesAndAROs(staleDeletedReport.id);
+
+      // Soft-deleted because the join proves it is on no live report, despite
+      // onApprovedAR/onAR being (incorrectly) true.
+      const orphan = await Objective.findByPk(staleOrphan.id, { paranoid: false });
+      expect(orphan.deletedAt).not.toBeNull();
+
+      // Kept because the join finds the live ARO, despite onAR being (incorrectly)
+      // false -- and onAR is resynced to true from the actual rows.
+      const shared = await Objective.findByPk(staleShared.id, { paranoid: false });
+      expect(shared.deletedAt).toBeNull();
+      expect(shared.onAR).toBe(true);
+
+      // Local teardown (create-and-destroy within the test).
+      await ActivityReportObjective.destroy({
+        where: { objectiveId: [staleOrphan.id, staleShared.id] },
+        force: true,
+      });
+      await ObjectiveCollaborator.destroy({
+        where: { objectiveId: [staleOrphan.id, staleShared.id] },
+        force: true,
+      });
+      await Objective.destroy({
+        where: { id: [staleOrphan.id, staleShared.id] },
+        force: true,
+      });
+      await ActivityReport.unscoped().destroy({
+        where: { id: [staleDeletedReport.id, staleLiveReport.id] },
+        force: true,
+      });
+    });
+
     it('is a no-op for a report with no linked objectives', async () => {
       const emptyReport = await ActivityReport.create({
         ...submittedReport,
