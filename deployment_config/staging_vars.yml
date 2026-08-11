@@ -7,6 +7,9 @@ worker_instances: 1
 worker_memory: 512M
 # 80% of worker_memory (MB), passed to node --max-old-space-size
 worker_max_old_space_size: 409
+# Forked worker processes (throng). Kept at 1 here because the 512M container
+# cannot fit the Node 24 baseline RSS of multiple forks + the throng master.
+worker_concurrency: 1
 app_disk_quota: 4GB
 LOG_LEVEL: info
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov/oidc
