@@ -64,6 +64,13 @@ export default function transactionWrapper(
       if (req) {
         req.inTransactionWrapper = false;
       }
+      if (
+        Number.isInteger(err?.statusCode) &&
+        err?.responseBody &&
+        typeof res?.status === 'function'
+      ) {
+        return res.status(err.statusCode).json(err.responseBody);
+      }
       return handleErrors(req, res, err, logContext);
     } finally {
       if (req) {

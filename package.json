@@ -6,7 +6,7 @@
   "private": true,
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "22.22.3"
+    "node": "22.23.1"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -143,7 +143,7 @@
     "csv-parse": "^4.14.1",
     "csv-stringify": "^5.6.2",
     "deepmerge": "^4.3.1",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "dot-wild": "^3.0.1",
     "dotenv": "^17.4.2",
     "email-templates": "^13.0.1",
@@ -244,6 +244,7 @@
     "axios": "^1.18.0",
     "body-parser": "^1.20.6",
     "brace-expansion": "^2.1.2",
+    "dompurify": "^3.4.13",
     "fast-xml-parser": "^5.7.0",
     "fast-uri": ">=4.1.2",
     "form-data": "^4.0.6",
