@@ -47,18 +47,56 @@ function formatDate(date) {
 }
 
 function dedupeVisibleFilters(filters) {
+  const NON_COMBINED_TOPICS = new Set(['startDate', 'completeDate', 'reportDeliveryDate']);
   const byTopicConditionQuery = new Map();
 
+  const normalizeQueryValues = (query) => {
+    if (Array.isArray(query)) {
+      return query;
+    }
+
+    if (query === undefined || query === null || query === '') {
+      return [];
+    }
+
+    return [query];
+  };
+
   filters.forEach((filter) => {
+    const shouldCombineValues =
+      !NON_COMBINED_TOPICS.has(filter.topic) && ['is', 'is not'].includes(filter.condition);
     const queryKey = Array.isArray(filter.query)
       ? filter.query.join('|')
       : String(filter.query ?? '');
-    const key = `${filter.topic}:${filter.condition}:${queryKey}`;
+    const key = shouldCombineValues
+      ? `${filter.topic}:${filter.condition}`
+      : `${filter.topic}:${filter.condition}:${queryKey}`;
     const existing = byTopicConditionQuery.get(key);
 
     if (!existing) {
       byTopicConditionQuery.set(key, filter);
+      return;
     }
+
+    if (!shouldCombineValues) {
+      return;
+    }
+
+    const mergedQueryValues = [
+      ...normalizeQueryValues(existing.query),
+      ...normalizeQueryValues(filter.query),
+    ].reduce((acc, value) => {
+      const exists = acc.some((item) => String(item) === String(value));
+      if (!exists) {
+        acc.push(value);
+      }
+      return acc;
+    }, []);
+
+    byTopicConditionQuery.set(key, {
+      ...existing,
+      query: mergedQueryValues,
+    });
   });
 
   return [...byTopicConditionQuery.values()];

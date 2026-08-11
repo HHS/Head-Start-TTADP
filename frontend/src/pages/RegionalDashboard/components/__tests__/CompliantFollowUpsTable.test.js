@@ -486,6 +486,16 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.getByText('Follow-up')).toBeInTheDocument();
     });
 
+    it('combines finding category values into one read-only pill', () => {
+      renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?findingCategory.in%5B%5D=Billing&findingCategory.in%5B%5D=classroom'
+      );
+
+      expect(screen.getAllByText('Finding category')).toHaveLength(1);
+      expect(screen.getByText('Billing, classroom')).toBeInTheDocument();
+    });
+
     it('updates sort order when the recipient header sort control is used', () => {
       mockUseFetch.mockReturnValue({
         data: [
