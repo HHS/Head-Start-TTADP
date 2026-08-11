@@ -67,5 +67,5 @@ applications:
         disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
-        command: NODE_MAX_OLD_SPACE_SIZE=((worker_max_old_space_size)) yarn start:worker
+        command: NODE_MAX_OLD_SPACE_SIZE=((worker_max_old_space_size)) WORKER_CONCURRENCY=((worker_concurrency)) yarn start:worker
         memory: ((worker_memory))
