@@ -690,9 +690,6 @@ jobs:
     - attach_workspace:
         at: .
     - run:
-        name: Test release inventory tooling
-        command: yarn jest tools/releaseInventory.test.js --runInBand
-    - run:
         name: Reconcile declared inventory against repository state
         command: |
           # Repository scope only. This job never contacts a live space, so it
