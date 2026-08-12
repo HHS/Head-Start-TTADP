@@ -2,6 +2,10 @@
   white-space: nowrap;
 }
 
+.filter-pill:not(:last-child) {
+  margin-right: 8px;
+}
+
 .filter-pill-container .smart-hub--ellipsis {
   font-size: 16px;
   max-width: 200px;
