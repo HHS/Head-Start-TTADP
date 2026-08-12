@@ -1767,7 +1767,7 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
           FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}' AND
-          dml_as != ${userId})`
+          dml_by != ${userId})`
             ),
           },
         },
