@@ -4,10 +4,18 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import FilterContext from '../../../../FilterContext';
-import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
+import {
+  getRecipientSpotlight,
+  getRecipientSpotlightCsv,
+} from '../../../../fetchers/recipientSpotlight';
+import { blobToCsvDownload } from '../../../../utils';
 import RecipientSpotlightDataController from '../RecipientSpotlightDataController';
 
 jest.mock('../../../../fetchers/recipientSpotlight');
+jest.mock('../../../../utils', () => ({
+  ...jest.requireActual('../../../../utils'),
+  blobToCsvDownload: jest.fn(),
+}));
 
 describe('RecipientSpotlightDataController', () => {
   const mockSetIsAppLoading = jest.fn();
@@ -82,6 +90,7 @@ describe('RecipientSpotlightDataController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getRecipientSpotlight.mockResolvedValue(mockRecipientData);
+    getRecipientSpotlightCsv.mockResolvedValue(new Blob(['csv']));
   });
 
   it('renders without crashing', async () => {
@@ -459,6 +468,32 @@ describe('RecipientSpotlightDataController', () => {
 
     await waitFor(() => {
       expect(mockSetIsAppLoadingLocal).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('exports the table to CSV from the actions menu', async () => {
+    renderController();
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Recipient 1')).toBeInTheDocument();
+    });
+
+    // Open the Actions menu, then choose Export table
+    fireEvent.click(screen.getByRole('button', { name: 'Open Actions for priority indicators' }));
+    fireEvent.click(screen.getByText('Export table'));
+
+    await waitFor(() => {
+      expect(getRecipientSpotlightCsv).toHaveBeenCalledWith(
+        'indicatorCount',
+        'desc',
+        '',
+        null,
+        true
+      );
+    });
+
+    await waitFor(() => {
+      expect(blobToCsvDownload).toHaveBeenCalledWith(expect.any(Blob), 'recipient-spotlight.csv');
     });
   });
 });
