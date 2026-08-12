@@ -4,10 +4,12 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
   destroySession,
@@ -330,6 +332,20 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
     }
 
     const recipientId = [req.query.recipientId].flat()[0];
+
+    if (recipientId) {
+      // Cross-region by design (all of the recipient's sessions regardless of TR region),
+      // but the caller must still be authorized to view this recipient's record.
+      const recipient = await recipientById(recipientId, {});
+      if (!recipient) {
+        return res.status(httpCodes.NOT_FOUND).send({ message: 'Recipient not found' });
+      }
+      const user = await userById(userId);
+      const recipientAuth = new RecipientPolicy(user, recipient);
+      if (!recipientAuth.canViewTrainingReports()) {
+        return res.sendStatus(httpCodes.FORBIDDEN);
+      }
+    }
 
     // Previously, we returned a FORBIDDEN (403) error after checking to see if
     // a user had regions, however, missing region URL params would cause
