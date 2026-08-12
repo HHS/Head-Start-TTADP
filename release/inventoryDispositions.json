@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "note": "Decisions about components that reconciliation reports as undocumented or missing, and about declared components whose authorization reference is not yet resolvable. Vocabulary and approval evidence follow the model ADR 0027 defines for the security findings register. Every entry below was created from the first production space reconciliation and carries provisional owners and closure targets that require team review before this control is promoted to blocking.",
+  "dispositions": [
+    {
+      "id": "INV-2026-0001",
+      "componentName": "tta-similarity-api-prod",
+      "componentClass": "application",
+      "finding": "The similarity API application is stopped but remains bound to ttahub-prod, the production database service.",
+      "status": "deferred",
+      "justification": "A stopped application retains its service binding and therefore retains live credentials to the production database. The application is authorized by ADR 0017, so the component itself is documented, but the binding on a stopped application is a standing access path with no operational need while the application is not running.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Either restart the application if it is still in use, or unbind the production database service while it is stopped.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0002",
+      "componentName": "tta-smarthub-maintenance-page-prod",
+      "componentClass": "application",
+      "finding": "The maintenance page application and its route were running in the production space with nothing recording their purpose or authorization. Both are now described in docs/boundary_diagram.md, but that diagram change has not yet been approved by the SSPO.",
+      "status": "deferred",
+      "justification": "The application serves a public route inside the accreditation boundary and is remapped over the primary hostname during incident response, so it belongs in the boundary documentation. The entry was added by TTAHUB-5245 and the inventory now cites it. Per the engineering process, boundary diagram changes require SSPO approval before they stand as authorization, so the reference is recorded but not yet ratified.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Obtain SSPO approval for the boundary diagram change at the next check-in, regenerate docs/boundary_diagram.svg from the updated source, then record the approval evidence here and close this disposition.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0003",
+      "componentName": "tta-automation.app.cloud.gov",
+      "componentClass": "route",
+      "finding": "A route exists for the automation application, which contradicts docs/boundary_diagram.md. The route is currently mapped to no application.",
+      "status": "deferred",
+      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. An existing route contradicts the approved boundary description even though it is currently unattached. Either the route should be deleted or the boundary documentation is inaccurate.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Delete the route. If it is required, correct docs/boundary_diagram.md and declare it in the inventory.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0004",
+      "componentName": "tta-smarthub-prod.app.cloud.gov",
+      "componentClass": "route",
+      "finding": "The route recorded as app_url in deployment_config/prod_vars.yml exists in the space but is mapped to no application. The application actually serves tta-smarthub-prod1.app.cloud.gov.",
+      "status": "deferred",
+      "justification": "The repository configuration names a hostname that no longer routes to the application, which means published configuration disagrees with the deployed state. The numeric suffix on the live route suggests a hostname collision at some point in the past that was worked around rather than resolved.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Delete the unmapped route and correct app_url in deployment_config/prod_vars.yml, or remap the intended hostname and retire the suffixed one.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0005",
+      "componentName": "nodejs-buildpack",
+      "componentClass": "platformRuntime",
+      "finding": "manifest.yml references the Node.js buildpack by git URL with no tag or commit, so the staged buildpack version can change without any repository change.",
+      "status": "deferred",
+      "justification": "The platform layer is not fully pinned. The inventory records the version cloud.gov reported for the current droplet, 1.9.4, but that value is an observation rather than a control. This is recorded as a known limitation in ADR 0029 rather than presented as a satisfied entry.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Pin the buildpack in manifest.yml to a released version, then set pinned to true on the inventory entry and close this disposition.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0006",
+      "componentName": "Smartsheet",
+      "componentClass": "externalIntegration",
+      "finding": "The application carries Smartsheet configuration and an access token variable, but Smartsheet does not appear in docs/boundary_diagram.md and no ADR covers it.",
+      "status": "deferred",
+      "justification": "SMARTSHEET_ENDPOINT is empty in production, so the integration appears inactive there, but the configuration and credential variable are present in the deployed environment. An external integration that is configured but undocumented is exactly the category the audit finding concerns, even when it is not currently exercised.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Confirm whether Smartsheet is still in use. If it is, add it to the boundary diagram and record its authorization. If it is not, remove the configuration and the credential variable from manifest.yml and deployment_config.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0007",
+      "componentName": "adam.levin",
+      "componentClass": "service",
+      "finding": "A cloud.gov service account named after an individual, with the space-deployer plan, exists in the production space and is not declared in the inventory.",
+      "status": "deferred",
+      "justification": "A space-deployer credential grants the ability to push applications and bind services in the production space. This one is named for a person rather than a system, is not referenced by any repository configuration, and is not bound to any application. It is the clearest example in the space of a component that the previous release evidence could not have surfaced.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-09-05",
+      "recommendation": "Confirm whether this credential is still required. If it is not, delete the service instance. If individual deployer credentials are an intentional practice, document that practice and declare the accounts in the inventory. This carries a shorter closure target than the other entries because it is a standing production credential.",
+      "approval": null
+    }
+  ]
+}
