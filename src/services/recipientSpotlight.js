@@ -487,7 +487,7 @@ export async function getRecipientSpotlightIndicators(
     ORDER BY "${safeSortBy}" ${safeDirection}${
       safeSortBy === 'indicatorCount' || safeSortBy === 'regionId' ? ', "recipientName" ASC' : ''
     }
-    ${hasGrantIds ? `LIMIT ${limit}` : ''}
+    ${hasGrantIds && Number.isInteger(limit) && limit > 0 ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
   `;
 

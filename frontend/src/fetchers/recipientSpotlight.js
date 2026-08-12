@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import join from 'url-join';
 import { get } from './index';
 
@@ -21,4 +20,20 @@ export const getRecipientSpotlight = async (
   const queryString = `?sortBy=${sortBy}&direction=${sortDir}&offset=${offset}${limitParam}${filters ? `&${filters}` : ''}${grantId ? `&grantId=${grantId}` : ''}${mustHaveIndicatorsParam}`;
   const spotlight = await get(`${recipientUrl}${queryString}`, signal);
   return spotlight.json();
+};
+
+export const getRecipientSpotlightCsv = async (
+  sortBy = 'recipientName',
+  sortDir = 'desc',
+  filters,
+  grantId = null,
+  mustHaveIndicators = true,
+  signal = null
+) => {
+  const mustHaveIndicatorsParam = mustHaveIndicators
+    ? `&mustHaveIndicators=${mustHaveIndicators}`
+    : '';
+  const queryString = `?sortBy=${sortBy}&direction=${sortDir}&offset=0${filters ? `&${filters}` : ''}${grantId ? `&grantId=${grantId}` : ''}${mustHaveIndicatorsParam}&format=csv`;
+  const spotlight = await get(`${recipientUrl}${queryString}`, signal);
+  return spotlight.blob();
 };

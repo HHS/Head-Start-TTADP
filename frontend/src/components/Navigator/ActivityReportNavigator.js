@@ -22,6 +22,7 @@ import {
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
+import { GOALS_OBJECTIVES_PATH } from './constants';
 import useNavigatorState from './useNavigatorState';
 
 const GOALS_AND_OBJECTIVES_POSITION = 2;
@@ -125,7 +126,7 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const isGoalsObjectivesPage = page?.path === 'goals-objectives';
+  const isGoalsObjectivesPage = page?.path === GOALS_OBJECTIVES_PATH;
   const recipients = watch('activityRecipients');
 
   const { grantIds } = useFormGrantData(recipients);

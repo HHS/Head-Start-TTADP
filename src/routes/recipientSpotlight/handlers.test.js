@@ -45,6 +45,9 @@ describe('recipientSpotlight handlers', () => {
         json: jest.fn(),
         sendStatus: jest.fn(),
         status: jest.fn().mockReturnThis(),
+        attachment: jest.fn().mockReturnThis(),
+        type: jest.fn().mockReturnThis(),
+        send: jest.fn(),
       };
 
       currentUserId.mockResolvedValue(mockUserId);
@@ -500,6 +503,169 @@ describe('recipientSpotlight handlers', () => {
         false
       );
       expect(res.json).toHaveBeenCalledWith(mockRecipientSpotlightData);
+    });
+  });
+
+  describe('getRecipientSpotLight CSV export', () => {
+    let req;
+    let res;
+    const mockUserId = 123;
+    const mockScopes = { grant: { someScope: 'value' } };
+
+    const csvRecipients = [
+      {
+        recipientId: 1,
+        regionId: 1,
+        recipientName: 'Recipient A',
+        grantIds: ['1'],
+        lastTTA: '2024-05-01',
+        childIncidents: true,
+        deficiency: false,
+        FEI: true,
+        newRecipients: false,
+        newStaff: true,
+        noTTA: false,
+        DRS: false,
+        underenrolled: true,
+        indicatorCount: 4,
+      },
+    ];
+
+    beforeEach(() => {
+      req = {
+        query: {
+          'region.in': '1',
+          sortBy: 'recipientName',
+          direction: 'asc',
+          parsedGrantId: null,
+          format: 'csv',
+        },
+      };
+
+      res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        attachment: jest.fn().mockReturnThis(),
+        type: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(mockUserId);
+      setReadRegions.mockImplementation((query) =>
+        Promise.resolve({
+          ...query,
+          'region.in': query['region.in'] || [1, 2, 3],
+        })
+      );
+      filtersToScopes.mockResolvedValue(mockScopes);
+      getRecipientSpotlightIndicators.mockResolvedValue({
+        recipients: csvRecipients,
+        count: 1,
+        overview: { numRecipients: '1', totalRecipients: '1', recipientPercentage: '100%' },
+      });
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('requests all rows (limit null, offset 0) for the export', async () => {
+      await getRecipientSpotLight(req, res);
+
+      expect(getRecipientSpotlightIndicators).toHaveBeenCalledWith(
+        mockScopes,
+        'recipientName',
+        'asc',
+        0, // offset
+        null, // limit (all rows)
+        ['1'],
+        [],
+        [],
+        null,
+        false
+      );
+    });
+
+    it('sends a CSV attachment and does not call res.json', async () => {
+      await getRecipientSpotLight(req, res);
+
+      expect(res.attachment).toHaveBeenCalledWith('recipient-spotlight.csv');
+      expect(res.type).toHaveBeenCalledWith('text/csv');
+      expect(res.send).toHaveBeenCalledTimes(1);
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('includes the expected header row and column values', async () => {
+      await getRecipientSpotLight(req, res);
+
+      const csv = res.send.mock.calls[0][0];
+      // BOM prefix for Excel compatibility
+      expect(csv.startsWith('\ufeff')).toBe(true);
+      const [headerLine, dataLine] = csv.replace('\ufeff', '').trim().split('\n');
+      expect(headerLine).toContain('Recipient name');
+      expect(headerLine).toContain('Region');
+      expect(headerLine).toContain('Last TTA');
+      expect(headerLine).toContain('Child incidents');
+      expect(headerLine).toContain('Deficiency');
+      expect(headerLine).toContain('FEI');
+      expect(headerLine).toContain('New recipient');
+      expect(headerLine).toContain('New staff');
+      expect(headerLine).toContain('No TTA');
+      expect(headerLine).toContain('Underenrolled');
+      // DRS must not be exported
+      expect(headerLine).not.toContain('DRS');
+
+      expect(dataLine).toContain('Recipient A');
+      expect(dataLine).toContain('05/01/2024');
+      // indicators rendered Yes/No
+      expect(dataLine).toContain('Yes');
+      expect(dataLine).toContain('No');
+    });
+
+    it('sanitizes recipient names that could be interpreted as formulas', async () => {
+      getRecipientSpotlightIndicators.mockResolvedValue({
+        recipients: [
+          {
+            ...csvRecipients[0],
+            recipientName: '=SUM(A1:A2)',
+          },
+        ],
+        count: 1,
+        overview: { numRecipients: '1', totalRecipients: '1', recipientPercentage: '100%' },
+      });
+
+      await getRecipientSpotLight(req, res);
+
+      const csv = res.send.mock.calls[0][0];
+      expect(csv).toContain("'=SUM(A1:A2)");
+    });
+
+    it('renders an empty Last TTA cell when there is no last TTA date', async () => {
+      getRecipientSpotlightIndicators.mockResolvedValue({
+        recipients: [
+          {
+            ...csvRecipients[0],
+            lastTTA: null,
+          },
+        ],
+        count: 1,
+        overview: { numRecipients: '1', totalRecipients: '1', recipientPercentage: '100%' },
+      });
+
+      await getRecipientSpotLight(req, res);
+
+      const csv = res.send.mock.calls[0][0];
+      expect(csv).not.toContain('05/01/2024');
+    });
+
+    it('returns 404 when no data is returned', async () => {
+      getRecipientSpotlightIndicators.mockResolvedValue(null);
+
+      await getRecipientSpotLight(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(404);
+      expect(res.send).not.toHaveBeenCalled();
     });
   });
 });

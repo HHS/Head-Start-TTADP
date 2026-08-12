@@ -24,6 +24,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
+  getObjectiveSupportTypeSubmissionError,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
@@ -73,6 +74,7 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReportAlerts: jest.fn(),
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
+  getObjectiveSupportTypeSubmissionError: jest.fn(),
   activityReportsForCleanup: jest.fn(),
   handleSoftDeleteReport: jest.fn(),
 }));
@@ -125,10 +127,10 @@ const mockResponse = {
   json: jest.fn(),
   send: jest.fn(),
   sendStatus: jest.fn(),
-  status: jest.fn(() => ({
-    end: jest.fn(),
-  })),
+  end: jest.fn(),
+  status: jest.fn(),
 };
+mockResponse.status.mockImplementation(() => mockResponse);
 
 const mockRequest = {
   session: {
@@ -1043,6 +1045,10 @@ describe('Activity Report handlers', () => {
       params: { activityReportId: 1 },
       body: { approverUserIds: [mockManager.id, secondMockManager.id], additionalNotes: 'notes' },
     };
+
+    beforeEach(() => {
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(null);
+    });
     it('calls correct functions and sends response', async () => {
       // Submit report for approval to firstMockManager
       // and secondMockManager
@@ -1114,6 +1120,41 @@ describe('Activity Report handlers', () => {
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('returns 403 for an unauthorized user even when an objective is missing a support type', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      userById.mockResolvedValue({ id: mockUser.id });
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(
+        'all objectives must have a support type'
+      );
+
+      await submitReport(request, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      // The support-type check must not run (or leak) before authorization fails.
+      expect(getObjectiveSupportTypeSubmissionError).not.toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalledWith(400);
+    });
+
+    it('returns 400 for an authorized user when an objective is missing a support type', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      userById.mockResolvedValue({ id: mockUser.id });
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(
+        'all objectives must have a support type'
+      );
+
+      await submitReport(request, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith('all objectives must have a support type');
+      expect(createOrUpdate).not.toHaveBeenCalled();
     });
 
     describe('createNotification', () => {

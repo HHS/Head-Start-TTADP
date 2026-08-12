@@ -3,6 +3,8 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import { respondWithServiceError } from '../../lib/serviceError';
+import { currentUserId } from '../../services/currentUser';
 import {
   getCuratedTemplates,
   getFieldPromptsForActivityReports,
@@ -51,7 +53,7 @@ export async function getGoalTemplateFilterStandards(req: Request, res: Response
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const { grantIds, includeClosedSuspendedGoals } = req.query;
+    const { grantIds, includeBlockingActivityReports, includeClosedSuspendedGoals } = req.query;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds]
@@ -59,9 +61,26 @@ export async function getGoalTemplates(req: Request, res: Response) {
       .map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const templates = await getCuratedTemplates(parsedGrantIds, !!includeClosedSuspendedGoals);
+    const shouldIncludeBlockingActivityReports = includeBlockingActivityReports === 'true';
+    const shouldIncludeClosedAndSuspendedGoals = includeClosedSuspendedGoals === 'true';
+    let userId: number | undefined;
+    if (shouldIncludeBlockingActivityReports) {
+      userId = await currentUserId(req, res);
+      if (!Number.isInteger(userId)) {
+        if (!res.headersSent) res.sendStatus(401);
+        return;
+      }
+    }
+    const templates = await getCuratedTemplates(parsedGrantIds, {
+      includeBlockingActivityReports: shouldIncludeBlockingActivityReports,
+      includeClosedAndSuspendedGoals: shouldIncludeClosedAndSuspendedGoals,
+      ...(shouldIncludeBlockingActivityReports ? { userId } : {}),
+    });
     res.json(templates);
   } catch (err) {
+    if (respondWithServiceError(res, err)) {
+      return;
+    }
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
   }
 }
@@ -70,17 +89,26 @@ export async function useStandardGoal(req: Request, res: Response) {
   try {
     const { grantId, goalTemplateId } = req.params;
     const { objectives, rootCauses, status } = req.body;
+    const userId = await currentUserId(req, res);
+    if (!Number.isInteger(userId)) {
+      if (!res.headersSent) res.sendStatus(401);
+      return;
+    }
 
     const standards = await newStandardGoal(
       Number(grantId),
       Number(goalTemplateId),
       objectives,
       rootCauses,
-      status || undefined // if status is not provided, it will default to NOT_STARTED
+      status || undefined, // if status is not provided, it will default to NOT_STARTED
+      { userId }
     );
 
     res.json(standards);
   } catch (err) {
+    if (respondWithServiceError(res, err)) {
+      return;
+    }
     await handleErrors(req, res, err, 'goalTemplates.useStandardGoal');
   }
 }
