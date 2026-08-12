@@ -124,13 +124,13 @@ const hsesUsers = [
   {
     name: 'Nicole tta',
     hsesUsername: 'test.tta.nicole',
-    hsesUserId: '58238',
+    hsesUserId: '58819',
     email: 'nicole.rodriguez@adhocteam.us',
   },
   {
     name: 'Marshall tta',
     hsesUsername: 'test.tta.marshall',
-    hsesUserId: '58238',
+    hsesUserId: '58820',
     email: 'marshall.haymond@adhocteam.us',
   },
   {
