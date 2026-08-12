@@ -4,6 +4,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const {
+  buildCmsApprovedCiVersions,
+  cmsApprovedCiVersionsCsv,
   componentIdentity,
   deriveRepositoryComponents,
   deriveSpaceComponents,
@@ -155,6 +157,136 @@ describe('selectDeclared', () => {
     expect(repository.length).toBeGreaterThan(0);
     expect(space.length).toBeGreaterThan(0);
     expect(repository.filter((id) => space.includes(id))).toEqual([]);
+  });
+});
+
+describe('buildCmsApprovedCiVersions', () => {
+  it('exports the approved version fields auditors need from the declared inventory', () => {
+    const exported = buildCmsApprovedCiVersions(inventory, {
+      inventoryPath: 'release/inventory.json',
+      inventorySha256: 'a'.repeat(64),
+      releaseTag: 'prod-abc1234',
+      releaseCommit: 'abc1234',
+      pipelineUrl: 'https://circleci.example/pipeline/1',
+      generatedAtUtc: '2026-08-12T00:00:00.000Z',
+    });
+
+    const database = exported.configurationItems.find((item) => item.id === 'service.database');
+    const manifest = exported.configurationItems.find(
+      (item) => item.id === 'configuration.manifest'
+    );
+
+    expect(exported.exportType).toBe('cmsApprovedCiVersions');
+    expect(exported.source).toEqual({
+      system: 'TTA Hub release inventory',
+      path: 'release/inventory.json',
+      sha256: 'a'.repeat(64),
+      authorizationModel: 'ADR 0029',
+    });
+    expect(exported.baseline).toEqual({
+      environment: 'prod',
+      releaseTag: 'prod-abc1234',
+      releaseCommit: 'abc1234',
+      pipelineUrl: 'https://circleci.example/pipeline/1',
+    });
+    expect(database).toEqual(
+      expect.objectContaining({
+        name: 'ttahub-prod',
+        class: 'service',
+        approvedVersion: 'ttahub-prod (small-psql-replica)',
+        owner: 'TTA Hub Engineering',
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        environment: 'prod',
+      })
+    );
+    expect(database.approvalReference).toEqual(
+      expect.objectContaining({ type: 'adr', reference: 'docs/adr/0006-database.md' })
+    );
+    expect(manifest.approvedVersion).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('renders a CSV export with the same required CMS fields', () => {
+    const exported = buildCmsApprovedCiVersions(
+      {
+        schemaVersion: 1,
+        space: { environment: 'prod' },
+        components: [
+          {
+            id: 'service.database',
+            class: 'service',
+            name: 'ttahub-((env))',
+            owner: 'TTA Hub Engineering',
+            tier: 'reconciled',
+            locator: {
+              type: 'cloudFoundryService',
+              value: 'ttahub-((env))',
+              servicePlan: 'small-psql-replica',
+            },
+            authorization: { type: 'adr', reference: 'docs/adr/0006-database.md' },
+          },
+        ],
+      },
+      {
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        generatedAtUtc: '2026-08-12T00:00:00.000Z',
+      }
+    );
+
+    expect(cmsApprovedCiVersionsCsv(exported)).toContain(
+      'service.database,ttahub-prod,service,reconciled,ttahub-prod (small-psql-replica),TTA Hub Engineering,adr,docs/adr/0006-database.md,,prod-abc1234,abc1234,prod'
+    );
+  });
+
+  it('refuses to generate the export when inventory validation fails', () => {
+    const workingDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'release-inventory-cms-'));
+    const invalidInventoryPath = path.join(workingDirectory, 'inventory.json');
+    const dispositionsPath = path.join(workingDirectory, 'inventoryDispositions.json');
+    const outPath = path.join(workingDirectory, 'cmsApprovedCiVersions.json');
+
+    try {
+      fs.writeFileSync(
+        invalidInventoryPath,
+        `${JSON.stringify({
+          schemaVersion: 1,
+          space: { org: 'o', name: 'n', environment: 'prod' },
+          components: [
+            {
+              id: 'app.rogue',
+              class: 'application',
+              name: 'rogue',
+              description: 'x',
+              owner: 'TTA Hub Engineering',
+              tier: 'reconciled',
+              locator: { type: 'cloudFoundryApp', value: 'rogue' },
+              authorization: { type: 'none', reference: 'none' },
+            },
+          ],
+        })}\n`,
+        'utf8'
+      );
+      fs.writeFileSync(
+        dispositionsPath,
+        `${JSON.stringify({ schemaVersion: 1, dispositions: [] })}\n`,
+        'utf8'
+      );
+
+      const exitCode = require('./releaseInventory').main([
+        'cms-export',
+        '--inventory',
+        invalidInventoryPath,
+        '--dispositions',
+        dispositionsPath,
+        '--out',
+        outPath,
+      ]);
+
+      expect(exitCode).toBe(1);
+      expect(fs.existsSync(outPath)).toBe(false);
+    } finally {
+      fs.rmSync(workingDirectory, { recursive: true, force: true });
+    }
   });
 });
 
