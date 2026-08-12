@@ -14,7 +14,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
-import { logger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReportApprover,
@@ -38,6 +38,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
+  getObjectiveSupportTypeSubmissionError,
   handleSoftDeleteReport,
   possibleRecipients,
   setStatus,
@@ -49,6 +50,7 @@ import {
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
+  createCreatorSubmittedNotification,
   createNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -710,6 +712,13 @@ export async function submitReport(req, res) {
       return;
     }
 
+    const supportTypeError = await getObjectiveSupportTypeSubmissionError(activityReportId);
+    if (supportTypeError) {
+      auditLogger.error(supportTypeError);
+      res.status(400).send(supportTypeError);
+      return;
+    }
+
     // Update Activity Report notes and submissionStatus
     const savedReport = await createOrUpdate(
       {
@@ -746,6 +755,11 @@ export async function submitReport(req, res) {
       report.activityReportCollaborators || [],
       savedReport
     );
+
+    // Notify creator when a collaborator (not the creator) submits the report
+    if (report.author && report.author.id !== userId) {
+      await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+    }
 
     // Notify collaborators that the report has been submitted for approval
     if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {

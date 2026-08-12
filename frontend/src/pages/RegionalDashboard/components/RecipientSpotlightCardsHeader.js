@@ -1,6 +1,7 @@
 import { Dropdown, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
+import ContextMenu from '../../../components/ContextMenu';
 import WidgetH2 from '../../../components/WidgetH2';
 import './RecipientSpotlightDashboardCards.scss';
 
@@ -21,20 +22,31 @@ export default function RecipientSpotlightCardsHeader({
   perPage,
   perPageChange,
   count,
+  onExportCsv,
 }) {
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
 
+  const menuItems = [
+    {
+      label: 'Export table',
+      onClick: onExportCsv,
+    },
+  ];
+
   return (
     <div className="padding-3">
       {/* Title Section */}
-      <div className="padding-bottom-2">
-        <WidgetH2 classNames="padding-0 margin-bottom-1">Priority indicators</WidgetH2>
-        <p className="usa-prose padding-0 margin-0">
-          These are the recipients that currently have at least one priority indicator.
-        </p>
+      <div className="display-flex flex-justify flex-align-start padding-bottom-2">
+        <div>
+          <WidgetH2 classNames="padding-0 margin-bottom-1">Priority indicators</WidgetH2>
+          <p className="usa-prose padding-0 margin-0">
+            These are the recipients that currently have at least one priority indicator.
+          </p>
+        </div>
+        <ContextMenu label="Open Actions for priority indicators" menuItems={menuItems} left />
       </div>
 
       {/* Sort and Per-Page Controls */}
@@ -99,4 +111,9 @@ RecipientSpotlightCardsHeader.propTypes = {
   perPage: PropTypes.number.isRequired,
   perPageChange: PropTypes.func.isRequired,
   count: PropTypes.number.isRequired,
+  onExportCsv: PropTypes.func,
+};
+
+RecipientSpotlightCardsHeader.defaultProps = {
+  onExportCsv: () => {},
 };

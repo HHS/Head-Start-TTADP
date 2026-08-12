@@ -124,6 +124,33 @@ CircleCI stores release evidence in both places:
 - CircleCI `release-artifacts`, including `release-manifest.json` and `build-checksums.txt`
 - the GitHub Release for the production release tag, with the same evidence files attached
 
+### Release inventory reconciliation
+
+`release/inventory.json` is the declared set of components a release is authorized to contain, established by [ADR 0029](../adr/0029-release-inventory-baseline-reconciliation.md). Release provenance records what was built; the inventory records what was approved, and reconciliation compares the two.
+
+Every branch build reconciles the declared inventory against repository state. Every production deploy additionally reconciles it against the live `ttahub-prod` space, comparing applications, bound services, routes, process types, the stack, and the staged buildpack. Results are written to `inventoryReconciliation.json`, summarized in the `inventory` section of `release-manifest.json`, and attached to the GitHub Release alongside the existing evidence.
+
+Both checks run in reporting mode. They record findings without failing the pipeline until the first clean production reconciliation is accepted as the starting baseline, at which point `--enforce` is added to the CI invocations.
+
+To reproduce the repository half of a past release from its tag:
+
+```sh
+yarn release:inventory:verify --tag prod-<commitShortSha>
+```
+
+That reads the declared inventory and the configuration files as they existed at the tag, so it returns the same result whenever it runs. The live space half cannot be replayed this way, because it compares against the space as it exists now rather than as it existed at release time. For historical proof, read the `inventoryReconciliation.json` attached to that release.
+
+To reconcile the current production space:
+
+```sh
+cf login -a https://api.fr.cloud.gov -o hhs-acf-ohs-tta -s ttahub-prod
+yarn release:inventory:verify:space
+```
+
+Reconciliation records component names, types, GUIDs, and service plans only. It never reads application environment or service keys, because the GitHub Release these records attach to is public.
+
+Components observed in the space but not declared, and declared components whose authorization reference is not yet resolvable, are tracked in `release/inventoryDispositions.json` using the `resolved`, `accepted`, and `deferred` vocabulary defined by [ADR 0027](../adr/0027-security-findings-register.md).
+
 If publishing the remote release tag or GitHub Release evidence fails after a successful production deploy, CircleCI sends an alert to `acf-head-start-alerts`. The production deploy is already complete in that case, so the release record should be remediated from the retained CircleCI `release-artifacts` by verifying the manifest's release tag and commit, creating or correcting the GitHub Release for that tag, and attaching the retained evidence files.
 
 ### Deploy changes directly to a test environment
