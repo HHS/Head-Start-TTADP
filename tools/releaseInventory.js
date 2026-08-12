@@ -15,6 +15,8 @@ const DEFAULT_INVENTORY_SCHEMA_PATH = 'release/inventorySchema.json';
 const DEFAULT_DISPOSITIONS_SCHEMA_PATH = 'release/inventoryDispositionsSchema.json';
 const DEFAULT_ARTIFACTS_DIR = 'release-artifacts';
 const DEFAULT_RECONCILIATION_PATH = `${DEFAULT_ARTIFACTS_DIR}/inventoryReconciliation.json`;
+const DEFAULT_CMS_EXPORT_PATH = `${DEFAULT_ARTIFACTS_DIR}/cmsApprovedCiVersions.json`;
+const DEFAULT_CMS_CSV_EXPORT_PATH = `${DEFAULT_ARTIFACTS_DIR}/cmsApprovedCiVersions.csv`;
 
 const REPOSITORY_LOCATOR_TYPES = new Set(['repositoryFile']);
 const SPACE_LOCATOR_TYPES = new Set([
@@ -632,6 +634,178 @@ function summarize(result) {
   };
 }
 
+function locatorVersion(component, environment) {
+  const locator = component.locator || {};
+  const value = locator.value ? substituteEnv(locator.value, environment) : null;
+
+  if (locator.type === 'repositoryFile') {
+    return component.sha256 || null;
+  }
+
+  if (locator.type === 'cloudFoundryService' && locator.servicePlan) {
+    return `${value} (${locator.servicePlan})`;
+  }
+
+  if (locator.type === 'cloudFoundryProcess') {
+    return `${value} (${locator.processInstances ?? 0} instances)`;
+  }
+
+  if (locator.type === 'cloudFoundryBuildpack') {
+    return locator.value;
+  }
+
+  return value;
+}
+
+function buildCmsApprovedCiVersions(inventory, options = {}) {
+  const environment = inventory.space.environment;
+  const generatedAtUtc = options.generatedAtUtc || new Date().toISOString();
+  const releaseTag = options.releaseTag || null;
+  const releaseCommit = options.releaseCommit || null;
+  const pipelineUrl = options.pipelineUrl || null;
+
+  return {
+    schemaVersion: 1,
+    exportType: 'cmsApprovedCiVersions',
+    generatedAtUtc,
+    source: {
+      system: 'TTA Hub release inventory',
+      path: options.inventoryPath || DEFAULT_INVENTORY_PATH,
+      sha256: options.inventorySha256 || null,
+      authorizationModel: 'ADR 0029',
+    },
+    baseline: {
+      environment,
+      releaseTag,
+      releaseCommit,
+      pipelineUrl,
+    },
+    configurationItems: inventory.components.map((component) => {
+      const approval = component.authorization.approval || null;
+
+      return {
+        id: component.id,
+        name: substituteEnv(component.name, environment),
+        class: component.class,
+        tier: component.tier,
+        approvedVersion: locatorVersion(component, environment),
+        owner: component.owner,
+        approvalReference: {
+          type: component.authorization.type,
+          reference: component.authorization.reference,
+          note: component.authorization.note || null,
+        },
+        approvalDate: approval?.approvalDate || null,
+        approval,
+        releaseTag,
+        releaseCommit,
+        environment,
+        locator: {
+          ...component.locator,
+          value: substituteEnv(component.locator.value, environment),
+        },
+        sha256: component.sha256 || null,
+        notes: component.notes || null,
+      };
+    }),
+  };
+}
+
+function csvCell(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  const stringValue = String(value);
+
+  if (/[",\n\r]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+
+  return stringValue;
+}
+
+function cmsApprovedCiVersionsCsv(exportData) {
+  const headers = [
+    'id',
+    'name',
+    'class',
+    'tier',
+    'approvedVersion',
+    'owner',
+    'approvalReferenceType',
+    'approvalReference',
+    'approvalDate',
+    'releaseTag',
+    'releaseCommit',
+    'environment',
+  ];
+  const rows = exportData.configurationItems.map((item) => [
+    item.id,
+    item.name,
+    item.class,
+    item.tier,
+    item.approvedVersion,
+    item.owner,
+    item.approvalReference.type,
+    item.approvalReference.reference,
+    item.approvalDate,
+    item.releaseTag,
+    item.releaseCommit,
+    item.environment,
+  ]);
+
+  return `${[headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')}\n`;
+}
+
+function commandCmsExport(options) {
+  const inventory = readJson(options.inventory);
+  const dispositions = readJson(options.dispositions);
+  const validationErrors = [
+    ...schemaErrors(readJson(DEFAULT_INVENTORY_SCHEMA_PATH), inventory, 'inventory.json'),
+    ...schemaErrors(
+      readJson(DEFAULT_DISPOSITIONS_SCHEMA_PATH),
+      dispositions,
+      'inventoryDispositions.json'
+    ),
+  ];
+
+  if (validationErrors.length === 0) {
+    validationErrors.push(...validateInventory(inventory, dispositions));
+  }
+
+  if (validationErrors.length > 0) {
+    validationErrors.forEach((error) => {
+      console.log(`  inventory error: ${error}`);
+    });
+    console.log('Approved CI version export was not generated from invalid inventory input.');
+
+    return 1;
+  }
+
+  const inventoryContent = fs.readFileSync(options.inventory);
+  const exportData = buildCmsApprovedCiVersions(inventory, {
+    inventoryPath: options.inventory,
+    inventorySha256: hashContent(inventoryContent),
+    releaseTag: options.releaseTag,
+    releaseCommit: options.releaseCommit,
+    pipelineUrl: options.pipelineUrl,
+  });
+
+  writeJson(options.out, exportData);
+  console.log(
+    `Wrote ${exportData.configurationItems.length} approved CI version records to ${options.out}`
+  );
+
+  if (options.csvOut) {
+    fs.mkdirSync(path.dirname(options.csvOut), { recursive: true });
+    fs.writeFileSync(options.csvOut, cmsApprovedCiVersionsCsv(exportData), 'utf8');
+    console.log(`Wrote approved CI version CSV export to ${options.csvOut}`);
+  }
+
+  return 0;
+}
+
 function commandGenerate(options) {
   const inventory = readJson(options.inventory);
   const environment = inventory.space.environment;
@@ -787,9 +961,13 @@ function main(argv) {
     options: {
       scope: { type: 'string', default: 'repository' },
       tag: { type: 'string' },
+      'release-tag': { type: 'string' },
+      'release-commit': { type: 'string' },
+      'pipeline-url': { type: 'string' },
       inventory: { type: 'string', default: DEFAULT_INVENTORY_PATH },
       dispositions: { type: 'string', default: DEFAULT_DISPOSITIONS_PATH },
       out: { type: 'string' },
+      'csv-out': { type: 'string' },
       enforce: { type: 'boolean', default: false },
     },
   });
@@ -797,11 +975,17 @@ function main(argv) {
   const command = positionals[0];
   const options = {
     ...values,
+    releaseTag: values['release-tag'],
+    releaseCommit: values['release-commit'],
+    pipelineUrl: values['pipeline-url'],
+    csvOut: values['csv-out'] || (command === 'cms-export' ? DEFAULT_CMS_CSV_EXPORT_PATH : null),
     out:
       values.out ||
-      (command === 'generate'
-        ? `${DEFAULT_ARTIFACTS_DIR}/observedInventory.json`
-        : DEFAULT_RECONCILIATION_PATH),
+      (command === 'cms-export'
+        ? DEFAULT_CMS_EXPORT_PATH
+        : command === 'generate'
+          ? `${DEFAULT_ARTIFACTS_DIR}/observedInventory.json`
+          : DEFAULT_RECONCILIATION_PATH),
   };
 
   if (command === 'generate') {
@@ -812,8 +996,12 @@ function main(argv) {
     return commandVerify(options);
   }
 
+  if (command === 'cms-export') {
+    return commandCmsExport(options);
+  }
+
   console.error(
-    'Usage: releaseInventory.js <generate|verify> [--scope repository|space|all] [--tag <releaseTag>] [--enforce]'
+    'Usage: releaseInventory.js <generate|verify|cms-export> [--scope repository|space|all] [--tag <releaseTag>] [--enforce]'
   );
 
   return 2;
@@ -829,6 +1017,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  buildCmsApprovedCiVersions,
+  cmsApprovedCiVersionsCsv,
   componentIdentity,
   deriveRepositoryComponents,
   deriveSpaceComponents,
