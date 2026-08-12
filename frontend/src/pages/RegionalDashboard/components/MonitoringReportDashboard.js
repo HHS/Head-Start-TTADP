@@ -16,11 +16,7 @@ import { formatMonitoringFiltersForQuery } from '../monitoringFilters';
 export default function MonitoringReportDashboard({ filtersToApply }) {
   const pageDrawerRef = useRef(null);
 
-  const detailsFilters = useMemo(
-    () => formatMonitoringFiltersForQuery(filtersToApply, { includeCompleteDate: true }),
-    [filtersToApply]
-  );
-  const relatedTtaFilters = useMemo(
+  const formattedFilters = useMemo(
     () => formatMonitoringFiltersForQuery(filtersToApply),
     [filtersToApply]
   );
@@ -43,7 +39,7 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
         <FeatureFlag flag="compliant_follow_up_reviews_tta_support">
           <CompliantFollowUpReviewsWithTtaSupport
             filters={filtersToApply}
-            detailsFilters={detailsFilters}
+            detailsFilters={formattedFilters}
           />
         </FeatureFlag>
       </Grid>
@@ -57,7 +53,7 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
         <FindingCategoryHotspot filters={filtersToApply} />
       </Grid>
       <Grid row>
-        <MonitoringRelatedTta filters={relatedTtaFilters} />
+        <MonitoringRelatedTta filters={formattedFilters} />
       </Grid>
     </>
   );

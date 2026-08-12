@@ -265,7 +265,7 @@ export function decodeQueryParam(param) {
 
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
-  return queries
+  const parsed = queries
     .map((q) => {
       const [topicAndCondition, query] = q.split('=');
       const [topic, searchCondition] = topicAndCondition.split('.');
@@ -298,6 +298,24 @@ export function queryStringToFilters(queryString) {
       return null;
     })
     .filter((query) => query);
+
+  // filtersToQueryString serializes array-query filters (is/is not) as one param per value.
+  // Merge params with the same topic+condition back into a single combined filter entry.
+  const merged = new Map();
+  parsed.forEach((filter) => {
+    if (!Array.isArray(filter.query)) {
+      merged.set(`${filter.topic}:${filter.condition}:${String(filter.query)}`, filter);
+      return;
+    }
+    const key = `${filter.topic}:${filter.condition}`;
+    const existing = merged.get(key);
+    if (existing) {
+      merged.set(key, { ...existing, query: [...existing.query, ...filter.query] });
+    } else {
+      merged.set(key, filter);
+    }
+  });
+  return [...merged.values()];
 }
 
 const FILTER_DATE_INPUT_FORMATS = [DATE_FMT, DATE_FORMAT];
