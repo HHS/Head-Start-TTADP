@@ -102,7 +102,7 @@ describe('MonitoringReportDashboard', () => {
     );
   });
 
-  it('passes detailsFilters with visible startDate and hidden completeDate filters in query format', () => {
+  it('passes detailsFilters with startDate only, stripping completeDate and reportDeliveryDate', () => {
     const incomingFilters = [
       {
         id: 'date-start',
@@ -134,12 +134,6 @@ describe('MonitoringReportDashboard', () => {
           {
             id: 'date-start',
             topic: 'startDate',
-            condition: 'is within',
-            query: '2026/07/01-2026/07/08',
-          },
-          {
-            id: 'date-start-completeDate',
-            topic: 'completeDate',
             condition: 'is within',
             query: '2026/07/01-2026/07/08',
           },
