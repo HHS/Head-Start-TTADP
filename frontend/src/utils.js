@@ -310,7 +310,10 @@ export function queryStringToFilters(queryString) {
     const key = `${filter.topic}:${filter.condition}`;
     const existing = merged.get(key);
     if (existing) {
-      merged.set(key, { ...existing, query: [...existing.query, ...filter.query] });
+      merged.set(key, {
+        ...existing,
+        query: [...new Set([...existing.query, ...filter.query.flat()])],
+      });
     } else {
       merged.set(key, filter);
     }

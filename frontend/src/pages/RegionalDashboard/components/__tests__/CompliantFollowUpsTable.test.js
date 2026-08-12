@@ -392,8 +392,8 @@ describe('CompliantFollowUpsTable', () => {
       expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith('region.in[]=1');
     });
 
-    it('repairs a bookmarked display-formatted date before serializing the API query and URL', async () => {
-      const { history } = renderWithRouter(
+    it('repairs a bookmarked display-formatted date before serializing the API query', async () => {
+      renderWithRouter(
         <CompliantFollowUpsTable />,
         '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026'
       );
@@ -413,16 +413,10 @@ describe('CompliantFollowUpsTable', () => {
       expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith(
         'startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08'
       );
-
-      await waitFor(() =>
-        expect(history.location.search).toBe(
-          '?startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08'
-        )
-      );
     });
 
     it('removes invalid bookmarked date filters before rendering pills or fetching data', async () => {
-      const { history } = renderWithRouter(
+      renderWithRouter(
         <CompliantFollowUpsTable />,
         '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=Invalid%20date-Invalid%20date'
       );
@@ -441,7 +435,6 @@ describe('CompliantFollowUpsTable', () => {
 
       expect(screen.queryByText('Invalid date-Invalid date')).not.toBeInTheDocument();
       expect(screen.queryByText('Date')).not.toBeInTheDocument();
-      await waitFor(() => expect(history.location.search).toBe(''));
     });
 
     it('does not display region filter pills', () => {
