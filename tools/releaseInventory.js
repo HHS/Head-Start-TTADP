@@ -719,7 +719,12 @@ function csvCell(value) {
     return '';
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value);
+
+  // Guard against spreadsheet formula injection when opened in Excel/Sheets.
+  if (/^[=+\-@]/.test(stringValue)) {
+    stringValue = `'${stringValue}`;
+  }
 
   if (/[",\n\r]/.test(stringValue)) {
     return `"${stringValue.replace(/"/g, '""')}"`;
