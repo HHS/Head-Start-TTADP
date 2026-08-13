@@ -696,7 +696,6 @@ function buildCmsApprovedCiVersions(inventory, options = {}) {
           note: component.authorization.note || null,
         },
         approvalDate: approval?.approvalDate || null,
-        approval,
         releaseTag,
         releaseCommit,
         environment,
