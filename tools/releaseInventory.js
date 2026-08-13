@@ -638,6 +638,10 @@ function locatorVersion(component, environment) {
   const locator = component.locator || {};
   const value = locator.value ? substituteEnv(locator.value, environment) : null;
 
+  if (locator.type === 'cmsDocument') {
+    return component.approvedVersion || value;
+  }
+
   if (locator.type === 'repositoryFile') {
     return component.sha256 || null;
   }
