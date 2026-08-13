@@ -84,7 +84,7 @@ const renderReview = (
   complete = true,
   onSave = jest.fn(),
   resetToDraft = jest.fn(),
-  approvers = [{ status: calculatedStatus, note: '', user: { fullName: 'name' } }],
+  approvers = [{ status: calculatedStatus, note: '', user: { id: 1, fullName: 'name' } }],
   user = defaultUser,
   creatorRole = 'Reporter',
   hasIncompleteGoalPrompts = false,
@@ -577,7 +577,7 @@ describe('Submitter review page', () => {
         {
           status: REPORT_STATUSES.NEEDS_ACTION,
           note: 'Report needs action.',
-          user: { fullName: 'Needs Action 1' },
+          user: { id: 1, fullName: 'Needs Action 1' },
         },
         {
           status: REPORT_STATUSES.APPROVED,
@@ -665,6 +665,34 @@ describe('Submitter review page', () => {
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
 
+    it('prevents submission when all approvers are removed', async () => {
+      const approvers = [
+        {
+          status: REPORT_STATUSES.NEEDS_ACTION,
+          note: 'Report needs action.',
+          user: { id: 1, fullName: 'Needs Action 1' },
+        },
+      ];
+      const mockSubmit = jest.fn();
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        true,
+        () => {},
+        () => {},
+        approvers
+      );
+
+      const approverSelect = await screen.findByLabelText(/add additional approvers/i);
+      await selectEvent.clearFirst(approverSelect);
+
+      const button = await screen.findByRole('button', { name: /update report/i });
+      userEvent.click(button);
+
+      expect(await screen.findByText('Select at least one')).toBeVisible();
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
+
     it('creator role auto populates on needs_action', async () => {
       const mockSubmit = jest.fn();
       renderReview(
@@ -673,7 +701,7 @@ describe('Submitter review page', () => {
         true,
         () => {},
         () => {},
-        [],
+        [{ status: REPORT_STATUSES.NEEDS_ACTION, note: '', user: { id: 1, fullName: 'COR' } }],
         { ...defaultUser, roles: [{ fullName: 'COR' }] }
       );
 
@@ -691,7 +719,7 @@ describe('Submitter review page', () => {
         true,
         () => {},
         () => {},
-        [],
+        [{ status: REPORT_STATUSES.NEEDS_ACTION, note: '', user: { id: 1, fullName: 'name' } }],
         {
           ...defaultUser,
           roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }],
@@ -731,7 +759,7 @@ describe('Submitter review page', () => {
         true,
         () => {},
         () => {},
-        [],
+        [{ status: REPORT_STATUSES.NEEDS_ACTION, note: '', user: { id: 1, fullName: 'name' } }],
         { ...defaultUser }
       );
 

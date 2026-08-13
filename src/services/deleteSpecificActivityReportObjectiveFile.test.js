@@ -18,12 +18,13 @@ import { deleteSpecificActivityReportObjectiveFile } from './files';
 
 jest.mock('bull');
 
+const mockUserUniqueId = faker.random.alphaNumeric(12);
 const mockUser = {
-  id: faker.datatype.number(),
+  id: faker.datatype.number({ min: 10000000 }),
   homeRegionId: 1,
-  name: 'user1134265161',
-  hsesUsername: 'user1134265161',
-  hsesUserId: 'user1134265161',
+  name: `user${mockUserUniqueId}`,
+  hsesUsername: `user${mockUserUniqueId}`,
+  hsesUserId: `user${mockUserUniqueId}`,
   lastLogin: new Date(),
 };
 
@@ -172,69 +173,83 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
 
   afterAll(async () => {
     // Delete ARO File.
-    await ActivityReportObjectiveFile.destroy({
-      where: {
-        fileId: file.id,
-      },
-    });
+    if (file) {
+      await ActivityReportObjectiveFile.destroy({
+        where: {
+          fileId: file.id,
+        },
+      });
+    }
 
     // Delete ARO.
-    await ActivityReportObjective.destroy({
-      where: {
-        activityReportId: [activityReport1.id, activityReport2.id],
-      },
-    });
+    if (activityReport1 && activityReport2) {
+      await ActivityReportObjective.destroy({
+        where: {
+          activityReportId: [activityReport1.id, activityReport2.id],
+        },
+      });
 
-    // Delete ARG.
-    await ActivityReportGoal.destroy({
-      where: {
-        activityReportId: [activityReport1.id, activityReport2.id],
-      },
-    });
+      // Delete ARG.
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [activityReport1.id, activityReport2.id],
+        },
+      });
 
-    // Delete Recipient AR.
-    await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
+      // Delete Recipient AR.
+      await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
+    }
 
     // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goal.id }, force: true });
+    if (goal) {
+      await Objective.destroy({ where: { goalId: goal.id }, force: true });
 
-    // Delete Goal.
-    await Goal.destroy({
-      where: {
-        id: goal.id,
-      },
-      force: true,
-    });
+      // Delete Goal.
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+        force: true,
+      });
+    }
 
     // Delete Grant.
-    await Grant.destroy({
-      where: {
-        id: grant.id,
-      },
-      individualHooks: true,
-    });
+    if (grant) {
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+        individualHooks: true,
+      });
+    }
 
     // Delete Recipient.
-    await Recipient.destroy({
-      where: {
-        id: recipient.id,
-      },
-    });
+    if (recipient) {
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+    }
 
     // Delete file.
-    await File.destroy({
-      where: {
-        id: file.id,
-      },
-      individualHooks: true,
-    });
+    if (file) {
+      await File.destroy({
+        where: {
+          id: file.id,
+        },
+        individualHooks: true,
+      });
+    }
 
     // Delete User.
-    await User.destroy({
-      where: {
-        id: user.id,
-      },
-    });
+    if (user) {
+      await User.destroy({
+        where: {
+          id: user.id,
+        },
+      });
+    }
 
     // Close Conn.
     await db.sequelize.close();

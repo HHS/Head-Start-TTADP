@@ -39,7 +39,7 @@ export default function useSessionSort(defaultSortConfig, key) {
             activePage: parseInt(activePage, DECIMAL_BASE),
           };
         }
-      } catch (error) {
+      } catch (_error) {
         return false;
       }
     }

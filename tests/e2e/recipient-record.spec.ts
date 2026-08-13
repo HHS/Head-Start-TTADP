@@ -13,7 +13,7 @@ test.describe('Recipient record', () => {
     // remove a filter
     await page
       .getByRole('button', {
-        name: /This button removes the filter: Date started \(ar\) is within/i,
+        name: /This button removes the filter: Date started is within/i,
       })
       .click();
 
@@ -101,7 +101,7 @@ test.describe('Recipient record', () => {
     // expect error
     await expect(
       page.getByText(
-        /The goal status cannot be changed until all In progress objectives are complete/i
+        /The goal status cannot be changed because this goal has In progress objectives. Update the objective status to complete them./i
       )
     ).toBeVisible();
     await goal.getByTestId('expander-button').click();

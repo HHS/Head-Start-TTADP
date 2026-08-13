@@ -1,0 +1,135 @@
+{
+  "baselineDate": "2026-06-17",
+  "generatedAt": "2026-06-17T21:07:04.566Z",
+  "scope": "frontend",
+  "scanner": {
+    "name": "yarn-audit",
+    "sourceFile": "frontend/yarn-audit-known-issues"
+  },
+  "findings": [
+    {
+      "id": "SCA-FRONTEND-GHSA-fq5x-7292-2p5r-react-draft-wysiwyg-1.15.0",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-fq5x-7292-2p5r",
+      "module": "react-draft-wysiwyg",
+      "affectedVersion": "1.15.0",
+      "title": "React Draft Wysiwyg Cross-Site Scripting (XSS) via the Embedded Button",
+      "sourceSeverity": "low",
+      "severity": "low",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1103748,
+      "advisoryUrl": "https://github.com/advisories/GHSA-fq5x-7292-2p5r",
+      "vulnerableVersions": "<=1.15.0",
+      "patchedVersions": "<0.0.0",
+      "recommendation": "None",
+      "cves": ["CVE-2025-3191"],
+      "cwe": ["CWE-79"],
+      "cvss": {
+        "score": 6.1,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+      },
+      "paths": ["react-draft-wysiwyg"]
+    },
+    {
+      "id": "SCA-FRONTEND-GHSA-v2v4-37r5-5v8g-ip-address-9.0.5",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-v2v4-37r5-5v8g",
+      "module": "ip-address",
+      "affectedVersion": "9.0.5",
+      "title": "ip-address has XSS in Address6 HTML-emitting methods",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1117683,
+      "advisoryUrl": "https://github.com/advisories/GHSA-v2v4-37r5-5v8g",
+      "vulnerableVersions": "<=10.1.0",
+      "patchedVersions": ">=10.1.1",
+      "recommendation": "Upgrade to version 10.1.1 or later",
+      "cves": ["CVE-2026-42338"],
+      "cwe": ["CWE-79"],
+      "cvss": {
+        "score": 0,
+        "vectorString": null
+      },
+      "paths": [
+        "@mesh-kit/core>sqlite3>node-gyp>make-fetch-happen>socks-proxy-agent>socks>ip-address"
+      ]
+    },
+    {
+      "id": "SCA-FRONTEND-GHSA-vpq2-c234-7xj6--tootallnate-once-1.1.2",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-vpq2-c234-7xj6",
+      "module": "@tootallnate/once",
+      "affectedVersion": "1.1.2",
+      "title": "@tootallnate/once vulnerable to Incorrect Control Flow Scoping",
+      "sourceSeverity": "low",
+      "severity": "low",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1113977,
+      "advisoryUrl": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+      "vulnerableVersions": "<3.0.1",
+      "patchedVersions": ">=3.0.1",
+      "recommendation": "Upgrade to version 3.0.1 or later",
+      "cves": ["CVE-2026-3449"],
+      "cwe": ["CWE-705"],
+      "cvss": {
+        "score": 3.3,
+        "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+      },
+      "paths": [
+        "@mesh-kit/core>sqlite3>node-gyp>make-fetch-happen>http-proxy-agent>@tootallnate/once"
+      ]
+    },
+    {
+      "id": "SCA-FRONTEND-GHSA-w5hq-g745-h8pq-uuid-11.1.0",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "module": "uuid",
+      "affectedVersion": "11.1.0",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1117637,
+      "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "vulnerableVersions": ">=11.0.0 <11.1.1",
+      "patchedVersions": ">=11.1.1",
+      "recommendation": "Upgrade to version 11.1.1 or later",
+      "cves": ["CVE-2026-41907"],
+      "cwe": ["CWE-787", "CWE-1285"],
+      "cvss": {
+        "score": 0,
+        "vectorString": null
+      },
+      "paths": ["@mesh-kit/core>uuid"]
+    },
+    {
+      "id": "SCA-FRONTEND-GHSA-wf6x-7x77-mvgw-immutable-3.7.6",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-wf6x-7x77-mvgw",
+      "module": "immutable",
+      "affectedVersion": "3.7.6",
+      "title": "Immutable is vulnerable to Prototype Pollution",
+      "sourceSeverity": "high",
+      "severity": "high",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1117066,
+      "advisoryUrl": "https://github.com/advisories/GHSA-wf6x-7x77-mvgw",
+      "vulnerableVersions": "<3.8.3",
+      "patchedVersions": ">=3.8.3",
+      "recommendation": "Upgrade to version 3.8.3 or later",
+      "cves": ["CVE-2026-29063"],
+      "cwe": ["CWE-1321"],
+      "cvss": {
+        "score": 9.8,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+      },
+      "paths": ["draft-js>immutable"]
+    }
+  ]
+}

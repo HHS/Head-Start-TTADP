@@ -1,21 +1,13 @@
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router';
 import AppLoadingContext from '../../AppLoadingContext';
 import { ROUTES } from '../../Constants';
-import {
-  GOAL_FORM_BUTTON_LABELS,
-  GOAL_FORM_BUTTON_TYPES,
-  GOAL_FORM_BUTTON_VARIANTS,
-} from '../../components/SharedGoalComponents/constants';
-import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
 import { HTTPError } from '../../fetchers';
-import { addStandardGoal, getStandardGoal } from '../../fetchers/standardGoals';
+import { getStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
-import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
+import RestartStandardGoalForm from './RestartStandardGoalForm';
 
 export default function RestartStandardGoal({ recipient }) {
   const { goalTemplateId, regionId, grantId } = useParams();
@@ -28,13 +20,6 @@ export default function RestartStandardGoal({ recipient }) {
 
   const [goal, setGoal] = useState(null);
   const fetchAttempted = useRef(false);
-
-  const hookForm = useForm({
-    defaultValues: {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [],
-      [GOAL_FORM_FIELDS.ROOT_CAUSES]: null,
-    },
-  });
 
   const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
@@ -49,14 +34,6 @@ export default function RestartStandardGoal({ recipient }) {
           throw new HTTPError('Goal not found', 404);
         }
         setGoal(g);
-
-        // We want the user to start fresh with objectives and root causes.
-        const resetFormData = {
-          // eslint-disable-next-line max-len
-          [GOAL_FORM_FIELDS.OBJECTIVES]: [],
-        };
-
-        hookForm.reset(resetFormData);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
@@ -78,62 +55,21 @@ export default function RestartStandardGoal({ recipient }) {
       fetchAttempted.current = true;
       fetchStandardGoal();
     }
-  }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, hookForm, setIsAppLoading]);
-
-  const standardGoalFormButtons = useMemo(
-    () => [
-      {
-        id: uniqueId('goal-form-button-'),
-        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-        label: GOAL_FORM_BUTTON_LABELS.RESTART,
-      },
-      {
-        id: uniqueId('goal-form-button-'),
-        type: GOAL_FORM_BUTTON_TYPES.LINK,
-        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-        to: backLinkTo,
-      },
-    ],
-    [backLinkTo]
-  );
-
-  const onSubmit = async (data) => {
-    try {
-      setIsAppLoading(true);
-
-      // submit to backend
-      await addStandardGoal({
-        goalTemplateId,
-        grantId,
-        status: GOAL_STATUS.IN_PROGRESS,
-        ...mapObjectivesAndRootCauses(data),
-      });
-
-      history.push(backLinkTo);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
+  }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, setIsAppLoading]);
 
   if (!goal) {
     return null;
   }
 
   return (
-    <GoalFormUpdateOrRestart
-      hookForm={hookForm}
-      onSubmit={onSubmit}
-      recipient={recipient}
-      regionId={regionId}
+    <RestartStandardGoalForm
       goal={goal}
       goalTemplatePrompts={goalTemplatePrompts}
-      standardGoalFormButtons={standardGoalFormButtons}
-      isRestart
+      recipient={recipient}
+      regionId={regionId}
+      goalTemplateId={goalTemplateId}
+      grantId={grantId}
+      backLinkTo={backLinkTo}
     />
   );
 }

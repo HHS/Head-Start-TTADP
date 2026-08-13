@@ -30,8 +30,8 @@ describe('HeaderUserMenu', () => {
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
           <HeaderUserMenu
-            areThereUnreadNotifications={false}
-            setAreThereUnreadNotifications={jest.fn()}
+            areThereUnreadWhatsNewNotifications={false}
+            setAreThereUnreadWhatsNewNotifications={jest.fn()}
           />
         </UserContext.Provider>
       </Router>
@@ -115,6 +115,24 @@ describe('HeaderUserMenu', () => {
         expect(logoutLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
         expect(logoutLink).not.toHaveAttribute('data-router-link');
       });
+    });
+  });
+
+  describe('feature flag menu items', () => {
+    it('hides the Notifications link when the user does not have the actionable_notifications flag', async () => {
+      await openMenu(hydratedUser);
+      expect(screen.queryByRole('link', { name: /notifications/i })).toBeNull();
+    });
+
+    it('shows the Notifications link when the user has the actionable_notifications flag', async () => {
+      const flaggedUser = { ...hydratedUser, flags: ['actionable_notifications'] };
+      await openMenu(flaggedUser);
+      expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+    });
+
+    it('shows the Notifications link to an admin user', async () => {
+      await openMenu(adminUser);
+      expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
     });
   });
 

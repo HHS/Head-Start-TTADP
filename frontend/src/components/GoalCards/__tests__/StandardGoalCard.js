@@ -956,7 +956,126 @@ describe('StandardGoalCard', () => {
 
     expect(
       await screen.findByText(
-        /The goal status cannot be changed until all In progress objectives are complete. Update the objective status./i
+        /The goal status cannot be changed because this goal has In progress objectives. Update the objective status to complete them./i
+      )
+    ).toBeVisible();
+  });
+
+  it('prevents closing when the goal is on an active activity report', async () => {
+    renderStandardGoalCard(
+      {},
+      {
+        ...goal,
+        hasActiveActivityReports: true,
+      }
+    );
+    const changeStatusBtn = await screen.findByRole('button', {
+      name: /Change status for goal 1/i,
+    });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    const closed = await screen.findByRole('button', { name: /closed/i });
+    act(() => {
+      userEvent.click(closed);
+    });
+
+    expect(
+      await screen.findByText(
+        /The goal status cannot be changed because this goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Why are you closing this goal?/i)).not.toBeInTheDocument();
+  });
+
+  it('shows active report blockers returned after a stale page status change', async () => {
+    fetchMock.put('/api/goals/changeStatus', {
+      status: 409,
+      body: {
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      },
+    });
+    renderStandardGoalCard();
+    const changeStatusBtn = await screen.findByRole('button', {
+      name: /Change status for goal 1/i,
+    });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    const closed = await screen.findByRole('button', { name: /closed/i });
+    act(() => {
+      userEvent.click(closed);
+    });
+
+    await screen.findByText(/Why are you closing this goal?/i);
+    const regionalOfficeRequest = document.querySelector(
+      'input[id^="closing-reason-"][value="Regional Office request"]'
+    );
+    const submit = await screen.findByRole('button', { name: /Change goal status/i });
+
+    expect(regionalOfficeRequest).toBeInTheDocument();
+    act(() => {
+      userEvent.click(regionalOfficeRequest);
+    });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    expect(
+      await screen.findByText(
+        /The goal status cannot be changed because this goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows all reasons that prevent a goal status change', async () => {
+    renderStandardGoalCard(
+      {},
+      {
+        ...goal,
+        hasActiveActivityReports: true,
+        objectives: [
+          {
+            ...goal.objectives[0],
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+          },
+        ],
+      }
+    );
+    const changeStatusBtn = await screen.findByRole('button', {
+      name: /Change status for goal 1/i,
+    });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    const closed = await screen.findByRole('button', { name: /closed/i });
+    act(() => {
+      userEvent.click(closed);
+    });
+
+    const blockingReasonsHeading = await screen.findByText(
+      /The goal status cannot be changed for the following reasons:/i
+    );
+    expect(blockingReasonsHeading).toBeVisible();
+    const statusChangeAlert = blockingReasonsHeading.closest('[role="alert"]');
+    expect(statusChangeAlert).toBeVisible();
+    expect(statusChangeAlert).toHaveAttribute('data-testid', 'alert');
+    expect(statusChangeAlert.querySelector('ul')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /This goal is on an activity report that is in a draft status, awaiting approval, or needs action./i
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        /This goal has In progress objectives. Update the objective status to complete them./i
       )
     ).toBeVisible();
   });

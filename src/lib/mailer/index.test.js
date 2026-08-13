@@ -1,4 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
+import Email from 'email-templates';
 import { createTransport } from 'nodemailer';
 import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
 import { auditLogger, logger } from '../../logger';
@@ -17,6 +18,9 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorDigest,
+  collaboratorReportSubmittedForReviewDigest,
+  collaboratorReportSubmittedForReviewNotification,
+  DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
   notificationQueue as notificationDigestQueueMock,
@@ -24,11 +28,13 @@ import {
   notifyApproverAssigned,
   notifyChangesRequested,
   notifyCollaboratorAssigned,
+  notifyCollaboratorReportSubmittedForReview,
   notifyDigest,
   notifyRecipientReportApproved,
   notifyReportApproved,
   onCompletedNotification,
   onFailedNotification,
+  processNotificationQueue,
   programSpecialistRecipientReportApprovedNotification,
   recipientApprovedDigest,
   reportApprovedNotification,
@@ -368,47 +374,86 @@ describe('mailer tests', () => {
   });
 
   describe('Changes requested by manager', () => {
-    it('Tests that an email is sent', async () => {
+    it('Tests that separate emails are sent to author/collaborators and approvers', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const email = await notifyChangesRequested(
+      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
         {
           data: {
             report: mockReport,
             approver: mockApprover,
             authorWithSetting: mockReport.author,
             collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+            approversWithSettings: [mockApprover],
           },
         },
         jsonTransport
       );
-      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
-      expect(email.envelope.to).toStrictEqual([
+
+      // Author and collaborators get the "make changes and resubmit" template.
+      expect(authorCollabEmail.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(authorCollabEmail.envelope.to).toStrictEqual([
         mockAuthor.email,
         mockCollaborator1.user.email,
         mockCollaborator2.user.email,
       ]);
-      const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Changes requested`);
-      expect(message.text).toContain(
+      const authorCollabMessage = JSON.parse(authorCollabEmail.message);
+      expect(authorCollabMessage.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Changes requested`
+      );
+      expect(authorCollabMessage.text).toContain(
         `${mockManager.name} requested changes to report ${mockReport.displayId}.`
       );
-      expect(message.text).toContain(mockApprover.note);
-      expect(message.text).toContain(reportPath);
+      expect(authorCollabMessage.text).toContain('Make changes and resubmit this report');
+      expect(authorCollabMessage.text).toContain(mockApprover.note);
+      expect(authorCollabMessage.text).toContain(reportPath);
+
+      // Approvers get the separate "approve this report" template.
+      expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
+      const approverMessage = JSON.parse(approverEmail.message);
+      expect(approverMessage.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Changes requested by ${mockManager.name}`
+      );
+      expect(approverMessage.text).toContain(
+        `${mockManager.name} requested changes to report ${mockReport.displayId}.`
+      );
+      expect(approverMessage.text).toContain('Approve this report');
+      expect(approverMessage.text).toContain(mockApprover.note);
+      expect(approverMessage.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const email = await notifyChangesRequested(
+      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
         {
           data: {
             report: mockReport,
             approver: mockApprover,
             authorWithSetting: null,
             collabsWithSettings: [],
+            approversWithSettings: [],
           },
         },
         jsonTransport
       );
-      expect(email).toBe(null);
+      expect(authorCollabEmail).toBe(null);
+      expect(approverEmail).toBe(null);
+    });
+    it('Tests that an email is sent to approvers if no author or collaborators are recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
+        {
+          data: {
+            report: mockReport,
+            approver: mockApprover,
+            authorWithSetting: null,
+            collabsWithSettings: [],
+            approversWithSettings: [mockApprover],
+          },
+        },
+        jsonTransport
+      );
+
+      expect(authorCollabEmail).toBe(null);
+      expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
@@ -537,9 +582,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Submitted for review`);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
       expect(message.text).toContain(
-        `Activity Report ${mockReport.displayId} was submitted for your review.`
+        `Activity Report ${mockReport.displayId} has been submitted for your approval.`
       );
       expect(message.text).toContain(reportPath);
     });
@@ -582,7 +629,7 @@ describe('mailer tests', () => {
         `Activity Report ${mockReport.displayId}: Added as collaborator`
       );
       expect(message.text).toContain(
-        `You've been added as a collaborator on Activity Report ${mockReport.displayId}.`
+        `You have been added as a collaborator on Activity Report ${mockReport.displayId}.`
       );
       expect(message.text).toContain(reportPath);
     });
@@ -606,6 +653,68 @@ describe('mailer tests', () => {
         jsonTransport
       );
       expect(email).toBeNull();
+    });
+  });
+
+  describe('Collaborator: Report submitted for approval', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId}, on which you are a collaborator, has been submitted for approval.`
+      );
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('Returns null if there are no toEmails', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: { email: null } },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('enqueues one job per collaborator', () => {
+      jest.spyOn(notificationQueueMock, 'add');
+      const collaborators = [
+        { user: { email: 'collab1@test.gov' }, userId: 10 },
+        { user: { email: 'collab2@test.gov' }, userId: 11 },
+      ];
+      collaboratorReportSubmittedForReviewNotification(mockReport, collaborators);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[0].user })
+      );
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[1].user })
+      );
     });
   });
 
@@ -999,10 +1108,10 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub daily digest: reports for review');
+      expect(message.subject).toBe('TTA Hub daily digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for today.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1021,10 +1130,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub weekly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub weekly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1043,10 +1152,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1065,9 +1174,9 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
-      expect(message.text).toContain('No reports were submitted for your review this month.');
+      expect(message.text).toContain('No reports were submitted for your approval this month.');
       expect(message.text).not.toContain(reportPath);
     });
   });
@@ -1270,6 +1379,133 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('internal helper coverage', () => {
+    describe('sendIfEnabled', () => {
+      it('returns null without calling the email sender when notifications are disabled', async () => {
+        process.env.SEND_NOTIFICATIONS = 'false';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: mockReport.author,
+              collabsWithSettings: [mockCollaborator1],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(email).toBeNull();
+        expect(sendSpy).not.toHaveBeenCalled();
+        sendSpy.mockRestore();
+      });
+
+      it('returns null when all recipients are filtered out', async () => {
+        process.env.SEND_NOTIFICATIONS = 'true';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: null,
+              collabsWithSettings: [{ user: { email: `no-send_${mockCollaborator1.user.email}` } }],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(email).toBeNull();
+        expect(sendSpy).not.toHaveBeenCalled();
+        sendSpy.mockRestore();
+      });
+
+      it('calls through to email.send when notifications are enabled and recipients are valid', async () => {
+        process.env.SEND_NOTIFICATIONS = 'true';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: mockReport.author,
+              collabsWithSettings: [mockCollaborator1],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+        expect(email.envelope.to).toStrictEqual([mockAuthor.email, mockCollaborator1.user.email]);
+        sendSpy.mockRestore();
+      });
+    });
+
+    describe('DIGEST_CONFIG', () => {
+      it('exports an object with 5 digest configuration entries keyed by actionType', () => {
+        const entries = Object.values(DIGEST_CONFIG);
+        expect(entries).toHaveLength(5);
+        entries.forEach((config) => {
+          expect(config).toHaveProperty('settingKey');
+          expect(config).toHaveProperty('reportFetcher');
+          expect(config).toHaveProperty('actionType');
+        });
+      });
+
+      it('registers a processor for every digest config entry plus the recipient digest', () => {
+        notificationQueueMock.on = jest.fn();
+        notificationQueueMock.getMaxListeners = jest.fn().mockReturnValue(0);
+        notificationQueueMock.setMaxListeners = jest.fn();
+        notificationQueueMock.process = jest.fn();
+
+        processNotificationQueue();
+
+        const registeredActions = notificationQueueMock.process.mock.calls.map(
+          ([action]) => action
+        );
+        const expectedDigestActions = [
+          ...Object.keys(DIGEST_CONFIG),
+          EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+        ];
+
+        expectedDigestActions.forEach((action) => {
+          expect(registeredActions).toContain(action);
+        });
+      });
+    });
+
+    describe('enqueueNotification', () => {
+      afterEach(() => {
+        notificationQueueMock.add.mockClear();
+        auditLogger.error.mockClear();
+      });
+
+      it('adds approved notifications to the queue with the correct action', () => {
+        reportApprovedNotification(mockReport, mockReport.author, [mockCollaborator1]);
+
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.APPROVED,
+          expect.objectContaining({
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1],
+          })
+        );
+      });
+
+      it('logs queue add errors without throwing', () => {
+        notificationQueueMock.add.mockImplementationOnce(() => {
+          throw new Error('queue exploded');
+        });
+
+        expect(() => reportApprovedNotification(mockReport, null, [])).not.toThrow();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+        expect(auditLogger.error.mock.calls[0][0].message).toContain('queue exploded');
+      });
+    });
+  });
+
   describe('enqueue', () => {
     beforeEach(async () => {
       await User.create(digestMockCollab, { validate: false }, { individualHooks: false });
@@ -1361,8 +1597,17 @@ describe('mailer tests', () => {
     it('"changes requested" on the notificationQueue', async () => {
       const report = await ActivityReport.create(reportObject);
 
-      changesRequestedNotification(report, mockApprover, null, []);
-      expect(notificationQueueMock.add).toHaveBeenCalled();
+      changesRequestedNotification(report, mockApprover, null, [], [mockApprover]);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.NEEDS_ACTION,
+        expect.objectContaining({
+          report,
+          approver: mockApprover,
+          authorWithSetting: null,
+          collabsWithSettings: [],
+          approversWithSettings: [mockApprover],
+        })
+      );
     });
 
     it('"changes requested" which logs on error', async () => {
@@ -1479,6 +1724,34 @@ describe('mailer tests', () => {
 
     it('"approved" digest which logs on bad date', async () => {
       await expect(approvedDigest('')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
+      const result = await collaboratorReportSubmittedForReviewDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"collaborator report submitted for review" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something went wrong')));
+      await expect(collaboratorReportSubmittedForReviewDigest('this month')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest which logs on bad date', async () => {
+      await expect(collaboratorReportSubmittedForReviewDigest('')).rejects.toThrow();
     });
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {

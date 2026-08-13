@@ -35,7 +35,16 @@ function SessionCard({
 }) {
   const modalRef = useRef();
   const { goalTemplates, trainers } = session;
-  const { sessionName, startDate, endDate, objective, objectiveSupportType, status } = session.data;
+
+  const {
+    sessionName,
+    startDate,
+    endDate,
+    objective,
+    objectiveSupportType,
+    status,
+    otherTrainers,
+  } = session.data;
 
   const getSessionDisplayStatusText = () => {
     switch (status) {
@@ -145,7 +154,9 @@ function SessionCard({
         </CardData>
 
         <CardData label="Trainers">
-          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join('; ') : ''}
+          {objectiveTrainers?.length ? objectiveTrainers.join('; ') : ''}
+          {otherTrainers && objectiveTrainers?.length ? '; ' : ''}
+          {otherTrainers ? 'Other' : ''}
         </CardData>
 
         <CardData label="Status">

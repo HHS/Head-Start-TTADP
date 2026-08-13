@@ -14,7 +14,7 @@ import Loader from './components/Loader';
 import { HTTPError } from './fetchers';
 import { fetchLogout, fetchUser } from './fetchers/Auth';
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
-import { getNotifications } from './fetchers/feed';
+import { getWhatsNew } from './fetchers/feed';
 import { getSiteAlerts } from './fetchers/siteAlerts';
 import { storageAvailable } from './hooks/helpers';
 import useGaUserData from './hooks/useGaUserData';
@@ -35,8 +35,9 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
   const [alert, setAlert] = useState(null);
-  const [notifications, setNotifications] = useState({ whatsNew: '' });
-  const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+  const [whatsNewNotifications, setWhatsNewNotifications] = useState({ whatsNew: '' });
+  const [areThereUnreadWhatsNewNotifications, setAreThereUnreadWhatsNewNotifications] =
+    useState(false);
 
   useGaUserData(user);
 
@@ -46,8 +47,8 @@ function App() {
 
       if (readNotifications) {
         const parsedReadNotifications = JSON.parse(readNotifications);
-        const dom = notifications.whatsNew
-          ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml')
+        const dom = whatsNewNotifications.whatsNew
+          ? new window.DOMParser().parseFromString(whatsNewNotifications.whatsNew, 'text/xml')
           : '';
         const ids = dom
           ? Array.from(dom.querySelectorAll('entry')).map(
@@ -56,12 +57,12 @@ function App() {
           : [];
         const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
 
-        setAreThereUnreadNotifications(unreadNotifications.length > 0);
+        setAreThereUnreadWhatsNewNotifications(unreadNotifications.length > 0);
       }
-    } catch (err) {
-      setAreThereUnreadNotifications(false);
+    } catch (_err) {
+      setAreThereUnreadWhatsNewNotifications(false);
     }
-  }, [notifications]);
+  }, [whatsNewNotifications]);
 
   useEffect(() => {
     // fetch alerts
@@ -82,10 +83,10 @@ function App() {
 
   useEffect(() => {
     // fetch alerts
-    async function fetchNotifications() {
+    async function fetchWhatsNew() {
       try {
-        const notificationsFromApi = await getNotifications();
-        setNotifications({ whatsNew: notificationsFromApi });
+        const whatsNewFromApi = await getWhatsNew();
+        setWhatsNewNotifications({ whatsNew: whatsNewFromApi });
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(`There was an error fetching notifications: ${e}`);
@@ -93,7 +94,7 @@ function App() {
     }
 
     if (authenticated) {
-      fetchNotifications();
+      fetchWhatsNew();
     }
   }, [authenticated]);
 
@@ -170,13 +171,13 @@ function App() {
             announce={announce}
             user={user}
             authenticated={authenticated}
-            areThereUnreadNotifications={areThereUnreadNotifications}
-            setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+            areThereUnreadWhatsNewNotifications={areThereUnreadWhatsNewNotifications}
+            setAreThereUnreadWhatsNewNotifications={setAreThereUnreadWhatsNewNotifications}
             authError={authError}
             updateUser={updateUser}
             loggedOut={loggedOut}
             timedOut={timedOut}
-            notifications={notifications}
+            whatsNewNotifications={whatsNewNotifications}
             alert={alert}
           />
         </BrowserRouter>

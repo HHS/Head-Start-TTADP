@@ -10,18 +10,29 @@ import { topicToQuery as grantsTopicsToQuery } from '../../scopes/grants';
 import { topicToQuery as sessionReportTopicsToQuery } from '../../scopes/sessionReports';
 import { topicToQuery as trainingReportTopicsToQuery } from '../../scopes/trainingReports';
 
-const mergedTopics = {
-  ...activityReportTopicsToQuery,
-  ...citationTopicsToQuery,
-  ...collabReportTopicsToQuery,
-  ...communicaionLogTopicsToQuery,
-  ...deliveredReviewTopicsToQuery,
-  ...goalTopicsToQuery,
-  ...grantCitationTopicsToQuery,
-  ...grantsTopicsToQuery,
-  ...sessionReportTopicsToQuery,
-  ...trainingReportTopicsToQuery,
-};
+const topicMaps = [
+  activityReportTopicsToQuery,
+  citationTopicsToQuery,
+  collabReportTopicsToQuery,
+  communicaionLogTopicsToQuery,
+  deliveredReviewTopicsToQuery,
+  goalTopicsToQuery,
+  grantCitationTopicsToQuery,
+  grantsTopicsToQuery,
+  sessionReportTopicsToQuery,
+  trainingReportTopicsToQuery,
+];
+
+const mergedTopics = topicMaps.reduce((merged, topicMap) => {
+  Object.entries(topicMap).forEach(([topic, operators]) => {
+    merged[topic] = {
+      ...(merged[topic] || {}),
+      ...operators,
+    };
+  });
+
+  return merged;
+}, {});
 
 /**
  *

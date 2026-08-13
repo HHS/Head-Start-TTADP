@@ -41,6 +41,8 @@ tasks:
     vars:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
+      - cmd: docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
+        ignore_error: true
       - |
           set -e
           yarn deps:install

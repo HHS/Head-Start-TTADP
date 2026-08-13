@@ -1,4 +1,4 @@
-import { Button, Dropdown, ErrorMessage, Fieldset, FormGroup } from '@trussworks/react-uswds';
+import { Button, Dropdown, ErrorMessage, Fieldset, Form, FormGroup } from '@trussworks/react-uswds';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { useContext, useState } from 'react';
@@ -37,7 +37,7 @@ const NeedsAction = ({
   const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
   const history = useHistory();
-  const { watch } = useFormContext();
+  const { handleSubmit, watch } = useFormContext();
 
   const approvers = watch('approvers');
 
@@ -46,7 +46,15 @@ const NeedsAction = ({
 
     if (!submitCR) {
       setShowCreatorRoleError(true);
-    } else if (!hasIncompletePages && !hasCitationIssues) {
+      return;
+    }
+
+    const hasApprovers = approvers && approvers.filter((a) => a?.user?.id).length > 0;
+    if (!hasApprovers) {
+      return;
+    }
+
+    if (!hasIncompletePages && !hasCitationIssues) {
       await onSubmit({
         additionalNotes: creatorNotes,
         creatorRole: submitCR,
@@ -81,82 +89,84 @@ const NeedsAction = ({
       {reviewItems && reviewItems.length > 0 && (
         <Accordion bordered items={reviewItems} multiselectable />
       )}
-      <div className="margin-bottom-2">
-        {!userHasOneRole ? (
-          <>
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label htmlFor="creatorRole" className="text-bold">
-              Creator role
-            </label>
-            <span className="smart-hub--form-required"> (Required)</span>
-            <FormGroup error={showCreatorRoleError}>
-              <Fieldset>
-                {showCreatorRoleError ? (
-                  <ErrorMessage>Please select a creator role.</ErrorMessage>
-                ) : null}
-                <Dropdown
-                  id="creatorRole"
-                  name="creatorRole"
-                  value={submitCR}
-                  onChange={creatorRoleChange}
-                >
-                  <option name="default" value="" disabled hidden>
-                    - Select -
-                  </option>
-                  {user.roles.map(({ fullName: role }) => (
-                    <option key={role} value={role}>
-                      {role}
+      <Form onSubmit={handleSubmit(submit)}>
+        <div className="margin-bottom-2">
+          {!userHasOneRole ? (
+            <>
+              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+              <label htmlFor="creatorRole" className="text-bold">
+                Creator role
+              </label>
+              <span className="smart-hub--form-required"> (Required)</span>
+              <FormGroup error={showCreatorRoleError}>
+                <Fieldset>
+                  {showCreatorRoleError ? (
+                    <ErrorMessage>Please select a creator role.</ErrorMessage>
+                  ) : null}
+                  <Dropdown
+                    id="creatorRole"
+                    name="creatorRole"
+                    value={submitCR}
+                    onChange={creatorRoleChange}
+                  >
+                    <option name="default" value="" disabled hidden>
+                      - Select -
                     </option>
-                  ))}
-                </Dropdown>
-              </Fieldset>
-            </FormGroup>
-          </>
-        ) : null}
-      </div>
+                    {user.roles.map(({ fullName: role }) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </Dropdown>
+                </Fieldset>
+              </FormGroup>
+            </>
+          ) : null}
+        </div>
 
-      <Fieldset
-        className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top no-print"
-        legend="Additional Notes"
-      >
-        <FormItem label="Creator notes" name="additionalNotes" required={false}>
-          <div className="margin-top-1">
-            <RichEditor value={creatorNotes} onChange={setCreatorNotes} />
-          </div>
-        </FormItem>
-      </Fieldset>
+        <Fieldset
+          className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top no-print"
+          legend="Additional Notes"
+        >
+          <FormItem label="Creator notes" name="additionalNotes" required={false}>
+            <div className="margin-top-1">
+              <RichEditor value={creatorNotes} onChange={setCreatorNotes} />
+            </div>
+          </FormItem>
+        </Fieldset>
 
-      <div className="smart-hub--creator-notes margin-top-2">
-        <p>
-          <span className="text-bold">Manager notes</span>
-        </p>
-        <DisplayApproverNotes approverStatusList={approverStatusList} />
-      </div>
-      {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
-      <div className="margin-top-3">
-        <ApproverStatusList approverStatus={approverStatusList} />
-      </div>
-      <div className="margin-top-3">
-        <FormItem label="Add additional approvers" name="approvers" htmlFor="approvers">
-          <ApproverSelect
-            name="approvers"
-            valueProperty="user.id"
-            labelProperty="user.fullName"
-            options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-            lockExistingValues
+        <div className="smart-hub--creator-notes margin-top-2">
+          <p>
+            <span className="text-bold">Manager notes</span>
+          </p>
+          <DisplayApproverNotes approverStatusList={approverStatusList} />
+        </div>
+        {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        <div className="margin-top-3">
+          <ApproverStatusList approverStatus={approverStatusList} />
+        </div>
+        <div className="margin-top-3">
+          <FormItem label="Add additional approvers" name="approvers" htmlFor="approvers">
+            <ApproverSelect
+              name="approvers"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
+              options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
+              lockExistingValues
+            />
+          </FormItem>
+          <MissingCitationAlerts
+            reportId={reportId}
+            grantsMissingMonitoring={grantsMissingMonitoring}
+            grantsMissingCitations={grantsMissingCitations}
           />
-        </FormItem>
-        <MissingCitationAlerts
-          reportId={reportId}
-          grantsMissingMonitoring={grantsMissingMonitoring}
-          grantsMissingCitations={grantsMissingCitations}
-        />
-      </div>
-      <div className="margin-top-3">
-        <Button className="margin-bottom-4" onClick={submit}>
-          Update report
-        </Button>
-      </div>
+        </div>
+        <div className="margin-top-3">
+          <Button className="margin-bottom-4" type="submit">
+            Update report
+          </Button>
+        </div>
+      </Form>
     </>
   );
 };

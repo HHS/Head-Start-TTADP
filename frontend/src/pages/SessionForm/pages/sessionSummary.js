@@ -32,10 +32,13 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
-import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
+import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
+import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import SessionTrainers from '../components/SessionTrainers';
 import {
   NO_ERROR,
   pageComplete,
@@ -66,7 +69,22 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const endDate = watch('endDate');
   const courses = watch('courses');
 
-  const { trainerOptions } = useEventAndSessionStaff(event);
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -94,7 +112,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (err) {
+      } catch (_error) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -185,7 +203,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       const uploadResults = await uploadSessionObjectiveFiles(id, uploadedFiles);
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -198,7 +216,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       setIsAppLoading(true);
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);
@@ -442,43 +460,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
-        <FormItem label="Who provided the TTA?" name="trainers" required>
-          <Controller
-            render={({ onChange: controllerOnChange, value, onBlur }) => (
-              <Select
-                value={value}
-                inputId="trainers"
-                name="trainers"
-                className="usa-select"
-                styles={selectOptionsReset}
-                onBlur={onBlur}
-                components={{
-                  DropdownIndicator: null,
-                }}
-                onChange={controllerOnChange}
-                inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions}
-                getOptionLabel={(option) => option.fullName}
-                getOptionValue={(option) => option.id}
-                isMulti
-                required
-              />
-            )}
-            control={control}
-            rules={{
-              validate: (value) => {
-                if (!value || value.length === 0) {
-                  return 'Select at least one trainer';
-                }
-                return true;
-              },
-            }}
-            name="trainers"
-            defaultValue={[]}
-          />
-        </FormItem>
-      </div>
+      <SessionTrainers event={event} />
+
       <IpdCourseSelect
         error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
@@ -575,24 +558,21 @@ const SessionSummary = ({ datePickerKey, event }) => {
         ) : null}
       </Fieldset>
 
-      <FormItem label="TTA provided " name="ttaProvided" required>
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status="Not Started"
+        isOnApprovedReport={false}
+        error={errors.ttaProvided ? ERROR_FORMAT(errors.ttaProvided.message) : NO_ERROR}
+        validateTta={onBlurTta}
+      />
 
       <div className="margin-bottom-4">
         <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
-            <>
-              Support type <Req />
-            </>
+            Support type <Req />
           </Label>
           <button
             type="button"
@@ -662,18 +642,29 @@ const ReviewSection = () => {
     files,
     ttaProvided,
     objectiveSupportType,
+    otherTrainers,
   } = watch();
 
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) =>
-    f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName
+    f.url ? (
+      <Link href={f.url.url} key={f.url.url}>
+        {f.originalFileName}
+      </Link>
+    ) : (
+      <span key={f.id}>{f.originalFileName}</span>
+    )
   );
   // eslint-disable-next-line max-len
   const resources = (objectiveResources || [])
     .filter((r) => r.value)
-    .map((r) => <Link href={r.value}>{r.value}</Link>);
+    .map((r) => (
+      <Link key={`r-${r.value}`} href={r.value}>
+        {r.value}
+      </Link>
+    ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
-  const objectiveTrainers = (trainers || []).map((t) => t.fullName);
+  const objectiveTrainers = (trainers || []).map((t) => t.fullName).filter((t) => t !== 'Other');
 
   const sections = [
     {
@@ -694,8 +685,17 @@ const ReviewSection = () => {
         { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
+        ...(otherTrainers && otherTrainers.trim() !== ''
+          ? [
+              {
+                label: 'Other trainers',
+                name: 'otherTrainers',
+                customValue: { otherTrainers },
+              },
+            ]
+          : []),
         {
-          label: 'iPD courses',
+          label: 'EEP Courses',
           name: 'courses',
           customValue: { courses: (courses || []).map((c) => c.name) },
         },
@@ -705,7 +705,12 @@ const ReviewSection = () => {
           customValue: { objectiveResources: resources },
         },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
-        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        {
+          label: 'TTA provided',
+          name: 'ttaProvided',
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
+          isRichText: true,
+        },
         {
           label: 'Support type',
           name: 'objectiveSupportType',
@@ -720,12 +725,28 @@ const ReviewSection = () => {
 
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
+  const { trainers } = hookForm.getValues();
+
+  const required = [...requiredFields];
 
   if (useIpdCourses) {
-    return pageComplete(hookForm, [...requiredFields, 'courses']);
+    required.push('courses');
   }
 
-  return pageComplete(hookForm, requiredFields);
+  if (trainers?.some((trainer) => trainer.id === 'other')) {
+    required.push('otherTrainers');
+  }
+
+  // ttaProvided is a rich-text field: the generic string check treats any HTML
+  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
+  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided')
+  );
 };
 
 export default {
@@ -765,19 +786,17 @@ export default {
         </Button>
         {
           // if status is 'Completed' then don't show the save draft button.
-          additionalData &&
-            additionalData.status &&
-            additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-              <Button
-                id={`${path}-save-draft`}
-                className="usa-button--outline usa-button--no-margin-top "
-                type="button"
-                disabled={isAppLoading}
-                onClick={onSaveDraft}
-              >
-                Save draft
-              </Button>
-            )
+          additionalData?.status && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button
+              id={`${path}-save-draft`}
+              className="usa-button--outline usa-button--no-margin-top "
+              type="button"
+              disabled={isAppLoading}
+              onClick={onSaveDraft}
+            >
+              Save draft
+            </Button>
+          )
         }
       </div>
     </div>

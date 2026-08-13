@@ -7,6 +7,7 @@ import {
 import transactionWrapper from '../transactionWrapper';
 import {
   getClassScore,
+  getCompliantFollowUpReviewsDetails,
   getMonitoringData,
   getMonitoringRelatedTtaCsv,
   getTtaByCitation,
@@ -42,5 +43,9 @@ router.get(
 );
 
 router.get('/related-tta', transactionWrapper(getMonitoringRelatedTtaCsv));
+router.get(
+  '/compliant-follow-up-reviews/details',
+  transactionWrapper(getCompliantFollowUpReviewsDetails)
+);
 
 export default router;

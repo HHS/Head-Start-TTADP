@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
+import { isNationalCenterUser, isSessionSubmitted } from '../services/eventFlow';
 
 export default class EventReport {
   constructor(user, eventReport, sessionReport = null) {
@@ -157,13 +158,17 @@ export default class EventReport {
     return this.eventReport.collaboratorIds.includes(this.user.id);
   }
 
+  isNationalCenterUser() {
+    return isNationalCenterUser(this.user);
+  }
+
   // some handy & fun aliases
   canEditEvent() {
     return this.isAdmin() || this.isAuthor();
   }
 
   canCreateSession() {
-    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
   }
 
   isSessionApprover() {
@@ -171,12 +176,7 @@ export default class EventReport {
   }
 
   isSubmitted() {
-    return !!(
-      this.session &&
-      this.session.data &&
-      this.session.data.pocComplete &&
-      this.session.data.collabComplete
-    );
+    return isSessionSubmitted(this.eventReport, this.session);
   }
 
   canEditAsSessionApprover() {

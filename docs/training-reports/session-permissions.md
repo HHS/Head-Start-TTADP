@@ -26,6 +26,7 @@ Training Report sessions have a complex permission model based on user roles, se
 ### POC (Point of Contact)
 - Users listed in `event.pocIds` array
 - Regional staff who coordinate training events
+- Can create sessions
 - Can edit sessions when `pocComplete === false` or status is `NEEDS_ACTION`
 - Blocked from editing in Regional TTA No National Centers events
 - Blocked from editing when facilitation is `national_center` and status is `NEEDS_ACTION`
@@ -72,6 +73,18 @@ Training Report sessions have a complex permission model based on user roles, se
 
 **Note:** Unlike collaborators, owners are NOT blocked by facilitation rules for deletion.
 
+### Session Creation Permissions
+
+| Role | Can Create Session? |
+|------|---------------------|
+| Admin | Yes |
+| Owner | Yes |
+| Collaborator | Yes |
+| POC | Yes |
+| Approver Only | No |
+
+**Note:** POCs can create sessions in addition to Admins, Owners, and Collaborators.
+
 ## Event Organizer Types
 
 ### Regional PD Event (with National Centers)
@@ -95,6 +108,49 @@ Training Report sessions have a complex permission model based on user roles, se
 
 \* POC blocked when status is `NEEDS_ACTION`
 \** Only in Regional PD with National Centers events
+
+### Session Form Page Access (Regional PD with National Centers)
+
+| User Context | Accessible Pages |
+|--------------|------------------|
+| Regional **owner** + Trainer = `national_center` | Participants, Supporting attachments, Next steps, Review and submit |
+| NC **owner** + Trainer = `national_center` + not submitted | Session summary, Review and submit |
+| NC **owner** + Trainer = `national_center` + submitted | Session summary, Participants, Supporting attachments, Next steps, Review and submit |
+| **Collaborator-only** (any NC status) + Trainer = `national_center` | Session summary, Review and submit (regardless of submission state) |
+
+A user who is both owner *and* collaborator keeps the broader owner privileges. These page-access rules come from `frontend/src/hooks/useSessionFormRoleAndPages.js` and split owners (responsible for the event) from collaborator-only users (TTAHUB-5502).
+
+### Form Field Access (Regional PD with National Centers)
+
+`frontend/src/pages/SessionForm/index.js` keeps the `determineKeyArray` function aligned with the page-access rules above. The same owner-vs-collaborator split applies to which form keys are loaded from and persisted to the database:
+
+| User Context | Saved/loaded keys |
+|--------------|-------------------|
+| Regional **owner** + Trainer = `national_center` | `pocKeys` (Participants, Supporting attachments, Next steps fields). `pocComplete` is stripped on save; the Regional owner's submit sets `ownerComplete` instead of `collabComplete` (see below). |
+| NC **owner** + Trainer = `national_center`, not submitted | `istKeys` (Session Summary fields). |
+| NC **owner** + Trainer = `national_center`, submitted | `istKeys ∪ pocKeys` (full review). |
+| **Collaborator-only** (any NC status) + Trainer = `national_center` | `istKeys` (Session Summary fields). `pocComplete` is stripped on save. |
+
+When adding new fields to either page set, register them in `pocKeys` / `istKeys` (`frontend/src/pages/SessionForm/constants.js`) so the right group of users can save them.
+
+### `ownerComplete` (Regional PD w/ NC + Trainer = National Centers only)
+
+The event organizer **Regional PD Event (with National Centers)** combined with facilitation = `national_center` flow — has two distinct people contributing to the same session:
+
+- The **Regional owner** fills the POC-side pages (Participants, Supporting attachments, Next steps).
+- The **NC collaborator** fills the IST-side pages (Session summary).
+
+To keep these two submissions independent, the Regional owner's submit is tracked via the dedicated `ownerComplete` flag (mirroring `collabComplete`'s shape: `ownerComplete`, `ownerCompleteId`, `ownerCompleteDate`). This prevents the owner's submit from setting `collabComplete = true`, which would otherwise block the NC collaborator from editing the Session summary they still own.
+
+- **Submission semantics** (for new-flow sessions): `submitted = approverId && ownerComplete && collabComplete`. POC is not involved. Outside the flow, the existing `pocComplete && collabComplete` semantics are unchanged.
+- **Edit lockout**: the Regional owner is locked out by `ownerComplete && !needsAction` (independently from the NC collaborator's `collabComplete` gate), the same way `collabComplete` locks editors today.
+- **Admin submits**: a non-POC admin submit in the flow sets both `ownerComplete = true` and `collabComplete = true` so the session can transition to `submitted`.
+
+Backend pieces that participate in this semantics:
+
+- `src/models/sessionReportPilot.js` — `submitted` virtual accepts either `pocComplete` or `ownerComplete` alongside `collabComplete`.
+- `src/policies/event.js` — `isSubmitted()` mirrors the model virtual.
+- `src/services/event.ts` — alert checker picks `ownerComplete` for the owner side in the flow and skips the POC-side check there.
 
 ## Owner vs Collaborator: Key Differences
 
@@ -124,14 +180,15 @@ This means:
 
 ### Completion Flags
 - `pocComplete` - POC has finished their section
-- `collabComplete` - Collaborator/Owner has finished their section
-- `submitted` - Both `pocComplete` and `collabComplete` are true, and an approver is assigned
+- `collabComplete` - Collaborator/Owner has finished their section (standard flow); the **NC collaborator** in the flow
+- `ownerComplete` - The Regional **owner** has finished their section in the  flow (Regional PD w/ NC + Trainer = National Centers). See [`ownerComplete`](#ownercomplete-regional-pd-w-nc--trainer--national-centers-only) above for full semantics.
+- `submitted` - Standard flow: `pocComplete && collabComplete` are true. National center facilitator flow with regional event owner: `ownerComplete && collabComplete` are true. Both require an approver to be assigned.
 
 ## Approver Selection Rules
 
 When selecting an approving manager for a session:
 
-1. **Current user filter**: The logged-in user cannot select themselves as an approver (unless they are an admin)
+1. **Current user filter**: The person filling out the session form cannot select themselves as an approver (unless they are an admin)
 2. **Event owner filter**: The event owner cannot be selected as an approver by anyone (prevents conflict of interest)
 3. **Role requirements**: Approvers must have ECM, GSM, or TTAC role for Regional TTA events
 
@@ -155,7 +212,7 @@ if (eventOwnerId) {
 ## Key Implementation Files
 
 - `frontend/src/hooks/useSessionCardPermissions.js` - Determines edit/delete button visibility
-- `frontend/src/hooks/useSessionFormRoleAndPages.js` - Determines which form pages are accessible
+- `frontend/src/hooks/useSessionFormRoleAndPages.js` - Determines which session form pages are accessible based on role, event organizer, facilitation, and submission state
 - `frontend/src/pages/SessionForm/index.js` - Form field access and submission logic
 - `frontend/src/pages/SessionForm/components/Submit.js` - Approver selection and filtering
 - `src/policies/event.js` - Backend authorization (includes `canEditSession()`)
