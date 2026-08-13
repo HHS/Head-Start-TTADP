@@ -600,6 +600,24 @@
       }
     },
     {
+      "id": "program.pmp",
+      "class": "programmaticConfigurationItem",
+      "name": "TTA Hub Project Management Plan",
+      "description": "Approved PMP. The configuration management owner confirmed this document includes the CM Plan and is the only programmatic CI in scope for TTAHUB-5246.",
+      "owner": "TTA Hub Configuration Management",
+      "tier": "attested",
+      "locator": {
+        "type": "cmsDocument",
+        "value": "https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15"
+      },
+      "approvedVersion": "2.4",
+      "authorization": {
+        "type": "cmsDocument",
+        "reference": "https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15",
+        "note": "The CM owner, confirmed the PMP includes the CM Plan and is the only programmatic CI in scope for TTAHUB-5246."
+      }
+    },
+    {
       "id": "integration.hsesAuth",
       "class": "externalIntegration",
       "name": "HSES authentication",
