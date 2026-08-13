@@ -1,5 +1,7 @@
 import httpCodes from 'http-codes';
-import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
+import goalsByIdAndRecipient, {
+  goalRegionIdsByIdAndRecipient,
+} from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import Recipient from '../../policies/recipient';
 import Users from '../../policies/user';
@@ -16,7 +18,10 @@ import {
 } from '../../services/recipient';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
 import { userById } from '../../services/users';
-import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
+import {
+  checkRecipientAccessAndExistence as checkAccessAndExistence,
+  checkUserRegionAccess,
+} from '../utils';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -29,10 +34,24 @@ export async function getGoalsByIdandRecipient(req, res) {
     const { recipientId } = req.params;
     const { goalIds } = req.query;
 
+    const regionIds = await goalRegionIdsByIdAndRecipient(goalIds, recipientId);
+
+    if (!regionIds.length) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const proceedQuestionMark = await checkUserRegionAccess(req, res, regionIds);
+
+    if (!proceedQuestionMark) {
+      return;
+    }
+
     const goals = await goalsByIdAndRecipient(goalIds, recipientId);
 
     if (!goals.length) {
       res.sendStatus(404);
+      return;
     }
 
     res.json(goals);

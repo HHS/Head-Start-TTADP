@@ -40,6 +40,28 @@ export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
   'rtrOrder',
 ];
 
+export async function goalRegionIdsByIdAndRecipient(ids: number | number[], recipientId: number) {
+  const goals = await Goal.findAll({
+    attributes: ['id'],
+    where: {
+      id: ids,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: ['regionId'],
+        required: true,
+        where: {
+          recipientId,
+        },
+      },
+    ],
+  });
+
+  return goals.map((goal) => Number(goal.grant.regionId));
+}
+
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number) => ({
   attributes: [
     'name',

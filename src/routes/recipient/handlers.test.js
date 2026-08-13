@@ -1,5 +1,7 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
-import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
+import { FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
+import goalsByIdAndRecipient, {
+  goalRegionIdsByIdAndRecipient,
+} from '../../goalServices/goalsByIdAndRecipient';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import Users from '../../policies/user';
@@ -445,6 +447,13 @@ describe('getRecipientAndGrantsByUser', () => {
 });
 
 describe('getGoalsByIdAndRecipient', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId.mockResolvedValue(1000);
+    getUserReadRegions.mockResolvedValue([1]);
+    goalRegionIdsByIdAndRecipient.mockResolvedValue([1]);
+  });
+
   it('handles errors', async () => {
     const req = {
       params: {
@@ -494,11 +503,41 @@ describe('getGoalsByIdAndRecipient', () => {
       })),
     };
 
-    goalsByIdAndRecipient.mockResolvedValueOnce([]);
+    goalRegionIdsByIdAndRecipient.mockResolvedValueOnce([]);
 
     await getGoalsByIdandRecipient(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    expect(goalsByIdAndRecipient).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when any matching goal belongs to a region the user cannot access', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalRegionIdsByIdAndRecipient.mockResolvedValueOnce([1, 2]);
+    getUserReadRegions.mockResolvedValueOnce([1]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
+    expect(goalsByIdAndRecipient).not.toHaveBeenCalled();
   });
 
   it('return goals successfully', async () => {
@@ -525,6 +564,8 @@ describe('getGoalsByIdAndRecipient', () => {
 
     await getGoalsByIdandRecipient(req, mockResponse);
 
+    expect(goalRegionIdsByIdAndRecipient).toHaveBeenCalledWith([1], 100000);
+    expect(getUserReadRegions).toHaveBeenCalledWith(1000);
     expect(mockResponse.json).toHaveBeenCalledWith([{ name: 'goal' }]);
   });
 });
