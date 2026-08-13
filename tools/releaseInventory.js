@@ -655,7 +655,7 @@ function locatorVersion(component, environment) {
   }
 
   if (locator.type === 'cloudFoundryBuildpack') {
-    return locator.value;
+    return value;
   }
 
   return value;
