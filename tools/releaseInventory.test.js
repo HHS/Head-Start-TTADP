@@ -203,6 +203,7 @@ describe('buildCmsApprovedCiVersions', () => {
     expect(database.approvalReference).toEqual(
       expect.objectContaining({ type: 'adr', reference: 'docs/adr/0006-database.md' })
     );
+    expect(database).not.toHaveProperty('approval');
     expect(manifest.approvedVersion).toMatch(/^[a-f0-9]{64}$/);
   });
 
