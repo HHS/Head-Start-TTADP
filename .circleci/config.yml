@@ -1075,7 +1075,7 @@ jobs:
           if [ "${reconciliation_exit}" -ne 0 ] || [ ! -s "${reconciliation_path}" ]; then
             rm -f "${reconciliation_path}"
             msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower "${SLACK_BOT_TOKEN}" || true
             exit 0
           fi
 
