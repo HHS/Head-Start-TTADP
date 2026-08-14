@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/HHS/Head-Start-TTADP/release/inventoryDispositionsSchema.json",
+  "title": "TTA Hub release inventory dispositions",
+  "description": "Documented decisions about components reconciliation reports as undocumented, missing, or mismatched, and about declared components whose authorization reference is not yet resolvable. Vocabulary and approval evidence follow the model ADR 0027 defines. See ADR 0029.",
+  "type": "object",
+  "required": ["schemaVersion", "dispositions"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "note": { "type": "string" },
+    "dispositions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/disposition" }
+    }
+  },
+  "definitions": {
+    "disposition": {
+      "type": "object",
+      "required": [
+        "id",
+        "componentName",
+        "componentClass",
+        "finding",
+        "status",
+        "justification",
+        "owner",
+        "trackingTicket",
+        "closureTarget",
+        "recommendation",
+        "approval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier. Never reused for a different finding.",
+          "pattern": "^INV-[0-9]{4}-[0-9]{4}$"
+        },
+        "componentName": { "type": "string", "minLength": 1 },
+        "componentClass": {
+          "type": "string",
+          "enum": [
+            "application",
+            "process",
+            "service",
+            "route",
+            "configurationArtifact",
+            "dependencyBoundary",
+            "platformRuntime",
+            "externalIntegration"
+          ]
+        },
+        "finding": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["resolved", "accepted", "deferred"]
+        },
+        "justification": { "type": "string", "minLength": 1 },
+        "owner": {
+          "type": "string",
+          "description": "Accountable owner. A team or role, not an individual."
+        },
+        "trackingTicket": { "type": "string", "minLength": 1 },
+        "closureTarget": { "type": "string", "format": "date" },
+        "recommendation": { "type": "string", "minLength": 1 },
+        "approval": {
+          "description": "Null until the disposition has structured approval evidence.",
+          "oneOf": [{ "type": "null" }, { "$ref": "#/definitions/approval" }]
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "description": "Structured approval evidence, matching the model ADR 0027 defines for the security findings register.",
+      "required": ["approverRole", "approver", "approvalDate", "decision"],
+      "additionalProperties": false,
+      "properties": {
+        "sourceSystem": { "type": "string" },
+        "record": { "type": "string" },
+        "approverRole": { "type": "string" },
+        "approver": { "type": "string" },
+        "approvalDate": { "type": "string", "format": "date" },
+        "decision": { "type": "string" }
+      }
+    }
+  }
+}
