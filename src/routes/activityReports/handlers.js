@@ -1175,6 +1175,14 @@ export async function downloadAllAlerts(req, res) {
 // AR, Goal, or Objective focused exports. Region policy is re-enforced in the SQL.
 export async function downloadActivityReportExport(req, res) {
   let responseStarted = false;
+  // Rejects if the client disconnects mid-stream, so a backpressure wait aborts
+  // (and the query rolls back) instead of hanging until the idle-in-transaction
+  // timeout fires. One 'close' listener, raced each time; the swallowed catch
+  // handles the same 'close' that fires on normal completion.
+  const disconnected = once(res, 'close').then(() => {
+    throw new Error('client disconnected');
+  });
+  disconnected.catch(() => {});
   try {
     const userId = await currentUserId(req, res);
     const regionIds = await getUserReadRegions(userId);
@@ -1183,7 +1191,7 @@ export async function downloadActivityReportExport(req, res) {
     await streamActivityReportExportCsv(
       {
         dataSet: params.dataSet,
-        reportIds: params.reportIds ?? params.reportId,
+        reportIds: params.reportIds,
         regionIds,
         sortBy: params.sortBy,
         direction: params.direction,
@@ -1198,7 +1206,7 @@ export async function downloadActivityReportExport(req, res) {
         },
         onChunk: async (chunk) => {
           if (!res.write(chunk)) {
-            await once(res, 'drain');
+            await Promise.race([once(res, 'drain'), disconnected]);
           }
         },
       }
@@ -1206,9 +1214,13 @@ export async function downloadActivityReportExport(req, res) {
 
     res.end();
   } catch (error) {
-    // Response already started: can't send a status, so tear down the socket.
+    // Response already started: can't send a status, so tear down the socket. A
+    // client disconnect leaves res already destroyed - expected teardown, not a
+    // failure worth logging.
     if (responseStarted) {
-      logger.error('downloadActivityReportExport stream failed after response started', error);
+      if (!res.destroyed) {
+        logger.error('downloadActivityReportExport stream failed after response started', error);
+      }
       res.destroy(error);
       return;
     }

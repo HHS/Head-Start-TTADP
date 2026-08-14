@@ -81,7 +81,6 @@ JSON: {
 -- short_title/tta_short are HTML-stripped previews; full_title/tta_provided are raw HTML,
 -- stripped at the app layer.
 -- Excludes: onAR, onApprovedAR, mapsToParentObjectiveId, createdViaActivityReportId.
--- TODO: wire ORDER BY to ssdi.sortOrder.* once dynamic sorting is added.
 -- All dates are US Eastern (a reasonable default — there's no per-user timezone).
 SET LOCAL TIME ZONE 'America/New_York';
 DROP TABLE IF EXISTS approved_ars;

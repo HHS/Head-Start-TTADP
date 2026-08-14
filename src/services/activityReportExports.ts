@@ -36,6 +36,9 @@ const FETCH_BATCH_SIZE = 2000;
 const EXPORT_CURSOR = 'ttahub_export_cursor';
 const STATEMENT_TIMEOUT = '180s';
 const IDLE_IN_TRANSACTION_TIMEOUT = '30s';
+// Cap on how many reports one export may cover, to stay inside the performance
+// envelope. Callers over this must narrow their filters.
+export const MAX_EXPORT_REPORT_IDS = 10000;
 
 // Caller mistakes (bad data set / unsupported sort) -> 400 rather than 500.
 export class ExportRequestError extends Error {
@@ -91,6 +94,11 @@ const validateReportIds = (reportIds: unknown): number[] => {
   const ids = list.map(Number);
   if (ids.some((id) => !Number.isInteger(id))) {
     throw new ExportRequestError('reportIds must be a list of integers.');
+  }
+  if (ids.length > MAX_EXPORT_REPORT_IDS) {
+    throw new ExportRequestError(
+      `Export is limited to ${MAX_EXPORT_REPORT_IDS} reports; narrow the filters and try again.`
+    );
   }
   return ids;
 };

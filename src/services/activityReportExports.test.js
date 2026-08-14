@@ -4,6 +4,7 @@ import {
   EXPORT_DATA_SETS,
   ExportRequestError,
   isValidDataSet,
+  MAX_EXPORT_REPORT_IDS,
   streamActivityReportExportCsv,
 } from './activityReportExports';
 
@@ -72,6 +73,16 @@ describe('activityReportExports', () => {
           NOOP_CALLBACKS
         )
       ).rejects.toThrow(/must be a list of integers/);
+    });
+
+    it('rejects more report ids than the export limit', async () => {
+      const tooMany = Array.from({ length: MAX_EXPORT_REPORT_IDS + 1 }, (_, i) => i + 1);
+      await expect(
+        streamActivityReportExportCsv(
+          { dataSet: 'goals', reportIds: tooMany, regionIds: ALL_REGIONS },
+          NOOP_CALLBACKS
+        )
+      ).rejects.toThrow(new RegExp(`limited to ${MAX_EXPORT_REPORT_IDS} reports`));
     });
 
     it('rejects an unsupported sort column', async () => {

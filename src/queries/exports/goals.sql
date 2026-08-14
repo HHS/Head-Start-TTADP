@@ -95,7 +95,6 @@ JSON: {
 -- short_objective_titles is an HTML-stripped preview; name/full_objective_titles are raw.
 -- Excludes: onAR, onApprovedAR, mapsToParentGoalId, rtrOrder, and legacy columns
 -- timeframe, isFromSmartsheetTtaPlan, isRttapa.
--- TODO: wire ORDER BY to ssdi.sortOrder.* once dynamic sorting is added.
 -- All dates are US Eastern (a reasonable default — there's no per-user timezone).
 SET LOCAL TIME ZONE 'America/New_York';
 DROP TABLE IF EXISTS approved_ars;

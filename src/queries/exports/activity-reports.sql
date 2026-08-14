@@ -105,7 +105,6 @@ JSON: {
 -- across those tables. objective_tta_short strips HTML over LEFT(ttaProvided, 250) with a
 -- trailing partial-tag strip; objective_tta_provided and context are raw HTML, stripped at
 -- the app layer.
--- TODO: wire ORDER BY to ssdi.sortOrder.* once dynamic sorting is added.
 -- Dates/timestamps are rendered in US Eastern (a reasonable default — there's no per-user
 -- timezone). The session tz is set here so ::date / ::timestamp casts come out Eastern.
 SET LOCAL TIME ZONE 'America/New_York';
