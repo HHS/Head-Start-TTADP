@@ -3,12 +3,13 @@ import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import db from '../../models';
 import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
   destroySession,
@@ -16,6 +17,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
 } from '../../services/sessionReports';
 import type {
@@ -28,7 +30,6 @@ import { getEventAuthorization } from '../events/handlers';
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
-const { EventReportPilot: TrainingReport } = db;
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -330,12 +331,30 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       normalizedFilterParams['region.in[]'] = [normalizedFilterParams['region.in[]']];
     }
 
+    const recipientId = [req.query.recipientId].flat()[0];
+
+    if (recipientId) {
+      // Cross-region by design (all of the recipient's sessions regardless of TR region),
+      // but the caller must still be authorized to view this recipient's record.
+      const recipient = await recipientById(recipientId, {});
+      if (!recipient) {
+        return res.status(httpCodes.NOT_FOUND).send({ message: 'Recipient not found' });
+      }
+      const user = await userById(userId);
+      const recipientAuth = new RecipientPolicy(user, recipient);
+      if (!recipientAuth.canViewTrainingReports()) {
+        return res.sendStatus(httpCodes.FORBIDDEN);
+      }
+    }
+
     // Previously, we returned a FORBIDDEN (403) error after checking to see if
     // a user had regions, however, missing region URL params would cause
     // overly permissive access to session reports.
     // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
     // of our application/handlers (the user experience will be the same: an empty sessions table)
-    const filteredFilterParams = await setTrainingReportReadRegions(normalizedFilterParams, userId);
+    const filteredFilterParams = recipientId
+      ? normalizedFilterParams
+      : await setTrainingReportReadRegions(normalizedFilterParams, userId);
 
     // Build params object for service
     // Region filtering has already been applied via setTrainingReportReadRegions
@@ -361,7 +380,9 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       ...filteredFilterParams,
     };
 
-    const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
+    const result: GetSessionReportsResponse = recipientId
+      ? await getSessionReportsByRecipient({ ...serviceParams, recipientId })
+      : await getSessionReports(serviceParams);
 
     // Handle CSV response
     if (format === 'csv') {

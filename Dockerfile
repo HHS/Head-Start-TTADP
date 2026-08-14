@@ -1,4 +1,4 @@
-FROM node:22.23.1
+FROM node:22.23.2
 WORKDIR /app
 
 # Install system dependencies

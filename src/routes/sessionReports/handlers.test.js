@@ -1,15 +1,18 @@
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
   findSessionById,
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
 } from '../../services/sessionReports';
 import { userById } from '../../services/users';
@@ -25,7 +28,11 @@ import {
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
+jest.mock('../../policies/recipient');
 jest.mock('../../services/sessionReports');
+jest.mock('../../services/recipient', () => ({
+  recipientById: jest.fn(),
+}));
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
@@ -646,6 +653,60 @@ describe('session report handlers', () => {
       await getSessionReportsHandler(mockRequest, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+
+    it('uses recipient-specific service and skips region scoping when recipientId is provided and user is authorized', async () => {
+      recipientById.mockResolvedValue({ id: 123, grants: [{ regionId: 1 }] });
+      userById.mockResolvedValue({ id: 1, permissions: [] });
+      RecipientPolicy.mockImplementation(() => ({ canViewTrainingReports: () => true }));
+      getSessionReportsByRecipient.mockResolvedValue(mockTrainingReportResponse);
+      const readRegionCallsBefore = setTrainingReportReadRegions.mock.calls.length;
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: {
+          recipientId: '123',
+          'region.in': ['1'],
+        },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(setTrainingReportReadRegions.mock.calls.length).toBe(readRegionCallsBefore);
+      expect(getSessionReportsByRecipient).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientId: '123' })
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(mockTrainingReportResponse);
+    });
+
+    it('returns 404 when recipientId does not resolve to a recipient', async () => {
+      recipientById.mockResolvedValue(null);
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: { recipientId: '123' },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when user is not authorized to view the recipient training reports', async () => {
+      recipientById.mockResolvedValue({ id: 123, grants: [{ regionId: 1 }] });
+      userById.mockResolvedValue({ id: 1, permissions: [] });
+      RecipientPolicy.mockImplementation(() => ({ canViewTrainingReports: () => false }));
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: { recipientId: '123' },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
     });
   });
 });
