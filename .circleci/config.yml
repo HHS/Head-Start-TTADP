@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.23.1-browsers
+    - image: cimg/node:22.23.2-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.23.1-browsers
+    - image: cimg/node:22.23.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -328,7 +328,7 @@ workflows:
             - main
     jobs:
     - clear_cache_job
-        
+
 
 # ----------------- Jobs -----------------
 
@@ -387,7 +387,7 @@ jobs:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
-    - run: 
+    - run:
         name: Install dependencies
         no_output_timeout: 20m
         command: |
@@ -409,7 +409,7 @@ jobs:
     - run:
         name: Ensure directories exist
         command: mkdir -p reports frontend/reports frontend/lint-reports
-    - run: 
+    - run:
         name: Build backend
         command: yarn build
     - run:
@@ -418,11 +418,11 @@ jobs:
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
-        name: Build frontend 
+        name: Build frontend
         command: yarn --cwd frontend run build
     - run:
         name: Run lint
-        command: | 
+        command: |
           yarn lint:ci
           cat reports/lint.json
     - run:
@@ -494,7 +494,7 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check for modified lines." 
+            echo "Not a PR build. Skipping coverage check for modified lines."
           fi
     - store_artifacts:
         path: backend-coverage-artifacts.zip
@@ -557,7 +557,7 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check." 
+            echo "Not a PR build. Skipping coverage check."
           fi
         when: always
     - store_artifacts:
@@ -622,7 +622,7 @@ jobs:
         timeout: 10m
     - run_e2e_test:
         cmd: |
-          echo "Running Cucumber Tests" 
+          echo "Running Cucumber Tests"
           PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
           export PUPPETEER_EXECUTABLE_PATH
           "$PUPPETEER_EXECUTABLE_PATH" --version
