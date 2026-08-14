@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { getRecipientSpotlight } from '../recipientSpotlight';
+import { getRecipientSpotlight, getRecipientSpotlightCsv } from '../recipientSpotlight';
 
 const recipientUrl = join('/', 'api', 'recipient-spotlight');
 
@@ -104,5 +104,41 @@ describe('recipientSpotlight fetcher', () => {
 
     const lastOptions = fetchMock.lastOptions();
     expect(lastOptions.signal).toBe(controller.signal);
+  });
+});
+
+describe('getRecipientSpotlightCsv fetcher', () => {
+  beforeEach(() => fetchMock.reset());
+  afterEach(() => fetchMock.restore());
+
+  it('requests a csv blob with default parameters', async () => {
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&mustHaveIndicators=true&format=csv`,
+      {
+        body: 'Recipient name,Region\nRecipient A,1',
+        headers: { 'Content-Type': 'text/csv' },
+      }
+    );
+
+    const result = await getRecipientSpotlightCsv();
+
+    expect(fetchMock.called()).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
+  });
+
+  it('includes sort, filters and grantId in the csv request url', async () => {
+    const filters = 'region.in=1';
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=lastTTA&direction=asc&offset=0&${filters}&grantId=42&mustHaveIndicators=true&format=csv`,
+      {
+        body: 'Recipient name,Region\nRecipient A,1',
+        headers: { 'Content-Type': 'text/csv' },
+      }
+    );
+
+    const result = await getRecipientSpotlightCsv('lastTTA', 'asc', filters, 42);
+
+    expect(fetchMock.called()).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
   });
 });

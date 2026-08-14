@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.22.3-browsers
+    - image: cimg/node:22.23.2-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.22.3-browsers
+    - image: cimg/node:22.23.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -98,6 +98,10 @@ workflows:
         requires:
         - build_done
         filters: *branch_build_filters
+    - release_inventory_check:
+        requires:
+        - build_done
+        filters: *branch_build_filters
     - dynamic_security_scan:
         requires:
         - build_done
@@ -111,6 +115,7 @@ workflows:
         - test_e2e_utils
         - test_cucumber
         - sast_scan
+        - release_inventory_check
         - dynamic_security_scan
         filters: *branch_build_filters
     - deploy_job:
@@ -341,7 +346,7 @@ workflows:
             - main
     jobs:
     - clear_cache_job
-        
+
 
 # ----------------- Jobs -----------------
 
@@ -400,7 +405,7 @@ jobs:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
-    - run: 
+    - run:
         name: Install dependencies
         no_output_timeout: 20m
         command: |
@@ -422,7 +427,7 @@ jobs:
     - run:
         name: Ensure directories exist
         command: mkdir -p reports frontend/reports frontend/lint-reports
-    - run: 
+    - run:
         name: Build backend
         command: yarn build
     - run:
@@ -431,11 +436,11 @@ jobs:
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
-        name: Build frontend 
+        name: Build frontend
         command: yarn --cwd frontend run build
     - run:
         name: Run lint
-        command: | 
+        command: |
           yarn lint:ci
           cat reports/lint.json
     - run:
@@ -507,7 +512,7 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check for modified lines." 
+            echo "Not a PR build. Skipping coverage check for modified lines."
           fi
     - store_artifacts:
         path: backend-coverage-artifacts.zip
@@ -570,7 +575,7 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check." 
+            echo "Not a PR build. Skipping coverage check."
           fi
         when: always
     - store_artifacts:
@@ -635,7 +640,7 @@ jobs:
         timeout: 10m
     - run_e2e_test:
         cmd: |
-          echo "Running Cucumber Tests" 
+          echo "Running Cucumber Tests"
           PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
           export PUPPETEER_EXECUTABLE_PATH
           "$PUPPETEER_EXECUTABLE_PATH" --version
@@ -694,6 +699,30 @@ jobs:
         command: node ./tools/semgrep-sast.js check
     - store_artifacts:
         path: reports/semgrep
+
+  release_inventory_check:
+    executor: docker-executor
+    resource_class: small
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Reconcile declared inventory against repository state
+        command: |
+          # Repository scope only. This job never contacts a live space, so it
+          # needs no platform credentials and runs on every branch build.
+          #
+          # Reporting mode until the first clean production reconciliation is
+          # accepted as the starting baseline, at which point --enforce is added
+          # here and the job is scoped to the paths that define the deployed
+          # shape. See ADR 0029.
+          node ./tools/releaseInventory.js verify \
+            --scope repository \
+            --out reports/release-inventory/inventoryReconciliation.json
+    - store_artifacts:
+        path: reports/release-inventory
+        destination: release-inventory
 
   deploy_job:
     executor: docker-executor
@@ -1002,6 +1031,90 @@ jobs:
                 buildTimestamp: $buildTimestamp
               }
             }' > "${RELEASE_MANIFEST_PATH}"
+    - run:
+        name: Reconcile release inventory
+        command: |
+          if [ -z "${BUILD_RELEASE_TAG}" ]; then
+            echo "No inventory reconciliation required for this deploy"
+            exit 0
+          fi
+
+          if [ "<< parameters.target_env >>" != "prod" ]; then
+            echo "Live space reconciliation targets production only"
+            exit 0
+          fi
+
+          # The cf session established by the deploy step is still active, so no
+          # additional login is required. Reporting mode until the first clean
+          # production reconciliation is accepted as the baseline, per ADR 0029.
+          #
+          # The repository half reads the deployed checkout rather than the release
+          # tag, because the tag is not fetched into this job. The content is the
+          # same commit. Auditors reproduce this later with --tag against the
+          # published tag.
+          reconciliation_path="release-artifacts/inventoryReconciliation.json"
+          inventory_path="release-artifacts/inventory.json"
+          rm -f "${reconciliation_path}" "${inventory_path}"
+
+          if ! cp release/inventory.json "${inventory_path}"; then
+            msg="Production deploy succeeded, but inventory evidence preparation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            exit 0
+          fi
+
+          reconciliation_exit=2
+
+          for attempt in 1 2 3; do
+            if node ./tools/releaseInventory.js verify \
+              --scope all \
+              --out "${reconciliation_path}"; then
+              reconciliation_exit=0
+              break
+            else
+              reconciliation_exit=$?
+            fi
+
+            # Exit 1 is reserved for findings in blocking mode. Retrying cannot
+            # change those findings, and the deploy must remain failed once
+            # --enforce is enabled. Exit 2 represents a tooling/collection error.
+            if [ "${reconciliation_exit}" -eq 1 ]; then
+              exit 1
+            fi
+
+            if [ "${attempt}" -lt 3 ]; then
+              echo "Inventory reconciliation attempt ${attempt} failed; retrying in 10 seconds"
+              rm -f "${reconciliation_path}"
+              sleep 10
+            fi
+          done
+
+          if [ "${reconciliation_exit}" -ne 0 ] || [ ! -s "${reconciliation_path}" ]; then
+            rm -f "${reconciliation_path}"
+            msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            exit 0
+          fi
+
+          inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
+          manifest_with_inventory=$(mktemp)
+          if ! jq \
+            --arg inventoryHash "${inventory_hash}" \
+            --slurpfile reconciliation "${reconciliation_path}" \
+            '.schemaVersion = 2
+             | .inventory = {
+                 declaredPath: "release/inventory.json",
+                 declaredSha256: $inventoryHash,
+                 reconciliationPath: "release-artifacts/inventoryReconciliation.json",
+                 enforcement: $reconciliation[0].enforcement,
+                 validationErrorCount: ($reconciliation[0].validationErrors | length),
+                 scopes: ($reconciliation[0].scopes | map_values(.summary))
+               }' "${RELEASE_MANIFEST_PATH}" > "${manifest_with_inventory}"; then
+            rm -f "${manifest_with_inventory}"
+            msg="Production deploy succeeded, but release manifest inventory enrichment failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            exit 0
+          fi
+          mv "${manifest_with_inventory}" "${RELEASE_MANIFEST_PATH}"
     - store_artifacts:
         path: release-artifacts
         destination: release-artifacts
@@ -1287,6 +1400,12 @@ jobs:
 
             upload_release_asset "${RELEASE_MANIFEST_PATH}" "application/json" || return 1
             upload_release_asset "release-artifacts/build-checksums.txt" "text/plain" || return 1
+            if [ -f "release-artifacts/inventory.json" ]; then
+              upload_release_asset "release-artifacts/inventory.json" "application/json" || return 1
+            fi
+            if [ -f "release-artifacts/inventoryReconciliation.json" ]; then
+              upload_release_asset "release-artifacts/inventoryReconciliation.json" "application/json" || return 1
+            fi
           }
 
           set +e

@@ -6,7 +6,7 @@
   "private": true,
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "22.22.3"
+    "node": "22.23.2"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -33,6 +33,10 @@
     "sast:baseline": "node ./tools/semgrep-sast.js generate-baseline",
     "sast:dispositions": "node ./tools/semgrep-sast.js seed-dispositions",
     "sast:check": "node ./tools/semgrep-sast.js check",
+    "release:inventory:generate": "node ./tools/releaseInventory.js generate",
+    "release:inventory:verify": "node ./tools/releaseInventory.js verify",
+    "release:inventory:verify:space": "node ./tools/releaseInventory.js verify --scope space",
+    "release:inventory:verify:all": "node ./tools/releaseInventory.js verify --scope all",
     "db:migrate": "sequelize db:migrate && yarn cli:updateMonitoringFactTables && yarn db:ldm",
     "db:migrate:ci": "bin/ci-env sequelize db:migrate && bin/ci-env yarn cli:updateMonitoringFactTables && yarn db:ldm:ci",
     "db:migrate:prod": "sequelize db:migrate --options-path .production.sequelizerc && yarn cli:updateMonitoringFactTables",
@@ -131,6 +135,7 @@
     "@types/ioredis-mock": "^8.2.6",
     "adm-zip": "^0.6.0",
     "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "aws-sdk-client-mock": "^4.1.0",
     "aws4": "^1.11.0",
     "axios": "^1.18.0",
@@ -146,7 +151,7 @@
     "csv-parse": "^4.14.1",
     "csv-stringify": "^5.6.2",
     "deepmerge": "^4.3.1",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "dot-wild": "^3.0.1",
     "dotenv": "^17.4.2",
     "email-templates": "^13.0.1",
@@ -247,6 +252,7 @@
     "axios": "^1.18.0",
     "body-parser": "^1.20.6",
     "brace-expansion": "^2.1.2",
+    "dompurify": "^3.4.13",
     "fast-xml-parser": "^5.7.0",
     "fast-uri": ">=4.1.2",
     "form-data": "^4.0.6",

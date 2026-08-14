@@ -31,6 +31,7 @@ export default function RecipientSpotlightDashboardCards({
   filters,
   userHasOnlyOneRegion,
   loading,
+  onExportCsv,
 }) {
   // Don't render cards while loading to prevent stale data display
   if (loading) {
@@ -47,6 +48,7 @@ export default function RecipientSpotlightDashboardCards({
             perPage={perPage}
             perPageChange={perPageChange}
             count={count}
+            onExportCsv={onExportCsv}
           />
           <div className="usa-table-container--scrollable padding-x-3 padding-y-2 display-flex flex-justify-center">
             <span className="text-base-dark">Loading...</span>
@@ -69,6 +71,7 @@ export default function RecipientSpotlightDashboardCards({
           perPage={perPage}
           perPageChange={perPageChange}
           count={count}
+          onExportCsv={onExportCsv}
         />
         {recipients && recipients.length > 0 ? (
           <>
@@ -155,10 +158,12 @@ RecipientSpotlightDashboardCards.propTypes = {
   ),
   userHasOnlyOneRegion: PropTypes.bool.isRequired,
   loading: PropTypes.bool,
+  onExportCsv: PropTypes.func,
 };
 
 RecipientSpotlightDashboardCards.defaultProps = {
   recipients: [],
   filters: [],
   loading: false,
+  onExportCsv: () => {},
 };

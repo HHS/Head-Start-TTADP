@@ -5,10 +5,13 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.22.3`).
-3. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
-4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
-5. Confirm the tools are available (`task`, `node`, `docker`).
+2. Install Node using the version in `.nvmrc` (`22.23.2`).
+3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
+4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
+5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
+6. Confirm the tools are available (`task`, `node`, `yarn`, `docker`).
+
+> **nvm gotcha:** Global packages (including Yarn) are installed per Node version and do not carry over when you switch versions. If `yarn` reports "command not found" after switching Node versions, reinstall it for the active version with `npm install -g yarn@1.22.22`, or copy globals when installing a new version via `nvm install <version> --reinstall-packages-from=current`.
 
 ### Docker Workflows
 
