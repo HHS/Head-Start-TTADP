@@ -1745,6 +1745,40 @@ export async function activityReportsSubmittedWhereCollaboratorByDate(userId, da
 }
 
 /**
+ * Fetches ActivityReports that were submitted for review by a collaborator (not the
+ * creator) where the given user is the report's creator. Only reports currently in
+ * the submitted state are returned, so reports since approved or sent back for
+ * changes are excluded.
+ *
+ * @param {integer} userId - creator's user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { userId },
+        { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports"
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}' AND
+          dml_by != ${userId})`
+            ),
+          },
+        },
+      ],
+    },
+  });
+  return reports;
+}
+
+/**
  * Fetches ActivityReports that were approved for authors and collaborators
  *
  * @param {integer} userId - user's id

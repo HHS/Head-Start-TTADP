@@ -343,6 +343,102 @@ describe('Activity Report handlers', () => {
       );
       expect(approvalNotification).toHaveBeenCalled();
     });
+    it('notifies author and collaborators on each approver approval, naming the approver', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // not fully approved yet: a second approver is still pending
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // timezone update only happens on full approval
+      expect(updateTimezone).not.toHaveBeenCalled();
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [],
+        'Approver McApproverface'
+      );
+    });
+    it('excludes the acting approver from the approved email collaborator recipients', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const keptCollaborator = { userId: 555, user: { email: 'kept@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [
+          keptCollaborator,
+          // this collaborator is the acting approver and must be excluded
+          { userId: 1, user: { email: 'self@test.gov' } },
+        ],
+        id: 999999,
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [keptCollaborator],
+        'Approver McApproverface'
+      );
+    });
     it('returns the new needs action status', async () => {
       const mockApproverRecord = {
         id: 1,
@@ -1424,6 +1520,95 @@ describe('Activity Report handlers', () => {
           NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
           expect.any(Object)
         );
+      });
+    });
+
+    describe('creator submitted email notification', () => {
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+        author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+      };
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue([]);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: [],
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+      });
+
+      it('emails the creator when they are opted into IMMEDIATELY and a collaborator submits', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(savedReport, {
+          id: 99,
+          name: 'Creator User',
+          email: 'creator@test.gov',
+        });
+      });
+
+      it('does not email the creator when they are not opted into IMMEDIATELY', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
+      });
+
+      it('does not email the creator when the creator submits their own report', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 1, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Creator User' });
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
       });
     });
   });
