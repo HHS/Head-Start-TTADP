@@ -476,6 +476,7 @@ describe('mailer tests', () => {
             report: mockReport,
             authorWithSetting: mockReport.author,
             collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+            approverName: 'Approver McApproverface',
           },
         },
         jsonTransport
@@ -488,8 +489,26 @@ describe('mailer tests', () => {
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Approved`);
-      expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved.`);
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId} has been approved by Approver McApproverface.`
+      );
       expect(message.text).toContain(reportPath);
+    });
+    it('Tests that the body omits the approver name when it is absent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyReportApproved(
+        {
+          data: {
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1],
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved.`);
+      expect(message.text).not.toContain('approved by');
     });
     it('Tests that an email is not sent if no recipients', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';

@@ -57,6 +57,10 @@ export type GetSessionReportsParams = {
   format?: 'json' | 'csv';
 };
 
+export type GetSessionReportsForRecipientParams = GetSessionReportsParams & {
+  recipientId: number | string;
+};
+
 type SessionReportSortSortMapEntryKey =
   | 'id'
   | 'sessionName'
