@@ -2967,16 +2967,12 @@ describe('recipientSpotlight service', () => {
       await db.GrantNumberLink.destroy({ where: { grantNumber: grantNumbers }, force: true });
     });
 
-    it('does not let one region\'s grant status bleed FEI into another region card', async () => {
+    it("does not let one region's grant status bleed FEI into another region card", async () => {
       const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'regionId',
-        'ASC',
-        0,
-        10,
-        [REGION_1, REGION_2]
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'ASC', 0, 10, [
+        REGION_1,
+        REGION_2,
+      ]);
 
       const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
       expect(result.recipients.length).toBe(2);
@@ -2985,16 +2981,12 @@ describe('recipientSpotlight service', () => {
       expect(byRegion[REGION_2].FEI).toBe(false);
     });
 
-    it('computes new recipient per region using only that region\'s grants', async () => {
+    it("computes new recipient per region using only that region's grants", async () => {
       const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'regionId',
-        'ASC',
-        0,
-        10,
-        [REGION_1, REGION_2]
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'ASC', 0, 10, [
+        REGION_1,
+        REGION_2,
+      ]);
 
       const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
       // Region 1's only grant started 2 years ago -> new recipient.

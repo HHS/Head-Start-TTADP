@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
-import httpContext from 'express-http-context';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import httpContext from 'express-http-context';
 import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
@@ -40,9 +40,9 @@ import {
   activityReportsSubmittedByDate,
   activityReportsWhereCollaboratorByDate,
   batchQuery,
+  cleanupOrphanedObjectivesAndAROs,
   createOrUpdate,
   formatResources,
-  cleanupOrphanedObjectivesAndAROs,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
@@ -2726,12 +2726,7 @@ describe('Activity report service', () => {
     });
 
     afterAll(async () => {
-      const objectiveIds = [
-        objOnlyOnDeleted.id,
-        objShared.id,
-        objRtr.id,
-        objTwoDeleted.id,
-      ];
+      const objectiveIds = [objOnlyOnDeleted.id, objShared.id, objRtr.id, objTwoDeleted.id];
       const reportIds = [deletedReport.id, liveReport.id, otherDeletedReport.id];
       await ActivityReportObjectiveTopic.destroy({
         where: { topicId: topic.id },
@@ -2889,12 +2884,9 @@ describe('Activity report service', () => {
       // Corrupt the cached flags so they contradict the actual table state.
       await Objective.update(
         { onApprovedAR: true, onAR: true },
-        { where: { id: staleOrphan.id }, hooks: false },
+        { where: { id: staleOrphan.id }, hooks: false }
       );
-      await Objective.update(
-        { onAR: false },
-        { where: { id: staleShared.id }, hooks: false },
-      );
+      await Objective.update({ onAR: false }, { where: { id: staleShared.id }, hooks: false });
 
       await cleanupOrphanedObjectivesAndAROs(staleDeletedReport.id);
 
@@ -2944,4 +2936,3 @@ describe('Activity report service', () => {
     });
   });
 });
-

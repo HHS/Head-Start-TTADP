@@ -175,6 +175,7 @@ describe('buildCmsApprovedCiVersions', () => {
     const manifest = exported.configurationItems.find(
       (item) => item.id === 'configuration.manifest'
     );
+    const pmp = exported.configurationItems.find((item) => item.id === 'program.pmp');
 
     expect(exported.exportType).toBe('cmsApprovedCiVersions');
     expect(exported.source).toEqual({
@@ -205,6 +206,23 @@ describe('buildCmsApprovedCiVersions', () => {
     );
     expect(database).not.toHaveProperty('approval');
     expect(manifest.approvedVersion).toMatch(/^[a-f0-9]{64}$/);
+    expect(pmp).toEqual(
+      expect.objectContaining({
+        name: 'TTA Hub Project Management Plan',
+        class: 'programmaticConfigurationItem',
+        tier: 'attested',
+        approvedVersion: '2.4',
+        owner: 'TTA Hub Configuration Management',
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        environment: 'prod',
+      })
+    );
+    expect(pmp.locator).toEqual({
+      type: 'cmsDocument',
+      value:
+        'https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15',
+    });
   });
 
   it('renders a CSV export with the same required CMS fields', () => {
@@ -931,6 +949,81 @@ describe('schemaErrors', () => {
 
     expect(errors).toEqual(
       expect.arrayContaining([expect.stringMatching(/must have required property 'sha256'/)])
+    );
+  });
+
+  it('rejects a CMS document component without an approved version', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'program.pmp',
+          class: 'programmaticConfigurationItem',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'attested',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    const errors = schemaErrors(inventorySchema, invalid, 'inventory.json');
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/must have required property 'approvedVersion'/),
+      ])
+    );
+  });
+
+  it('rejects a CMS document component marked as reconciled', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'program.pmp',
+          class: 'programmaticConfigurationItem',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'reconciled',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          approvedVersion: '2.4',
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    expect(schemaErrors(inventorySchema, invalid, 'inventory.json')).toEqual(
+      expect.arrayContaining([expect.stringMatching(/tier.*must be equal to constant/)])
+    );
+  });
+
+  it('rejects a CMS document component outside the programmatic CI class', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'integration.pmp',
+          class: 'externalIntegration',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'attested',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          approvedVersion: '2.4',
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    expect(schemaErrors(inventorySchema, invalid, 'inventory.json')).toEqual(
+      expect.arrayContaining([expect.stringMatching(/class.*must be equal to constant/)])
     );
   });
 
