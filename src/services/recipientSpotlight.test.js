@@ -2886,4 +2886,122 @@ describe('recipientSpotlight service', () => {
       expect(regions).toEqual([REGION_1, REGION_2]);
     });
   });
+
+  describe('indicators are scoped to the recipient+region level', () => {
+    const REGION_1 = 1;
+    const REGION_2 = 2;
+    const fiveYearsAgo = new Date();
+    fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+    const grantNumbers = ['G-SCOPE-R1', 'G-SCOPE-R2'];
+    let multiRegionRecipient;
+    let scopeGrantR1;
+    let scopeGrantR2;
+
+    const createScopesForRecipientRegions = (recipientId, regions) => ({
+      grant: {
+        where: {
+          [db.Sequelize.Op.and]: [
+            { id: { [db.Sequelize.Op.ne]: null } },
+            { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
+            { regionId: { [db.Sequelize.Op.in]: regions } },
+          ],
+        },
+        include: [],
+      },
+    });
+
+    beforeAll(async () => {
+      // Clean up leftover data from previous failed runs
+      const leftover = await Grant.findAll({ where: { number: grantNumbers }, raw: true });
+      if (leftover.length > 0) {
+        const ids = leftover.map((g) => g.id);
+        const recipIds = [...new Set(leftover.map((g) => g.recipientId))];
+        await Grant.destroy({ where: { id: ids }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: recipIds }, force: true });
+      }
+
+      await db.GrantNumberLink.bulkCreate(
+        grantNumbers.map((grantNumber) => ({ grantNumber })),
+        { ignoreDuplicates: true }
+      );
+
+      multiRegionRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 50001, max: 59999 })),
+        name: 'Region Scoped Recipient',
+      });
+
+      // Region 1 grant: FEI initiative status + recently started (new recipient)
+      scopeGrantR1 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 50001, max: 59999 })),
+        number: grantNumbers[0],
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_1,
+        status: 'Active',
+        startDate: twoYearsAgo,
+        feiHsStatus: 'Notified of 12 Month Period',
+      });
+
+      // Region 2 grant: not in FEI + started long ago (not a new recipient)
+      scopeGrantR2 = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 50001, max: 59999 })),
+        number: grantNumbers[1],
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_2,
+        status: 'Active',
+        startDate: fiveYearsAgo,
+        feiHsStatus: 'Fully Enrolled',
+      });
+    });
+
+    afterAll(async () => {
+      const grantIds = [scopeGrantR1?.id, scopeGrantR2?.id].filter(Boolean);
+      if (grantIds.length > 0) {
+        await Grant.destroy({ where: { id: grantIds }, force: true, individualHooks: true });
+      }
+      if (multiRegionRecipient?.id) {
+        await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
+      }
+      await db.GrantNumberLink.destroy({ where: { grantNumber: grantNumbers }, force: true });
+    });
+
+    it('does not let one region\'s grant status bleed FEI into another region card', async () => {
+      const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'regionId',
+        'ASC',
+        0,
+        10,
+        [REGION_1, REGION_2]
+      );
+
+      const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
+      expect(result.recipients.length).toBe(2);
+      // Region 1 grant is in FEI; region 2 grant is not.
+      expect(byRegion[REGION_1].FEI).toBe(true);
+      expect(byRegion[REGION_2].FEI).toBe(false);
+    });
+
+    it('computes new recipient per region using only that region\'s grants', async () => {
+      const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
+      const result = await getRecipientSpotlightIndicators(
+        scopes,
+        'regionId',
+        'ASC',
+        0,
+        10,
+        [REGION_1, REGION_2]
+      );
+
+      const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
+      // Region 1's only grant started 2 years ago -> new recipient.
+      expect(byRegion[REGION_1].newRecipients).toBe(true);
+      // Region 2's only grant started 5 years ago -> not a new recipient,
+      // even though the recipient has a newer grant in region 1.
+      expect(byRegion[REGION_2].newRecipients).toBe(false);
+    });
+  });
 });
