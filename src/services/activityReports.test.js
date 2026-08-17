@@ -1672,10 +1672,13 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
+        await ActivityReportCollaborator.destroy({
+          where: { userId: digestMockCollabOne.id },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await User.destroy({ where: { id: digestMockCollabOne.id }, force: true });
+        await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('retrieves activity reports in DRAFT when added as a collaborator', async () => {
         const report = await ActivityReport.create({
@@ -1820,10 +1823,13 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
+        await ActivityReportCollaborator.destroy({
+          where: { userId: digestMockCollabOne.id },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await User.destroy({ where: { id: digestMockCollabOne.id }, force: true });
+        await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
         const report = await ActivityReport.create({
@@ -2007,8 +2013,8 @@ describe('Activity report service', () => {
           force: true,
         });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockApprover.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await User.destroy({ where: { id: digestMockApprover.id }, force: true });
+        await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('does not retrieve activity reports in DRAFT when submitted', async () => {
         const report = await ActivityReport.create(submittedReport);
@@ -2145,8 +2151,19 @@ describe('Activity report service', () => {
     });
 
     describe('activityReportsApprovedByDate', () => {
+      const approvedDigestApprover = {
+        id: 21161530,
+        homeRegionId: 1,
+        name: 'approved-digest-approver',
+        hsesUserId: 'approved-digest-approver',
+        hsesUsername: 'approved-digest-approver',
+        role: [],
+        lastLogin: new Date(),
+      };
+
       beforeEach(async () => {
         await User.create(digestMockCollabOne, { validate: false }, { individualHooks: false });
+        await User.create(approvedDigestApprover, { validate: false }, { individualHooks: false });
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
@@ -2154,9 +2171,14 @@ describe('Activity report service', () => {
           where: { userId: digestMockCollabOne.id },
           force: true,
         });
+        await ActivityReportApprover.destroy({
+          where: { userId: approvedDigestApprover.id },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await User.destroy({ where: { id: digestMockCollabOne.id }, force: true });
+        await User.destroy({ where: { id: approvedDigestApprover.id }, force: true });
+        await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('does not retrieve activity reports in DRAFT when approved', async () => {
         const report = await ActivityReport.create({
@@ -2329,6 +2351,68 @@ describe('Activity report service', () => {
         );
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
+      });
+
+      it('retrieves approved activity reports for an assigned approver', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Before adding as approver, should not appear.
+        const empty = await activityReportsApprovedByDate(
+          approvedDigestApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(empty.length).toBe(0);
+
+        // Add as approver with APPROVED status so the report stays APPROVED.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: approvedDigestApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsApprovedByDate(
+          approvedDigestApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeDefined();
+        expect(dailyDigestReport.id).toBe(report.id);
+
+        const [weeklyDigestReport] = await activityReportsApprovedByDate(
+          approvedDigestApprover.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
+        expect(weeklyDigestReport).toBeDefined();
+        expect(weeklyDigestReport.id).toBe(report.id);
+
+        const [monthlyDigestReport] = await activityReportsApprovedByDate(
+          approvedDigestApprover.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
+        expect(monthlyDigestReport).toBeDefined();
+        expect(monthlyDigestReport.id).toBe(report.id);
+
+        // Draft/submitted reports should not appear for approvers.
+        const draftReport = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        });
+        await ActivityReportApprover.create({
+          activityReportId: draftReport.id,
+          userId: approvedDigestApprover.id,
+        });
+        const approverResults = await activityReportsApprovedByDate(
+          approvedDigestApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(approverResults.every((r) => r.id !== draftReport.id)).toBe(true);
+        await ActivityReportApprover.destroy({
+          where: { activityReportId: draftReport.id, userId: approvedDigestApprover.id },
+          force: true,
+        });
+        await ActivityReport.destroy({ where: { id: draftReport.id } });
       });
     });
   });

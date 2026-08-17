@@ -10,6 +10,7 @@ import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
 import orderReportsBy from '../lib/orderReportsBy';
+import { safeParseInt } from '../lib/safeParse';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import {
@@ -1785,6 +1786,12 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
+  const safeUserId = safeParseInt(userId);
+
+  if (!safeUserId) {
+    throw new Error('Invalid userId provided');
+  }
+
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1792,8 +1799,18 @@ export async function activityReportsApprovedByDate(userId, date) {
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
-        userId && {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        safeUserId && {
+          [Op.or]: [
+            { userId: sequelize.escape(safeUserId) },
+            { '$activityReportCollaborators.userId$': sequelize.escape(safeUserId) },
+            {
+              id: {
+                [Op.in]: sequelize.literal(
+                  `(SELECT "activityReportId" FROM "ActivityReportApprovers" WHERE "userId" = ${sequelize.escape(safeUserId)} AND "deletedAt" IS NULL)`
+                ),
+              },
+            },
+          ],
         },
         {
           id: {
