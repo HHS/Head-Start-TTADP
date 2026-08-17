@@ -68,13 +68,13 @@ export default async function filtersToScopes(filters, options = {}) {
     validTopics = await getValidTopicsSet();
   }
 
-  return Object.keys(models).reduce((scopes, model) => {
-    // we make em an object like so
-    Object.assign(scopes, {
-      [model]: models[model](filters, options[model], options.userId, validTopics),
-    });
-    return scopes;
-  }, {});
+  const entries = await Promise.all(
+    Object.keys(models).map(async (model) => [
+      model,
+      await models[model](filters, options[model], options.userId, validTopics),
+    ])
+  );
+  return Object.fromEntries(entries);
 }
 
 /**

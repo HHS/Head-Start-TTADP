@@ -752,6 +752,11 @@ components:
         - outcome
         - lastTTADate
         - specialists
+    monitoringFindingCategoriesResponse:
+      type: array
+      description: Alphabetically sorted monitoring finding category names.
+      items:
+        type: string
 
   parameters:
     reportId.in:
