@@ -1,7 +1,8 @@
 import { CronJob } from 'cron';
 import { auditLogger, logger } from '../logger';
+import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
-import { lastDayOfMonth, runCronJobs } from './cron';
+import { dailyNightSched, lastDayOfMonth, runCronJobs } from './cron';
 import { DIGEST_CONFIG, digestForSetting, recipientApprovedDigest } from './mailer';
 import updateGrantsRecipients from './updateGrantsRecipients';
 
@@ -25,6 +26,9 @@ jest.mock('../logger', () => ({
 
 jest.mock('./updateGrantsRecipients');
 jest.mock('../tools/dbMaintenance');
+jest.mock('../services/notifications', () => ({
+  deleteExpiredArchivedNotifications: jest.fn(),
+}));
 jest.mock('./mailer', () => ({
   DIGEST_CONFIG: {
     collaboratorAction: {
@@ -132,7 +136,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(4);
+      expect(CronJob).toHaveBeenCalledTimes(5);
     });
 
     it('starts all cron jobs in production on instance 0 non-cloud.gov', () => {
@@ -142,7 +146,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(5);
+      expect(CronJob).toHaveBeenCalledTimes(6);
     });
 
     it('runs the updateGrantsRecipients job on schedule', () => {
@@ -275,6 +279,36 @@ describe('cron', () => {
       expect(deleteOldRecords).toHaveBeenCalled();
     });
 
+    it('schedules the notification cleanup job on the nightly cron and starts it', () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+
+      runCronJobs();
+      const job = getScheduledJob('runNotificationCleanupJob');
+
+      expect(job.schedule).toBe(dailyNightSched);
+      expect(job.start).toHaveBeenCalled();
+    });
+
+    it('runs the notification cleanup job on schedule', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      deleteExpiredArchivedNotifications.mockResolvedValueOnce(5);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runNotificationCleanupJob');
+
+      await jobFunction();
+
+      expect(logger.info).toHaveBeenCalledWith('Starting expired archived notification cleanup');
+      expect(deleteExpiredArchivedNotifications).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(
+        'Completed expired archived notification cleanup (5 deleted)'
+      );
+    });
+
     it('logs audit log cleanup errors with normalized messages and stack details', async () => {
       process.env.CF_INSTANCE_INDEX = '0';
       process.env.NODE_ENV = 'production';
@@ -291,6 +325,27 @@ describe('cron', () => {
         'Error processing Audit Log Cleanup job: cleanup failed'
       );
       expect(logger.error).toHaveBeenCalledWith('Audit Log Cleanup Error: cleanup failed');
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
+    });
+
+    it('logs notification cleanup errors without throwing', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      const error = new Error('notification cleanup failed');
+      deleteExpiredArchivedNotifications.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runNotificationCleanupJob');
+
+      await expect(jobFunction()).resolves.toBeUndefined();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Notification Cleanup job: notification cleanup failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        'Notification Cleanup Error: notification cleanup failed'
+      );
       expect(logger.error).toHaveBeenCalledWith(error.stack);
     });
 
