@@ -205,6 +205,7 @@ const EMAIL_ACTIONS = {
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'collaboratorReportSubmittedForReviewDigest',
   CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
+  CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'creatorReportSubmittedForReviewDigest',
   COLLAB_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollabReportSubmittedForReview',
   COLLABORATION_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaborationReportSubmittedForReview',
   COLLABORATION_REPORT_COLLABORATOR_SUBMITTED: 'emailWhenCollaborationReportCollaboratorSubmitted',

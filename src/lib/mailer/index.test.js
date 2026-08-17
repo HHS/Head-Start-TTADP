@@ -20,6 +20,8 @@ import {
   collaboratorDigest,
   collaboratorReportSubmittedForReviewDigest,
   collaboratorReportSubmittedForReviewNotification,
+  creatorReportSubmittedForReviewDigest,
+  creatorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
@@ -29,6 +31,7 @@ import {
   notifyChangesRequested,
   notifyCollaboratorAssigned,
   notifyCollaboratorReportSubmittedForReview,
+  notifyCreatorReportSubmittedForReview,
   notifyDigest,
   notifyRecipientReportApproved,
   notifyReportApproved,
@@ -737,6 +740,60 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Creator: Report submitted for approval', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockAuthor.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId}, which you created, has been submitted for approval.`
+      );
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('Returns null if there are no toEmails', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: { email: null } },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('enqueues one job for the creator', () => {
+      jest.spyOn(notificationQueueMock, 'add').mockClear();
+      creatorReportSubmittedForReviewNotification(mockReport, mockAuthor);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, creator: mockAuthor })
+      );
+    });
+  });
+
   describe('sendEmailVerificationRequestWithToken', () => {
     it('returns null if there are no emails to verify', async () => {
       const email = await sendEmailVerificationRequestWithToken(
@@ -1398,6 +1455,116 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Collaborator report submitted for review digest', () => {
+    it('renders the populated digest with the correct subject and report list', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [mockReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${WEEKLY} digest: Activity Reports submitted for approval`
+      );
+      expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
+      expect(message.text).toContain('Below are your report notifications for this week.');
+      expect(message.text).toContain(
+        'The following Activity Reports, on which you are a collaborator, have been submitted for approval:'
+      );
+      expect(message.text).toContain(`* ${mockReport.displayId}`);
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('renders the empty digest with the correct subject and no reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${WEEKLY} digest: no new reports submitted for approval`
+      );
+      expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
+      expect(message.text).toContain(
+        'No Activity Reports on which you are a collaborator have been submitted for approval this week.'
+      );
+      expect(message.text).not.toContain(reportPath);
+    });
+  });
+
+  describe('Creator report submitted for review digest', () => {
+    it('renders the populated digest with the correct subject and report list', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [mockReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${DAILY} digest: Activity Reports submitted for approval`
+      );
+      expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
+      expect(message.text).toContain('Below are your report notifications for today.');
+      expect(message.text).toContain(
+        'The following Activity Reports, on which you are a creator, have been submitted for approval:'
+      );
+      expect(message.text).toContain(`* ${mockReport.displayId}`);
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('renders the empty digest with the correct subject and no reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${DAILY} digest: no new reports submitted for approval`
+      );
+      expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
+      expect(message.text).toContain(
+        'No Activity Reports on which you are a creator have been submitted for approval today.'
+      );
+      expect(message.text).not.toContain(reportPath);
+    });
+  });
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1462,9 +1629,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 5 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 6 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(5);
+        expect(entries).toHaveLength(6);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -1771,6 +1938,42 @@ describe('mailer tests', () => {
 
     it('"collaborator report submitted for review" digest which logs on bad date', async () => {
       await expect(collaboratorReportSubmittedForReviewDigest('')).rejects.toThrow();
+    });
+
+    it('"creator report submitted for review" digest on the notificationDigestQueue', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.resolve([{ id: mockUser.id }]));
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      const result = await creatorReportSubmittedForReviewDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"creator report submitted for review" digest excludes reports since approved', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.resolve([{ id: mockUser.id }]));
+      await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      });
+
+      const result = await creatorReportSubmittedForReviewDigest('today');
+      expect(result[0].reports.length).toBe(0);
+    });
+
+    it('"creator report submitted for review" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something went wrong')));
+      await expect(creatorReportSubmittedForReviewDigest('this month')).rejects.toThrow();
+    });
+
+    it('"creator report submitted for review" digest which logs on bad date', async () => {
+      await expect(creatorReportSubmittedForReviewDigest('')).rejects.toThrow();
     });
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {

@@ -16,6 +16,7 @@ import {
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsSubmittedWhereCollaboratorByDate,
+  activityReportsSubmittedWhereCreatorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
@@ -388,6 +389,39 @@ export const collaboratorReportSubmittedForReviewNotification = (report, collabo
   });
 };
 
+/**
+ * Process function for creatorReportSubmittedForReview jobs added to notification queue.
+ * Sends email to the report creator when a collaborator submits the report for approval.
+ */
+export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, creator } = job.data;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${creator.email} that report ${displayId} was submitted for approval`
+  );
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([creator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${creator.email} that report ${displayId} was submitted for approval`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'creator_report_submitted_for_review'),
+      message: { to: toEmails },
+      locals: { reportPath, displayId },
+    });
+  });
+};
+
+export const creatorReportSubmittedForReviewNotification = (report, creator) => {
+  enqueueNotification(EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, {
+    report,
+    creator,
+  });
+};
+
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
@@ -704,6 +738,12 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
     logKey: 'CollaboratorReportSubmittedForReviewDigest',
   },
+  [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedWhereCreatorByDate,
+    actionType: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+    logKey: 'CreatorReportSubmittedForReviewDigest',
+  },
 };
 
 export async function digestForSetting({
@@ -804,6 +844,22 @@ export async function approvedDigest(freq, subjectFreq) {
 export async function collaboratorReportSubmittedForReviewDigest(freq, subjectFreq) {
   return digestForSetting({
     ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
+    freq,
+    subjectFreq,
+  });
+}
+
+/**
+ * Finds users subscribed to the creator-report-submitted-for-review digest.
+ * For each user retrieves reports where they are the creator and a collaborator
+ * (not the creator) submitted the report for approval within the given timeframe.
+ *
+ * @param {String} freq - frequency of the digests (daily/weekly/monthly)
+ *
+ */
+export async function creatorReportSubmittedForReviewDigest(freq, subjectFreq) {
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
     freq,
     subjectFreq,
   });
@@ -1161,6 +1217,7 @@ export const processNotificationQueue = () => {
       EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
       notifyCollaboratorReportSubmittedForReview,
     ],
+    [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, notifyCreatorReportSubmittedForReview],
   ];
   instantProcessors.forEach(([action, handler]) => {
     notificationQueue.process(action, transactionQueueWrapper(handler, action));
