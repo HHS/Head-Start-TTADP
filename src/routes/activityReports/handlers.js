@@ -53,6 +53,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createReportApprovedNotification,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -565,6 +566,17 @@ export async function reviewReport(req, res) {
         collabsWithSettings,
         // approvers, minus the approver whose review triggered this workflow
         approversWithSettings.filter((a) => a.user.id !== userId)
+      );
+    }
+
+    if (status === REPORT_STATUSES.APPROVED) {
+      await createReportApprovedNotification(
+        reviewedReport.author.id,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
       );
     }
 

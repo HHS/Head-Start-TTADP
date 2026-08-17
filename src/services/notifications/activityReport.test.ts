@@ -6,6 +6,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createReportApprovedNotification,
 } from './activityReport';
 
 jest.mock('./index', () => ({
@@ -178,6 +179,38 @@ describe('activityReport notification helpers', () => {
           },
         }
       );
+    });
+  });
+
+  describe('createReportApprovedNotification', () => {
+    it('calls createNotification once with the ACTIVITY_REPORT_APPROVED type', async () => {
+      await createReportApprovedNotification(42, reportBase, 'Approver Name');
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        42,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createReportApprovedNotification(
+        42,
+        { ...reportBase, activityRecipients: [] },
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
     });
   });
 
