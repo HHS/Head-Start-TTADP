@@ -10,6 +10,10 @@ case type
         p No reports have been approved #{freq}.
     when 'recipientReportApprovedDigest'
         p No reports have been approved #{freq}.
+    when 'collaboratorReportSubmittedForReviewDigest'
+        p No Activity Reports on which you are a collaborator have been submitted for approval #{freq}.
+    when 'creatorReportSubmittedForReviewDigest'
+        p No Activity Reports on which you are a creator have been submitted for approval #{freq}.
     default
         p
 p Best wishes,

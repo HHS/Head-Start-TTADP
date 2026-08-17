@@ -9,5 +9,9 @@ case type
         = `TTA Hub ${subjectFreq} digest: no new approved reports`
     when 'recipientReportApprovedDigest'
         = `TTA Hub ${subjectFreq} digest: no new approved reports`
+    when 'collaboratorReportSubmittedForReviewDigest'
+        = `TTA Hub ${subjectFreq} digest: no new reports submitted for approval`
+    when 'creatorReportSubmittedForReviewDigest'
+        = `TTA Hub ${subjectFreq} digest: no new reports submitted for approval`
     default
         = `TTA Hub digest: ${type}`
