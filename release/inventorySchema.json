@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/HHS/Head-Start-TTADP/release/inventorySchema.json",
+  "title": "TTA Hub declared release inventory",
+  "description": "Approved set of components a TTA Hub release is authorized to contain, as established by ADR 0029. Reconciliation compares this declaration against the observed release and the live cloud.gov space.",
+  "type": "object",
+  "required": ["schemaVersion", "space", "components"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "space": {
+      "type": "object",
+      "description": "The cloud.gov space that live reconciliation targets. Production only, per ADR 0029.",
+      "required": ["org", "name", "environment"],
+      "additionalProperties": false,
+      "properties": {
+        "org": { "type": "string" },
+        "name": { "type": "string" },
+        "environment": { "type": "string" }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/component" }
+    }
+  },
+  "definitions": {
+    "component": {
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "locator": {
+                "properties": { "type": { "const": "repositoryFile" } },
+                "required": ["type"]
+              }
+            },
+            "required": ["locator"]
+          },
+          "then": { "required": ["sha256"] }
+        }
+      ],
+      "required": [
+        "id",
+        "class",
+        "name",
+        "description",
+        "owner",
+        "tier",
+        "locator",
+        "authorization"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier. Never reused for a different component.",
+          "pattern": "^[a-z][a-zA-Z0-9]*(\\.[a-z][a-zA-Z0-9]*)+$"
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "application",
+            "process",
+            "service",
+            "route",
+            "configurationArtifact",
+            "dependencyBoundary",
+            "platformRuntime",
+            "externalIntegration"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Component name as the platform or repository reports it. May contain the ((env)) token, which is substituted before comparison."
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "owner": {
+          "type": "string",
+          "description": "Accountable owner. A team or role, not an individual."
+        },
+        "tier": {
+          "type": "string",
+          "description": "reconciled components are compared automatically and can fail the gate. attested components have no reliable machine observation and are confirmed during periodic review.",
+          "enum": ["reconciled", "attested"]
+        },
+        "locator": { "$ref": "#/definitions/locator" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Expected SHA-256 content digest. Required for repositoryFile components and compared with the file observed in the working tree or release tag."
+        },
+        "authorization": { "$ref": "#/definitions/authorization" },
+        "boundAppName": {
+          "type": "string",
+          "description": "For service and route components, the application the platform reports it attached to. Absent means intentionally unattached."
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "locator": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "cloudFoundryApp",
+            "cloudFoundryProcess",
+            "cloudFoundryService",
+            "cloudFoundryRoute",
+            "cloudFoundryStack",
+            "cloudFoundryBuildpack",
+            "repositoryFile",
+            "externalEndpoint"
+          ]
+        },
+        "value": { "type": "string", "minLength": 1 },
+        "servicePlan": {
+          "type": "string",
+          "description": "For cloudFoundryService, the plan the platform reports. Compared during reconciliation because a plan change alters the authorized shape."
+        },
+        "serviceOffering": { "type": "string" },
+        "processInstances": { "type": "integer", "minimum": 0 },
+        "pinned": {
+          "type": "boolean",
+          "description": "False records a component whose version is not pinned at its source. See ADR 0029 on the buildpack gap."
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "description": "What authorizes this component. A component without a resolvable authorization reference is not a documented item.",
+      "required": ["type", "reference"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "none" } },
+            "required": ["type"]
+          },
+          "then": { "properties": { "reference": { "const": "none" } } },
+          "else": { "properties": { "reference": { "not": { "const": "none" } } } }
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "adr",
+            "jira",
+            "atoArtifact",
+            "boundaryDiagram",
+            "repositoryConfiguration",
+            "none"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Resolvable locator: a repository path, a JIRA key, or an ATO artifact identifier. Type none requires the literal string 'none' and a disposition; other authorization types may not use that value."
+        },
+        "note": { "type": "string" },
+        "approval": { "$ref": "#/definitions/approval" }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "description": "Structured approval evidence, matching the model ADR 0027 defines for the security findings register.",
+      "required": ["approverRole", "approver", "approvalDate", "decision"],
+      "additionalProperties": false,
+      "properties": {
+        "sourceSystem": { "type": "string" },
+        "record": { "type": "string" },
+        "approverRole": { "type": "string" },
+        "approver": { "type": "string" },
+        "approvalDate": { "type": "string", "format": "date" },
+        "decision": { "type": "string" }
+      }
+    }
+  }
+}
