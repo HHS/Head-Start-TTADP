@@ -56,6 +56,8 @@
   $ref: './monitoring/tta-citation.yaml'
 '/monitoring/{recipientId}/region/{regionId}/tta/review':
   $ref: './monitoring/tta-review.yaml'
+'/monitoring/finding-categories':
+  $ref: './monitoring/finding-categories.yaml'
 '/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':

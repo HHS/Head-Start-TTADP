@@ -1,3 +1,8 @@
+/* Fix to filter pill spacing on details page */
+.ttahub-compliant-follow-ups-table .filter-pill:not(:last-child) {
+  margin-right: 8px;
+}
+
 /* Align sort indicators with the bottom line of both single- and multi-line labels. */
 .ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget
   .usa-table

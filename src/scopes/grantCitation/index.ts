@@ -1,5 +1,6 @@
 import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
+import { withFindingCategory, withoutFindingCategory } from './findingCategory';
 import { withFindingType, withoutFindingType } from './findingType';
 import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
 import { withoutRegion, withRegion } from './regionId';
@@ -22,6 +23,10 @@ export const topicToQuery = {
     in: (query: string[]) => withFindingType(query),
     nin: (query: string[]) => withoutFindingType(query),
   },
+  findingCategory: {
+    in: (query: string[]) => withFindingCategory(query),
+    nin: (query: string[]) => withoutFindingCategory(query),
+  },
   programSpecialist: {
     ctn: (query: string[]) => withProgramSpecialist(query),
     nctn: (query: string[]) => withoutProgramSpecialist(query),
@@ -37,6 +42,7 @@ export const topicToQuery = {
   },
 };
 
-export function grantCitationFiltersToScopes(filters, options, userId, validTopics) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+export async function grantCitationFiltersToScopes(filters, options, userId, validTopics) {
+  const scopes = createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+  return Promise.all(scopes);
 }
