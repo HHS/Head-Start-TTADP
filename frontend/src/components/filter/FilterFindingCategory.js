@@ -5,12 +5,7 @@ import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
 export default function FilterFindingCategory({ onApply, inputId, query }) {
-  const { data } = useFetch(
-    [],
-getFindingCategories,
-    [],
-    'Error fetching finding categories'
-  );
+  const { data } = useFetch([], getFindingCategories, [], 'Error fetching finding categories');
 
   return (
     <FilterSelect

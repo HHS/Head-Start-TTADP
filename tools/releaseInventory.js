@@ -638,6 +638,10 @@ function locatorVersion(component, environment) {
   const locator = component.locator || {};
   const value = locator.value ? substituteEnv(locator.value, environment) : null;
 
+  if (locator.type === 'cmsDocument') {
+    return component.approvedVersion || value;
+  }
+
   if (locator.type === 'repositoryFile') {
     return component.sha256 || null;
   }
@@ -651,7 +655,7 @@ function locatorVersion(component, environment) {
   }
 
   if (locator.type === 'cloudFoundryBuildpack') {
-    return locator.value;
+    return value;
   }
 
   return value;
@@ -715,7 +719,12 @@ function csvCell(value) {
     return '';
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value);
+
+  // Guard against spreadsheet formula injection when opened in Excel/Sheets.
+  if (/^[=+\-@]/.test(stringValue)) {
+    stringValue = `'${stringValue}`;
+  }
 
   if (/[",\n\r]/.test(stringValue)) {
     return `"${stringValue.replace(/"/g, '""')}"`;

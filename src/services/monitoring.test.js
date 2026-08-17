@@ -1,6 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import db from '../models';
-import { classScore, getFindingCategories, monitoringData, ttaByCitations, ttaByReviews } from './monitoring';
+import {
+  classScore,
+  getFindingCategories,
+  monitoringData,
+  ttaByCitations,
+  ttaByReviews,
+} from './monitoring';
 
 const { Grant, GrantNumberLink, DeliveredReview, GrantDeliveredReview, FindingCategory } = db;
 
@@ -271,7 +277,7 @@ describe('monitoring services', () => {
 
     beforeAll(async () => {
       createdCategories = await Promise.all(
-        categoryNames.map((name) => FindingCategory.create({ name })),
+        categoryNames.map((name) => FindingCategory.create({ name }))
       );
     });
 
