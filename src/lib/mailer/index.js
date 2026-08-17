@@ -236,7 +236,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
   const addresses = [];
-  const { report, authorWithSetting, collabsWithSettings } = job.data;
+  const { report, authorWithSetting, collabsWithSettings = [], approverName } = job.data;
   const { id, displayId } = report;
   logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
   const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
@@ -257,6 +257,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
       locals: {
         reportPath,
         displayId,
+        approverName,
       },
     })
   );
@@ -407,8 +408,18 @@ export const approverAssignedNotification = (report, newApprovers) => {
   });
 };
 
-export const reportApprovedNotification = (report, authorWithSetting, collabsWithSettings) => {
-  enqueueNotification(EMAIL_ACTIONS.APPROVED, { report, authorWithSetting, collabsWithSettings });
+export const reportApprovedNotification = (
+  report,
+  authorWithSetting,
+  collabsWithSettings,
+  approverName
+) => {
+  enqueueNotification(EMAIL_ACTIONS.APPROVED, {
+    report,
+    authorWithSetting,
+    collabsWithSettings,
+    approverName,
+  });
 };
 
 /**
