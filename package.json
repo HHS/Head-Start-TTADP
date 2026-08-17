@@ -37,6 +37,7 @@
     "release:inventory:verify": "node ./tools/releaseInventory.js verify",
     "release:inventory:verify:space": "node ./tools/releaseInventory.js verify --scope space",
     "release:inventory:verify:all": "node ./tools/releaseInventory.js verify --scope all",
+    "release:inventory:cms-export": "node ./tools/releaseInventory.js cms-export --csv-out release-artifacts/cmsApprovedCiVersions.csv",
     "db:migrate": "sequelize db:migrate && yarn cli:updateMonitoringFactTables && yarn db:ldm",
     "db:migrate:ci": "bin/ci-env sequelize db:migrate && bin/ci-env yarn cli:updateMonitoringFactTables && yarn db:ldm:ci",
     "db:migrate:prod": "sequelize db:migrate --options-path .production.sequelizerc && yarn cli:updateMonitoringFactTables",
