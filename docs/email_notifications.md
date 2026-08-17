@@ -138,6 +138,7 @@ Triggered synchronously by an application event, processed once per job.
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
+| `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `creatorReportSubmittedForReviewNotification` | `notifyCreatorReportSubmittedForReview` | `creator_report_submitted_for_review` |
 
 All instant handlers share the same shape:
 
@@ -163,6 +164,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `SUBMITTED_FOR_REVIEW` | `SUBMITTED_DIGEST` | `emailWhenReportSubmittedForReview` |
 | `APPROVAL` | `APPROVED_DIGEST` | `emailWhenReportApproval` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
+| `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
 
