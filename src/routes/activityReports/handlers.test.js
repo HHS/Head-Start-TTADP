@@ -1355,6 +1355,64 @@ describe('Activity Report handlers', () => {
         expect(createNotification).toHaveBeenCalledTimes(2);
       });
 
+      it('excludes the submitting approver (userId 1) from approver email recipients', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // Only the non-submitting approver receives the email
+        expect(assignedNotification).toHaveBeenCalledWith(
+          savedReport,
+          [approversIncludingSubmitter[0]],
+          false
+        );
+      });
+
+      it('excludes the submitting approver (userId 1) from in-app submitted notifications', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // In-app notification only fires for the non-submitting approver
+        expect(createNotification).toHaveBeenCalledTimes(1);
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          1,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+      });
+
       it('marks approver email as a resubmission when the report was previously needs_action', async () => {
         userSettingOverridesById.mockResolvedValue({
           value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,

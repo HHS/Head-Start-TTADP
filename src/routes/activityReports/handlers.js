@@ -760,12 +760,16 @@ export async function submitReport(req, res) {
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
 
+    // The user submitting the report should not be notified for their own
+    // submission, even if they are also one of the report's approvers.
+    const approversToNotify = currentApprovers.filter((a) => a.userId !== userId);
+
     const settingsForAllCurrentApprovers = await Promise.all(
-      currentApprovers.map((a) =>
+      approversToNotify.map((a) =>
         userSettingOverridesById(a.userId, USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW)
       )
     );
-    const currentApproversWithSettings = currentApprovers.filter((_value, index) => {
+    const currentApproversWithSettings = approversToNotify.filter((_value, index) => {
       if (!settingsForAllCurrentApprovers[index]) {
         return false;
       }
@@ -776,7 +780,7 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings, isResubmission);
 
-    await createApproverSubmittedNotification(currentApprovers, savedReport);
+    await createApproverSubmittedNotification(approversToNotify, savedReport);
 
     await createCollaboratorSubmittedNotification(
       report.activityReportCollaborators || [],
