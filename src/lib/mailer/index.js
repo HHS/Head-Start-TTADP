@@ -297,7 +297,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
 export const notifyApproverAssigned = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, newApprover } = job.data;
+  const { report, newApprover, isResubmission = false } = job.data;
   const { id, displayId } = report;
   const approverEmail = newApprover.user.email;
   logger.debug(
@@ -317,6 +317,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       locals: {
         reportPath,
         displayId,
+        isResubmission,
       },
     });
   });
@@ -432,12 +433,13 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
   });
 };
 
-export const approverAssignedNotification = (report, newApprovers) => {
+export const approverAssignedNotification = (report, newApprovers, isResubmission = false) => {
   // Each approver will get an individual notification
   newApprovers.forEach((approver) => {
     enqueueNotification(EMAIL_ACTIONS.SUBMITTED, {
       report,
       newApprover: approver,
+      isResubmission,
     });
   });
 };

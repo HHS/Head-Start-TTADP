@@ -732,6 +732,7 @@ export async function submitReport(req, res) {
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
+    const isResubmission = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
@@ -773,7 +774,7 @@ export async function submitReport(req, res) {
     // This will send notification to everyone marked as an approver.
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
-    approverAssignedNotification(savedReport, currentApproversWithSettings);
+    approverAssignedNotification(savedReport, currentApproversWithSettings, isResubmission);
 
     await createApproverSubmittedNotification(currentApprovers, savedReport);
 
