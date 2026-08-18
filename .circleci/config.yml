@@ -1036,7 +1036,9 @@ jobs:
           # published tag.
           reconciliation_path="release-artifacts/inventoryReconciliation.json"
           inventory_path="release-artifacts/inventory.json"
-          rm -f "${reconciliation_path}" "${inventory_path}"
+          cms_export_path="release-artifacts/cmsApprovedCiVersions.json"
+          cms_csv_export_path="release-artifacts/cmsApprovedCiVersions.csv"
+          rm -f "${reconciliation_path}" "${inventory_path}" "${cms_export_path}" "${cms_csv_export_path}"
 
           if ! cp release/inventory.json "${inventory_path}"; then
             msg="Production deploy succeeded, but inventory evidence preparation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
@@ -1073,14 +1075,42 @@ jobs:
           if [ "${reconciliation_exit}" -ne 0 ] || [ ! -s "${reconciliation_path}" ]; then
             rm -f "${reconciliation_path}"
             msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower "${SLACK_BOT_TOKEN}" || true
+            exit 0
+          fi
+
+          if ! node ./tools/releaseInventory.js cms-export \
+            --out "${cms_export_path}" \
+            --csv-out "${cms_csv_export_path}" \
+            --release-tag "${BUILD_RELEASE_TAG}" \
+            --release-commit "${CIRCLE_SHA1}" \
+            --pipeline-url "${CIRCLE_BUILD_URL}"; then
+            rm -f "${cms_export_path}" "${cms_csv_export_path}"
+            msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            exit 0
+          fi
+
+          if ! node ./tools/releaseInventory.js cms-export \
+            --out "${cms_export_path}" \
+            --csv-out "${cms_csv_export_path}" \
+            --release-tag "${BUILD_RELEASE_TAG}" \
+            --release-commit "${CIRCLE_SHA1}" \
+            --pipeline-url "${CIRCLE_BUILD_URL}"; then
+            rm -f "${cms_export_path}" "${cms_csv_export_path}"
+            msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
             ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
             exit 0
           fi
 
           inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
+          cms_export_hash=$(sha256sum "${cms_export_path}" | awk '{print $1}')
+          cms_csv_export_hash=$(sha256sum "${cms_csv_export_path}" | awk '{print $1}')
           manifest_with_inventory=$(mktemp)
           if ! jq \
             --arg inventoryHash "${inventory_hash}" \
+            --arg cmsExportHash "${cms_export_hash}" \
+            --arg cmsCsvExportHash "${cms_csv_export_hash}" \
             --slurpfile reconciliation "${reconciliation_path}" \
             '.schemaVersion = 2
              | .inventory = {
@@ -1090,6 +1120,14 @@ jobs:
                  enforcement: $reconciliation[0].enforcement,
                  validationErrorCount: ($reconciliation[0].validationErrors | length),
                  scopes: ($reconciliation[0].scopes | map_values(.summary))
+               }
+             | .cmsApprovedCiVersions = {
+                 jsonPath: "release-artifacts/cmsApprovedCiVersions.json",
+                 jsonSha256: $cmsExportHash,
+                 csvPath: "release-artifacts/cmsApprovedCiVersions.csv",
+                 csvSha256: $cmsCsvExportHash,
+                 source: "release/inventory.json",
+                 ticket: "TTAHUB-5244"
                }' "${RELEASE_MANIFEST_PATH}" > "${manifest_with_inventory}"; then
             rm -f "${manifest_with_inventory}"
             msg="Production deploy succeeded, but release manifest inventory enrichment failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
@@ -1275,8 +1313,17 @@ jobs:
               echo "CircleCI pipeline: ${CIRCLE_BUILD_URL}"
               echo
               echo "Attached evidence:"
-              echo "- release-manifest.json"
-              echo "- build-checksums.txt"
+              for evidence_path in \
+                "${RELEASE_MANIFEST_PATH}" \
+                "release-artifacts/build-checksums.txt" \
+                "release-artifacts/inventory.json" \
+                "release-artifacts/inventoryReconciliation.json" \
+                "release-artifacts/cmsApprovedCiVersions.json" \
+                "release-artifacts/cmsApprovedCiVersions.csv"; do
+                if [ -f "${evidence_path}" ]; then
+                  echo "- $(basename "${evidence_path}")"
+                fi
+              done
             } > "${release_body_path}"
 
             releases_api="https://api.github.com/repos/HHS/Head-Start-TTADP/releases"
@@ -1387,6 +1434,12 @@ jobs:
             fi
             if [ -f "release-artifacts/inventoryReconciliation.json" ]; then
               upload_release_asset "release-artifacts/inventoryReconciliation.json" "application/json" || return 1
+            fi
+            if [ -f "release-artifacts/cmsApprovedCiVersions.json" ]; then
+              upload_release_asset "release-artifacts/cmsApprovedCiVersions.json" "application/json" || return 1
+            fi
+            if [ -f "release-artifacts/cmsApprovedCiVersions.csv" ]; then
+              upload_release_asset "release-artifacts/cmsApprovedCiVersions.csv" "text/csv" || return 1
             fi
           }
 
