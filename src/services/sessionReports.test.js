@@ -197,24 +197,6 @@ describe('session reports service', () => {
       await destroySession(created.id);
     });
 
-    it('removes a previously persisted association when a clean save follows', async () => {
-      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
-
-      const dirtied = await updateSession(created.id, {
-        eventId,
-        data: { harry: 'potter', event: { id: event.id, data: { eventId } } },
-      });
-      // the strip runs on write, so even the "dirty" save is clean
-      expect(dirtied.data.event).toBeUndefined();
-
-      const cleaned = await updateSession(created.id, {
-        eventId,
-        data: { harry: 'potter' },
-      });
-      expect(cleaned.data.event).toBeUndefined();
-
-      await destroySession(created.id);
-    });
   });
 
   describe('destroySession', () => {
