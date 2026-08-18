@@ -35,15 +35,15 @@ type WhereOptions = {
 // can reintroduce the duplication regardless of how the form serializes its state.
 export const SESSION_ASSOCIATION_KEYS = ['approver', 'event'] as const;
 
-export const removeAssociationsFromData = <T extends Record<string, unknown>>(data: T): T => {
-  if (!data || typeof data !== 'object') {
-    return data;
+export const removeAssociationsFromData = (data: unknown): Record<string, unknown> => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
   }
 
-  const cleaned = { ...data };
-  SESSION_ASSOCIATION_KEYS.forEach((key) => {
+  const cleaned: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  for (const key of SESSION_ASSOCIATION_KEYS) {
     delete cleaned[key];
-  });
+  }
   return cleaned;
 };
 
