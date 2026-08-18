@@ -1,0 +1,89 @@
+get:
+  tags:
+    - recipient
+  summary: Retrieve timeline events for a recipient in a region
+  operationId: getRecipientTimeline
+  parameters:
+    - in: path
+      name: recipientId
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    - in: path
+      name: regionId
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    - in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    - in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - in: query
+      name: sortBy
+      required: false
+      schema:
+        type: string
+        enum:
+          - date
+        default: date
+    - in: query
+      name: direction
+      required: false
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+    - in: query
+      name: filters
+      required: false
+      schema:
+        type: array
+        maxItems: 20
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
+  responses:
+    200:
+      description: Timeline events for the recipient
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - count
+              - events
+            properties:
+              count:
+                type: integer
+                minimum: 0
+              events:
+                type: array
+                items:
+                  type: object
+          example:
+            count: 0
+            events: []
+    400:
+      description: Invalid path or query parameters
+    401:
+      description: Authentication is required
+    403:
+      description: User does not have access to the requested region
+    404:
+      description: Recipient was not found

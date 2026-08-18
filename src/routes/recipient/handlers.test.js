@@ -12,6 +12,7 @@ import {
   recipientsByName,
   recipientsByUserId,
 } from '../../services/recipient';
+import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
 import {
   getGoalsByIdandRecipient,
@@ -19,6 +20,7 @@ import {
   getRecipient,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
+  getRecipientTimeline,
   searchRecipients,
 } from './handlers';
 
@@ -43,6 +45,8 @@ jest.mock('../../services/recipient', () => ({
 }));
 
 jest.mock('../../goalServices/goalsByIdAndRecipient');
+
+jest.mock('../../services/recipientTimeline');
 
 jest.mock('../../services/accessValidation');
 
@@ -343,6 +347,73 @@ describe('getRecipientLeadership', () => {
     getUserReadRegions.mockResolvedValue([2]);
     await getRecipientLeadership(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+  });
+});
+
+describe('getRecipientTimeline', () => {
+  const responseBody = {
+    count: 0,
+    events: [],
+  };
+
+  const timelineQuery = {
+    limit: 25,
+    offset: 10,
+    sortBy: 'date',
+    direction: 'asc',
+    filters: ['example'],
+  };
+
+  const req = {
+    params: {
+      recipientId: '100000',
+      regionId: '1',
+    },
+    session: {
+      userId: 1000,
+    },
+  };
+
+  const mockResponse = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+    status: jest.fn().mockReturnThis(),
+    locals: {
+      validatedParams: {
+        recipientId: 100000,
+        regionId: 1,
+      },
+      recipientTimelineQuery: timelineQuery,
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId.mockResolvedValue(1000);
+    recipientById.mockResolvedValue({ id: 100000 });
+    getUserReadRegions.mockResolvedValue([1]);
+    getRecipientTimelineService.mockResolvedValue(responseBody);
+  });
+
+  it('returns the stable empty timeline contract for an authorized user', async () => {
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(getRecipientTimelineService).toHaveBeenCalledWith({
+      recipientId: 100000,
+      regionId: 1,
+      ...timelineQuery,
+    });
+    expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
+  });
+
+  it('rejects users without access to the requested region', async () => {
+    getUserReadRegions.mockResolvedValue([2]);
+
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    expect(getRecipientTimelineService).not.toHaveBeenCalled();
+    expect(mockResponse.json).not.toHaveBeenCalled();
   });
 });
 
