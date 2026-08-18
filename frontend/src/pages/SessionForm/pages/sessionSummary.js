@@ -343,7 +343,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           <ErrorMessage id={`${objectiveInputName}-error`}>{errors.objective.message}</ErrorMessage>
         ) : null}
         <div className="smart-hub--text-area__resize-vertical margin-top-1">
-          <input type="hidden" name={objectiveInputName} value={objective} />
+<input type="hidden" id={objectiveInputName} name={objectiveInputName} value={objective} />
           <RichEditor
             ariaLabel="Session objectives"
             ariaRequired
