@@ -28,6 +28,25 @@ type WhereOptions = {
   data?: unknown;
 };
 
+// Hydrated associations (the parent event record and the approver user record)
+// are returned to the client as separate associations and must never be persisted
+// back into the session's JSONB `data` column. Storing them creates a stale,
+// duplicate source of truth. This is a server-side backstop so no client payload
+// can reintroduce the duplication regardless of how the form serializes its state.
+export const SESSION_ASSOCIATION_KEYS = ['approver', 'event'] as const;
+
+export const removeAssociationsFromData = <T extends Record<string, unknown>>(data: T): T => {
+  if (!data || typeof data !== 'object') {
+    return data;
+  }
+
+  const cleaned = { ...data };
+  SESSION_ASSOCIATION_KEYS.forEach((key) => {
+    delete cleaned[key];
+  });
+  return cleaned;
+};
+
 const normalizeStates = (states: string[] | undefined): string[] => {
   return (states || [])
     .map((state: string) => {
@@ -211,12 +230,14 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
+  const cleanData = removeAssociationsFromData(data);
+
   const created = await SessionReportPilot.create(
     {
       eventId: event.id,
       data: cast(
         JSON.stringify({
-          ...data,
+          ...cleanData,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
           additionalRegions: event.data.additionalRegions || [],
@@ -250,7 +271,7 @@ export async function updateSession(id: number, request) {
 
   // Combine existing session data with new data.
   const existingData = session.data;
-  const newData = { ...existingData, ...data };
+  const newData = { ...existingData, ...removeAssociationsFromData(data) };
 
   const event = await findEventBySmartsheetId(eventId);
 
