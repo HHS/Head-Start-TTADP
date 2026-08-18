@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
-import { Op } from 'sequelize';
 import { VALIDATION_PROCESS, VALIDATION_RUN_STATUS } from '../constants';
 import db from '../models';
+import getMonitoringImportCycle from './validation/monitoringImportCycle';
 
 const { ValidationRun } = db;
 
@@ -22,29 +22,36 @@ const easternTime = (date: Date): string =>
   moment(date).tz('America/New_York').format('YYYY-MM-DD HH:mm z');
 
 /**
- * Watchdog for the daily monitoring data validation: checks ValidationRuns for
- * a monitoring run started within the last 24 hours. Runs on a separate
- * schedule from the validation itself so it can catch the case where the
- * validation never started at all.
+ * Watchdog for the daily monitoring data validation: confirms a successful
+ * ValidationRun exists for the current import cycle (the latest processed ITAMS
+ * monitoring import). Runs on a separate schedule from the validation itself so
+ * it can catch the case where the validation never started at all. A day with no
+ * new processed import stays ok - there is nothing new to validate.
  *
  * Outcomes:
- * - a run exists and succeeded -> ok
- * - the latest run failed -> not ok ("run failed")
- * - the latest run is still 'started' -> not ok ("run incomplete") - either
- *   crashed without updating its row or genuinely still in progress
- * - no run in the window -> not ok ("no validation run in last 24 hours")
+ * - no processed import yet -> ok (nothing to validate; import watchdog's job)
+ * - a run for the cycle succeeded -> ok
+ * - the latest run for the cycle failed -> not ok ("run failed")
+ * - the latest run for the cycle is still 'started' -> not ok ("run incomplete")
+ * - no run for the cycle -> not ok ("no validation run for the current import cycle")
  */
 const checkMonitoringValidationRan = async (): Promise<WatchdogResult> => {
+  const cycle = await getMonitoringImportCycle();
+
+  if (cycle.import_id == null) {
+    return { ok: true, reason: 'no processed monitoring import to validate' };
+  }
+
   const run = await ValidationRun.findOne({
     where: {
       process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
-      started_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      import_id: cycle.import_id,
     },
     order: [['started_at', 'DESC']],
   });
 
   if (!run) {
-    return { ok: false, reason: 'no validation run in last 24 hours' };
+    return { ok: false, reason: 'no validation run for the current import cycle' };
   }
 
   const base = {

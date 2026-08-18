@@ -72,19 +72,19 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 | `finding_count` | `MonitoringReviews` | scalar | Distinct findings linked to the review. |
 | `closure_state` | `MonitoringFindings` | category | `active_with_closed_date` when an Active finding carries a `closedDate`, else `consistent`. |
 
-**Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. As of MVP, the full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run: the upsert key makes it idempotent, and it self-corrects late-arriving source data (IT-AMS can source-update old records, which shifts historical buckets since stats bucket on source activity). This is simple but its cost grows with the full history — a bounded/incremental recompute is [future work](#future-work). Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
+**Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. As of MVP, the full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run: the upsert key makes it idempotent, and it self-corrects late-arriving source data (IT-AMS can source-update old records, which shifts historical buckets since stats bucket on source activity). This is simple but its cost grows with the full history — a bounded/incremental recompute is [future work](#future-work). Each stat is built into a temp table, upserted, then **reconciled**: keys in the recomputed range that the temp table no longer produces are deleted, so a period/region whose source records were all invalidated upstream doesn't leave a stale value behind (an upsert alone never removes rows). Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
 
 | Stat (`feature_set` / `stat_name`) | Grain | Notes |
 |---|---|---|
 | `monitoring_reviews` / `reviews_created` | weekly, per region/geo | Bucketed on `MonitoringReviews.sourceCreatedAt` (upstream activity), not `createdAt` (our import time), so backfills don't register as spikes. A review spanning regions counts once per region slice. |
-| `monitoring_findings` / `findings_delivered` | monthly, per region/geo | Distinct findings by first delivery date (earliest delivered review via `MonitoringFindingHistories`). |
+| `monitoring_findings` / `findings_delivered` | monthly, per region/geo **and national** | Distinct findings by first delivery date (earliest delivered review via `MonitoringFindingHistories`). A finding on grants in multiple regions is counted in each region slice, so per-region rows **must not be summed** for a national figure; a `region_id = 0` (geo `0`) row carries the deduplicated national count instead. |
 
 **Step 3 — `monitoringAlerts.ts` → `ValidationAlerts`.** Raises alerts from threshold checks over the time series and validity checks over the observations, both produced earlier in the same run. Threshold checks look at **complete** periods only (the current partial week/month would always false-alarm). Every alert here is severity `alert`.
 
 | Check (`check_name`) | Fires when |
 |---|---|
 | `reviews_created_region_zero` | A region created zero reviews over the last four complete weeks, *and* the cross-region four-week average exceeds 5 (so quiet seasons don't false-alarm). The region universe comes from `Grants`, so a region with no time-series rows still counts as zero. |
-| `findings_delivered_month_spike` | The last complete month delivered more than 50% as many findings as the entire twelve months before it. |
+| `findings_delivered_month_spike` | The last complete month delivered more than 50% as many findings as the entire twelve months before it. Reads the national `region_id = 0` rows, not a sum across regions. |
 | `finding_category_missing` | Aggregate count of findings on delivered reviews with no category (drill in via `ValidationRecords`, `observation_name = 'category' AND category IS NULL`). |
 | `review_delivery_report_lag` | Aggregate count of reviews whose delivery date was imported more than 7 days late (`delivery_report_lag_days > 7`). |
 | `finding_active_with_closed_date` | Aggregate count of Active findings that carry a `closedDate` (`closure_state = 'active_with_closed_date'`). |
@@ -146,7 +146,7 @@ How it is wired:
 - `build_import_summary.sh` surfaces the gate's criticals on success too (not only when the gate phase fails), so a report-only critical appears in that summary rather than only in the `Monitoring Gate: {…}` log line.
 - The `notify_slack` command posts to the base channel and, when its `ohs_channel` param is non-empty **and** `OHS_MONITORING_ALERTS_ENABLED` is truthy, mirrors the same message there. `ohs_channel` is only passed by the prod workflow invocations, so a lower environment can never reach the contractor channel even if the env var were set — two independent guards.
 
-**The watchdog.** `checkMonitoringValidationRan.ts` (`cli:check-monitoring-validation-ran`) runs on a **separate** schedule a few hours after the import cron, so it can catch the case where the validation — or the whole cron — never fired. It looks for a `monitoring_post_refresh` run started in the last 24 hours and reports `ok`, `run failed`, `run incomplete` (stuck at `started`), or `no validation run in last 24 hours`. This is why the run row is committed as `started` before any work.
+**The watchdog.** `checkMonitoringValidationRan.ts` (`cli:check-monitoring-validation-ran`) runs on a **separate** schedule a few hours after the import cron, so it can catch the case where the validation — or the whole cron — never fired. It resolves the current [cycle](#architecture) (`getMonitoringImportCycle`) and looks for a `monitoring_post_refresh` run for that cycle's `import_id`, reporting `ok`, `run failed`, `run incomplete` (stuck at `started`), or `no validation run for the current import cycle`. A day with no new processed import stays `ok` (nothing new to validate). This is why the run row is committed as `started` before any work.
 
 ## Tables
 

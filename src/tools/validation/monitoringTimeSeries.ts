@@ -17,9 +17,10 @@ const TIME_SERIES_START = '2025-01-01';
 /**
  * Upserts long/narrow time-series statistics describing Monitoring activity into
  * ValidationTimeSeries. As of MVP, the full range since TIME_SERIES_START is
- * recomputed every run. New stats are just new feature_set/stat_name values, no
- * schema change. Shared intermediates (e.g. finding_deliveries) are temp tables
- * reused by later stats. See docs/monitoring-data-validation.md.
+ * recomputed every run. Each stat is built into a temp table, upserted, then
+ * reconciled. New stats are just new feature_set/stat_name values, no schema
+ * change. Shared intermediates (e.g. finding_deliveries) are temp tables reused
+ * by later stats. See docs/monitoring-data-validation.md.
  *
  * Skeleton: two example statistics.
  *
@@ -31,22 +32,17 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
   // reviews_created: weekly count of distinct reviews first created in ITAMS,
   // sliced by region/geographic region. Bucketed on "sourceCreatedAt" (ITAMS
   // activity) rather than "createdAt" (our import time) so that import
-  // backfills don't register as spikes. A review spanning grants in multiple
-  // regions counts once in each region slice.
-  const [, reviewsMeta] = await sequelize.query(
+  // backfills don't register as spikes.
+  await sequelize.query(
     `
-    INSERT INTO "ValidationTimeSeries"
-      (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+    DROP TABLE IF EXISTS reviews_ts;
+    CREATE TEMP TABLE reviews_ts
+    AS
     SELECT
-      'monitoring_reviews',
-      'week',
-      date_trunc('week', mr."sourceCreatedAt")::date,
-      gr."regionId",
-      COALESCE(gr."geographicRegionId", 0),
-      'reviews_created',
-      COUNT(DISTINCT mr."reviewId"),
-      NOW(),
-      NOW()
+      date_trunc('week', mr."sourceCreatedAt")::date period_start,
+      gr."regionId" region_id,
+      COALESCE(gr."geographicRegionId", 0) geo_id,
+      COUNT(DISTINCT mr."reviewId") value
     FROM "MonitoringReviews" mr
     JOIN "MonitoringReviewGrantees" mrg
       ON mrg."reviewId" = mr."reviewId"
@@ -58,7 +54,18 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
       AND mr."sourceCreatedAt" >= :timeSeriesStart
-    GROUP BY 3, 4, 5
+    GROUP BY 1, 2, 3
+    ;
+    `,
+    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+  );
+
+  const [, reviewsMeta] = await sequelize.query(
+    `
+    INSERT INTO "ValidationTimeSeries"
+      (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+    SELECT 'monitoring_reviews', 'week', period_start, region_id, geo_id, 'reviews_created', value, NOW(), NOW()
+    FROM reviews_ts
     ON CONFLICT (feature_set, period_type, period_start, region_id, geo_id, stat_name)
     DO UPDATE SET
       value = EXCLUDED.value,
@@ -66,9 +73,28 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     WHERE "ValidationTimeSeries".value IS DISTINCT FROM EXCLUDED.value
     ;
     `,
-    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+    { raw: true, transaction }
   );
   statsUpserted += affectedRows(reviewsMeta);
+
+  // Reconcile: drop keys no longer produced this cycle.
+  await sequelize.query(
+    `
+    DELETE FROM "ValidationTimeSeries" v
+    WHERE v.feature_set = 'monitoring_reviews'
+      AND v.period_type = 'week'
+      AND v.stat_name = 'reviews_created'
+      AND v.period_start >= date_trunc('week', :timeSeriesStart::date)::date
+      AND NOT EXISTS (
+        SELECT 1 FROM reviews_ts t
+        WHERE t.period_start = v.period_start
+          AND t.region_id = v.region_id
+          AND t.geo_id = v.geo_id
+      )
+    ;
+    `,
+    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+  );
 
   // finding_deliveries: each finding paired with the reportDeliveryDate of the
   // earliest delivered review associated with it (via
@@ -100,23 +126,20 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     { raw: true, transaction }
   );
 
-  // findings_delivered: monthly count of distinct findings by first delivery.
-  // Region slice via MonitoringFindingGrants -> MonitoringReviewGrantees ->
-  // Grants (the same chain updateMonitoringFactTables uses for citation grants).
-  const [, findingsMeta] = await sequelize.query(
+  // findings_delivered: monthly count of distinct findings by first delivery,
+  // region slice via MonitoringFindingGrants -> MonitoringReviewGrantees ->
+  // Grants. Per-region rows plus a national (region_id = 0) deduplicated total.
+  // See docs/monitoring-data-validation.md.
+  await sequelize.query(
     `
-    INSERT INTO "ValidationTimeSeries"
-      (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+    DROP TABLE IF EXISTS findings_ts;
+    CREATE TEMP TABLE findings_ts
+    AS
     SELECT
-      'monitoring_findings',
-      'month',
-      date_trunc('month', fd.first_delivered)::date,
-      gr."regionId",
-      COALESCE(gr."geographicRegionId", 0),
-      'findings_delivered',
-      COUNT(DISTINCT fd.finding_uuid),
-      NOW(),
-      NOW()
+      date_trunc('month', fd.first_delivered)::date period_start,
+      gr."regionId" region_id,
+      COALESCE(gr."geographicRegionId", 0) geo_id,
+      COUNT(DISTINCT fd.finding_uuid) value
     FROM finding_deliveries fd
     JOIN "MonitoringFindingGrants" mfg
       ON mfg."findingId" = fd.finding_uuid
@@ -130,7 +153,40 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
       ON gr.number = mrg."grantNumber"
       AND NOT gr.deleted
     WHERE fd.first_delivered >= :timeSeriesStart
-    GROUP BY 3, 4, 5
+    GROUP BY 1, 2, 3
+    ;
+
+    DROP TABLE IF EXISTS findings_national_ts;
+    CREATE TEMP TABLE findings_national_ts
+    AS
+    SELECT
+      date_trunc('month', fd.first_delivered)::date period_start,
+      COUNT(DISTINCT fd.finding_uuid) value
+    FROM finding_deliveries fd
+    JOIN "MonitoringFindingGrants" mfg
+      ON mfg."findingId" = fd.finding_uuid
+      AND mfg."sourceDeletedAt" IS NULL
+      AND mfg."deletedAt" IS NULL
+    JOIN "MonitoringReviewGrantees" mrg
+      ON mfg."granteeId" = mrg."granteeId"
+      AND mrg."sourceDeletedAt" IS NULL
+      AND mrg."deletedAt" IS NULL
+    JOIN "Grants" gr
+      ON gr.number = mrg."grantNumber"
+      AND NOT gr.deleted
+    WHERE fd.first_delivered >= :timeSeriesStart
+    GROUP BY 1
+    ;
+    `,
+    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+  );
+
+  const [, findingsMeta] = await sequelize.query(
+    `
+    INSERT INTO "ValidationTimeSeries"
+      (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+    SELECT 'monitoring_findings', 'month', period_start, region_id, geo_id, 'findings_delivered', value, NOW(), NOW()
+    FROM findings_ts
     ON CONFLICT (feature_set, period_type, period_start, region_id, geo_id, stat_name)
     DO UPDATE SET
       value = EXCLUDED.value,
@@ -138,9 +194,58 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     WHERE "ValidationTimeSeries".value IS DISTINCT FROM EXCLUDED.value
     ;
     `,
-    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+    { raw: true, transaction }
   );
   statsUpserted += affectedRows(findingsMeta);
+
+  const [, findingsNationalMeta] = await sequelize.query(
+    `
+    INSERT INTO "ValidationTimeSeries"
+      (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+    SELECT 'monitoring_findings', 'month', period_start, 0, 0, 'findings_delivered', value, NOW(), NOW()
+    FROM findings_national_ts
+    ON CONFLICT (feature_set, period_type, period_start, region_id, geo_id, stat_name)
+    DO UPDATE SET
+      value = EXCLUDED.value,
+      "updatedAt" = NOW()
+    WHERE "ValidationTimeSeries".value IS DISTINCT FROM EXCLUDED.value
+    ;
+    `,
+    { raw: true, transaction }
+  );
+  statsUpserted += affectedRows(findingsNationalMeta);
+
+  // Reconcile per-region rows and the national (region_id = 0) row separately.
+  await sequelize.query(
+    `
+    DELETE FROM "ValidationTimeSeries" v
+    WHERE v.feature_set = 'monitoring_findings'
+      AND v.period_type = 'month'
+      AND v.stat_name = 'findings_delivered'
+      AND v.region_id <> 0
+      AND v.period_start >= date_trunc('month', :timeSeriesStart::date)::date
+      AND NOT EXISTS (
+        SELECT 1 FROM findings_ts t
+        WHERE t.period_start = v.period_start
+          AND t.region_id = v.region_id
+          AND t.geo_id = v.geo_id
+      )
+    ;
+
+    DELETE FROM "ValidationTimeSeries" v
+    WHERE v.feature_set = 'monitoring_findings'
+      AND v.period_type = 'month'
+      AND v.stat_name = 'findings_delivered'
+      AND v.region_id = 0
+      AND v.period_start >= date_trunc('month', :timeSeriesStart::date)::date
+      AND NOT EXISTS (
+        SELECT 1 FROM findings_national_ts t
+        WHERE t.period_start = v.period_start
+      )
+    ;
+    `,
+    { raw: true, transaction, replacements: { timeSeriesStart: TIME_SERIES_START } }
+  );
 
   return statsUpserted;
 };

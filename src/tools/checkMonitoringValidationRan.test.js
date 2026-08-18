@@ -1,37 +1,37 @@
-import { Op } from 'sequelize';
 import { VALIDATION_PROCESS, VALIDATION_RUN_STATUS } from '../constants';
 import { sequelize, ValidationRun } from '../models';
 import checkMonitoringValidationRan from './checkMonitoringValidationRan';
+import getMonitoringImportCycle from './validation/monitoringImportCycle';
 
 jest.mock('../logger');
+jest.mock('./validation/monitoringImportCycle');
 
 describe('checkMonitoringValidationRan', () => {
   const createdRunIds = [];
+  // Distinctive ids so runs left by other test files against the shared DB
+  // can't match the cycle under test.
+  const CURRENT_IMPORT_ID = 987654321;
+  const PRIOR_IMPORT_ID = 987654320;
 
-  const createRun = async (status, startedAt) => {
+  const createRun = async (status, importId, startedAt = new Date()) => {
     const run = await ValidationRun.create({
       process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
       status,
       started_at: startedAt,
       completed_at: status === VALIDATION_RUN_STATUS.STARTED ? null : startedAt,
       alert_count: status === VALIDATION_RUN_STATUS.SUCCESS ? 2 : null,
+      import_id: importId,
+      source_updated_at: startedAt,
     });
     createdRunIds.push(run.id);
     return run;
   };
 
-  beforeAll(async () => {
-    // Age any recent monitoring runs (e.g. left by other test files against the
-    // shared database) out of the 24-hour window so results are deterministic.
-    await ValidationRun.update(
-      { started_at: new Date(Date.now() - 48 * 60 * 60 * 1000) },
-      {
-        where: {
-          process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
-          started_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-        },
-      }
-    );
+  beforeEach(() => {
+    getMonitoringImportCycle.mockResolvedValue({
+      import_id: CURRENT_IMPORT_ID,
+      source_updated_at: new Date(),
+    });
   });
 
   afterAll(async () => {
@@ -39,14 +39,28 @@ describe('checkMonitoringValidationRan', () => {
     await sequelize.close();
   });
 
-  it('reports no run when nothing started in the last 24 hours', async () => {
+  it('reports ok when there is no processed import to validate', async () => {
+    getMonitoringImportCycle.mockResolvedValue({ import_id: null, source_updated_at: null });
     const result = await checkMonitoringValidationRan();
-    expect(result.ok).toBe(false);
-    expect(result.reason).toBe('no validation run in last 24 hours');
+    expect(result.ok).toBe(true);
+    expect(result.reason).toBe('no processed monitoring import to validate');
   });
 
-  it('reports ok for a recent successful run', async () => {
-    const run = await createRun(VALIDATION_RUN_STATUS.SUCCESS, new Date());
+  it('reports no run when nothing ran for the current import cycle', async () => {
+    const result = await checkMonitoringValidationRan();
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('no validation run for the current import cycle');
+  });
+
+  it('does not accept a run from a previous import cycle', async () => {
+    await createRun(VALIDATION_RUN_STATUS.SUCCESS, PRIOR_IMPORT_ID);
+    const result = await checkMonitoringValidationRan();
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('no validation run for the current import cycle');
+  });
+
+  it('reports ok for a successful run of the current cycle', async () => {
+    const run = await createRun(VALIDATION_RUN_STATUS.SUCCESS, CURRENT_IMPORT_ID);
     const result = await checkMonitoringValidationRan();
     expect(result.ok).toBe(true);
     expect(`${result.runId}`).toBe(`${run.id}`);
@@ -54,15 +68,15 @@ describe('checkMonitoringValidationRan', () => {
     expect(result.asOf).toEqual(expect.stringMatching(/E[SD]T$/));
   });
 
-  it('reports a failed run when the latest run failed', async () => {
-    await createRun(VALIDATION_RUN_STATUS.FAILURE, new Date());
+  it('reports a failed run when the latest run for the cycle failed', async () => {
+    await createRun(VALIDATION_RUN_STATUS.FAILURE, CURRENT_IMPORT_ID);
     const result = await checkMonitoringValidationRan();
     expect(result.ok).toBe(false);
     expect(result.reason).toBe('run failed');
   });
 
-  it('reports an incomplete run when the latest run is still started', async () => {
-    await createRun(VALIDATION_RUN_STATUS.STARTED, new Date());
+  it('reports an incomplete run when the latest run for the cycle is still started', async () => {
+    await createRun(VALIDATION_RUN_STATUS.STARTED, CURRENT_IMPORT_ID);
     const result = await checkMonitoringValidationRan();
     expect(result.ok).toBe(false);
     expect(result.reason).toBe('run incomplete');

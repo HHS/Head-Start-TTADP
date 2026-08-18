@@ -69,6 +69,10 @@ describe('validateMonitoringData', () => {
   const recipientId = faker.datatype.number({ min: 90000 });
   const grantId = faker.datatype.number({ min: 90000 });
   const grantNumber = `VMD-${uuidv4().slice(0, 8)}`;
+  // A second grant in a different region on the same grantee, so the seeded
+  // findings span two regions and the national total must deduplicate them.
+  const grantId2 = grantId + 1;
+  const grantNumber2 = `VMD2-${uuidv4().slice(0, 8)}`;
   const reviewId = uuidv4();
   const granteeId = uuidv4();
   // Active finding with a closedDate and a source -> closure_state alert, category present
@@ -111,8 +115,22 @@ describe('validateMonitoringData', () => {
       startDate: new Date(),
       endDate: new Date('2030-01-01'),
     });
+    await Grant.create({
+      id: grantId2,
+      number: grantNumber2,
+      recipientId,
+      regionId: 2,
+      geographicRegionId: null,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date('2030-01-01'),
+    });
     await Promise.all([
       GrantNumberLink.findOrCreate({ where: { grantNumber }, defaults: { grantId } }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumber2 },
+        defaults: { grantId: grantId2 },
+      }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId } }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ACTIVE_ID },
@@ -140,6 +158,17 @@ describe('validateMonitoringData', () => {
     await MonitoringReviewGrantee.create({
       id: faker.datatype.number({ min: 99999 }),
       grantNumber,
+      reviewId,
+      granteeId,
+      createTime: new Date(),
+      updateTime: new Date(),
+      updateBy: 'Test',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+    await MonitoringReviewGrantee.create({
+      id: faker.datatype.number({ min: 99999 }),
+      grantNumber: grantNumber2,
       reviewId,
       granteeId,
       createTime: new Date(),
@@ -236,8 +265,11 @@ describe('validateMonitoringData', () => {
     await MonitoringReview.destroy({ where: { reviewId }, force: true });
     await MonitoringReviewLink.destroy({ where: { reviewId }, force: true });
     await MonitoringGranteeLink.destroy({ where: { granteeId }, force: true });
-    await GrantNumberLink.destroy({ where: { grantNumber }, force: true });
-    await Grant.destroy({ where: { id: grantId }, force: true });
+    await GrantNumberLink.destroy({
+      where: { grantNumber: [grantNumber, grantNumber2] },
+      force: true,
+    });
+    await Grant.destroy({ where: { id: [grantId, grantId2] }, force: true });
     await Recipient.destroy({ where: { id: recipientId }, force: true });
     await MonitoringReviewStatus.destroy({
       where: { statusId: REVIEW_STATUS_COMPLETE_ID },
@@ -442,5 +474,68 @@ describe('validateMonitoringData', () => {
     expect(await recordCount(runC.id)).toBeGreaterThan(0);
     expect(await recordCount(runB2.id)).toBeGreaterThan(0); // previous cycle kept
     expect(await recordCount(runA.id)).toBe(0); // rolled off
+  });
+
+  it('emits a national (region_id 0) findings-delivered total, deduplicated across regions', async () => {
+    await validateMonitoringData();
+
+    const periodStart = `${reportDeliveryDate.toISOString().slice(0, 7)}-01`;
+    const national = await ValidationTimeSeries.findAll({
+      where: {
+        feature_set: 'monitoring_findings',
+        period_type: 'month',
+        period_start: periodStart,
+        region_id: 0,
+        geo_id: 0,
+        stat_name: 'findings_delivered',
+      },
+      raw: true,
+    });
+    // one national row, counting the two distinct delivered findings once each
+    expect(national.length).toBe(1);
+    expect(Number(national[0].value)).toBe(2);
+
+    // Each seeded finding is on grants in regions 1 and 2, so the per-region
+    // rows sum to 4 - the national total (2) is a dedup, not that sum.
+    const perRegion = await ValidationTimeSeries.findAll({
+      where: {
+        feature_set: 'monitoring_findings',
+        period_type: 'month',
+        period_start: periodStart,
+        region_id: [1, 2],
+        stat_name: 'findings_delivered',
+      },
+      raw: true,
+    });
+    const regionSum = perRegion.reduce((sum, r) => sum + Number(r.value), 0);
+    expect(regionSum).toBe(4);
+  });
+
+  it('reconciles: deletes time-series keys the recompute no longer produces', async () => {
+    // A findings row for a region/month with no source data. The next run
+    // recomputes the full range and must drop it, since an upsert alone can't.
+    await ValidationTimeSeries.create({
+      feature_set: 'monitoring_findings',
+      period_type: 'month',
+      period_start: '2025-05-01',
+      region_id: 7,
+      geo_id: 0,
+      stat_name: 'findings_delivered',
+      value: 99,
+    });
+
+    await validateMonitoringData();
+
+    const stale = await ValidationTimeSeries.findAll({
+      where: {
+        feature_set: 'monitoring_findings',
+        period_type: 'month',
+        period_start: '2025-05-01',
+        region_id: 7,
+        stat_name: 'findings_delivered',
+      },
+      raw: true,
+    });
+    expect(stale.length).toBe(0);
   });
 });

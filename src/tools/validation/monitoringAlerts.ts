@@ -49,7 +49,8 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     ;
 
     -- National findings-delivered totals per month over the last complete
-    -- month plus the twelve months preceding it
+    -- month plus the twelve months preceding it, from the region_id = 0 rows
+    -- (not a sum across regions - see docs/monitoring-data-validation.md).
     DROP TABLE IF EXISTS monthly_findings;
     CREATE TEMP TABLE monthly_findings
     AS
@@ -60,6 +61,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE feature_set = 'monitoring_findings'
       AND period_type = 'month'
       AND stat_name = 'findings_delivered'
+      AND region_id = 0
       AND period_start >= (date_trunc('month', NOW()) - INTERVAL '13 months')::date
       AND period_start < date_trunc('month', NOW())::date
     GROUP BY 1
