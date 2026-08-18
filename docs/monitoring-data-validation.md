@@ -150,7 +150,7 @@ How it is wired:
 
 ## Tables
 
-All four tables are created by migration `20260806120000-create_validation_tables.js`. Ids are `INTEGER` autoincrement; `createdAt`/`updatedAt` are present on every table.
+All four tables are created by migration `20260818170000-create_validation_tables.js`. Ids are `INTEGER` autoincrement; `createdAt`/`updatedAt` are present on every table.
 
 ### ValidationRuns
 
