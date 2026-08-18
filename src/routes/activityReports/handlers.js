@@ -10,6 +10,7 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorReportSubmittedForReviewNotification,
+  creatorReportSubmittedForReviewNotification,
   programSpecialistRecipientReportApprovedNotification,
   reportApprovedNotification,
 } from '../../lib/mailer';
@@ -52,6 +53,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createReportApprovedNotification,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -520,11 +522,6 @@ export async function reviewReport(req, res) {
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       await ActivityReportModel.update({ approvedAtTimezone }, { where: { id: activityReportId } });
-      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
-        reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.APPROVAL
-      );
-      reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
 
       // Notify program specialists of this approval if they
       // have a grant recipient associated with this report.
@@ -540,6 +537,24 @@ export async function reviewReport(req, res) {
       );
     }
 
+    // Notify the author and collaborators every time an approver approves the report,
+    // naming the approver who just acted. The acting approver is excluded so they don't
+    // email themselves.
+    if (status === REPORT_STATUSES.APPROVED) {
+      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.APPROVAL
+      );
+
+      const recipientAuthor =
+        authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null;
+      const recipientCollabs = collabsWithSettings.filter((c) => c.userId !== userId);
+      const approverName =
+        savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
+
+      reportApprovedNotification(reviewedReport, recipientAuthor, recipientCollabs, approverName);
+    }
+
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       const [authorWithSetting, collabsWithSettings, , approversWithSettings] =
         await checkEmailSettings(reviewedReport, USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED);
@@ -551,6 +566,17 @@ export async function reviewReport(req, res) {
         collabsWithSettings,
         // approvers, minus the approver whose review triggered this workflow
         approversWithSettings.filter((a) => a.user.id !== userId)
+      );
+    }
+
+    if (status === REPORT_STATUSES.APPROVED) {
+      await createReportApprovedNotification(
+        reviewedReport.author.id,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
       );
     }
 
@@ -759,6 +785,14 @@ export async function submitReport(req, res) {
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {
       await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+
+      const creatorSetting = await userSettingOverridesById(
+        report.author.id,
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW
+      );
+      if (creatorSetting && creatorSetting.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
+        creatorReportSubmittedForReviewNotification(savedReport, report.author);
+      }
     }
 
     // Notify collaborators that the report has been submitted for approval

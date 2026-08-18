@@ -51,7 +51,8 @@
             "configurationArtifact",
             "dependencyBoundary",
             "platformRuntime",
-            "externalIntegration"
+            "externalIntegration",
+            "programmaticConfigurationItem"
           ]
         },
         "finding": { "type": "string", "minLength": 1 },

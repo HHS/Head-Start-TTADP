@@ -21,6 +21,7 @@ const {
   Citation,
   DeliveredReview,
   DeliveredReviewCitation,
+  FindingCategory,
   GrantCitation,
   GrantDeliveredReview,
   ActivityReportObjective,
@@ -1134,4 +1135,13 @@ export async function classScore({
     CO: gdr.deliveredReview.class_co,
     IS: gdr.deliveredReview.class_is,
   };
+}
+
+export async function getFindingCategories(): Promise<string[]> {
+  const categories = await FindingCategory.findAll({
+    attributes: ['name'],
+    order: [['name', 'ASC']],
+    raw: true,
+  });
+  return categories.map(({ name }: { name: string }) => name);
 }

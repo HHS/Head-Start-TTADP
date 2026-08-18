@@ -1,8 +1,14 @@
 import { v4 as uuid } from 'uuid';
 import db from '../models';
-import { classScore, monitoringData, ttaByCitations, ttaByReviews } from './monitoring';
+import {
+  classScore,
+  getFindingCategories,
+  monitoringData,
+  ttaByCitations,
+  ttaByReviews,
+} from './monitoring';
 
-const { Grant, GrantNumberLink, DeliveredReview, GrantDeliveredReview } = db;
+const { Grant, GrantNumberLink, DeliveredReview, GrantDeliveredReview, FindingCategory } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
@@ -263,6 +269,38 @@ describe('monitoring services', () => {
     it('returns an array', async () => {
       const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
       expect(Array.isArray(data)).toBe(true);
+    });
+  });
+  describe('getFindingCategories', () => {
+    const categoryNames = [`ZZZ-test-${TEST_KEY}`, `AAA-test-${TEST_KEY}`];
+    let createdCategories;
+
+    beforeAll(async () => {
+      createdCategories = await Promise.all(
+        categoryNames.map((name) => FindingCategory.create({ name }))
+      );
+    });
+
+    afterAll(async () => {
+      await FindingCategory.destroy({
+        where: { id: createdCategories.map((c) => c.id) },
+        force: true,
+      });
+    });
+
+    it('returns category names sorted ascending', async () => {
+      const result = await getFindingCategories();
+      const testResults = result.filter((name) => name.endsWith(`-test-${TEST_KEY}`));
+      expect(testResults).toEqual([`AAA-test-${TEST_KEY}`, `ZZZ-test-${TEST_KEY}`]);
+    });
+
+    it('excludes soft-deleted rows', async () => {
+      await createdCategories[0].destroy();
+      const result = await getFindingCategories();
+      const testResults = result.filter((name) => name.endsWith(`-test-${TEST_KEY}`));
+      expect(testResults).not.toContain(`ZZZ-test-${TEST_KEY}`);
+      // Restore for afterAll cleanup
+      await createdCategories[0].restore();
     });
   });
 });

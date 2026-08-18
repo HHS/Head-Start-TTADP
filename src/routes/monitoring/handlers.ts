@@ -8,6 +8,7 @@ import compliantFollowUpReviewsDetails from '../../services/compliantFollowUpRev
 import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
+  getFindingCategories as getFindingCategoriesService,
   monitoringData,
   ttaByCitations,
   ttaByReviews,
@@ -372,5 +373,14 @@ export async function getClassScore(req: Request, res: Response) {
     res.status(200).json(data);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getFindingCategories(req: Request, res: Response) {
+  try {
+    const categories = await getFindingCategoriesService();
+    return res.json(categories);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
   }
 }

@@ -4,6 +4,11 @@ import { get } from '.';
 const monitoringUrl = join('/', 'api', 'monitoring');
 const classUrl = join('/', 'api', 'monitoring', 'class');
 
+export const getFindingCategories = async () => {
+  const data = await get(join(monitoringUrl, 'finding-categories'));
+  return data.json();
+};
+
 export const getTtaByCitation = async (recipientId, regionId) => {
   const data = await get(
     join(monitoringUrl, String(recipientId), 'region', String(regionId), 'tta', 'citation')

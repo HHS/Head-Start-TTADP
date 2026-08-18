@@ -43,6 +43,24 @@
             "required": ["locator"]
           },
           "then": { "required": ["sha256"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "locator": {
+                "properties": { "type": { "const": "cmsDocument" } },
+                "required": ["type"]
+              }
+            },
+            "required": ["locator"]
+          },
+          "then": {
+            "required": ["approvedVersion"],
+            "properties": {
+              "class": { "const": "programmaticConfigurationItem" },
+              "tier": { "const": "attested" }
+            }
+          }
         }
       ],
       "required": [
@@ -72,7 +90,8 @@
             "configurationArtifact",
             "dependencyBoundary",
             "platformRuntime",
-            "externalIntegration"
+            "externalIntegration",
+            "programmaticConfigurationItem"
           ]
         },
         "name": {
@@ -94,6 +113,11 @@
           "type": "string",
           "pattern": "^[a-f0-9]{64}$",
           "description": "Expected SHA-256 content digest. Required for repositoryFile components and compared with the file observed in the working tree or release tag."
+        },
+        "approvedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Approved version for attested configuration items that are referenced in an external CMS rather than controlled by a repository file hash or platform value."
         },
         "authorization": { "$ref": "#/definitions/authorization" },
         "boundAppName": {
@@ -118,7 +142,8 @@
             "cloudFoundryStack",
             "cloudFoundryBuildpack",
             "repositoryFile",
-            "externalEndpoint"
+            "externalEndpoint",
+            "cmsDocument"
           ]
         },
         "value": { "type": "string", "minLength": 1 },
@@ -158,6 +183,7 @@
             "atoArtifact",
             "boundaryDiagram",
             "repositoryConfiguration",
+            "cmsDocument",
             "none"
           ]
         },

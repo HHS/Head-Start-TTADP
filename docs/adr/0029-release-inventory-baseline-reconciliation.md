@@ -38,8 +38,11 @@ The platform and runtime class is machine reconciled because `.nvmrc` and `Docke
 Declaration only classes, where no automated observation exists and review is periodic rather than continuous:
 
 - external integrations: the boundary systems reached from the deployed application, including HSES authentication and data file retrieval, ClamAV scanning through `CLAMAV_ENDPOINT`, ITAMS over SFTP, Smartsheet, SMTP mail delivery, and New Relic, cross referenced against `docs/boundary_diagram.md`
+- programmatic configuration items: approved program governance artifacts that are referenced from the CMS, such as the TTA Hub PMP. These carry an explicit approved version because their content and approval workflow live outside the repository.
 
 External integrations cannot be observed from a build or from the platform API. The closest available signal is the presence of a configuration variable, which proves neither that the integration is reachable nor that an undeclared one is absent. Treating that signal as reconciliation would claim coverage this control does not have, which is a worse audit position than scoping the class honestly.
+
+Programmatic configuration items are handled the same way: the repository records the approved CMS reference and version for baseline evidence, but it does not become the authoritative store for the document content.
 
 Each entry carries a stable id, component class, description, owner, locator/hash, and an authorization reference (an ADR, JIRA issue, or ATO artifact) — the reference is what makes this audit evidence rather than a list. The inventory is parameterized by environment the same way `manifest.yml` is; automated reconciliation against the live space targets production only, since that's the environment inside the ATO boundary.
 

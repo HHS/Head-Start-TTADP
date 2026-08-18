@@ -23,6 +23,27 @@ describe('queryStringToFilters', () => {
       [['14'], '2021/11/13-2021/12/13'].sort()
     );
   });
+
+  it('merges multiple params with the same topic and condition into one filter', () => {
+    const str =
+      'findingCategory.in[]=Billing&findingCategory.in[]=classroom&startDate.win=2021/11/13-2021/12/13';
+    const filters = queryStringToFilters(str);
+    expect(filters.length).toBe(2);
+    const categoryFilter = filters.find((f) => f.topic === 'findingCategory');
+    expect(categoryFilter.condition).toBe('is');
+    expect(categoryFilter.query).toStrictEqual(['Billing', 'classroom']);
+  });
+
+  it('round-trips a combined array filter through filtersToQueryString', () => {
+    const original = [
+      { id: 'abc', topic: 'findingCategory', condition: 'is', query: ['Billing', 'classroom'] },
+    ];
+    const str = filtersToQueryString(original);
+    const parsed = queryStringToFilters(str);
+    expect(parsed.length).toBe(1);
+    expect(parsed[0].topic).toBe('findingCategory');
+    expect(parsed[0].query).toStrictEqual(['Billing', 'classroom']);
+  });
 });
 
 describe('decodeQueryParam', () => {
