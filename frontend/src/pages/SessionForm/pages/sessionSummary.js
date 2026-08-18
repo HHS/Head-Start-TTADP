@@ -3,6 +3,7 @@ import {
   Dropdown,
   ErrorMessage,
   Fieldset,
+  FormGroup,
   Label,
   Link,
   Radio,
@@ -28,6 +29,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import QuestionTooltip from '../../../components/QuestionTooltip';
 import Req from '../../../components/Req';
+import RichEditor from '../../../components/RichEditor';
 import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
@@ -81,6 +83,23 @@ const SessionSummary = ({ datePickerKey, event }) => {
     rules: {
       validate: {
         notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
+
+  const {
+    field: {
+      onChange: onChangeObjective,
+      onBlur: onBlurObjective,
+      value: objective,
+      name: objectiveInputName,
+    },
+  } = useController({
+    name: `objective`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the session objectives',
       },
     },
     defaultValue: '<p></p>',
@@ -315,16 +334,28 @@ const SessionSummary = ({ datePickerKey, event }) => {
       </FormItem>
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
-      <FormItem label="Session objectives " name="objective" required>
-        <Textarea
-          id="objective"
-          name="objective"
-          inputRef={register({
-            required: 'Describe the session objectives',
-          })}
-          required
-        />
-      </FormItem>
+      <FormGroup error={!!errors.objective}>
+        <Label htmlFor={objectiveInputName}>
+          Session objectives
+          <Req />
+        </Label>
+        {errors.objective ? (
+          <ErrorMessage id={`${objectiveInputName}-error`}>{errors.objective.message}</ErrorMessage>
+        ) : null}
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <input type="hidden" name={objectiveInputName} value={objective} />
+          <RichEditor
+            ariaLabel="Session objectives"
+            ariaRequired
+            ariaInvalid={!!errors.objective}
+            ariaDescribedBy={errors.objective ? `${objectiveInputName}-error` : undefined}
+            defaultValue={objective}
+            value={objective}
+            onChange={onChangeObjective}
+            onBlur={onBlurObjective}
+          />
+        </div>
+      </FormGroup>
 
       <div>
         <Drawer triggerRef={goalDrawerTriggerRef} stickyHeader stickyFooter title="Goal guidance">
@@ -681,7 +712,12 @@ const ReviewSection = () => {
       title: 'Objectives summary',
       anchor: 'session-objective',
       items: [
-        { label: 'Session objectives', name: 'objective', customValue: { objective } },
+        {
+          label: 'Session objectives',
+          name: 'objective',
+          customValue: { objective: sanitizeRichText(objective) },
+          isRichText: true,
+        },
         { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
@@ -737,15 +773,19 @@ export const isPageComplete = (hookForm) => {
     required.push('otherTrainers');
   }
 
-  // ttaProvided is a rich-text field: the generic string check treats any HTML
-  // wrapper (e.g. '<p></p>') as complete, so validate it for actual text content.
-  if (isEmptyRichText(hookForm.getValues('ttaProvided'))) {
+  // ttaProvided and objective are rich-text fields: the generic string check treats
+  // any HTML wrapper (e.g. '<p></p>') as complete, so validate them for actual text
+  // content.
+  if (
+    isEmptyRichText(hookForm.getValues('ttaProvided')) ||
+    isEmptyRichText(hookForm.getValues('objective'))
+  ) {
     return false;
   }
 
   return pageComplete(
     hookForm,
-    required.filter((field) => field !== 'ttaProvided')
+    required.filter((field) => field !== 'ttaProvided' && field !== 'objective')
   );
 };
 
