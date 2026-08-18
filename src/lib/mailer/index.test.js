@@ -777,6 +777,23 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
 
+    it('uses Revised wording for resubmissions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor, isResubmission: true },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Revised Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Revised Activity Report ${mockReport.displayId}, which you created, has been submitted for approval.`
+      );
+    });
+
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
       const email = await notifyCreatorReportSubmittedForReview(
@@ -805,7 +822,16 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
-        expect.objectContaining({ report: mockReport, creator: mockAuthor })
+        expect.objectContaining({ report: mockReport, creator: mockAuthor, isResubmission: false })
+      );
+    });
+
+    it('enqueues the creator job with the resubmission flag', () => {
+      jest.spyOn(notificationQueueMock, 'add').mockClear();
+      creatorReportSubmittedForReviewNotification(mockReport, mockAuthor, true);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, creator: mockAuthor, isResubmission: true })
       );
     });
   });
