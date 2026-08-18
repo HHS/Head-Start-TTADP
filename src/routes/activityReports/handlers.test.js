@@ -1185,11 +1185,15 @@ describe('Activity Report handlers', () => {
         },
       ];
       syncApprovers.mockResolvedValue(mockApprovers);
-      createOrUpdate.mockResolvedValueOnce({
+      userSettingOverridesById.mockResolvedValue({
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+      const savedReport = {
         id: 1,
         displayId: 'mockreport-1',
         activityRecipients: [],
-      });
+      };
+      createOrUpdate.mockResolvedValueOnce(savedReport);
       const assignedNotification = jest
         .spyOn(mailer, 'approverAssignedNotification')
         .mockImplementation();
@@ -1219,11 +1223,7 @@ describe('Activity Report handlers', () => {
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
-      expect(assignedNotification).toHaveBeenCalledWith(
-        savedReport,
-        currentApproversWithSettings,
-        false
-      );
+      expect(assignedNotification).toHaveBeenCalledWith(savedReport, mockApprovers, false);
       expect(approverUpdate).toHaveBeenCalledWith(
         { status: null },
         {
