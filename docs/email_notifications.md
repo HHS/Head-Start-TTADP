@@ -137,7 +137,7 @@ Triggered synchronously by an application event, processed once per job.
 | `APPROVED` | `reportApprovedNotification` | `notifyReportApproved` | `report_approved` (names the approving approver; sent on each individual approver approval, excluding the approver who just acted) |
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
-| `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
+| `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `creatorReportSubmittedForReviewNotification` | `notifyCreatorReportSubmittedForReview` | `creator_report_submitted_for_review` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
 
 All instant handlers share the same shape:
