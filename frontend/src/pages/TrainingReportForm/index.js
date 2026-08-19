@@ -91,6 +91,10 @@ export default function TrainingReportForm({ match }) {
   // as the truss component doesn't re-render when the default value changes
   const [datePickerKey, setDatePickerKey] = useState(Date.now().toString());
 
+  // these drive the "Draft saved on ..." confirmation alert
+  const [lastSaveTime, updateLastSaveTime] = useState(null);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
+
   /* ============
    */
 
@@ -102,6 +106,7 @@ export default function TrainingReportForm({ match }) {
 
   const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
+  const { isDirty } = hookForm.formState;
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
@@ -159,6 +164,11 @@ export default function TrainingReportForm({ match }) {
   /* istanbul ignore next: tested elsewhere */
   const onSave = async () => {
     try {
+      // don't save if nothing has changed
+      if (!isDirty) {
+        return;
+      }
+
       // reset the error message
       setError('');
       setIsAppLoading(true);
@@ -179,6 +189,9 @@ export default function TrainingReportForm({ match }) {
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, dataToPut);
       resetFormData(hookForm.reset, updatedEvent);
+
+      updateLastSaveTime(moment(updatedEvent.updatedAt));
+      updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -300,6 +313,9 @@ export default function TrainingReportForm({ match }) {
               onSaveDraft={onSave}
               datePickerKey={datePickerKey}
               showSubmitModal={showSubmitModal}
+              lastSaveTime={lastSaveTime}
+              showSavedDraft={showSavedDraft}
+              updateShowSavedDraft={updateShowSavedDraft}
             />
           </Form>
         </FormProvider>

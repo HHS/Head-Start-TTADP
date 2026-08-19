@@ -228,6 +228,15 @@ describe('TrainingReportForm', () => {
         email: 'ted.user@computers.always',
       },
     });
+
+    // dirty the form so the save is not skipped
+    const additionalRegion = await screen.findByRole('checkbox', {
+      name: /Region 11 \(Tribal\)/i,
+    });
+    act(() => {
+      userEvent.click(additionalRegion);
+    });
+
     const onSaveDraftButton = screen.getByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
@@ -237,6 +246,35 @@ describe('TrainingReportForm', () => {
     await waitFor(() =>
       expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true)
     );
+  });
+
+  it('does not save the draft when the form is not dirty', async () => {
+    fetchMock.get('/api/events/id/123', {
+      regionId: '1',
+      reportId: 1,
+      data: {},
+      ownerId: 1,
+      owner: {
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
+      },
+    });
+    act(() => {
+      renderTrainingReportForm('123');
+    });
+    expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
+
+    fetchMock.put('/api/events/id/123', {});
+
+    const onSaveDraftButton = await screen.findByText(/save draft/i);
+    act(() => {
+      userEvent.click(onSaveDraftButton);
+    });
+
+    // the form was never modified, so no PUT should be made
+    await waitFor(() => expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true));
+    expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(false);
   });
 
   it('shows an error when failing to save', async () => {
@@ -257,6 +295,15 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', 500);
+
+    // dirty the form so the save is not skipped
+    const additionalRegion = await screen.findByRole('checkbox', {
+      name: /Region 11 \(Tribal\)/i,
+    });
+    act(() => {
+      userEvent.click(additionalRegion);
+    });
+
     const onSaveDraftButton = screen.getByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
