@@ -43,7 +43,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod, clear_cache ]
+    enum: [ build_test_deploy, deploy_only, import_data, validation_watchdog, restore_db, backup_prod, clear_cache ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -196,6 +196,14 @@ workflows:
         target_env: "prod"
         slack_channel: acf-head-start-alerts
         ohs_channel: acf-ohs-ttahub--contractor-customer-team
+
+  validation_watchdog_manual:
+    # for manual testing of the monitoring validation watchdog against a lower env
+    when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger_source == "api"
+    jobs:
+    - run_validation_watchdog:
+        target_env: "<< pipeline.parameters.target_env >>"
+        slack_channel: acf-head-start-alerts-lower
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state

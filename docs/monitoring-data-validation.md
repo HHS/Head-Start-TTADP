@@ -240,6 +240,15 @@ yarn cli:check-monitoring-validation-ran   # watchdog
 
 Because every step is plain SQL keyed off the `validation_run` temp table, an individual check's SQL can be pulled from its module and run by hand in psql against a prod-copy database for threshold tuning.
 
+### Exercising the full pipeline on a lower environment (CircleCI)
+
+The import (which runs the validation) and the watchdog are both manual pipelines gated on `pipeline.trigger_source == "api"`, so they run from CircleCI's **Trigger Pipeline** button (which sets `trigger_source = api`). Run them in order — the watchdog only reports green once the validation has run for the current import cycle:
+
+1. **Import + validation.** Trigger Pipeline → set `action = import_data` and `target_env` to a lower env (`dev-blue`/`dev-green`/`dev-red`/`dev-gold`/`dev-pink` or `staging`). This runs `run_import_job` on that env: it downloads/refreshes the ITAMS monitoring data and runs `cli:validate-monitoring-gate` then `cli:validate-monitoring-data` (time series + observations + alerts) for the latest import cycle. Results post to `acf-head-start-alerts-lower`.
+2. **Watchdog.** Trigger Pipeline → set `action = validation_watchdog` and the **same** `target_env`. This runs `cli:check-monitoring-validation-ran` on that env and confirms a successful validation run exists for that import cycle. Result posts to `acf-head-start-alerts-lower`.
+
+Before step 1, that env has no run for the new cycle, so running the watchdog first correctly reports *"no validation run for the current import cycle."* Equivalently, either pipeline can be triggered through the CircleCI API v2 `pipeline` endpoint with the same `action`/`target_env` parameters.
+
 ## Extending
 
 - **New statistic**: add an `INSERT … ON CONFLICT` for a new `feature_set`/`stat_name` in `monitoringTimeSeries.ts`. No schema change — the table is long/narrow.
