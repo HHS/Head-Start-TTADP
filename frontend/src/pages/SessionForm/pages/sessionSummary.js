@@ -335,7 +335,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
       <FormGroup error={!!errors.objective}>
-        <Label htmlFor={objectiveInputName}>
+        <Label>
           Session objectives
           <Req />
         </Label>
@@ -343,13 +343,11 @@ const SessionSummary = ({ datePickerKey, event }) => {
           <ErrorMessage id={`${objectiveInputName}-error`}>{errors.objective.message}</ErrorMessage>
         ) : null}
         <div className="smart-hub--text-area__resize-vertical margin-top-1">
-<input type="hidden" id={objectiveInputName} name={objectiveInputName} value={objective} />
           <RichEditor
             ariaLabel="Session objectives"
             ariaRequired
             ariaInvalid={!!errors.objective}
             ariaDescribedBy={errors.objective ? `${objectiveInputName}-error` : undefined}
-            defaultValue={objective}
             value={objective}
             onChange={onChangeObjective}
             onBlur={onBlurObjective}
