@@ -416,6 +416,47 @@ describe('Activity Report handlers', () => {
         'Approver McApproverface'
       );
     });
+    it('does not archive resubmission notifications until the report is fully approved', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // acting approver approved, but the aggregate status is still SUBMITTED
+        // because a second approver is pending
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999 }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // resubmission notifications must survive until the aggregate status is APPROVED
+      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
+    });
     it('excludes the acting approver from the approved email collaborator recipients', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
@@ -1536,6 +1577,7 @@ describe('Activity Report handlers', () => {
           dataValues: report,
           objectivesWithoutGoals: [],
           calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          author: { id: 1 },
           activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
         },
         undefined,
@@ -1618,6 +1660,44 @@ describe('Activity Report handlers', () => {
         );
         expect(createNotification).toHaveBeenCalledWith(
           mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+      });
+
+      it('sends the standard submitted notification when a collaborator (not the creator) resubmits', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+            // the acting user is 1, but the report author is someone else,
+            // so this is a collaborator submit, not a creator resubmission
+            author: { id: 777 },
+            activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
+          },
+          undefined,
+          undefined,
+        ]);
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+          expect.anything()
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator2.userId,
           savedReport.id,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
           expect.anything()

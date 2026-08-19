@@ -580,8 +580,10 @@ export async function reviewReport(req, res) {
         },
         user.name
       );
+    }
 
-      // A resubmission notification is obsolete once the report is approved.
+    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // A resubmission notification is obsolete once the report is fully approved.
       await archiveResubmittedNotifications(Number(activityReportId));
     }
 
@@ -740,9 +742,12 @@ export async function submitReport(req, res) {
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
-    // Resubmission is detected the same way as the resubmit approver email flow:
-    // a report submitted while still in "needs action" is a resubmission.
-    const isResubmission = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+    // Only a creator resubmitting (report still in needs-action) counts as a resubmission
+    // for the collaborator revised-report notification; collaborator submits use the standard flow.
+    const isResubmission =
+      report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION &&
+      report.author &&
+      report.author.id === userId;
 
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
