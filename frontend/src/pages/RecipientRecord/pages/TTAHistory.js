@@ -1,4 +1,4 @@
-import { Grid } from '@trussworks/react-uswds';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
@@ -9,7 +9,11 @@ import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
+import { getSessionReportsTable } from '../../../fetchers/session';
+import useFetch from '../../../hooks/useFetch';
+import useRequestSort from '../../../hooks/useRequestSort';
 import useSanitizedFilters from '../../../hooks/useSanitizedFilters';
+import useSessionSort from '../../../hooks/useSessionSort';
 import { getUserRegions } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { expandFilters, formatDateRange } from '../../../utils';
@@ -17,6 +21,7 @@ import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoa
 import { TTAHistoryOverview } from '../../../widgets/DashboardOverview';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
 const defaultDate = formatDateRange({
@@ -72,6 +77,25 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
       },
     ],
     [filters, regionId, recipientId]
+  );
+
+  const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
+    {
+      sortBy: 'Event_ID',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    },
+    'trainingReportsTable'
+  );
+
+  const requestTrainingReportsSort = useRequestSort(setTrainingReportsSortConfig);
+
+  const { data: trainingReportsData, error: trainingReportsError } = useFetch(
+    { rows: [], count: 0 },
+    () => getSessionReportsTable(trainingReportsSortConfig, [], recipientId),
+    [trainingReportsSortConfig, recipientId],
+    'Unable to fetch training reports'
   );
 
   if (!recipientName) {
@@ -144,6 +168,20 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             exportIdPrefix="tta-history-"
             resetPagination={resetPagination}
             setResetPagination={setResetPagination}
+          />
+          {trainingReportsError && (
+            <Alert type="error" role="alert">
+              {trainingReportsError}
+            </Alert>
+          )}
+          <TrainingReportsTable
+            data={trainingReportsData}
+            title="Training Reports"
+            emptyMsg="No training reports found"
+            requestSort={requestTrainingReportsSort}
+            sortConfig={trainingReportsSortConfig}
+            setSortConfig={setTrainingReportsSortConfig}
+            recipientId={recipientId}
           />
         </FilterContext.Provider>
       </div>
