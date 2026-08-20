@@ -12,6 +12,7 @@ import RequestPermissions from './components/RequestPermissions';
 import ScrollToTop from './components/ScrollToTop';
 import SiteNav from './components/SiteNav';
 import SomethingWentWrong from './components/SomethingWentWrong';
+import VerifyEmailSwitch from './components/VerifyEmailSwitch';
 import useGaPageView from './hooks/useGaPageView';
 import AccountManagement from './pages/AccountManagement';
 import Group from './pages/AccountManagement/Group';
@@ -416,6 +417,15 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <WhatsNewPage notifications={whatsNewNotifications} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/notifications/verify-email/:token"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+              <VerifyEmailSwitch />
             </AppWrapper>
           )}
         />
