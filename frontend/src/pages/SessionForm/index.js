@@ -590,10 +590,27 @@ export default function SessionForm({ match }) {
         return;
       }
 
+      // Narrow the payload to the fields for this role so hydrated associations
+      // (event, approver) that live on the form state are not persisted back into
+      // the session's JSONB data column. The unfiltered `data` is still used for
+      // the redirect message below.
+      const keyArray = determineKeyArray({
+        isAdminUser,
+        isPoc,
+        eventOrganizer,
+        isCollaborator,
+        isOwner,
+        isApprover,
+        isNcUser,
+        facilitation: data?.facilitation || '',
+        isSubmitted: data?.submitted,
+      });
+      const roleData = reduceDataToMatchKeys(keyArray, data);
+
       // PUT it to the backend
       await updateSession(sessionId, {
         data: {
-          ...data,
+          ...roleData,
           status,
         },
         trainingReportId,
