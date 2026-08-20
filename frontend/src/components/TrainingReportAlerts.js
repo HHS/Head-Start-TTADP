@@ -138,7 +138,8 @@ export default function TrainingReportAlerts() {
       loading={false}
     >
       {alertsForTable.length ? (
-        <div className="ttahub-training-report-alerts-scrollable">
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: scroll region needs keyboard focus
+        <div className="ttahub-training-report-alerts-scrollable" tabIndex={0}>
           <SimpleSortableTable
             className="ttahub-training-report-alerts"
             columns={columns}
