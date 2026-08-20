@@ -106,7 +106,6 @@ export default function TrainingReportForm({ match }) {
 
   const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
-  const { isDirty } = hookForm.formState;
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
   useEffect(() => {
@@ -167,11 +166,6 @@ export default function TrainingReportForm({ match }) {
       // reset the error message
       setError('');
       hookForm.clearErrors();
-
-      // don't save if nothing has changed
-      if (!isDirty) {
-        return;
-      }
 
       setIsAppLoading(true);
 
