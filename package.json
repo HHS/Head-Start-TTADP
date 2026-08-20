@@ -265,7 +265,6 @@
     "qs": "^6.15.2",
     "filelist": "^2.0.2",
     "minimatch": "^10.2.5",
-    "multimatch": "^8.0.0",
     "sqlite3": "^6.0.1",
     "test-exclude": "^8.0.0",
     "tar": "^7.5.21",
