@@ -39,6 +39,9 @@ jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
 jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page</div>);
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
+jest.mock('../pages/AccountManagement/ManageNotifications', () => () => (
+  <div>Manage Notifications Page</div>
+));
 jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
@@ -382,6 +385,24 @@ describe('Routes', () => {
     await RenderRoutes('/notifications');
     expect(await screen.findByText('Actionable Notifications Flag Not Found')).toBeInTheDocument();
     expect(screen.queryByText('Notifications Page')).toBe(null);
+  });
+
+  it('routes "/notifications/verify-email/:token" to the notifications management page for flagged users', async () => {
+    await RenderRoutes('/notifications/verify-email/tok-123', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Manage Notifications Page')).toBeInTheDocument();
+  });
+
+  it('routes "/notifications/verify-email/:token" to the legacy account page for unflagged users', async () => {
+    await RenderRoutes('/notifications/verify-email/tok-123', true, {
+      flags: defaultFlags,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Account Management Page')).toBeInTheDocument();
   });
 
   // --- unauthenticated scenarios ---
