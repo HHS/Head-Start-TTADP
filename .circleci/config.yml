@@ -1091,18 +1091,6 @@ jobs:
             exit 0
           fi
 
-          if ! node ./tools/releaseInventory.js cms-export \
-            --out "${cms_export_path}" \
-            --csv-out "${cms_csv_export_path}" \
-            --release-tag "${BUILD_RELEASE_TAG}" \
-            --release-commit "${CIRCLE_SHA1}" \
-            --pipeline-url "${CIRCLE_BUILD_URL}"; then
-            rm -f "${cms_export_path}" "${cms_csv_export_path}"
-            msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-
           inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
           cms_export_hash=$(sha256sum "${cms_export_path}" | awk '{print $1}')
           cms_csv_export_hash=$(sha256sum "${cms_csv_export_path}" | awk '{print $1}')
