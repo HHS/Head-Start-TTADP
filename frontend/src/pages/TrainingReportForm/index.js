@@ -164,15 +164,16 @@ export default function TrainingReportForm({ match }) {
   /* istanbul ignore next: tested elsewhere */
   const onSave = async () => {
     try {
+      // reset the error message
+      setError('');
+      hookForm.clearErrors();
+
       // don't save if nothing has changed
       if (!isDirty) {
         return;
       }
 
-      // reset the error message
-      setError('');
       setIsAppLoading(true);
-      hookForm.clearErrors();
 
       // grab the newest data from the form
       const { ownerId, pocIds, collaboratorIds, regionId, sessionReports, ...data } =
