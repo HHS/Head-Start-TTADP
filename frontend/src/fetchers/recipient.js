@@ -86,3 +86,27 @@ export const getRecipientLeadership = async (recipientId, regionId) => {
   const leadership = await get(url);
   return leadership.json();
 };
+
+export const getRecipientTimeline = async (
+  recipientId,
+  regionId,
+  { direction = 'desc', filters = [], excludeMultiRecipientCommunications = false } = {}
+) => {
+  const id = parseInt(recipientId, DECIMAL_BASE);
+  if (Number.isNaN(id)) {
+    throw new Error('Recipient ID must be a number');
+  }
+
+  const idRegion = parseInt(regionId, DECIMAL_BASE);
+  if (Number.isNaN(idRegion)) {
+    throw new Error('Region ID must be a number');
+  }
+
+  const query = new URLSearchParams({ direction });
+  filters.forEach((filter) => query.append('filters', filter));
+  query.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
+
+  const url = join(recipientUrl, recipientId, 'region', regionId, 'timeline');
+  const timeline = await get(`${url}?${query.toString()}`);
+  return timeline.json();
+};

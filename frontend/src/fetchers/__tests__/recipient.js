@@ -4,6 +4,7 @@ import {
   getRecipient,
   getRecipientGoals,
   getRecipientLeadership,
+  getRecipientTimeline,
   goalsByIdAndRecipient,
 } from '../recipient';
 
@@ -44,5 +45,33 @@ describe('recipient fetcher', () => {
     fetchMock.getOnce(url, { name: 'Tim Johnson the Recipient' });
     const res = await getRecipientLeadership('1', '1');
     expect(res.name).toBe('Tim Johnson the Recipient');
+  });
+
+  it('getRecipientTimeline sends sort direction, serialized filters, and the multi-recipient switch', async () => {
+    const filter = JSON.stringify({ topic: 'date', condition: 'is within', query: 'date-range' });
+    const query = new URLSearchParams({ direction: 'asc', filters: filter });
+    query.set('excludeMultiRecipientCommunications', 'true');
+    const url = `${join(recipientUrl, '1', 'region', '2', 'timeline')}?${query.toString()}`;
+    fetchMock.getOnce(url, { count: 0, events: [] });
+
+    const result = await getRecipientTimeline('1', '2', {
+      direction: 'asc',
+      filters: [filter],
+      excludeMultiRecipientCommunications: true,
+    });
+
+    expect(result).toEqual({ count: 0, events: [] });
+  });
+
+  it('getRecipientTimeline rejects an invalid recipient id', async () => {
+    await expect(getRecipientTimeline('not-a-number', '1')).rejects.toThrow(
+      'Recipient ID must be a number'
+    );
+  });
+
+  it('getRecipientTimeline rejects an invalid region id', async () => {
+    await expect(getRecipientTimeline('1', 'not-a-number')).rejects.toThrow(
+      'Region ID must be a number'
+    );
   });
 });
