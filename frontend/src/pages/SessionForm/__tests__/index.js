@@ -1401,6 +1401,9 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
       expect(putBodyJson.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
       expect(putBodyJson.data.approvalStatus).toBeUndefined(); // Should be destructured out
+      // Hydrated associations must not be sent back into the session data column
+      expect(putBodyJson.data.event).toBeUndefined();
+      expect(putBodyJson.data.approver).toBeUndefined();
 
       // Verify navigation with success message
       await waitFor(() => expect(historySpy).toHaveBeenCalled());
