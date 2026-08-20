@@ -120,7 +120,8 @@
     "sass/immutable": ">=5.1.8",
     "filelist": "^2.0.2",
     "minimatch": "^10.2.5",
-    "sqlite3": "^6.0.1",
+    "node-gyp": "^12.4.0",
+    "sqlite3": "^5.1.7",
     "test-exclude": "^8.0.0",
     "tar": "^7.5.21",
     "ws": "^8.21.0"
