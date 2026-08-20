@@ -36,18 +36,25 @@ describe('checkRecipientTimelineQuery', () => {
       sortBy: 'date',
       direction: 'desc',
       filters: [],
+      excludeMultiRecipientCommunications: false,
     });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('parses valid pagination and filter values', () => {
+  it('parses valid pagination, structured filters, and the multi-recipient switch', () => {
+    const filter = JSON.stringify({
+      topic: 'eventType',
+      condition: 'is',
+      query: ['Email communication', 'Phone communication', 'In person communication'],
+    });
     const req = {
       query: {
         limit: '25',
         offset: '10',
         sortBy: 'date',
         direction: 'asc',
-        filters: ['one', 'two'],
+        filters: filter,
+        excludeMultiRecipientCommunications: 'true',
       },
     };
     const res = mockResponse();
@@ -60,7 +67,14 @@ describe('checkRecipientTimelineQuery', () => {
       offset: 10,
       sortBy: 'date',
       direction: 'asc',
-      filters: ['one', 'two'],
+      filters: [
+        {
+          topic: 'eventType',
+          condition: 'is',
+          query: ['Email communication', 'Phone communication', 'In person communication'],
+        },
+      ],
+      excludeMultiRecipientCommunications: true,
     });
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -70,7 +84,12 @@ describe('checkRecipientTimelineQuery', () => {
     ['negative offset', { offset: '-1' }],
     ['unsupported sort field', { sortBy: 'title' }],
     ['unsupported direction', { direction: 'sideways' }],
-    ['structured filters', { filters: { key: 'value' } }],
+    ['non-serialized filters', { filters: { key: 'value' } }],
+    ['malformed serialized filter', { filters: '{' }],
+    [
+      'serialized filter with an unsupported topic',
+      { filters: JSON.stringify({ topic: 'recipient', condition: 'is', query: ['1'] }) },
+    ],
     ['unknown query parameter', { extra: 'value' }],
   ])('rejects %s', (_description, query) => {
     const req = { query };

@@ -31,8 +31,11 @@ const checkRecipientAccessAndExistence = async (req: Request, res: Response) => 
     return false;
   }
 
-  // Check recipient exists.
-  const recipient = await recipientById(validatedRecipientId, []);
+  // Verify that the recipient has a grant in the requested region. This avoids
+  // revealing recipient existence outside the requested region.
+  const recipient = await recipientById(validatedRecipientId, {
+    where: { regionId: validatedRegionId },
+  });
   if (!recipient) {
     res.sendStatus(httpCodes.NOT_FOUND);
     return false;

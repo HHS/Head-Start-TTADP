@@ -1,3 +1,9 @@
+interface RecipientTimelineFilter {
+  topic: 'date' | 'purpose' | 'standard' | 'eventType';
+  condition: string;
+  query: string | string[];
+}
+
 interface RecipientTimelineParams {
   recipientId: number;
   regionId: number;
@@ -5,7 +11,8 @@ interface RecipientTimelineParams {
   offset: number;
   sortBy: 'date';
   direction: 'asc' | 'desc';
-  filters: string[];
+  filters: RecipientTimelineFilter[];
+  excludeMultiRecipientCommunications: boolean;
 }
 
 interface RecipientTimelineResponse {

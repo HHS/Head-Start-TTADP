@@ -10,6 +10,7 @@ describe('getRecipientTimeline', () => {
       sortBy: 'date',
       direction: 'desc',
       filters: [],
+      excludeMultiRecipientCommunications: false,
     });
 
     expect(result).toEqual({

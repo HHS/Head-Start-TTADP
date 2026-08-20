@@ -49,6 +49,23 @@ describe('recipient routes', () => {
     });
   });
 
+  it('accepts the multi-select event-type filter used by the timeline UI', async () => {
+    const filters = JSON.stringify({
+      topic: 'eventType',
+      condition: 'is',
+      query: ['Email communication', 'Phone communication', 'In person communication'],
+    });
+
+    expect(filters).toHaveLength(118);
+
+    const response = await request(app)
+      .get('/recipient/100000/region/1/timeline')
+      .query({ filters });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ count: 0, events: [] });
+  });
+
   it.each([
     '/recipient/not-a-number/region/1/timeline',
     '/recipient/100000/region/not-a-number/timeline',

@@ -361,7 +361,8 @@ describe('getRecipientTimeline', () => {
     offset: 10,
     sortBy: 'date',
     direction: 'asc',
-    filters: ['example'],
+    filters: [{ topic: 'date', condition: 'is within', query: '08/01/2025-08/01/2026' }],
+    excludeMultiRecipientCommunications: true,
   };
 
   const req = {
