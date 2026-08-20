@@ -39,10 +39,18 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(screen.getByRole('heading', { name: 'TTA timeline' })).toBeVisible();
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
     expect(screen.getByRole('button', { name: 'About this data' })).toBeVisible();
-    expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc');
-    expect(
-      screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' })
-    ).toBeVisible();
+    const sortControl = screen.getByRole('combobox', { name: 'View' });
+    const checkbox = screen.getByRole('checkbox', {
+      name: 'Hide multi-recipient communications',
+    });
+    const multiRecipientIcon = checkbox.parentElement.querySelector('svg');
+
+    expect(sortControl).toHaveValue('desc');
+    expect(sortControl).toHaveClass('width-mobile');
+    expect(checkbox).toBeVisible();
+    expect(checkbox.closest('.usa-checkbox')).toHaveClass('ttahub-timeline-checkbox');
+    expect(multiRecipientIcon).toHaveClass('height-2', 'width-2');
+    expect(multiRecipientIcon).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByText('Date', { selector: 'strong' })).toBeVisible();
   });
 
@@ -78,13 +86,13 @@ describe('Recipient Record - TTA Timeline', () => {
     renderTimeline();
 
     expect(screen.getByLabelText('Loading TTA timeline')).toBeVisible();
-    expect(screen.queryByText('No timeline events found.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
   });
 
   it('renders an empty state', () => {
     renderTimeline();
 
-    expect(screen.getByText('No timeline events found.')).toBeVisible();
+    expect(screen.getByText('No results found.')).toBeVisible();
     expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
   });
 
@@ -98,7 +106,7 @@ describe('Recipient Record - TTA Timeline', () => {
     renderTimeline();
 
     expect(screen.getByRole('alert')).toHaveTextContent('Unable to load the TTA timeline.');
-    expect(screen.queryByText('No timeline events found.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
   });
 
   it('renders a result count when timeline events exist', () => {

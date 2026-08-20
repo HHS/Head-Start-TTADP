@@ -13,9 +13,11 @@ import FilterDateRange from '../../../components/filter/FilterDateRange';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterSelect from '../../../components/filter/FilterSelect';
 import { goalCategoryFilter } from '../../../components/filter/goalFilters';
+import NoResultsFound from '../../../components/NoResultsFound';
 import { getRecipientTimeline } from '../../../fetchers/recipient';
 import useFetch from '../../../hooks/useFetch';
 import { formatDateRange } from '../../../utils';
+import './Timeline.css';
 
 interface TimelineProps {
   recipientId: string;
@@ -219,7 +221,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
                   View
                 </label>
                 <Dropdown
-                  className="margin-top-0 width-card-lg"
+                  className="margin-top-0 width-mobile"
                   id="timeline-sort"
                   name="timeline-sort"
                   value={direction}
@@ -231,16 +233,22 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
               </div>
               <div className="display-flex flex-align-center">
                 <Checkbox
+                  className="ttahub-timeline-checkbox"
                   id="hide-multi-recipient-communications"
                   name="hide-multi-recipient-communications"
-                  label="Hide multi-recipient communications"
+                  label={
+                    <span className="display-flex flex-align-center">
+                      Hide multi-recipient communications
+                      <FontAwesomeIcon
+                        aria-hidden="true"
+                        className="height-2 margin-left-1 width-2"
+                        focusable="false"
+                        icon={faUsers}
+                      />
+                    </span>
+                  }
                   checked={hideMultiRecipientCommunications}
                   onChange={(event) => setHideMultiRecipientCommunications(event.target.checked)}
-                />
-                <FontAwesomeIcon
-                  className="margin-left-1"
-                  icon={faUsers}
-                  title="Multi-recipient communication"
                 />
               </div>
             </div>
@@ -252,14 +260,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
                 {error}
               </Alert>
             )}
-            {!loading && !error && events.length === 0 && (
-              <div className="text-center padding-y-5">
-                <h3 className="font-sans-md margin-y-1">No timeline events found.</h3>
-                <p className="usa-prose margin-x-auto margin-bottom-0">
-                  Try removing or changing the selected filters.
-                </p>
-              </div>
-            )}
+            {!loading && !error && events.length === 0 && <NoResultsFound hideFilterHelp />}
             {!loading && !error && events.length > 0 && (
               <p className="margin-0" data-testid="timeline-results">
                 {count} timeline {count === 1 ? 'event' : 'events'}
