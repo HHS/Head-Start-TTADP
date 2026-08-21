@@ -119,7 +119,6 @@
     "postcss": "8.5.23",
     "sass/immutable": ">=5.1.8",
     "filelist": "^2.0.2",
-    "minimatch": "^10.2.5",
     "node-gyp": "^12.4.0",
     "sqlite3": "^5.1.7",
     "test-exclude": "^8.0.0",
