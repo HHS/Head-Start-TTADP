@@ -19,6 +19,7 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - Pause and ask before making broad refactors or touching many files.
 - When presenting choices, provide a recommended option with reasoning.
 - Ensure changes pass lint checks after work is complete.
+- Before writing a new helper/utility, search for an existing one (shared `common` package, `src/lib`/`src/utils`, `frontend/src/utils`, and surrounding code). Reuse or extend it rather than re-implementing common operations like numeric/type checks, list cleaning/deduping, or formatting. See `best_practices.md`.
 - Follow coding standards in `best_practices.md`.
 
 ## Commands
