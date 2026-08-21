@@ -1185,11 +1185,15 @@ describe('Activity Report handlers', () => {
         },
       ];
       syncApprovers.mockResolvedValue(mockApprovers);
-      createOrUpdate.mockResolvedValueOnce({
+      userSettingOverridesById.mockResolvedValue({
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+      const savedReport = {
         id: 1,
         displayId: 'mockreport-1',
         activityRecipients: [],
-      });
+      };
+      createOrUpdate.mockResolvedValueOnce(savedReport);
       const assignedNotification = jest
         .spyOn(mailer, 'approverAssignedNotification')
         .mockImplementation();
@@ -1219,6 +1223,7 @@ describe('Activity Report handlers', () => {
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
+      expect(assignedNotification).toHaveBeenCalledWith(savedReport, mockApprovers, false);
       expect(approverUpdate).toHaveBeenCalledWith(
         { status: null },
         {
@@ -1345,9 +1350,90 @@ describe('Activity Report handlers', () => {
         await submitReport(request, mockResponse);
 
         // Email notification only goes to the first approver (IMMEDIATELY setting)
-        expect(assignedNotification).toHaveBeenCalledWith(savedReport, [mockApprovers[0]]);
+        expect(assignedNotification).toHaveBeenCalledWith(savedReport, [mockApprovers[0]], false);
         // In-app notification goes to both approvers
         expect(createNotification).toHaveBeenCalledTimes(2);
+      });
+
+      it('excludes the submitting approver (userId 1) from approver email recipients', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // Only the non-submitting approver receives the email
+        expect(assignedNotification).toHaveBeenCalledWith(
+          savedReport,
+          [approversIncludingSubmitter[0]],
+          false
+        );
+      });
+
+      it('excludes the submitting approver (userId 1) from in-app submitted notifications', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // In-app notification only fires for the non-submitting approver
+        expect(createNotification).toHaveBeenCalledTimes(1);
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          1,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+      });
+
+      it('marks approver email as a resubmission when the report was previously needs_action', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponse[0],
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+            dataValues: {
+              ...byIdResponse[0].dataValues,
+              calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+            },
+          },
+        ]);
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(assignedNotification).toHaveBeenCalledWith(savedReport, mockApprovers, true);
       });
 
       it('does not call createNotification when syncApprovers returns no approvers', async () => {
