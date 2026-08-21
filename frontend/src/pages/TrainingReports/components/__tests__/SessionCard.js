@@ -83,6 +83,20 @@ describe('SessionCard', () => {
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
+  it('renders the session dates supplied in data (derived from the startDate/endDate columns)', () => {
+    // The backend treats the startDate/endDate columns as the source of truth and
+    // re-derives data.startDate/data.endDate (MM/DD/YYYY) from them on read.
+    renderSessionCard({
+      ...defaultSession,
+      data: {
+        ...defaultSession.data,
+        startDate: '03/15/2024',
+        endDate: '03/16/2024',
+      },
+    });
+    expect(screen.getByText(/03\/15\/2024 - 03\/16\/2024/i)).toBeInTheDocument();
+  });
+
   it('owner can both edit and delete (treated as collaborator)', () => {
     renderSessionCard(
       defaultSession,
