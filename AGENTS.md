@@ -19,6 +19,7 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - Pause and ask before making broad refactors or touching many files.
 - When presenting choices, provide a recommended option with reasoning.
 - Ensure changes pass lint checks after work is complete.
+- Before writing a new helper/utility, you MUST first search for an existing one and reuse it. Check the shared `common` package (`packages/common`), backend `src/lib`/`src/utils` (start with `src/lib/utils.ts` — it already exports helpers like `uniqueStrings`, `ensureArray`, `formatDate`), `frontend/src/utils`, and the surrounding code. Do not re-implement common operations (numeric/type checks, list cleaning/deduping, ensuring an array, date formatting) inline — e.g. do not write `[...new Set(...)]` when `uniqueStrings` exists. Only create a new helper when none fits, and note it explicitly. See `best_practices.md`.
 - Follow coding standards in `best_practices.md`.
 
 ## Commands
