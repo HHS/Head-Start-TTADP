@@ -13,15 +13,23 @@ import {
 
 jest.mock('./index', () => ({
   archiveNotificationsByEntityAndType: jest.fn(),
+  archiveNotificationsByUserEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
 // eslint-disable-next-line import/first
-import { archiveNotificationsByEntityAndType, createNotification } from './index';
+import {
+  archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
+  createNotification,
+} from './index';
 
 const mockCreateNotification = createNotification as jest.MockedFunction<typeof createNotification>;
 const mockArchiveNotifications = archiveNotificationsByEntityAndType as jest.MockedFunction<
   typeof archiveNotificationsByEntityAndType
+>;
+const mockArchiveByUser = archiveNotificationsByUserEntityAndType as jest.MockedFunction<
+  typeof archiveNotificationsByUserEntityAndType
 >;
 
 describe('activityReport notification helpers', () => {
@@ -34,6 +42,7 @@ describe('activityReport notification helpers', () => {
   beforeEach(() => {
     mockCreateNotification.mockResolvedValue(null);
     mockArchiveNotifications.mockResolvedValue(undefined);
+    mockArchiveByUser.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -420,6 +429,34 @@ describe('activityReport notification helpers', () => {
       });
 
       expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it("archives each collaborator's submitted-collaborator notification", async () => {
+      const collaborators = [{ userId: 1 }, { userId: 2 }];
+      await createResubmittedNotificationForCollaborators(collaborators, reportBase);
+
+      expect(mockArchiveByUser).toHaveBeenCalledTimes(2);
+      expect(mockArchiveByUser).toHaveBeenNthCalledWith(
+        1,
+        reportBase.id,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+      expect(mockArchiveByUser).toHaveBeenNthCalledWith(
+        2,
+        reportBase.id,
+        2,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+    });
+
+    it('does not archive when there is no recipient name', async () => {
+      await createResubmittedNotificationForCollaborators([{ userId: 1 }], {
+        ...reportBase,
+        activityRecipients: [],
+      });
+
+      expect(mockArchiveByUser).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,9 @@
 import { NOTIFICATION_TYPES } from '../../constants';
-import { archiveNotificationsByEntityAndType, createNotification } from './index';
+import {
+  archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
+  createNotification,
+} from './index';
 
 const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
   return !!(activityRecipients || [])
@@ -200,7 +204,7 @@ async function createResubmittedNotificationForCollaborators(
     return Promise.resolve();
   }
 
-  return Promise.all(
+  await Promise.all(
     currentCollaborators.map((collaborator) =>
       createNotification(
         collaborator.userId,
@@ -214,6 +218,16 @@ async function createResubmittedNotificationForCollaborators(
           },
           skipExisting: 'archived',
         }
+      )
+    )
+  );
+
+  return Promise.all(
+    currentCollaborators.map((collaborator) =>
+      archiveNotificationsByUserEntityAndType(
+        savedReport.id,
+        collaborator.userId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
       )
     )
   );
