@@ -4,8 +4,9 @@
  * otherwise untested. These tests run the real `fetchFeed` against a local
  * HTTP server (no network access).
  */
+
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import http from 'http';
-import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 import { fetchFeed } from './feed';
 
 describe('fetchFeed (real HTTP)', () => {
@@ -28,13 +29,17 @@ describe('fetchFeed (real HTTP)', () => {
       res.end();
     });
 
-    await new Promise<void>((resolve) => { server.listen(0, resolve); });
+    await new Promise<void>((resolve) => {
+      server.listen(0, resolve);
+    });
     const { port } = server.address() as { port: number };
     baseUrl = `http://127.0.0.1:${port}`;
   });
 
   afterAll(async () => {
-    await new Promise<void>((resolve) => { server.close(() => resolve()); });
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
   });
 
   it('returns the response body for the feed address', async () => {

@@ -391,6 +391,24 @@ const SORT_DIR = {
 
 const REGIONS = ['Northeast', 'Midwest', 'West', 'AIAN', 'Southeast', 'Southwest'];
 
+const VALIDATION_RUN_STATUS = {
+  STARTED: 'started',
+  SUCCESS: 'success',
+  FAILURE: 'failure',
+};
+
+const VALIDATION_PROCESS = {
+  // post-refresh, non-blocking: time series + observations + threshold alerts
+  MONITORING_POST_REFRESH: 'monitoring_post_refresh',
+  // pre-refresh gate: critical-capable checks that can block the fact-table refresh
+  MONITORING_GATE: 'monitoring_gate',
+};
+
+const VALIDATION_ALERT_SEVERITY = {
+  ALERT: 'alert',
+  CRITICAL: 'critical',
+};
+
 module.exports = {
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
@@ -435,4 +453,7 @@ module.exports = {
   SORT_DIR,
   COMMUNICATION_LOG_LIMIT_MAX,
   REGIONS,
+  VALIDATION_RUN_STATUS,
+  VALIDATION_PROCESS,
+  VALIDATION_ALERT_SEVERITY,
 };
