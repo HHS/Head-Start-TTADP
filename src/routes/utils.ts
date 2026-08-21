@@ -26,6 +26,16 @@ const checkRecipientAccessAndExistence = async (req: Request, res: Response) => 
 };
 
 const checkUserRegionAccess = async (req: Request, res: Response, regionIds: number[]) => {
+  const validRegionIds =
+    Array.isArray(regionIds) &&
+    regionIds.length > 0 &&
+    regionIds.every((regionId) => Number.isInteger(Number(regionId)) && Number(regionId) > 0);
+
+  if (!validRegionIds) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return false;
+  }
+
   const userId = await currentUserId(req, res);
   const readRegions = await getUserReadRegions(userId);
   const hasAccessToAllRegions = regionIds.every((regionId) =>

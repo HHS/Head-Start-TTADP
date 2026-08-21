@@ -41,6 +41,10 @@ export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
 ];
 
 export async function goalRegionIdsByIdAndRecipient(ids: number | number[], recipientId: number) {
+  if (Array.isArray(ids) && !ids.length) {
+    return [];
+  }
+
   const goals = await Goal.findAll({
     attributes: ['id'],
     where: {

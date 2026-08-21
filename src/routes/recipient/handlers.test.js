@@ -511,6 +511,34 @@ describe('getGoalsByIdAndRecipient', () => {
     expect(goalsByIdAndRecipient).not.toHaveBeenCalled();
   });
 
+  it('handles no goals after region access succeeds', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockResolvedValueOnce([]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    expect(mockResponse.json).not.toHaveBeenCalled();
+  });
+
   it('returns 403 when any matching goal belongs to a region the user cannot access', async () => {
     const req = {
       params: {

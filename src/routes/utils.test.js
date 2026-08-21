@@ -67,6 +67,22 @@ describe('Route Utils', () => {
   });
 
   describe('checkUserRegionAccess', () => {
+    it('returns false and 400 if no regions are provided', async () => {
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, []);
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(getUserReadRegions).not.toHaveBeenCalled();
+    });
+
+    it('returns false and 400 if any region is invalid', async () => {
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, [1, Number.NaN]);
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(getUserReadRegions).not.toHaveBeenCalled();
+    });
+
     it('returns false and 403 if user cannot access all requested regions', async () => {
       getUserReadRegions.mockResolvedValue([1]);
       req = mockRequest();
