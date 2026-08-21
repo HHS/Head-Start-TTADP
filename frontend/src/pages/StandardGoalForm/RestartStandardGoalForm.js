@@ -1,7 +1,7 @@
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -12,7 +12,11 @@ import {
 } from '../../components/SharedGoalComponents/constants';
 import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
 import { addStandardGoal } from '../../fetchers/standardGoals';
-import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
+import {
+  DEFAULT_STATUS_CHANGE_BLOCKING_REASONS,
+  GOAL_FORM_FIELDS,
+  mapObjectivesAndRootCauses,
+} from './constants';
 
 export default function RestartStandardGoalForm({
   goal,
@@ -25,6 +29,10 @@ export default function RestartStandardGoalForm({
 }) {
   const history = useHistory();
   const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  const [statusChangeBlockingReasons, setStatusChangeBlockingReasons] = useState(
+    DEFAULT_STATUS_CHANGE_BLOCKING_REASONS
+  );
 
   const hookForm = useForm({
     defaultValues: {
@@ -65,8 +73,17 @@ export default function RestartStandardGoalForm({
 
       history.push(backLinkTo);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
+      if (err.status === 409 && err.data?.code === 'STANDARD_GOAL_ON_ACTIVITY_REPORT') {
+        setStatusChangeBlockingReasons({
+          activeActivityReport: true,
+          incompleteObjectives: false,
+          fromApi: true,
+          invalidStatusChangeAttempted: true,
+        });
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(err);
+      }
     } finally {
       setIsAppLoading(false);
     }
@@ -81,6 +98,7 @@ export default function RestartStandardGoalForm({
       goal={goal}
       goalTemplatePrompts={goalTemplatePrompts}
       standardGoalFormButtons={standardGoalFormButtons}
+      statusChangeBlockingReasons={statusChangeBlockingReasons}
       isRestart
     />
   );

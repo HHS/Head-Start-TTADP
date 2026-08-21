@@ -468,7 +468,6 @@ export default function StandardGoalCard({
           )}
           {/* Alert for invalid status change attempt */}
           <GoalStatusChangeAlert
-            internalLeftMargin="3rem"
             invalidStatusChangeAttempted={invalidStatusChangeAttempted}
             activeActivityReport={statusChangeBlockingReasons.activeActivityReport}
             incompleteObjectives={statusChangeBlockingReasons.incompleteObjectives}
