@@ -204,6 +204,9 @@ describe('RestartStandardGoal', () => {
     await waitFor(() => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1')).toBe(true);
     });
+
+    // A generic server error should not surface the conflict guidance alert.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows a blocking alert when the goal is on an activity report', async () => {
@@ -211,7 +214,7 @@ describe('RestartStandardGoal', () => {
       status: 409,
       body: { code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT' },
     });
-    renderRestartStandardGoal();
+    const { history } = renderRestartStandardGoal();
 
     await waitFor(() => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
@@ -222,9 +225,15 @@ describe('RestartStandardGoal', () => {
       userEvent.click(submitButton);
     });
 
-    expect(
-      await screen.findByText(/on an activity report that is in a draft status/i)
-    ).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
+      /The goal status cannot be changed because this goal is on an activity report/i
+    );
+
+    // The user should remain on the restart form so they can see the guidance.
+    expect(history.location.pathname).toBe(
+      '/recipient-tta-records/1/region/1/standard-goals/1/grant/1/restart'
+    );
   });
 
   it('navigates to the correct page on cancel', async () => {
