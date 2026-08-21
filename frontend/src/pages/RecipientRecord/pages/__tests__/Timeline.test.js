@@ -3,24 +3,43 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import {
+  createInitialTimelineFilters,
+  TIMELINE_FILTER_CONFIG,
+} from '../../../../components/filter/timelineFilters';
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
 import useFetch from '../../../../hooks/useFetch';
+import useFilters from '../../../../hooks/useFilters';
+import UserContext from '../../../../UserContext';
 import Timeline from '../Timeline';
 
 jest.mock('../../../../hooks/useFetch');
+jest.mock('../../../../hooks/useFilters');
 jest.mock('../../../../fetchers/recipient', () => ({
   getRecipientTimeline: jest.fn(),
 }));
 
+const user = { homeRegionId: 1 };
+const onApplyFilters = jest.fn();
+const onRemoveFilter = jest.fn();
+
 const renderTimeline = () =>
   render(
-    <MemoryRouter>
-      <Timeline recipientId="401" regionId="1" />
-    </MemoryRouter>
+    <UserContext.Provider value={{ user }}>
+      <MemoryRouter>
+        <Timeline recipientId="401" regionId="1" />
+      </MemoryRouter>
+    </UserContext.Provider>
   );
 
 describe('Recipient Record - TTA Timeline', () => {
   beforeEach(() => {
+    useFilters.mockReturnValue({
+      filters: createInitialTimelineFilters(),
+      onApplyFilters,
+      onRemoveFilter,
+      filterConfig: TIMELINE_FILTER_CONFIG,
+    });
     useFetch.mockReturnValue({
       data: { count: 0, events: [] },
       error: '',
@@ -52,6 +71,18 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(multiRecipientIcon).toHaveClass('height-2', 'width-2');
     expect(multiRecipientIcon).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByText('Date', { selector: 'strong' })).toBeVisible();
+    expect(useFilters).toHaveBeenCalledWith(
+      user,
+      'timeline-filters',
+      false,
+      [
+        expect.objectContaining({
+          topic: 'date',
+          condition: 'is within',
+        }),
+      ],
+      TIMELINE_FILTER_CONFIG
+    );
   });
 
   it('sends the multi-recipient communication checkbox state with the timeline request', async () => {

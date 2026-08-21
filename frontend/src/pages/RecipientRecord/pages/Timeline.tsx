@@ -1,7 +1,7 @@
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Checkbox, Dropdown } from '@trussworks/react-uswds';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Container from '../../../components/Container';
 import Drawer from '../../../components/Drawer';
@@ -11,12 +11,15 @@ import {
   createInitialTimelineFilters,
   serializeTimelineFilter,
   TIMELINE_FILTER_CONFIG,
-  type TimelineFilter,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import { getRecipientTimeline } from '../../../fetchers/recipient';
 import useFetch from '../../../hooks/useFetch';
+import useFilters from '../../../hooks/useFilters';
+import UserContext from '../../../UserContext';
 import './Timeline.css';
+
+const FILTER_KEY = 'timeline-filters';
 
 interface TimelineProps {
   recipientId: string;
@@ -30,9 +33,17 @@ interface TimelineResponse {
 
 export default function Timeline({ recipientId, regionId }: TimelineProps): React.ReactElement {
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
-  const [filters, setFilters] = useState<TimelineFilter[]>(createInitialTimelineFilters);
   const [direction, setDirection] = useState<'asc' | 'desc'>('desc');
   const [hideMultiRecipientCommunications, setHideMultiRecipientCommunications] = useState(false);
+  const { user } = useContext(UserContext);
+  const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
+  const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
+    user,
+    FILTER_KEY,
+    false,
+    initialFilters,
+    TIMELINE_FILTER_CONFIG
+  );
 
   const serializedFilters = useMemo(() => filters.map(serializeTimelineFilter), [filters]);
 
@@ -54,10 +65,6 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
       ? Math.max(data.count, events.length)
       : events.length;
 
-  const onRemoveFilter = (id: string) => {
-    setFilters((currentFilters) => currentFilters.filter((filter) => filter.id !== id));
-  };
-
   return (
     <>
       <Helmet>
@@ -70,9 +77,9 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
         >
           <FilterPanel
             filters={filters}
-            onApplyFilters={setFilters}
+            onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
-            filterConfig={TIMELINE_FILTER_CONFIG}
+            filterConfig={filterConfig}
             applyButtonAria="Apply filters to the TTA timeline"
             allUserRegions={[]}
             manageRegions={false}
