@@ -8,6 +8,7 @@ For general coding standards, follow existing style in the surrounding code.
 - Follow existing style in the surrounding code.
 - Ensure changes pass Biome lint checks.
 - Reuse existing components and hooks before creating new ones.
+- **Search for an existing helper/utility before writing a new one.** Do not automatically author inline logic for common operations — first check whether a shared helper already exists (e.g., type checks like "is this a number", deduping/cleaning a list, formatting dates, escaping/sanitizing input). Search the shared `common` package, existing `utils`/`lib` directories, and the surrounding code before creating anything new. If a suitable helper exists, use it; if a near-match exists, extend it; only create a new helper when none fits, and place it where it can be reused.
 
 ## Testing
 - Add or update tests for behavior changes unless the change is purely documentation or formatting.
