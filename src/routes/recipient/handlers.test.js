@@ -209,6 +209,12 @@ describe('getGoalsByActivityRecipient', () => {
       end: jest.fn(),
     })),
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockResponse.locals = {};
+  });
+
   it('retrieves goals by recipient', async () => {
     const req = {
       params: {
@@ -227,7 +233,7 @@ describe('getGoalsByActivityRecipient', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 
-  it("returns a 404 when a recipient can't be found", async () => {
+  it('returns a 404 when the recipient has no grant in the requested region', async () => {
     const req = {
       params: {
         recipientId: 14565,
@@ -246,6 +252,10 @@ describe('getGoalsByActivityRecipient', () => {
     standardGoalsForRecipient.mockResolvedValue(null);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    expect(recipientById).toHaveBeenCalledWith(14565, {
+      where: { regionId: 1 },
+    });
+    expect(standardGoalsForRecipient).not.toHaveBeenCalled();
   });
 
   it('returns a 500 on error', async () => {
@@ -285,6 +295,12 @@ describe('getRecipientLeadership', () => {
       end: jest.fn(),
     })),
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockResponse.locals = {};
+  });
+
   it('retrieves goals by recipient', async () => {
     const req = {
       params: {
@@ -302,7 +318,7 @@ describe('getRecipientLeadership', () => {
     expect(mockResponse.json).toHaveBeenCalledWith([]);
   });
 
-  it("returns a 404 when a recipient can't be found", async () => {
+  it('returns a 404 when the recipient has no grant in the requested region', async () => {
     const req = {
       params: {
         recipientId: 14565,
@@ -321,6 +337,10 @@ describe('getRecipientLeadership', () => {
     recipientLeadership.mockResolvedValue(null);
     await getRecipientLeadership(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    expect(recipientById).toHaveBeenCalledWith(14565, {
+      where: { regionId: 1 },
+    });
+    expect(recipientLeadership).not.toHaveBeenCalled();
   });
 
   it('returns a 500 on error', async () => {

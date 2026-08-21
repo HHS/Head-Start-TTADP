@@ -320,7 +320,11 @@ export async function getTtaByReview(req: Request, res: Response) {
   const { recipientId, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(req, res);
+    const canAccessRecipient = await checkRecipientAccessAndExistence(req, res);
+    if (!canAccessRecipient) {
+      return;
+    }
+
     const data = await ttaByReviews(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);
@@ -333,7 +337,11 @@ export async function getTtaByCitation(req: Request, res: Response) {
   const { recipientId, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(req, res);
+    const canAccessRecipient = await checkRecipientAccessAndExistence(req, res);
+    if (!canAccessRecipient) {
+      return;
+    }
+
     const data = await ttaByCitations(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);
@@ -346,7 +354,11 @@ export async function getMonitoringData(req: Request, res: Response) {
   const { recipientId, grantNumber, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(req, res);
+    const canAccessRecipient = await checkRecipientAccessAndExistence(req, res);
+    if (!canAccessRecipient) {
+      return;
+    }
+
     const data = await monitoringData({
       recipientId: Number(recipientId),
       grantNumber: String(grantNumber),
@@ -363,7 +375,11 @@ export async function getClassScore(req: Request, res: Response) {
   const { recipientId, grantNumber, regionId } = req.params;
 
   try {
-    await checkRecipientAccessAndExistence(req, res);
+    const canAccessRecipient = await checkRecipientAccessAndExistence(req, res);
+    if (!canAccessRecipient) {
+      return;
+    }
+
     const data = await classScore({
       recipientId: Number(recipientId),
       grantNumber: String(grantNumber),
