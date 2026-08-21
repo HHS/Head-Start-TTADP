@@ -14,6 +14,7 @@ import {
   recipientsByName,
   recipientsByUserId,
 } from '../../services/recipient';
+import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
 import { userById } from '../../services/users';
 import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
@@ -149,6 +150,25 @@ export async function getRecipientLeadership(req, res) {
     // Get goals for recipient.
     const leadership = await recipientLeadership(recipientId, regionId);
     res.json(leadership);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientTimeline(req, res) {
+  try {
+    const canAccessRecipient = await checkAccessAndExistence(req, res);
+
+    if (!canAccessRecipient) {
+      return;
+    }
+
+    const timeline = await getRecipientTimelineService({
+      ...res.locals.validatedParams,
+      ...res.locals.recipientTimelineQuery,
+    });
+
+    res.json(timeline);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
