@@ -638,7 +638,8 @@ describe('session reports service', () => {
 
       const foundSession = await findSessionHelper({ id: createdSession.id });
 
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
 
@@ -650,7 +651,8 @@ describe('session reports service', () => {
       const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
       expect(foundSession).toHaveProperty('eventId', null);
       expect(foundSession).toHaveProperty('id', 999);
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null/undefined)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
     });
@@ -701,6 +703,90 @@ describe('session reports service', () => {
         id: 1002,
         eventId: 'R01-PD-1002',
       });
+    });
+  });
+
+  describe('session date columns (single source of truth)', () => {
+    let dateEvent;
+    const createdSessionIds = [];
+
+    beforeAll(async () => {
+      dateEvent = await createEvent({
+        ownerId: 99_777,
+        regionId: 99_777,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: 'R01-PD-99_777' },
+      });
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({ where: { id: createdSessionIds } });
+      await destroyEvent(dateEvent.id);
+    });
+
+    it('createSession writes dates to the startDate/endDate columns and strips them from data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '03/15/2024', endDate: '03/16/2024', sessionName: 'col test' },
+      });
+      createdSessionIds.push(created.id);
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      // Columns hold the parsed dates (DATEONLY -> YYYY-MM-DD string).
+      expect(raw.startDate).toBe('2024-03-15');
+      expect(raw.endDate).toBe('2024-03-16');
+      // The JSONB data no longer mirrors the dates on write.
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+    });
+
+    it('findSessionHelper re-derives data dates from the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '07/04/2024', endDate: '07/05/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      const found = await findSessionHelper({ id: created.id });
+      expect(found.data.startDate).toBe('07/04/2024');
+      expect(found.data.endDate).toBe('07/05/2024');
+    });
+
+    it('columns win even when stale dates linger in the JSONB data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '01/01/2024', endDate: '01/02/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      // Simulate a legacy/stale JSONB value that disagrees with the columns.
+      await SessionReportPilot.update(
+        { data: { startDate: '12/31/1999', endDate: '12/31/1999' } },
+        { where: { id: created.id }, individualHooks: false }
+      );
+
+      const found = await findSessionHelper({ id: created.id });
+      // The column value (not the stale JSONB value) is surfaced.
+      expect(found.data.startDate).toBe('01/01/2024');
+      expect(found.data.endDate).toBe('01/02/2024');
+    });
+
+    it('updateSession persists new dates to the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '05/01/2024', endDate: '05/02/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      await updateSession(created.id, {
+        eventId: 'R01-PD-99_777',
+        data: { startDate: '06/10/2024', endDate: '06/11/2024' },
+      });
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      expect(raw.startDate).toBe('2024-06-10');
+      expect(raw.endDate).toBe('2024-06-11');
     });
   });
 
