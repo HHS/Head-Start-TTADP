@@ -65,13 +65,26 @@ describe('recipient fetcher', () => {
 
   it('getRecipientTimeline rejects an invalid recipient id', async () => {
     await expect(getRecipientTimeline('not-a-number', '1')).rejects.toThrow(
-      'Recipient ID must be a number'
+      'Recipient ID must be a positive integer'
     );
   });
 
   it('getRecipientTimeline rejects an invalid region id', async () => {
     await expect(getRecipientTimeline('1', 'not-a-number')).rejects.toThrow(
-      'Region ID must be a number'
+      'Region ID must be a positive integer'
+    );
+  });
+
+  it.each([
+    ['recipient', '1abc', '1', 'Recipient ID'],
+    ['recipient', '1.5', '1', 'Recipient ID'],
+    ['recipient', '9007199254740992', '1', 'Recipient ID'],
+    ['region', '1', '1abc', 'Region ID'],
+    ['region', '1', '1.5', 'Region ID'],
+    ['region', '1', '9007199254740992', 'Region ID'],
+  ])('getRecipientTimeline rejects a malformed %s ID', async (_type, recipientId, regionId, error) => {
+    await expect(getRecipientTimeline(recipientId, regionId)).rejects.toThrow(
+      `${error} must be a positive integer`
     );
   });
 });

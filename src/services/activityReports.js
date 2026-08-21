@@ -10,7 +10,7 @@ import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
 import orderReportsBy from '../lib/orderReportsBy';
-import { safeParseInt } from '../lib/safeParse';
+import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import {
@@ -1786,7 +1786,7 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
-  const safeUserId = safeParseInt(userId);
+  const safeUserId = parsePositiveInteger(userId);
 
   if (!safeUserId) {
     throw new Error('Invalid userId provided');

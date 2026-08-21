@@ -6,6 +6,19 @@ import { get } from './index';
 
 const recipientUrl = join('/', 'api', 'recipient');
 
+const parsePositiveInteger = (value) => {
+  const isWholeNumber =
+    (typeof value === 'number' && Number.isInteger(value)) ||
+    (typeof value === 'string' && /^[0-9]+$/.test(value));
+
+  if (!isWholeNumber) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isSafeInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
+};
+
 export const getRecipient = async (recipientId, regionId = '') => {
   const regionSearch = regionId ? `?region.in[]=${regionId.toString(DECIMAL_BASE)}` : '';
   const id = parseInt(recipientId, DECIMAL_BASE);
@@ -92,21 +105,27 @@ export const getRecipientTimeline = async (
   regionId,
   { direction = 'desc', filters = [], excludeMultiRecipientCommunications = false } = {}
 ) => {
-  const id = parseInt(recipientId, DECIMAL_BASE);
-  if (Number.isNaN(id)) {
-    throw new Error('Recipient ID must be a number');
+  const id = parsePositiveInteger(recipientId);
+  if (id === null) {
+    throw new Error('Recipient ID must be a positive integer');
   }
 
-  const idRegion = parseInt(regionId, DECIMAL_BASE);
-  if (Number.isNaN(idRegion)) {
-    throw new Error('Region ID must be a number');
+  const idRegion = parsePositiveInteger(regionId);
+  if (idRegion === null) {
+    throw new Error('Region ID must be a positive integer');
   }
 
   const query = new URLSearchParams({ direction });
   filters.forEach((filter) => query.append('filters', filter));
   query.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
 
-  const url = join(recipientUrl, recipientId, 'region', regionId, 'timeline');
+  const url = join(
+    recipientUrl,
+    id.toString(DECIMAL_BASE),
+    'region',
+    idRegion.toString(DECIMAL_BASE),
+    'timeline'
+  );
   const timeline = await get(`${url}?${query.toString()}`);
   return timeline.json();
 };
