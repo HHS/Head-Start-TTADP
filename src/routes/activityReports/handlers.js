@@ -796,7 +796,7 @@ export async function submitReport(req, res) {
         EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW
       );
       if (creatorSetting && creatorSetting.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
-        creatorReportSubmittedForReviewNotification(savedReport, report.author);
+        creatorReportSubmittedForReviewNotification(savedReport, report.author, isResubmission);
       }
     }
 
