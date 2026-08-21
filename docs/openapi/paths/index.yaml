@@ -48,6 +48,8 @@
   $ref: './files.yaml'
 '/recipient/{recipientId}':
   $ref: './recipient/recipient-id.yaml'
+'/recipient/{recipientId}/region/{regionId}/timeline':
+  $ref: './recipient/recipient-timeline.yaml'
 '/recipient/search':
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':

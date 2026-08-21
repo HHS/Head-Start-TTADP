@@ -1,4 +1,3 @@
-import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import { getUserReadRegions } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
@@ -12,7 +11,7 @@ jest.mock('../services/recipient');
 jest.mock('../services/users');
 
 const mockResponse = () => {
-  const res = {};
+  const res = { locals: {} };
   res.sendStatus = jest.fn().mockReturnValue(res);
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
@@ -50,12 +49,13 @@ describe('Route Utils', () => {
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
-    it('returns false and 404 if recipient not found', async () => {
+    it('returns false and 404 if the recipient has no grant in the requested region', async () => {
       recipientById.mockResolvedValue(null);
-      req = mockRequest({ recipientId: '99', regionId: '1' }); // User can access region 1
+      req = mockRequest({ recipientId: '10', regionId: '1' }); // User can access region 1
       const result = await checkRecipientAccessAndExistence(req, res);
       expect(result).toBe(false);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
+      expect(recipientById).toHaveBeenCalledWith(10, { where: { regionId: 1 } });
     });
 
     it('returns true if user has access and recipient exists', async () => {
@@ -63,6 +63,19 @@ describe('Route Utils', () => {
       const result = await checkRecipientAccessAndExistence(req, res);
       expect(result).toBe(true);
       expect(res.sendStatus).not.toHaveBeenCalled();
+      expect(res.locals.validatedParams).toEqual({ recipientId: 10, regionId: 1 });
+      expect(recipientById).toHaveBeenCalledWith(10, { where: { regionId: 1 } });
+    });
+
+    it('returns false and 400 for a scientific-notation region', async () => {
+      req = mockRequest({ recipientId: '10', regionId: '1e1' });
+
+      const result = await checkRecipientAccessAndExistence(req, res);
+
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(getUserReadRegions).not.toHaveBeenCalled();
+      expect(recipientById).not.toHaveBeenCalled();
     });
   });
 });
