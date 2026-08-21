@@ -206,6 +206,27 @@ describe('RestartStandardGoal', () => {
     });
   });
 
+  it('shows a blocking alert when the goal is on an activity report', async () => {
+    fetchMock.post('/api/goal-templates/standard/1/grant/1', {
+      status: 409,
+      body: { code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT' },
+    });
+    renderRestartStandardGoal();
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
+    });
+
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
+    await act(async () => {
+      userEvent.click(submitButton);
+    });
+
+    expect(
+      await screen.findByText(/on an activity report that is in a draft status/i)
+    ).toBeInTheDocument();
+  });
+
   it('navigates to the correct page on cancel', async () => {
     const { history } = renderRestartStandardGoal();
 
