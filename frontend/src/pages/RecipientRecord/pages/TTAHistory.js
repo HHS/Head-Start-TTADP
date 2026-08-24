@@ -24,6 +24,50 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
+function TrainingReportsSectionInContext({ recipientId }) {
+  const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
+    {
+      sortBy: 'Event_ID',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    },
+    'trainingReportsTable'
+  );
+
+  const requestTrainingReportsSort = useRequestSort(setTrainingReportsSortConfig);
+
+  const { data: trainingReportsData, error: trainingReportsError } = useFetch(
+    { rows: [], count: 0 },
+    () => getSessionReportsTable(trainingReportsSortConfig, [], recipientId),
+    [trainingReportsSortConfig, recipientId],
+    'Unable to fetch training reports'
+  );
+
+  return (
+    <>
+      {trainingReportsError && (
+        <Alert type="error" role="alert">
+          {trainingReportsError}
+        </Alert>
+      )}
+      <TrainingReportsTable
+        data={trainingReportsData}
+        title="Training Reports"
+        emptyMsg="No training reports found"
+        requestSort={requestTrainingReportsSort}
+        sortConfig={trainingReportsSortConfig}
+        setSortConfig={setTrainingReportsSortConfig}
+        recipientId={recipientId}
+      />
+    </>
+  );
+}
+
+TrainingReportsSectionInContext.propTypes = {
+  recipientId: PropTypes.string.isRequired,
+};
+
 const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
@@ -77,25 +121,6 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
       },
     ],
     [filters, regionId, recipientId]
-  );
-
-  const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
-    {
-      sortBy: 'Event_ID',
-      direction: 'desc',
-      activePage: 1,
-      offset: 0,
-    },
-    'trainingReportsTable'
-  );
-
-  const requestTrainingReportsSort = useRequestSort(setTrainingReportsSortConfig);
-
-  const { data: trainingReportsData, error: trainingReportsError } = useFetch(
-    { rows: [], count: 0 },
-    () => getSessionReportsTable(trainingReportsSortConfig, [], recipientId),
-    [trainingReportsSortConfig, recipientId],
-    'Unable to fetch training reports'
   );
 
   if (!recipientName) {
@@ -169,18 +194,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             resetPagination={resetPagination}
             setResetPagination={setResetPagination}
           />
-          {trainingReportsError && (
-            <Alert type="error" role="alert">
-              {trainingReportsError}
-            </Alert>
-          )}
-          <TrainingReportsTable
-            data={trainingReportsData}
-            title="Training Reports"
-            emptyMsg="No training reports found"
-            requestSort={requestTrainingReportsSort}
-            sortConfig={trainingReportsSortConfig}
-            setSortConfig={setTrainingReportsSortConfig}
+          <TrainingReportsSectionInContext
             recipientId={recipientId}
           />
         </FilterContext.Provider>

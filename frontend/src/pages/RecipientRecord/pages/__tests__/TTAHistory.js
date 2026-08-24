@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -85,6 +85,9 @@ describe('Recipient Record - TTA History', () => {
   afterEach(() => {
     fetchMock.restore();
     window.sessionStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem('ttahistory-filters-v2-401-trainingReportsTable-sorting');
+    window.sessionStorage.removeItem('ttahistory-filters-v2-999');
+    window.sessionStorage.removeItem('ttahistory-filters-v2-999-trainingReportsTable-sorting');
   });
 
   it('renders the TTA History page appropriately', async () => {
@@ -187,6 +190,43 @@ describe('Recipient Record - TTA History', () => {
 
     expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
     expect(fetchMock.called(/activityReportGoalResponse\.in\[\]/)).toBe(false);
+  });
+
+  it('scopes training reports sort to the current recipientId and does not bleed across recipients', async () => {
+    const defaultDateDecoded = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    // Store a non-default sort for recipient 401
+    window.sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify([{ id: 'f1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded }])
+    );
+    window.sessionStorage.setItem(
+      'ttahistory-filters-v2-401-trainingReportsTable-sorting',
+      JSON.stringify({ sortBy: 'Session_Name', direction: 'asc', activePage: 2, offset: 10 })
+    );
+
+    // Register expected URLs for a different recipient (999) using the default sort
+    const defaultSessionReportsUrl = '/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=999';
+    fetchMock.get(defaultSessionReportsUrl, { rows: [], count: 0 });
+    fetchMock.get(`/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, overviewResponse);
+    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, tableResponse);
+    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, 200);
+    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, 200);
+    fetchMock.get(`/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, []);
+
+    await act(async () => {
+      render(
+        <UserContext.Provider value={{ user }}>
+          <Router history={memoryHistory}>
+            <TTAHistory recipientName="Other Recipient" recipientId="999" regionId="1" />
+          </Router>
+        </UserContext.Provider>
+      );
+    });
+
+    // Recipient 999 should use the default sort, not the sort stored for recipient 401
+    await waitFor(() => expect(fetchMock.called(defaultSessionReportsUrl)).toBe(true));
+    expect(fetchMock.called(/sortBy=Session_Name.*recipientId=999/)).toBe(false);
   });
 
   it('strips stale role filter from URL params before fetching', async () => {
