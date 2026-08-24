@@ -41,8 +41,6 @@ tasks:
     vars:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
-      - cmd: docker compose -f {{.COMPOSE_FILE}} --profile fullstack down --remove-orphans
-        ignore_error: true
       - |
           set -e
           yarn deps:install
@@ -93,6 +91,7 @@ tasks:
       - docker compose -f {{.COMPOSE_FILE}} run --rm backend yarn db:migrate
   reseed:
     desc: Reseed the database via testing server
+    cmds:
       - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
       - curl --fail --silent --show-error http://localhost:9999/testingOnly/reseed
 
