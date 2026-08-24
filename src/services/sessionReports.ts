@@ -305,10 +305,17 @@ export async function updateSession(id: number, request) {
 
   const event = await findEventBySmartsheetId(eventId);
 
+  const hasStartDate = Object.prototype.hasOwnProperty.call(newData, 'startDate');
+  const hasEndDate = Object.prototype.hasOwnProperty.call(newData, 'endDate');
+
   const update = {
     eventId: event.id,
-    startDate: parseDate(newData.startDate as string) as Date | null,
-    endDate: parseDate(newData.endDate as string) as Date | null,
+    startDate: hasStartDate
+      ? (parseDate(newData.startDate as string) as Date | null)
+      : (session.get('startDate') as unknown as Date | null),
+    endDate: hasEndDate
+      ? (parseDate(newData.endDate as string) as Date | null)
+      : (session.get('endDate') as unknown as Date | null),
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
