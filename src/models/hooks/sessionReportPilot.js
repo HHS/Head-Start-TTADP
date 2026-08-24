@@ -6,7 +6,7 @@ const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
-const fieldsToEscape = ['ttaProvided'];
+const fieldsToEscape = ['ttaProvided', 'objective'];
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   let event;

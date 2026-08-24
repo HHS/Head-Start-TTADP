@@ -75,33 +75,44 @@ export const getEditorState = (name) => {
 };
 
 /**
+ * Convert a rich-text (HTML) value into a clean, human-readable plain-text
+ * string. Strips all tags, decodes the whitespace entities Draft emits, and
+ * collapses remaining whitespace. Useful for compact displays (e.g. cards)
+ * where the formatting itself should not be rendered.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} plain text ('' for empty or non-string input)
+ */
+export const getRichTextAsText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
+
+  return (
+    html
+      // replace tags with a space so adjacent blocks don't merge words together
+      .replace(/<[^>]*>/g, ' ')
+      // decode common whitespace entities that Draft emits
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#160;/g, ' ')
+      // normalize remaining whitespace (including newlines)
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+};
+
+/**
  * Determine whether a rich-text (HTML) value is semantically empty.
  *
  * React Draft emits several "empty" variants beyond a bare `<p></p>` — for
  * example `<p></p>\n`, `<p>&nbsp;</p>`, or multiple empty paragraphs. A naive
- * check against a single sentinel string misses these, so we strip tags,
- * decode non-breaking spaces, collapse whitespace and check for remaining text.
+ * check against a single sentinel string misses these, so we strip the value
+ * down to its visible text (via `getRichTextAsText`) and check for content.
  *
  * @param {string} html - rich-text HTML string
  * @returns {boolean} true when the value contains no visible text content
  */
-export const isEmptyRichText = (html) => {
-  if (!html || typeof html !== 'string') {
-    return true;
-  }
-
-  const textContent = html
-    // drop all HTML tags
-    .replace(/<[^>]*>/g, '')
-    // decode common whitespace entities that Draft emits
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&#160;/g, ' ')
-    // normalize remaining whitespace (including newlines)
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return textContent.length === 0;
-};
+export const isEmptyRichText = (html) => getRichTextAsText(html).length === 0;
 
 /**
  * Strict allowlist for read-only rich-text rendering. Intentionally excludes
