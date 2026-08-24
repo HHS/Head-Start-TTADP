@@ -1,10 +1,11 @@
 .ttahub-training-report-alerts-container {
   /* CSS custom properties */
   --half-column-width: 150px;
+}
 
-  /* setup container context and name */
-  container-name: tta-hub-training-report-alerts;
-  container-type: inline-size;
+/* Clip and scroll the table at every width so it never paints outside its card */
+.ttahub-training-report-alerts-scrollable {
+  overflow-x: auto;
 }
 
 .ttahub-training-report-alerts th button {
@@ -30,34 +31,29 @@
   max-width: var(--half-column-width);
 }
 
-@container tta-hub-training-report-alerts (max-width: 1140px) {
-  .ttahub-training-report-alerts-scrollable {
-    overflow-x: scroll;
-  }
+/* Pin the "Action needed" column at every width so the boundary and scroll cue persist */
+.ttahub-training-report-alerts {
+  position: relative;
+}
 
-  .ttahub-training-report-alerts {
-    position: relative;
-  }
+.ttahub-training-report-alerts thead th:last-child {
+  background-color: white;
+}
 
-  .ttahub-training-report-alerts thead th:last-child {
-    background-color: white;
-  }
+.ttahub-training-report-alerts th:last-child,
+.ttahub-training-report-alerts td:last-child {
+  position: sticky;
+  right: 0;
+}
 
-  .ttahub-training-report-alerts th:last-child,
-  .ttahub-training-report-alerts td:last-child {
-    position: sticky;
-    right: 0;
-  }
-
-  .ttahub-training-report-alerts th:last-child::before,
-  .ttahub-training-report-alerts td:last-child::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: var(--text-ink);
-    pointer-events: none;
-  }
+.ttahub-training-report-alerts th:last-child::before,
+.ttahub-training-report-alerts td:last-child::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--text-ink);
+  pointer-events: none;
 }

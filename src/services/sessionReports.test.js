@@ -7,7 +7,7 @@ import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
-import { createGoal, createGrant, destroyGoal } from '../testUtils';
+import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -17,6 +17,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
   validateFields,
 } from './sessionReports';
@@ -63,6 +64,23 @@ describe('session reports service', () => {
       await expect(createSession({ eventId: 999999, data: { card: 'ace' } })).rejects.toThrow(
         'Event with id 999999 not found'
       );
+    });
+
+    it('does not persist hydrated event or approver associations into data', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: {
+          card: 'ace',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(created.data.card).toBe('ace');
+      expect(created.data.event).toBeUndefined();
+      expect(created.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
     });
   });
 
@@ -159,6 +177,26 @@ describe('session reports service', () => {
 
       await destroySession(updated.id);
     });
+
+    it('strips hydrated event and approver associations from incoming data', async () => {
+      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: {
+          harry: 'potter',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(updated.data.harry).toBe('potter');
+      expect(updated.data.event).toBeUndefined();
+      expect(updated.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+
   });
 
   describe('destroySession', () => {
@@ -1312,6 +1350,162 @@ describe('session reports service', () => {
           expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
       });
+    });
+  });
+
+  describe('getSessionReportsByRecipient', () => {
+    let recipient;
+    let otherRecipient;
+    let recipientGrantInRegion1;
+    let recipientGrantInRegion2;
+    let otherRecipientGrant;
+    let regionOneEvent;
+    let regionTwoEvent;
+    let createdSessions = [];
+
+    beforeAll(async () => {
+      recipient = await createRecipient({
+        name: `Recipient-${faker.datatype.uuid()}`,
+      });
+
+      otherRecipient = await createRecipient({
+        name: `Recipient-${faker.datatype.uuid()}`,
+      });
+
+      recipientGrantInRegion1 = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        status: 'Active',
+      });
+
+      recipientGrantInRegion2 = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      otherRecipientGrant = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: otherRecipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      regionOneEvent = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R01-PD-RECIPIENT-${faker.datatype.number()}`,
+          eventName: 'Recipient Filter Region 1',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      regionTwoEvent = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: 2,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R02-PD-RECIPIENT-${faker.datatype.number()}`,
+          eventName: 'Recipient Filter Region 2',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      createdSessions = await Promise.all([
+        createSession({
+          eventId: regionOneEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 1',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Grant 1', value: recipientGrantInRegion1.id }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 2',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            // store as string to validate cast guard logic
+            recipients: [{ label: 'Grant 2', value: String(recipientGrantInRegion2.id) }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Other Recipient Session',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Other Grant', value: otherRecipientGrant.id }],
+          },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all((createdSessions || []).map((s) => destroySession(s.id)));
+
+      if (regionOneEvent) await destroyEvent(regionOneEvent.id);
+      if (regionTwoEvent) await destroyEvent(regionTwoEvent.id);
+
+      await db.Grant.destroy({
+        where: {
+          id: [
+            recipientGrantInRegion1?.id,
+            recipientGrantInRegion2?.id,
+            otherRecipientGrant?.id,
+          ].filter(Boolean),
+        },
+        individualHooks: true,
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: [recipient?.id, otherRecipient?.id].filter(Boolean),
+        },
+      });
+    });
+
+    it('returns sessions where the recipient grant ids are listed in session recipients', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
+      expect(names).not.toContain('Other Recipient Session');
+    });
+
+    it('ignores region restrictions and still returns sessions from all regions', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+        // Deliberately restrictive; cloned function should ignore region filters.
+        'region.in': ['1'],
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
     });
   });
 });

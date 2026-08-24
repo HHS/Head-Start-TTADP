@@ -140,6 +140,7 @@ Depending on the change, the following may be used as evidence:
 - UI review outcome
 - ADRs for major architecture decisions
 - system boundary approval records when applicable
+- approved CI version export from the release inventory for production baseline audits
 
 ### Documentation and artifact expectations
 

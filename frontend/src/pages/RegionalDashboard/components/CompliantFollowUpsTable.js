@@ -1,7 +1,7 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import BackLink from '../../../components/BackLink';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
@@ -15,11 +15,9 @@ import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetC
 import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring';
 import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
-import useFilters from '../../../hooks/useFilters';
 import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting, { parseValue } from '../../../hooks/useWidgetSorting';
-import UserContext from '../../../UserContext';
-import { filtersToQueryString } from '../../../utils';
+import { filtersToQueryString, queryStringToFilters } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import CitationDrawer from '../../RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import { links } from '..';
@@ -47,18 +45,56 @@ function formatDate(date) {
 }
 
 function dedupeVisibleFilters(filters) {
+  const NON_COMBINED_TOPICS = new Set(['startDate', 'completeDate', 'reportDeliveryDate']);
   const byTopicConditionQuery = new Map();
 
+  const normalizeQueryValues = (query) => {
+    if (Array.isArray(query)) {
+      return query;
+    }
+
+    if (query === undefined || query === null || query === '') {
+      return [];
+    }
+
+    return [query];
+  };
+
   filters.forEach((filter) => {
+    const shouldCombineValues =
+      !NON_COMBINED_TOPICS.has(filter.topic) && ['is', 'is not'].includes(filter.condition);
     const queryKey = Array.isArray(filter.query)
       ? filter.query.join('|')
       : String(filter.query ?? '');
-    const key = `${filter.topic}:${filter.condition}:${queryKey}`;
+    const key = shouldCombineValues
+      ? `${filter.topic}:${filter.condition}`
+      : `${filter.topic}:${filter.condition}:${queryKey}`;
     const existing = byTopicConditionQuery.get(key);
 
     if (!existing) {
       byTopicConditionQuery.set(key, filter);
+      return;
     }
+
+    if (!shouldCombineValues) {
+      return;
+    }
+
+    const mergedQueryValues = [
+      ...normalizeQueryValues(existing.query),
+      ...normalizeQueryValues(filter.query),
+    ].reduce((acc, value) => {
+      const exists = acc.some((item) => String(item) === String(value));
+      if (!exists) {
+        acc.push(value);
+      }
+      return acc;
+    }, []);
+
+    byTopicConditionQuery.set(key, {
+      ...existing,
+      query: mergedQueryValues,
+    });
   });
 
   return [...byTopicConditionQuery.values()];
@@ -428,25 +464,33 @@ export default function CompliantFollowUpsTable({ title }) {
   const [checkboxes, setCheckboxes] = useState({});
   const [pageSize, setPageSize] = useState(PER_PAGE);
   const drawerTriggerRef = useRef(null);
-  const { user } = useContext(UserContext) || { user: {} };
   const filterKey = useDashboardFilterKey('regional-dashboard', 'monitoring');
+  const location = useLocation();
 
-  const {
-    filters: selectedFilters,
-    setFilters,
-    filterConfig,
-  } = useFilters(user || {}, filterKey, false, [], MONITORING_FILTER_CONFIG);
+  // Read filters without writing back to session storage — this page is read-only
+  // and writing URL-parsed (split) entries would corrupt the dashboard's combined filter state.
+  const selectedFilters = useMemo(() => {
+    const urlFilters = queryStringToFilters(location.search.substring(1));
+    if (urlFilters.length) {
+      return urlFilters;
+    }
+    try {
+      const stored = window.sessionStorage.getItem(filterKey);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (_) {
+      // ignore
+    }
+    return [];
+  }, [location.search, filterKey]);
+
+  const filterConfig = MONITORING_FILTER_CONFIG;
 
   const selectedFiltersForQuery = useMemo(
     () => formatMonitoringFiltersForQuery(selectedFilters, { includeCompleteDate: true }),
     [selectedFilters]
   );
-
-  useEffect(() => {
-    if (JSON.stringify(selectedFilters) !== JSON.stringify(selectedFiltersForQuery)) {
-      setFilters(selectedFiltersForQuery);
-    }
-  }, [selectedFilters, selectedFiltersForQuery, setFilters]);
 
   const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
     'compliant-follow-up-reviews-details-table',
@@ -478,11 +522,8 @@ export default function CompliantFollowUpsTable({ title }) {
   const visibleFilterPills = useMemo(
     () =>
       dedupeVisibleFilters(
-        selectedFiltersForQuery.filter(
-          (filter) =>
-            filter.topic !== 'region' &&
-            filter.topic !== 'reportDeliveryDate' &&
-            filter.topic !== 'completeDate'
+        formatMonitoringFiltersForQuery(selectedFiltersForQuery).filter(
+          (filter) => filter.topic !== 'region'
         )
       ),
     [selectedFiltersForQuery]

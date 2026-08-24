@@ -5,6 +5,7 @@ import compliantFollowUpReviewsDetails from '../../services/compliantFollowUpRev
 import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
+  getFindingCategories as getFindingCategoriesService,
   monitoringData,
   ttaByCitations,
   ttaByReviews,
@@ -15,6 +16,7 @@ import { onlyAllowedKeys } from '../widgets/utils';
 import {
   getClassScore,
   getCompliantFollowUpReviewsDetails,
+  getFindingCategories,
   getMonitoringData,
   getMonitoringRelatedTtaCsv,
   getTtaByCitation,
@@ -48,6 +50,11 @@ jest.mock('csv-stringify', () => {
 });
 
 describe('monintoring handlers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    checkRecipientAccessAndExistence.mockResolvedValue(true);
+  });
+
   describe('getMonitoringData', () => {
     let req;
     let res;
@@ -86,6 +93,16 @@ describe('monintoring handlers', () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(data);
+    });
+
+    it('does not call monitoringData when recipient access fails', async () => {
+      checkRecipientAccessAndExistence.mockResolvedValue(false);
+
+      await getMonitoringData(req, res);
+
+      expect(monitoringData).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
     it('should call handleErrors if an error is thrown', async () => {
@@ -135,6 +152,16 @@ describe('monintoring handlers', () => {
       expect(res.json).toHaveBeenCalledWith(data);
     });
 
+    it('does not call ttaByReviews when recipient access fails', async () => {
+      checkRecipientAccessAndExistence.mockResolvedValue(false);
+
+      await getTtaByReview(req, res);
+
+      expect(ttaByReviews).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
     it('should call handleErrors if an error is thrown', async () => {
       const error = new Error('Test error');
       ttaByReviews.mockRejectedValue(error);
@@ -182,6 +209,16 @@ describe('monintoring handlers', () => {
       expect(res.json).toHaveBeenCalledWith(data);
     });
 
+    it('does not call ttaByCitations when recipient access fails', async () => {
+      checkRecipientAccessAndExistence.mockResolvedValue(false);
+
+      await getTtaByCitation(req, res);
+
+      expect(ttaByCitations).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
     it('should call handleErrors if an error is thrown', async () => {
       const error = new Error('Test error');
       ttaByCitations.mockRejectedValue(error);
@@ -227,6 +264,16 @@ describe('monintoring handlers', () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(data);
+    });
+
+    it('does not call classScore when recipient access fails', async () => {
+      checkRecipientAccessAndExistence.mockResolvedValue(false);
+
+      await getClassScore(req, res);
+
+      expect(classScore).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
     it('should call handleErrors if an error is thrown', async () => {
@@ -613,6 +660,41 @@ describe('monintoring handlers', () => {
       compliantFollowUpReviewsDetails.mockRejectedValue(error);
 
       await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
+    });
+  });
+
+  describe('getFindingCategories', () => {
+    let req;
+    let res;
+
+    beforeEach(() => {
+      req = {};
+      res = {
+        json: jest.fn(),
+      };
+      getFindingCategoriesService.mockReset();
+      handleErrors.mockReset();
+    });
+
+    it('returns finding categories as JSON', async () => {
+      const categories = [{ name: 'Health' }, { name: 'Safety' }];
+      getFindingCategoriesService.mockResolvedValue(categories);
+
+      await getFindingCategories(req, res);
+
+      expect(getFindingCategoriesService).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(categories);
+    });
+
+    it('passes errors to handleErrors', async () => {
+      const error = new Error('service failure');
+      getFindingCategoriesService.mockRejectedValue(error);
+
+      await getFindingCategories(req, res);
 
       expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
         namespace: 'SERVICE:MONITORING',
