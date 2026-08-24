@@ -65,6 +65,23 @@ describe('session reports service', () => {
         'Event with id 999999 not found'
       );
     });
+
+    it('does not persist hydrated event or approver associations into data', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: {
+          card: 'ace',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(created.data.card).toBe('ace');
+      expect(created.data.event).toBeUndefined();
+      expect(created.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
   });
 
   describe('createSession additionalRegions', () => {
@@ -160,6 +177,26 @@ describe('session reports service', () => {
 
       await destroySession(updated.id);
     });
+
+    it('strips hydrated event and approver associations from incoming data', async () => {
+      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: {
+          harry: 'potter',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(updated.data.harry).toBe('potter');
+      expect(updated.data.event).toBeUndefined();
+      expect(updated.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+
   });
 
   describe('destroySession', () => {
