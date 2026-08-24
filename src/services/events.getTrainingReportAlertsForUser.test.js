@@ -418,6 +418,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionOwnerMissing = await SessionReportPilot.create({
         eventId: eventOwnerMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -444,6 +446,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionCollabMissing = await SessionReportPilot.create({
         eventId: eventCollabMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -470,6 +474,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionBothComplete = await SessionReportPilot.create({
         eventId: eventBothComplete.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -499,6 +505,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionPocCreated = await SessionReportPilot.create({
         eventId: eventPocCreated.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
