@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -214,7 +214,7 @@ describe('Recipient Record - TTA History', () => {
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, 200);
     fetchMock.get(`/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, []);
 
-    act(() => {
+    await act(async () => {
       render(
         <UserContext.Provider value={{ user }}>
           <Router history={memoryHistory}>
@@ -225,7 +225,7 @@ describe('Recipient Record - TTA History', () => {
     });
 
     // Recipient 999 should use the default sort, not the sort stored for recipient 401
-    expect(fetchMock.called(defaultSessionReportsUrl)).toBe(true);
+    await waitFor(() => expect(fetchMock.called(defaultSessionReportsUrl)).toBe(true));
     expect(fetchMock.called(/sortBy=Session_Name.*recipientId=999/)).toBe(false);
   });
 
