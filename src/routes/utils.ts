@@ -44,5 +44,29 @@ const checkRecipientAccessAndExistence = async (req: Request, res: Response) => 
   return true;
 };
 
-// eslint-disable-next-line import/prefer-default-export
-export { checkRecipientAccessAndExistence };
+const checkUserRegionAccess = async (req: Request, res: Response, regionIds: number[]) => {
+  const validRegionIds =
+    Array.isArray(regionIds) &&
+    regionIds.length > 0 &&
+    regionIds.every((regionId) => Number.isInteger(Number(regionId)) && Number(regionId) > 0);
+
+  if (!validRegionIds) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return false;
+  }
+
+  const userId = await currentUserId(req, res);
+  const readRegions = await getUserReadRegions(userId);
+  const hasAccessToAllRegions = regionIds.every((regionId) =>
+    readRegions.includes(Number(regionId))
+  );
+
+  if (!hasAccessToAllRegions) {
+    res.sendStatus(httpCodes.FORBIDDEN);
+    return false;
+  }
+
+  return true;
+};
+
+export { checkRecipientAccessAndExistence, checkUserRegionAccess };

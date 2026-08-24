@@ -3,7 +3,7 @@ import { getUserReadRegions } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { allArUserIdsByRecipientAndRegion, recipientById } from '../services/recipient';
 import { userById } from '../services/users';
-import { checkRecipientAccessAndExistence } from './utils';
+import { checkRecipientAccessAndExistence, checkUserRegionAccess } from './utils';
 
 jest.mock('../services/accessValidation');
 jest.mock('../services/currentUser');
@@ -76,6 +76,40 @@ describe('Route Utils', () => {
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
       expect(getUserReadRegions).not.toHaveBeenCalled();
       expect(recipientById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkUserRegionAccess', () => {
+    it('returns false and 400 if no regions are provided', async () => {
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, []);
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(getUserReadRegions).not.toHaveBeenCalled();
+    });
+
+    it('returns false and 400 if any region is invalid', async () => {
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, [1, Number.NaN]);
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(getUserReadRegions).not.toHaveBeenCalled();
+    });
+
+    it('returns false and 403 if user cannot access all requested regions', async () => {
+      getUserReadRegions.mockResolvedValue([1]);
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, [1, 2]);
+      expect(result).toBe(false);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('returns true if user can access all requested regions', async () => {
+      getUserReadRegions.mockResolvedValue([1, 2]);
+      req = mockRequest();
+      const result = await checkUserRegionAccess(req, res, [1, 2]);
+      expect(result).toBe(true);
+      expect(res.sendStatus).not.toHaveBeenCalled();
     });
   });
 });
