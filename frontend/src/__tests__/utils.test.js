@@ -1,6 +1,7 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import {
   getCollabReportStatusDisplayAndClassnames,
+  getRichTextAsText,
   isEmptyRichText,
   sanitizeRichText,
 } from '../utils';
@@ -62,6 +63,38 @@ describe('isEmptyRichText', () => {
     ['formatted text', '<p><strong>Bold</strong> content</p>'],
   ])('returns false for %s', (_label, value) => {
     expect(isEmptyRichText(value)).toBe(false);
+  });
+});
+
+describe('getRichTextAsText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['non-string', 123],
+    ['empty string', ''],
+    ['single empty paragraph', '<p></p>'],
+    ['non-breaking space paragraph', '<p>&nbsp;</p>'],
+  ])('returns an empty string for %s', (_label, value) => {
+    expect(getRichTextAsText(value)).toBe('');
+  });
+
+  it('strips a paragraph wrapper', () => {
+    expect(getRichTextAsText('<p>Hello world</p>')).toBe('Hello world');
+  });
+
+  it('strips inline formatting markup', () => {
+    expect(getRichTextAsText('<p>Improve <strong>ERSEA</strong> enrollment</p>')).toBe(
+      'Improve ERSEA enrollment'
+    );
+  });
+
+  it('joins multiple blocks with a single space', () => {
+    expect(getRichTextAsText('<p>First</p><p>Second</p>')).toBe('First Second');
+  });
+
+  it('collapses list items and whitespace entities', () => {
+    expect(getRichTextAsText('<ul><li>One</li><li>Two</li></ul>')).toBe('One Two');
+    expect(getRichTextAsText('<p>a&nbsp;&#160;b</p>')).toBe('a b');
   });
 });
 
