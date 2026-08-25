@@ -58,9 +58,11 @@ describe('Recipient Record - TTA History', () => {
   beforeEach(async () => {
     const ttaHistoryOverviewUrl = `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
     const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&offset=0&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
     fetchMock.get(ttaHistoryOverviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
+    fetchMock.get(sessionReportsUrl, { rows: [], count: 0 });
 
     fetchMock.get(
       `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
@@ -85,6 +87,14 @@ describe('Recipient Record - TTA History', () => {
   afterEach(() => {
     fetchMock.restore();
     window.sessionStorage.removeItem(SESSION_KEY);
+  });
+
+  it('fetches session-reports with active page filters (not an empty filters array)', async () => {
+    act(() => renderTTAHistory());
+    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&offset=0&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    expect(fetchMock.called(sessionReportsUrl)).toBe(true);
+    // Ensure no unfiltered session-reports call was made
+    expect(fetchMock.called('/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&offset=0')).toBe(false);
   });
 
   it('renders the TTA History page appropriately', async () => {
