@@ -9,8 +9,13 @@ import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
+import { getSessionReportsTable } from '../../../fetchers/session';
+import useFetch from '../../../hooks/useFetch';
+import useRequestSort from '../../../hooks/useRequestSort';
 import useSanitizedFilters from '../../../hooks/useSanitizedFilters';
+import useSessionSort from '../../../hooks/useSessionSort';
 import { getUserRegions } from '../../../permissions';
+import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import UserContext from '../../../UserContext';
 import { expandFilters, formatDateRange } from '../../../utils';
 import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoalCategory';
@@ -72,6 +77,25 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
       },
     ],
     [filters, regionId, recipientId]
+  );
+
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: 'Event_ID',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    },
+    `ttaHistoryTrainingReportsTable-${recipientId}`
+  );
+
+  const requestSort = useRequestSort(setSortConfig);
+
+  const { data: trainingReportsData } = useFetch(
+    { rows: [], count: 0 },
+    () => getSessionReportsTable(sortConfig, filtersToApply),
+    [sortConfig, filtersToApply],
+    'Unable to fetch training reports'
   );
 
   if (!recipientName) {
@@ -146,6 +170,16 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
+        <TrainingReportsTable
+          data={trainingReportsData}
+          title="Training Reports"
+          loading={false}
+          emptyMsg="No training reports found"
+          requestSort={requestSort}
+          sortConfig={sortConfig}
+          setSortConfig={setSortConfig}
+          filters={filtersToApply}
+        />
       </div>
     </>
   );
