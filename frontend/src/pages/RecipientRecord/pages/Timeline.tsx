@@ -1,6 +1,7 @@
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Checkbox, Dropdown } from '@trussworks/react-uswds';
+import type { RecipientTimelineResponse } from '@ttahub/common/src/recipientTimeline';
 import React, { useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Container from '../../../components/Container';
@@ -26,11 +27,6 @@ interface TimelineProps {
   regionId: string;
 }
 
-interface TimelineResponse {
-  count: number;
-  events: unknown[];
-}
-
 export default function Timeline({ recipientId, regionId }: TimelineProps): React.ReactElement {
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
   const [direction, setDirection] = useState<'asc' | 'desc'>('desc');
@@ -48,7 +44,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
   const serializedFilters = useMemo(() => filters.map(serializeTimelineFilter), [filters]);
 
   const { data, error, loading } = useFetch(
-    { count: 0, events: [] } as TimelineResponse,
+    { count: 0, events: [] } as RecipientTimelineResponse,
     () =>
       getRecipientTimeline(recipientId, regionId, {
         direction,

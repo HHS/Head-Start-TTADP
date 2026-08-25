@@ -1,18 +1,19 @@
+import {
+  TIMELINE_DATE_FILTER_CONDITIONS,
+  TIMELINE_EVENT_TYPES,
+  TIMELINE_SELECT_FILTER_CONDITIONS,
+} from '@ttahub/common/src/constants';
+import type { RecipientTimelineFilter } from '@ttahub/common/src/recipientTimeline';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { DATE_CONDITIONS, EMPTY_MULTI_SELECT, FILTER_CONDITIONS } from '../../Constants';
+import { EMPTY_MULTI_SELECT } from '../../Constants';
 import { formatDateRange } from '../../utils';
 import { purposeFilter } from './communicationLogFilters';
 import FilterDateRange from './FilterDateRange';
 import FilterSelect from './FilterSelect';
 import { goalCategoryFilter } from './goalFilters';
 
-export interface TimelineFilter {
-  id: string;
-  topic: string;
-  condition: string;
-  query: string | string[];
-}
+export type TimelineFilter = RecipientTimelineFilter & { id: string };
 
 const LAST_TWELVE_MONTHS = formatDateRange({
   lastTwelveMonths: true,
@@ -34,25 +35,12 @@ const TIMELINE_DATE_OPTIONS = [
   },
 ];
 
-const EVENT_TYPES = [
-  'Email communication',
-  'Phone communication',
-  'In person communication',
-  'Virtual communication',
-  'TTA activity',
-  'Training session',
-  'Goal added',
-  'Goal suspended',
-  'Goal closed',
-  'Goal reopened',
-  'TTA request',
-  'Monitoring report received',
-].map((label) => ({ label, value: label }));
+const EVENT_TYPE_OPTIONS = TIMELINE_EVENT_TYPES.map((label) => ({ label, value: label }));
 
 const dateFilter = {
   id: 'date',
   display: 'Date',
-  conditions: DATE_CONDITIONS,
+  conditions: TIMELINE_DATE_FILTER_CONDITIONS,
   defaultValues: {
     is: LAST_TWELVE_MONTHS,
     'is within': '',
@@ -84,7 +72,7 @@ const dateFilter = {
 const eventTypeFilter = {
   id: 'eventType',
   display: 'TTA event type',
-  conditions: FILTER_CONDITIONS,
+  conditions: TIMELINE_SELECT_FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: (query: string | string[]) => [query].flat().join(', '),
   renderInput: (
@@ -97,7 +85,7 @@ const eventTypeFilter = {
       onApply={onApplyQuery}
       inputId={`event-type-${condition}-${id}`}
       labelText="Select TTA event types to filter by"
-      options={EVENT_TYPES}
+      options={EVENT_TYPE_OPTIONS}
       selectedValues={query}
     />
   ),
