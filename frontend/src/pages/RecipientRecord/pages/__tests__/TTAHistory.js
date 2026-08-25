@@ -56,11 +56,17 @@ describe('Recipient Record - TTA History', () => {
   };
 
   beforeEach(async () => {
+    // Filters get reflected into the shared memoryHistory's URL; reset it so filters
+    // applied in one test don't leak into the next test's initial render.
+    memoryHistory.replace('/');
+
     const ttaHistoryOverviewUrl = `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
     const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
     fetchMock.get(ttaHistoryOverviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
+    fetchMock.get(sessionReportsUrl, tableResponse);
 
     fetchMock.get(
       `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
@@ -170,6 +176,52 @@ describe('Recipient Record - TTA History', () => {
     expect(button).toBeVisible();
   });
 
+  it('fetches training reports with the same active page filters as other widgets', async () => {
+    renderTTAHistory();
+    const filteredSessionReportsUrl =
+      '/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(filteredSessionReportsUrl, tableResponse);
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      tableResponse
+    );
+    fetchMock.get(
+      '/api/widgets/targetPopulationTable?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/frequencyGraph?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/ttaHistoryOverview?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      overviewResponse
+    );
+    fetchMock.get(
+      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      []
+    );
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'myReports');
+      userEvent.selectOptions(
+        await screen.findByRole('combobox', { name: 'condition' }),
+        "where I'm the"
+      );
+      const reportRolesSelect = await screen.findByLabelText('Select report roles to filter by');
+      await selectEvent.select(reportRolesSelect, ['AR creator']);
+      const apply = await screen.findByRole('button', {
+        name: /apply filters to recipient record data/i,
+      });
+      userEvent.click(apply);
+    });
+
+    // Training reports table must fetch with the same filters applied to other widgets,
+    // not just recipientId/sort — guards against the table silently ignoring page filters.
+    await waitFor(() => expect(fetchMock.called(filteredSessionReportsUrl)).toBe(true));
+  });
+
   it('strips stale role and activityReportGoalResponse filters from session storage before fetching', async () => {
     const defaultDateDecoded = formatDateRange({ yearToDate: true, forDateTime: true });
     window.sessionStorage.setItem(
@@ -198,7 +250,9 @@ describe('Recipient Record - TTA History', () => {
     // Store a non-default sort for recipient 401
     window.sessionStorage.setItem(
       SESSION_KEY,
-      JSON.stringify([{ id: 'f1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded }])
+      JSON.stringify([
+        { id: 'f1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded },
+      ])
     );
     window.sessionStorage.setItem(
       'ttahistory-filters-v2-401-trainingReportsTable-sorting',
@@ -206,13 +260,28 @@ describe('Recipient Record - TTA History', () => {
     );
 
     // Register expected URLs for a different recipient (999) using the default sort
-    const defaultSessionReportsUrl = '/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=999';
+    const defaultSessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=999&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`;
     fetchMock.get(defaultSessionReportsUrl, { rows: [], count: 0 });
-    fetchMock.get(`/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, overviewResponse);
-    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, tableResponse);
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, 200);
-    fetchMock.get(`/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`, []);
+    fetchMock.get(
+      `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      overviewResponse
+    );
+    fetchMock.get(
+      `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      tableResponse
+    );
+    fetchMock.get(
+      `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      []
+    );
 
     await act(async () => {
       render(

@@ -24,7 +24,7 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
-function TrainingReportsSectionInContext({ recipientId }) {
+function TrainingReportsSectionInContext({ recipientId, filters }) {
   const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
     {
       sortBy: 'Event_ID',
@@ -39,8 +39,8 @@ function TrainingReportsSectionInContext({ recipientId }) {
 
   const { data: trainingReportsData, error: trainingReportsError } = useFetch(
     { rows: [], count: 0 },
-    () => getSessionReportsTable(trainingReportsSortConfig, [], recipientId),
-    [trainingReportsSortConfig, recipientId],
+    () => getSessionReportsTable(trainingReportsSortConfig, filters, recipientId),
+    [trainingReportsSortConfig, filters, recipientId],
     'Unable to fetch training reports'
   );
 
@@ -58,6 +58,7 @@ function TrainingReportsSectionInContext({ recipientId }) {
         requestSort={requestTrainingReportsSort}
         sortConfig={trainingReportsSortConfig}
         setSortConfig={setTrainingReportsSortConfig}
+        filters={filters}
         recipientId={recipientId}
       />
     </>
@@ -66,6 +67,7 @@ function TrainingReportsSectionInContext({ recipientId }) {
 
 TrainingReportsSectionInContext.propTypes = {
   recipientId: PropTypes.string.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
 };
 
 const defaultDate = formatDateRange({
@@ -194,9 +196,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             resetPagination={resetPagination}
             setResetPagination={setResetPagination}
           />
-          <TrainingReportsSectionInContext
-            recipientId={recipientId}
-          />
+          <TrainingReportsSectionInContext recipientId={recipientId} filters={filtersToApply} />
         </FilterContext.Provider>
       </div>
     </>
