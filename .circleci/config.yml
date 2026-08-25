@@ -420,8 +420,21 @@ jobs:
     - run:
         name: Build frontend
         command: |
-          if [ "${CIRCLE_BRANCH}" = "production" ] && [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
-            ./tools/parse-env-CLI.js ./deployment_config/prod_vars.yml ./temp.vars
+          frontend_env_config=""
+
+          if [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
+            case "${CIRCLE_BRANCH}" in
+              main)
+                frontend_env_config="./deployment_config/staging_vars.yml"
+                ;;
+              production)
+                frontend_env_config="./deployment_config/prod_vars.yml"
+                ;;
+            esac
+          fi
+
+          if [ -n "${frontend_env_config}" ]; then
+            ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
             grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
             circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
             set -a
