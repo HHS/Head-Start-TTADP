@@ -4,18 +4,34 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getSessionReportsTable } from '../../../../fetchers/session';
+import useRequestSort from '../../../../hooks/useRequestSort';
+import useSessionSort from '../../../../hooks/useSessionSort';
 import TrainingReportDashboard from '../TrainingReportDashboard';
 
 jest.mock('../../../../fetchers/session');
+jest.mock('../../../../hooks/useRequestSort');
+jest.mock('../../../../hooks/useSessionSort');
 
 describe('Training report Dashboard page', () => {
   const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
   const standardGoalsListUrl = '/api/widgets/trStandardGoalList';
   const overviewUrl = '/api/widgets/trOverview';
   const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic';
+  const mockSetSortConfig = jest.fn();
+  const mockSetResetPagination = jest.fn();
 
   beforeEach(async () => {
     getSessionReportsTable.mockResolvedValue({ rows: [], count: 0 });
+    useRequestSort.mockReturnValue(jest.fn());
+    useSessionSort.mockReturnValue([
+      {
+        sortBy: 'Event_ID',
+        direction: 'desc',
+        activePage: 2,
+        offset: 10,
+      },
+      mockSetSortConfig,
+    ]);
     fetchMock.get(overviewUrl, {
       numReports: '0',
       totalRecipients: '0',
@@ -39,7 +55,11 @@ describe('Training report Dashboard page', () => {
   const renderTest = (filtersToApply = []) => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <TrainingReportDashboard filtersToApply={filtersToApply} />
+        <TrainingReportDashboard
+          filtersToApply={filtersToApply}
+          filterKey="regional-dashboard-training-reports"
+          setResetPagination={mockSetResetPagination}
+        />
       </AppLoadingContext.Provider>
     );
   };
@@ -81,5 +101,38 @@ describe('Training report Dashboard page', () => {
     await waitFor(() => {
       expect(getSessionReportsTable).toHaveBeenCalledWith(expect.any(Object), []);
     });
+  });
+
+  it('resets persisted pagination when requested', async () => {
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <TrainingReportDashboard
+          filtersToApply={[]}
+          filterKey="regional-dashboard-training-reports"
+          resetPagination
+          setResetPagination={mockSetResetPagination}
+        />
+      </AppLoadingContext.Provider>
+    );
+
+    await waitFor(() => {
+      expect(mockSetSortConfig).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    const updateSortConfig = mockSetSortConfig.mock.calls[0][0];
+    expect(
+      updateSortConfig({
+        sortBy: 'Event_ID',
+        direction: 'desc',
+        activePage: 2,
+        offset: 10,
+      })
+    ).toEqual({
+      sortBy: 'Event_ID',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    });
+    expect(mockSetResetPagination).toHaveBeenCalledWith(false);
   });
 });
