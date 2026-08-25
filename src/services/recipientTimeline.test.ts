@@ -1,4 +1,5 @@
-import { getRecipientTimeline, type TimelineEventSource } from './recipientTimeline';
+import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
+import type { TimelineEventSource } from './recipientTimelineSources';
 
 const timelineParams = {
   recipientId: 100000,
@@ -54,6 +55,19 @@ const timelineSources: TimelineEventSource[] = [
   },
 ];
 
+const queryTestTimeline = (
+  params: typeof timelineParams,
+  sources: readonly TimelineEventSource[] = timelineSources
+) =>
+  queryTimelineEventIndex({
+    sources,
+    recipientId: params.recipientId,
+    regionId: params.regionId,
+    limit: params.limit,
+    offset: params.offset,
+    direction: params.direction,
+  });
+
 describe('getRecipientTimeline', () => {
   it('returns the empty timeline contract when there are no event sources', async () => {
     const result = await getRecipientTimeline(timelineParams);
@@ -66,7 +80,7 @@ describe('getRecipientTimeline', () => {
 
   it('rejects source names that differ only by surrounding whitespace', async () => {
     await expect(
-      getRecipientTimeline(timelineParams, [
+      queryTestTimeline(timelineParams, [
         timelineSources[0],
         {
           ...timelineSources[1],
@@ -79,7 +93,7 @@ describe('getRecipientTimeline', () => {
   });
 
   it('returns page 1 with a distinct count and deterministic equal-date ordering', async () => {
-    const result = await getRecipientTimeline(
+    const result = await queryTestTimeline(
       {
         ...timelineParams,
         limit: 2,
@@ -105,7 +119,7 @@ describe('getRecipientTimeline', () => {
   });
 
   it('excludes source rows outside the requested recipient and region', async () => {
-    const result = await getRecipientTimeline(
+    const result = await queryTestTimeline(
       {
         ...timelineParams,
         limit: 10,
@@ -121,7 +135,7 @@ describe('getRecipientTimeline', () => {
   });
 
   it('returns the next event slice without repeating a multi-grant event', async () => {
-    const result = await getRecipientTimeline(
+    const result = await queryTestTimeline(
       {
         ...timelineParams,
         limit: 2,
@@ -149,7 +163,7 @@ describe('getRecipientTimeline', () => {
   });
 
   it('returns the count when the requested event slice is empty', async () => {
-    const result = await getRecipientTimeline(
+    const result = await queryTestTimeline(
       {
         ...timelineParams,
         limit: 2,
@@ -166,7 +180,7 @@ describe('getRecipientTimeline', () => {
 
   it('rejects source rows with unsupported event types', async () => {
     await expect(
-      getRecipientTimeline(
+      queryTestTimeline(
         {
           ...timelineParams,
           limit: 1,

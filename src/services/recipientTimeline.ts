@@ -6,19 +6,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
-
-export interface TimelineEventSource {
-  /**
-   * Stable source discriminator. Together with sourceId, this identifies an event globally.
-   */
-  name: string;
-  /**
-   * A SELECT that returns sourceId, date, eventType, recipientId, and regionId. Source queries may
-   * return duplicate rows when an event is associated with multiple grants; the global index
-   * enforces requested recipient/region scope and removes duplicates.
-   */
-  query: string;
-}
+import { RECIPIENT_TIMELINE_SOURCES, type TimelineEventSource } from './recipientTimelineSources';
 
 interface TimelineQueryRow {
   count: string | number;
@@ -29,7 +17,7 @@ interface TimelineQueryRow {
 }
 
 interface TimelineEventIndexParams {
-  sources: TimelineEventSource[];
+  sources: readonly TimelineEventSource[];
   recipientId: number;
   regionId: number;
   limit: number;
@@ -41,7 +29,7 @@ interface TimelineEventIndexParams {
 const TIMELINE_EVENT_TYPE_SET = new Set<string>(TIMELINE_EVENT_TYPES);
 
 const validateQueryOptions = (
-  sources: TimelineEventSource[],
+  sources: readonly TimelineEventSource[],
   recipientId: number,
   regionId: number,
   limit: number,
@@ -85,7 +73,7 @@ const isValidTimelineEventType = (
   eventType: string
 ): eventType is RecipientTimelineEvent['eventType'] => TIMELINE_EVENT_TYPE_SET.has(eventType);
 
-const timelineIndexCte = (sources: TimelineEventSource[]) => {
+const timelineIndexCte = (sources: readonly TimelineEventSource[]) => {
   const sourceQueries = sources.map(
     ({ query }, index) => `
       SELECT
@@ -122,10 +110,11 @@ const timelineIndexCte = (sources: TimelineEventSource[]) => {
 };
 
 /**
- * Query a single, deduplicated event index across timeline sources.
+ * Infrastructure query for a single, deduplicated event index across registered timeline sources.
  *
  * Pagination is applied only after the source results have been combined and deduplicated. The
  * stable source and sourceId tie-breakers prevent equal-date events from moving between pages.
+ * Route handlers must call getRecipientTimeline rather than supplying source definitions directly.
  */
 export async function queryTimelineEventIndex({
   sources,
@@ -218,15 +207,14 @@ export async function queryTimelineEventIndex({
 }
 
 /**
- * Timeline sources are added independently. Keeping the global index query here gives every
- * source the same deduplication, ordering, count, and pagination behavior.
+ * Query the code-owned recipient timeline source registry. Timeline sources are added independently
+ * to the registry while sharing the same scoping, deduplication, ordering, count, and pagination.
  */
 export async function getRecipientTimeline(
-  params: RecipientTimelineRequestParams,
-  sources: TimelineEventSource[] = []
+  params: RecipientTimelineRequestParams
 ): Promise<RecipientTimelineResponse> {
   return queryTimelineEventIndex({
-    sources,
+    sources: RECIPIENT_TIMELINE_SOURCES,
     recipientId: params.recipientId,
     regionId: params.regionId,
     limit: params.limit,
