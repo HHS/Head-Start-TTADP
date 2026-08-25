@@ -301,20 +301,26 @@ export async function updateSession(id: number, request) {
   // re-derived from the columns on read (see findSessionHelper).
   const existingData = session.data as Record<string, unknown>;
   const { startDate, endDate, ...restExistingData } = existingData;
-  const newData = { ...restExistingData, ...removeAssociationsFromData(data) };
+  const cleanIncomingData = removeAssociationsFromData(data);
+  const {
+    startDate: incomingStartDate,
+    endDate: incomingEndDate,
+    ...restIncomingData
+  } = cleanIncomingData;
+  const newData = { ...restExistingData, ...restIncomingData };
 
   const event = await findEventBySmartsheetId(eventId);
 
-  const hasStartDate = Object.prototype.hasOwnProperty.call(newData, 'startDate');
-  const hasEndDate = Object.prototype.hasOwnProperty.call(newData, 'endDate');
+  const hasStartDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'startDate');
+  const hasEndDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'endDate');
 
   const update = {
     eventId: event.id,
     startDate: hasStartDate
-      ? (parseDate(newData.startDate as string) as Date | null)
+      ? (parseDate(incomingStartDate as string | null | undefined) as Date | null)
       : (session.get('startDate') as unknown as Date | null),
     endDate: hasEndDate
-      ? (parseDate(newData.endDate as string) as Date | null)
+      ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
       : (session.get('endDate') as unknown as Date | null),
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {

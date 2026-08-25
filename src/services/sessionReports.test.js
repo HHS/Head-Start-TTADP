@@ -775,18 +775,21 @@ describe('session reports service', () => {
     it('updateSession persists new dates to the columns', async () => {
       const created = await createSession({
         eventId: dateEvent.id,
-        data: { startDate: '05/01/2024', endDate: '05/02/2024' },
+        data: { startDate: '05/01/2024', endDate: '05/02/2024', sessionName: 'updated session' },
       });
       createdSessionIds.push(created.id);
 
       await updateSession(created.id, {
         eventId: 'R01-PD-99_777',
-        data: { startDate: '06/10/2024', endDate: '06/11/2024' },
+        data: { startDate: '06/10/2024', endDate: '06/11/2024', sessionName: 'updated session name' },
       });
 
       const raw = await SessionReportPilot.findByPk(created.id);
       expect(raw.startDate).toBe('2024-06-10');
       expect(raw.endDate).toBe('2024-06-11');
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+      expect(raw.data.sessionName).toBe('updated session name');
     });
   });
 
