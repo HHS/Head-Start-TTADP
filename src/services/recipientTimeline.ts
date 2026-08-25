@@ -68,12 +68,16 @@ const validateQueryOptions = (
     throw new Error('Timeline direction must be asc or desc');
   }
 
-  const sourceNames = sources.map(({ name }) => name);
+  const sourceNames = sources.map(({ name }) => name.trim());
   if (
-    sources.some(({ name, query }) => name.trim() === '' || query.trim() === '') ||
+    sources.some(
+      ({ name, query }) => name.trim() === '' || name !== name.trim() || query.trim() === ''
+    ) ||
     new Set(sourceNames).size !== sourceNames.length
   ) {
-    throw new Error('Timeline event sources must have unique names and non-empty queries');
+    throw new Error(
+      'Timeline event sources must have unique, whitespace-trimmed names and non-empty queries'
+    );
   }
 };
 

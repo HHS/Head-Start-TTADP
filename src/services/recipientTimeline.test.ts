@@ -64,6 +64,20 @@ describe('getRecipientTimeline', () => {
     });
   });
 
+  it('rejects source names that differ only by surrounding whitespace', async () => {
+    await expect(
+      getRecipientTimeline(timelineParams, [
+        timelineSources[0],
+        {
+          ...timelineSources[1],
+          name: `${timelineSources[0].name} `,
+        },
+      ])
+    ).rejects.toThrow(
+      'Timeline event sources must have unique, whitespace-trimmed names and non-empty queries'
+    );
+  });
+
   it('returns page 1 with a distinct count and deterministic equal-date ordering', async () => {
     const result = await getRecipientTimeline(
       {
