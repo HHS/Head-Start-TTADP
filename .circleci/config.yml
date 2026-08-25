@@ -419,7 +419,18 @@ jobs:
           ./tools/run-yarn-audit.js;
     - run:
         name: Build frontend
-        command: yarn --cwd frontend run build
+        command: |
+          if [ "${CIRCLE_BRANCH}" = "production" ] && [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
+            ./tools/parse-env-CLI.js ./deployment_config/prod_vars.yml ./temp.vars
+            grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
+            circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
+            set -a
+            . ./frontend-build.vars
+            set +a
+            rm -f ./temp.vars ./frontend-build.template.vars ./frontend-build.vars
+          fi
+
+          yarn --cwd frontend run build
     - run:
         name: Run lint
         command: |
