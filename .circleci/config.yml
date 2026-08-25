@@ -431,6 +431,12 @@ jobs:
                 frontend_env_config="./deployment_config/prod_vars.yml"
                 ;;
             esac
+          elif [ "<< pipeline.parameters.action >>" = "deploy_only" ]; then
+            case "<< pipeline.parameters.target_env >>" in
+              dev-blue)
+                frontend_env_config="./deployment_config/dev_vars.yml"
+                ;;
+            esac
           fi
 
           if [ -n "${frontend_env_config}" ]; then
