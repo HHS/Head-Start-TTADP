@@ -1,7 +1,8 @@
 import { Alert, Grid, GridContainer } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import FilterContext from '../../../FilterContext';
 import { getSessionReportsTable } from '../../../fetchers/session';
 import useFetch from '../../../hooks/useFetch';
 import useRequestSort from '../../../hooks/useRequestSort';
@@ -12,7 +13,12 @@ import Overview from '../../../widgets/TrainingReportDashboardOverview';
 import VTopicFrequency from '../../../widgets/VTopicFrequency';
 import TrainingReportsTable from './TrainingReportsTable';
 
-export default function TrainingReportDashboard({ filtersToApply: filters }) {
+export default function TrainingReportDashboard({
+  filtersToApply: filters,
+  resetPagination,
+  setResetPagination,
+  filterKey,
+}) {
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'Event_ID',
@@ -24,6 +30,17 @@ export default function TrainingReportDashboard({ filtersToApply: filters }) {
   );
 
   const requestSort = useRequestSort(setSortConfig);
+
+  useEffect(() => {
+    if (resetPagination) {
+      setSortConfig((previousConfig) => ({
+        ...previousConfig,
+        activePage: 1,
+        offset: 0,
+      }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   const { data, error } = useFetch(
     { rows: [], count: 0 },
@@ -71,16 +88,18 @@ export default function TrainingReportDashboard({ filtersToApply: filters }) {
               {error}
             </Alert>
           )}
-          <TrainingReportsTable
-            data={data}
-            title="Training Reports"
-            loading={false}
-            emptyMsg="No training reports found"
-            requestSort={requestSort}
-            sortConfig={sortConfig}
-            setSortConfig={setSortConfig}
-            filters={filters}
-          />
+          <FilterContext.Provider value={{ filterKey }}>
+            <TrainingReportsTable
+              data={data}
+              title="Training Reports"
+              loading={false}
+              emptyMsg="No training reports found"
+              requestSort={requestSort}
+              sortConfig={sortConfig}
+              setSortConfig={setSortConfig}
+              filters={filters}
+            />
+          </FilterContext.Provider>
         </Grid>
       </GridContainer>
     </>
@@ -89,8 +108,14 @@ export default function TrainingReportDashboard({ filtersToApply: filters }) {
 
 TrainingReportDashboard.defaultProps = {
   filtersToApply: [],
+  resetPagination: false,
+  filterKey: '',
+  setResetPagination: () => {},
 };
 
 TrainingReportDashboard.propTypes = {
   filtersToApply: PropTypes.arrayOf(PropTypes.shape({})),
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
+  filterKey: PropTypes.string,
 };
