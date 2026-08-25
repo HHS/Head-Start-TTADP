@@ -41,6 +41,7 @@ export type EventShape = {
   pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
+  eventId: string;
   data: {
     startDate: string;
     endDate: string;

@@ -4,6 +4,7 @@ const {
   beforeUpdate,
   afterCreate,
   beforeCreate,
+  beforeValidate,
 } = require('./hooks/eventReportPilot');
 
 export default (sequelize, DataTypes) => {
@@ -40,6 +41,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      eventId: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true,
+      },
       data: {
         type: DataTypes.JSONB,
         allowNull: false,
@@ -61,6 +67,7 @@ export default (sequelize, DataTypes) => {
         afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
         beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
         beforeCreate: async (instance) => beforeCreate(sequelize, instance),
+        beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       },
     }
   );

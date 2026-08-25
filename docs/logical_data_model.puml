@@ -458,6 +458,7 @@ class EventReportPilots{
  * collaboratorIds : integer[]
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ * eventId : text
  * ownerId : integer
  * regionId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP

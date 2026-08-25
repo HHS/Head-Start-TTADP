@@ -90,6 +90,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     pocIds,
     collaboratorIds,
     regionId,
+    eventId: (data as { eventId?: string }).eventId,
     data: cast(JSON.stringify(data), 'jsonb'),
   });
 }
@@ -308,7 +309,7 @@ export async function findEventHelperBlob({
     ],
     where,
     order: [
-      ['data.eventId', 'ASC'],
+      ['eventId', 'ASC'],
       ['data.startDate', 'ASC'],
     ],
   });
@@ -376,12 +377,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
+  // eventId is an immutable identifier; only mirror it to the column when the
+  // request actually supplies one so we never overwrite the existing value with null.
+  const { eventId } = data as { eventId?: string };
+
   await evt.update(
     {
       ownerId,
       pocIds,
       collaboratorIds,
       regionId,
+      ...(eventId ? { eventId } : {}),
       data: cast(JSON.stringify(data), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
@@ -781,10 +787,8 @@ export async function findEventBySmartsheetId(
   const where = {
     [Op.and]: [
       {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
+        eventId: {
+          [Op.eq]: eventId,
         },
       },
       ...scopes,
@@ -940,13 +944,7 @@ const checkUserExistsByEmail = async (email: string) => checkUserExists('email',
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
     attributes: ['id'],
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`
-        ),
-      },
-    },
+    where: { eventId },
   });
 
   if (event) throw new Error(`Event ${eventId} already exists`);
@@ -1082,6 +1080,7 @@ export async function csvImport(buffer: Buffer) {
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
+        eventId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,

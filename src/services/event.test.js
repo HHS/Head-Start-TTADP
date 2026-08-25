@@ -57,6 +57,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
         status: 'active',
         owner: {
           id: num,
@@ -73,6 +74,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
         status,
       },
     });
@@ -83,7 +85,10 @@ describe('event service', () => {
       regionId: num,
       pocIds: [num],
       collaboratorIds: [num],
-      data,
+      data: {
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        ...data,
+      },
     });
 
   describe('createEvent', () => {
@@ -92,6 +97,46 @@ describe('event service', () => {
       expect(created).toHaveProperty('id');
       expect(created).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
+    });
+
+    it('mirrors data.eventId into the dedicated eventId column', async () => {
+      const eventId = `R01-TR-${faker.datatype.uuid()}`;
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [98_989],
+        collaboratorIds: [98_989],
+        data: { eventId, status: 'active' },
+      });
+
+      expect(created.eventId).toEqual(eventId);
+      expect(created.data.eventId).toEqual(eventId);
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.eventId).toEqual(eventId);
+
+      await destroyEvent(created.id);
+    });
+
+    it('throws when creating an event whose eventId already exists', async () => {
+      const eventId = `R01-TR-${faker.datatype.uuid()}`;
+      const first = await createAnEventWithData(98_989, { eventId });
+
+      await expect(createAnEventWithData(98_989, { eventId })).rejects.toThrow();
+
+      await destroyEvent(first.id);
+    });
+
+    it('throws when the eventId is missing', async () => {
+      await expect(
+        db.EventReportPilot.create({
+          ownerId: 98_989,
+          regionId: 98_989,
+          pocIds: [98_989],
+          collaboratorIds: [98_989],
+          data: { status: 'active' },
+        })
+      ).rejects.toThrow(/eventId cannot be null/);
     });
   });
 
@@ -148,7 +193,7 @@ describe('event service', () => {
         pocIds: [123],
         regionId: 123,
         collaboratorIds: [123],
-        data: {},
+        data: { eventId: `R01-TR-${faker.datatype.uuid()}` },
       });
 
       expect(updated).toHaveProperty('id');
@@ -397,71 +442,6 @@ describe('event service', () => {
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
       await destroyEvent(found[2].id);
-
-      // when eventId is missing, sort by startDate:
-      const e4 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-02',
-        status: TRS.NOT_STARTED,
-      });
-      const e5 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-03',
-        status: TRS.NOT_STARTED,
-      });
-      const e6 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-01',
-        status: TRS.NOT_STARTED,
-      });
-
-      const found2 = await findEventHelperBlob({
-        key: 'status',
-        value: TRS.NOT_STARTED,
-        regions: [],
-        fallbackValue: null,
-        allowNull: true,
-        scopes: [{ id: [e4.id, e5.id, e6.id] }],
-      });
-
-      expect(found2[0].data).toHaveProperty('startDate', '2020-01-01');
-      expect(found2[1].data).toHaveProperty('startDate', '2020-01-02');
-      expect(found2[2].data).toHaveProperty('startDate', '2020-01-03');
-
-      await destroyEvent(found2[0].id);
-      await destroyEvent(found2[1].id);
-      await destroyEvent(found2[2].id);
-
-      // when eventId is the same, sort by startDate:
-      const e7 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-02',
-        status: TRS.NOT_STARTED,
-      });
-      const e8 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-03',
-        status: TRS.NOT_STARTED,
-      });
-      const e9 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-01',
-        status: TRS.NOT_STARTED,
-      });
-
-      const found3 = await findEventHelperBlob({
-        key: 'status',
-        value: TRS.NOT_STARTED,
-        regions: [],
-        fallbackValue: null,
-        allowNull: true,
-        scopes: [{ id: [e7.id, e8.id, e9.id] }],
-      });
-
-      expect(found3[0].data).toHaveProperty('startDate', '2020-01-01');
-      expect(found3[1].data).toHaveProperty('startDate', '2020-01-02');
-      expect(found3[2].data).toHaveProperty('startDate', '2020-01-03');
-
-      await destroyEvent(found3[0].id);
-      await destroyEvent(found3[1].id);
-      await destroyEvent(found3[2].id);
     });
 
     it('findEventHelperBlob use scopes', async () => {
@@ -820,6 +800,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(created).not.toBeNull();
 
       expect(created).toHaveProperty('ownerId', userId);
+      expect(created).toHaveProperty('eventId', eventId);
       expect(created).toHaveProperty('regionId', regionId);
       expect(created.data.reasons).toEqual(['Complaint', 'Planning/Coordination']);
       expect(created.data.vision).toEqual(vision);
