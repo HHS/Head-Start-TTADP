@@ -10,6 +10,7 @@ import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
 import AppLoadingContext from '../../AppLoadingContext';
+import FeatureFlag from '../../components/FeatureFlag';
 import NewReportButton from '../../components/NewReportButton';
 import FilterContext from '../../FilterContext';
 import { canCreateCommunicationLog } from '../../permissions';
@@ -19,12 +20,13 @@ import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
-import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
+import { GOALS_OBJECTIVES_FILTER_KEY, TTA_TIMELINE_FEATURE_FLAG } from './pages/constants';
 import GoalsObjectives from './pages/GoalsObjectives';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import Monitoring from './pages/Monitoring';
 import PrintGoals from './pages/PrintGoals';
 import Profile from './pages/Profile';
+import Timeline from './pages/Timeline';
 import TTAHistory from './pages/TTAHistory';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import ViewGoalDetails from './pages/ViewStandardGoals';
@@ -176,6 +178,22 @@ export default function RecipientRecord({ match, hasAlerts }) {
       />
 
       <Switch>
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/timeline"
+          render={() => (
+            <FeatureFlag flag={TTA_TIMELINE_FEATURE_FLAG} renderNotFound>
+              <PageWithHeading
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+                slug="tta-timeline"
+                hasAlerts={hasAlerts}
+              >
+                <Timeline recipientId={recipientId} regionId={regionId} />
+              </PageWithHeading>
+            </FeatureFlag>
+          )}
+        />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-history"
           render={() => (

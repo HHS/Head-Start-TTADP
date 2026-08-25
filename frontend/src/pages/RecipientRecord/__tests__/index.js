@@ -61,7 +61,7 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord() {
+  function renderRecipientRecord(currentUser = user) {
     const match = {
       path: '',
       url: '',
@@ -73,7 +73,7 @@ describe('recipient record page', () => {
 
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user }}>
+        <UserContext.Provider value={{ user: currentUser }}>
           <GrantDataProvider>
             <AppLoadingContext.Provider
               value={{
@@ -243,6 +243,34 @@ describe('recipient record page', () => {
 
     userEvent.click(remove);
     await waitFor(() => expect(remove).not.toBeInTheDocument());
+  });
+
+  it('navigates to the feature-flagged TTA timeline page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('begin:/api/recipient/1/region/45/timeline', { count: 0, events: [] });
+    memoryHistory.push('/recipient-tta-records/1/region/45/timeline');
+
+    act(() => renderRecipientRecord());
+
+    expect(await screen.findByRole('heading', { name: 'TTA timeline' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'About this data' })).toBeVisible();
+  });
+
+  it('redirects an unflagged user away from the TTA timeline page', async () => {
+    const unflaggedUser = {
+      ...user,
+      flags: [],
+      permissions: user.permissions.filter(({ scopeId }) => scopeId !== ADMIN),
+    };
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/timeline');
+
+    act(() => renderRecipientRecord(unflaggedUser));
+
+    await waitFor(() => {
+      expect(memoryHistory.location.pathname).toBe('/something-went-wrong/404');
+    });
+    expect(screen.queryByRole('heading', { name: 'TTA timeline' })).not.toBeInTheDocument();
   });
 
   it('navigates to the goals & objectives page', async () => {

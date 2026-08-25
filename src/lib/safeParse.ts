@@ -36,9 +36,4 @@ function safeParseDate(value: string | undefined | null): Date | null {
   return parsed ? moment(value, parsed, true).toDate() : null;
 }
 
-function safeParseInt(value: string | number | undefined | null): number | null {
-  const parsed = parseInt(String(value) ?? '', 10);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-export { safeParseDate, safeParseInt };
+export { safeParseDate };
