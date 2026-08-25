@@ -55,6 +55,7 @@ export type GetSessionReportsParams = {
   offset?: number;
   limit?: number | 'all';
   format?: 'json' | 'csv';
+  userId?: number;
 };
 
 export type GetSessionReportsForRecipientParams = GetSessionReportsParams & {

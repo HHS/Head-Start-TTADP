@@ -503,13 +503,21 @@ async function fetchSessionReports(
     offset = 0,
     limit = 10 as number | 'all',
     extraWhereClauses = [] as unknown[],
+    userId,
+  }: {
+    sortBy?: string;
+    sortDir?: string;
+    offset?: number;
+    limit?: number | 'all';
+    extraWhereClauses?: unknown[];
+    userId?: number;
   }
 ): Promise<GetSessionReportsResponse> {
   const orderClause = sessionReportOrderClause(sortBy, sortDir);
 
   // Get scopes from filters
   const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
-    await filtersToScopes(filterParams, {});
+    await filtersToScopes(filterParams, { userId });
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -620,9 +628,16 @@ async function fetchSessionReports(
 export async function getSessionReports(
   params: GetSessionReportsParams
 ): Promise<GetSessionReportsResponse> {
-  const { sortBy = 'id', sortDir = 'DESC', offset = 0, limit = 10, ...filterParams } = params;
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    userId,
+    ...filterParams
+  } = params;
 
-  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit });
+  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit, userId });
 }
 
 /**
@@ -638,6 +653,7 @@ export async function getSessionReportsByRecipient(
     sortDir = 'DESC',
     offset = 0,
     limit = 10,
+    userId,
     ...filterParams
   } = params;
 
@@ -672,6 +688,7 @@ export async function getSessionReportsByRecipient(
     sortDir,
     offset,
     limit,
+    userId,
     extraWhereClauses: [recipientGrantFilter(grantIds)],
   });
 }
