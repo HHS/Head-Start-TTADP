@@ -42,4 +42,19 @@ describe('RecipientTabs', () => {
     renderRecipientTabs(<a href="/">Back</a>);
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
   });
+
+  it('hides the TTA Timeline tab without the feature flag', () => {
+    renderRecipientTabs();
+
+    expect(screen.queryByRole('link', { name: 'TTA Timeline' })).not.toBeInTheDocument();
+  });
+
+  it('shows the TTA Timeline tab with the feature flag', () => {
+    renderRecipientTabs(null, { ...DEFAULT_USER, flags: ['tta_timeline'] });
+
+    expect(screen.getByRole('link', { name: 'TTA Timeline' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/1/timeline'
+    );
+  });
 });
