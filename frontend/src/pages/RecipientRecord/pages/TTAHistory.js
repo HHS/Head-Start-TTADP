@@ -1,6 +1,6 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
@@ -24,7 +24,12 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
-function TrainingReportsSectionInContext({ recipientId, filters }) {
+function TrainingReportsSectionInContext({
+  recipientId,
+  filters,
+  resetPagination,
+  setResetPagination,
+}) {
   const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
     {
       sortBy: 'Event_ID',
@@ -36,6 +41,14 @@ function TrainingReportsSectionInContext({ recipientId, filters }) {
   );
 
   const requestTrainingReportsSort = useRequestSort(setTrainingReportsSortConfig);
+
+  // reset pagination to page 1 when filters change so a stale offset can't hide matching rows
+  useEffect(() => {
+    if (resetPagination) {
+      setTrainingReportsSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setTrainingReportsSortConfig]);
 
   const { data: trainingReportsData, error: trainingReportsError } = useFetch(
     { rows: [], count: 0 },
@@ -65,9 +78,16 @@ function TrainingReportsSectionInContext({ recipientId, filters }) {
   );
 }
 
+TrainingReportsSectionInContext.defaultProps = {
+  resetPagination: false,
+  setResetPagination: () => {},
+};
+
 TrainingReportsSectionInContext.propTypes = {
   recipientId: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
 };
 
 const defaultDate = formatDateRange({
@@ -196,7 +216,12 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             resetPagination={resetPagination}
             setResetPagination={setResetPagination}
           />
-          <TrainingReportsSectionInContext recipientId={recipientId} filters={filtersToApply} />
+          <TrainingReportsSectionInContext
+            recipientId={recipientId}
+            filters={filtersToApply}
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
+          />
         </FilterContext.Provider>
       </div>
     </>
