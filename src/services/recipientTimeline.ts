@@ -23,6 +23,8 @@ interface TimelineEventIndexParams {
   limit: number;
   offset: number;
   direction: 'asc' | 'desc';
+  filters: RecipientTimelineRequestParams['filters'];
+  excludeMultiRecipientCommunications: boolean;
   replacements?: Record<string, unknown>;
 }
 
@@ -123,12 +125,19 @@ export async function queryTimelineEventIndex({
   limit,
   offset,
   direction,
+  filters,
+  excludeMultiRecipientCommunications,
   replacements = {},
 }: TimelineEventIndexParams): Promise<RecipientTimelineResponse> {
   validateQueryOptions(sources, recipientId, regionId, limit, offset, direction);
 
   if (sources.length === 0) {
     return { count: 0, events: [] };
+  }
+
+  // Remove this guard only when registered sources implement the corresponding filter semantics.
+  if (filters.length > 0 || excludeMultiRecipientCommunications) {
+    throw new Error('Recipient timeline filtering is not implemented for registered sources');
   }
 
   const cte = timelineIndexCte(sources);
@@ -220,5 +229,7 @@ export async function getRecipientTimeline(
     limit: params.limit,
     offset: params.offset,
     direction: params.direction,
+    filters: params.filters,
+    excludeMultiRecipientCommunications: params.excludeMultiRecipientCommunications,
   });
 }

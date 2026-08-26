@@ -1,7 +1,8 @@
+import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
 import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
 import type { TimelineEventSource } from './recipientTimelineSources';
 
-const timelineParams = {
+const timelineParams: RecipientTimelineRequestParams = {
   recipientId: 100000,
   regionId: 1,
   limit: 20,
@@ -56,7 +57,7 @@ const timelineSources: TimelineEventSource[] = [
 ];
 
 const queryTestTimeline = (
-  params: typeof timelineParams,
+  params: RecipientTimelineRequestParams,
   sources: readonly TimelineEventSource[] = timelineSources
 ) =>
   queryTimelineEventIndex({
@@ -66,7 +67,29 @@ const queryTestTimeline = (
     limit: params.limit,
     offset: params.offset,
     direction: params.direction,
+    filters: params.filters,
+    excludeMultiRecipientCommunications: params.excludeMultiRecipientCommunications,
   });
+
+const unsupportedFilteringRequests: Array<{
+  description: string;
+  params: RecipientTimelineRequestParams;
+}> = [
+  {
+    description: 'timeline filters',
+    params: {
+      ...timelineParams,
+      filters: [{ topic: 'date', condition: 'is', query: '08/26/2026' }],
+    },
+  },
+  {
+    description: 'the multi-recipient communication exclusion',
+    params: {
+      ...timelineParams,
+      excludeMultiRecipientCommunications: true,
+    },
+  },
+];
 
 describe('getRecipientTimeline', () => {
   it('returns the empty timeline contract when there are no event sources', async () => {
@@ -89,6 +112,16 @@ describe('getRecipientTimeline', () => {
       ])
     ).rejects.toThrow(
       'Timeline event sources must have unique, whitespace-trimmed names and non-empty queries'
+    );
+  });
+
+  it.each(
+    unsupportedFilteringRequests
+  )('rejects $description rather than silently ignoring it when sources are registered', async ({
+    params,
+  }) => {
+    await expect(queryTestTimeline(params)).rejects.toThrow(
+      'Recipient timeline filtering is not implemented for registered sources'
     );
   });
 
