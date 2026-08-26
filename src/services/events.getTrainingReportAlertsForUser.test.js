@@ -22,7 +22,11 @@ async function createEvents({
     regionId: 1,
     data: {
       eventName: faker.datatype.string(),
-      eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
+      // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+      // UNIQUE `eventId` column never collides across the many events created below.
+      get eventId() {
+        return `R0${regionId}-TR-${faker.datatype.uuid()}`;
+      },
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
@@ -33,7 +37,7 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  await EventReportPilot.create(baseEvent);
+  await EventReportPilot.create({ ...baseEvent, data: { ...baseEvent.data } });
 
   // event with no sessions and a start date of today (Will not appear in alerts)
   await EventReportPilot.create({
