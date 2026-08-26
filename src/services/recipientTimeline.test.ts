@@ -91,6 +91,66 @@ const unsupportedFilteringRequests: Array<{
   },
 ];
 
+const invalidQueryOptions: Array<{
+  description: string;
+  params: RecipientTimelineRequestParams;
+  error: string;
+}> = [
+  {
+    description: 'a zero recipientId',
+    params: { ...timelineParams, recipientId: 0 },
+    error: 'Timeline recipientId must be a positive integer',
+  },
+  {
+    description: 'a non-integer recipientId',
+    params: { ...timelineParams, recipientId: 1.5 },
+    error: 'Timeline recipientId must be a positive integer',
+  },
+  {
+    description: 'a zero regionId',
+    params: { ...timelineParams, regionId: 0 },
+    error: 'Timeline regionId must be a positive integer',
+  },
+  {
+    description: 'a non-integer regionId',
+    params: { ...timelineParams, regionId: 1.5 },
+    error: 'Timeline regionId must be a positive integer',
+  },
+  {
+    description: 'a zero limit',
+    params: { ...timelineParams, limit: 0 },
+    error: 'Timeline limit must be an integer between 1 and 100',
+  },
+  {
+    description: 'a limit above 100',
+    params: { ...timelineParams, limit: 101 },
+    error: 'Timeline limit must be an integer between 1 and 100',
+  },
+  {
+    description: 'a non-integer limit',
+    params: { ...timelineParams, limit: 1.5 },
+    error: 'Timeline limit must be an integer between 1 and 100',
+  },
+  {
+    description: 'a negative offset',
+    params: { ...timelineParams, offset: -1 },
+    error: 'Timeline offset must be a non-negative integer',
+  },
+  {
+    description: 'a non-integer offset',
+    params: { ...timelineParams, offset: 1.5 },
+    error: 'Timeline offset must be a non-negative integer',
+  },
+  {
+    description: 'an unsupported direction',
+    params: {
+      ...timelineParams,
+      direction: 'sideways' as RecipientTimelineRequestParams['direction'],
+    },
+    error: 'Timeline direction must be asc or desc',
+  },
+];
+
 describe('getRecipientTimeline', () => {
   it('returns the empty timeline contract when there are no event sources', async () => {
     const result = await getRecipientTimeline(timelineParams);
@@ -125,6 +185,25 @@ describe('getRecipientTimeline', () => {
     );
   });
 
+  it.each(invalidQueryOptions)('rejects $description', async ({ params, error }) => {
+    await expect(queryTestTimeline(params)).rejects.toThrow(error);
+  });
+
+  it.each([
+    {
+      description: 'an empty query',
+      sources: [{ name: 'emptyQuery', query: '  ' }],
+    },
+    {
+      description: 'exact duplicate source names',
+      sources: [timelineSources[0], { ...timelineSources[1], name: timelineSources[0].name }],
+    },
+  ])('rejects $description', async ({ sources }) => {
+    await expect(queryTestTimeline(timelineParams, sources)).rejects.toThrow(
+      'Timeline event sources must have unique, whitespace-trimmed names and non-empty queries'
+    );
+  });
+
   it('returns page 1 with a distinct count and deterministic equal-date ordering', async () => {
     const result = await queryTestTimeline(
       {
@@ -136,6 +215,50 @@ describe('getRecipientTimeline', () => {
 
     expect(result.count).toBe(5);
     expect(result.events).toEqual([
+      {
+        source: 'activityReport',
+        sourceId: 101,
+        date: '2026-08-21',
+        eventType: 'TTA activity',
+      },
+      {
+        source: 'communicationLog',
+        sourceId: 101,
+        date: '2026-08-21',
+        eventType: 'Email communication',
+      },
+    ]);
+  });
+
+  it('orders ascending results deterministically across equal dates', async () => {
+    const result = await queryTestTimeline(
+      {
+        ...timelineParams,
+        direction: 'asc',
+        limit: 5,
+      },
+      timelineSources
+    );
+
+    expect(result.events).toEqual([
+      {
+        source: 'communicationLog',
+        sourceId: 201,
+        date: '2026-08-19',
+        eventType: 'Phone communication',
+      },
+      {
+        source: 'activityReport',
+        sourceId: 102,
+        date: '2026-08-20',
+        eventType: 'TTA activity',
+      },
+      {
+        source: 'activityReport',
+        sourceId: 103,
+        date: '2026-08-20',
+        eventType: 'TTA activity',
+      },
       {
         source: 'activityReport',
         sourceId: 101,
