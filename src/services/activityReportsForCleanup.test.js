@@ -160,7 +160,13 @@ describe('Activity report cleanup service', () => {
         userId: [mockAuthor.id, mockPhantomUser.id],
       },
     });
-    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
+    // These reports share the same author, grant, recipient, and region, so
+    // destroying them concurrently races on those shared rows against the
+    // shared test database. Destroy them sequentially to avoid the race.
+    for (const r of reportsToDestroy) {
+      // eslint-disable-next-line no-await-in-loop
+      await destroyReport(r);
+    }
     await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await User.destroy({
