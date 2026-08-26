@@ -609,7 +609,7 @@ const collabReportTransformers = [
   'displayId',
   'regionId',
   'name',
-  'description',
+  'descriptionFormatted',
   'conductMethod',
   'isStateActivity',
   'duration',

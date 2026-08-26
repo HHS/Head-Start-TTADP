@@ -48,6 +48,8 @@
   $ref: './files.yaml'
 '/recipient/{recipientId}':
   $ref: './recipient/recipient-id.yaml'
+'/recipient/{recipientId}/region/{regionId}/timeline':
+  $ref: './recipient/recipient-timeline.yaml'
 '/recipient/search':
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':
@@ -56,10 +58,14 @@
   $ref: './monitoring/tta-citation.yaml'
 '/monitoring/{recipientId}/region/{regionId}/tta/review':
   $ref: './monitoring/tta-review.yaml'
+'/monitoring/finding-categories':
+  $ref: './monitoring/finding-categories.yaml'
 '/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
+'/widgets/ttaHistoryOverview':
+  $ref: './widgets/ttaHistoryOverview.yaml'
 '/widgets/monitoringOverview':
   $ref: './widgets/monitoringOverview.yaml'
 '/widgets/monitoringTta':

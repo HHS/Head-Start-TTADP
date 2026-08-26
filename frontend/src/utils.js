@@ -1,4 +1,5 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import DOMPurify from 'dompurify';
 import { ContentState, EditorState } from 'draft-js';
 import htmlToDraft from 'html-to-draftjs';
 import moment from 'moment';
@@ -73,6 +74,100 @@ export const getEditorState = (name) => {
   return EditorState.createWithContent(contentState);
 };
 
+/**
+ * Convert a rich-text (HTML) value into a clean, human-readable plain-text
+ * string. Strips all tags, decodes the whitespace entities Draft emits, and
+ * collapses remaining whitespace. Useful for compact displays (e.g. cards)
+ * where the formatting itself should not be rendered.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} plain text ('' for empty or non-string input)
+ */
+export const getRichTextAsText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
+
+  return (
+    html
+      // replace tags with a space so adjacent blocks don't merge words together
+      .replace(/<[^>]*>/g, ' ')
+      // decode common whitespace entities that Draft emits
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#160;/g, ' ')
+      // normalize remaining whitespace (including newlines)
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+};
+
+/**
+ * Determine whether a rich-text (HTML) value is semantically empty.
+ *
+ * React Draft emits several "empty" variants beyond a bare `<p></p>` — for
+ * example `<p></p>\n`, `<p>&nbsp;</p>`, or multiple empty paragraphs. A naive
+ * check against a single sentinel string misses these, so we strip the value
+ * down to its visible text (via `getRichTextAsText`) and check for content.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {boolean} true when the value contains no visible text content
+ */
+export const isEmptyRichText = (html) => getRichTextAsText(html).length === 0;
+
+/**
+ * Strict allowlist for read-only rich-text rendering. Intentionally excludes
+ * embedded/atomic content such as `img` and `iframe`, which `html-to-draftjs`
+ * converts into atomic blocks that can crash the read-only Draft renderer.
+ */
+export const RICH_TEXT_ALLOWED_TAGS = [
+  'p',
+  'br',
+  'strong',
+  'em',
+  'del',
+  'ins',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'a',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'code',
+  'pre',
+  'span',
+  'div',
+];
+
+export const RICH_TEXT_ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];
+
+/**
+ * Sanitize stored rich-text HTML with the strict read-only allowlist above.
+ *
+ * Backend hooks only sanitize on create/update, so legacy values (or values
+ * authored before a sanitization change) can still contain unsupported markup.
+ * Sanitizing at render time strips it before the value reaches the Draft
+ * renderer, preventing crashes from atomic content like `iframe`/`img`.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} sanitized HTML (non-string input is returned unchanged)
+ */
+export const sanitizeRichText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return html;
+  }
+
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: RICH_TEXT_ALLOWED_TAGS,
+    ALLOWED_ATTR: RICH_TEXT_ALLOWED_ATTR,
+  });
+};
+
 export const getDistinctSortedArray = (arr) => {
   let distinctList = arr.filter((a) => a !== null);
   distinctList = [...new Set(distinctList)];
@@ -134,26 +229,25 @@ export function expandMonitoringFilters(filters) {
 
   filters.forEach((filter) => {
     const { topic, query, condition } = filter;
+    const queries = Array.isArray(query) ? query : [query];
 
-    // startDate is a special case because we want to apply the same date range to both startDate and reportDeliveryDate
-    // because the backend expects certain scopes to be applied to startDate and certain scopes to be applied to reportDeliveryDate,
-    // but from the user perspective, they should be treated as the same date range
+    // startDate is a special case because the monitoring dashboard exposes one
+    // Date filter while the backend applies that date to different columns for
+    // different monitoring datasets.
     if (topic === 'startDate') {
-      if (Array.isArray(query)) {
-        query.forEach((q) => {
+      const generatedDateTopics = ['completeDate', 'reportDeliveryDate'];
+      queries.forEach((q) => {
+        arr.push({ ...filter, query: q });
+        generatedDateTopics.forEach((generatedTopic) => {
           arr.push({
-            topic: 'reportDeliveryDate',
+            topic: generatedTopic,
             condition,
             query: q,
           });
         });
-      } else {
-        arr.push({
-          topic: 'reportDeliveryDate',
-          condition,
-          query,
-        });
-      }
+      });
+
+      return;
     }
 
     if (Array.isArray(query)) {
@@ -182,7 +276,7 @@ export function decodeQueryParam(param) {
 
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
-  return queries
+  const parsed = queries
     .map((q) => {
       const [topicAndCondition, query] = q.split('=');
       const [topic, searchCondition] = topicAndCondition.split('.');
@@ -215,13 +309,85 @@ export function queryStringToFilters(queryString) {
       return null;
     })
     .filter((query) => query);
+
+  // filtersToQueryString serializes array-query filters (is/is not) as one param per value.
+  // Merge params with the same topic+condition back into a single combined filter entry.
+  const merged = new Map();
+  parsed.forEach((filter) => {
+    if (!Array.isArray(filter.query)) {
+      merged.set(`${filter.topic}:${filter.condition}:${String(filter.query)}`, filter);
+      return;
+    }
+    const key = `${filter.topic}:${filter.condition}`;
+    const existing = merged.get(key);
+    if (existing) {
+      merged.set(key, {
+        ...existing,
+        query: [...new Set([...existing.query, ...filter.query.flat()])],
+      });
+    } else {
+      merged.set(key, filter);
+    }
+  });
+  return [...merged.values()];
+}
+
+const FILTER_DATE_INPUT_FORMATS = [DATE_FMT, DATE_FORMAT];
+
+function formatFilterDateForQuery(date) {
+  const parsed = moment(date, FILTER_DATE_INPUT_FORMATS, true);
+  return parsed.isValid() ? parsed.format(DATE_FMT) : null;
+}
+
+function formatDateFilterQueryValue(query) {
+  if (typeof query !== 'string') {
+    return query;
+  }
+
+  const dates = query.split('-');
+  if (dates.length === 1) {
+    return formatFilterDateForQuery(query) || query;
+  }
+
+  if (dates.length !== 2) {
+    return query;
+  }
+
+  const startDate = formatFilterDateForQuery(dates[0]);
+  const endDate = formatFilterDateForQuery(dates[1]);
+
+  return startDate && endDate ? `${startDate}-${endDate}` : query;
+}
+
+export function formatDateFilterForQuery(query) {
+  return Array.isArray(query)
+    ? query.map(formatDateFilterQueryValue)
+    : formatDateFilterQueryValue(query);
 }
 
 export function filtersToQueryString(filters, region) {
-  const filtersWithValues = filters.filter((f) => {
+  const filtersForQuery = filters.map((filter) =>
+    filter.condition === WITHIN
+      ? { ...filter, query: formatDateFilterForQuery(filter.query) }
+      : filter
+  );
+
+  const filtersWithValues = filtersForQuery.filter((f) => {
     if (f.condition === WITHIN) {
-      const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+      const queries = Array.isArray(f.query) ? f.query : [f.query];
+
+      return queries.every((query) => {
+        if (typeof query !== 'string') {
+          return false;
+        }
+
+        const dates = query.split('-');
+        if (dates.length !== 2) {
+          return false;
+        }
+
+        return dates.every((date) => moment(date, DATE_FMT, true).isValid());
+      });
     }
     return f.query !== '';
   });
@@ -354,11 +520,12 @@ export const parseFeedIntoDom = (feed) => {
 
 export const checkboxesToIds = (checkboxes) => {
   const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
-  // Loop all selected rows and parseInt to an array of integers.
-  // If the ID isn't a number, keep it as a string.
+  // Preserve composite IDs like "123:456"; only legacy numeric row IDs should become numbers.
   return selectedRowsStrings.map((s) => {
-    const parsedInt = parseInt(s, DECIMAL_BASE);
-    return s.includes('-') ? s : parsedInt;
+    if (/^\d+$/.test(s)) {
+      return parseInt(s, DECIMAL_BASE);
+    }
+    return s;
   });
 };
 

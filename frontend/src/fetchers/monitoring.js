@@ -4,6 +4,11 @@ import { get } from '.';
 const monitoringUrl = join('/', 'api', 'monitoring');
 const classUrl = join('/', 'api', 'monitoring', 'class');
 
+export const getFindingCategories = async () => {
+  const data = await get(join(monitoringUrl, 'finding-categories'));
+  return data.json();
+};
+
 export const getTtaByCitation = async (recipientId, regionId) => {
   const data = await get(
     join(monitoringUrl, String(recipientId), 'region', String(regionId), 'tta', 'citation')
@@ -45,5 +50,25 @@ export const getClassScores = async ({ grantNumber, recipientId, regionId }) => 
 export const getMonitoringRelatedTtaCsv = async (query) => {
   const params = new URLSearchParams(query).toString();
   const data = await get(`${join(monitoringUrl, 'related-tta')}?${params}`);
+  return data.blob();
+};
+
+export const getCompliantFollowUpReviewsDetails = async (query = '') => {
+  const params = new URLSearchParams(query).toString();
+  const url = params
+    ? `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${params}`
+    : join(monitoringUrl, 'compliant-follow-up-reviews', 'details');
+
+  const data = await get(url);
+  return data.json();
+};
+
+export const getCompliantFollowUpReviewsDetailsCsv = async (query) => {
+  const params = new URLSearchParams(query).toString();
+  const csvParams = new URLSearchParams(params);
+  csvParams.set('format', 'csv');
+  const data = await get(
+    `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${csvParams.toString()}`
+  );
   return data.blob();
 };

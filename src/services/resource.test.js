@@ -245,6 +245,33 @@ describe('resource', () => {
         ]);
         expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
       });
+      it('releases the resource semaphore when resource lookup fails', async () => {
+        const error = new Error('resource lookup failed');
+        const recoverUrl = 'http://semaphore-release.test';
+        const findAllSpy = jest.spyOn(Resource, 'findAll').mockRejectedValueOnce(error);
+
+        await expect(findOrCreateResources(['http://semaphore-failure.test'])).rejects.toThrow(
+          error
+        );
+        findAllSpy.mockRestore();
+
+        try {
+          const resources = await Promise.race([
+            findOrCreateResources([recoverUrl]),
+            new Promise((_resolve, reject) =>
+              setTimeout(() => reject(new Error('timed out waiting for semaphore')), 1000)
+            ),
+          ]);
+
+          expect(resources).toEqual([expect.objectContaining({ url: recoverUrl })]);
+        } finally {
+          await Resource.destroy({
+            where: { url: recoverUrl },
+            individualHooks: false,
+            force: true,
+          });
+        }
+      });
       it('fail to empty array, null urls', async () => {
         urls = null;
         const resources = await findOrCreateResources(urls);

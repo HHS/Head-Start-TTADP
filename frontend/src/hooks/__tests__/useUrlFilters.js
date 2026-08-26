@@ -107,4 +107,18 @@ describe('useUrlFilters', () => {
     await waitFor(() => expect(history.location.search).toBe('?region.in[]=1'));
     expect(pushSpy).not.toHaveBeenCalled();
   });
+
+  it('clears the URL search string when filters serialize to an empty query', async () => {
+    const history = createMemoryHistory({
+      initialEntries: ['/activity-reports?startDate.win=not-a-date-not-a-date'],
+    });
+
+    render(
+      <Router history={history}>
+        <UrlFiltersUpdater nextFilters={[]} />
+      </Router>
+    );
+
+    await waitFor(() => expect(history.location.search).toBe(''));
+  });
 });

@@ -640,7 +640,7 @@ describe('updateMonitoringFactTables', () => {
       findingId: findingIdB,
       statusId: FINDING_STATUS_CORRECTED_ID,
       findingType: 'Deficiency',
-      source: 'FA-1',
+      source: null,
       name: 'Finding B',
       hash: `hash-${uuidv4()}`,
       ...timestamps,
@@ -1392,6 +1392,7 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.standard_text).toBe('Standard text for testing');
       expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
+      expect(citation.calculated_category).toBe('FA-1'); // source_category takes precedence over guidance_category
     });
 
     it('links the Citation to the correct Category row', async () => {
@@ -1400,7 +1401,8 @@ describe('updateMonitoringFactTables', () => {
 
       const category = await FindingCategory.findByPk(citation.findingCategoryId);
       expect(category).not.toBeNull();
-      expect(category.name).toBe('Fiscal');
+      // source_category is 'FA-1' so calculated_category = 'FA-1', which drives findingCategoryId
+      expect(category.name).toBe('FA-1');
       expect(category.deletedAt).toBeNull();
     });
 
@@ -1487,6 +1489,8 @@ describe('updateMonitoringFactTables', () => {
     it('links the Citation to a different Category than Scenario A', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
       expect(citation.findingCategoryId).not.toBeNull();
+      // source is null for finding B, so calculated_category falls back to guidance_category ('Health')
+      expect(citation.calculated_category).toBe('Health');
 
       const category = await FindingCategory.findByPk(citation.findingCategoryId);
       expect(category).not.toBeNull();
@@ -2303,9 +2307,9 @@ describe('updateMonitoringFactTables', () => {
   // Soft delete
   // =====================
   describe('soft delete', () => {
-    it('soft-deletes a Category when no non-deleted Citation references its guidance_category', async () => {
-      // Scenario B's finding (findingIdB) uses STANDARD_ID_2 → guidance: 'Health'
-      // Temporarily source-delete the standard so findingIdB drops out of full_citations
+    it('soft-deletes a Category when no non-deleted Citation references its calculated_category', async () => {
+      // Scenario B's finding (findingIdB) has null source, so calculated_category = guidance_category = 'Health'
+      // (from STANDARD_ID_2). Temporarily source-delete the standard so findingIdB drops out of full_citations
       await MonitoringStandard.update(
         { sourceDeletedAt: new Date() },
         { where: { standardId: STANDARD_ID_2 } }

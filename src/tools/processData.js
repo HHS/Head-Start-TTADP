@@ -56,12 +56,6 @@ const hsesUsers = [
     email: 'kelly.born@adhocteam.us',
   },
   {
-    name: 'Lauren tta',
-    hsesUsername: 'test.tta.lauren',
-    hsesUserId: '51130',
-    email: 'lauren.rodriguez@adhocteam.us',
-  },
-  {
     name: 'Maria tta',
     hsesUsername: 'test.tta.maria',
     hsesUserId: '51298',
@@ -113,19 +107,31 @@ const hsesUsers = [
     name: 'Fletcher tta',
     hsesUsername: 'test.tta.fletcher',
     hsesUserId: '55815',
-    email: 'no-send_smith95@yahoo.com',
+    email: 'fletcher.bonds@adhocteam.us',
   },
   {
     name: 'Corinne tta',
     hsesUsername: 'test.tta.corinne',
     hsesUserId: '55228',
-    email: 'no-send_smith96@yahoo.com',
+    email: 'corinne.aherne@adhocteam.us',
   },
   {
     name: 'Yvette tta',
     hsesUsername: 'test.tta.juanayvette',
     hsesUserId: '58238',
     email: 'no-send_smith97@yahoo.com',
+  },
+  {
+    name: 'Nicole tta',
+    hsesUsername: 'test.tta.nicole',
+    hsesUserId: '58819',
+    email: 'nicole.rodriguez@adhocteam.us',
+  },
+  {
+    name: 'Marshall tta',
+    hsesUsername: 'test.tta.marshall',
+    hsesUserId: '58820',
+    email: 'marshall.haymond@adhocteam.us',
   },
   {
     name: 'Does tta',

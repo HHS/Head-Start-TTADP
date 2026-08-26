@@ -3,6 +3,7 @@ const { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } = require('@ttahub/common'
 const { sortBy } = require('lodash');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeUpdate } = require('./hooks/collabReport');
+const { convert } = require('html-to-text');
 
 export default (sequelize, DataTypes) => {
   class CollabReport extends Model {
@@ -219,6 +220,13 @@ export default (sequelize, DataTypes) => {
           return this.conductMethod;
         },
       },
+      descriptionFormatted: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.description) return null;
+          return convert(this.description);
+        },
+      },
       approvedAt: {
         type: DataTypes.VIRTUAL,
         get() {
@@ -226,7 +234,7 @@ export default (sequelize, DataTypes) => {
             return '';
           }
 
-          if (!this.approvers || !this.approvers.length) {
+          if (!this.approvers?.length) {
             return '';
           }
 

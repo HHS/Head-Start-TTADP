@@ -69,6 +69,38 @@ const mockTemplates = [
       },
     ],
   },
+  {
+    id: 6,
+    name: 'Template 6',
+    goals: [
+      {
+        id: 7,
+        name: 'Goal 7',
+        prestandard: false,
+        status: GOAL_STATUS.NOT_STARTED,
+      },
+    ],
+    blockingActivityReports: [
+      {
+        displayId: 'R14-AR-67433',
+        creatorName: 'Annika Lewis, GS',
+        href: '/activity-reports/123',
+      },
+    ],
+  },
+  {
+    id: 7,
+    name: 'Template 7',
+    goals: [
+      {
+        id: 8,
+        name: 'Existing RTTAPA goal',
+        prestandard: false,
+        status: GOAL_STATUS.IN_PROGRESS,
+      },
+    ],
+    blockingActivityReports: [],
+  },
 ];
 
 const mockGrants = [
@@ -93,24 +125,45 @@ describe('useGoalTemplates', () => {
   it('filters out used templates when filterOutUsedTemplates is true', async () => {
     fetchMock.get('/api/goal-templates?grantIds=123&grantIds=456', mockTemplates);
 
-    const { result, waitForNextUpdate } = renderHook(() => useGoalTemplates(mockGrants, true));
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useGoalTemplates(mockGrants, { filterOutUsedTemplates: true })
+    );
     expect(result.current).toBeNull();
     await waitForNextUpdate();
 
     // Should keep templates with no goals AND templates where all goals are prestandard
-    expect(result.current).toEqual([mockTemplates[0], mockTemplates[2], mockTemplates[3]]);
-    expect(result.current.length).toBe(3);
+    expect(result.current).toEqual([
+      mockTemplates[0],
+      mockTemplates[2],
+      mockTemplates[3],
+      mockTemplates[5],
+    ]);
+    expect(result.current.length).toBe(4);
     expect(result.current[0].goals).toHaveLength(0); // Template 1: no goals
     expect(result.current[1].goals).toHaveLength(1); // Template 3: one prestandard goal
     expect(result.current[1].goals[0].prestandard).toBe(true);
     expect(result.current[2].goals).toHaveLength(2); // Template 4: multiple prestandard goals
     expect(result.current[2].goals.every((goal) => goal.prestandard === true)).toBe(true);
+    expect(result.current[3].blockingActivityReports).toHaveLength(1);
+  });
+
+  it('keeps a hidden activity report goal selectable when blocker details are present', async () => {
+    fetchMock.get('/api/goal-templates?grantIds=123&grantIds=456', mockTemplates);
+
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useGoalTemplates(mockGrants, { filterOutUsedTemplates: true })
+    );
+    await waitForNextUpdate();
+
+    expect(result.current).toContainEqual(mockTemplates[5]);
   });
 
   it('correctly excludes templates with any non-prestandard goals', async () => {
     fetchMock.get('/api/goal-templates?grantIds=123&grantIds=456', mockTemplates);
 
-    const { result, waitForNextUpdate } = renderHook(() => useGoalTemplates(mockGrants, true));
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useGoalTemplates(mockGrants, { filterOutUsedTemplates: true })
+    );
     expect(result.current).toBeNull();
     await waitForNextUpdate();
 
@@ -120,6 +173,8 @@ describe('useGoalTemplates', () => {
     expect(filteredTemplates).not.toContainEqual(mockTemplates[1]);
     // Mixed prestandard and non-prestandard goals should be excluded
     expect(filteredTemplates).not.toContainEqual(mockTemplates[4]);
+    // An ordinary RTTAPA goal remains excluded when no blocker enrichment is present.
+    expect(filteredTemplates).not.toContainEqual(mockTemplates[6]);
   });
 
   it('returns empty array on error', async () => {
@@ -131,21 +186,35 @@ describe('useGoalTemplates', () => {
     expect(result.current).toEqual([]);
   });
 
-  it('does not fetch if grants array is empty or invalid', () => {
-    const { result } = renderHook(() => useGoalTemplates([]));
+  it('fetches global templates when an intentionally empty grants array is provided', async () => {
+    fetchMock.get('/api/goal-templates', mockTemplates);
+
+    const { result, waitForNextUpdate } = renderHook(() => useGoalTemplates([]));
     expect(result.current).toBeNull();
-    const { result: result2 } = renderHook(() => useGoalTemplates([{}]));
-    expect(result2.current).toBeNull();
+    await waitForNextUpdate();
+
+    expect(result.current).toEqual(mockTemplates);
+    expect(fetchMock.called('/api/goal-templates')).toBe(true);
   });
 
-  it('includes includeClosedSuspended parameter when specified', async () => {
+  it('does not fetch when the selected grant is unresolved', () => {
+    const { result } = renderHook(() => useGoalTemplates([{}]));
+
+    expect(result.current).toBeNull();
+    expect(fetchMock.calls()).toHaveLength(0);
+  });
+
+  it('requests closed goals and blocking report enrichment when specified', async () => {
     fetchMock.get(
-      '/api/goal-templates?grantIds=123&grantIds=456&includeClosedSuspendedGoals=true',
+      '/api/goal-templates?grantIds=123&grantIds=456&includeClosedSuspendedGoals=true&includeBlockingActivityReports=true',
       mockTemplates
     );
 
     const { result, waitForNextUpdate } = renderHook(() =>
-      useGoalTemplates(mockGrants, false, true)
+      useGoalTemplates(mockGrants, {
+        includeBlockingActivityReports: true,
+        includeClosedSuspendedGoals: true,
+      })
     );
     expect(result.current).toBeNull();
     await waitForNextUpdate();

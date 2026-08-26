@@ -106,6 +106,8 @@ test.describe('get /recipient', () => {
       latestMonitoringReviewDate: Joi.string().allow(null),
       latestMonitoringReviewType: Joi.string().allow(null),
       latestMonitoringReviewOutcome: Joi.string().allow(null),
+      feiHsStatus: Joi.string().allow(null),
+      feiEhsStatus: Joi.string().allow(null),
     });
 
     const recipientSchema = Joi.object({
@@ -289,5 +291,33 @@ test.describe('get /recipient', () => {
       .min(1);
 
     await validateSchema(response, schema, expect);
+  });
+
+  test('/:recipientId/region/:regionId/timeline, authorized', async ({ request }) => {
+    const response = await request.get(`${root}/recipient/2/region/14/timeline`, {
+      headers: { 'playwright-user-id': '1' },
+    });
+
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({
+      count: 0,
+      events: [],
+    });
+  });
+
+  test('/:recipientId/region/:regionId/timeline, forbidden region', async ({ request }) => {
+    const response = await request.get(`${root}/recipient/2/region/14/timeline`, {
+      headers: { 'playwright-user-id': '4' },
+    });
+
+    expect(response.status()).toBe(403);
+  });
+
+  test('/:recipientId/region/:regionId/timeline, invalid region', async ({ request }) => {
+    const response = await request.get(`${root}/recipient/2/region/1e1/timeline`, {
+      headers: { 'playwright-user-id': '1' },
+    });
+
+    expect(response.status()).toBe(400);
   });
 });

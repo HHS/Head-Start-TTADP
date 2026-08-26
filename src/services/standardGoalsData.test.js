@@ -167,7 +167,6 @@ describe('standardGoals with Data', () => {
         citation: 'Citation on approved report',
         raw_finding_type: 'Type 1',
         calculated_finding_type: 'Type 1',
-        source_category: 'Source 1',
       });
 
       normalizedCitationOnNonApprovedReport = await Citation.create({
@@ -176,7 +175,6 @@ describe('standardGoals with Data', () => {
         citation: 'Citation on non-approved report',
         raw_finding_type: 'Type 2',
         calculated_finding_type: 'Type 2',
-        source_category: 'Source 2',
       });
 
       await GrantCitation.create({

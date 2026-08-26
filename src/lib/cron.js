@@ -2,13 +2,12 @@ import { CronJob } from 'cron';
 import { DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ } from '../constants';
 import { isTrue } from '../envParser';
 import { auditLogger, logger } from '../logger';
+import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
 import {
-  approvedDigest,
-  changesRequestedDigest,
-  collaboratorDigest,
+  DIGEST_CONFIG,
+  digestForSetting,
   recipientApprovedDigest,
-  submittedDigest,
   trainingReportTaskDueNotifications,
 } from './mailer';
 import updateGrantsRecipients from './updateGrantsRecipients';
@@ -57,38 +56,40 @@ const runUpdateJob = () => {
   return false;
 };
 
-const runDailyEmailJob = () =>
-  (async () => {
-    logger.info('Starting daily digests');
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await recipientApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      if (process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true') {
-        await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+const runDigestJob =
+  (freqKey, { checkLastDay = false, includeTrainingReport = false } = {}) =>
+  () =>
+    (async () => {
+      const label = freqKey.toLowerCase();
+      logger.info(`Starting ${label} digests`);
+      if (checkLastDay && !lastDayOfMonth(new Date())) {
+        return;
       }
-      logger.info('Completed daily digests');
-    } catch (error) {
-      logCronError('Error processing Daily Email Digest job', 'Daily Email Digest Error', error);
-    }
-  })();
-
-const runWeeklyEmailJob = () =>
-  (async () => {
-    logger.info('Starting weekly digests');
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await recipientApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      logger.info('Completed weekly digests');
-    } catch (error) {
-      logCronError('Error processing Weekly Email Digest job', 'Weekly Email Digest Error', error);
-    }
-  })();
+      try {
+        for (const config of Object.values(DIGEST_CONFIG)) {
+          // eslint-disable-next-line no-await-in-loop
+          await digestForSetting({
+            ...config,
+            freq: EMAIL_DIGEST_FREQ[freqKey],
+            subjectFreq: DIGEST_SUBJECT_FREQ[freqKey],
+          });
+        }
+        await recipientApprovedDigest(EMAIL_DIGEST_FREQ[freqKey], DIGEST_SUBJECT_FREQ[freqKey]);
+        if (
+          includeTrainingReport &&
+          process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'
+        ) {
+          await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ[freqKey]);
+        }
+        logger.info(`Completed ${label} digests`);
+      } catch (error) {
+        logCronError(
+          `Error processing ${label} Email Digest job`,
+          `${label} Email Digest Error`,
+          error
+        );
+      }
+    })();
 
 export const lastDayOfMonth = (date) => {
   const tomorrow = new Date(date);
@@ -98,27 +99,13 @@ export const lastDayOfMonth = (date) => {
   return tomorrow.getDate() === 1;
 };
 
-const runMonthlyEmailJob = () =>
-  (async () => {
-    logger.info('Starting monthly digests');
-    if (!lastDayOfMonth(new Date())) {
-      return;
-    }
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await recipientApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      logger.info('Completed monthly digests');
-    } catch (error) {
-      logCronError(
-        'Error processing Monthly Email Digest job',
-        'Monthly Email Digest Error',
-        error
-      );
-    }
-  })();
+const dailyDigestJob = runDigestJob('DAILY', { includeTrainingReport: true });
+const weeklyDigestJob = runDigestJob('WEEKLY');
+const monthlyDigestJob = runDigestJob('MONTHLY', { checkLastDay: true });
+
+const runDailyEmailJob = () => dailyDigestJob();
+const runWeeklyEmailJob = () => weeklyDigestJob();
+const runMonthlyEmailJob = () => monthlyDigestJob();
 
 const runDBCleanupJob = () =>
   (async () => {
@@ -128,6 +115,21 @@ const runDBCleanupJob = () =>
       logger.info('Completed audit log cleanup');
     } catch (error) {
       logCronError('Error processing Audit Log Cleanup job', 'Audit Log Cleanup Error', error);
+    }
+  })();
+
+const runNotificationCleanupJob = () =>
+  (async () => {
+    logger.info('Starting expired archived notification cleanup');
+    try {
+      const deletedCount = await deleteExpiredArchivedNotifications();
+      logger.info(`Completed expired archived notification cleanup (${deletedCount} deleted)`);
+    } catch (error) {
+      logCronError(
+        'Error processing Notification Cleanup job',
+        'Notification Cleanup Error',
+        error
+      );
     }
   })();
 
@@ -154,6 +156,14 @@ function runCronJobs() {
     monthlyJob.start();
     const dbCleanupJob = new CronJob(dailyNightSched, runDBCleanupJob, null, true, timezone);
     dbCleanupJob.start();
+    const notificationCleanupJob = new CronJob(
+      dailyNightSched,
+      runNotificationCleanupJob,
+      null,
+      true,
+      timezone
+    );
+    notificationCleanupJob.start();
     logger.info('Cron jobs scheduled');
   }
 }

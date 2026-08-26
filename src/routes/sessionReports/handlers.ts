@@ -4,10 +4,12 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
   destroySession,
@@ -15,6 +17,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
 } from '../../services/sessionReports';
 import type {
@@ -109,12 +112,7 @@ export const getHandler = async (req: Request, res: Response) => {
 
     if (id) {
       session = await findSessionById(Number(id));
-      if (
-        session.event &&
-        session.event &&
-        session.event.data &&
-        session.event.data.status === 'Complete'
-      ) {
+      if (session?.event?.data?.status === 'Complete') {
         return res
           .status(httpCodes.FORBIDDEN)
           .send({ message: 'Sessions on completed training events cannot be edited.' });
@@ -267,10 +265,28 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const participants = await getPossibleSessionParticipants(Number(regionId));
+    const { sessionReportId } = req.params; // checked by middleware
+    const sessionId = Number(sessionReportId);
+    const session = await findSessionById(sessionId);
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
+    }
+
+    const event = await findEventBySmartsheetId(String(session.eventId));
+
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    const eventAuth = await getEventAuthorization(req, res, event, session);
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(403);
+    }
+
+    const participants = await getPossibleSessionParticipants(sessionId);
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
+    console.log(error);
     return handleErrors(req, res, error, logContext);
   }
 };
@@ -315,12 +331,30 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       normalizedFilterParams['region.in[]'] = [normalizedFilterParams['region.in[]']];
     }
 
+    const recipientId = [req.query.recipientId].flat()[0];
+
+    if (recipientId) {
+      // Cross-region by design (all of the recipient's sessions regardless of TR region),
+      // but the caller must still be authorized to view this recipient's record.
+      const recipient = await recipientById(recipientId, {});
+      if (!recipient) {
+        return res.status(httpCodes.NOT_FOUND).send({ message: 'Recipient not found' });
+      }
+      const user = await userById(userId);
+      const recipientAuth = new RecipientPolicy(user, recipient);
+      if (!recipientAuth.canViewTrainingReports()) {
+        return res.sendStatus(httpCodes.FORBIDDEN);
+      }
+    }
+
     // Previously, we returned a FORBIDDEN (403) error after checking to see if
     // a user had regions, however, missing region URL params would cause
     // overly permissive access to session reports.
     // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
     // of our application/handlers (the user experience will be the same: an empty sessions table)
-    const filteredFilterParams = await setTrainingReportReadRegions(normalizedFilterParams, userId);
+    const filteredFilterParams = recipientId
+      ? normalizedFilterParams
+      : await setTrainingReportReadRegions(normalizedFilterParams, userId);
 
     // Build params object for service
     // Region filtering has already been applied via setTrainingReportReadRegions
@@ -346,7 +380,9 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       ...filteredFilterParams,
     };
 
-    const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
+    const result: GetSessionReportsResponse = recipientId
+      ? await getSessionReportsByRecipient({ ...serviceParams, recipientId })
+      : await getSessionReports(serviceParams);
 
     // Handle CSV response
     if (format === 'csv') {

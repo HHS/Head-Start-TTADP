@@ -118,6 +118,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      calculated_category: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       findingCategoryId: {
         type: DataTypes.INTEGER,
         allowNull: true,

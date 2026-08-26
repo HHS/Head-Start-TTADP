@@ -5,8 +5,10 @@
 ## How to test
 
 
-## Issue(s)
+## Jira Issue(s)
 
+<!-- Link a Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
+<!-- Maintenance, dependency, docs, and CI/CD changes still require a dedicated Jira issue. -->
 * https://jira.acf.gov/browse/TTAHUB-0
 
 
@@ -15,8 +17,8 @@
 ### Every PR
 
 <!-- Add details to each completed item -->
-- [ ] Meets issue criteria
-- [ ] JIRA ticket status updated
+- [ ] Linked Jira issue
+- [ ] JIRA issue status updated
 - [ ] Code is meaningfully tested
 - [ ] Meets accessibility standards (WCAG 2.1 Levels A, AA)
 - [ ] API Documentation updated
@@ -36,7 +38,7 @@
 - [ ] PR created as **Draft**
 - [ ] Staging smoke test completed
 - [ ] PR transitioned to **Open** _(this `ready_for_review` transition triggers the Slack/Jira automation)_
-- [ ] Reviewer added after the PR is **Open** _(`elainaparrish` is the authorized approver under normal circumstances)_
+- [ ] Reviewer added after the PR is **Open** _(`seyandiangov` and `elainaparrish` are the authorized approvers under normal circumstances)_
   - _Sequence: Draft PR → Smoke test → Open PR (automation runs) → Add reviewer_
   - _Confirm that the Slack notification was sent after the PR was opened_
   - _Confirm that linked Jira ticket(s) transitioned as expected; if not, review the GitHub Actions workflow logs_

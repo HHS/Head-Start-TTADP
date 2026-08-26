@@ -100,7 +100,7 @@ export async function getCitationsByGrantIds(
           'reviewName', dr.review_name,
           'reportDeliveryDate', dr.report_delivery_date,
           'findingType', c.calculated_finding_type,
-          'findingSource', c.source_category,
+          'findingSource', c.calculated_category,
           'monitoringFindingStatusName', c.raw_status,
           'citation', c.citation,
           'severity', CASE

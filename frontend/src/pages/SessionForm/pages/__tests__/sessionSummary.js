@@ -50,19 +50,118 @@ const flushPromises = async (rerender, ui) => {
 
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
-    it('returns true if form state is valid', () => {
+    const makeHookForm = ({
+      useIpdCourses = false,
+      trainers = [],
+      otherTrainers = '',
+      ttaProvided = 'filled',
+      objective = 'filled',
+    } = {}) => ({
+      getValues: jest.fn((field) => {
+        if (!field) {
+          return { useIpdCourses, trainers };
+        }
+
+        if (field === 'useIpdCourses') {
+          return useIpdCourses;
+        }
+
+        if (field === 'trainers') {
+          return trainers;
+        }
+
+        if (field === 'otherTrainers') {
+          return otherTrainers;
+        }
+
+        if (field === 'ttaProvided') {
+          return ttaProvided;
+        }
+
+        if (field === 'objective') {
+          return objective;
+        }
+
+        return 'filled';
+      }),
+    });
+
+    it('returns true when required fields are complete and Other trainer is not selected', () => {
       expect(
-        isPageComplete({
-          getValues: jest.fn(() => ({
-            objectiveTrainers: [1],
-            objectiveTopics: [1],
-          })),
-        })
+        isPageComplete(
+          makeHookForm({
+            trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+          })
+        )
       ).toBe(true);
     });
 
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
+    it('returns false when Other trainer is selected and otherTrainers is empty', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: '',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when Other trainer is selected and otherTrainers is provided', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: 'Custom Trainer',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when ttaProvided is semantically empty (%s)', (_label, ttaProvided) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when ttaProvided has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided: '<p>Provided coaching on ERSEA.</p>',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when objective is semantically empty (%s)', (_label, objective) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when objective has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective: '<p>Improve ERSEA enrollment processes.</p>',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
     });
   });
 
@@ -225,11 +324,6 @@ describe('sessionSummary', () => {
         userEvent.type(duration, '1.25');
       });
 
-      const sessionObjective = await screen.findByLabelText(/session objective/i);
-      act(() => {
-        userEvent.type(sessionObjective, 'Session objective');
-      });
-
       await selectEvent.select(document.getElementById('objectiveTopics'), ['Complaint']);
 
       const trainers = await screen.findByLabelText(/Who provided the TTA/i);
@@ -287,7 +381,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
       await selectEvent.select(courseSelect, ['Sample Course 2', 'Sample Course 3']);
       expect(await screen.findByText(/Sample Course 2/i)).toBeVisible();
       expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
@@ -333,10 +427,6 @@ describe('sessionSummary', () => {
         userEvent.click(noIsaidNoIsaidNoFilesSir);
       });
 
-      act(() => {
-        userEvent.type(screen.getByLabelText(/TTA provided/i), 'TTA provided');
-      });
-
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
         userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
@@ -347,7 +437,64 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('shows validation error when iPD courses is yes but no courses selected', async () => {
+    it('loads global goal templates when the session has no grants', async () => {
+      fetchMock.get('/api/goal-templates', [{ id: 1, standard: 'Family engagement' }], {
+        overwriteRoutes: true,
+      });
+      render(<RenderSessionSummary />);
+
+      await waitFor(() => expect(fetchMock.called('/api/goal-templates')).toBe(true));
+      const goalSelect = document.getElementById('goalTemplates');
+      expect(goalSelect).not.toBeNull();
+      await selectEvent.select(goalSelect, 'Family engagement');
+
+      expect(screen.getByText('Family engagement')).toBeInTheDocument();
+    });
+
+    it('exposes required-field semantics for the TTA provided rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field is labeled "TTA provided" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/TTA provided/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
+
+      // The rich-text editor is present and labeled for assistive technology.
+      await waitFor(() => {
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /TTA provided/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
+        expect(editable).toHaveAttribute('aria-label', expect.stringMatching(/TTA provided/i));
+      });
+    });
+
+    it('exposes required-field semantics for the session objectives rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field is labeled "Session objectives" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/Session objectives/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
+
+      // The rich-text editor is present and labeled for assistive technology.
+      await waitFor(() => {
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /Session objectives/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
+        expect(editable).toHaveAttribute(
+          'aria-label',
+          expect.stringMatching(/Session objectives/i)
+        );
+      });
+    });
+
+    it('shows validation error when EEP courses is yes but no courses selected', async () => {
       render(<RenderSessionSummary />);
 
       const yesCourses = document.querySelector('#useIpdCourses-yes');
@@ -355,7 +502,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
 
       await act(async () => {
         userEvent.click(courseSelect);
@@ -766,6 +913,47 @@ describe('sessionSummary', () => {
         expect(screen.getByText(/Course One/i)).toBeInTheDocument();
         expect(screen.getByText(/Course Two/i)).toBeInTheDocument();
       });
+    });
+
+    it('renders legacy ttaProvided with unsupported markup without crashing', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [],
+          // Legacy value stored before render-time sanitization: contains atomic
+          // markup that would otherwise crash the read-only Draft renderer.
+          ttaProvided:
+            '<p>Legacy content</p><iframe src="https://evil.example"></iframe><img src="x" onerror="alert(1)" />',
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Legacy content/i)).toBeInTheDocument();
+      });
+
+      expect(document.querySelector('iframe')).toBeNull();
+      expect(document.querySelector('img')).toBeNull();
     });
   });
 });

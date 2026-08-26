@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { v4 as uuid } from 'uuid';
 import db from '../../models';
 import { activeAfter, activeBefore, activeWithinDates } from './activeWithin';
@@ -11,15 +12,31 @@ describe('citation/activeWithin', () => {
   let spanningCitation;
   let aprilCitation;
 
+  const testCitationIds = () =>
+    [
+      janCitation?.id,
+      febCitation?.id,
+      marchCitation?.id,
+      spanningCitation?.id,
+      aprilCitation?.id,
+    ].filter(Boolean);
   const findCitationIds = async (query) => {
+    const where = query?.where
+      ? {
+          [Op.and]: [{ id: { [Op.in]: testCitationIds() } }, query.where],
+        }
+      : { id: { [Op.in]: testCitationIds() } };
+
     const citations = await Citation.findAll({
       ...query,
+      where,
       attributes: ['id'],
       order: [['id', 'ASC']],
     });
 
     return citations.map((citation) => citation.id);
   };
+  const sortIds = (ids) => [...ids].sort((a, b) => a - b);
 
   beforeAll(async () => {
     const mfidSeed = Math.floor(Math.random() * 1_000_000_000);
@@ -78,30 +95,30 @@ describe('citation/activeWithin', () => {
 
   it('uses month-only inputs against persisted citation dates', async () => {
     await expect(findCitationIds({ where: activeBefore(['2025/02']) })).resolves.toEqual(
-      [janCitation.id, febCitation.id, spanningCitation.id].sort()
+      sortIds([janCitation.id, febCitation.id, spanningCitation.id])
     );
 
     await expect(findCitationIds({ where: activeAfter(['2025/02']) })).resolves.toEqual(
-      [febCitation.id, marchCitation.id, spanningCitation.id, aprilCitation.id].sort()
+      sortIds([febCitation.id, marchCitation.id, spanningCitation.id, aprilCitation.id])
     );
 
     await expect(
       findCitationIds({ where: activeWithinDates(['2025/02-2025/03']) })
-    ).resolves.toEqual([febCitation.id, marchCitation.id, spanningCitation.id].sort());
+    ).resolves.toEqual(sortIds([febCitation.id, marchCitation.id, spanningCitation.id]));
   });
 
-  it('uses normalized values for valid full-date inputs', async () => {
+  it('uses valid full-date inputs against persisted citation dates', async () => {
     await expect(findCitationIds({ where: activeBefore(['02/14/2025']) })).resolves.toEqual(
-      [janCitation.id, spanningCitation.id].sort()
+      sortIds([janCitation.id, spanningCitation.id])
     );
 
     await expect(findCitationIds({ where: activeAfter(['2025-03-15']) })).resolves.toEqual(
-      [spanningCitation.id, aprilCitation.id].sort()
+      sortIds([spanningCitation.id, aprilCitation.id])
     );
 
     await expect(
       findCitationIds({ where: activeWithinDates(['2025/02/14-2025/03/15']) })
-    ).resolves.toEqual([febCitation.id, marchCitation.id, spanningCitation.id].sort());
+    ).resolves.toEqual(sortIds([febCitation.id, marchCitation.id, spanningCitation.id]));
   });
 
   it('ignores invalid or partial range inputs when querying citations', async () => {
@@ -116,6 +133,6 @@ describe('citation/activeWithin', () => {
           '2025/02/14-2025/03/15',
         ]),
       })
-    ).resolves.toEqual([febCitation.id, marchCitation.id, spanningCitation.id].sort());
+    ).resolves.toEqual(sortIds([febCitation.id, marchCitation.id, spanningCitation.id]));
   });
 });

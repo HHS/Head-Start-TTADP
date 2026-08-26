@@ -77,6 +77,12 @@ JSON: {
             "description": "Unique identifier for the recipient."
           },
           {
+            "columnName": "classReviewCardId",
+            "type": "string",
+            "nullable": false,
+            "description": "Unique identifier for the CLASS review card."
+          },
+          {
             "columnName": "recipientName",
             "type": "string",
             "nullable": true,
@@ -769,6 +775,10 @@ WITH
     SELECT
       (
         NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+        OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["with_class_widget"]'::jsonb
+      ) AS include_with_class_widget,
+      (
+        NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
         OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["with_class_page"]'::jsonb
       ) AS include_with_class_page
   ),
@@ -781,10 +791,7 @@ WITH
   ),
   with_class AS (
     SELECT
-      r.id,
-      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
-      COUNT(DISTINCT mcs.id) > 0 has_scores,
-      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172 AND fg.id IS NOT NULL AND mcs.id IS NOT NULL) grant_count
+      DISTINCT r.id
     FROM "Recipients" r
     JOIN has_current_grant hcg
     ON r.id = hcg.rid
@@ -794,8 +801,6 @@ WITH
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
     ON gr.id = g."grantId"
-    LEFT JOIN filtered_goals fg
-    ON g.id = fg.id
     LEFT JOIN "MonitoringReviewGrantees" mrg
     ON gr.number = mrg."grantNumber"
     LEFT JOIN "MonitoringReviews" mr
@@ -803,98 +808,305 @@ WITH
     AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
     LEFT JOIN "MonitoringReviewStatuses" mrs
     ON mr."statusId" = mrs."statusId"
-    LEFT JOIN "MonitoringClassSummaries" mcs
-    ON mr."reviewId" = mcs."reviewId"
     WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     AND g."mapsToParentGoalId" IS NULL
-    GROUP BY 1
   ),
-  with_class_widget AS (
+  grant_class_review_rows AS (
     SELECT
-      (COALESCE(COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class AND wc.has_scores)::decimal/
-      NULLIF(COUNT(DISTINCT wc.id), 0), 0)*100)::decimal(5,2) "% recipients with class",
-      COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class AND wc.has_scores) "recipients with class",
-      COUNT(DISTINCT wc.id) total,
-      SUM(grant_count) "grants with class"
-    FROM with_class wc
+      gr.id "grantId",
+      mr.id "monitoringReviewId",
+      mr."reviewId",
+      mr."reportDeliveryDate",
+      mcs."emotionalSupport",
+      mcs."classroomOrganization",
+      mcs."instructionalSupport",
+      ROW_NUMBER() OVER (
+        PARTITION BY gr.id, mr."reviewId", mr."reportDeliveryDate"
+        ORDER BY mcs.id DESC, mr.id DESC
+      ) "summaryRank"
+    FROM "Grants" gr
+    JOIN filtered_grants fgr
+    ON gr.id = fgr.id
+    JOIN "MonitoringReviewGrantees" mrg
+    ON gr.number = mrg."grantNumber"
+    JOIN "MonitoringReviews" mr
+    ON mrg."reviewId" = mr."reviewId"
+    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
+    LEFT JOIN "MonitoringReviewStatuses" mrs
+    ON mr."statusId" = mrs."statusId"
+    JOIN "MonitoringClassSummaries" mcs
+    ON mr."reviewId" = mcs."reviewId"
+    AND gr.number = mcs."grantNumber"
+    WHERE (mrs.id IS NULL OR mrs.name = 'Complete')
+    AND mr."reportDeliveryDate" IS NOT NULL
+    AND mcs."emotionalSupport" IS NOT NULL
   ),
-  with_class_page AS (
+  class_review_windows AS (
     SELECT
-        r.id "recipientId",
-        r.name "recipientName",
-        gr.number "grantNumber",
-        gr."regionId",
-        (ARRAY_AGG(g.id ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalId",
-        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalCreatedAt",
-        (ARRAY_AGG(g.status ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalStatus",
-        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "lastARStartDate",
-        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "emotionalSupport",
-        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "classroomOrganization",
-        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "instructionalSupport",
-        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "reportDeliveryDate",
-        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator' AND fg.id IS NOT NULL))[1] "creator",
-        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
-    FROM requested_datasets rd
-    JOIN with_class wc
-    ON rd.include_with_class_page
-    JOIN "Recipients" r
+      "grantId",
+      CONCAT("grantId", ':', "reviewId") "classReviewCardId",
+      "monitoringReviewId",
+      "reviewId",
+      "reportDeliveryDate",
+      LEAD("reportDeliveryDate") OVER (
+        PARTITION BY "grantId"
+        ORDER BY "reportDeliveryDate", "monitoringReviewId"
+      ) "nextReportDeliveryDate",
+      "emotionalSupport",
+      "classroomOrganization",
+      "instructionalSupport"
+    FROM grant_class_review_rows
+    WHERE "summaryRank" = 1
+  ),
+  class_goals AS (
+    SELECT
+      r.id "recipientId",
+      gr.id "grantId",
+      g.id "goalId",
+      g."createdAt" "goalCreatedAt",
+      g.status "goalStatus"
+    FROM "Recipients" r
     JOIN has_current_grant hcg
     ON r.id = hcg.rid
-    ON wc.id = r.id
-    AND (has_class OR has_scores)
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
-    LEFT JOIN "Goals" g
+    JOIN "Goals" g
     ON gr.id = g."grantId"
-    AND has_class
     AND g."goalTemplateId" = 18172
-    LEFT JOIN filtered_goals fg
+    JOIN filtered_goals fg
     ON g.id = fg.id
+    WHERE hcg.has_current_active_grant
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
+  ),
+  class_goal_events AS (
+    SELECT
+      "recipientId",
+      "grantId",
+      "goalId",
+      "goalCreatedAt",
+      "goalStatus",
+      "goalCreatedAt" "eventDate",
+      'goal_created' "eventType",
+      NULL::timestamp with time zone "arStartDate"
+    FROM class_goals
+    UNION ALL
+    SELECT
+      cg."recipientId",
+      cg."grantId",
+      cg."goalId",
+      cg."goalCreatedAt",
+      cg."goalStatus",
+      COALESCE(gsc."performedAt", gsc."createdAt") "eventDate",
+      'goal_reopened' "eventType",
+      NULL::timestamp with time zone "arStartDate"
+    FROM class_goals cg
+    JOIN "GoalStatusChanges" gsc
+    ON cg."goalId" = gsc."goalId"
+    AND gsc."oldStatus" = 'Closed'
+    AND gsc."newStatus" = 'In Progress'
+    WHERE COALESCE(gsc."performedAt", gsc."createdAt") IS NOT NULL
+    UNION ALL
+    SELECT
+      cg."recipientId",
+      cg."grantId",
+      cg."goalId",
+      cg."goalCreatedAt",
+      cg."goalStatus",
+      a."startDate"::timestamp with time zone "eventDate",
+      'approved_ar' "eventType",
+      a."startDate"::timestamp with time zone "arStartDate"
+    FROM class_goals cg
+    JOIN "ActivityReportGoals" arg
+    ON cg."goalId" = arg."goalId"
+    JOIN "ActivityReports" a
+    ON arg."activityReportId" = a.id
+    AND a."calculatedStatus" = 'approved'
+    AND a."startDate" IS NOT NULL
+  ),
+  matched_class_goal_events AS (
+    SELECT
+      cge."recipientId",
+      cge."grantId",
+      cge."goalId",
+      cge."goalCreatedAt",
+      cge."goalStatus",
+      cge."eventDate",
+      cge."eventType",
+      cge."arStartDate",
+      crw."classReviewCardId",
+      crw."reportDeliveryDate",
+      crw."emotionalSupport",
+      crw."classroomOrganization",
+      crw."instructionalSupport"
+    FROM class_goal_events cge
+    JOIN class_review_windows crw
+    ON cge."grantId" = crw."grantId"
+    AND cge."eventDate"::date >= crw."reportDeliveryDate"::date
+    AND (
+      crw."nextReportDeliveryDate" IS NULL
+      OR cge."eventDate"::date < crw."nextReportDeliveryDate"::date
+    )
+  ),
+  goal_review_assignments AS (
+    SELECT
+      "recipientId",
+      "grantId",
+      "goalId",
+      "goalCreatedAt",
+      "goalStatus",
+      "classReviewCardId",
+      "reportDeliveryDate",
+      "emotionalSupport",
+      "classroomOrganization",
+      "instructionalSupport"
+    FROM (
+      SELECT
+        mcge.*,
+        ROW_NUMBER() OVER (
+          PARTITION BY mcge."grantId", mcge."goalId"
+          ORDER BY
+            mcge."eventDate" DESC,
+            mcge."reportDeliveryDate" DESC,
+            CASE mcge."eventType"
+              WHEN 'approved_ar' THEN 1
+              WHEN 'goal_reopened' THEN 2
+              ELSE 3
+            END
+        ) "assignmentRank"
+      FROM matched_class_goal_events mcge
+    ) ranked
+    WHERE "assignmentRank" = 1
+  ),
+  assigned_goal_ar_dates AS (
+    SELECT
+      gra."classReviewCardId",
+      gra."goalId",
+      MAX(mcge."arStartDate") "lastARStartDate"
+    FROM goal_review_assignments gra
+    LEFT JOIN matched_class_goal_events mcge
+    ON gra."classReviewCardId" = mcge."classReviewCardId"
+    AND gra."goalId" = mcge."goalId"
+    GROUP BY 1, 2
+  ),
+  qualifying_class_review_goal_rows AS (
+    SELECT
+      gra."recipientId",
+      gra."grantId",
+      gra."goalId",
+      gra."goalCreatedAt",
+      gra."goalStatus",
+      gra."classReviewCardId",
+      agard."lastARStartDate",
+      gra."emotionalSupport",
+      gra."classroomOrganization",
+      gra."instructionalSupport",
+      gra."reportDeliveryDate"
+    FROM goal_review_assignments gra
+    LEFT JOIN assigned_goal_ar_dates agard
+    ON gra."classReviewCardId" = agard."classReviewCardId"
+    AND gra."goalId" = agard."goalId"
+  ),
+  qualifying_class_grant_rows AS (
+    SELECT DISTINCT
+      "recipientId",
+      "grantId"
+    FROM qualifying_class_review_goal_rows
+  ),
+  class_page_rows AS (
+    SELECT
+      qcgr."recipientId",
+      r.name "recipientName",
+      qcgr."classReviewCardId",
+      gr.id "grantId",
+      gr.number "grantNumber",
+      gr."regionId",
+      qcgr."goalId",
+      qcgr."goalCreatedAt",
+      qcgr."goalStatus",
+      qcgr."lastARStartDate",
+      qcgr."emotionalSupport",
+      qcgr."classroomOrganization",
+      qcgr."instructionalSupport",
+      qcgr."reportDeliveryDate"
+    FROM requested_datasets rd
+    JOIN qualifying_class_review_goal_rows qcgr
+    ON rd.include_with_class_page
+    JOIN "Recipients" r
+    ON qcgr."recipientId" = r.id
+    JOIN "Grants" gr
+    ON qcgr."grantId" = gr.id
+  ),
+  class_goal_collaborators AS (
+    SELECT
+      cpr."goalId",
+      MIN(u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (
+        WHERE ct.name = 'Creator'
+        AND vf.name = 'Goals'
+      ) "creator",
+      STRING_AGG(
+        DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles'),
+        ', '
+        ORDER BY u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')
+      ) FILTER (
+        WHERE ct.name = 'Collaborator'
+        AND vf.name = 'Goals'
+      ) "collaborators"
+    FROM class_page_rows cpr
     LEFT JOIN "GoalCollaborators" gc
-    ON g.id = gc."goalId"
+    ON cpr."goalId" = gc."goalId"
     LEFT JOIN "CollaboratorTypes" ct
     ON gc."collaboratorTypeId" = ct.id
-    AND ct.name IN ('Creator', 'Collaborator')
     LEFT JOIN "ValidFor" vf
     ON ct."validForId" = vf.id
-    AND vf.name = 'Goals'
     LEFT JOIN "Users" u
     ON gc."userId" = u.id
     LEFT JOIN LATERAL (
-        SELECT ur."userId", STRING_AGG(r.name, ', ') AS agg_roles
+        SELECT STRING_AGG(r.name, ', ') AS agg_roles
         FROM "UserRoles" ur
         JOIN "Roles" r ON ur."roleId" = r.id
         WHERE ur."userId" = u.id
-        GROUP BY ur."userId"
-    ) ur ON u.id = ur."userId"
-    LEFT JOIN "ActivityReportGoals" arg
-    ON g.id = arg."goalId"
-    LEFT JOIN "ActivityReports" a
-    ON arg."activityReportId" = a.id
-    AND a."calculatedStatus" = 'approved'
-    LEFT JOIN "MonitoringReviewGrantees" mrg
-    ON gr.number = mrg."grantNumber"
-    LEFT JOIN "MonitoringReviews" mr
-    ON mrg."reviewId" = mr."reviewId"
-    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
-    LEFT JOIN "MonitoringReviewStatuses" mrs
-    ON mr."statusId" = mrs."statusId"
-    LEFT JOIN "MonitoringClassSummaries" mcs
-    ON mr."reviewId" = mcs."reviewId"
-    WHERE hcg.has_current_active_grant
-    AND (has_class OR has_scores)
-    AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
-    AND (mrs.id IS NULL OR mrs.name = 'Complete')
-    AND (mcs.id IS NOT NULL)
-    AND g."deletedAt" IS NULL
-    AND g."mapsToParentGoalId" IS NULL
-    GROUP BY 1, 2, 3, 4
-    HAVING (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] IS NOT NULL
-    ORDER BY 1, 3
+    ) ur ON true
+    GROUP BY 1
+  ),
+  with_class_widget AS (
+    SELECT
+      (COALESCE(COUNT(DISTINCT qcgr."recipientId")::decimal/
+      NULLIF(COUNT(DISTINCT wc.id), 0), 0)*100)::decimal(5,2) "% recipients with class",
+      COUNT(DISTINCT qcgr."recipientId") "recipients with class",
+      COUNT(DISTINCT wc.id) total,
+      COUNT(DISTINCT qcgr."grantId") "grants with class"
+    FROM requested_datasets rd
+    JOIN with_class wc
+    ON rd.include_with_class_widget
+    LEFT JOIN qualifying_class_grant_rows qcgr
+    ON wc.id = qcgr."recipientId"
+  ),
+  with_class_page AS (
+    SELECT
+      cpr."recipientId",
+      cpr."recipientName",
+      cpr."classReviewCardId",
+      cpr."grantNumber",
+      cpr."regionId",
+      cpr."goalId",
+      cpr."goalCreatedAt",
+      cpr."goalStatus",
+      cpr."lastARStartDate",
+      cpr."emotionalSupport",
+      cpr."classroomOrganization",
+      cpr."instructionalSupport",
+      cpr."reportDeliveryDate",
+      COALESCE(cgc."creator", '') "creator",
+      COALESCE(cgc."collaborators", '') "collaborators"
+    FROM class_page_rows cpr
+    LEFT JOIN class_goal_collaborators cgc
+    ON cpr."goalId" = cgc."goalId"
+    ORDER BY cpr."recipientId", cpr."reportDeliveryDate" DESC, cpr."lastARStartDate" DESC, cpr."goalId" DESC
   ),
   
   -- CTE for fetching active filters using NULLIF() to handle empty strings
@@ -936,6 +1148,7 @@ WITH
       COUNT(*) records,
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'recipientId', "recipientId",
+        'classReviewCardId', "classReviewCardId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
         'region id', "regionId",

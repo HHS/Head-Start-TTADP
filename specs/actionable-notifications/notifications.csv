@@ -1,0 +1,176 @@
+Category,Role,Action (trigger),Type,Content or Subject line,CTA,Received by,Status,ID,Email content,Notes
+Activity Report,Creator,Adds a Collaborator,In-app,[Creator's name] added you as a Collaborator on their Activity Report for [Recipient name].,View AR,Collaborator,Proposed,AR-1a,,
+Activity Report,Creator,Adds a Collaborator,Email,Activity Report R01-AR-17967: Added as collaborator,,Collaborator,Published,AR-1b,Actionable Notifications email content,
+Activity Report,Creator,Submits a report for approval,In-app,An Activity Report for [Recipient name] has been submitted for approval.,Review AR,Approvers,Proposed,AR-2a,,review vs. approval? Go with Approval
+Activity Report,Creator,Submits a report for approval,Email,Activity Report R01-AR-17967: Submitted for approval,,Approvers,Published,AR-2b ,Actionable Notifications email content,"updated existing message with ""approval"""
+Activity Report,Creator,Submits a report for approval,In-app,[Creator's Name] has submitted an Activity Report for approval.,View AR,Collaborators,Proposed,AR-2c,,
+Activity Report,Creator,Submits a report for approval,Email,Activity Report R01-AR-17967: Submitted for approval,,Collaborators,Proposed,AR-2d,Actionable Notifications email content,Do we have this?
+Activity Report,Collaborator,Submits a report for approval,In-app,An Activity Report for [Recipient's name] has been submitted for approval.,Review AR,Approvers,Proposed,AR-3a,,
+Activity Report,Collaborator,Submits a report for approval,Email,Activity Report R01-AR-17967: Submitted for approval,,Approvers,Proposed,AR-3b,Actionable Notifications email content,
+Activity Report,Collaborator,Submits a report for approval,In-app,[Collaborator's name] has submitted an Activity Report for approval.,View AR,Creator,Proposed,AR-3c,,
+Activity Report,Collaborator,Submits a report for approval,Email,Activity Report R01-AR-17967: Submitted for approval,,Creator,Proposed,AR-3d,Actionable Notifications email content,
+Activity Report,Creator,Re-submit a report for approval,In-app,A revised Activity Report for [Recipient's name] has been submitted for approval.,Review AR,Approvers,Proposed,AR-4a,,
+Activity Report,Creator,RE-submit a report for approval,Email,Revised Activity Report R01-AR-17967: Submitted for approval,,Approvers,Proposed,AR-4b,Actionable Notifications email content,
+Activity Report,Creator,Re-submit a report for approval,In-app,A revised Activity Report for [Recipient's name] has been submitted for approval.,View AR,Collaborator,Proposed,AR-4c,,
+Activity Report,Creator,Re-submit a report for approval,Email,Revised Activity Report R01-AR-17967: Submitted for approval,,Collaborator,Proposed,AR-4d,Actionable Notifications email content,
+Activity Report,Collaborator,RE-submit a report for approval,In-app,A revised Activity Report for [Recipient's name] has been submitted for approval.,Review AR,Approvers,Proposed,AR-5a,,
+Activity Report,Collaborator,RE-submit a report for approval,Email,Revised Activity Report R01-AR-17967: Submitted for approval,,Approvers,Proposed,AR-5b,Actionable Notifications email content,
+Activity Report,Collaborator,RE-submit a report for approval,In-app,[Collaborator's name] has submitted a revised Activity Report for approval.,View AR,Creator,Proposed,AR-5c,,
+Activity Report,Collaborator,RE-submit a report for approval,Email,Revised Activity Report R01-AR-17967: Submitted for approval,,Creator,Proposed,AR-5d,Actionable Notifications email content,
+Activity Report,System,Near report submission deadline (5th working day of the month),In-app,The submission deadline for Activity Report R01-AR-17967 is near. ,Take action,Creator,Out of scope,,,NEW - Wishlist item 03/24/26 Digest?
+Activity Report,System,Near report submission deadline (5th working day of the month),Email,Submit draft Activity Report R01-AR-17967: Submission deadline 07/05/2026,,Creator,Out of scope,,Actionable Notifications email content,Version 2 per Heather - https://adhoc.slack.com/archives/C022R5301L4/p1774474899507799
+Activity Report,System,Near report submission deadline (5th working day of the month),In-app,The submission deadline for Activity Report R01-AR-17967 is near. ,Take action,Collaborator,Out of scope,,,
+Activity Report,System,Near report submission deadline (5th working day of the month),Email,Submit draft Activity Report R01-AR-17967: Submission deadline 07/05/2026,,Collaborator,Out of scope,,Actionable Notifications email content,
+Activity Report,System,"Activity Report pending approval for ""X' days",In-app,"An Activity Report for [Recipient name] has been pending approval for ""X"" days.",View AR,TTAC/Managers,Out of scope,,,NEW - Wishlist item 03/24/26 Digest?
+Activity Report,System,"Activity Report pending approval for ""X' days",Email,"Activity Report R01-AR-17967: Pending approval for ""X"" days",,TTAC/Managers,Out of scope,,Actionable Notifications email content,Version 2 - https://adhoc.slack.com/archives/C022R5301L4/p1774474899507799
+Activity Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to your Activity Report for [Recipient name].,Take action/View AR,Creator,Proposed,AR-6a,,
+Activity Report,Approver 1,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested,,Creator,Published,AR-6b,Actionable Notifications email content,Text includes Approver name
+Activity Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to your Activity Report for [Recipient name].,Take action,Collaborator,Proposed,AR-6c,,
+Activity Report,Approver 1,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested,,Collaborator,Proposed,AR-6d,Actionable Notifications email content,
+Activity Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to an Activity Report for [Recipient name].,View AR,Approver 2,Proposed,AR-6e,,
+Activity Report,Approver 1,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested by [Approver 1 name],,Approver 2,Proposed,AR-6f,Actionable Notifications email content,LInk text is different for Approver 2
+Activity Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved your Activity Report for [Recipient name].,View AR,Creator,Proposed,AR-7a,,
+Activity Report,Approver 1,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved,,Creator,Published,AR-7b,Actionable Notifications email content,Added approver name
+Activity Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved your Activity Report for [Recipient name].,View AR,Collaborator,Proposed,AR-7c,,
+Activity Report,Approver 1,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved,,Collaborator,Published,AR-7d,Actionable Notifications email content,
+Activity Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved your Activity Report for [Recipient name].,View AR,Approver 2,Proposed,AR-7e,,
+Activity Report,Approver 1,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved by [Approver 1 name],,Approver 2,Proposed,AR-7f,Actionable Notifications email content,
+Activity Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to your Activity Report for [Recipient name].,Take action/View AR,Creator,Proposed,AR-8a,,
+Activity Report,Approver 2,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested,,Creator,Proposed,AR-8b,Actionable Notifications email content,"Text includes Approver name, update existing email"
+Activity Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to your Activity Report for [Recipient name].,Take action,Collaborator,Proposed,AR-8c,,
+Activity Report,Approver 2,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested,,Collaborator,Proposed,AR-8d,Actionable Notifications email content,
+Activity Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to an Activity Report for [Recipient name].,View AR,Approver 1,Proposed,AR-8e,,
+Activity Report,Approver 2,Reviews report and sets status to needs action,Email,Activity Report R01-AR-17967: Changes requested by [Approver 2 name],,Approver 1,Proposed,AR-8f,Actionable Notifications email content,LInk text is different for Approver 1
+Activity Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved your Activity Report for [Recipient name].,View AR,Creator,Proposed,AR-9a,,
+Activity Report,Approver 2,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved,,Creator,Proposed,AR-9b,Actionable Notifications email content,
+Activity Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved your Activity Report for [Recipient name]..,View AR,Collaborator,Proposed,AR-9c,,
+Activity Report,Approver 2,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved,,Collaborator,Proposed,AR-9d,Actionable Notifications email content,
+Activity Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved your Activity Report for [Recipient name].,View AR,Approver 1,Proposed,AR-9e,,
+Activity Report,Approver 2,Reviews report and sets status to approved,Email,Activity Report R01-AR-17967: Approved by [Approver 2 name],,Approver 1,Proposed,AR-9f,Actionable Notifications email content,
+Activity Report,Digest,Activity Reports for review,Email,TTA Hub [daily/weekly/monthly] digest: Activity Reports for approval,,Approvers,Proposed,AR-10a,,Digest
+Activity Report,Digest,Activity Reports need action,Email,TTA Hub [daily/weekly/monthly] digest: Activity Report changes requested,,Creator/Collaborator,Proposed,AR-11,Actionable Notifications email content,
+Activity Report,Digest,Activity Reports - approved,Email,TTA Hub [daily/weekly/monthly] digest: approved Activity Reports,,Creator/Collaborator,Proposed,AR-12,Actionable Notifications email content,
+Activity Report,Digest,Added as a Collaborator,Email,TTA Hub [daily/weekly/monthly] digest: added as collaborator on Activity Reports,,Collaborator,Proposed,AR-13,Actionable Notifications email content,
+Activity Report,Digest,Creator submits AR where I'm the Collab,Email,TTA Hub [daily/weekly/monthly] digest: Activity Reports submitted for approval,,Collaborator,Proposed,AR-14,Actionable Notifications email content,
+Activity Report,Digest,Collab submits a report for approval,Email,TTA Hub [daily/weekly/monthly] digest: Activity Reports submitted for approval,,Creator,Proposed,AR-15,Actionable Notifications email content,
+Collaborative Report,Creator,Adds a Collaborator,In-app,[Creator's name] added you as a Collaborator on their Collaboration Report for [Activity name].,View AR,Collaborator,Proposed,CR-1a,,
+Collaborative Report,Creator,Adds a Collaborator,Email,Collaboration Report R01-CR-12345: Added as collaborator,,Collaborator,Proposed,CR-1b,Actionable Notifications email content,
+Collaborative Report,Creator,Submits a report for approval,In-app,[Creator's name] submitted the [Activity name] Collaboration Report for approval.,Review CR,Approvers,Proposed,CR-2a,,
+Collaborative Report,Creator,Submits a report for approval,Email,Collaboration Report R01-CR-12345: Submitted for approval,,Approvers,Proposed,CR-2b,Actionable Notifications email content,
+Collaborative Report,Creator,Submits a report for approval,In-app,[Creator's name] submitted the [Activity name] Collaboration Report for approval.,View CR,Collaborator,Proposed,CR-2c,,
+Collaborative Report,Creator,Submits a report for approval,Email,Collaboration Report R01-CR-12345: Submitted for approval,,Collaborator,Proposed,CR-2d,Actionable Notifications email content,
+Collaborative Report,Collaborator,Submits a report for approval,In-app,[Collaborator's name] submitted the [Activity name] Collaboration Report for approval.,Review CR,Approvers,Proposed,CR-3a,,
+Collaborative Report,Collaborator,Submits a report for approval,Email,Collaborator Report R01-CR-12345: Submitted for approval,,Approvers,Proposed,CR-3b,Actionable Notifications email content,
+Collaborative Report,Collaborator,Submits a report for approval,In-app,[Collaborator's name] submitted the [Activity name] Collaboration Report for approval.,View CR,Creator,Proposed,CR-3c,,
+Collaborative Report,Collaborator,Submits a report for approval,Email,Collaborator Report R01-CR-12345: Submitted for approval,,Creator,Proposed,CR-3d,,
+Collaborative Report,Creator,Re-submit a report for approval,In-app,[Creator's name] submitted the revised [Activity name] Collaboration Report for approval.,Review CR,Approvers,Proposed,CR-4a,,Add Title
+Collaborative Report,Creator,Re-submit a report for approval,Email,Revised Collaboration Report R01-CR-12345: Submitted for approval,,Approvers,Proposed,CR-4b,Actionable Notifications email content,
+Collaborative Report,Creator,Re-submit a report for approval,In-app,[Creator's name] submitted the revised [Activity name] Collaboration Report for approval.,View CR,Collaborators,Proposed,CR-4c,,
+Collaborative Report,Creator,Re-submit a report for approval,Email,Revised Collaboration Report R01-CR-12345: Submitted for approval,,Collaborators,Proposed,CR-4d,,
+Collaborative Report,Collaborator,Re-submit a report for approval,In-app,[Collaborator's name] submitted the revised [Activity name] Collaboration Report for approval.,Review CR,Approvers,Proposed,CR-5a,,
+Collaborative Report,Collaborator,Re-submit a report for approval,Email,Revised Collaboration Report R01-CR-12345: Submitted for approval,,Approvers,Proposed,CR-5b,,
+Collaborative Report,Collaborator,Re-submit a report for approval,In-app,[Collaborator's name] has submitted a revised Collaboration Report for [Activity name].,View CR,Creator,Proposed,CR-5c,,
+Collaborative Report,Collaborator,Re-submit a report for approval,Email,Revised Collaboration Report R01-CR-12345: Submitted for approval,,Creator,Proposed,CR-5d,,
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to your Collaboration Report for [Activity name].,Take action/View AR,Creator,Proposed,CR-6a,,
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested,,Creator,Proposed,CR-6b,Actionable Notifications email content,Text includes Approver name
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to your Collaboration Report for [Activity name].,Take action,Collaborator,Proposed,CR-6c,,
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested,,Collaborator,Proposed,CR-6d,Actionable Notifications email content,
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,In-app,[Approver 1 name] has requested changes to your Collaboration Report for [Activity name].,View AR,Approver 2,Proposed,CR-6e,,
+Collaborative Report,Approver 1,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested by [Approver 1 name],,Approver 2,Proposed,CR-6f,,LInk text is different for Approver 2
+Collaborative Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved your Collaboration Report for [Activity name].,View AR,Creator,Proposed,CR-7a,,
+Collaborative Report,Approver 1,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345: Approved,,Creator,Proposed,CR-7b,Actionable Notifications email content,
+Collaborative Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved your Collaboration Report for [Activity name].,View AR,Collaborator,Proposed,CR-7c,,
+Collaborative Report,Approver 1,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345: Approved,,Collaborator,Proposed,CR-7d,Actionable Notifications email content,
+Collaborative Report,Approver 1,Reviews report and sets status to approved,In-app,[Approver 1 name] has approved a Collaboration Report for [Activity name].,View AR,Approver 2,Proposed,CR-7e,,
+Collaborative Report,Approver 1,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345: Approved by [Approver 1 name],,Approver 2,Proposed,CR-7f,,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to your Collaboration Report for [Activity name].,Take action/View AR,Creator,Proposed,CR-8a,,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested,,Creator,Proposed,CR-8b,Actionable Notifications email content,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to your Collaboration Report for [Activity name].,Take action,Collaborator,Proposed,CR-8c,,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested,,Collaborator,Proposed,CR-8d,Actionable Notifications email content,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,In-app,[Approver 2 name] has requested changes to Collaboration Report for [Activity name].,View AR,Approver 1,Proposed,CR-8e,,
+Collaborative Report,Approver 2,Reviews report and sets status to needs action,Email,Collaboration Report R01-CR-12345: Changes requested by [Approver 2 name],,Approver 1,Proposed,CR-8f,,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved your Collaboration Report for [Activity name].,View AR,Creator,Proposed,CR-9a,,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345:  Approved,,Creator,Proposed,CR-9b,Actionable Notifications email content,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved your Collaboration Report for [Activity name].,View AR,Collaborator,Proposed,CR-9c,,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345:  Approved,,Collaborator,Proposed,CR-9d,Actionable Notifications email content,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,In-app,[Approver 2 name] has approved a Collaboration Report for [Activity name].,View AR,Approver 1,Proposed,CR-9e,,
+Collaborative Report,Approver 2,Reviews report and sets status to approved,Email,Collaboration Report R01-CR-12345: Approved by [Approver 2 name],,Approver 1,Proposed,CR-9f,,
+Collaborative Report,Digest,Collaboration Reports for approval,Email,TTA Hub [daily/weekly/monthly] digest: Collaboration Reports for approval,,Approvers,Proposed,CR-10a,Actionable Notifications email content,
+Collaborative Report,Digest,Collaboration Reports needs action,Email,Subject: TTA Hub [daily/weekly/monthly] digest: Collaboration Report changes requested,,Creator/Collaborator,Proposed,CR-11,Actionable Notifications email content,
+Collaborative Report,Digest,Collaboration Reports - approved,Email,Subject: TTA Hub [daily/weekly/monthly] digest: approved Collaboration Reports,,Creator/Collaborator,Proposed,CR-12,Actionable Notifications email content,
+Collaborative Report,Digest,Added as a Collaborator,Email,TTA Hub [daily/weekly/monthly] digest: added as collaborator on Collaboration Reports,,Collaborator,Proposed,CR-13,,
+Collaborative Report,Digest,Collaboration Reports need action,Email,TTA Hub [daily/weekly/monthly] digest: Collaboration Report changes requested,,Creator/Collaborator,Proposed,CR-14,,
+Collaborative Report,Digest,Collab Report - approved,Email,TTA Hub [daily/weekly/monthly] digest: approved Collaboration Reports,,Creator/Collaborator,Proposed,CR-15,,
+Collaborative Report,Digest,Creator submits CR where I'm the Collab,Email,TTA Hub [daily/weekly/monthly] digest: Collaboration Reports submitted for approval,,Collaborator,Proposed,CR-16,,
+Collaborative Report,Digest,Collab submits a report for approval,Email,TTA Hub [daily/weekly/monthly] digest: Collaboration Reports submitted for approval,,Creator,Proposed,CR-17,,
+Training Report,Event Creator,Adds a Collaborator as a POC,In-app,[Creator's name] added you as a Regional point of contact on their Training Report.,View TR,Event POC,Proposed,TR-1a,Actionable Notifications email content,Spell out point of contact? yes
+Training Report,Event Creator,Adds a Collaborator as a POC,Email,Training Report R01-TR-25-2345: Added as Regional point of contact,,Event POC,Proposed,TR-1b,,
+Training Report,Event Creator,Adds a Collaborator,In-app,[Creator's name] added you as a Collaborator on their Training Report.,View TR,Event Collaborator,Proposed,TR-2a,,
+Training Report,Event Creator,Adds a Collaborator,Email,Training Report R01-TR-25-2345: Added as Collaborator,,Event Collaborator,Proposed,TR-2b,,
+Training Report,Event Creator,Submits a session for approval,In-app,Session: [Session name] submitted for approval.,Take action,Approver,Proposed,TR-3a,,"Event POC, Session Approver?"
+Training Report,Event Creator,Submits a session for approval,Email,Training Report R01-TR-25-2345: [Session name] submitted for approval.,,Approver,Proposed,TR-3b,,
+Training Report,Event Creator,Submits a session for approval,In-app,Session: [Session name] submitted for approval.,View TR,Event Collaborator,Proposed,TR-3c,,
+Training Report,Event Creator,Submits a session for approval,Email,Training Report R01-TR-25-2345: [Session name] submitted for approval.,,Event Collaborator,Proposed,TR-3d,,
+Training Report,Event Creator,Submits a session for approval,In-app,Training Report R01-TR-25-2345: [Session name] submitted for approval.,View TR,Event Collaborator,Proposed,TR-3e,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,In-app,[Approver 1 name] has requested changes to session [Session name].,View TR,Creator,Proposed,TR-4a,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,Email,Training Report R01-TR-25-2345: Session changes requested,,Creator,Proposed,TR-4b,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,In-app,[Approver 1 name] has requested changes to session: [Session name].,View TR,Event Collaborator,Proposed,TR-4c,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,Email,Training Report R01-TR-25-2345: Session changes requested,,Event Collaborator,Proposed,TR-4d,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,In-app,[Approver 1 name] has requested changes to session: [Session name].,View TR,Session Approver 2,Proposed,TR-4e,,
+Training Report,Approver 1,Reviews session report and sets status to needs action,Email,Training Report R01-TR-25-2345: Session changes requested,,Session Approver 2,Proposed,TR-4f,,
+Training Report,Event Creator,Re-submit a session for review,In-app,"A revised Training Report session: [Session name], has been submitted for review.",,Approvers,Proposed,TR-5a,,Remove block
+Training Report,Event Creator,Re-submit a session for review,Email,Revised Training Report R01-CR-12345: [Session name] submitted for review,,Approvers,Proposed,TR-5b,,
+Training Report,Event Creator,Re-submit a session for review,In-app,"A revised Training Report session: [Session name], has been submitted for review.",,Event Collaborator,Proposed,TR-5c,,
+Training Report,Event Creator,Re-submit a sessionfor review,Email,Revised Training Report R01-CR-12345: [Session name] submitted for review,,Event Collaborator,Proposed,TR-5d,,
+Training Report,Event Collaborator,Re-submit a session for review,In-app,A revised Training Report has been submitted for review.,,Approvers,Proposed,TR-6a,,Does Collaborating Specialist submit TR's?
+Training Report,Event Collaborator,Re-submit a session for review,Email,Revised Training Report R01-TR-25-2345: Submitted for review,,Approvers,Proposed,TR-6b,,Remove block
+Training Report,Event Collaborator,Re-submit a session for review,In-app,A revised Training Report has been submitted for review.,,Event Creator,Proposed,TR-6c,,
+Training Report,Event Collaborator,Re-submit a session for review,Email,Revised Training Report R01-TR-25-2345: Submitted for review,,Event Creator,Proposed,TR-6d,,
+Training Report,System,Event info missing 20 days past event start date,In-app,Submit event details for [Event name].,Take action,Event Creator,Proposed,TR-5a,,Event Specialist?
+Training Report,System,Event info missing 20 days past event start date,Email,Reminder: Submit event details for Training Report R01-TR-25-2345,,Event Creator,Paused,TR-5b,Actionable Notifications email content,#1
+Training Report,System,Event info missing 20 days past previous email reminder,Email,Past due: Submit event details for Training Report R01-TR-23-1358,,Event Creator,Paused,TR-6a,,"#2 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,Event info missing 20 days past event start date,In-app,Submit event details for [Event name].,Take action,Event Collaborator,Proposed,TR-7a,,
+Training Report,System,Event info missing 20 days past event start date,Email,Reminder: Submit event details for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-7b,,#3
+Training Report,System,Event info missing 20 days past previous email reminder,Email,Past due: Submit event details for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-8a,,"#4 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,Session info missing 20 days past the session start date,In-app,Submit session details for [Session name].,Take action,Event Creator,Proposed,TR-9a,,
+Training Report,System,Session info missing 20 days past the session start date,Email,"Reminder: Submit session details for Training Report R01-TR-23-135
+",,Event Creator,Paused,TR-9b,,#5
+Training Report,System,Session info missing 20 days past the session start date,Email,Past due: Submit session details for Training Report R01-TR-23-1358,,Event Creator,Paused,TR-9c,,"#6 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,Session info missing 20 days past the session start date,In-app,Submit session details for [Session name].,,Event Collaborator,Paused,TR-10a,,#7
+Training Report,System,Session info missing 20 days past the session start date,Email,Reminder: Submit session details for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-10b,,#7
+Training Report,System,Session info missing 20 days past reminder,Email,Past due: Submit session details for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-10c,,#8
+Training Report,System,Session info missing 20 days past session start date,In-app,Submit session details for [Session name].,Take action,Regional POC,Paused,TR-11a,,#9
+Training Report,System,Session info missing 20 days past session start date,Email,Reminder: Submit Session Details for Training Report ,,Regional POC,Paused,TR-11b,,#9
+Training Report,System,Session info missing 20 days past email reminder,Email,Past due: Submit session details for Training Report R01-TR-23-1358,,Regional POC,Paused,TR-12,,"#10 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,No sessions created 20 days past event end date,Email,Reminder: Create a Session for Training Report R01-TR-23-1358,,Event Creator,Paused,TR-13,,#11
+Training Report,System,No sessions created 20 days past reminder,Email,Past due: Create a Session for Training Report R01-TR-23-1358,,Event Creator,Paused,TR-14,,"#12 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,No sessions created 20 days past event end date,Email,Reminder: Create a Session for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-15,,#13
+Training Report,System,No sessions 20 days past email reminder,Email,Past due: Create a Session for Training Report R01-TR-23-1358,,Event Collaborator,Paused,TR-16,,"#14 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,System,Event not completed 20 days past event end date,Email,Reminder: Complete Training Report R01-TR-23-1358,,Event Creator,Paused,TR-17,,#15
+Training Report,System,Event not completed 20 days past reminder,Email,Past due: Complete Training Report R01-TR-23-1358,,Event Creator,Paused,TR-18,,"#16 No in-app or opt-out option. In-app, event info missing will still be displayed in notification center. Repeats every 10 days if no action is taken"
+Training Report,Digest,Added as an Event POC,Email,TTA Hub [daily/weekly/monthly] digest: added as a Regional point of contact,,Event POC,Proposed,TR-19,Actionable Notifications email content,
+Training Report,Digest,Added as Event Collaborator,Email,TTA Hub [daily/weekly/monthly] digest: added as an Event Collaborator,,Event Collaborator,Proposed,TR-20,,
+Training Report,Digest,session submitted for review,Email,TTA Hub [daily/weekly/monthly] digest: session submitted for review,,Approvers,Proposed,TR-21,,
+Training Report,Digest,Session changes requested,Email,TTA Hub [daily/weekly/monthly] digest: session changes requested,,Event Creator/Event Collaborator,Proposed,TR-22,,
+Training Report,Digest,Event details not complete,Email,TTA Hub [daily/weekly/monthly] digest: submit event details,,Event Collaborator,Proposed,TR-23,,
+Training Report,Digest,Session details not complete,Email,TTA Hub [daily/weekly/monthly] digest: submit session details,,Event Creator/Event Collaborator,Proposed,TR-24,,
+Training Report,Digest,Session details not complete (POC),Email,TTA Hub [daily/weekly/monthly] digest: submit session details,,Regional POC,Proposed,TR-25,,
+Training Report,Digest,No sessions created 20 days past event end date,Email,TTA Hub [daily/weekly/monthly] digest: Past due - Create a session,,Event Creator/Event Collaborator,Proposed,TR-26,,
+Training Report,Digest,Event not completed 20 days past event end date,Email,TTA Hub [daily/weekly/monthly] digest: Past due - Complete event,,Event Creator,Proposed,TR-27,,
+Other,System,Adds/opens a monitoring goal,In-app,New monitoring goals for recipients in your region are available.,View goals,TTACs & Managers,Draft,Misc-1a,Actionable Notifications email content,"Will trigger when the monitoring goal is added to the RTR for the first iteration and any subsequent re-opens. Original content: ""A monitoring goal for [Recipient name] is available in the TTA Hub."""
+Other,System,Adds/opens a monitoring goal,Email,New monitoring goals added for recipients in your region.,,TTACs & Managers,Draft,Misc-1b,,"We don't know what TTAC or Manager is associated with each recipient, do we? Phase 2? Original content: ""Monitoring goal added for [Recipient name]."
+Other,System,New monitoring data was received.,In-app,New monitoring details for [Recipient name] are available.,View details,TTACs & Managers,Proposed,Misc-1a,,Replaced monitoring goal language in row 159 & 160
+Other,System,New monitoring data was received.,Email,New monitoring details were added for recipients in your region.,,TTACs & Managers,Proposed,Misc-1b,,
+Other,Group Creator,"Adds a co-owner to ""my group""",In-app,[Creator's name] added you as a co-owner of the group: [Group name].,,Group Co-owner,Proposed,Misc-2a,,
+Other,Group Creator,"Adds a co-owner to ""my group""",Email,Group [Group name]: Added as co-owner,,Group Co-owner,Proposed,Misc-2b,,
+Other,Group Creator,"Shares their ""my group""",In-app,[Creator's name] shared the group: [Group name] with you.,,Group receiver,Proposed,Misc-3a,,
+Other,Group Creator,"Shares their ""my group""",Email,Group [Group name]: shared with you,,Group receiver,Proposed,Misc-3b,,
+System,System,TTA Hub planned outage,In-app,Planned outage: the TTA Hub will be closed for maintenance from [date through date].,,All roles,Proposed,Misc-4a,Actionable Notifications email content,
+System,System,TTA Hub planned outage,Email,"TTA Hub scheduled outage [day, month, day]",,All roles,Proposed,Misc-4b,,
+System,System,Unplanned TTA Hub outage,Email,The TTA Hub is temporarily down ,,All roles,Proposed,Misc-5a,,Do we have the ability to send this during an outage? Do we want this or keep our current process?
+Communcation Log,Creator,Adds Other TTA staff to a Comm Log,In-app,[Creator's name] added you as TTA staff on their Communication Log for [Recipient name].,,TTA staff,Proposed,CL-1a,Actionable Notifications email content,
+Communcation Log,Creator,Adds Other TTA staff to a Comm Log,Email,Communication Log R14-CL-12345: Added as TTA staff,,TTA staff,Proposed,CL-1b,,
+Communcation Log,Creator,A Comm Log was entered for a recipient in a group,In-app,A Communication Log was entered for your recipient: [Recipient name] from the group: [My Group name].,,Program Specialist,Proposed,CL-2a,,Anyone with a group or just Program Specialists?
+Communcation Log,Creator,A Comm Log was entered for a recipient in a group,Email,Communication Log R14-CL-12345: Entered for the recipient: [Recipient name] from group: [Group name],,Program Specialist,Proposed,CL-2b,,
+Communcation Log,Digest,Added as TTA staff on a Comm log,Email,Subject: TTA Hub [daily/weekly/monthly] digest: added as TTA staff on a Communication log,,TTA staff,Proposed,CL-3,,
+Communcation Log,Digest,"Comm log added for a recipient in ""My group""",Email,Subject: TTA Hub [daily/weekly/monthly] digest: Communication log added for a recipient in one of your groups,,Program Specialist,Proposed,CL-4,,

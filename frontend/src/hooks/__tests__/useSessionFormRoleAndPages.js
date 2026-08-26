@@ -27,6 +27,12 @@ describe('useSessionFormRoleAndPages', () => {
   const mockUser = {
     id: 1,
     permissions: [],
+    roles: [],
+  };
+  const ncUser = {
+    id: 1,
+    permissions: [],
+    roles: [{ name: 'NC' }],
   };
 
   describe('isSubmitted tracking', () => {
@@ -61,7 +67,9 @@ describe('useSessionFormRoleAndPages', () => {
   });
 
   describe('applicationPages for collaborators', () => {
-    it('shows all pages when collaborator, regional with national centers, no regional facilitation, and submitted', () => {
+    it('restricts collaborator (non-NC) to session summary + review on Regional PD w/ NC + Trainer=NC, submitted', () => {
+      // TTAHUB-5502: collaborator-only access is limited to session summary + review,
+      // even when submitted.
       const defaultValues = {
         submitted: true,
         event: {
@@ -86,21 +94,12 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Should have all 4 pages + review page = 5 pages
-      expect(result.current.applicationPages.length).toBe(5);
       const paths = result.current.applicationPages.map((p) => p.path);
-      expect(paths).toEqual(
-        expect.arrayContaining([
-          'session-summary',
-          'participants',
-          'supporting-attachments',
-          'next-steps',
-          'review',
-        ])
-      );
+      expect(paths).toEqual(['session-summary', 'review']);
     });
 
-    it('shows only sessionSummary when collaborator, regional with national centers, no regional facilitation, and NOT submitted', () => {
+    it('restricts collaborator (non-NC) to session summary + review on Regional PD w/ NC + Trainer=NC, not submitted', () => {
+      // TTAHUB-5502: collaborator-only access is limited to session summary + review.
       const defaultValues = {
         submitted: false,
         event: {
@@ -125,10 +124,73 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Should have only sessionSummary + review = 2 pages
       expect(result.current.applicationPages.length).toBe(2);
-      expect(result.current.applicationPages[0].path).toBe('session-summary');
-      expect(result.current.applicationPages[1].path).toBe('review');
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(['session-summary', 'review']);
+    });
+
+    it('restricts NC collaborator to session summary + review on Regional PD w/ NC + Trainer=NC, even when submitted', () => {
+      // TTAHUB-5502: collaborator-only access overrides the NC-owner-submitted full view.
+      const defaultValues = {
+        submitted: true,
+        event: {
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(ncUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(['session-summary', 'review']);
+    });
+
+    it('treats owner+collaborator as owner (broader access) on Regional PD w/ NC + Trainer=NC', () => {
+      // A user listed as BOTH owner and collaborator should NOT be downgraded to
+      // collaborator-only restrictions. With no NC role, this is a Regional owner.
+      const defaultValues = {
+        submitted: false,
+        event: {
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(mockUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(
+        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
+      );
+      expect(paths).not.toContain('session-summary');
     });
 
     it('shows all pages for admin regardless of submission status', () => {
@@ -360,7 +422,7 @@ describe('useSessionFormRoleAndPages', () => {
       );
     });
 
-    it('shows only sessionSummary when owner, regional with national centers, no regional facilitation, and NOT submitted', () => {
+    it('shows limited pages when owner, regional with national centers, no regional facilitation, and NOT submitted without NC role', () => {
       const defaultValues = {
         submitted: false,
         event: {
@@ -385,13 +447,15 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Owner should have only sessionSummary + review = 2 pages
-      expect(result.current.applicationPages.length).toBe(2);
-      expect(result.current.applicationPages[0].path).toBe('session-summary');
-      expect(result.current.applicationPages[1].path).toBe('review');
+      // Regional owner should see participants flow + review
+      expect(result.current.applicationPages.length).toBe(4);
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(
+        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
+      );
     });
 
-    it('shows all pages when owner, regional with national centers, no regional facilitation, and submitted', () => {
+    it('shows limited pages when owner, regional with national centers, no regional facilitation, and submitted without NC role', () => {
       const defaultValues = {
         submitted: true,
         event: {
@@ -416,18 +480,106 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Owner should get all 5 pages when submitted
-      expect(result.current.applicationPages.length).toBe(5);
+      // Regional owner should see participants flow + review
+      expect(result.current.applicationPages.length).toBe(4);
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
-        expect.arrayContaining([
-          'session-summary',
-          'participants',
-          'supporting-attachments',
-          'next-steps',
-          'review',
-        ])
+        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
       );
+    });
+
+    it('shows only sessionSummary when owner has NC role, regional with national centers, and NOT submitted', () => {
+      const defaultValues = {
+        submitted: false,
+        event: {
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(ncUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      expect(result.current.applicationPages.length).toBe(2);
+      expect(result.current.applicationPages[0].path).toBe('session-summary');
+      expect(result.current.applicationPages[1].path).toBe('review');
+    });
+
+    it('shows limited pages when owner is a regional user, regional with national centers, and NOT submitted', () => {
+      const defaultValues = {
+        submitted: false,
+        event: {
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(mockUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(['participants', 'supporting-attachments', 'next-steps', 'review']);
+    });
+
+    it('shows all pages when owner has NC role, regional with national centers, and submitted', () => {
+      const defaultValues = {
+        submitted: true,
+        event: {
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(ncUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual([
+        'session-summary',
+        'participants',
+        'supporting-attachments',
+        'next-steps',
+        'review',
+      ]);
     });
 
     it('returns correct role indicators for approver', () => {

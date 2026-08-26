@@ -68,7 +68,7 @@ export default function GenericSelectWithDrawer({
           closeMenuOnSelect={false}
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
-          getOptionValue={(option) => option.id}
+          getOptionValue={(option) => option.selectKey ?? option.id}
           required
         />
       </FormGroup>
@@ -84,6 +84,7 @@ GenericSelectWithDrawer.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       value: PropTypes.number,
+      selectKey: PropTypes.string,
     })
   ).isRequired,
   validateValues: PropTypes.func.isRequired,
@@ -91,6 +92,7 @@ GenericSelectWithDrawer.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       value: PropTypes.number,
+      selectKey: PropTypes.string,
     })
   ).isRequired,
   onChangeValues: PropTypes.func.isRequired,

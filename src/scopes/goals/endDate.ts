@@ -1,6 +1,6 @@
 import { Op, type WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
-import { normalizeDateInput } from '../utils';
+import { dateInputForQuery } from '../utils';
 
 function getDateSql(dates: string[], operator: string) {
   const dateClause = operator === 'BETWEEN' ? `${dates[0]} AND ${dates[1]}` : dates[0];
@@ -15,7 +15,7 @@ function getDateSql(dates: string[], operator: string) {
 }
 
 export function beforeEndDate(date: string): WhereOptions {
-  const converted = normalizeDateInput(date, 'end');
+  const converted = dateInputForQuery(date, 'end');
   if (!converted) return {};
   return {
     id: {
@@ -25,7 +25,7 @@ export function beforeEndDate(date: string): WhereOptions {
 }
 
 export function afterEndDate(date: string): WhereOptions {
-  const converted = normalizeDateInput(date, 'start');
+  const converted = dateInputForQuery(date, 'start');
   if (!converted) return {};
   return {
     id: {
@@ -39,8 +39,8 @@ export function withinEndDates(dates: string[]): WhereOptions {
   if (splitDates.length !== 2) {
     return {};
   }
-  const startDate = normalizeDateInput(splitDates[0], 'start');
-  const endDate = normalizeDateInput(splitDates[1], 'end');
+  const startDate = dateInputForQuery(splitDates[0], 'start');
+  const endDate = dateInputForQuery(splitDates[1], 'end');
   if (!startDate || !endDate) {
     return {};
   }

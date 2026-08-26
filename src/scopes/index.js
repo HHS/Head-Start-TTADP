@@ -7,6 +7,7 @@ import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredRe
 import { goalsFiltersToScopes as goal } from './goals';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
 import { grantsFiltersToScopes as grant } from './grants';
+import { notificationFiltersToScopes as notification } from './notifications';
 import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { getValidTopicsSet } from './utils';
@@ -22,6 +23,7 @@ const models = {
   deliveredReview,
   citation,
   grantCitation,
+  notification,
 };
 
 /**
@@ -66,13 +68,13 @@ export default async function filtersToScopes(filters, options = {}) {
     validTopics = await getValidTopicsSet();
   }
 
-  return Object.keys(models).reduce((scopes, model) => {
-    // we make em an object like so
-    Object.assign(scopes, {
-      [model]: models[model](filters, options[model], options.userId, validTopics),
-    });
-    return scopes;
-  }, {});
+  const entries = await Promise.all(
+    Object.keys(models).map(async (model) => [
+      model,
+      await models[model](filters, options[model], options.userId, validTopics),
+    ])
+  );
+  return Object.fromEntries(entries);
 }
 
 /**

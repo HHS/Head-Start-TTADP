@@ -128,7 +128,7 @@ jobs:
             const reportLines = [
               `# Review Metrics Report`,
               ``,
-              `**Generated:** ${now} | **Repo:** ${owner}/${repo} | **Lookback:** ${lookbackDays}d (since ${since.slice(0, 10)}) | **PRs:** ${allPrs.length}/${maxPrs}`,
+              `**Generated:** ${now} | **Repo:** ${owner}/${repo} | **Lookback:** ${lookbackDays}d (since ${since.toISOString().slice(0, 10)}) | **PRs:** ${allPrs.length}/${maxPrs}`,
               ``,
               `## Summary`,
               ``,

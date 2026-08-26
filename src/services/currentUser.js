@@ -29,7 +29,7 @@ const logContext = {
  */
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
-    if (req.session && req.session.userId) {
+   if (req.session && req.session.userId) {
       httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
     }
