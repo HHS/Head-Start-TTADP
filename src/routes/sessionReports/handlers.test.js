@@ -537,6 +537,25 @@ describe('session report handlers', () => {
       );
     });
 
+    it('uses the authenticated user ID when the query includes a user ID', async () => {
+      setTrainingReportReadRegions.mockResolvedValue({
+        userId: 'another-user',
+        'myReports.in[]': 'TR POC',
+      });
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithUserIdFilter = {
+        session: { userId: 1 },
+        query: { userId: 'another-user', 'myReports.in[]': 'TR POC' },
+      };
+
+      await getSessionReportsHandler(requestWithUserIdFilter, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 1, 'myReports.in[]': 'TR POC' })
+      );
+    });
+
     it('returns training reports with custom pagination', async () => {
       setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);

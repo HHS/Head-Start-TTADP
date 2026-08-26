@@ -377,8 +377,8 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       offset: offsetValue,
       limit: limitValue,
       format: formatValue as 'json' | 'csv',
-      userId,
       ...filteredFilterParams,
+      userId,
     };
 
     const result: GetSessionReportsResponse = recipientId
