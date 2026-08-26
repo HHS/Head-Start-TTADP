@@ -479,7 +479,7 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
 const sessionReportAttributes = [
   'id',
-  [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+  [sequelize.literal('"event"."eventId"'), 'eventId'],
   [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
