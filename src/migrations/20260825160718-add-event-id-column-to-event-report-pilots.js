@@ -22,7 +22,7 @@ module.exports = {
       await queryInterface.sequelize.query(
         `
         UPDATE "EventReportPilots"
-        SET "eventId" = data->>'eventId'
+        SET "eventId" = COALESCE(NULLIF(data->>'eventId',''), NULLIF(imported->>'Event ID',''), NULLIF(imported->>'eventId',''))
         WHERE "eventId" IS NULL;
       `,
         { transaction }
