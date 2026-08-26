@@ -1,10 +1,8 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
-  activityReportGoalResponseFilter,
   endDateFilter,
-  myReportsFilter,
-  specialistRoleFilter,
   startDateFilter,
+  ttaHistoryMyReportsFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
   createDateFilter,
@@ -28,11 +26,9 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) =>
   ].sort((a, b) => a.display.localeCompare(b.display));
 
 const TTAHISTORY_FILTER_CONFIG = [
-  startDateFilter,
-  endDateFilter,
-  activityReportGoalResponseFilter,
-  myReportsFilter,
-  specialistRoleFilter,
+  { ...startDateFilter, display: 'Date started' },
+  { ...endDateFilter, display: 'Date ended' },
+  ttaHistoryMyReportsFilter,
 ];
 
 TTAHISTORY_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
@@ -41,6 +37,8 @@ export { TTAHISTORY_FILTER_CONFIG };
 
 export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) =>
   `goals-objectives-filters-${recipientId}`;
+
+export const TTA_TIMELINE_FEATURE_FLAG = 'tta_timeline';
 
 export const getIdParamArray = (search) => {
   const searchParams = new URLSearchParams(search);

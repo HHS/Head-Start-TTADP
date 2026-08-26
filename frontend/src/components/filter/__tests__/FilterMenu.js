@@ -6,6 +6,7 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 import UserContext from '../../../UserContext';
+import { formatDateRange } from '../../../utils';
 import {
   activityReportGoalResponseFilter,
   domainClassroomOrganizationFilter,
@@ -22,6 +23,7 @@ import {
   recipientFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,
+  specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
@@ -42,6 +44,15 @@ import {
 } from '../trainingReportFilters';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
+
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterMenu tests continue to exercise those filter types.
+const TTA_HISTORY_TEST_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
 
 describe('Filter Menu', () => {
   afterAll(() => {
@@ -100,7 +111,7 @@ describe('Filter Menu', () => {
   const renderFilterMenu = (
     filters = [],
     onApplyFilters = jest.fn(),
-    filterConfig = TTAHISTORY_FILTER_CONFIG
+    filterConfig = TTA_HISTORY_TEST_CONFIG
   ) => {
     const user = {
       permissions: [
@@ -166,11 +177,35 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(condition, 'is on or after');
 
     const del = screen.getByRole('button', {
-      name: /remove date started \(ar\) is on or after filter\. click apply filters to make your changes/i,
+      name: /remove date started is on or after filter\. click apply filters to make your changes/i,
     });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
+  });
+
+  it('shows the selected date preset for filters restored from the URL', async () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+    const filters = [
+      {
+        id: 'restored-date-filter',
+        topic: 'startDate',
+        condition: 'is',
+        query: [yearToDate],
+      },
+    ];
+
+    renderFilterMenu(filters, jest.fn(), [startDateFilter]);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const date = await screen.findByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
   });
 
   it('filters out bad results', () => {

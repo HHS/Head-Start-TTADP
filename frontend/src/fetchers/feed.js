@@ -3,7 +3,7 @@ import { get } from './index';
 
 const feedUrl = join('/', 'api', 'feeds');
 
-const getNotifications = async () => {
+const getWhatsNew = async () => {
   const url = join(feedUrl, 'whats-new');
   const response = await get(url);
   return response.text();
@@ -15,4 +15,4 @@ const getSingleFeedItemByTag = async (tag, signal = null) => {
   return response.text();
 };
 
-export { getNotifications, getSingleFeedItemByTag };
+export { getSingleFeedItemByTag, getWhatsNew };

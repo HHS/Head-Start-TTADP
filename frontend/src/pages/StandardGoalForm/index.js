@@ -1,7 +1,7 @@
 import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { Redirect, useHistory, useLocation, useParams } from 'react-router';
 import Select from 'react-select';
@@ -23,6 +23,7 @@ import GoalFormTitleGroup from '../../components/SharedGoalComponents/GoalFormTi
 import GoalGrantSingleSelect from '../../components/SharedGoalComponents/GoalGrantSingleSelect';
 import ObjectivesSection from '../../components/SharedGoalComponents/ObjectivesSection';
 import selectOptionsReset from '../../components/selectOptionsReset';
+import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import { addStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
 import useGoalTemplates from '../../hooks/useGoalTemplates';
@@ -34,8 +35,14 @@ import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
 const missingStandardGoalToolTip =
   'Goals listed haven’t been used by the recipient. To reopen a goal, go to the Recipient TTA Record RTTAPA tab.';
 
+const blockingActivityReportOptions = {
+  includeBlockingActivityReports: true,
+  includeClosedSuspendedGoals: true,
+};
+
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
+  const [blockingActivityReportOverrides, setBlockingActivityReportOverrides] = useState({});
 
   const history = useHistory();
   const location = useLocation();
@@ -50,6 +57,7 @@ export default function StandardGoalForm({ recipient }) {
       [GOAL_FORM_FIELDS.ROOT_CAUSES]: [],
     },
   });
+  const { setValue } = hookForm;
 
   const standardGoalFormButtons = useMemo(
     () => [
@@ -77,7 +85,21 @@ export default function StandardGoalForm({ recipient }) {
   const { selectedGrant, selectedGoal } = hookForm.watch();
 
   const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
-  const goalTemplates = useGoalTemplates(selectedGrants, true, true);
+  const goalTemplates = useGoalTemplates(selectedGrants, {
+    filterOutUsedTemplates: true,
+    ...blockingActivityReportOptions,
+  });
+  const goalTemplatesWithBlockingOverrides = useMemo(
+    () =>
+      (goalTemplates || []).map((goalTemplate) => {
+        const overrideKey = `${selectedGrant?.id}:${goalTemplate.id}`;
+        const blockingOverride = blockingActivityReportOverrides[overrideKey];
+        return blockingOverride
+          ? { ...goalTemplate, blockingActivityReports: blockingOverride }
+          : goalTemplate;
+      }),
+    [blockingActivityReportOverrides, goalTemplates, selectedGrant?.id]
+  );
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -94,6 +116,32 @@ export default function StandardGoalForm({ recipient }) {
       hookForm.setValue('selectedGrant', possibleGrants[0]);
     }
   }, [possibleGrants]);
+
+  useEffect(() => {
+    setValue(GOAL_FORM_FIELDS.SELECTED_GOAL, null);
+    setValue(GOAL_FORM_FIELDS.ROOT_CAUSES, []);
+    setValue(GOAL_FORM_FIELDS.OBJECTIVES, []);
+  }, [selectedGrant?.id, setValue]);
+
+  const blockingActivityReports = selectedGoal?.blockingActivityReports || [];
+  const isGoalBlocked = blockingActivityReports.length > 0;
+
+  const rememberBlockingActivityReports = (goalTemplate, reports) => {
+    if (!selectedGrant || !goalTemplate || !reports?.length) {
+      return false;
+    }
+
+    const overrideKey = `${selectedGrant.id}:${goalTemplate.id}`;
+    setBlockingActivityReportOverrides((currentOverrides) => ({
+      ...currentOverrides,
+      [overrideKey]: reports,
+    }));
+    hookForm.setValue(GOAL_FORM_FIELDS.SELECTED_GOAL, {
+      ...goalTemplate,
+      blockingActivityReports: reports,
+    });
+    return true;
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -114,6 +162,38 @@ export default function StandardGoalForm({ recipient }) {
         });
       }
     } catch (err) {
+      if (
+        err.status === 409 &&
+        err.data?.code === 'STANDARD_GOAL_ON_ACTIVITY_REPORT' &&
+        selectedGoal
+      ) {
+        if (rememberBlockingActivityReports(selectedGoal, err.data.blockingActivityReports)) {
+          return;
+        }
+      }
+      if (
+        err.status === 409 &&
+        err.data?.code === 'STANDARD_GOAL_ALREADY_USED' &&
+        selectedGoal &&
+        selectedGrant
+      ) {
+        try {
+          const refreshedTemplates = await getGoalTemplates(
+            [selectedGrant.id],
+            blockingActivityReportOptions
+          );
+          const refreshedGoal = refreshedTemplates.find(
+            (template) => template.id === selectedGoal.id
+          );
+          if (
+            rememberBlockingActivityReports(refreshedGoal, refreshedGoal?.blockingActivityReports)
+          ) {
+            return;
+          }
+        } catch {
+          // Preserve the original conflict when refreshed availability cannot be loaded.
+        }
+      }
       // eslint-disable-next-line no-console
       console.error(err);
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${err.status}`);
@@ -140,6 +220,48 @@ export default function StandardGoalForm({ recipient }) {
             selectedGrant={selectedGrant}
             possibleGrants={possibleGrants}
           />
+          {isGoalBlocked && (
+            <div
+              className="usa-alert usa-alert--info usa-alert--slim margin-top-2 margin-bottom-0 maxw-mobile-lg"
+              role="alert"
+            >
+              <div className="usa-alert__body">
+                <div className="usa-alert__text">
+                  {blockingActivityReports.length === 1 ? (
+                    <>
+                      This goal already exists on a draft or submitted activity report{' '}
+                      {blockingActivityReports[0].href ? (
+                        <a href={blockingActivityReports[0].href}>
+                          {blockingActivityReports[0].displayId}
+                        </a>
+                      ) : (
+                        <span>{blockingActivityReports[0].displayId}</span>
+                      )}{' '}
+                      created by {blockingActivityReports[0].creatorName}.
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        This goal already exists on multiple draft or submitted activity reports:
+                      </div>
+                      <ul>
+                        {blockingActivityReports.map((report) => (
+                          <li key={report.displayId}>
+                            {report.href ? (
+                              <a href={report.href}>{report.displayId}</a>
+                            ) : (
+                              <span>{report.displayId}</span>
+                            )}{' '}
+                            created by {report.creatorName}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <Controller
             render={({ value, onChange, onBlur }) => (
               <FormItem
@@ -148,6 +270,7 @@ export default function StandardGoalForm({ recipient }) {
                 toolTipText={missingStandardGoalToolTip}
                 htmlFor={GOAL_FORM_FIELDS.SELECTED_GOAL}
                 required
+                formGroupClassName={isGoalBlocked ? 'margin-top-2' : ''}
               >
                 <Select
                   aria-label="Select recipient's goal"
@@ -156,7 +279,7 @@ export default function StandardGoalForm({ recipient }) {
                   className="usa-select"
                   styles={selectOptionsReset}
                   onChange={onChange}
-                  options={goalTemplates || []}
+                  options={goalTemplatesWithBlockingOverrides}
                   placeholder="- Select -"
                   value={value}
                   getOptionLabel={(option) => option.name}
@@ -170,9 +293,20 @@ export default function StandardGoalForm({ recipient }) {
             rules={{ required: 'Select a goal' }}
             defaultValue={null}
           />
-          <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} />
-          {selectedGoal ? <ObjectivesSection /> : <div className="margin-top-4" />}
-          <GoalFormButtonIterator buttons={standardGoalFormButtons} />
+          {!isGoalBlocked && <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} />}
+          {!isGoalBlocked &&
+            (selectedGoal ? <ObjectivesSection /> : <div className="margin-top-4" />)}
+          {isGoalBlocked ? (
+            <div className="margin-top-4">
+              <GoalFormButtonIterator
+                buttons={standardGoalFormButtons.filter(
+                  (button) => button.type === GOAL_FORM_BUTTON_TYPES.LINK
+                )}
+              />
+            </div>
+          ) : (
+            <GoalFormButtonIterator buttons={standardGoalFormButtons} />
+          )}
         </form>
       </GoalFormContainer>
     </FormProvider>

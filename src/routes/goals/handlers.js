@@ -1,5 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
+import { BAD_REQUEST, CONFLICT, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import {
@@ -11,6 +11,7 @@ import {
   goalsByIdsAndActivityReport,
   updateGoalStatusById,
 } from '../../goalServices/goals';
+import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
 import handleErrors from '../../lib/apiErrorHandler';
 import { sequelize } from '../../models';
 import Goal from '../../policies/goals';
@@ -198,6 +199,17 @@ export async function changeGoalStatus(req, res) {
 
     res.json(updatedGoal);
   } catch (error) {
+    if (error instanceof GoalStatusChangeBlockedError) {
+      if (req.inTransactionWrapper) {
+        throw error;
+      }
+      res.status(CONFLICT).json({
+        code: error.code,
+        reasons: error.reasons,
+      });
+      return;
+    }
+
     await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }

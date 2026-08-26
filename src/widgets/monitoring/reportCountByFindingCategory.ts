@@ -24,7 +24,7 @@ interface IReportCountByFindingCategory {
 }
 
 interface AggregatedRow {
-  guidance_category: string;
+  calculated_category: string;
   month_start: string;
   report_count: number;
 }
@@ -102,7 +102,7 @@ export default async function reportCountByFindingCategory(
 
   const rows = await sequelize.query<AggregatedRow>(
     `SELECT
-      COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory) AS guidance_category,
+      COALESCE(NULLIF(BTRIM(c.calculated_category), ''), :noCategory) AS calculated_category,
       TO_CHAR(DATE_TRUNC('month', ar."startDate")::date, 'YYYY-MM-DD') AS month_start,
       COUNT(DISTINCT ar.id)::int AS report_count
     FROM "ActivityReports" ar
@@ -112,8 +112,8 @@ export default async function reportCountByFindingCategory(
     WHERE ar.id IN (:approvedReportIds)
       AND c."deletedAt" IS NULL
       AND c.id IN (:citationIds)
-    GROUP BY COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
-    ORDER BY month_start ASC, guidance_category ASC`,
+    GROUP BY COALESCE(NULLIF(BTRIM(c.calculated_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
+    ORDER BY month_start ASC, calculated_category ASC`,
     {
       replacements: {
         noCategory: NO_CATEGORY_LABEL,
@@ -137,7 +137,7 @@ export default async function reportCountByFindingCategory(
   // Build map: category -> month_start -> count
   const categoryMonthMap = rows.reduce(
     (acc: Map<string, Map<string, number>>, row: AggregatedRow) => {
-      const { guidance_category: category, month_start: monthStart, report_count: count } = row;
+      const { calculated_category: category, month_start: monthStart, report_count: count } = row;
       if (!acc.has(category)) {
         acc.set(category, new Map());
       }

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { Closed, InProgress, NoStatus, Pencil, Trash } from '../../../components/icons';
 import Modal from '../../../components/VanillaModal';
 import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
+import { getRichTextAsText } from '../../../utils';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -35,7 +36,16 @@ function SessionCard({
 }) {
   const modalRef = useRef();
   const { goalTemplates, trainers } = session;
-  const { sessionName, startDate, endDate, objective, objectiveSupportType, status } = session.data;
+
+  const {
+    sessionName,
+    startDate,
+    endDate,
+    objective,
+    objectiveSupportType,
+    status,
+    otherTrainers,
+  } = session.data;
 
   const getSessionDisplayStatusText = () => {
     switch (status) {
@@ -134,7 +144,11 @@ function SessionCard({
 
         <CardData label="Session dates">{`${startDate || ''} - ${endDate || ''}`}</CardData>
 
-        <CardData label="Session objective">{objective}</CardData>
+        <CardData label="Session objective">
+          <p className="usa-prose margin-y-0 ttahub-session-card__objective">
+            {getRichTextAsText(objective)}
+          </p>
+        </CardData>
 
         <CardData label="Support type">{objectiveSupportType}</CardData>
 
@@ -145,7 +159,9 @@ function SessionCard({
         </CardData>
 
         <CardData label="Trainers">
-          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join('; ') : ''}
+          {objectiveTrainers?.length ? objectiveTrainers.join('; ') : ''}
+          {otherTrainers && objectiveTrainers?.length ? '; ' : ''}
+          {otherTrainers ? 'Other' : ''}
         </CardData>
 
         <CardData label="Status">

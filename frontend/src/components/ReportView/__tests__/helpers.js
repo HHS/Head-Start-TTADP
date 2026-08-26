@@ -305,7 +305,7 @@ describe('helpers', () => {
         data: {
           'TTA objective': 'Test Objective 1',
           Topics: 'Topic 1, Topic 2',
-          'iPD courses': 'Course 1',
+          'EEP Courses': 'Course 1',
           'Resource links': expect.any(Object),
           'Resource attachments': 'None provided',
           'TTA provided': 'Training provided',

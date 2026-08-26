@@ -1,0 +1,39 @@
+get:
+  tags:
+    - widgets
+  operationId: ttaHistoryOverview
+  description: >
+    Gets combined overview metrics for the TTA History tab on the Recipient
+    TTA Record. All numeric fields are formatted strings (e.g. "1,234").
+    `sumDuration`, `numParticipants`, and `inPerson` combine values from
+    approved Activity Reports and approved Training Report sessions.
+    `numSessions` is the count of approved Training Report sessions only.
+  responses:
+    200:
+      description: Combined AR and TR overview metrics for the recipient
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              numReports:
+                type: string
+                description: Number of approved Activity Reports
+              numGrants:
+                type: string
+                description: Number of grants with approved Activity Reports
+              numOtherEntities:
+                type: string
+                description: Number of other entities with approved Activity Reports
+              sumDuration:
+                type: string
+                description: Total hours of TTA across approved ARs and TR sessions
+              numParticipants:
+                type: string
+                description: Total participants across approved ARs and TR sessions
+              inPerson:
+                type: string
+                description: Count of in-person activities across approved ARs and TR sessions
+              numSessions:
+                type: string
+                description: Count of approved Training Report sessions

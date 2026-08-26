@@ -1,6 +1,6 @@
 import { APPROVER_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
-import { checkReviewReportBody } from './middleware';
+import { checkReviewReportBody, checkSubmitReportBody } from './middleware';
 
 jest.mock('../../logger', () => ({
   auditLogger: {
@@ -113,5 +113,121 @@ describe('activityReports reviewReport middleware', () => {
     expect(send).toHaveBeenCalled();
     expect(auditLogger.error).toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+});
+
+describe('activityReports submitReport middleware', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockResponse = () => {
+    const send = jest.fn();
+    return {
+      send,
+      res: {
+        status: jest.fn(() => ({ send })),
+      },
+    };
+  };
+
+  it('returns 400 when approverUserIds is missing', () => {
+    const mockRequest = {
+      body: {},
+    };
+    const { res, send } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalled();
+    expect(auditLogger.error).toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when approverUserIds is empty', () => {
+    const mockRequest = {
+      body: {
+        approverUserIds: [],
+      },
+    };
+    const { res, send } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalled();
+    expect(auditLogger.error).toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when approverUserIds contains non-integers', () => {
+    const mockRequest = {
+      body: {
+        approverUserIds: ['abc'],
+      },
+    };
+    const { res, send } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalled();
+    expect(auditLogger.error).toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when approverUserIds contains a negative number', () => {
+    const mockRequest = {
+      body: {
+        approverUserIds: [-1],
+      },
+    };
+    const { res, send } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalled();
+    expect(auditLogger.error).toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('calls next when approverUserIds is a non-empty array of positive integers', () => {
+    const mockRequest = {
+      body: {
+        approverUserIds: [1, 2],
+      },
+    };
+    const { res } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('calls next when unknown fields are included in the request body', () => {
+    const mockRequest = {
+      body: {
+        approverUserIds: [1, 2],
+        notes: 'keep this field',
+        nested: {
+          arbitrary: true,
+        },
+      },
+    };
+    const { res } = mockResponse();
+    const mockNext = jest.fn();
+
+    checkSubmitReportBody(mockRequest, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
   });
 });

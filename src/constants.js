@@ -1,3 +1,5 @@
+const { NOTIFICATION_TYPES, USER_SETTINGS } = require('@ttahub/common');
+
 const FILE_STATUSES = {
   UPLOADING: 'UPLOADING',
   UPLOADED: 'UPLOADED',
@@ -96,30 +98,102 @@ const GROUP_COLLABORATORS = {
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
+ *
+ * The runtime values now live in `@ttahub/common` (see
+ * packages/common/src/constants.js) so that TypeScript can derive
+ * literal-typed unions from a single source of truth. This file
+ * re-imports them above and re-exports them below for backward
+ * compatibility with the 200+ existing call sites that read
+ * `USER_SETTINGS.EMAIL.*` from `../constants`.
  */
-const USER_SETTINGS = {
-  EMAIL: {
-    KEYS: {
-      // Email you when an activity report is submitted for your approval.
-      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
-      // Email you when an activity report you created or are a collaborator on needs an action.
-      CHANGE_REQUESTED: 'emailWhenChangeRequested',
-      // Email you when an activity report you created or are a collaborator on is approved.
-      APPROVAL: 'emailWhenReportApproval',
-      // Email you when you are added as a collaborator to an activity report.
-      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
-      // As a Program Specialist, email you when an AR for one of your grants is approved.
-      RECIPIENT_APPROVAL: 'emailWhenRecipientReportApprovedProgramSpecialist',
-    },
-    VALUES: {
-      NEVER: 'never',
-      IMMEDIATELY: 'immediately',
-      DAILY_DIGEST: 'today',
-      WEEKLY_DIGEST: 'this week',
-      MONTHLY_DIGEST: 'this month',
-    },
+const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED]: {
+    textFn: ({ author, recipientName }) =>
+      `${author} added you as a Collaborator on their Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCollaboratorAdded',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR]: {
+    textFn: ({ author }) => `${author} has submitted an Activity Report for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCollaboratorReportSubmittedForReview',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR]: {
+    textFn: ({ author }) => `${author} has submitted an Activity Report for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
+    textFn: ({ recipientName }) =>
+      `An Activity Report for ${recipientName} has been submitted for approval.`,
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'Take action',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportSubmittedForReview',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has requested changes to your Activity Report for ${recipientName}.`,
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'Take Action',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has requested changes to your Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
+  },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has approved your Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportApproval',
+  },
+  [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
+    textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
+    actionable: false,
+    linkFn: () => null,
+    linkText: () => null,
+    displayId: () => null,
+    settingsKey: 'inAppWhenPlannedOutage',
   },
 };
+
+const ADMIN_BROADCASTABLE_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+  NOTIFICATION_TYPES.SYSTEM_UNPLANNED_OUTAGE,
+];
+
+const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+];
 
 const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
@@ -137,7 +211,74 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+  COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
+  COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'collaboratorReportSubmittedForReviewDigest',
+  CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
+  CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'creatorReportSubmittedForReviewDigest',
+  COLLAB_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollabReportSubmittedForReview',
+  COLLABORATION_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaborationReportSubmittedForReview',
+  COLLABORATION_REPORT_COLLABORATOR_SUBMITTED: 'emailWhenCollaborationReportCollaboratorSubmitted',
+  COLLABORATION_CHANGE_REQUESTED: 'emailWhenCollaborationChangeRequested',
+  COLLABORATION_REPORT_APPROVED: 'emailWhenCollaborationReportApproved',
+  ADDED_AS_COLLABORATION_COLLABORATOR: 'emailWhenAddedAsCollaborationCollaborator',
+  ADDED_AS_TTA_STAFF_COMM_LOG: 'emailWhenAddedAsTTAStaffCommLog',
+  ADDED_AS_RECIPIENT_COMM_LOG: 'emailWhenAddedAsRecipientCommLog',
+  ADDED_AS_POC_TRAINING_REPORT: 'emailWhenAddedAsPocTrainingReport',
+  ADDED_AS_COLLABORATOR_TRAINING_REPORT: 'emailWhenAddedAsCollaboratorTrainingReport',
+  SESSION_REVIEW_REQUESTED_TRAINING_REPORT: 'emailWhenSessionReviewRequestedTrainingReport',
+  SESSION_CHANGES_REQUESTED_TRAINING_REPORT: 'emailWhenSessionChangesRequestedTrainingReport',
+  SESSION_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenSessionDetails20DaysCreatorCollaborator',
+  SESSION_DETAILS_20_DAYS_POC: 'emailWhenSessionDetails20DaysPoc',
+  NO_SESSIONS_CREATOR_COLLABORATOR: 'emailWhenNoSessionsCreatorCollaborator',
+  NO_SESSIONS_POC: 'emailWhenNoSessionsPoc',
+  EVENT_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenEventDetails20DaysCreatorCollaborator',
+  EVENT_NOT_COMPLETED: 'emailWhenEventNotCompleted',
+  PLANNED_OUTAGE: 'emailWhenPlannedOutage',
+  UNPLANNED_OUTAGE: 'emailWhenUnplannedOutage',
+  MONITORING_DETAILS_ADDED: 'emailWhenMonitoringDetailsAdded',
+  ADDED_AS_CO_OWNER: 'emailWhenAddedAsCoOwner',
+  SHARED_MY_GROUP: 'emailWhenSharedMyGroup',
 };
+
+const EMAIL_NOTIFICATION_SETTING_KEYS = Array.from(
+  new Set([
+    ...Object.values(USER_SETTINGS.EMAIL.KEYS),
+    ...Object.values(EMAIL_ACTIONS).filter((action) => action.startsWith('emailWhen')),
+  ])
+);
+
+const IN_APP_NOTIFICATION_SETTING_KEYS = [
+  'inAppWhenReportSubmittedForReview',
+  'inAppWhenChangeRequested',
+  'inAppWhenReportApproval',
+  'inAppWhenAppointedCollaborator',
+  'inAppWhenRecipientReportApprovedProgramSpecialist',
+  'inAppWhenCollaboratorReportSubmittedForReview',
+  'inAppWhenCreatorReportSubmittedForReview',
+  'inAppWhenCollabReportSubmittedForReview',
+  'inAppWhenCollaborationReportSubmittedForReview',
+  'inAppWhenCollaborationReportCollaboratorSubmitted',
+  'inAppWhenCollaborationChangeRequested',
+  'inAppWhenCollaborationReportApproved',
+  'inAppWhenAddedAsCollaborationCollaborator',
+  'inAppWhenAddedAsTTAStaffCommLog',
+  'inAppWhenAddedAsRecipientCommLog',
+  'inAppWhenAddedAsPocTrainingReport',
+  'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionReviewRequestedTrainingReport',
+  'inAppWhenSessionChangesRequestedTrainingReport',
+  'inAppWhenSessionDetails20DaysCreatorCollaborator',
+  'inAppWhenSessionDetails20DaysPoc',
+  'inAppWhenNoSessionsCreatorCollaborator',
+  'inAppWhenNoSessionsPoc',
+  'inAppWhenEventDetails20DaysCreatorCollaborator',
+  'inAppWhenEventNotCompleted',
+  'inAppWhenPlannedOutage',
+  'inAppWhenUnplannedOutage',
+  'inAppWhenMonitoringDetailsAdded',
+  'inAppWhenAddedAsCoOwner',
+  'inAppWhenSharedMyGroup',
+];
 
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
@@ -226,6 +367,9 @@ const MAINTENANCE_TYPE = {
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'monitoring-regional-dashboard',
+  'actionable_notifications',
+  'compliant_follow_up_reviews_tta_support',
+  'tta_timeline',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -272,7 +416,13 @@ module.exports = {
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
+  NOTIFICATION_TYPES,
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  NOTIFICATION_CONFIGURATION,
+  ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
+  EMAIL_NOTIFICATION_SETTING_KEYS,
+  IN_APP_NOTIFICATION_SETTING_KEYS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,

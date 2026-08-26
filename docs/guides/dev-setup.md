@@ -1,22 +1,26 @@
 # Dev Setup
 
-## Docker Setup
+## Local Docker Setup
 
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.22.2`).
-3. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
-4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
-5. Confirm the tools are available (`task`, `node`, `docker`).
+2. Install Node using the version in `.nvmrc` (`22.23.2`).
+3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
+4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
+5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
+6. Confirm the tools are available (`task`, `node`, `yarn`, `docker`).
 
-### Docker Workflows
+> **nvm gotcha:** Global packages (including Yarn) are installed per Node version and do not carry over when you switch versions. If `yarn` reports "command not found" after switching Node versions, reinstall it for the active version with `npm install -g yarn@1.22.22`, or copy globals when installing a new version via `nvm install <version> --reinstall-packages-from=current`.
 
-Primary workflows (Yarn-first):
+### Primary Workflows
 
 - Install frontend and backend dependencies: `yarn deps`
+- Build frontend/backend code: `yarn build`
+- On first startup, when switching branches, or after significant changes: `yarn docker:refresh`
+    - This will rebuild code and images, run migrations/reseed the DB 
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
-- Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full`
+- Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
 - Tail logs: `yarn docker:logs`
 - Open backend shell: `yarn docker:shell:backend`
 - Open frontend shell: `yarn docker:shell:frontend`
@@ -31,7 +35,7 @@ For testing commands, see [testing](./testing.md).
 
 Local Docker development uses [`docker/compose/docker-compose.yml`](../../docker/compose/docker-compose.yml).
 The baseline/dev services have no profile and start by default.
-Additional services use the `fullstack` profile and are included by `yarn docker:start:full`.
+Additional services use the `fullstack` profile and are included by `yarn docker:start:full`. For local email testing with that profile, set `SMTP_HOST=mailpit` in `.env`.
 Dynamic security scan uses [`docker/compose/dss.yml`](../../docker/compose/dss.yml) via `yarn docker:dss`.
 
 The Docker stack uses bind mounts for source code and named volumes for dependencies/cache (for example `backend-node-modules`, `backend-yarn-cache`) to speed up rebuilds.
@@ -72,8 +76,9 @@ Make sure you have access to cloud.gov spaces and required credentials.
 
 On macOS:
 
-1. `cf login -a api.fr.cloud.gov --sso`
-2. `bash ./bin/latest_backup.sh -d`
+1. Install cloud foundry cli: `brew install cloudfoundry/tap/cf-cli@8`
+2. `cf login -a api.fr.cloud.gov --sso`
+2. `bash ./bin/latest_backup.sh`
 3. Ensure `psql` is installed.
 4. Start the Docker stack: `yarn docker:start`
 5. Create `bounce.sql` in repo root:

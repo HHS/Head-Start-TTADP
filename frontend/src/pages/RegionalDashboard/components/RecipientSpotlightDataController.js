@@ -5,10 +5,13 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { RECIPIENTS_SPOTLIGHT_PER_PAGE } from '../../../Constants';
 import FilterContext from '../../../FilterContext';
-import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
+import {
+  getRecipientSpotlight,
+  getRecipientSpotlightCsv,
+} from '../../../fetchers/recipientSpotlight';
 import useFetch from '../../../hooks/useFetch';
 import useSessionSort from '../../../hooks/useSessionSort';
-import { filtersToQueryString } from '../../../utils';
+import { blobToCsvDownload, filtersToQueryString } from '../../../utils';
 import { DashboardOverviewWidget } from '../../../widgets/DashboardOverview';
 import RecipientSpotlightDashboardCards from './RecipientSpotlightDashboardCards';
 
@@ -125,6 +128,22 @@ export default function RecipientSpotlightDataController({
     setRecipientsPerPage(perPageValue);
   };
 
+  const exportCsv = async () => {
+    try {
+      setIsAppLoading(true);
+      const blob = await getRecipientSpotlightCsv(
+        sortConfig.sortBy,
+        sortConfig.direction,
+        filterQuery,
+        null, // grantId
+        true // mustHaveIndicators
+      );
+      blobToCsvDownload(blob, 'recipient-spotlight.csv');
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
   return (
     <>
       {error && (
@@ -157,6 +176,7 @@ export default function RecipientSpotlightDataController({
             filters={filters}
             userHasOnlyOneRegion={userHasOnlyOneRegion}
             loading={loading}
+            onExportCsv={exportCsv}
           />
         </Grid>
       </Grid>

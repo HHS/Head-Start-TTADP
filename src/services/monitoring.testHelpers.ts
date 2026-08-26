@@ -423,7 +423,7 @@ async function createReportAndCitationData(
       calculated_status: 'Complete',
       raw_finding_type: 'Noncompliance',
       calculated_finding_type: 'Deficiency',
-      source_category: 'source',
+      calculated_category: 'source',
       active: true,
       last_review_delivered: true,
     },

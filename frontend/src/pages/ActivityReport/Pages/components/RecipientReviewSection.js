@@ -58,7 +58,7 @@ const RecipientReviewSection = () => {
           sort: true,
         },
         {
-          label: 'iPD Courses',
+          label: 'EEP Courses',
           name: 'courses',
           path: 'name',
           sort: true,

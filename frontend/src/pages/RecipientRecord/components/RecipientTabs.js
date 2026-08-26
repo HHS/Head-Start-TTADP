@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import TabsNav from '../../../components/TabsNav';
+import { TTA_TIMELINE_FEATURE_FLAG } from '../pages/constants';
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
   const links = [
@@ -23,6 +24,11 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/monitoring/review`,
       label: 'Monitoring',
+    },
+    {
+      to: `/recipient-tta-records/${recipientId}/region/${region}/timeline`,
+      label: 'TTA Timeline',
+      featureFlag: TTA_TIMELINE_FEATURE_FLAG,
     },
   ];
 

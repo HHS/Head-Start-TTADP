@@ -1,6 +1,18 @@
 import { useCallback } from 'react';
 import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
+
+function formatCsvCell(value) {
+  const stringValue = typeof value === 'string' ? value : String(value ?? '');
+  const sanitizedValue =
+    typeof value === 'string' && CSV_FORMULA_PREFIX_PATTERN.test(stringValue)
+      ? `'${stringValue}`
+      : stringValue;
+
+  return /[,"\n]/.test(sanitizedValue) ? `"${sanitizedValue.replace(/"/g, '""')}"` : sanitizedValue;
+}
+
 export default function useWidgetExport(
   data,
   headers,
@@ -31,13 +43,15 @@ export default function useWidgetExport(
 
         // create a csv file of all the rows.
         const csvRows = dataToExport.map((row) => {
-          const dataToUse = !row.data && exportDataName ? row[exportDataName] : row.data;
+          const dataToUse =
+            (!row?.data && exportDataName ? row?.[exportDataName] : row?.data) || [];
           const rowValues = dataToUse.map((d) => {
-            const { value } = d;
-            return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+            const rawValue = d?.value ?? '';
+            return formatCsvCell(rawValue);
           });
-          // If the heading has a comma, wrap it in quotes.
-          const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
+          const heading =
+            typeof row?.heading === 'string' ? row.heading : String(row?.heading ?? '');
+          const rowHeadingToUse = formatCsvCell(heading);
           return `${rowHeadingToUse},${rowValues.join(',')}`;
         });
         // Create CSV.

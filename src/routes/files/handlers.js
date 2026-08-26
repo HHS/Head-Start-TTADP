@@ -201,7 +201,7 @@ const deleteHandler = async (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    return handleErrors(req, res, error, logContext);
   }
 };
 

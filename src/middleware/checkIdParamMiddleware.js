@@ -1,10 +1,11 @@
 import httpCodes from 'http-codes';
+import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger } from '../logger';
 
 const errorMessage = 'Received malformed request params';
 
 function canBeInt(str) {
-  return Number.isInteger(Number(str)) && Number(str) > 0;
+  return parsePositiveInteger(str) !== null;
 }
 
 /**
@@ -202,7 +203,13 @@ export function checkGoalTemplateIdParam(req, res, next) {
 }
 
 export function checkIdParam(req, res, next, paramName) {
-  if (req.params && req.params[paramName] && canBeInt(req.params[paramName])) {
+  const parsedParam = parsePositiveInteger(req.params?.[paramName]);
+  if (parsedParam !== null) {
+    res.locals = res.locals || {};
+    res.locals.validatedParams = {
+      ...res.locals.validatedParams,
+      [paramName]: parsedParam,
+    };
     return next();
   }
 
@@ -273,8 +280,8 @@ export function checkGrantIdQueryParam(req, res, next) {
     return next();
   }
 
-  const parsed = Number(grantId);
-  if (!Number.isInteger(parsed) || parsed < 1) {
+  const parsed = parsePositiveInteger(grantId);
+  if (parsed === null) {
     const msg = `${errorMessage}: grantId ${String(grantId)}`;
     auditLogger.error(msg);
     return res.status(httpCodes.BAD_REQUEST).send(msg);
@@ -282,4 +289,8 @@ export function checkGrantIdQueryParam(req, res, next) {
 
   req.query.parsedGrantId = parsed;
   return next();
+}
+
+export function checkNotificationIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'notificationId');
 }

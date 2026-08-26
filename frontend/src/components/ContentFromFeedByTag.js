@@ -21,6 +21,7 @@ export default function ContentFromFeedByTag({
   contentSelector,
   className,
   openLinksInNewTab,
+  hideEmptyParagraphs,
 }) {
   const [content, setContent] = useState('');
 
@@ -75,7 +76,7 @@ export default function ContentFromFeedByTag({
     };
   }, [contentSelector, tagName]);
 
-  const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
+  const classNames = `${className} ttahub-single-feed-item--by-tag text-left ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
   return (
     <div className={classNames}>
       <FeedArticle
@@ -84,6 +85,7 @@ export default function ContentFromFeedByTag({
         unread={false}
         key={content}
         openLinksInNewTab={openLinksInNewTab}
+        hideEmptyParagraphs={hideEmptyParagraphs}
         partial
       />
     </div>
@@ -95,10 +97,12 @@ ContentFromFeedByTag.propTypes = {
   contentSelector: PropTypes.string,
   className: PropTypes.string,
   openLinksInNewTab: PropTypes.bool,
+  hideEmptyParagraphs: PropTypes.bool,
 };
 
 ContentFromFeedByTag.defaultProps = {
   contentSelector: '',
   className: '',
   openLinksInNewTab: false,
+  hideEmptyParagraphs: false,
 };

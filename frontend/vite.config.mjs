@@ -1,11 +1,12 @@
 import { createRequire } from 'node:module';
-import { defineConfig, loadEnv, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig, loadEnv, transformWithEsbuild } from 'vite';
 
 const require = createRequire(import.meta.url);
 
 const loadJsFilesAsJsx = {
   name: 'load-js-files-as-jsx',
+  // Transforms .js files in src/ as JSX. .ts/.tsx files are handled natively by @vitejs/plugin-react.
   async transform(code, id) {
     if (!/\/src\/.*\.js$/.test(id)) {
       return null;
@@ -21,21 +22,23 @@ const loadJsFilesAsJsx = {
 const htmlTemplateBehavior = (env) => ({
   name: 'html-template-behavior',
   transformIndexHtml(html) {
-    const accessibilityCssLink = env.REACT_APP_INCLUDE_ACCESSIBILITY_CSS === 'true'
-      ? '<link rel="stylesheet" href="/accessibility-errors.css" />'
-      : '';
+    const accessibilityCssLink =
+      env.REACT_APP_INCLUDE_ACCESSIBILITY_CSS === 'true'
+        ? '<link rel="stylesheet" href="/accessibility-errors.css" />'
+        : '';
 
     const gtmAuth = JSON.stringify(env.REACT_APP_GTM_AUTH || '');
     const gtmPreview = JSON.stringify(env.REACT_APP_GTM_PREVIEW || '');
     const gtmId = JSON.stringify(env.REACT_APP_GTM_ID || '');
 
-    const gtmScript = env.REACT_APP_GTM_ENABLED === 'true'
-      ? `<script nonce="__NONCE__">(function(w,d,s,l,i,auth,preview){w[l]=w[l]||[];w[l].push({'gtm.start':
+    const gtmScript =
+      env.REACT_APP_GTM_ENABLED === 'true'
+        ? `<script nonce="__NONCE__">(function(w,d,s,l,i,auth,preview){w[l]=w[l]||[];w[l].push({'gtm.start':
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl+ '&gtm_auth='+auth+'&gtm_preview='+preview+'&gtm_cookies_win=x';f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer', ${gtmId}, ${gtmAuth}, ${gtmPreview});</script>`
-      : '';
+        : '';
 
     return html
       .replace('<!-- __ACCESSIBILITY_CSS__ -->', accessibilityCssLink)
@@ -47,7 +50,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backendProxy = env.BACKEND_PROXY || process.env.BACKEND_PROXY;
   const reactAppEnv = Object.fromEntries(
-    Object.entries(env).filter(([key]) => key.startsWith('REACT_APP_')),
+    Object.entries(env).filter(([key]) => key.startsWith('REACT_APP_'))
   );
 
   return {
@@ -60,6 +63,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [loadJsFilesAsJsx, react(), htmlTemplateBehavior(env)],
     resolve: {
+      extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
         '@mesh-kit/core/client': require.resolve('@mesh-kit/core/client'),
         '@use-it/interval': require.resolve('@use-it/interval/dist/index.js'),
@@ -81,11 +85,11 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: backendProxy
         ? {
-          '/api': {
-            target: backendProxy,
-            changeOrigin: true,
-          },
-        }
+            '/api': {
+              target: backendProxy,
+              changeOrigin: true,
+            },
+          }
         : undefined,
     },
     build: {
@@ -97,9 +101,9 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         onwarn(warning, warn) {
           if (
-            warning.code === 'SOURCEMAP_ERROR'
-            || (typeof warning.message === 'string'
-              && warning.message.includes('Failed to parse source map'))
+            warning.code === 'SOURCEMAP_ERROR' ||
+            (typeof warning.message === 'string' &&
+              warning.message.includes('Failed to parse source map'))
           ) {
             return;
           }

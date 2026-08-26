@@ -1,0 +1,70 @@
+import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import ActivityReportNotifications from '../ActivityReportNotifications';
+
+function renderComponent() {
+  function Wrapper() {
+    const methods = useForm();
+    return (
+      <FormProvider {...methods}>
+        <ActivityReportNotifications />
+      </FormProvider>
+    );
+  }
+
+  render(<Wrapper />);
+}
+
+describe('ActivityReportNotifications', () => {
+  it('renders column headers', () => {
+    renderComponent();
+
+    expect(screen.getByText('Event')).toBeInTheDocument();
+    expect(screen.getByText('In-app')).toBeInTheDocument();
+    expect(screen.getAllByText('Email').length).toBeGreaterThan(0);
+  });
+
+  it('renders group controller label', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText('Set preferences for all Activity Report notifications')
+    ).toBeInTheDocument();
+  });
+
+  it('renders expected row labels', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText('Someone submits an Activity Report for my approval.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'A manager requests changes to an Activity Report that I created, collaborated on, or am assigned to approve.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("I'm added as a collaborator on an activity report.")
+    ).toBeInTheDocument();
+  });
+
+  it('renders the new WhenCollaboratorReportSubmittedForReview row', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText(
+        'Someone submits an Activity Report for approval that I am a collaborator on.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders the new WhenCreatorReportSubmittedForReview row', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText('Someone submits an Activity Report for approval that I created.')
+    ).toBeInTheDocument();
+  });
+});

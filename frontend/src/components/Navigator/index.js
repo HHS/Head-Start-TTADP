@@ -17,7 +17,7 @@ import Container from '../Container';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import NavigatorHeader from './components/NavigatorHeader';
 import SideNav from './components/SideNav';
-import { COMPLETE, IN_PROGRESS } from './constants';
+import { COMPLETE, GOALS_OBJECTIVES_PATH, IN_PROGRESS } from './constants';
 
 const Navigator = ({
   formData,
@@ -62,7 +62,7 @@ const Navigator = ({
 
   const context = useFormContext();
 
-  const { watch, formState } = context;
+  const { watch, formState, getValues } = context;
 
   const pageState = watch('pageState');
 
@@ -76,7 +76,9 @@ const Navigator = ({
   const { isDirty } = formState;
 
   const onUpdatePage = async (index) => {
-    // run the preflight check
+    // Callers supply preFlightForNavigation for report-type-specific checks
+    // (e.g., required-field guards) that must pass before any navigation save.
+    // Return false from preFlightForNavigation to abort navigation; true to proceed.
     const preFlightResult = await preFlightForNavigation();
     if (!preFlightResult) return;
 
@@ -125,12 +127,8 @@ const Navigator = ({
     const current = p.position === page.position;
 
     let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-    if (stateOfPage !== COMPLETE) {
-      if (current) {
-        stateOfPage = IN_PROGRESS;
-      } else {
-        stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-      }
+    if (stateOfPage !== COMPLETE && current) {
+      stateOfPage = IN_PROGRESS;
     }
 
     // SPECIAL CASE: Goals and objectives page (position 2) should always show
@@ -142,6 +140,22 @@ const Navigator = ({
       Object.keys(goalForEditing).length > 0;
 
     if (p.position === GOALS_AND_OBJECTIVES_POSITION && hasGoalBeingEdited) {
+      stateOfPage = IN_PROGRESS;
+    }
+
+    // STALE COMPLETE GUARD: a page can be persisted as Complete and later fail its
+    // own completion rules if a field became required after it was last saved (e.g.
+    // objective support type). Because submit/return gates read this stored state,
+    // such a report could be submitted—or an approver blocked from returning it—while
+    // actually incomplete. Re-run the page's own isPageComplete (the single source of
+    // truth) and downgrade a stale Complete to In progress. This only ever downgrades,
+    // so a page that still passes its check is unaffected.
+    if (
+      p.path === GOALS_OBJECTIVES_PATH &&
+      stateOfPage === COMPLETE &&
+      typeof p.isPageComplete === 'function' &&
+      !p.isPageComplete(getValues(), formState)
+    ) {
       stateOfPage = IN_PROGRESS;
     }
 
@@ -247,6 +261,7 @@ Navigator.propTypes = {
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
+  updateErrorMessage: PropTypes.func,
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
@@ -292,6 +307,7 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
+  updateErrorMessage: NOOP,
   reportCreator: {
     name: null,
     role: null,

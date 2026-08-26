@@ -226,30 +226,35 @@ describe('Objective status update hook', () => {
         activityReportId: reportOne.id,
         objectiveId: objective.id,
         status: 'Complete',
+        supportType: 'Planning',
       });
 
       ActivityReportObjective.create({
         activityReportId: reportTwo.id,
         objectiveId: objective.id,
         status: 'In Progress',
+        supportType: 'Planning',
       });
 
       ActivityReportObjective.create({
         activityReportId: reportThree.id,
         objectiveId: objective.id,
         status: 'Suspended',
+        supportType: 'Planning',
       });
 
       ActivityReportObjective.create({
         activityReportId: reportOnlyUsingObjective.id,
         objectiveId: objectiveTwo.id,
         status: 'Complete',
+        supportType: 'Planning',
       });
 
       ActivityReportObjective.create({
         activityReportId: reportOnlyUsingObjective.id,
         objectiveId: objectiveTwoB.id,
         status: 'Complete',
+        supportType: 'Planning',
       });
     } catch (e) {
       auditLogger.error(JSON.stringify(e));

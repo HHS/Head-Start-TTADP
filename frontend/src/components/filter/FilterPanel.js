@@ -11,11 +11,9 @@ const REGION = 'region';
 const determineRegionalFilters = (filters, allUserRegions) => {
   const passedRegionFilters = filters
     .filter((f) => f.topic === REGION)
-    .map((r) => {
-      if (isArray(r.query)) {
-        return parseInt(r.query[0], 10);
-      }
-      return r.query;
+    .flatMap((r) => {
+      const values = isArray(r.query) ? r.query : [r.query];
+      return values.map((v) => parseInt(v, 10));
     });
 
   const containsAllRegions = allUserRegions.every((region) => passedRegionFilters.includes(region));

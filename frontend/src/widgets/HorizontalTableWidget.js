@@ -138,18 +138,15 @@ export default function HorizontalTableWidget({
 
   const hasActionsColumn = data.some((r) => r.actions);
   const canStickyLastDataColumn = stickyLastDataColumn && !hasActionsColumn && !showTotalColumn;
-  const horizontalTableStyle = anchorColumns
-    ? {
-        '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
-        ...(firstColumnMaxWidth
-          ? {
-              '--smarthub-horizontal-table-first-column-max-width':
-                toCssLength(firstColumnMaxWidth),
-              '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
-            }
-          : {}),
-      }
-    : undefined;
+  const horizontalTableStyle = {
+    '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
+    ...(anchorColumns && firstColumnMaxWidth
+      ? {
+          '--smarthub-horizontal-table-first-column-max-width': toCssLength(firstColumnMaxWidth),
+          '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
+        }
+      : {}),
+  };
   const firstFooterDataIndex = enableCheckboxes ? 1 : 0;
 
   const Header = ({ header, sortingEnabled, className }) => {
@@ -347,11 +344,14 @@ export default function HorizontalTableWidget({
                       data={{ ...d, title: d.title }}
                       showDashForNullValue={showDashForNullValue}
                       isSticky={isStickyTotal}
-                      className={
+                      className={[
                         isStickyTotal
                           ? 'smarthub-horizontal-table-last-column'
-                          : getStickyLastDataColumnClass(isLastDataCell)
-                      }
+                          : getStickyLastDataColumnClass(isLastDataCell),
+                        d.className,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     />
                   );
                 })}
@@ -385,14 +385,25 @@ export default function HorizontalTableWidget({
           <tfoot>
             <tr>
               {footerData.map((f, index) => {
-                const isLastDataFooterCell = index === headers.length + (enableCheckboxes ? 1 : 0);
-                const footerCellClassNames = [getStickyLastDataColumnClass(isLastDataFooterCell)];
+                const isLastFooterCell = index === footerData.length - 1;
+                const isStickyTotal =
+                  stickyLastColumn && showTotalColumn && isLastFooterCell && !hasActionsColumn;
+                const footerCellClassNames = [];
 
-                if (anchorColumns && enableCheckboxes && index === 0) {
+                if (isStickyTotal) {
+                  footerCellClassNames.push('smarthub-horizontal-table-last-column');
+                } else {
+                  const stickyClass = getStickyLastDataColumnClass(isLastFooterCell);
+                  if (stickyClass) {
+                    footerCellClassNames.push(stickyClass);
+                  }
+                }
+
+                if (enableCheckboxes && index === 0) {
                   footerCellClassNames.push('smarthub-horizontal-table-footer-checkbox-column');
                 }
 
-                if (anchorColumns && stickyFirstColumn && index === firstFooterDataIndex) {
+                if (stickyFirstColumn && index === firstFooterDataIndex) {
                   footerCellClassNames.push('smarthub-horizontal-table-footer-first-column');
                 }
 

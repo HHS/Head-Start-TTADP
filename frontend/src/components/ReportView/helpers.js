@@ -246,7 +246,7 @@ export function addObjectiveSectionsToArray(
             }
           : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'iPD courses': objective.courses.length
+        'EEP Courses': objective.courses.length
           ? formatSimpleArray(objective.courses.map(({ name }) => name))
           : 'None provided',
         'Resource links': objective.resources.length

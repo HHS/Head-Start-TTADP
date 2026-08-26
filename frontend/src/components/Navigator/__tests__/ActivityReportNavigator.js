@@ -4,6 +4,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { useForm, useFormContext } from 'react-hook-form';
@@ -283,6 +284,30 @@ describe('ActivityReportNavigator', () => {
     fetchMock.restore();
   });
 
+  it('blocks side-nav navigation on a needs-action report with no valid approvers', async () => {
+    const updatePage = jest.fn();
+    const onUpdateError = jest.fn();
+    await renderNavigator({
+      updatePage,
+      onUpdateError,
+      formData: {
+        ...initialData,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [],
+        pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+      },
+    });
+
+    userEvent.click(screen.getByRole('button', { name: /second page/i }));
+
+    await waitFor(() => {
+      expect(updatePage).not.toHaveBeenCalled();
+      expect(onUpdateError).toHaveBeenCalledWith(
+        'At least one approver is required before saving.'
+      );
+    });
+  });
+
   it('sets dirty forms as "in progress"', async () => {
     await renderNavigator({});
     const firstInput = screen.getByTestId('first');
@@ -418,8 +443,13 @@ describe('ActivityReportNavigator', () => {
     const input = screen.getByTestId('second');
     userEvent.click(input);
 
-    jest.advanceTimersByTime(800);
-    expect(onSave).toHaveBeenCalled();
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
+
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
   });
 
   it('does not run the autosave when the form is clean', async () => {
@@ -870,10 +900,56 @@ describe('ActivityReportNavigator goals page saves', () => {
       expect(defaultProps.onSave).toHaveBeenCalled();
     });
 
+    // The goal form fields are cleared as part of the single reset() payload
+    // (not via post-reset setValue calls) so the read-only goals list renders
+    // consistently in one pass.
     await waitFor(() => {
-      expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
+      expect(hookForm.reset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          goalForEditing: '',
+          goalName: '',
+          goalEndDate: '',
+          goalPrompts: [],
+        })
+      );
+    });
+  });
+
+  it('folds a backend-split goalForEditing into the goals list when closing the form', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    // Backend still reports the just-saved goal as actively edited, so onSave
+    // returns it split out into goalForEditing with the goals array missing it.
+    // Because "Save goal" closes the form, the goal must be folded back into
+    // goals at its original index so the read-only list renders it.
+    defaultProps.onSave.mockResolvedValue({
+      id: 1,
+      goals: [{ id: 5, name: 'Existing goal' }],
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+    });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    // reset() alone does not propagate to the useController-bound `goals` field,
+    // so the handler also calls setValue('goals', ...) with the folded goal at its
+    // original index to force the read-only list to render it.
+    await waitFor(() => {
+      expect(hookForm.setValue).toHaveBeenCalledWith('goals', [
+        { id: 5, name: 'Existing goal' },
+        { id: 7, name: 'Goal', originalIndex: 1 },
+      ]);
       expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
-      expect(hookForm.reset).toHaveBeenCalled();
     });
   });
 

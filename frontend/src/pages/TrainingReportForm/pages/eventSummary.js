@@ -1,5 +1,9 @@
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  Alert,
   Button,
+  Checkbox,
   Dropdown,
   Fieldset,
   Label,
@@ -14,13 +18,16 @@ import {
   TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
 import { sortBy } from 'lodash';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { useContext, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import colors from '../../../colors';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import DismissingComponentWrapper from '../../../components/DismissingComponentWrapper';
 import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
@@ -54,6 +61,9 @@ const EventSummary = ({
   isAppLoading,
   showSubmitModal,
   onSaveDraft,
+  lastSaveTime,
+  showSavedDraft,
+  updateShowSavedDraft,
 }) => {
   const { register, control, getValues, watch, setValue } = useFormContext();
 
@@ -85,7 +95,7 @@ const EventSummary = ({
     users: { pointOfContact, creators },
   } = additionalData;
   const adminCanEdit = hasAdminRights && status !== TRAINING_REPORT_STATUSES.COMPLETE;
-  const ownerName = owner && owner.name ? owner.name : '';
+  const ownerName = owner?.name ?? '';
 
   const getIntendedAudience = (value) => {
     let audience = '';
@@ -98,7 +108,7 @@ const EventSummary = ({
 
   const getPointOfContacts = (pocs) => {
     let pocsToDisplay = [];
-    if (pocs && pocs.length) {
+    if (pocs?.length) {
       pocsToDisplay = pointOfContact
         .filter((poc) => pocs.includes(poc.id))
         .map((poc) => poc.fullName);
@@ -107,14 +117,14 @@ const EventSummary = ({
   };
 
   const getReadOnlyReasons = (reasons) => {
-    if (!reasons || reasons.length === 0) {
+    if (!reasons?.length) {
       return '';
     }
     return reasons.join(', ');
   };
 
   const getReadOnlyTargetPopulations = (tvalue) => {
-    if (!tvalue || tvalue.length === 0) {
+    if (!tvalue?.length) {
       return '';
     }
     return tvalue.join(', ');
@@ -270,6 +280,30 @@ const EventSummary = ({
 
         <div className="margin-top-3">
           <FormItem
+            label="Additional regions involved"
+            name="additionalRegions"
+            fieldSetWrapper
+            required={false}
+          >
+            <Checkbox
+              id="additionalRegions-11"
+              name="additionalRegions"
+              value="11"
+              label="Region 11 (Tribal)"
+              inputRef={register()}
+            />
+            <Checkbox
+              id="additionalRegions-12"
+              name="additionalRegions"
+              value="12"
+              label="Region 12 (Migrant and Seasonal Head Start)"
+              inputRef={register()}
+            />
+          </FormItem>
+        </div>
+
+        <div className="margin-top-3">
+          <FormItem
             label="Is this event in partnership with a Head Start Association (HSA)? "
             name="eventPartnership"
             required
@@ -317,7 +351,7 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  options={trainerOptions.filter((option) => option.id !== data.ownerId)}
+                  options={optionsForValue.filter((option) => option.id !== data.ownerId)}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required
@@ -522,6 +556,32 @@ const EventSummary = ({
             <ReadOnlyField label="Event vision">{data.vision}</ReadOnlyField>
           </>
         )}
+        <DismissingComponentWrapper
+          shown={showSavedDraft}
+          updateShown={updateShowSavedDraft}
+          hideFromScreenReader={false}
+        >
+          {lastSaveTime && (
+            <Alert
+              id="eventSummarySaveAlert"
+              className="margin-top-3 maxw-mobile-lg"
+              noIcon
+              slim
+              type="success"
+              aria-live="off"
+            >
+              <span className="display-flex flex-align-center">
+                <FontAwesomeIcon
+                  className="margin-right-1 flex-align-self-center"
+                  color={colors.baseDarkest}
+                  icon={faCheckCircle}
+                  size="lg"
+                />
+                Draft saved on {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+              </span>
+            </Alert>
+          )}
+        </DismissingComponentWrapper>
         <div className="display-flex margin-top-4">
           <Button
             id="review-and-submit"
@@ -564,6 +624,15 @@ EventSummary.propTypes = {
   isAppLoading: PropTypes.bool.isRequired,
   showSubmitModal: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
+  showSavedDraft: PropTypes.bool,
+  updateShowSavedDraft: PropTypes.func,
+};
+
+EventSummary.defaultProps = {
+  lastSaveTime: null,
+  showSavedDraft: false,
+  updateShowSavedDraft: () => {},
 };
 
 export default EventSummary;

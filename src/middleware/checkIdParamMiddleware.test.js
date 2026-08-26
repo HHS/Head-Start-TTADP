@@ -13,6 +13,7 @@ import {
   checkGroupIdParam,
   checkIdIdParam,
   checkIdParam,
+  checkNotificationIdParam,
   checkObjectiveIdParam,
   checkObjectiveTemplateIdParam,
   checkRecipientIdParam,
@@ -405,6 +406,56 @@ describe('checkIdParamMiddleware', () => {
     });
   });
 
+  describe('checkNotificationIdParam', () => {
+    it('calls next if notification id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          notificationId: '2',
+        },
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          notificationId: '2D',
+        },
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if notificationId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: notificationId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
   describe('checkGroupIdParam', () => {
     it('calls next if objective id is string or integer', () => {
       const mockRequest = {
@@ -516,7 +567,21 @@ describe('checkIdParamMiddleware', () => {
 
       checkRecipientIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.locals.validatedParams.recipientId).toBe(2);
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throws 400 if param exceeds the safe integer range', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          recipientId: '9007199254740992',
+        },
+      };
+
+      checkRecipientIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {
@@ -557,7 +622,21 @@ describe('checkIdParamMiddleware', () => {
 
       checkRegionIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.locals.validatedParams.regionId).toBe(2);
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throws 400 if param uses scientific notation', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          regionId: '1e1',
+        },
+      };
+
+      checkRegionIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {

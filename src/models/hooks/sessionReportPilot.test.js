@@ -153,6 +153,58 @@ describe('sessionReportPilot hooks', () => {
 
       await expect(beforeCreate(mockSequelize, mockInstance, mockOptions)).resolves.not.toThrow();
     });
+
+    it('sanitizes the ttaProvided rich text field', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => null),
+          },
+        },
+      };
+
+      const setData = jest.fn();
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => []),
+        data: {
+          ttaProvided: '<p>hello<script>alert("xss")</script></p>',
+        },
+        set: setData,
+      };
+
+      await beforeCreate(mockSequelize, instance, mockOptions);
+
+      expect(setData).toHaveBeenCalledWith('data', {
+        ttaProvided: '<p>hello</p>',
+      });
+    });
+
+    it('sanitizes the objective rich text field', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => null),
+          },
+        },
+      };
+
+      const setData = jest.fn();
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => []),
+        data: {
+          objective: '<p>hello<script>alert("xss")</script></p>',
+        },
+        set: setData,
+      };
+
+      await beforeCreate(mockSequelize, instance, mockOptions);
+
+      expect(setData).toHaveBeenCalledWith('data', {
+        objective: '<p>hello</p>',
+      });
+    });
   });
 
   describe('beforeUpdate', () => {
@@ -166,6 +218,58 @@ describe('sessionReportPilot hooks', () => {
       };
 
       await expect(beforeUpdate(mockSequelize, mockInstance, mockOptions)).rejects.toThrow();
+    });
+
+    it('sanitizes the ttaProvided rich text field', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => null),
+          },
+        },
+      };
+
+      const setData = jest.fn();
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => []),
+        data: {
+          ttaProvided: '<p onclick="evil()">hi</p><script>bad()</script>',
+        },
+        set: setData,
+      };
+
+      await beforeUpdate(mockSequelize, instance, mockOptions);
+
+      expect(setData).toHaveBeenCalledWith('data', {
+        ttaProvided: '<p>hi</p>',
+      });
+    });
+
+    it('sanitizes the objective rich text field', async () => {
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => null),
+          },
+        },
+      };
+
+      const setData = jest.fn();
+      const instance = {
+        eventId: 1,
+        changed: jest.fn(() => []),
+        data: {
+          objective: '<p onclick="evil()">hi</p><script>bad()</script>',
+        },
+        set: setData,
+      };
+
+      await beforeUpdate(mockSequelize, instance, mockOptions);
+
+      expect(setData).toHaveBeenCalledWith('data', {
+        objective: '<p>hi</p>',
+      });
     });
   });
 
