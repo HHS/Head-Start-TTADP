@@ -69,6 +69,7 @@ export type CreateEventRequest = {
   data: {
     owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
+    eventId: string;
   };
 };
 
