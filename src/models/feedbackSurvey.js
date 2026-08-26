@@ -1,0 +1,53 @@
+const { Model } = require('sequelize');
+
+export default (sequelize, DataTypes) => {
+  class FeedbackSurvey extends Model {
+    static associate() {}
+  }
+
+  FeedbackSurvey.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    userRoles: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: sequelize.literal('(ARRAY[]::character varying[])::character varying(255)[]'),
+    },
+    pageId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    response: {
+      type: DataTypes.ENUM('yes', 'no'),
+      allowNull: false,
+      validate: {
+        isIn: {
+          args: [['yes', 'no']],
+          msg: 'Response must be one of yes or no',
+        },
+      },
+    },
+    comment: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    submittedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  }, {
+    sequelize,
+    modelName: 'FeedbackSurvey',
+    tableName: 'FeedbackSurveys',
+  });
+
+  return FeedbackSurvey;
+};
