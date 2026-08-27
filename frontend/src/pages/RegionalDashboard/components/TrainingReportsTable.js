@@ -151,8 +151,8 @@ const TrainingReportsTable = ({
             'Event title',
             'Supporting goals',
             'Session name',
-            'Session start date',
-            'Session end date',
+            { displayName: 'Session start date', name: 'startDate' },
+            { displayName: 'Session end date', name: 'endDate' },
             'Topics',
           ]}
           data={tabularData}
