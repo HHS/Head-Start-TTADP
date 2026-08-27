@@ -487,9 +487,9 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
-    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
-    eventId: ['event', 'eventId'],
+    startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
+    endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
+    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [
       sequelize.literal(
@@ -506,7 +506,7 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
 const sessionReportAttributes = [
   'id',
-  [sequelize.literal('"event"."eventId"'), 'eventId'],
+  [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
   [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
   'startDate',
