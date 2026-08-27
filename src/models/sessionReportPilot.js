@@ -93,6 +93,14 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      startDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      endDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
       data: {
         type: DataTypes.JSONB,
         allowNull: false,
