@@ -471,8 +471,8 @@ export async function activityReportAndRecipientsById(activityReportId) {
 
   // Use real NextStep model instances (not plain objects) for the empty-note placeholder so the
   // report instance can still be serialized via toJSON (e.g. when enqueued to the notification
-  // queue, which JSON.stringifies the job data). A plain object here has no `.get()` method and
-  // breaks Sequelize's association serialization.
+  // queue, which serializes the job data via JSON.stringify). A plain object here has no `.get()`
+  // method and breaks Sequelize's association serialization.
   if (report?.specialistNextSteps?.length === 0) {
     report.specialistNextSteps[0] = NextStep.build({ note: '' });
   }
