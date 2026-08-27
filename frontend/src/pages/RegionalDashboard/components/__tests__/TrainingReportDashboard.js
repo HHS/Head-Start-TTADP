@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -161,5 +162,94 @@ describe('Training report Dashboard page', () => {
     });
 
     expect(setResetPagination).toHaveBeenCalledWith(false);
+  });
+
+  it('requests Session start date sorting in desc then asc order', async () => {
+    const row = {
+      id: 1,
+      eventId: 'R01-PD-123',
+      eventName: 'Event Name',
+      sessionName: 'Session Name',
+      startDate: '2026-08-01',
+      endDate: '2026-08-02',
+      objectiveTopics: ['Topic A'],
+      goalTemplates: [{ standard: 'Goal A' }],
+    };
+
+    getSessionReportsTable.mockResolvedValue({ rows: [row], count: 1 });
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: 'Event_ID', direction: 'desc' }),
+        []
+      );
+    });
+
+    const startDateSortButton = await screen.findByRole('button', {
+      name: /startdate\. activate to sort ascending/i,
+    });
+    userEvent.click(startDateSortButton);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: 'startDate', direction: 'desc' }),
+        []
+      );
+    });
+
+    const startDateSortButtonSecondClick = await screen.findByRole('button', {
+      name: /startdate\. activate to sort ascending/i,
+    });
+    userEvent.click(startDateSortButtonSecondClick);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: 'startDate', direction: 'asc' }),
+        []
+      );
+    });
+  });
+
+  it('requests Session end date sorting in desc then asc order', async () => {
+    const row = {
+      id: 2,
+      eventId: 'R01-PD-456',
+      eventName: 'Another Event',
+      sessionName: 'Another Session',
+      startDate: '2026-09-01',
+      endDate: '2026-09-02',
+      objectiveTopics: ['Topic B'],
+      goalTemplates: [{ standard: 'Goal B' }],
+    };
+
+    getSessionReportsTable.mockResolvedValue({ rows: [row], count: 1 });
+
+    renderTest();
+
+    const endDateSortButton = await screen.findByRole('button', {
+      name: /enddate\. activate to sort ascending/i,
+    });
+    userEvent.click(endDateSortButton);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: 'endDate', direction: 'desc' }),
+        []
+      );
+    });
+
+    const endDateSortButtonSecondClick = await screen.findByRole('button', {
+      name: /enddate\. activate to sort ascending/i,
+    });
+    userEvent.click(endDateSortButtonSecondClick);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: 'endDate', direction: 'asc' }),
+        []
+      );
+    });
   });
 });
