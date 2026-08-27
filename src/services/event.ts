@@ -85,12 +85,16 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
+  if (!data.eventId) {
+    throw new Error('Missing required field: data.eventId');
+  }
+
   return EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
     regionId,
-    eventId: (data as { eventId?: string }).eventId,
+    eventId: data.eventId,
     data: cast(JSON.stringify(data), 'jsonb'),
   });
 }
