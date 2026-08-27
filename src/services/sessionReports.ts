@@ -1,7 +1,9 @@
 import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
+import parseDate from '../lib/date';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import type {
@@ -26,6 +28,25 @@ type WhereOptions = {
   id?: number;
   eventId?: number;
   data?: unknown;
+};
+
+// Hydrated associations (the parent event record and the approver user record)
+// are returned to the client as separate associations and must never be persisted
+// back into the session's JSONB `data` column. Storing them creates a stale,
+// duplicate source of truth. This is a server-side backstop so no client payload
+// can reintroduce the duplication regardless of how the form serializes its state.
+export const SESSION_ASSOCIATION_KEYS = ['approver', 'event'] as const;
+
+export const removeAssociationsFromData = (data: unknown): Record<string, unknown> => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
+  }
+
+  const cleaned: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  for (const key of SESSION_ASSOCIATION_KEYS) {
+    delete cleaned[key];
+  }
+  return cleaned;
 };
 
 const normalizeStates = (states: string[] | undefined): string[] => {
@@ -135,8 +156,8 @@ export async function findSessionHelper(
       'approverId',
       'submitterId',
       'submitted',
-      // eslint-disable-next-line @typescript-eslint/quotes
-      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+      'startDate',
+      'endDate',
     ],
     where,
     order: [['startDate', 'ASC']],
@@ -177,15 +198,37 @@ export async function findSessionHelper(
   }
 
   if (Array.isArray(session)) {
-    return session;
+    return (session as Model[]).map((s) => {
+      const sd = s.get('startDate') as string | null;
+      const ed = s.get('endDate') as string | null;
+      return {
+        ...s.get({ plain: true }),
+        data: {
+          ...((s.get('data') as Record<string, unknown>) ?? {}),
+          startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+          endDate: ed ? moment(ed, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+        },
+      };
+    }) as unknown as SessionReportShape[];
   }
 
   const eventId = session?.event?.data?.eventId ?? null;
 
+  const startDate = session?.startDate
+    ? moment(session.startDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+  const endDate = session?.endDate
+    ? moment(session.endDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+
   return {
     id: session?.id,
     eventId,
-    data: session?.data ?? {},
+    data: {
+      ...((session?.data as Record<string, unknown>) ?? {}),
+      startDate,
+      endDate,
+    },
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     goalTemplates: session?.goalTemplates ?? [],
@@ -211,12 +254,17 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
+  const cleanData = removeAssociationsFromData(data);
+  const { startDate, endDate, ...restData } = cleanData;
+
   const created = await SessionReportPilot.create(
     {
       eventId: event.id,
+      startDate: parseDate(startDate as string),
+      endDate: parseDate(endDate as string),
       data: cast(
         JSON.stringify({
-          ...data,
+          ...restData,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
           additionalRegions: event.data.additionalRegions || [],
@@ -248,19 +296,39 @@ export async function updateSession(id: number, request) {
     data: { approverId, goalTemplates, submitterId, trainers, ...data },
   } = request;
 
-  // Combine existing session data with new data.
-  const existingData = session.data;
-  const newData = { ...existingData, ...data };
+  // Combine existing session data with new data. The dedicated startDate/endDate
+  // columns are the source of truth; the JSONB `data` keeps a mirror that is
+  // re-derived from the columns on read (see findSessionHelper).
+  const existingData = session.data as Record<string, unknown>;
+  const { startDate, endDate, ...restExistingData } = existingData;
+  const cleanIncomingData = removeAssociationsFromData(data);
+  const {
+    startDate: incomingStartDate,
+    endDate: incomingEndDate,
+    ...restIncomingData
+  } = cleanIncomingData;
+  const newData = { ...restExistingData, ...restIncomingData };
 
   const event = await findEventBySmartsheetId(eventId);
 
+  const hasStartDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'startDate');
+  const hasEndDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'endDate');
+
   const update = {
     eventId: event.id,
+    startDate: hasStartDate
+      ? (parseDate(incomingStartDate as string | null | undefined) as Date | null)
+      : (session.get('startDate') as unknown as Date | null),
+    endDate: hasEndDate
+      ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
+      : (session.get('endDate') as unknown as Date | null),
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
     approverId?: number;
     submitterId?: number;
+    startDate?: Date | null;
+    endDate?: Date | null;
     data: Cast;
   };
 
@@ -376,26 +444,6 @@ export async function getPossibleSessionParticipants(
   });
 }
 
-/**
- * Builds a SQL CASE expression that casts a JSONB date string field to a proper date,
- * handling the inconsistent formats found in production data:
- *   YYYY-MM-DD  (ISO — direct cast, strict match)
- *   M/D/YY or MM/DD/YY  (short year — TO_DATE MM/DD/YY)
- *   M/D/YYYY or MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY)
- *   null / ''   (guarded by NULLIF → NULL)
- *   any other value (unrecognized format → NULL to prevent sort errors)
- */
-function sessionReportDateSort(field: string): string {
-  const col = `"SessionReportPilot".data->>'${field}'`;
-  return `CASE
-    WHEN NULLIF(${col}, '') IS NULL THEN NULL
-    WHEN ${col} ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN (${col})::date
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${col}, 'MM/DD/YYYY')
-    ELSE NULL
-  END`;
-}
-
 function removeRegionFilters(filters: Record<string, unknown>): Record<string, unknown> {
   return Object.keys(filters || {}).reduce((acc, key) => {
     if (key === 'region.in' || key === 'region.in[]' || key === 'region.nin') {
@@ -439,8 +487,8 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
-    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
+    startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
+    endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
     eventId: ['event', sequelize.literal("data->>'eventId'::text")],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [
@@ -461,8 +509,8 @@ const sessionReportAttributes = [
   [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
   [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
-  [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
-  [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+  'startDate',
+  'endDate',
   [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
   [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],

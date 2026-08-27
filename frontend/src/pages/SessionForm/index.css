@@ -1,8 +1,16 @@
 .smart-hub-training-report--session .navigator-form .usa-form *:not([class*="maxw-"]) {
   max-width: 525px;
 }
+.smart-hub-training-report--session [aria-hidden="false"]:has(.usa-alert) {
+  /* USWDS margin-bottom-2 (16px) below the save draft alert only */
+  margin-bottom: 1rem;
+}
+/* Zero the default form-button top margin on the button group that follows the
+   alert so the 16px alert margin-bottom is the only, consistent gap on every
+   session page (sessionSummary already zeroes it inline; this covers the rest) */
 .smart-hub-training-report--session
   [aria-hidden="false"]:has(.usa-alert)
-  + .ttahub-form-button-group {
-  margin-top: 4rem;
+  + .display-flex
+  .usa-button {
+  margin-top: 0;
 }

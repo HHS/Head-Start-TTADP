@@ -55,6 +55,7 @@ describe('sessionSummary', () => {
       trainers = [],
       otherTrainers = '',
       ttaProvided = 'filled',
+      objective = 'filled',
     } = {}) => ({
       getValues: jest.fn((field) => {
         if (!field) {
@@ -75,6 +76,10 @@ describe('sessionSummary', () => {
 
         if (field === 'ttaProvided') {
           return ttaProvided;
+        }
+
+        if (field === 'objective') {
+          return objective;
         }
 
         return 'filled';
@@ -129,6 +134,31 @@ describe('sessionSummary', () => {
       const hookForm = makeHookForm({
         trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
         ttaProvided: '<p>Provided coaching on ERSEA.</p>',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when objective is semantically empty (%s)', (_label, objective) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when objective has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective: '<p>Improve ERSEA enrollment processes.</p>',
       });
 
       expect(isPageComplete(hookForm)).toBe(true);
@@ -294,11 +324,6 @@ describe('sessionSummary', () => {
         userEvent.type(duration, '1.25');
       });
 
-      const sessionObjective = await screen.findByLabelText(/session objective/i);
-      act(() => {
-        userEvent.type(sessionObjective, 'Session objective');
-      });
-
       await selectEvent.select(document.getElementById('objectiveTopics'), ['Complaint']);
 
       const trainers = await screen.findByLabelText(/Who provided the TTA/i);
@@ -437,9 +462,35 @@ describe('sessionSummary', () => {
 
       // The rich-text editor is present and labeled for assistive technology.
       await waitFor(() => {
-        const editable = document.querySelector('[contenteditable="true"]');
-        expect(editable).not.toBeNull();
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /TTA provided/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
         expect(editable).toHaveAttribute('aria-label', expect.stringMatching(/TTA provided/i));
+      });
+    });
+
+    it('exposes required-field semantics for the session objectives rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field is labeled "Session objectives" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/Session objectives/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
+
+      // The rich-text editor is present and labeled for assistive technology.
+      await waitFor(() => {
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /Session objectives/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
+        expect(editable).toHaveAttribute(
+          'aria-label',
+          expect.stringMatching(/Session objectives/i)
+        );
       });
     });
 
