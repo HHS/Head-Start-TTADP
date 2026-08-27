@@ -1475,9 +1475,12 @@ jobs:
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         - yarn-deps-
-    - run: |
-        yarn deps
-        yarn build
+    - run:
+        name: Install dependencies and build
+        no_output_timeout: 20m
+        command: |
+          yarn deps
+          yarn build
     - cf_process:
         target_env: prod
 
