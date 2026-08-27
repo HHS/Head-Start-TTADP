@@ -1,13 +1,14 @@
+import {
+  TIMELINE_DATE_FILTER_CONDITIONS,
+  TIMELINE_FILTER_TOPICS,
+  TIMELINE_SELECT_FILTER_CONDITIONS,
+} from '@ttahub/common/src/constants';
 import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import { auditLogger } from '../../logger';
 
 const errorMessage = 'Received malformed request query';
-
-const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
-const DATE_FILTER_CONDITIONS = ['is', 'is within', 'is on or after', 'is on or before'];
-const SELECT_FILTER_CONDITIONS = ['is', 'is not'];
 
 const timelineFilterSchema = Joi.object({
   topic: Joi.string()
@@ -23,7 +24,9 @@ const timelineFilterSchema = Joi.object({
 })
   .custom((filter, helpers) => {
     const isDateFilter = filter.topic === 'date';
-    const allowedConditions = isDateFilter ? DATE_FILTER_CONDITIONS : SELECT_FILTER_CONDITIONS;
+    const allowedConditions = isDateFilter
+      ? TIMELINE_DATE_FILTER_CONDITIONS
+      : TIMELINE_SELECT_FILTER_CONDITIONS;
 
     if (!allowedConditions.includes(filter.condition)) {
       return helpers.error('any.invalid');
