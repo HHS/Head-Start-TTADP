@@ -486,6 +486,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 1',
           startDate: '2024-01-01',
           endDate: '2024-01-02',
+          participantCount: 13,
+          deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
         },
         {
@@ -495,6 +497,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 2',
           startDate: '2024-01-03',
           endDate: '2024-01-04',
+          participantCount: 8,
+          deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
         },
       ],
@@ -604,6 +608,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Session Start Date');
       expect(csvOutput).toContain('Session End Date');
       expect(csvOutput).toContain('Topics');
+      expect(csvOutput).toContain('Participant Count');
+      expect(csvOutput).toContain('Delivery type');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -612,6 +618,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-01');
       expect(csvOutput).toContain('Topic 1');
       expect(csvOutput).toContain('Topic 2');
+      expect(csvOutput).toContain('13');
+      expect(csvOutput).toContain('hybrid');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');
@@ -619,6 +627,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-03');
       expect(csvOutput).toContain('2024-01-04');
       expect(csvOutput).toContain('Topic 3');
+      expect(csvOutput).toContain('8');
+      expect(csvOutput).toContain('virtual');
     });
 
     it('supports sorting by event fields (eventId, eventName)', async () => {

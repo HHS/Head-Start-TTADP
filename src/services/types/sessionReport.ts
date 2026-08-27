@@ -42,6 +42,8 @@ export type SessionReportTableRow = {
   recipients: { label: string }[];
   participants: string[];
   duration: number;
+  participantCount: number | null;
+  deliveryMethod: string | null;
 };
 
 export type GetSessionReportsResponse = {

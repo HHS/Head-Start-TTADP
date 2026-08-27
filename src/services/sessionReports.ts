@@ -488,6 +488,16 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  [
+    sequelize.literal(`CASE
+      WHEN "SessionReportPilot"."data"->>'deliveryMethod' = 'hybrid' THEN
+        COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsInPerson')::integer, 0)
+        + COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsVirtually')::integer, 0)
+      ELSE ("SessionReportPilot"."data"->>'numberOfParticipants')::integer
+    END`),
+    'participantCount',
+  ],
 ];
 
 /**
@@ -611,6 +621,8 @@ async function fetchSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
+      participantCount: plain.participantCount,
+      deliveryMethod: plain.deliveryMethod,
     };
   });
 
