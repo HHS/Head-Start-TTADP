@@ -33,7 +33,7 @@ describe('SessionCard', () => {
       sessionName: 'This is my session title',
       startDate: '01/02/2021',
       endDate: '01/03/2021',
-      objective: 'This is my session objective',
+      objective: '<p>This is my session objective</p>',
       objectiveSupportType: SUPPORT_TYPES[2],
       status: 'In progress',
       pocComplete: false,
@@ -81,6 +81,40 @@ describe('SessionCard', () => {
 
     expect(screen.getByText(/trainer 1; trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
+  });
+
+  it('strips HTML formatting from the session objective', async () => {
+    const session = {
+      ...defaultSession,
+      data: {
+        ...defaultSession.data,
+        objective: '<p>Improve <strong>ERSEA</strong> enrollment</p>',
+      },
+    };
+    await renderSessionCard(session);
+
+    // The rich-text markup is stripped so the objective displays as clean text.
+    expect(screen.getByText('Improve ERSEA enrollment')).toBeInTheDocument();
+    // No formatting elements are rendered on the card.
+    expect(document.querySelector('strong')).toBeNull();
+    // The objective is clamped to three lines via the dedicated class.
+    expect(screen.getByText('Improve ERSEA enrollment')).toHaveClass(
+      'ttahub-session-card__objective'
+    );
+  });
+
+  it('renders the session dates supplied in data (derived from the startDate/endDate columns)', () => {
+    // The backend treats the startDate/endDate columns as the source of truth and
+    // re-derives data.startDate/data.endDate (MM/DD/YYYY) from them on read.
+    renderSessionCard({
+      ...defaultSession,
+      data: {
+        ...defaultSession.data,
+        startDate: '03/15/2024',
+        endDate: '03/16/2024',
+      },
+    });
+    expect(screen.getByText(/03\/15\/2024 - 03\/16\/2024/i)).toBeInTheDocument();
   });
 
   it('owner can both edit and delete (treated as collaborator)', () => {

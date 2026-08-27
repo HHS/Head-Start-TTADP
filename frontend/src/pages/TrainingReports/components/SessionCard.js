@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { Closed, InProgress, NoStatus, Pencil, Trash } from '../../../components/icons';
 import Modal from '../../../components/VanillaModal';
 import useSessionCardPermissions from '../../../hooks/useSessionCardPermissions';
+import { getRichTextAsText } from '../../../utils';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -143,7 +144,11 @@ function SessionCard({
 
         <CardData label="Session dates">{`${startDate || ''} - ${endDate || ''}`}</CardData>
 
-        <CardData label="Session objective">{objective}</CardData>
+        <CardData label="Session objective">
+          <p className="usa-prose margin-y-0 ttahub-session-card__objective">
+            {getRichTextAsText(objective)}
+          </p>
+        </CardData>
 
         <CardData label="Support type">{objectiveSupportType}</CardData>
 

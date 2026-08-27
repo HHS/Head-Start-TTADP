@@ -131,11 +131,15 @@ async function createEvents({
   });
 
   // poc incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const f1StartDate = new Date(new Date().setMonth(new Date().getMonth() - 1));
   const f1 = await SessionReportPilot.create({
     eventId: f.id,
+    startDate: f1StartDate,
+    endDate: new Date(),
     data: {
       sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      startDate: f1StartDate,
       endDate: new Date(),
       duration: 'Series',
       objective: 'This is an objective',
@@ -168,11 +172,15 @@ async function createEvents({
   });
 
   // owner incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const g1StartDate = new Date(new Date().setMonth(new Date().getMonth() - 1));
   const g1 = await SessionReportPilot.create({
     eventId: g.id,
+    startDate: g1StartDate,
+    endDate: new Date(),
     data: {
       sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      startDate: g1StartDate,
       endDate: new Date(),
       duration: 'Series',
       objective: 'This is an objective',
@@ -410,6 +418,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionOwnerMissing = await SessionReportPilot.create({
         eventId: eventOwnerMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -436,6 +446,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionCollabMissing = await SessionReportPilot.create({
         eventId: eventCollabMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -462,6 +474,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionBothComplete = await SessionReportPilot.create({
         eventId: eventBothComplete.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),
@@ -491,6 +505,8 @@ describe('getTrainingReportAlertsForUser', () => {
 
       sessionPocCreated = await SessionReportPilot.create({
         eventId: eventPocCreated.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
         data: {
           sessionName: faker.datatype.string(),
           startDate: oneMonthAgo(),

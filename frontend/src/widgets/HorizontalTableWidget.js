@@ -68,7 +68,8 @@ export default function HorizontalTableWidget({
     itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {});
 
   const renderSortableColumnHeader = (displayName, key, name, classValues) => {
-    const sortClassName = getClassNamesFor(key);
+    const sortKey = name || key;
+    const sortClassName = getClassNamesFor(sortKey);
     let fullAriaSort;
     switch (sortClassName) {
       case 'asc':
@@ -93,7 +94,7 @@ export default function HorizontalTableWidget({
           type="button"
           tabIndex={0}
           onClick={() => {
-            requestSort(key);
+            requestSort(sortKey);
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
           aria-label={`${name}. Activate to sort ${

@@ -69,7 +69,11 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByLabel('Session end date *mm/dd/yyyy').fill('02/02/2023');
   await page.getByLabel('Duration in hours (round to the nearest quarter hour) *').fill('5');
   await page.getByLabel(/Session context/i).fill('Context');
-  await page.getByLabel('Session objectives *').fill('Objective');
+  await page
+    .getByRole('textbox', { name: /Session objectives/i })
+    .locator('div')
+    .nth(2)
+    .fill('Objective');
 
   await page
     .getByText('Select the goals that this activity supports *Get help selecting a goal')

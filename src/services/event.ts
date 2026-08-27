@@ -62,9 +62,35 @@ const INCLUDED_SESSION_ATTRIBUTES = [
   'approverId',
   'submitted',
   'submitterId',
-  // eslint-disable-next-line @typescript-eslint/quotes
-  [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+  // startDate/endDate are dedicated columns and the single source of truth for
+  // session dates; the JSONB data.startDate/data.endDate are re-derived from them
+  // on read (see injectSessionColumnDates).
+  'startDate',
+  'endDate',
 ];
+
+/**
+ * Re-derives the display `data.startDate` / `data.endDate` (MM/DD/YYYY) from the
+ * dedicated startDate/endDate columns, which are the single source of truth.
+ * Mirrors services/sessionReports.ts#findSessionHelper so the JSONB values the
+ * frontend and alert logic read stay in sync with the columns. Mutates and
+ * returns the given session model instance.
+ */
+const injectSessionColumnDates = (session) => {
+  if (!session) return session;
+  const rawStart = session.get('startDate') as string | null;
+  const rawEnd = session.get('endDate') as string | null;
+  session.set(
+    'data',
+    {
+      ...((session.get('data') as Record<string, unknown>) ?? {}),
+      startDate: rawStart ? moment(rawStart, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+      endDate: rawEnd ? moment(rawEnd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+    },
+    { raw: true }
+  );
+  return session;
+};
 
 /**
  * Creates an event.
@@ -190,6 +216,9 @@ export async function findEventHelper(
   }
 
   if (Array.isArray(event)) {
+    event.forEach((e) => {
+      (e.sessionReports ?? []).forEach(injectSessionColumnDates);
+    });
     return event;
   }
 
@@ -223,7 +252,7 @@ export async function findEventHelper(
     regionId: event?.regionId,
     data: event?.data,
     updatedAt: event?.updatedAt,
-    sessionReports: event?.sessionReports ?? [],
+    sessionReports: (event?.sessionReports ?? []).map(injectSessionColumnDates),
     version: event?.version ?? EVENT_REPORT_PILOT_VERSION,
   };
 }
@@ -311,6 +340,11 @@ export async function findEventHelperBlob({
       ['data.eventId', 'ASC'],
       ['data.startDate', 'ASC'],
     ],
+  });
+
+  // Re-derive each session's display dates from the dedicated columns.
+  (events || []).forEach((event) => {
+    (event.sessionReports ?? []).forEach(injectSessionColumnDates);
   });
 
   // if a fallbackValue was provided for this key search

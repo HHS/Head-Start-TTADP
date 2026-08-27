@@ -439,12 +439,12 @@ describe('fetchPaginatedCfCollection', () => {
       });
 
     const result = fetchPaginatedCfCollection(
-      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      '/v3/service_instances?space_guids=space-1&per_page=200&fields[service_plan]=guid,name',
       { fetchPage }
     );
 
     expect(fetchPage.mock.calls.map(([apiPath]) => apiPath)).toEqual([
-      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      '/v3/service_instances?space_guids=space-1&per_page=200&fields[service_plan]=guid,name',
       '/v3/service_instances?page=2&per_page=200',
     ]);
     expect(result.resources).toEqual([{ guid: 'service-1' }, { guid: 'service-2' }]);
@@ -471,6 +471,24 @@ describe('fetchPaginatedCfCollection', () => {
         fetchPage: () => ({ resources: [], pagination: {} }),
       })
     ).toThrow(/invalid response/);
+  });
+
+  it('reports Cloud Foundry API error details', () => {
+    expect(() =>
+      fetchPaginatedCfCollection('/v3/service_instances', {
+        fetchPage: () => ({
+          errors: [
+            {
+              code: 10005,
+              title: 'CF-InvalidQueryParameter',
+              detail: 'The query parameter is invalid: include',
+            },
+          ],
+        }),
+      })
+    ).toThrow(
+      'Cloud Foundry collection /v3/service_instances failed: 10005 CF-InvalidQueryParameter The query parameter is invalid: include'
+    );
   });
 });
 

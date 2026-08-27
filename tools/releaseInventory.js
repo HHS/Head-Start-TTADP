@@ -267,6 +267,14 @@ function fetchPaginatedCfCollection(apiPath, { fetchPage = cfCurl } = {}) {
     visited.add(nextApiPath);
     const page = fetchPage(nextApiPath);
 
+    if (Array.isArray(page?.errors) && page.errors.length > 0) {
+      const details = page.errors
+        .map((error) => [error.code, error.title, error.detail].filter(Boolean).join(' '))
+        .join('; ');
+
+      throw new Error(`Cloud Foundry collection ${nextApiPath} failed: ${details}`);
+    }
+
     if (
       !page ||
       !Array.isArray(page.resources) ||
@@ -320,10 +328,10 @@ function collectSpaceState(spaceName) {
     `/v3/routes?space_guids=${spaceGuid}&per_page=200`
   ).resources;
 
-  // include=service_plan resolves plan names in one call. A plan change alters
+  // fields[service_plan] resolves plan names in one call. A plan change alters
   // the authorized shape of a service, so the plan is part of the record.
   const serviceResponse = fetchPaginatedCfCollection(
-    `/v3/service_instances?space_guids=${spaceGuid}&per_page=200&include=service_plan`
+    `/v3/service_instances?space_guids=${spaceGuid}&per_page=200&fields[service_plan]=guid,name`
   );
   const plansByGuid = new Map(
     (serviceResponse.included?.service_plans || []).map((plan) => [plan.guid, plan.name])
