@@ -27,7 +27,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [mockUser.id],
       regionId: mockUser.homeRegionId,
-      data: {},
+      data: { eventId: 'TR-COLLAB-TEST-1' },
     });
 
     // create report with both mockUser and mockCollaboratorUser as collaborators
@@ -36,7 +36,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [mockUser.id, mockCollaboratorUser.id],
       regionId: mockUser.homeRegionId,
-      data: {},
+      data: { eventId: 'TR-COLLAB-TEST-2' },
     });
 
     // create report with mockCollaboratorUser as collaborator
@@ -45,7 +45,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockCollaboratorUser.id],
       collaboratorIds: [mockCollaboratorUser.id],
       regionId: 3,
-      data: {},
+      data: { eventId: 'TR-COLLAB-TEST-3' },
     });
 
     possibleIds = [

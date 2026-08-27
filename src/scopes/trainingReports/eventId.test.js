@@ -42,14 +42,15 @@ describe('trainingReports/eventId', () => {
       { individualHooks: false }
     );
 
-    // Report with null event.
+    // Report with a non-matching event id (previously created with a null event id,
+    // which is no longer possible now that eventId is a required column).
     reportWithNullEventId = await EventReportPilot.create(
       {
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
-        data: {},
+        data: { eventId: 'R01-TR-23-0000' },
       },
       { individualHooks: false }
     );

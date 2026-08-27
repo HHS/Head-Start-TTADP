@@ -38,7 +38,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      data: { eventId: 'TR-MYREPORTS-TEST-1' },
     });
 
     eventCollabByMe = await EventReportPilot.create({
@@ -46,7 +46,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [me.id],
       regionId: 1,
-      data: {},
+      data: { eventId: 'TR-MYREPORTS-TEST-2' },
     });
 
     eventPocByMe = await EventReportPilot.create({
@@ -54,7 +54,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [me.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      data: { eventId: 'TR-MYREPORTS-TEST-3' },
     });
 
     eventWithoutMe = await EventReportPilot.create({
@@ -62,7 +62,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      data: { eventId: 'TR-MYREPORTS-TEST-4' },
     });
 
     possibleIds = [eventOwnedByMe.id, eventCollabByMe.id, eventPocByMe.id, eventWithoutMe.id];

@@ -20,6 +20,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-TEST-1',
         startDate: '06/06/2021',
       },
     });
@@ -31,6 +32,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-TEST-2',
         startDate: '06/08/2021',
       },
     });
@@ -42,6 +44,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-TEST-3',
         startDate: '09/08/2019',
       },
     });
@@ -53,6 +56,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-TEST-4',
         startDate: '06/07/2021',
       },
     });

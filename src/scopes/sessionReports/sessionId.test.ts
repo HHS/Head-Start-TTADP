@@ -23,7 +23,7 @@ describe('sessionReports/sessionId', () => {
         pocIds: [mockUser.id],
         collaboratorIds: [],
         regionId: mockUser.homeRegionId,
-        data: {},
+        data: { eventId: 'SR-SESSIONID-TEST-1' },
       },
       { individualHooks: false }
     );

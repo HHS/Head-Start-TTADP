@@ -30,6 +30,7 @@ describe('nationalCenter hooks', () => {
         collaboratorIds: [3, 4],
         regionId: [1],
         data: {
+          eventId: 'NC-HOOK-TEST-1',
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
