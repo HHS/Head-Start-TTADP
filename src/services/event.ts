@@ -417,9 +417,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
-  // eventId is an immutable identifier; only mirror it to the column when the
-  // request actually supplies one so we never overwrite the existing value with null.
-  const { eventId } = data as { eventId?: string };
+  // eventId is an immutable identifier. Reject any attempt to change it, and always
+  // write the canonical column value back into the JSON payload so the physical
+  // `eventId` column and `data.eventId` never desync (many read paths rely on
+  // `data.eventId`, e.g. alerts and session shaping).
+  const requestedEventId = (data as { eventId?: string }).eventId;
+
+  if (requestedEventId && requestedEventId !== evt.eventId) {
+    throw new Error('eventId is immutable and cannot be changed');
+  }
+
+  const syncedData = { ...data, eventId: evt.eventId };
 
   await evt.update(
     {
@@ -427,8 +435,8 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       pocIds,
       collaboratorIds,
       regionId,
-      ...(eventId ? { eventId } : {}),
-      data: cast(JSON.stringify(data), 'jsonb'),
+      eventId: evt.eventId,
+      data: cast(JSON.stringify(syncedData), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
   );

@@ -157,6 +157,40 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('keeps data.eventId synced with the eventId column when the request omits it', async () => {
+      const created = await createAnEvent(98_989);
+      const originalEventId = created.eventId;
+
+      const updated = await updateEvent(created.id, {
+        ownerId: 123,
+        pocIds: [123],
+        regionId: 123,
+        collaboratorIds: [123],
+        data: {},
+      });
+
+      expect(updated.eventId).toBe(originalEventId);
+      expect(updated.data.eventId).toBe(originalEventId);
+
+      await destroyEvent(created.id);
+    });
+
+    it('throws when the request attempts to change the eventId', async () => {
+      const created = await createAnEvent(98_989);
+
+      await expect(
+        updateEvent(created.id, {
+          ownerId: 123,
+          pocIds: [123],
+          regionId: 123,
+          collaboratorIds: [123],
+          data: { eventId: `R01-TR-${faker.datatype.uuid()}` },
+        })
+      ).rejects.toThrow('eventId is immutable and cannot be changed');
+
+      await destroyEvent(created.id);
+    });
+
     it('update owner json', async () => {
       const created = await createAnEvent(99_927);
       const newOwner = await db.User.create({
