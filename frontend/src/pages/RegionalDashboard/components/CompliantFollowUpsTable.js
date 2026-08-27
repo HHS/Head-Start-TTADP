@@ -28,8 +28,15 @@ import './CompliantFollowUpsTable.css';
 const EMPTY_DATA = [];
 const PER_PAGE = 10;
 const API_DATE_FORMAT = 'YYYY-MM-DD';
+const SORT_KEYS = {
+  REVIEW: 'Compliant follow-up review',
+  RECIPIENT: 'Recipient',
+  HAD_TTA: 'Had TTA',
+  LAST_TTA: 'Last TTA',
+  RECEIVED_DATE: 'Compliant follow-up review received date',
+};
 const DEFAULT_SORT_CONFIG = {
-  sortBy: 'Had_TTA',
+  sortBy: SORT_KEYS.HAD_TTA,
   direction: 'desc',
   activePage: 1,
   offset: 0,
@@ -372,11 +379,19 @@ const NON_SORTABLE_HEADERS = [
   'Initial review',
 ];
 
-const STRING_SORT_COLUMNS = ['Compliant_follow-up_review', 'Recipient', 'Had_TTA'];
-const DATE_SORT_COLUMNS = ['Last_TTA', 'Compliant_follow-up_review_received_date'];
+const STRING_SORT_COLUMNS = [SORT_KEYS.REVIEW, SORT_KEYS.RECIPIENT, SORT_KEYS.HAD_TTA];
+const DATE_SORT_COLUMNS = [SORT_KEYS.LAST_TTA, SORT_KEYS.RECEIVED_DATE];
+
+const LEGACY_SORT_KEY_ALIASES = {
+  'Compliant_follow-up_review': SORT_KEYS.REVIEW,
+  Had_TTA: SORT_KEYS.HAD_TTA,
+  Last_TTA: SORT_KEYS.LAST_TTA,
+  'Compliant_follow-up_review_received_date': SORT_KEYS.RECEIVED_DATE,
+};
 
 function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
-  const { sortBy, direction } = sortConfig;
+  const { direction } = sortConfig;
+  const sortBy = LEGACY_SORT_KEY_ALIASES[sortConfig.sortBy] || sortConfig.sortBy;
 
   if (!sortBy || !rows?.length) {
     return rows;
@@ -449,10 +464,7 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
     if (recipientComparison) return recipientComparison;
 
     if (isDefaultSort) {
-      return compareDatesDescending(
-        a['Compliant_follow-up_review_received_date'],
-        b['Compliant_follow-up_review_received_date']
-      );
+      return compareDatesDescending(a[SORT_KEYS.RECEIVED_DATE], b[SORT_KEYS.RECEIVED_DATE]);
     }
 
     return 0;
@@ -541,15 +553,11 @@ export default function CompliantFollowUpsTable({ title }) {
     () =>
       (data || []).map((row) => ({
         ...row,
-        'Compliant_follow-up_review': formatReviewDisplayName(
-          row.reviewName,
-          reviewIdForRow(row),
-          ''
-        ),
-        Recipient: row.recipientName || '',
-        Had_TTA: row.hasTta ? 'Yes' : 'No',
-        Last_TTA: row.lastTtaDate || '',
-        'Compliant_follow-up_review_received_date': row.compliantFollowUpReviewReceivedDate || '',
+        [SORT_KEYS.REVIEW]: formatReviewDisplayName(row.reviewName, reviewIdForRow(row), ''),
+        [SORT_KEYS.RECIPIENT]: row.recipientName || '',
+        [SORT_KEYS.HAD_TTA]: row.hasTta ? 'Yes' : 'No',
+        [SORT_KEYS.LAST_TTA]: row.lastTtaDate || '',
+        [SORT_KEYS.RECEIVED_DATE]: row.compliantFollowUpReviewReceivedDate || '',
       })),
     [data]
   );

@@ -304,6 +304,32 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('findEventHelper surfaces session dates from the columns (source of truth)', async () => {
+      const created = await createAnEvent(98_989);
+
+      // Column dates are set; the JSONB data holds a stale/disagreeing value.
+      const sessionReport = await db.SessionReportPilot.create({
+        eventId: created.id,
+        startDate: '2024-03-15',
+        endDate: '2024-03-16',
+        data: {
+          sessionName: 'Column-backed session',
+          startDate: '01/01/1999',
+          endDate: '01/02/1999',
+        },
+      });
+
+      const found = await findEventByDbId(created.id);
+      const [session] = found.sessionReports;
+
+      // Display dates are re-derived from the columns (MM/DD/YYYY), not the stale JSONB.
+      expect(session.data.startDate).toBe('03/15/2024');
+      expect(session.data.endDate).toBe('03/16/2024');
+
+      await db.SessionReportPilot.destroy({ where: { id: sessionReport.id } });
+      await destroyEvent(created.id);
+    });
+
     it('findEventsByOwnerId', async () => {
       const created = await createAnEvent(98_989);
       const found = await findEventsByOwnerId(created.ownerId);

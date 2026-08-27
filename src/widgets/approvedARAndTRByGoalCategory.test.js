@@ -399,14 +399,16 @@ describe('approvedARAndTRByGoalCategory', () => {
     // First complete session: Teaching Practices + Family Engagement
     sessionComplete = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+      startDate: '2025-10-01',
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     // Second complete session on the SAME event: Teaching Practices only
     // Used to verify double-counting (each session counted separately).
     sessionComplete2 = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+      startDate: '2025-10-01',
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     // In-progress session: should not be counted
@@ -450,7 +452,8 @@ describe('approvedARAndTRByGoalCategory', () => {
 
     sessionForOldTRTest = await SessionReportPilot.create({
       eventId: eventForOldTRTest.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '08/15/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+      startDate: '2025-08-15',
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     // Junction exists so only the SQL date predicate can exclude this session.
@@ -669,9 +672,9 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('ignores malformed session recipient values instead of throwing', async () => {
     const malformedSession = await SessionReportPilot.create({
       eventId: event.id,
+      startDate: '2025-10-01',
       data: {
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '10/01/2025',
         recipients: [{ value: '', label: 'Malformed Recipient' }],
       },
     });
@@ -694,8 +697,8 @@ describe('approvedARAndTRByGoalCategory', () => {
     }
   });
 
-  it('excludes TR sessions with data.startDate before 2025-09-01', async () => {
-    // junctionForOldTRTest links sessionForOldTRTest (startDate='08/15/2025') to
+  it('excludes TR sessions with startDate before 2025-09-01', async () => {
+    // junctionForOldTRTest links sessionForOldTRTest (startDate=2025-08-15) to
     // templateForOldTRTest. The junction exists so only the SQL date predicate can
     // exclude this session — absence of a junction is not the guard being tested here.
     const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
@@ -704,26 +707,26 @@ describe('approvedARAndTRByGoalCategory', () => {
     const reloaded = await GoalTemplate.findByPk(templateForOldTRTest.id, { attributes: ['standard'] });
     const isolatedStandard = reloaded.standard;
 
-    // sessionForOldTRTest must NOT be counted — its startDate is before the cutoff.
+    // sessionForOldTRTest must NOT be counted — its column startDate is before the cutoff.
     const oldRow = results.find((r) => r.category === isolatedStandard);
     expect(oldRow?.sessionReportCount ?? 0).toBe(0);
 
-    // Cross-check: sessionComplete / sessionComplete2 (startDate='10/01/2025') ARE counted.
+    // Cross-check: sessionComplete / sessionComplete2 (startDate=2025-10-01) ARE counted.
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
     expect(tpRow).toBeDefined();
     expect(tpRow.sessionReportCount).toBe(2);
   });
 
-  it('excludes TR sessions with null or missing data.startDate', async () => {
-    // Sessions whose startDate is absent or empty resolve to NULL in the CASE expression
-    // and must not count, regardless of junction or recipient membership.
+  it('excludes TR sessions with null or missing startDate column', async () => {
+    // Sessions with null/missing startDate column must not count, regardless of
+    // junction or recipient membership.
     const nullDateSession = await SessionReportPilot.create({
       eventId: event.id,
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
     const emptyDateSession = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
     const nullJunction = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: nullDateSession.id,
@@ -930,7 +933,8 @@ describe('approvedARAndTRByGoalCategory', () => {
     // A complete session on the same event linked to otherGrant (not to recipient's grants).
     const otherSession = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: otherGrant.id, label: 'Other Recipient' }] },
+      startDate: '2025-10-01',
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: otherGrant.id, label: 'Other Recipient' }] },
     });
     const otherJunction = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: otherSession.id,
@@ -1037,9 +1041,9 @@ describe('approvedARAndTRByGoalCategory', () => {
     // It should count as 1 session, not 2.
     const multiRecipientSession = await SessionReportPilot.create({
       eventId: event.id,
+      startDate: '2025-10-01',
       data: {
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '10/01/2025',
         recipients: [
           { value: grant.id, label: 'First Grant' },
           { value: grant2.id, label: 'Second Grant' },
@@ -1097,14 +1101,14 @@ describe('approvedARAndTRByGoalCategory', () => {
     }
   });
 
-  it('TR excludes a complete session whose startDate is in ISO format (not MM/DD/YYYY)', async () => {
-    // A session with an ISO-format startDate — in production such a session would not
-    // have goal template junction rows, so it is naturally excluded without any SQL date filter.
+  it('TR excludes a complete session with no startDate column even if data.startDate is ISO', async () => {
+    // The filter now uses the startDate column, so a value in data.startDate alone
+    // must not make this session count.
     const isoDateSession = await SessionReportPilot.create({
       eventId: event.id,
       data: {
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '2025-10-01', // ISO format
+        startDate: '2025-10-01',
         recipients: [{ value: grant.id, label: 'Test Recipient' }],
       },
     });
@@ -1118,7 +1122,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
       const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
       expect(tpRow).toBeDefined();
-      // Session with no junction row must not inflate the count (baseline = 2).
+      // Session with no startDate column must not inflate the count (baseline = 2).
       expect(tpRow.sessionReportCount).toBe(2);
     } finally {
       await SessionReportPilot.destroy({ where: { id: isoDateSession.id }, force: true });
@@ -1130,9 +1134,9 @@ describe('approvedARAndTRByGoalCategory', () => {
     // without crashing (exercises the ELSE '[]'::jsonb fallback).
     const emptyRecipientsSession = await SessionReportPilot.create({
       eventId: event.id,
+      startDate: '2025-10-01',
       data: {
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '10/01/2025',
         recipients: [],
       },
     });
