@@ -230,6 +230,7 @@ describe('trainingReports/endDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-ENDDATE-MALFORMED-ISO',
         endDate: '2021-06-09',
       },
     });
@@ -240,6 +241,7 @@ describe('trainingReports/endDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-ENDDATE-MALFORMED-SHORTYEAR',
         endDate: '6/9/21',
       },
     });
@@ -250,6 +252,7 @@ describe('trainingReports/endDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-ENDDATE-MALFORMED-EMPTY',
         endDate: '',
       },
     });
@@ -260,6 +263,7 @@ describe('trainingReports/endDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-ENDDATE-MALFORMED-INVALID',
         endDate: 'this-is-not-a-date',
       },
     });
@@ -269,7 +273,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      data: { eventId: 'TR-ENDDATE-MALFORMED-MISSING' },
     });
 
     try {

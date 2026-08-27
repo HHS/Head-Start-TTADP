@@ -241,6 +241,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-ISO',
         startDate: '2021-06-09',
       },
     });
@@ -251,6 +252,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-SHORTYEAR',
         startDate: '6/9/21',
       },
     });
@@ -261,6 +263,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-EMPTY',
         startDate: '',
       },
     });
@@ -271,6 +274,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-INVALID',
         startDate: 'this-is-not-a-date',
       },
     });
@@ -280,7 +284,7 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      data: { eventId: 'TR-STARTDATE-MALFORMED-MISSING' },
     });
 
     try {
