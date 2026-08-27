@@ -178,6 +178,35 @@ const EVENT_REPORT_STATUSES = {
 
 exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
+const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
+
+exports.TIMELINE_FILTER_TOPICS = TIMELINE_FILTER_TOPICS;
+
+const TIMELINE_DATE_FILTER_CONDITIONS = ['is', 'is within', 'is on or after', 'is on or before'];
+
+exports.TIMELINE_DATE_FILTER_CONDITIONS = TIMELINE_DATE_FILTER_CONDITIONS;
+
+const TIMELINE_SELECT_FILTER_CONDITIONS = ['is', 'is not'];
+
+exports.TIMELINE_SELECT_FILTER_CONDITIONS = TIMELINE_SELECT_FILTER_CONDITIONS;
+
+const TIMELINE_EVENT_TYPES = [
+  'Email communication',
+  'Phone communication',
+  'In person communication',
+  'Virtual communication',
+  'TTA activity',
+  'Training session',
+  'Goal added',
+  'Goal suspended',
+  'Goal closed',
+  'Goal reopened',
+  'TTA request',
+  'Monitoring report received',
+];
+
+exports.TIMELINE_EVENT_TYPES = TIMELINE_EVENT_TYPES;
+
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool Children (ages 3-5)',

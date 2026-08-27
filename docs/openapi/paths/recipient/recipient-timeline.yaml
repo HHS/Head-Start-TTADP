@@ -84,6 +84,40 @@ get:
                 type: array
                 items:
                   type: object
+                  required:
+                    - source
+                    - sourceId
+                    - date
+                    - eventType
+                  properties:
+                    source:
+                      type: string
+                      minLength: 1
+                      description: Stable timeline source discriminator.
+                    sourceId:
+                      type: integer
+                      minimum: 1
+                      description: Identifier of the event within its source.
+                    date:
+                      type: string
+                      format: date
+                      description: Event date used for timeline ordering.
+                    eventType:
+                      type: string
+                      enum:
+                        - Email communication
+                        - Phone communication
+                        - In person communication
+                        - Virtual communication
+                        - TTA activity
+                        - Training session
+                        - Goal added
+                        - Goal suspended
+                        - Goal closed
+                        - Goal reopened
+                        - TTA request
+                        - Monitoring report received
+                      minLength: 1
           example:
             count: 0
             events: []
