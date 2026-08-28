@@ -437,9 +437,10 @@ jobs:
             ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
             grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
             circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
-            set -a
-            . ./frontend-build.vars
-            set +a
+            while IFS= read -r line; do
+              [ -z "${line}" ] && continue
+              export "${line}"
+            done < ./frontend-build.vars
             rm -f ./temp.vars ./frontend-build.template.vars ./frontend-build.vars
           fi
 
