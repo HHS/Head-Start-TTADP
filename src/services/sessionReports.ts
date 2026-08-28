@@ -2,8 +2,8 @@ import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from 
 import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
-import db, { sequelize } from '../models';
 import parseDate from '../lib/date';
+import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import type {
@@ -311,8 +311,8 @@ export async function updateSession(id: number, request) {
 
   const event = await findEventBySmartsheetId(eventId);
 
-  const hasStartDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'startDate');
-  const hasEndDate = Object.prototype.hasOwnProperty.call(cleanIncomingData, 'endDate');
+  const hasStartDate = Object.hasOwn(cleanIncomingData, 'startDate');
+  const hasEndDate = Object.hasOwn(cleanIncomingData, 'endDate');
 
   const update = {
     eventId: event.id,
@@ -515,6 +515,16 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  [
+    sequelize.literal(`CASE
+      WHEN "SessionReportPilot"."data"->>'deliveryMethod' = 'hybrid' THEN
+        COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsInPerson')::integer, 0)
+        + COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsVirtually')::integer, 0)
+      ELSE ("SessionReportPilot"."data"->>'numberOfParticipants')::integer
+    END`),
+    'participantCount',
+  ],
 ];
 
 /**
@@ -530,13 +540,21 @@ async function fetchSessionReports(
     offset = 0,
     limit = 10 as number | 'all',
     extraWhereClauses = [] as unknown[],
+    userId,
+  }: {
+    sortBy?: string;
+    sortDir?: string;
+    offset?: number;
+    limit?: number | 'all';
+    extraWhereClauses?: unknown[];
+    userId?: number;
   }
 ): Promise<GetSessionReportsResponse> {
   const orderClause = sessionReportOrderClause(sortBy, sortDir);
 
   // Get scopes from filters
   const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
-    await filtersToScopes(filterParams, {});
+    await filtersToScopes(filterParams, { userId });
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -630,6 +648,8 @@ async function fetchSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
+      participantCount: plain.participantCount,
+      deliveryMethod: plain.deliveryMethod,
     };
   });
 
@@ -647,9 +667,16 @@ async function fetchSessionReports(
 export async function getSessionReports(
   params: GetSessionReportsParams
 ): Promise<GetSessionReportsResponse> {
-  const { sortBy = 'id', sortDir = 'DESC', offset = 0, limit = 10, ...filterParams } = params;
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    userId,
+    ...filterParams
+  } = params;
 
-  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit });
+  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit, userId });
 }
 
 /**
@@ -665,6 +692,7 @@ export async function getSessionReportsByRecipient(
     sortDir = 'DESC',
     offset = 0,
     limit = 10,
+    userId,
     ...filterParams
   } = params;
 
@@ -699,6 +727,7 @@ export async function getSessionReportsByRecipient(
     sortDir,
     offset,
     limit,
+    userId,
     extraWhereClauses: [recipientGrantFilter(grantIds)],
   });
 }
