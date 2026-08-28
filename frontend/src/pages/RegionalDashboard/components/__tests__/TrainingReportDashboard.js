@@ -1,10 +1,9 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { createMemoryHistory } from 'history';
-import React from 'react';
-import { Router } from 'react-router';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getSessionReportsTable } from '../../../../fetchers/session';
 import TrainingReportDashboard from '../TrainingReportDashboard';
@@ -12,7 +11,6 @@ import TrainingReportDashboard from '../TrainingReportDashboard';
 jest.mock('../../../../fetchers/session');
 
 describe('Training report Dashboard page', () => {
-  const history = createMemoryHistory();
   const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
   const standardGoalsListUrl = '/api/widgets/trStandardGoalList';
   const overviewUrl = '/api/widgets/trOverview';
@@ -40,13 +38,21 @@ describe('Training report Dashboard page', () => {
     jest.clearAllMocks();
   });
 
-  const renderTest = (filtersToApply = []) => {
+  const renderTest = (
+    filtersToApply = [],
+    resetPagination = false,
+    setResetPagination = jest.fn()
+  ) => {
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-          <TrainingReportDashboard filtersToApply={filtersToApply} />
+          <TrainingReportDashboard
+            filtersToApply={filtersToApply}
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
+          />
         </AppLoadingContext.Provider>
-      </Router>
+      </MemoryRouter>
     );
   };
 
@@ -87,6 +93,75 @@ describe('Training report Dashboard page', () => {
     await waitFor(() => {
       expect(getSessionReportsTable).toHaveBeenCalledWith(expect.any(Object), []);
     });
+  });
+
+  it('resets pagination to page 1 when filters change while on a later page', async () => {
+    const manyRowsData = {
+      rows: Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        eventId: `R01-TR-23-${1037 + i}`,
+        eventName: `Test Event ${i + 1}`,
+        sessionName: `Session ${i + 1}`,
+        startDate: '2024-01-01',
+        endDate: '2024-01-02',
+        objectiveTopics: ['Topic 1'],
+        goalTemplates: [{ standard: 'Goal 1' }],
+      })),
+      count: 25,
+    };
+    getSessionReportsTable.mockResolvedValue(manyRowsData);
+
+    const setResetPagination = jest.fn();
+    const { rerender } = render(
+      <MemoryRouter>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <TrainingReportDashboard
+            filtersToApply={[]}
+            resetPagination={false}
+            setResetPagination={setResetPagination}
+          />
+        </AppLoadingContext.Provider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenCalledWith(
+        expect.objectContaining({ activePage: 1 }),
+        []
+      );
+    });
+
+    const page2Button = await screen.findByRole('button', { name: /page 2/i });
+    fireEvent.click(page2Button);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenCalledWith(
+        expect.objectContaining({ activePage: 2 }),
+        []
+      );
+    });
+
+    const filters = [{ id: '1', topic: 'region', condition: 'is', query: 1 }];
+    rerender(
+      <MemoryRouter>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <TrainingReportDashboard
+            filtersToApply={filters}
+            resetPagination
+            setResetPagination={setResetPagination}
+          />
+        </AppLoadingContext.Provider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenCalledWith(
+        expect.objectContaining({ activePage: 1, offset: 0 }),
+        filters
+      );
+    });
+
+    expect(setResetPagination).toHaveBeenCalledWith(false);
   });
 
   it('requests Session start date sorting in desc then asc order', async () => {
