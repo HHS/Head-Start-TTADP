@@ -474,6 +474,10 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('defaults the add communication button to the home region, not the first permission region', async () => {
+    window.sessionStorage.clear();
+    const regionURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&region.in[]=4&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(regionURL, { count: 0, rows: [] });
+
     act(() => renderComm(userHomeRegionNotFirstPermission, '/communication-log'));
 
     const addButton = await screen.findByRole('link', { name: /add communication/i });
