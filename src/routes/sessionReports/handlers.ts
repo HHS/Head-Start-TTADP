@@ -77,6 +77,14 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'duration',
         header: 'Duration (hours)',
       },
+      {
+        key: 'participantCount',
+        header: 'Participant Count',
+      },
+      {
+        key: 'deliveryMethod',
+        header: 'Delivery type',
+      },
     ],
   };
 
@@ -378,6 +386,7 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       limit: limitValue,
       format: formatValue as 'json' | 'csv',
       ...filteredFilterParams,
+      userId,
     };
 
     const result: GetSessionReportsResponse = recipientId

@@ -810,7 +810,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(1);
-        expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.recipientNextSteps[0].note).toBe('');
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['i am groot', 'harry'])
@@ -843,7 +843,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(1);
-        expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.specialistNextSteps[0].note).toBe('');
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['One Piece', 'Toy Story'])
@@ -940,9 +940,9 @@ describe('Activity report service', () => {
         // Then we see the report was updated correctly
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.recipientNextSteps.length).toBe(1);
-        expect(updatedReport.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.recipientNextSteps[0].note).toBe('');
         expect(updatedReport.specialistNextSteps.length).toBe(1);
-        expect(updatedReport.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.specialistNextSteps[0].note).toBe('');
       });
 
       it('handles notes being the same', async () => {
@@ -1037,6 +1037,21 @@ describe('Activity report service', () => {
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
+      });
+      it('returns a serializable report when there are no next steps', async () => {
+        // Regression: a report with no next steps used to receive a plain-object placeholder in its
+        // specialistNextSteps/recipientNextSteps associations. That broke Sequelize's toJSON (used
+        // when the report is enqueued to the notification queue via JSON.stringify), throwing
+        // "instance.get is not a function" and 502-ing report approval.
+        const report = await ActivityReport.create(reportObject);
+
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
+        expect(foundReport.specialistNextSteps.length).toBe(1);
+        expect(foundReport.specialistNextSteps[0].note).toBe('');
+        expect(foundReport.recipientNextSteps.length).toBe(1);
+        expect(foundReport.recipientNextSteps[0].note).toBe('');
+        // Mirrors what Bull does when enqueuing the notification job.
+        expect(() => JSON.stringify(foundReport)).not.toThrow();
       });
       it('includes approver with full name', async () => {
         const report = await ActivityReport.create({ ...submittedReport, regionId: 5 });
