@@ -12,4 +12,11 @@ const mapObjectivesAndRootCauses = (data) => ({
   rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
 });
 
-export { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses };
+const DEFAULT_STATUS_CHANGE_BLOCKING_REASONS = {
+  activeActivityReport: false,
+  incompleteObjectives: false,
+  fromApi: false,
+  invalidStatusChangeAttempted: false,
+};
+
+export { DEFAULT_STATUS_CHANGE_BLOCKING_REASONS, GOAL_FORM_FIELDS, mapObjectivesAndRootCauses };
