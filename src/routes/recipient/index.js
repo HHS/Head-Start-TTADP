@@ -7,8 +7,10 @@ import {
   getRecipient,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
+  getRecipientTimeline,
   searchRecipients,
 } from './handlers';
+import { checkRecipientTimelineQuery } from './middleware';
 
 const router = express.Router();
 router.get('/search', transactionWrapper(searchRecipients));
@@ -29,6 +31,13 @@ router.get(
   '/:recipientId/region/:regionId/leadership',
   checkRecipientIdParam,
   transactionWrapper(getRecipientLeadership)
+);
+router.get(
+  '/:recipientId/region/:regionId/timeline',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkRecipientTimelineQuery,
+  transactionWrapper(getRecipientTimeline)
 );
 
 export default router;

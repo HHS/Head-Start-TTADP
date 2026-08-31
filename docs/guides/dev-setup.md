@@ -13,11 +13,12 @@
 
 > **nvm gotcha:** Global packages (including Yarn) are installed per Node version and do not carry over when you switch versions. If `yarn` reports "command not found" after switching Node versions, reinstall it for the active version with `npm install -g yarn@1.22.22`, or copy globals when installing a new version via `nvm install <version> --reinstall-packages-from=current`.
 
-### Docker Workflows
-
-Primary workflows (Yarn-first):
+### Primary Workflows
 
 - Install frontend and backend dependencies: `yarn deps`
+- Build frontend/backend code: `yarn build`
+- On first startup, when switching branches, or after significant changes: `yarn docker:refresh`
+    - This will rebuild code and images, run migrations/reseed the DB 
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
 - Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
 - Tail logs: `yarn docker:logs`

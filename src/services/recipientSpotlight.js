@@ -361,7 +361,7 @@ export async function getRecipientSpotlightIndicators(
     SELECT (jsonb_array_elements(data->'recipients')->>'value')::integer session_grid
     FROM "SessionReportPilots"
     WHERE data->>'status' = 'Complete'
-      AND (data->>'startDate')::timestamp >= NOW() - INTERVAL '12 months'
+      AND "startDate" >= NOW() - INTERVAL '12 months'
     ),
     grants_with_tta AS (
       SELECT
