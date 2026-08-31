@@ -79,12 +79,13 @@ export default function RegionalCommunicationLog() {
   );
 
   const filterConfig = useMemo(
-    () => [
-      // This is just the communicationDate filter for now.
-      ...DASHBOARD_FILTER_CONFIG,
-      // When they have multiple regions, we want to show the region filter.
-      ...(userHasOnlyOneRegion ? [] : [regionFilter]),
-    ],
+    () =>
+      [
+        // This is just the communicationDate filter for now.
+        ...DASHBOARD_FILTER_CONFIG,
+        // When they have multiple regions, we want to show the region filter.
+        ...(userHasOnlyOneRegion ? [] : [regionFilter]),
+      ].sort((first, second) => first.display.localeCompare(second.display)),
     [userHasOnlyOneRegion]
   );
 
