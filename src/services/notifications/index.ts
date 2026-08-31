@@ -324,6 +324,98 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
   return deletedCount;
 }
 /*
+ * Archives a single user's notifications for a given entity and one or more notification
+ * types. This is the per-user counterpart to {@link archiveNotificationsByEntityAndType}:
+ * it only touches notifications and state rows belonging to `userId`, leaving other users'
+ * notifications for the same entity/type untouched. It is used when a state change makes
+ * one user's notifications obsolete but they should remain visible in that user's archived
+ * list (e.g. a collaborator's "report submitted" notification is archived when the report
+ * is resubmitted).
+ *
+ * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
+ * rows intact and instead marks the user's NotificationUserState as archived. For state
+ * rows that already exist, `archivedAt` is set only when currently null, so existing
+ * archive timestamps are preserved. For matching notifications that have no state row for
+ * the user yet, an archived + viewed state row is created.
+ *
+ * Not to be called from Sequelize model hooks — call it inline in the same service function
+ * that performs the state change.
+ * @param {number} entityId The ID of the entity whose notifications should be archived.
+ * @param {number} userId The ID of the user whose notifications should be archived.
+ * @param {NotificationType | NotificationType[]} notificationType The notification type(s) to target.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ * @throws {Error} Throws when entityId, userId, or notificationType is falsy/empty.
+ */
+async function archiveNotificationsByUserEntityAndType(
+  entityId: number,
+  userId: number,
+  notificationType: NotificationType | NotificationType[]
+): Promise<void> {
+  if (!entityId) {
+    throw new Error('entityId is required');
+  }
+
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+
+  const notificationTypes = Array.isArray(notificationType) ? notificationType : [notificationType];
+
+  if (!notificationTypes.length || notificationTypes.some((type) => !type)) {
+    throw new Error('notificationType is required');
+  }
+
+  const notifications = (await Notification.findAll({
+    attributes: ['id'],
+    where: {
+      entityId,
+      type: { [Op.in]: notificationTypes },
+      userId,
+    },
+    raw: true,
+  })) as unknown as { id: number }[];
+
+  if (!notifications.length) {
+    return;
+  }
+
+  const notificationIds = notifications.map((n) => n.id);
+  const archivedAt = new Date();
+
+  await NotificationUserState.update(
+    { archivedAt },
+    {
+      where: {
+        notificationId: notificationIds,
+        userId,
+        archivedAt: null,
+      },
+    }
+  );
+
+  const existingStates = (await NotificationUserState.findAll({
+    attributes: ['notificationId'],
+    where: { notificationId: notificationIds, userId },
+    raw: true,
+  })) as unknown as { notificationId: number }[];
+
+  const existingSet = new Set(existingStates.map((state) => state.notificationId));
+
+  const missingStates = notificationIds
+    .filter((notificationId) => !existingSet.has(notificationId))
+    .map((notificationId) => ({
+      notificationId,
+      userId,
+      archivedAt,
+      viewedAt: archivedAt,
+    }));
+
+  if (missingStates.length) {
+    await NotificationUserState.bulkCreate(missingStates, { ignoreDuplicates: true });
+  }
+}
+
+/*
  * Archives all notifications for a given entity and one or more notification types.
  * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
  * rows intact and instead marks each recipient's NotificationUserState as archived. It is
@@ -497,6 +589,7 @@ async function getNotifications(
 
 export {
   archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
   createGlobalNotification,
   createNotification,
   deleteExpiredArchivedNotifications,
