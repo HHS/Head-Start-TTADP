@@ -48,12 +48,14 @@ import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
   archiveNeedsActionNotifications,
+  archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createResubmittedNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -580,8 +582,16 @@ export async function reviewReport(req, res) {
       );
     }
 
+    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // A resubmission notification is obsolete once the report is fully approved.
+      await archiveResubmittedNotifications(Number(activityReportId));
+    }
+
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       const { author, activityReportCollaborators, approvers } = reviewedReport;
+
+      // A resubmission notification is obsolete once changes are requested.
+      await archiveResubmittedNotifications(Number(activityReportId));
 
       // add in-app notification
       // - for creator
@@ -732,6 +742,12 @@ export async function submitReport(req, res) {
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
+    // Only a creator resubmitting (report still in needs-action) counts as a resubmission
+    // for the collaborator revised-report notification; collaborator submits use the standard flow.
+    const isResubmission =
+      report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION &&
+      report.author &&
+      report.author.id === userId;
 
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
@@ -777,10 +793,19 @@ export async function submitReport(req, res) {
 
     await createApproverSubmittedNotification(currentApprovers, savedReport);
 
-    await createCollaboratorSubmittedNotification(
-      report.activityReportCollaborators || [],
-      savedReport
-    );
+    // On resubmission, collaborators receive the "revised report" notification instead of
+    // the standard collaborator-submitted one.
+    if (isResubmission) {
+      await createResubmittedNotificationForCollaborators(
+        report.activityReportCollaborators || [],
+        savedReport
+      );
+    } else {
+      await createCollaboratorSubmittedNotification(
+        report.activityReportCollaborators || [],
+        savedReport
+      );
+    }
 
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {
