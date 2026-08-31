@@ -152,7 +152,7 @@ How it is wired:
 
 ## Tables
 
-All four tables are created by migration `20260818170000-create_validation_tables.js`. Ids are `INTEGER` autoincrement; `createdAt`/`updatedAt` are present on every table.
+All four tables are created by migration `20260831120000-create_validation_tables.js`. Ids are `INTEGER` autoincrement; `createdAt`/`updatedAt` are present on every table.
 
 ### ValidationRuns
 
@@ -321,6 +321,6 @@ Error: downstream system unavailable
 - **Watchdog**: `src/tools/checkMonitoringValidationRan.ts`, `src/tools/checkMonitoringValidationRanCLI.ts`
 - **Models**: `src/models/validationRun.js`, `src/models/validationTimeSeries.js`, `src/models/validationRecord.js`, `src/models/validationAlert.js`
 - **Constants**: `VALIDATION_PROCESS`, `VALIDATION_RUN_STATUS`, `VALIDATION_ALERT_SEVERITY` in `src/constants.js`
-- **Migration**: `src/migrations/20260806120000-create_validation_tables.js`
+- **Migration**: `src/migrations/20260831120000-create_validation_tables.js`
 - **CI**: `.circleci/config.yml` (import phases), `.circleci/scripts/build_import_summary.sh` (Slack summary)
 </content>
