@@ -204,6 +204,12 @@ module.exports = {
         transaction,
       });
 
+      // run_id (FK, not auto-indexed) leads the retention, count, and alert-generation filters.
+      await queryInterface.addIndex('ValidationRecords', ['run_id', 'observation_name'], {
+        name: 'ValidationRecords_run_id_observation_name',
+        transaction,
+      });
+
       await queryInterface.createTable(
         'ValidationAlerts',
         {

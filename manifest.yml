@@ -29,6 +29,7 @@ applications:
       JWT_SECRET: ((JWT_SECRET))
       LOG_JSON_FORMAT: "true"
       LOG_LEVEL: ((LOG_LEVEL))
+      MONITORING_GATE_HALT_CHECKS: ((MONITORING_GATE_HALT_CHECKS))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production

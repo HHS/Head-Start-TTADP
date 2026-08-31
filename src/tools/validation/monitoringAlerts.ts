@@ -73,7 +73,11 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     -- average four-week total across all regions is above 5 - meaning there is
     -- enough national activity that a silent region stands out. The region
     -- universe comes from Grants so regions with no time series rows at all
-    -- still count as zero.
+    -- still count as zero. A review spanning multiple region/geo slices is
+    -- counted in each, so this cross-region sum double-counts it; far too rare
+    -- to matter for an order-of-magnitude sparsity gate like this, but the
+    -- imprecision should be accounted for if the stat ever feeds statistical
+    -- modeling.
     WITH region_totals AS (
     SELECT
       g."regionId" region_id,

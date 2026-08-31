@@ -276,10 +276,65 @@ describe('build_import_summary.sh', () => {
     runSummaryScript(artifactDir, summaryFile, '6');
 
     const summary = fs.readFileSync(summaryFile, 'utf-8');
+    // The critical data condition is the headline; the refresh block is a clause.
     expect(summary).toBe(
-      'Monitoring import BLOCKED - fact-table refresh prevented by critical validation (as of 2026-03-24 06:00 EDT): ```\n' +
+      'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - blocked the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
-        '```'
+        '```\n'
+    );
+  });
+
+  it('surfaces a report-only critical even when an unrelated later phase fails', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-report-only-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-validate_monitoring_gate-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-validate_monitoring_gate.log'),
+            },
+            {
+              taskName: 'import-update_fact_tables-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              logFile: path.join(logDir, 'phase-update_fact_tables.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    // Gate found a critical but ran report-only (exit 0, phase SUCCEEDED); a later
+    // phase is what failed. The critical must still reach the channel.
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-update_fact_tables.log'),
+      'Task import-update_fact_tables-prod-1 status: RUNNING\nError: fact-table refresh failed\nPHASE_FAILURE update_fact_tables exit 1\n'
+    );
+
+    runSummaryScript(artifactDir, summaryFile, '8');
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    expect(summary).toBe(
+      'Monitoring job failure: ```\n' +
+        'Error: fact-table refresh failed\n' +
+        '```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
+        '```\n'
     );
   });
 

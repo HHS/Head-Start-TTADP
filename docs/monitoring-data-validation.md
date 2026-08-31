@@ -111,14 +111,14 @@ Two subtleties in `findings_mass_source_deletion`:
 
 A raised alert reaches people through one chain, and the decision to block the fact-table refresh is a separate, caller-side step.
 
-**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain *why* it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a summary (with a dedicated branch that spells out the reason when the failed phase is `validate_monitoring_gate`) → `notify_slack` posts the summary to the configured channel.
+**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain *why* it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a summary — always appending the gate's result last, so a critical is in the summary regardless of the run's outcome → `notify_slack` posts the summary to the configured channel.
 
 **Acting on the result.** `severity` is what separates a condition that merely needs attention from one that should block the fact-table refresh. The runner only *counts* criticals; each caller decides what to do with the count:
 
 | Caller | On `criticalCount > 0` |
 |---|---|
 | `validateMonitoringDataCLI` | Nothing — post-refresh, non-blocking, exits 0 |
-| `validateMonitoringGateCLI` | Exits nonzero **only for criticals the halt policy has opted in** (see Enforcement controls) → the phase loop breaks before `update_fact_tables`, leaving the prior fact tables live |
+| `validateMonitoringGateCLI` | Exits nonzero **for criticals the halt policy has opted in** (see Enforcement controls), and for execution errors while enforcing → the phase loop breaks before `update_fact_tables`, leaving the prior fact tables live |
 | Future in-refresh check | Would `throw` inside `updateMonitoringFactTables`' transaction → rollback for free |
 
 **Enforcement controls.** The gate defaults to **report-only**: a critical is recorded and logged, but the fact-table refresh still proceeds, so the checks can be validated against real production data before they are trusted to block anything. Which criticals actually block is a caller-side policy in `resolveGateHalt` (`src/tools/validation/gateHaltPolicy.ts`), driven by the `MONITORING_GATE_HALT_CHECKS` env var read by `validateMonitoringGateCLI`:
@@ -129,7 +129,9 @@ A raised alert reaches people through one chain, and the decision to block the f
 | `all` | Every critical blocks (also if `all` appears anywhere in a list) |
 | `check_a,check_b` | Only those `check_name`s block — lets the gate be switched on one check at a time |
 
-Because report-only is the default, enabling enforcement needs no code change: set the env var on the `run_import_job` in CI (e.g. `MONITORING_GATE_HALT_CHECKS=findings_mass_source_deletion` to start with one check, or `all`). Keeping the decision in the CLI — not in the runner or the checks — is what lets the same checks feed both the report-only observation and the enforced gate.
+A gate **execution error** (DB blip, bad SQL, timeout) is not a detected critical, so it follows the same policy: it fails closed (exits nonzero, halting the import before `update_fact_tables`) only when enforcement is configured; in report-only mode the CLI exits 0, so a transient gate error can't halt the pipeline while the gate is still being trialed against real data, before its checks are trusted to block.
+
+Because report-only is the default, enabling enforcement needs no code change. Like `ENABLE_MONITORING_GOAL_CREATION`, `MONITORING_GATE_HALT_CHECKS` is declared in `manifest.yml` and set per environment in `deployment_config/<env>_vars.yml` (the `PROD_GATE_HALT_CHECKS` / `DEV_GATE_HALT_CHECKS` / `STAGING_GATE_HALT_CHECKS` CircleCI vars) — set one to e.g. `findings_mass_source_deletion` for a single check, or `all`. Keeping the decision in the CLI — not in the runner or the checks — is what lets the same checks feed both the report-only observation and the enforced gate.
 
 **Channels.** The routine summary, with all alerts including criticals, always goes to a base channel chosen by environment. The OHS contractor–customer channel receives the **same** summary only when it is explicitly enabled:
 
@@ -143,7 +145,7 @@ Because report-only is the default, enabling enforcement needs no code change: s
 How it is wired:
 
 - The base channel is the `run_import_job` / `run_validation_watchdog` `slack_channel` param (`acf-head-start-alerts` for the prod cron, `acf-head-start-alerts-lower` for manual/lower runs).
-- `build_import_summary.sh` surfaces the gate's criticals on success too (not only when the gate phase fails), so a report-only critical appears in that summary rather than only in the `Monitoring Gate: {…}` log line.
+- `build_import_summary.sh` appends the gate's result to every summary — success, a gate block, or an unrelated later-phase failure — so a critical always reaches the channel, not only the `Monitoring Gate: {…}` log line. The critical data condition is the headline; whether it blocked the refresh is a clause on it. The benign "no critical / no result" confirmations appear only on success, so a failure unrelated to data isn't given confusing validation commentary.
 - The `notify_slack` command posts to the base channel and, when its `ohs_channel` param is non-empty **and** `OHS_MONITORING_ALERTS_ENABLED` is truthy, mirrors the same message there. `ohs_channel` is only passed by the prod workflow invocations, so a lower environment can never reach the contractor channel even if the env var were set — two independent guards.
 
 **The watchdog.** `checkMonitoringValidationRan.ts` (`cli:check-monitoring-validation-ran`) runs on a **separate** schedule a few hours after the import cron, so it can catch the case where the validation — or the whole cron — never fired. It resolves the current [cycle](#architecture) (`getMonitoringImportCycle`) and looks for a `monitoring_post_refresh` run for that cycle's `import_id`, reporting `ok`, `run failed`, `run incomplete` (stuck at `started`), or `no validation run for the current import cycle`. A day with no new processed import stays `ok` (nothing new to validate). This is why the run row is committed as `started` before any work.
@@ -203,7 +205,7 @@ Per-entity observations for a run.
 | `scalar` | DECIMAL | Continuous measurement; NULL for categorical |
 | `category` | TEXT | Categorization; NULL for scalar |
 
-Index on `(entity_type, observation_name)`.
+Indexes on `(entity_type, observation_name)` and `(run_id, observation_name)` — the latter for the `run_id`-first retention, count, and alert-generation filters (the FK is not auto-indexed).
 
 ### ValidationAlerts
 
@@ -264,6 +266,51 @@ Split logic that different future consumers will use (e.g. anomaly-detection mod
 - **In-refresh gate** (documented, not built): a marked point in `src/tools/updateMonitoringFactTables.ts` (just before the "Primary Entity Table Upserts") where the staged temp tables exist but the live fact tables have not yet been overwritten — so a check could diff the new import against last-good linkage and, being inside one transaction, get true rollback for free by throwing on `criticalCount > 0`.
 - **Incremental time-series recompute**: as of MVP, `monitoringTimeSeries` recomputes the full range since `TIME_SERIES_START` every run — simple and self-correcting for late source updates, but its cost grows with the full history. The endstate is likely a bounded trailing-window recompute plus a periodic full backfill.
 - **Retention/archival**: `ValidationRecords` keeps only the current + previous cycle today; a fuller strategy is future work.
+
+## Example Slack notifications
+
+What `build_import_summary.sh` posts in the main scenarios (the ``` are literal — Slack renders them as code fences). Criticals always appear; benign gate confirmations only on success.
+
+**Successful import** — new goals, plus a report-only critical that did not block:
+
+~~~
+Monitoring Updates: ```
+New Goals: Example Recipient Alpha (Region 1)
+```
+Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT): ```
+Region 5 created no monitoring reviews in the last four complete weeks
+```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+52.0% of monitoring findings from the last year have no live row (900 of 1730)
+```
+~~~
+
+**Gate block** — a halt-listed critical stopped the refresh; the condition is the headline, the block a clause:
+
+~~~
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - blocked the fact-table refresh: ```
+52.0% of monitoring findings from the last year have no live row (900 of 1730)
+```
+~~~
+
+**Report-only critical, but a later phase failed** — the failure and the (non-blocking) critical are both surfaced:
+
+~~~
+Monitoring job failure: ```
+Error: fact-table refresh failed
+```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+52.0% of monitoring findings from the last year have no live row (900 of 1730)
+```
+~~~
+
+**Failure unrelated to data** — no validation commentary, so nothing implies the failure was validation-related:
+
+~~~
+Monitoring job failure: ```
+Error: downstream system unavailable
+```
+~~~
 
 ## Source Code
 

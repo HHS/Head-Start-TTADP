@@ -41,6 +41,10 @@ validateMonitoringGate().then(
   },
   (e) => {
     auditLogger.error(e);
-    process.exit(1);
+    // A gate execution error is not a detected critical. Fail closed (halt the
+    // import) only when enforcement is configured; in report-only mode nothing
+    // should block the refresh, so a transient gate error must not either.
+    const enforcing = resolveGateHalt([], process.env.MONITORING_GATE_HALT_CHECKS).mode !== 'none';
+    process.exit(enforcing ? 1 : 0);
   }
 );
