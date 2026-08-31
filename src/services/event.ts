@@ -111,7 +111,12 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
-  if (!data.eventId) {
+  // The event display id is provided via `data.eventId` but is stored solely in
+  // the dedicated `eventId` column (the single source of truth); it is not
+  // persisted back into the JSONB `data`.
+  const { eventId, ...dataWithoutEventId } = data;
+
+  if (!eventId) {
     throw new Error('Missing required field: data.eventId');
   }
 
@@ -120,8 +125,8 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     pocIds,
     collaboratorIds,
     regionId,
-    eventId: data.eventId,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    eventId,
+    data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 }
 
@@ -256,7 +261,7 @@ export async function findEventHelper(
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
-    eventId: event?.eventId ?? event?.data?.eventId,
+    eventId: event?.eventId,
     data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: (event?.sessionReports ?? []).map(injectSessionColumnDates),
@@ -417,17 +422,16 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
-  // eventId is an immutable identifier. Reject any attempt to change it, and always
-  // write the canonical column value back into the JSON payload so the physical
-  // `eventId` column and `data.eventId` never desync (many read paths rely on
-  // `data.eventId`, e.g. alerts and session shaping).
-  const requestedEventId = (data as { eventId?: string }).eventId;
+  // eventId is an immutable identifier stored in the dedicated `eventId` column,
+  // which is the single source of truth. Reject any attempt to change it, and
+  // never persist it back into the JSONB `data`.
+  const { eventId: requestedEventId, ...dataWithoutEventId } = data as {
+    eventId?: string;
+  } & Record<string, unknown>;
 
   if (requestedEventId && requestedEventId !== evt.eventId) {
     throw new Error('eventId is immutable and cannot be changed');
   }
-
-  const syncedData = { ...data, eventId: evt.eventId };
 
   await evt.update(
     {
@@ -436,7 +440,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       collaboratorIds,
       regionId,
       eventId: evt.eventId,
-      data: cast(JSON.stringify(syncedData), 'jsonb'),
+      data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
   );
@@ -460,8 +464,8 @@ const parseMinimalEventForAlert = (
     ownerId: number;
     pocIds: number[];
     collaboratorIds: number[];
+    eventId: string;
     data: {
-      eventId: string;
       eventName: string;
       startDate: string;
       endDate: string;
@@ -472,7 +476,7 @@ const parseMinimalEventForAlert = (
   sessionName = '--'
 ): TRAlertShape => ({
   id: event.id,
-  eventId: event.data.eventId,
+  eventId: event.eventId,
   eventName: event.data.eventName,
   alertType,
   sessionName,
@@ -517,7 +521,7 @@ const checkSessionForCompletion = (
   if (!sessionValid) {
     missingSessionInfo.push({
       id: session.id,
-      eventId: event.data.eventId,
+      eventId: event.eventId,
       isSession: true,
       sessionName: session.data.sessionName,
       eventName: event.data.eventName,
@@ -743,7 +747,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter || isApprover) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -772,7 +776,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,

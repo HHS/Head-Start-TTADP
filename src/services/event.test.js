@@ -99,7 +99,7 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
-    it('mirrors data.eventId into the dedicated eventId column', async () => {
+    it('stores the eventId in the dedicated column and not in the JSONB data', async () => {
       const eventId = `R01-TR-${faker.datatype.uuid()}`;
       const created = await createEvent({
         ownerId: 98_989,
@@ -110,10 +110,13 @@ describe('event service', () => {
       });
 
       expect(created.eventId).toEqual(eventId);
-      expect(created.data.eventId).toEqual(eventId);
+      // The eventId column is the single source of truth; it is not duplicated
+      // into the JSONB `data`.
+      expect(created.data.eventId).toBeUndefined();
 
       const reloaded = await db.EventReportPilot.findByPk(created.id);
       expect(reloaded.eventId).toEqual(eventId);
+      expect(reloaded.data.eventId).toBeUndefined();
 
       await destroyEvent(created.id);
     });
@@ -157,7 +160,7 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
-    it('keeps data.eventId synced with the eventId column when the request omits it', async () => {
+    it('keeps the eventId column stable when the request omits it', async () => {
       const created = await createAnEvent(98_989);
       const originalEventId = created.eventId;
 
@@ -169,8 +172,9 @@ describe('event service', () => {
         data: {},
       });
 
+      // The dedicated eventId column is the single source of truth and is
+      // immutable, so it remains stable even when the request omits it.
       expect(updated.eventId).toBe(originalEventId);
-      expect(updated.data.eventId).toBe(originalEventId);
 
       await destroyEvent(created.id);
     });

@@ -221,7 +221,7 @@ export default function TrainingReportForm({ match }) {
 
       const dateStr = moment().format('MM/DD/YYYY [at] h:mm a z');
       const message = {
-        eventId: updatedEvent.data.eventId,
+        eventId: updatedEvent.eventId,
         dateStr,
       };
 

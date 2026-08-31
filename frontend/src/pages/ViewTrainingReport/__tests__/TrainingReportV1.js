@@ -77,6 +77,7 @@ const mockEvent = (data = {}) => ({
   collaboratorIds: [2],
   regionId: 1,
   version: 1,
+  eventId: 'R03-PD-23-1037',
   data: {
     vision: 'Oral Health',
     creator: 'cucumber@hogwarts.com',
