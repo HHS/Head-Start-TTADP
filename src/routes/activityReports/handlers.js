@@ -48,12 +48,14 @@ import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
   archiveNeedsActionNotifications,
+  archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createResubmittedNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -580,8 +582,16 @@ export async function reviewReport(req, res) {
       );
     }
 
+    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // A resubmission notification is obsolete once the report is fully approved.
+      await archiveResubmittedNotifications(Number(activityReportId));
+    }
+
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       const { author, activityReportCollaborators, approvers } = reviewedReport;
+
+      // A resubmission notification is obsolete once changes are requested.
+      await archiveResubmittedNotifications(Number(activityReportId));
 
       // add in-app notification
       // - for creator
@@ -787,8 +797,13 @@ export async function submitReport(req, res) {
     const collaboratorsToNotify = (report.activityReportCollaborators || []).filter(
       (c) => c.userId !== userId
     );
-
-    await createCollaboratorSubmittedNotification(collaboratorsToNotify, savedReport);
+    // On resubmission, collaborators receive the "revised report" notification instead of
+    // the standard collaborator-submitted one.
+    if (isResubmission) {
+      await createResubmittedNotificationForCollaborators(collaboratorsToNotify || [], savedReport);
+    } else {
+      await createCollaboratorSubmittedNotification(collaboratorsToNotify || [], savedReport);
+    }
 
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {

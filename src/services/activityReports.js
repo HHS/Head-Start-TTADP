@@ -10,7 +10,7 @@ import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
 import orderReportsBy from '../lib/orderReportsBy';
-import { safeParseInt } from '../lib/safeParse';
+import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import {
@@ -469,19 +469,15 @@ export async function activityReportAndRecipientsById(activityReportId) {
     order: [[{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC']],
   });
 
+  // Use real NextStep model instances (not plain objects) for the empty-note placeholder so the
+  // report instance can still be serialized via toJSON (e.g. when enqueued to the notification
+  // queue, which serializes the job data via JSON.stringify). A plain object here has no `.get()`
+  // method and breaks Sequelize's association serialization.
   if (report?.specialistNextSteps?.length === 0) {
-    report.specialistNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.specialistNextSteps[0] = NextStep.build({ note: '' });
   }
   if (report?.recipientNextSteps?.length === 0) {
-    report.recipientNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.recipientNextSteps[0] = NextStep.build({ note: '' });
   }
 
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
@@ -1786,7 +1782,7 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
-  const safeUserId = safeParseInt(userId);
+  const safeUserId = parsePositiveInteger(userId);
 
   if (!safeUserId) {
     throw new Error('Invalid userId provided');

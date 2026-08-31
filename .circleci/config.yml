@@ -189,7 +189,8 @@ workflows:
             only:
             - main
     jobs:
-    - build_and_lint
+    - build_and_lint:
+        load_deploy_frontend_env: false
     - deploy_job:
         name: reset (dev-blue)
         target_env: "dev-blue"
@@ -336,6 +337,10 @@ jobs:
   build_and_lint:
     executor: docker-executor
     resource_class: large
+    parameters:
+      load_deploy_frontend_env:
+        type: boolean
+        default: true
     steps:
     - checkout
     - run:
@@ -419,7 +424,48 @@ jobs:
           ./tools/run-yarn-audit.js;
     - run:
         name: Build frontend
-        command: yarn --cwd frontend run build
+        command: |
+          frontend_env_config=""
+
+          if [ "<< parameters.load_deploy_frontend_env >>" = "true" ]; then
+            if [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
+              case "${CIRCLE_BRANCH}" in
+                main)
+                  frontend_env_config="./deployment_config/staging_vars.yml"
+                  ;;
+                production)
+                  frontend_env_config="./deployment_config/prod_vars.yml"
+                  ;;
+              esac
+            elif [ "<< pipeline.parameters.action >>" = "deploy_only" ] \
+              && [ "<< pipeline.parameters.target_env >>" = "staging" ]; then
+              frontend_env_config="./deployment_config/staging_vars.yml"
+            fi
+          fi
+
+          if [ -n "${frontend_env_config}" ]; then
+            ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
+            grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
+            circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
+            while IFS= read -r line; do
+              key="${line%%=*}"
+              value="${line#*=}"
+
+              if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+                echo "Invalid frontend environment variable name: ${key}"
+                exit 1
+              fi
+
+              if [[ "${value}" == \"*\" ]] || [[ "${value}" == \'*\' ]]; then
+                value="${value:1:${#value}-2}"
+              fi
+
+              export "${key}=${value}"
+            done < ./frontend-build.vars
+            rm -f ./temp.vars ./frontend-build.template.vars ./frontend-build.vars
+          fi
+
+          yarn --cwd frontend run build
     - run:
         name: Run lint
         command: |
@@ -1076,18 +1122,6 @@ jobs:
             rm -f "${reconciliation_path}"
             msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
             ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-
-          if ! node ./tools/releaseInventory.js cms-export \
-            --out "${cms_export_path}" \
-            --csv-out "${cms_csv_export_path}" \
-            --release-tag "${BUILD_RELEASE_TAG}" \
-            --release-commit "${CIRCLE_SHA1}" \
-            --pipeline-url "${CIRCLE_BUILD_URL}"; then
-            rm -f "${cms_export_path}" "${cms_csv_export_path}"
-            msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
             exit 0
           fi
 

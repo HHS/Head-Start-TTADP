@@ -7,6 +7,7 @@ import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import WidgetContainer from '../../../components/WidgetContainer';
 import { getSessionReportsCSV, getSessionReportsCSVById } from '../../../fetchers/session';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import './TrainingReportsTable.css';
 
 const PER_PAGE = 10;
 
@@ -19,6 +20,7 @@ const TrainingReportsTable = ({
   sortConfig,
   setSortConfig,
   filters,
+  recipientId,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const perPage = sortConfig.perPage || PER_PAGE;
@@ -39,14 +41,15 @@ const TrainingReportsTable = ({
   if (data.rows.length) {
     menuItems.push({
       label: 'Export table',
-      onClick: async () => getSessionReportsCSV(sortConfig, filters),
+      onClick: async () => getSessionReportsCSV(sortConfig, filters, recipientId),
     });
   }
 
   if (selectedReports.length) {
     menuItems.unshift({
       label: 'Export selected rows',
-      onClick: async () => getSessionReportsCSVById(selectedReports, sortConfig, filters),
+      onClick: async () =>
+        getSessionReportsCSVById(selectedReports, sortConfig, filters, recipientId),
     });
   }
 
@@ -114,17 +117,18 @@ const TrainingReportsTable = ({
           },
           {
             label: 'Export',
-            onClick: () => getSessionReportsCSVById([r.id], sortConfig, filters),
+            onClick: () => getSessionReportsCSVById([r.id], sortConfig, filters, recipientId),
           },
         ],
       })),
-    [data.rows, history, sortConfig, filters]
+    [data.rows, history, sortConfig, filters, recipientId]
   );
 
   return (
     <WidgetContainer
       className="training-reports-table--widget-container"
       title={title}
+      subtitle="Approved sessions from training events."
       enableCheckboxes
       checkboxes={reportCheckboxes}
       setCheckboxes={setReportCheckboxes}
@@ -151,8 +155,8 @@ const TrainingReportsTable = ({
             'Event title',
             'Supporting goals',
             'Session name',
-            'Session start date',
-            'Session end date',
+            { displayName: 'Session start date', name: 'startDate' },
+            { displayName: 'Session end date', name: 'endDate' },
             'Topics',
           ]}
           data={tabularData}
@@ -167,7 +171,6 @@ const TrainingReportsTable = ({
           showDashForNullValue
           hideFirstColumnBorder
           stickyFirstColumn
-          stickyLastColumn={false}
         />
       )}
     </WidgetContainer>
@@ -178,6 +181,7 @@ TrainingReportsTable.defaultProps = {
   loading: false,
   emptyMsg: 'No training reports found',
   filters: [],
+  recipientId: null,
 };
 
 TrainingReportsTable.propTypes = {
@@ -198,6 +202,7 @@ TrainingReportsTable.propTypes = {
   title: PropTypes.string.isRequired,
   setSortConfig: PropTypes.func.isRequired,
   filters: PropTypes.arrayOf(PropTypes.shape({})),
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default TrainingReportsTable;
