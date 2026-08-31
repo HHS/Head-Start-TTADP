@@ -1224,8 +1224,11 @@ export async function downloadActivityReportExport(req, res) {
       res.destroy(error);
       return;
     }
-    if (error?.statusCode === 400) {
-      res.status(400).json({ error: error.message });
+    // Errors that set their own statusCode are deliberate client responses
+    // (validation, over-capacity); surface them as-is. Everything else is
+    // unexpected and goes through handleErrors as a 500.
+    if (error?.statusCode) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
     await handleErrors(req, res, error, logContext);

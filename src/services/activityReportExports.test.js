@@ -2,8 +2,10 @@ import db, { ActivityReportGoal, ActivityReportObjective, Objective } from '../m
 import { createGoal, createReport, destroyGoal, destroyReport, getUniqueId } from '../testUtils';
 import {
   EXPORT_DATA_SETS,
+  ExportCapacityError,
   ExportRequestError,
   isValidDataSet,
+  MAX_CONCURRENT_EXPORTS,
   MAX_EXPORT_REPORT_IDS,
   streamActivityReportExportCsv,
 } from './activityReportExports';
@@ -112,6 +114,67 @@ describe('activityReportExports', () => {
           NOOP_CALLBACKS
         )
       ).rejects.toThrow(/Unsupported sort direction/);
+    });
+  });
+
+  // The concurrency cap bounds how many pooled connections exports can hold at
+  // once. Hold MAX_CONCURRENT_EXPORTS exports open (parked in onStart, past the
+  // slot reservation) and assert the next one is rejected, then let them finish.
+  describe('concurrency cap', () => {
+    it(`rejects a request beyond ${MAX_CONCURRENT_EXPORTS} concurrent exports with a 429`, async () => {
+      const releases = [];
+      const started = [];
+      const inFlight = [];
+
+      for (let i = 0; i < MAX_CONCURRENT_EXPORTS; i += 1) {
+        let release;
+        const blocked = new Promise((resolve) => {
+          release = resolve;
+        });
+        releases.push(release);
+
+        let markStarted;
+        started.push(
+          new Promise((resolve) => {
+            markStarted = resolve;
+          })
+        );
+
+        inFlight.push(
+          streamActivityReportExportCsv(
+            { dataSet: 'activity-reports', reportIds: [], regionIds: ALL_REGIONS },
+            {
+              onStart: () => {
+                markStarted();
+                return blocked; // hold the slot until we release it
+              },
+              onChunk: () => {},
+            }
+          )
+        );
+      }
+
+      // Wait until all of them have reserved their slot.
+      await Promise.all(started);
+
+      const overflow = streamActivityReportExportCsv(
+        { dataSet: 'activity-reports', reportIds: [], regionIds: ALL_REGIONS },
+        NOOP_CALLBACKS
+      );
+      await expect(overflow).rejects.toBeInstanceOf(ExportCapacityError);
+      await expect(overflow).rejects.toHaveProperty('statusCode', 429);
+
+      // Release the held exports and let them complete cleanly.
+      releases.forEach((release) => release());
+      await Promise.all(inFlight);
+
+      // The slots are freed again, so a fresh export succeeds.
+      const { rowCount } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [],
+        regionIds: ALL_REGIONS,
+      });
+      expect(rowCount).toBe(0);
     });
   });
 

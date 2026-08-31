@@ -250,9 +250,11 @@ FROM ars
 LEFT JOIN "ActivityReportGoals" arg ON arid = arg."activityReportId"
 LEFT JOIN "Goals" g ON arg."goalId" = g.id
 LEFT JOIN "GoalTemplates" gt ON g."goalTemplateId" = gt.id
-JOIN "GoalTemplateFieldPrompts" gtfp ON gtfp.title = 'FEI root cause'
 LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-  ON argfr."activityReportGoalId" = arg.id AND argfr."goalTemplateFieldPromptId" = gtfp.id
+  ON argfr."activityReportGoalId" = arg.id
+  AND argfr."goalTemplateFieldPromptId" IN (
+    SELECT id FROM "GoalTemplateFieldPrompts" WHERE title = 'FEI root cause'
+  )
 LEFT JOIN LATERAL UNNEST(argfr.response) root_cause ON TRUE
 GROUP BY 1,2,3,4,5,6,7,8,9
 ),
