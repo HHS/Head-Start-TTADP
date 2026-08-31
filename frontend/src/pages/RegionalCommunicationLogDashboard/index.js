@@ -60,13 +60,11 @@ const createDefaultFilters = (
 
 export default function RegionalCommunicationLog() {
   const { user } = useContext(UserContext);
-  const hasCentralOffice = useMemo(
-    () => user && user.homeRegionId && user.homeRegionId === 14,
-    [user]
-  );
+  const hasCentralOffice = useMemo(() => user?.homeRegionId && user.homeRegionId === 14, [user]);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+  const defaultRegion = useMemo(() => user.homeRegionId, [user.homeRegionId]);
+
   const canCreateCommLog = useMemo(
     () => canCreateCommunicationLog(user, parseInt(defaultRegion, DECIMAL_BASE)),
     [user, defaultRegion]
