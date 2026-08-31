@@ -266,6 +266,7 @@ Split logic that different future consumers will use (e.g. anomaly-detection mod
 - **In-refresh gate** (documented, not built): a marked point in `src/tools/updateMonitoringFactTables.ts` (just before the "Primary Entity Table Upserts") where the staged temp tables exist but the live fact tables have not yet been overwritten — so a check could diff the new import against last-good linkage and, being inside one transaction, get true rollback for free by throwing on `criticalCount > 0`.
 - **Incremental time-series recompute**: as of MVP, `monitoringTimeSeries` recomputes the full range since `TIME_SERIES_START` every run — simple and self-correcting for late source updates, but its cost grows with the full history. The endstate is likely a bounded trailing-window recompute plus a periodic full backfill.
 - **Retention/archival**: `ValidationRecords` keeps only the current + previous cycle today; a fuller strategy is future work.
+- **Slack payload correctness test**: these notifications embed arbitrary message text — including double quotes, newlines, and backslashes (e.g. the watchdog logs raw JSON, and gate/validation messages are multi-line) — into a JSON request body, and there is currently no automated check that the assembled payload is actually valid JSON that preserves the message verbatim. A malformed payload silently fails the Slack request. The intent is a regression test that drives the real notification path with a battery of adversarial messages and asserts each produces a valid payload whose text round-trips exactly, independent of how the payload happens to be assembled. The payload is currently built in more than one place (`bin/notify-slack.sh` and an inline copy in the CircleCI `notify_slack` command), so collapsing those to a single path would make such a test cover everything at once.
 
 ## Example Slack notifications
 
@@ -302,6 +303,12 @@ Error: fact-table refresh failed
 Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
 52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
+~~~
+
+**Gate did not complete** — a gate check errored, so it validated nothing. In report-only mode this still exits 0 and the import succeeds, so it is surfaced either way rather than reported as "no critical findings":
+
+~~~
+Monitoring Gate: did not complete, data was not validated (as of 2026-08-29 06:00 EDT)
 ~~~
 
 **Failure unrelated to data** — no validation commentary, so nothing implies the failure was validation-related:

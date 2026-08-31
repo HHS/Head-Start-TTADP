@@ -152,6 +152,7 @@ append_gate_summary() {
   local critical_count
   local critical
   local as_of
+  local status
   local refresh_clause
 
   if [[ -f "$gate_log" ]]; then
@@ -160,6 +161,7 @@ append_gate_summary() {
       json_data=${results#*: }
       as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
       critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
+      status=$(echo "$json_data" | jq -r '.status // empty' 2>/dev/null || true)
 
       if [[ "${critical_count:-0}" -gt 0 ]]; then
         if gate_blocked; then
@@ -175,6 +177,15 @@ append_gate_summary() {
           printf '%s\n' "$critical"
           printf '```\n'
         } >> "$SUMMARY_FILE"
+        return
+      fi
+
+      # The gate ran but did not finish (a check errored); it validated nothing,
+      # so it cannot be reported as "no critical findings". In report-only mode
+      # this still exits 0 and the import can SUCCEED, so surface it either way.
+      if [[ -n "$status" && "$status" != "success" ]]; then
+        [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
+        printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
         return
       fi
 

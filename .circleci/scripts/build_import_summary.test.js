@@ -377,4 +377,52 @@ describe('build_import_summary.sh', () => {
     expect(summary).not.toContain('BLOCKED');
     expect(summary).toContain('Monitoring job failure:');
   });
+
+  it('reports the gate did not complete instead of "no critical findings" when it errored but the import succeeded', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-gate-error-ok-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    // Report-only mode: the gate errored (status=failure, no criticalCount) but
+    // its CLI exited 0, so every phase SUCCEEDED and the import is green. The gate
+    // validated nothing, so it must not be reported as "no critical findings".
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-download-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-download.log'),
+            },
+            {
+              taskName: 'import-validate_monitoring_gate-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-validate_monitoring_gate.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+    );
+
+    runSummaryScript(artifactDir, summaryFile, '2');
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    expect(summary).toBe(
+      'Monitoring Updates: none\n' +
+        'Monitoring Validation: no result found\n' +
+        'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT)\n'
+    );
+  });
 });
