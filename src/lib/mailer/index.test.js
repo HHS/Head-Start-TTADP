@@ -1836,6 +1836,7 @@ describe('mailer tests', () => {
     });
 
     it('"approver assigned" includes resubmission flag on the notificationQueue', async () => {
+      notificationQueueMock.add.mockClear();
       const report = await ActivityReport.create(reportObject);
 
       approverAssignedNotification(report, [mockApprover], true);
