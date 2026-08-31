@@ -17,7 +17,7 @@ const createOverviewFieldArray = (data) => [
       ? `${data.recipientsWithOhsStandardFeiGoals.pct}%`
       : '0%',
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
-    filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
+    filterApplicable: data?.recipientsWithOhsStandardFeiGoals?.filterApplicable ?? false,
     showNoResults: true,
     ariaLabel: 'Display details about recipients with OHS standard FEI goals',
   },
