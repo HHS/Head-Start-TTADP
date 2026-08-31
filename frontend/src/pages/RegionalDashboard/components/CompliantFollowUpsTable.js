@@ -1,7 +1,7 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import BackLink from '../../../components/BackLink';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
@@ -15,11 +15,9 @@ import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetC
 import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring';
 import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
-import useFilters from '../../../hooks/useFilters';
 import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting, { parseValue } from '../../../hooks/useWidgetSorting';
-import UserContext from '../../../UserContext';
-import { filtersToQueryString } from '../../../utils';
+import { filtersToQueryString, queryStringToFilters } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import CitationDrawer from '../../RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import { links } from '..';
@@ -30,8 +28,15 @@ import './CompliantFollowUpsTable.css';
 const EMPTY_DATA = [];
 const PER_PAGE = 10;
 const API_DATE_FORMAT = 'YYYY-MM-DD';
+const SORT_KEYS = {
+  REVIEW: 'Compliant follow-up review',
+  RECIPIENT: 'Recipient',
+  HAD_TTA: 'Had TTA',
+  LAST_TTA: 'Last TTA',
+  RECEIVED_DATE: 'Compliant follow-up review received date',
+};
 const DEFAULT_SORT_CONFIG = {
-  sortBy: 'Had_TTA',
+  sortBy: SORT_KEYS.HAD_TTA,
   direction: 'desc',
   activePage: 1,
   offset: 0,
@@ -47,18 +52,56 @@ function formatDate(date) {
 }
 
 function dedupeVisibleFilters(filters) {
+  const NON_COMBINED_TOPICS = new Set(['startDate', 'completeDate', 'reportDeliveryDate']);
   const byTopicConditionQuery = new Map();
 
+  const normalizeQueryValues = (query) => {
+    if (Array.isArray(query)) {
+      return query;
+    }
+
+    if (query === undefined || query === null || query === '') {
+      return [];
+    }
+
+    return [query];
+  };
+
   filters.forEach((filter) => {
+    const shouldCombineValues =
+      !NON_COMBINED_TOPICS.has(filter.topic) && ['is', 'is not'].includes(filter.condition);
     const queryKey = Array.isArray(filter.query)
       ? filter.query.join('|')
       : String(filter.query ?? '');
-    const key = `${filter.topic}:${filter.condition}:${queryKey}`;
+    const key = shouldCombineValues
+      ? `${filter.topic}:${filter.condition}`
+      : `${filter.topic}:${filter.condition}:${queryKey}`;
     const existing = byTopicConditionQuery.get(key);
 
     if (!existing) {
       byTopicConditionQuery.set(key, filter);
+      return;
     }
+
+    if (!shouldCombineValues) {
+      return;
+    }
+
+    const mergedQueryValues = [
+      ...normalizeQueryValues(existing.query),
+      ...normalizeQueryValues(filter.query),
+    ].reduce((acc, value) => {
+      const exists = acc.some((item) => String(item) === String(value));
+      if (!exists) {
+        acc.push(value);
+      }
+      return acc;
+    }, []);
+
+    byTopicConditionQuery.set(key, {
+      ...existing,
+      query: mergedQueryValues,
+    });
   });
 
   return [...byTopicConditionQuery.values()];
@@ -336,11 +379,19 @@ const NON_SORTABLE_HEADERS = [
   'Initial review',
 ];
 
-const STRING_SORT_COLUMNS = ['Compliant_follow-up_review', 'Recipient', 'Had_TTA'];
-const DATE_SORT_COLUMNS = ['Last_TTA', 'Compliant_follow-up_review_received_date'];
+const STRING_SORT_COLUMNS = [SORT_KEYS.REVIEW, SORT_KEYS.RECIPIENT, SORT_KEYS.HAD_TTA];
+const DATE_SORT_COLUMNS = [SORT_KEYS.LAST_TTA, SORT_KEYS.RECEIVED_DATE];
+
+const LEGACY_SORT_KEY_ALIASES = {
+  'Compliant_follow-up_review': SORT_KEYS.REVIEW,
+  Had_TTA: SORT_KEYS.HAD_TTA,
+  Last_TTA: SORT_KEYS.LAST_TTA,
+  'Compliant_follow-up_review_received_date': SORT_KEYS.RECEIVED_DATE,
+};
 
 function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
-  const { sortBy, direction } = sortConfig;
+  const { direction } = sortConfig;
+  const sortBy = LEGACY_SORT_KEY_ALIASES[sortConfig.sortBy] || sortConfig.sortBy;
 
   if (!sortBy || !rows?.length) {
     return rows;
@@ -413,10 +464,7 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
     if (recipientComparison) return recipientComparison;
 
     if (isDefaultSort) {
-      return compareDatesDescending(
-        a['Compliant_follow-up_review_received_date'],
-        b['Compliant_follow-up_review_received_date']
-      );
+      return compareDatesDescending(a[SORT_KEYS.RECEIVED_DATE], b[SORT_KEYS.RECEIVED_DATE]);
     }
 
     return 0;
@@ -428,25 +476,33 @@ export default function CompliantFollowUpsTable({ title }) {
   const [checkboxes, setCheckboxes] = useState({});
   const [pageSize, setPageSize] = useState(PER_PAGE);
   const drawerTriggerRef = useRef(null);
-  const { user } = useContext(UserContext) || { user: {} };
   const filterKey = useDashboardFilterKey('regional-dashboard', 'monitoring');
+  const location = useLocation();
 
-  const {
-    filters: selectedFilters,
-    setFilters,
-    filterConfig,
-  } = useFilters(user || {}, filterKey, false, [], MONITORING_FILTER_CONFIG);
+  // Read filters without writing back to session storage — this page is read-only
+  // and writing URL-parsed (split) entries would corrupt the dashboard's combined filter state.
+  const selectedFilters = useMemo(() => {
+    const urlFilters = queryStringToFilters(location.search.substring(1));
+    if (urlFilters.length) {
+      return urlFilters;
+    }
+    try {
+      const stored = window.sessionStorage.getItem(filterKey);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (_) {
+      // ignore
+    }
+    return [];
+  }, [location.search, filterKey]);
+
+  const filterConfig = MONITORING_FILTER_CONFIG;
 
   const selectedFiltersForQuery = useMemo(
     () => formatMonitoringFiltersForQuery(selectedFilters, { includeCompleteDate: true }),
     [selectedFilters]
   );
-
-  useEffect(() => {
-    if (JSON.stringify(selectedFilters) !== JSON.stringify(selectedFiltersForQuery)) {
-      setFilters(selectedFiltersForQuery);
-    }
-  }, [selectedFilters, selectedFiltersForQuery, setFilters]);
 
   const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
     'compliant-follow-up-reviews-details-table',
@@ -478,11 +534,8 @@ export default function CompliantFollowUpsTable({ title }) {
   const visibleFilterPills = useMemo(
     () =>
       dedupeVisibleFilters(
-        selectedFiltersForQuery.filter(
-          (filter) =>
-            filter.topic !== 'region' &&
-            filter.topic !== 'reportDeliveryDate' &&
-            filter.topic !== 'completeDate'
+        formatMonitoringFiltersForQuery(selectedFiltersForQuery).filter(
+          (filter) => filter.topic !== 'region'
         )
       ),
     [selectedFiltersForQuery]
@@ -500,15 +553,11 @@ export default function CompliantFollowUpsTable({ title }) {
     () =>
       (data || []).map((row) => ({
         ...row,
-        'Compliant_follow-up_review': formatReviewDisplayName(
-          row.reviewName,
-          reviewIdForRow(row),
-          ''
-        ),
-        Recipient: row.recipientName || '',
-        Had_TTA: row.hasTta ? 'Yes' : 'No',
-        Last_TTA: row.lastTtaDate || '',
-        'Compliant_follow-up_review_received_date': row.compliantFollowUpReviewReceivedDate || '',
+        [SORT_KEYS.REVIEW]: formatReviewDisplayName(row.reviewName, reviewIdForRow(row), ''),
+        [SORT_KEYS.RECIPIENT]: row.recipientName || '',
+        [SORT_KEYS.HAD_TTA]: row.hasTta ? 'Yes' : 'No',
+        [SORT_KEYS.LAST_TTA]: row.lastTtaDate || '',
+        [SORT_KEYS.RECEIVED_DATE]: row.compliantFollowUpReviewReceivedDate || '',
       })),
     [data]
   );

@@ -567,7 +567,21 @@ describe('checkIdParamMiddleware', () => {
 
       checkRecipientIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.locals.validatedParams.recipientId).toBe(2);
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throws 400 if param exceeds the safe integer range', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          recipientId: '9007199254740992',
+        },
+      };
+
+      checkRecipientIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {
@@ -608,7 +622,21 @@ describe('checkIdParamMiddleware', () => {
 
       checkRegionIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.locals.validatedParams.regionId).toBe(2);
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throws 400 if param uses scientific notation', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          regionId: '1e1',
+        },
+      };
+
+      checkRegionIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {

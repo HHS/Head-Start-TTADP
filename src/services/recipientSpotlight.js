@@ -263,9 +263,11 @@ export async function getRecipientSpotlightIndicators(
       AND ar."calculatedStatus" = 'approved'
     GROUP BY 1,2,3
     ),
-    -- In recipient mode we care about all the grants for a recipient
-    -- not just the ones in the filter. In grantmode we only want the
-    -- indicators calculated for that specific grant.
+    -- In recipient mode we care about all the grants for a recipient in this
+    -- region (not just the ones passing the other filters), so indicators are
+    -- computed at the recipient+region level. Grants in other regions belong to
+    -- that recipient's other region cards and must not bleed in here. In
+    -- grantmode we only want the indicators calculated for that specific grant.
     all_grants AS (
     SELECT DISTINCT
       r.rid,
@@ -282,6 +284,7 @@ export async function getRecipientSpotlightIndicators(
       ON r.rid = g.rid
     JOIN "Grants" gr
       ON r.rid = gr."recipientId"
+      AND gr."regionId" = r.region
       AND (
         NOT grantmode OR
         g.grid = gr.id
@@ -322,8 +325,9 @@ export async function getRecipientSpotlightIndicators(
         AND ag.grstatus = 'Active'
     ),
 
-    -- 3. New Recipients: Recipients with oldest grant less than 4 years old
-    --    this checks all recipient grants even in grantmode
+    -- 3. New Recipients: Recipients with oldest grant in this region less than
+    --    4 years old. Scoped to the card's region so a recipient can be new in
+    --    one region without other regions' older grants suppressing it.
     new_recipients AS (
       SELECT
         rid new_recip_rid,
@@ -331,6 +335,7 @@ export async function getRecipientSpotlightIndicators(
       FROM recipients
       JOIN "Grants" gr
         ON gr."recipientId" = rid
+        AND gr."regionId" = region
       WHERE (gr.deleted IS NULL OR NOT gr.deleted)
       GROUP BY 1,2
       HAVING MIN(gr."startDate") >= NOW() - INTERVAL '4 years'
@@ -356,7 +361,7 @@ export async function getRecipientSpotlightIndicators(
     SELECT (jsonb_array_elements(data->'recipients')->>'value')::integer session_grid
     FROM "SessionReportPilots"
     WHERE data->>'status' = 'Complete'
-      AND (data->>'startDate')::timestamp >= NOW() - INTERVAL '12 months'
+      AND "startDate" >= NOW() - INTERVAL '12 months'
     ),
     grants_with_tta AS (
       SELECT

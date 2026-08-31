@@ -23,8 +23,18 @@ For Docker-specific non-test checks/scans:
 To run Biome lint checks, run `yarn lint`.
 To apply autofixes where supported, use `yarn lint:fix`.
 All files will be checked by default, path explicit paths if desired.
+### Running Targeted Backend Test Files Directly
+Use the local jest binary
 
-### Running Tests Natively
+```bash
+node node_modules/jest/bin/jest.js src/routes/activityReports/handlers.test.js --runInBand
+node node_modules/jest/bin/jest.js src/routes/activityReports/handlers.test.js -t 'pattern'
+```
+
+Runs directly against `src/`, no `yarn build` step needed.
+
+A "Jest did not exit one second after..." warning after a passing run is benign — Bull/Sequelize hold open connections. Ignore it unless tests actually failed.
+
 
 **Backend:**
 

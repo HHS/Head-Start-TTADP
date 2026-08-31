@@ -4,6 +4,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const {
+  buildCmsApprovedCiVersions,
+  cmsApprovedCiVersionsCsv,
   componentIdentity,
   deriveRepositoryComponents,
   deriveSpaceComponents,
@@ -158,6 +160,155 @@ describe('selectDeclared', () => {
   });
 });
 
+describe('buildCmsApprovedCiVersions', () => {
+  it('exports the approved version fields auditors need from the declared inventory', () => {
+    const exported = buildCmsApprovedCiVersions(inventory, {
+      inventoryPath: 'release/inventory.json',
+      inventorySha256: 'a'.repeat(64),
+      releaseTag: 'prod-abc1234',
+      releaseCommit: 'abc1234',
+      pipelineUrl: 'https://circleci.example/pipeline/1',
+      generatedAtUtc: '2026-08-12T00:00:00.000Z',
+    });
+
+    const database = exported.configurationItems.find((item) => item.id === 'service.database');
+    const manifest = exported.configurationItems.find(
+      (item) => item.id === 'configuration.manifest'
+    );
+    const pmp = exported.configurationItems.find((item) => item.id === 'program.pmp');
+
+    expect(exported.exportType).toBe('cmsApprovedCiVersions');
+    expect(exported.source).toEqual({
+      system: 'TTA Hub release inventory',
+      path: 'release/inventory.json',
+      sha256: 'a'.repeat(64),
+      authorizationModel: 'ADR 0029',
+    });
+    expect(exported.baseline).toEqual({
+      environment: 'prod',
+      releaseTag: 'prod-abc1234',
+      releaseCommit: 'abc1234',
+      pipelineUrl: 'https://circleci.example/pipeline/1',
+    });
+    expect(database).toEqual(
+      expect.objectContaining({
+        name: 'ttahub-prod',
+        class: 'service',
+        approvedVersion: 'ttahub-prod (small-psql-replica)',
+        owner: 'TTA Hub Engineering',
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        environment: 'prod',
+      })
+    );
+    expect(database.approvalReference).toEqual(
+      expect.objectContaining({ type: 'adr', reference: 'docs/adr/0006-database.md' })
+    );
+    expect(database).not.toHaveProperty('approval');
+    expect(manifest.approvedVersion).toMatch(/^[a-f0-9]{64}$/);
+    expect(pmp).toEqual(
+      expect.objectContaining({
+        name: 'TTA Hub Project Management Plan',
+        class: 'programmaticConfigurationItem',
+        tier: 'attested',
+        approvedVersion: '2.4',
+        owner: 'TTA Hub Configuration Management',
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        environment: 'prod',
+      })
+    );
+    expect(pmp.locator).toEqual({
+      type: 'cmsDocument',
+      value:
+        'https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15',
+    });
+  });
+
+  it('renders a CSV export with the same required CMS fields', () => {
+    const exported = buildCmsApprovedCiVersions(
+      {
+        schemaVersion: 1,
+        space: { environment: 'prod' },
+        components: [
+          {
+            id: 'service.database',
+            class: 'service',
+            name: 'ttahub-((env))',
+            owner: 'TTA Hub Engineering',
+            tier: 'reconciled',
+            locator: {
+              type: 'cloudFoundryService',
+              value: 'ttahub-((env))',
+              servicePlan: 'small-psql-replica',
+            },
+            authorization: { type: 'adr', reference: 'docs/adr/0006-database.md' },
+          },
+        ],
+      },
+      {
+        releaseTag: 'prod-abc1234',
+        releaseCommit: 'abc1234',
+        generatedAtUtc: '2026-08-12T00:00:00.000Z',
+      }
+    );
+
+    expect(cmsApprovedCiVersionsCsv(exported)).toContain(
+      'service.database,ttahub-prod,service,reconciled,ttahub-prod (small-psql-replica),TTA Hub Engineering,adr,docs/adr/0006-database.md,,prod-abc1234,abc1234,prod'
+    );
+  });
+
+  it('refuses to generate the export when inventory validation fails', () => {
+    const workingDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'release-inventory-cms-'));
+    const invalidInventoryPath = path.join(workingDirectory, 'inventory.json');
+    const dispositionsPath = path.join(workingDirectory, 'inventoryDispositions.json');
+    const outPath = path.join(workingDirectory, 'cmsApprovedCiVersions.json');
+
+    try {
+      fs.writeFileSync(
+        invalidInventoryPath,
+        `${JSON.stringify({
+          schemaVersion: 1,
+          space: { org: 'o', name: 'n', environment: 'prod' },
+          components: [
+            {
+              id: 'app.rogue',
+              class: 'application',
+              name: 'rogue',
+              description: 'x',
+              owner: 'TTA Hub Engineering',
+              tier: 'reconciled',
+              locator: { type: 'cloudFoundryApp', value: 'rogue' },
+              authorization: { type: 'none', reference: 'none' },
+            },
+          ],
+        })}\n`,
+        'utf8'
+      );
+      fs.writeFileSync(
+        dispositionsPath,
+        `${JSON.stringify({ schemaVersion: 1, dispositions: [] })}\n`,
+        'utf8'
+      );
+
+      const exitCode = require('./releaseInventory').main([
+        'cms-export',
+        '--inventory',
+        invalidInventoryPath,
+        '--dispositions',
+        dispositionsPath,
+        '--out',
+        outPath,
+      ]);
+
+      expect(exitCode).toBe(1);
+      expect(fs.existsSync(outPath)).toBe(false);
+    } finally {
+      fs.rmSync(workingDirectory, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('deriveRepositoryComponents', () => {
   let workingDirectory;
   const taggedManifest = 'applications: []\n';
@@ -288,12 +439,12 @@ describe('fetchPaginatedCfCollection', () => {
       });
 
     const result = fetchPaginatedCfCollection(
-      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      '/v3/service_instances?space_guids=space-1&per_page=200&fields[service_plan]=guid,name',
       { fetchPage }
     );
 
     expect(fetchPage.mock.calls.map(([apiPath]) => apiPath)).toEqual([
-      '/v3/service_instances?space_guids=space-1&per_page=200&include=service_plan',
+      '/v3/service_instances?space_guids=space-1&per_page=200&fields[service_plan]=guid,name',
       '/v3/service_instances?page=2&per_page=200',
     ]);
     expect(result.resources).toEqual([{ guid: 'service-1' }, { guid: 'service-2' }]);
@@ -320,6 +471,24 @@ describe('fetchPaginatedCfCollection', () => {
         fetchPage: () => ({ resources: [], pagination: {} }),
       })
     ).toThrow(/invalid response/);
+  });
+
+  it('reports Cloud Foundry API error details', () => {
+    expect(() =>
+      fetchPaginatedCfCollection('/v3/service_instances', {
+        fetchPage: () => ({
+          errors: [
+            {
+              code: 10005,
+              title: 'CF-InvalidQueryParameter',
+              detail: 'The query parameter is invalid: include',
+            },
+          ],
+        }),
+      })
+    ).toThrow(
+      'Cloud Foundry collection /v3/service_instances failed: 10005 CF-InvalidQueryParameter The query parameter is invalid: include'
+    );
   });
 });
 
@@ -798,6 +967,81 @@ describe('schemaErrors', () => {
 
     expect(errors).toEqual(
       expect.arrayContaining([expect.stringMatching(/must have required property 'sha256'/)])
+    );
+  });
+
+  it('rejects a CMS document component without an approved version', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'program.pmp',
+          class: 'programmaticConfigurationItem',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'attested',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    const errors = schemaErrors(inventorySchema, invalid, 'inventory.json');
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/must have required property 'approvedVersion'/),
+      ])
+    );
+  });
+
+  it('rejects a CMS document component marked as reconciled', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'program.pmp',
+          class: 'programmaticConfigurationItem',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'reconciled',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          approvedVersion: '2.4',
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    expect(schemaErrors(inventorySchema, invalid, 'inventory.json')).toEqual(
+      expect.arrayContaining([expect.stringMatching(/tier.*must be equal to constant/)])
+    );
+  });
+
+  it('rejects a CMS document component outside the programmatic CI class', () => {
+    const invalid = {
+      schemaVersion: 1,
+      space: { org: 'o', name: 'n', environment: 'prod' },
+      components: [
+        {
+          id: 'integration.pmp',
+          class: 'externalIntegration',
+          name: 'TTA Hub Project Management Plan',
+          description: 'x',
+          owner: 'TTA Hub Configuration Management',
+          tier: 'attested',
+          locator: { type: 'cmsDocument', value: 'https://docs.example.test/pmp' },
+          approvedVersion: '2.4',
+          authorization: { type: 'cmsDocument', reference: 'https://docs.example.test/pmp' },
+        },
+      ],
+    };
+
+    expect(schemaErrors(inventorySchema, invalid, 'inventory.json')).toEqual(
+      expect.arrayContaining([expect.stringMatching(/class.*must be equal to constant/)])
     );
   });
 

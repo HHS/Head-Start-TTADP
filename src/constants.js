@@ -159,6 +159,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenChangeRequested',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has approved your Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportApproval',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -205,6 +214,7 @@ const EMAIL_ACTIONS = {
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'collaboratorReportSubmittedForReviewDigest',
   CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
+  CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'creatorReportSubmittedForReviewDigest',
   COLLAB_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollabReportSubmittedForReview',
   COLLABORATION_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaborationReportSubmittedForReview',
   COLLABORATION_REPORT_COLLABORATOR_SUBMITTED: 'emailWhenCollaborationReportCollaboratorSubmitted',
@@ -359,6 +369,7 @@ const FEATURE_FLAGS = [
   'monitoring-regional-dashboard',
   'actionable_notifications',
   'compliant_follow_up_reviews_tta_support',
+  'tta_timeline',
 ];
 
 const MAINTENANCE_CATEGORY = {
