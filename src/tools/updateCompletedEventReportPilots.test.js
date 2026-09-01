@@ -41,7 +41,11 @@ describe('updateCompletedEventReportPilots', () => {
         regionId: 1,
         ownerId: user1.id,
         collaboratorIds: [user2.id, user3.id],
-        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );
@@ -50,7 +54,11 @@ describe('updateCompletedEventReportPilots', () => {
         ownerId: user2.id,
         regionId: 1,
         collaboratorIds: [user1.id, user3.id, 123_123],
-        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );
@@ -59,7 +67,11 @@ describe('updateCompletedEventReportPilots', () => {
         regionId: 1,
         collaboratorIds: [],
         ownerId: user3.id,
-        data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
       },
       { individualHooks: false }
     );
@@ -146,7 +158,11 @@ describe('updateCompletedEventReportPilots', () => {
         regionId: 1,
         ownerId: userWithoutNationalCenter.id,
         collaboratorIds: [],
-        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );

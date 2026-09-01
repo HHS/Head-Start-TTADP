@@ -389,6 +389,7 @@ describe('approvedARAndTRByGoalCategory', () => {
       regionId: 1,
       pocIds: [user.id],
       collaboratorIds: [user.id],
+      eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
       data: {
         eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
         startDate: '10/01/2025',
@@ -452,6 +453,7 @@ describe('approvedARAndTRByGoalCategory', () => {
       regionId: 1,
       pocIds: [user.id],
       collaboratorIds: [user.id],
+      eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
       data: {
         eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
         startDate: '10/01/2025',

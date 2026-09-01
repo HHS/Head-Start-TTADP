@@ -21,9 +21,13 @@ async function createEvents({
     collaboratorIds: [collaboratorId],
     pocIds: [pocId],
     regionId: 1,
+    // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+    // UNIQUE `eventId` column never collides across the many events created below.
+    get eventId() {
+      return `R0${regionId}-TR-${faker.datatype.uuid()}`;
+    },
     data: {
       eventName: faker.datatype.string(),
-      eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
@@ -47,7 +51,7 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  const minus2 = await EventReportPilot.create(baseEvent);
+  const minus2 = await EventReportPilot.create({ ...baseEvent, data: { ...baseEvent.data } });
   testData.ids.push(minus2.id);
 
   // event with no sessions and a start date of today (Will not appear in alerts)
@@ -293,6 +297,7 @@ describe('getTrainingReportAlerts', () => {
         collaboratorIds: [faker.datatype.number()],
         pocIds: [faker.datatype.number()],
         regionId: 1,
+        eventId: `R01-TR-ENDDATE-${ownerId}`,
         data: {
           eventName: 'Missing Event Info Test',
           eventId: `R01-TR-ENDDATE-${ownerId}`,
@@ -355,6 +360,7 @@ describe('getTrainingReportAlerts', () => {
         collaboratorIds: [approver.id], // Add approver as collaborator so they see the event
         pocIds: [],
         regionId: 1,
+        eventId: 'R01-PD-TESTAPPROVAL',
         data: {
           eventId: 'R01-PD-TESTAPPROVAL',
           eventName: 'Test Approval Event',

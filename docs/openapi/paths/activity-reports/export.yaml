@@ -1,0 +1,66 @@
+post:
+  tags:
+    - activity-reports
+  summary: Export Activity Reports, Goals, or Objectives as a flat CSV.
+  description: >-
+    Streams a flat CSV export for one of three data sets, scoped to a
+    caller-supplied list of Activity Report ids. The CSV is streamed from a
+    server-side cursor so large
+    exports do not buffer in memory. Region access is always enforced from the
+    user's policy, regardless of the ids supplied. Only approved reports are
+    included.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - dataSet
+            - reportIds
+          properties:
+            dataSet:
+              type: string
+              description: Which export to run.
+              enum:
+                - activity-reports
+                - goals
+                - objectives
+            reportIds:
+              type: array
+              description: >-
+                Activity Report ids to scope the export to, already resolved on
+                the page. Required; an empty array yields an empty export.
+              items:
+                type: integer
+            sortBy:
+              type: string
+              description: >-
+                Column to sort by. Must be one of the data set's supported sort
+                columns, otherwise the request is rejected. When omitted, the
+                export's default sort applies.
+            direction:
+              type: string
+              description: Sort direction. Only applies when sortBy is set.
+              enum:
+                - ASC
+                - DESC
+              default: ASC
+  responses:
+    200:
+      description: Streamed CSV export.
+      content:
+        text/csv; charset=utf-8:
+          schema:
+            type: string
+    400:
+      description: >-
+        Invalid request: unknown dataSet, missing or non-integer reportIds, or
+        an unsupported sort column/direction.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string

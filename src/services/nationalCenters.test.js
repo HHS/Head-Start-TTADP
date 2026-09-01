@@ -231,7 +231,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: `R01-PD-${faker.datatype.number()}`,
         data: {
+          eventId: `R01-PD-${faker.datatype.number()}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -242,7 +244,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: `R01-PD-${faker.datatype.number()}`,
         data: {
+          eventId: `R01-PD-${faker.datatype.number()}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},

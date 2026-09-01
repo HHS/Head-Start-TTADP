@@ -40,6 +40,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      eventId: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true,
+      },
       data: {
         type: DataTypes.JSONB,
         allowNull: false,

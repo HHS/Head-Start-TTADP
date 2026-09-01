@@ -5,7 +5,7 @@ const eventIdSql = `
 SELECT
  DISTINCT erp."id"
 FROM "EventReportPilots" erp
-WHERE data->>'eventId'`;
+WHERE erp."eventId"`;
 
 export function withEventId(names) {
   return filterAssociation(eventIdSql, names, false, '~*');
