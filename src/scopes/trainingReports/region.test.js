@@ -16,6 +16,7 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-REGION-TEST-1',
       data: { eventId: 'TR-REGION-TEST-1' },
     });
 
@@ -25,6 +26,7 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-REGION-TEST-2',
       data: { eventId: 'TR-REGION-TEST-2' },
     });
 
@@ -34,6 +36,7 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: 3,
+      eventId: 'TR-REGION-TEST-3',
       data: { eventId: 'TR-REGION-TEST-3' },
     });
 

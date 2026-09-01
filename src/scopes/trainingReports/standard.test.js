@@ -56,6 +56,7 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STANDARD-TEST-1',
       data: { eventId: 'TR-STANDARD-TEST-1' },
     });
 
@@ -64,6 +65,7 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STANDARD-TEST-2',
       data: { eventId: 'TR-STANDARD-TEST-2' },
     });
 
@@ -72,6 +74,7 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STANDARD-TEST-3',
       data: { eventId: 'TR-STANDARD-TEST-3' },
     });
 

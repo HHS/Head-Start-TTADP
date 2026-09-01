@@ -25,6 +25,7 @@ describe('trainingReports/eventId', () => {
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-1035',
         data: { eventId: 'R01-TR-23-1035' },
       },
       { individualHooks: false }
@@ -37,6 +38,7 @@ describe('trainingReports/eventId', () => {
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-2484',
         data: { eventId: 'R01-TR-23-2484' },
       },
       { individualHooks: false }
@@ -50,6 +52,7 @@ describe('trainingReports/eventId', () => {
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-0000',
         data: { eventId: 'R01-TR-23-0000' },
       },
       { individualHooks: false }

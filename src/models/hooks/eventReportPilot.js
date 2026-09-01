@@ -4,16 +4,6 @@ const { purifyDataFields } = require('../helpers/purifyFields');
 
 const fieldsToEscape = ['eventName'];
 
-// Keep the dedicated `eventId` column in sync with the `data.eventId` JSON value.
-// Only mirrors when `data` is a plain object exposing a string eventId, so it never
-// clobbers a value set explicitly by the service (where `data` is a sequelize cast literal).
-const mirrorEventId = (instance) => {
-  const dataEventId = instance.data && instance.data.eventId;
-  if (typeof dataEventId === 'string' && dataEventId.length > 0) {
-    instance.eventId = dataEventId;
-  }
-};
-
 const notifyNewCollaborators = async (_sequelize, instance) => {
   try {
     const changed = instance.changed();
@@ -54,11 +44,6 @@ const notifyNewOwner = async (_sequelize, instance) => {
   }
 };
 
-const beforeValidate = async (_sequelize, instance) => {
-  // Mirror before validation so the NOT NULL check on the column passes.
-  mirrorEventId(instance);
-};
-
 const beforeUpdate = async (_sequelize, instance) => {
   purifyDataFields(instance, fieldsToEscape);
 };
@@ -75,4 +60,4 @@ const afterCreate = async (sequelize, instance, options) => {
   await notifyNewOwner(sequelize, instance);
 };
 
-export { afterCreate, afterUpdate, beforeCreate, beforeUpdate, beforeValidate };
+export { afterCreate, afterUpdate, beforeCreate, beforeUpdate };

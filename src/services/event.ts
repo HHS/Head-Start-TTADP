@@ -1127,6 +1127,10 @@ export async function csvImport(buffer: Buffer) {
       // Additional States Involved, remove duplicates.
       data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
 
+      // The event display id is stored solely in the dedicated `eventId` column
+      // (the single source of truth); it is not persisted back into the JSONB `data`.
+      delete data.eventId;
+
       await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,

@@ -27,6 +27,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [mockUser.id],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-COLLAB-TEST-1',
       data: { eventId: 'TR-COLLAB-TEST-1' },
     });
 
@@ -36,6 +37,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [mockUser.id, mockCollaboratorUser.id],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-COLLAB-TEST-2',
       data: { eventId: 'TR-COLLAB-TEST-2' },
     });
 
@@ -45,6 +47,7 @@ describe('trainingReports/collaborators', () => {
       pocIds: [mockCollaboratorUser.id],
       collaboratorIds: [mockCollaboratorUser.id],
       regionId: 3,
+      eventId: 'TR-COLLAB-TEST-3',
       data: { eventId: 'TR-COLLAB-TEST-3' },
     });
 

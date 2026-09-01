@@ -18,6 +18,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-TEST-1',
       data: {
         eventId: 'TR-ENDDATE-TEST-1',
         endDate: '06/06/2021',
@@ -30,6 +31,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-TEST-2',
       data: {
         eventId: 'TR-ENDDATE-TEST-2',
         endDate: '06/08/2021',
@@ -42,6 +44,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-TEST-3',
       data: {
         eventId: 'TR-ENDDATE-TEST-3',
         endDate: '09/08/2019',
@@ -54,6 +57,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-TEST-4',
       data: {
         eventId: 'TR-ENDDATE-TEST-4',
         endDate: '06/07/2021',
@@ -229,6 +233,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-MALFORMED-ISO',
       data: {
         eventId: 'TR-ENDDATE-MALFORMED-ISO',
         endDate: '2021-06-09',
@@ -240,6 +245,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-MALFORMED-SHORTYEAR',
       data: {
         eventId: 'TR-ENDDATE-MALFORMED-SHORTYEAR',
         endDate: '6/9/21',
@@ -251,6 +257,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-MALFORMED-EMPTY',
       data: {
         eventId: 'TR-ENDDATE-MALFORMED-EMPTY',
         endDate: '',
@@ -262,6 +269,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-MALFORMED-INVALID',
       data: {
         eventId: 'TR-ENDDATE-MALFORMED-INVALID',
         endDate: 'this-is-not-a-date',
@@ -273,6 +281,7 @@ describe('trainingReports/endDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-ENDDATE-MALFORMED-MISSING',
       data: { eventId: 'TR-ENDDATE-MALFORMED-MISSING' },
     });
 

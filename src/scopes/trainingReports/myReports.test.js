@@ -38,6 +38,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
+      eventId: 'TR-MYREPORTS-TEST-1',
       data: { eventId: 'TR-MYREPORTS-TEST-1' },
     });
 
@@ -46,6 +47,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [me.id],
       regionId: 1,
+      eventId: 'TR-MYREPORTS-TEST-2',
       data: { eventId: 'TR-MYREPORTS-TEST-2' },
     });
 
@@ -54,6 +56,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [me.id],
       collaboratorIds: [other.id],
       regionId: 1,
+      eventId: 'TR-MYREPORTS-TEST-3',
       data: { eventId: 'TR-MYREPORTS-TEST-3' },
     });
 
@@ -62,6 +65,7 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
+      eventId: 'TR-MYREPORTS-TEST-4',
       data: { eventId: 'TR-MYREPORTS-TEST-4' },
     });
 

@@ -854,14 +854,14 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
       expect(result.count).toEqual(1);
 
-      // eventId is now a field in the jsonb body of the "data" column on
-      // db.EventReportPilot.
-      // Let's make sure it exists.
+      // eventId is stored solely in the dedicated `eventId` column and not in
+      // the JSONB `data`.
       created = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': eventId },
+        where: { eventId },
       });
 
       expect(created).not.toBeNull();
+      expect(created.data.eventId).toBeUndefined();
 
       expect(created).toHaveProperty('ownerId', userId);
       expect(created).toHaveProperty('eventId', eventId);
@@ -892,7 +892,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': ncEventId },
+        where: { eventId: ncEventId },
       });
 
       expect(importedEvent).not.toBeNull();
@@ -906,7 +906,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': regionalEventId },
+        where: { eventId: regionalEventId },
       });
 
       expect(importedEvent).not.toBeNull();
@@ -966,7 +966,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
 
@@ -990,7 +990,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
       expect(importedEvent.data.reasons).toEqual([
@@ -1016,7 +1016,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
       expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Expectant families']);
@@ -1088,6 +1088,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         pocIds: [ownerId],
         collaboratorIds: [ownerId],
         regionId: 1,
+        eventId: 'E123',
         data: {
           eventId: 'E123',
           eventName: 'Test Event',

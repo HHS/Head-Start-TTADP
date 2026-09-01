@@ -21,13 +21,13 @@ async function createEvents({
     collaboratorIds: [collaboratorId],
     pocIds: [pocId],
     regionId: 1,
+    // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+    // UNIQUE `eventId` column never collides across the many events created below.
+    get eventId() {
+      return `R0${regionId}-TR-${faker.datatype.uuid()}`;
+    },
     data: {
       eventName: faker.datatype.string(),
-      // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
-      // UNIQUE `eventId` column never collides across the many events created below.
-      get eventId() {
-        return `R0${regionId}-TR-${faker.datatype.uuid()}`;
-      },
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
