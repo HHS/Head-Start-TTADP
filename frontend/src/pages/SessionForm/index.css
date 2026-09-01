@@ -8,8 +8,7 @@
 /* Zero the default form-button top margin on the button group that follows the
    alert so the 16px alert margin-bottom is the only, consistent gap on every
    session page (sessionSummary already zeroes it inline; this covers the rest) */
-.smart-hub-training-report--session
-  [aria-hidden="false"]:has(.usa-alert)
+.smart-hub-training-report--session [aria-hidden="false"]:has(.usa-alert)
   + .display-flex
   .usa-button {
   margin-top: 0;

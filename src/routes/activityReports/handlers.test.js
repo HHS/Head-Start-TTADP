@@ -1601,10 +1601,77 @@ describe('Activity Report handlers', () => {
 
         await submitReport(request, mockResponse);
 
-        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1]);
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1], false);
         expect(collabNotification).not.toHaveBeenCalledWith(
           expect.anything(),
           expect.arrayContaining([mockCollaborator2])
+        );
+      });
+
+      it('marks the collaborator email as a resubmission when the report was previously needs_action', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponseWithCollabs[0],
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(
+          savedReport,
+          [mockCollaborator1, mockCollaborator2],
+          true
+        );
+      });
+
+      it('excludes the submitting collaborator from the collaborator notification', async () => {
+        // currentUserId is mocked to 1, so a collaborator with userId 1 is the submitter
+        const submittingCollaborator = { userId: 1 };
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponseWithCollabs[0],
+            activityReportCollaborators: [submittingCollaborator, mockCollaborator1],
+          },
+          undefined,
+          undefined,
+        ]);
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }); // collab1
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1], false);
+        expect(collabNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([submittingCollaborator]),
+          expect.anything()
+        );
+        // in-app collaborator notification skips the submitter (userId 1)
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          submittingCollaborator.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
         );
       });
 
@@ -1620,7 +1687,7 @@ describe('Activity Report handlers', () => {
 
         await submitReport(request, mockResponse);
 
-        expect(collabNotification).toHaveBeenCalledWith(savedReport, []);
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [], false);
       });
 
       it('skips the collaborator notification block when activityReportCollaborators is empty', async () => {
@@ -1873,11 +1940,48 @@ describe('Activity Report handlers', () => {
 
         await submitReport(request, mockResponse);
 
-        expect(creatorNotification).toHaveBeenCalledWith(savedReport, {
-          id: 99,
-          name: 'Creator User',
-          email: 'creator@test.gov',
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          false
+        );
+      });
+
+      it('marks the creator email as a resubmission when the report was previously needs_action', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
         });
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          true
+        );
       });
 
       it('does not email the creator when they are not opted into IMMEDIATELY', async () => {
