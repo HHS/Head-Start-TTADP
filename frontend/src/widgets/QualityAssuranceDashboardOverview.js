@@ -32,7 +32,7 @@ const createOverviewFieldArray = (data) => [
       ? `${data.recipientsWithOhsStandardClass.pct}%`
       : '0%',
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
-    filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
+    filterApplicable: data?.recipientsWithOhsStandardClass?.filterApplicable ?? false,
     showNoResults: true,
     ariaLabel: 'Display details about recipients with OHS standard CLASS goals',
   },
