@@ -19,7 +19,14 @@ import {
   ValidationAlert,
   ValidationRun,
 } from '../models';
-import { createGoal, createGrant, createReport, destroyGoal, destroyReport } from '../testUtils';
+import {
+  createGoal,
+  createGrant,
+  createRegion,
+  createReport,
+  destroyGoal,
+  destroyReport,
+} from '../testUtils';
 import validateMonitoringGate from './validateMonitoringGate';
 import { resolveGateHalt } from './validation/gateHaltPolicy';
 
@@ -104,7 +111,13 @@ describe('validateMonitoringGate', () => {
     // (ActivityReportObjectiveCitations -> ActivityReportObjectives ->
     // ActivityReports) finds them and its MonitoringFindings liveness check
     // marks all 20 gone.
-    const openGrant = await createGrant({});
+    //
+    // Use a dedicated region rather than createGrant's shared default (id 10):
+    // destroyReport's teardown deletes the region once nothing it can see still
+    // references it, and under CI's parallel workers another suite can still be
+    // using the shared default region at that moment, so deleting it would race.
+    const openRegion = await createRegion({});
+    const openGrant = await createGrant({ regionId: openRegion.id });
     openReport = await createReport({
       activityRecipients: [{ grantId: openGrant.id }],
       regionId: openGrant.regionId,
