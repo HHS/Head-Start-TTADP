@@ -29,7 +29,9 @@ describe('nationalCenter hooks', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: 'NC-HOOK-TEST-1',
         data: {
+          eventId: 'NC-HOOK-TEST-1',
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},

@@ -575,7 +575,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId,
+          eventId: `R01-PD-${faker.datatype.number()}`,
         },
       };
       createdEvent = await createEvent(eventData);
@@ -690,9 +690,7 @@ describe('session reports service', () => {
         id: 1002,
         data: {},
         event: {
-          data: {
-            eventId: 'R01-PD-1002',
-          },
+          eventId: 'R01-PD-1002',
         },
       });
 

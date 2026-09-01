@@ -274,6 +274,7 @@ describe('session report handlers', () => {
     it('allows a POC to create a session for a regional PD with national centers event', async () => {
       const pocEvent = {
         ...mockEvent,
+        eventId: 'R01-PD-100',
         data: {
           eventId: 'R01-PD-100',
           eventName: 'Regional PD Event (with National Centers)',
@@ -298,7 +299,7 @@ describe('session report handlers', () => {
         data: {
           ...mockRequest.body.data,
           eventName: pocEvent.data.eventName,
-          eventDisplayId: pocEvent.data.eventId,
+          eventDisplayId: pocEvent.eventId,
           regionId: pocEvent.regionId,
           eventOwner: pocEvent.ownerId,
         },
