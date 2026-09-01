@@ -1,5 +1,6 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
+import { once } from 'events';
 import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
@@ -29,6 +30,7 @@ import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { syncApprovers, upsertApprover } from '../../services/activityReportApprovers';
+import { streamActivityReportExportCsv } from '../../services/activityReportExports';
 import {
   activityReportAlerts,
   activityReportAndRecipientsById,
@@ -1226,6 +1228,70 @@ export async function downloadAllAlerts(req, res) {
 
     await sendActivityReportCSV(rows, res);
   } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+// Streams a flat CSV export for the reportIds pulled for the page. This includes
+// AR, Goal, or Objective focused exports. Region policy is re-enforced in the SQL.
+export async function downloadActivityReportExport(req, res) {
+  let responseStarted = false;
+  // Rejects if the client disconnects mid-stream, so a backpressure wait aborts
+  // (and the query rolls back) instead of hanging until the idle-in-transaction
+  // timeout fires. One 'close' listener, raced each time; the swallowed catch
+  // handles the same 'close' that fires on normal completion.
+  const disconnected = once(res, 'close').then(() => {
+    throw new Error('client disconnected');
+  });
+  disconnected.catch(() => {});
+  try {
+    const userId = await currentUserId(req, res);
+    const regionIds = await getUserReadRegions(userId);
+    const params = { ...req.query, ...req.body };
+
+    await streamActivityReportExportCsv(
+      {
+        dataSet: params.dataSet,
+        reportIds: params.reportIds,
+        regionIds,
+        sortBy: params.sortBy,
+        direction: params.direction,
+      },
+      {
+        onStart: ({ outputName }) => {
+          res.writeHead(200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="${outputName}.csv"`,
+          });
+          responseStarted = true;
+        },
+        onChunk: async (chunk) => {
+          if (!res.write(chunk)) {
+            await Promise.race([once(res, 'drain'), disconnected]);
+          }
+        },
+      }
+    );
+
+    res.end();
+  } catch (error) {
+    // Response already started: can't send a status, so tear down the socket. A
+    // client disconnect leaves res already destroyed - expected teardown, not a
+    // failure worth logging.
+    if (responseStarted) {
+      if (!res.destroyed) {
+        logger.error('downloadActivityReportExport stream failed after response started', error);
+      }
+      res.destroy(error);
+      return;
+    }
+    // Errors that set their own statusCode are deliberate client responses
+    // (validation, over-capacity); surface them as-is. Everything else is
+    // unexpected and goes through handleErrors as a 500.
+    if (error?.statusCode) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
     await handleErrors(req, res, error, logContext);
   }
 }
