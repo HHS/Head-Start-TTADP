@@ -1873,11 +1873,48 @@ describe('Activity Report handlers', () => {
 
         await submitReport(request, mockResponse);
 
-        expect(creatorNotification).toHaveBeenCalledWith(savedReport, {
-          id: 99,
-          name: 'Creator User',
-          email: 'creator@test.gov',
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          false
+        );
+      });
+
+      it('marks the creator email as a resubmission when the report was previously needs_action', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
         });
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          true
+        );
       });
 
       it('does not email the creator when they are not opted into IMMEDIATELY', async () => {

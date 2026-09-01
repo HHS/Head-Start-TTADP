@@ -397,7 +397,7 @@ export const collaboratorReportSubmittedForReviewNotification = (report, collabo
 export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, creator } = job.data;
+  const { report, creator, isResubmission = false } = job.data;
   const { id, displayId } = report;
   logger.debug(
     `MAILER: Attempting to notify ${creator.email} that report ${displayId} was submitted for approval`
@@ -411,15 +411,20 @@ export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTr
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'creator_report_submitted_for_review'),
       message: { to: toEmails },
-      locals: { reportPath, displayId },
+      locals: { reportPath, displayId, isResubmission },
     });
   });
 };
 
-export const creatorReportSubmittedForReviewNotification = (report, creator) => {
+export const creatorReportSubmittedForReviewNotification = (
+  report,
+  creator,
+  isResubmission = false
+) => {
   enqueueNotification(EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, {
     report,
     creator,
+    isResubmission,
   });
 };
 
