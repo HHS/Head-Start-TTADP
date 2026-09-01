@@ -540,8 +540,11 @@ SELECT
   g."createdVia" created_via,
   g.prestandard,
   g."createdAt"::date created_date,
-  sr.suspend_reason,
-  sr.close_reason,
+  -- Formula-injection guard: prefixes raw, non-id-prefixed free text starting with
+  -- =/+/-/@ with a single quote so it can't be read as a formula when the CSV opens in
+  -- Excel/Sheets. See the fuller rationale on `context` in activity-reports.sql.
+  CASE WHEN sr.suspend_reason ~ '^\s*[-=+@]' THEN '''' || sr.suspend_reason ELSE sr.suspend_reason END suspend_reason,
+  CASE WHEN sr.close_reason ~ '^\s*[-=+@]' THEN '''' || sr.close_reason ELSE sr.close_reason END close_reason,
   gc.region,
   gc.recipient,
   gc.grant_number,
