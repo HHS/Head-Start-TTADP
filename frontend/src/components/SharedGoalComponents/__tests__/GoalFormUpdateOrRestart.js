@@ -53,7 +53,11 @@ const mockGoalTemplatePrompts = [
 const mockOnSubmit = jest.fn();
 
 describe('GoalFormUpdateOrRestart', () => {
-  const RenderTest = ({ goalTemplatePrompts = null, isRestart = false }) => {
+  const RenderTest = ({
+    goalTemplatePrompts = null,
+    isRestart = false,
+    statusChangeBlockingReasons = undefined,
+  }) => {
     const hookForm = useForm();
     return (
       <MemoryRouter>
@@ -67,6 +71,7 @@ describe('GoalFormUpdateOrRestart', () => {
             onSubmit={mockOnSubmit}
             goalTemplatePrompts={goalTemplatePrompts}
             isRestart={isRestart}
+            statusChangeBlockingReasons={statusChangeBlockingReasons}
           />
         </FormProvider>
       </MemoryRouter>
@@ -94,5 +99,27 @@ describe('GoalFormUpdateOrRestart', () => {
   it('renders RestartStandardGoalObjectives when isRestart is true', () => {
     render(<RenderTest isRestart />);
     expect(screen.getByTestId('restart-standard-goal-objectives')).toBeInTheDocument();
+  });
+
+  it('does not render the status change alert by default', () => {
+    render(<RenderTest />);
+    expect(screen.queryByText(/The goal status cannot be changed/i)).not.toBeInTheDocument();
+  });
+
+  it('renders the status change alert when a blocking reason is present', () => {
+    render(
+      <RenderTest
+        statusChangeBlockingReasons={{
+          activeActivityReport: true,
+          incompleteObjectives: false,
+          fromApi: true,
+          invalidStatusChangeAttempted: true,
+        }}
+      />
+    );
+    expect(screen.getByText(/The goal status cannot be changed because/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/on an activity report that is in a draft status/i)
+    ).toBeInTheDocument();
   });
 });
