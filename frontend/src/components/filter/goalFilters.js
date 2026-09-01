@@ -16,6 +16,7 @@ import FilterDateRange from './FilterDateRange';
 import FilterFEIRootCause from './FilterFEIRootCause';
 import FilterGoalStandard from './FilterGoalStandard';
 import FilterInput from './FilterInput';
+import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionSelect from './FilterRegionSelect';
 import FilterRoles from './FilterRoles';
@@ -265,6 +266,21 @@ export const stateCodeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterStateSelect
       inputId={`state-${condition.replace(/\s+/g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantsFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterParticipantsSelect
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
