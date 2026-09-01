@@ -42,7 +42,10 @@ describe('updateCompletedEventReportPilots', () => {
         ownerId: user1.id,
         collaboratorIds: [user2.id, user3.id],
         eventId: `R01-TR-${faker.datatype.uuid()}`,
-        data: { eventId: `R01-TR-${faker.datatype.uuid()}`, status: TRAINING_REPORT_STATUSES.COMPLETE },
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );
@@ -52,7 +55,10 @@ describe('updateCompletedEventReportPilots', () => {
         regionId: 1,
         collaboratorIds: [user1.id, user3.id, 123_123],
         eventId: `R01-TR-${faker.datatype.uuid()}`,
-        data: { eventId: `R01-TR-${faker.datatype.uuid()}`, status: TRAINING_REPORT_STATUSES.COMPLETE },
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );
@@ -62,7 +68,10 @@ describe('updateCompletedEventReportPilots', () => {
         collaboratorIds: [],
         ownerId: user3.id,
         eventId: `R01-TR-${faker.datatype.uuid()}`,
-        data: { eventId: `R01-TR-${faker.datatype.uuid()}`, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
       },
       { individualHooks: false }
     );
@@ -150,7 +159,10 @@ describe('updateCompletedEventReportPilots', () => {
         ownerId: userWithoutNationalCenter.id,
         collaboratorIds: [],
         eventId: `R01-TR-${faker.datatype.uuid()}`,
-        data: { eventId: `R01-TR-${faker.datatype.uuid()}`, status: TRAINING_REPORT_STATUSES.COMPLETE },
+        data: {
+          eventId: `R01-TR-${faker.datatype.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
       },
       { individualHooks: false }
     );

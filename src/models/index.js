@@ -54,8 +54,9 @@ fs.readdirSync(__dirname)
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
         // View-backed models (static isView = true) are excluded because ZAL audit tables
-        // do not exist for views. RequestErrors is also excluded (no audit needed).
-        if (model.name !== 'RequestErrors' && !model.isView) {
+        // do not exist for views. RequestErrors and models flagged noAudit (operational
+        // tables whose migration removes DB-level auditing) are also excluded.
+        if (model.name !== 'RequestErrors' && !model.isView && !model.noAudit) {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }

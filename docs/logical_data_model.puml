@@ -1399,6 +1399,58 @@ class ValidFor{
  deletedAt : timestamp with time zone
 }
 
+class ValidationAlerts{
+ * id : integer : <generated>
+ * check_name : text
+ * createdAt : timestamp with time zone : now()
+ * message : text
+ * run_id : integer
+ * severity : text : 'alert'::text
+ * updatedAt : timestamp with time zone : now()
+ context : jsonb
+}
+
+class ValidationRecords{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * entity_id : integer
+ * entity_type : text
+ * observation_name : text
+ * run_id : integer
+ * updatedAt : timestamp with time zone : now()
+ category : text
+ scalar : decimal
+}
+
+class ValidationRuns{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * process_name : text
+ * started_at : timestamp with time zone
+ * status : text
+ * updatedAt : timestamp with time zone : now()
+ alert_count : integer
+ completed_at : timestamp with time zone
+ error : text
+ import_id : integer
+ observation_count : integer
+ source_updated_at : timestamp with time zone
+ stats_upserted : integer
+}
+
+class ValidationTimeSeries{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * feature_set : text
+ * geo_id : integer : 0
+ * period_start : date
+ * period_type : text
+ * region_id : integer : 0
+ * stat_name : text
+ * updatedAt : timestamp with time zone : now()
+ * value : decimal
+}
+
 class ZADescriptor{
  * id : integer : <generated>
  * descriptor : text
@@ -3162,6 +3214,8 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, use
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus
 ValidFor "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : validFor, collaboratorTypes
 ValidFor "1" --[#black,dashed,thickness=2]--{  "n" ValidFor : mapsToValidFor, mapsFromValidFor
+ValidationRuns "1" --[#black,dashed,thickness=2]--{  "n" ValidationAlerts : run, alerts
+ValidationRuns "1" --[#black,dashed,thickness=2]--{  "n" ValidationRecords : run, records
 
 ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, collaborators
 ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
