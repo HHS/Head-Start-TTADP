@@ -63,7 +63,7 @@ export default function RegionalCommunicationLog() {
   const hasCentralOffice = useMemo(() => user?.homeRegionId && user.homeRegionId === 14, [user]);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-  const defaultRegion = useMemo(() => String(user?.homeRegionId || 0), [user?.homeRegionId]);
+  const defaultRegion = useMemo(() => String(user?.homeRegionId ?? regions[0]?.id ?? 0), [user?.homeRegionId, regions]);
 
   const canCreateCommLog = useMemo(
     () => canCreateCommunicationLog(user, parseInt(defaultRegion, DECIMAL_BASE)),
