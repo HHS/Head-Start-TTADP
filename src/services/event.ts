@@ -308,7 +308,7 @@ export async function findEventHelperBlob({
   }
 
   const events = await EventReportPilot.findAll({
-    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
+    attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     include: [
       {
         model: SessionReportPilot,

@@ -690,9 +690,7 @@ describe('session reports service', () => {
         id: 1002,
         data: {},
         event: {
-          data: {
-            eventId: 'R01-PD-1002',
-          },
+          eventId: 'R01-PD-1002',
         },
       });
 
