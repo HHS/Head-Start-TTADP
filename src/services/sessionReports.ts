@@ -212,7 +212,7 @@ export async function findSessionHelper(
     }) as unknown as SessionReportShape[];
   }
 
-  const eventId = session?.event?.data?.eventId ?? null;
+  const eventId = session?.event?.eventId ?? null;
 
   const startDate = session?.startDate
     ? moment(session.startDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
@@ -489,7 +489,7 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
     startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
     endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
-    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    eventId: ['event', 'eventId'],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [
       sequelize.literal(
@@ -506,7 +506,7 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
 const sessionReportAttributes = [
   'id',
-  [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+  [sequelize.literal('"event"."eventId"'), 'eventId'],
   [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
   'startDate',

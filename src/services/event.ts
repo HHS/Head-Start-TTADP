@@ -111,12 +111,22 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
+  // The event display id is provided via `data.eventId` but is stored solely in
+  // the dedicated `eventId` column (the single source of truth); it is not
+  // persisted back into the JSONB `data`.
+  const { eventId, ...dataWithoutEventId } = data;
+
+  if (!eventId) {
+    throw new Error('Missing required field: data.eventId');
+  }
+
   return EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
     regionId,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    eventId,
+    data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 }
 
@@ -152,6 +162,7 @@ export async function findEventHelper(
       'pocIds',
       'collaboratorIds',
       'regionId',
+      'eventId',
       'data',
       'updatedAt',
       'version',
@@ -250,6 +261,7 @@ export async function findEventHelper(
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
+    eventId: event?.eventId,
     data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: (event?.sessionReports ?? []).map(injectSessionColumnDates),
@@ -296,7 +308,7 @@ export async function findEventHelperBlob({
   }
 
   const events = await EventReportPilot.findAll({
-    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
+    attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     include: [
       {
         model: SessionReportPilot,
@@ -337,7 +349,7 @@ export async function findEventHelperBlob({
     ],
     where,
     order: [
-      ['data.eventId', 'ASC'],
+      ['eventId', 'ASC'],
       ['data.startDate', 'ASC'],
     ],
   });
@@ -410,13 +422,25 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
+  // eventId is an immutable identifier stored in the dedicated `eventId` column,
+  // which is the single source of truth. Reject any attempt to change it, and
+  // never persist it back into the JSONB `data`.
+  const { eventId: requestedEventId, ...dataWithoutEventId } = data as {
+    eventId?: string;
+  } & Record<string, unknown>;
+
+  if (requestedEventId && requestedEventId !== evt.eventId) {
+    throw new Error('eventId is immutable and cannot be changed');
+  }
+
   await evt.update(
     {
       ownerId,
       pocIds,
       collaboratorIds,
       regionId,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      eventId: evt.eventId,
+      data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
   );
@@ -440,8 +464,8 @@ const parseMinimalEventForAlert = (
     ownerId: number;
     pocIds: number[];
     collaboratorIds: number[];
+    eventId: string;
     data: {
-      eventId: string;
       eventName: string;
       startDate: string;
       endDate: string;
@@ -452,7 +476,7 @@ const parseMinimalEventForAlert = (
   sessionName = '--'
 ): TRAlertShape => ({
   id: event.id,
-  eventId: event.data.eventId,
+  eventId: event.eventId,
   eventName: event.data.eventName,
   alertType,
   sessionName,
@@ -497,7 +521,7 @@ const checkSessionForCompletion = (
   if (!sessionValid) {
     missingSessionInfo.push({
       id: session.id,
-      eventId: event.data.eventId,
+      eventId: event.eventId,
       isSession: true,
       sessionName: session.data.sessionName,
       eventName: event.data.eventName,
@@ -723,7 +747,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter || isApprover) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -752,7 +776,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -815,10 +839,8 @@ export async function findEventBySmartsheetId(
   const where = {
     [Op.and]: [
       {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
+        eventId: {
+          [Op.eq]: eventId,
         },
       },
       ...scopes,
@@ -974,13 +996,7 @@ const checkUserExistsByEmail = async (email: string) => checkUserExists('email',
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
     attributes: ['id'],
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`
-        ),
-      },
-    },
+    where: { eventId },
   });
 
   if (event) throw new Error(`Event ${eventId} already exists`);
@@ -1111,11 +1127,16 @@ export async function csvImport(buffer: Buffer) {
       // Additional States Involved, remove duplicates.
       data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
 
+      // The event display id is stored solely in the dedicated `eventId` column
+      // (the single source of truth); it is not persisted back into the JSONB `data`.
+      delete data.eventId;
+
       await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
+        eventId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,

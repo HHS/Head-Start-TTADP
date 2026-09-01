@@ -34,14 +34,14 @@ describe('trStandardGoalList', () => {
   let sessionReportComplete3;
   let sessionReportIncomplete;
 
-  const createAnEvent = async ({ userId, status, startDate }) =>
+  const createAnEvent = async ({ userId, status, startDate, eventId }) =>
     createEvent({
       ownerId: userId,
       regionId: userId,
       pocIds: [userId],
       collaboratorIds: [userId],
       data: {
-        eventId: testEventLongId,
+        eventId,
         startDate,
         status,
       },
@@ -68,17 +68,21 @@ describe('trStandardGoalList', () => {
       throw new Error('ERSEA template not found - migration did not run');
     }
 
-    // Create event reports with complete status and valid start dates
+    // Create event reports with complete status and valid start dates.
+    // eventId has a unique constraint, so each event gets a distinct id that
+    // still shares the testEventLongId prefix used by the eventId.ctn filter.
     eventReportComplete1 = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       startDate: '10/01/2025',
+      eventId: `${testEventLongId}-1`,
     });
 
     eventReportComplete2 = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       startDate: '11/15/2025',
+      eventId: `${testEventLongId}-2`,
     });
 
     // Event - included since we only filter by start date, not event status
@@ -86,6 +90,7 @@ describe('trStandardGoalList', () => {
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       startDate: '10/01/2025',
+      eventId: `${testEventLongId}-3`,
     });
 
     // Session reports linked to complete events

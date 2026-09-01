@@ -620,7 +620,7 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionReviewSubmitted',
         sessionName: data.sessionName,
-        eventId: data.event.data.eventId,
+        eventId: data.event.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
@@ -709,7 +709,7 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionSubmitted',
         sessionName: data.sessionName,
-        eventId: data.event.data.eventId,
+        eventId: data.event.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
