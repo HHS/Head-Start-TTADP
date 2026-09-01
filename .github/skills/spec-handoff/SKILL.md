@@ -129,7 +129,7 @@ Record in the spec:
 
 ## Gate 2, step 4 — Write the spec
 
-Write `specs/<slug>/index.md` using `assets/spec-template.md`.
+Write `specs/<slug>/index.md` using `templates/spec-template.md`.
 
 Rules:
 
