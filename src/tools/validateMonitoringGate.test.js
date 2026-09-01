@@ -1,14 +1,25 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import { VALIDATION_ALERT_SEVERITY, VALIDATION_PROCESS, VALIDATION_RUN_STATUS } from '../constants';
 import {
+  GOAL_STATUS,
+  VALIDATION_ALERT_SEVERITY,
+  VALIDATION_PROCESS,
+  VALIDATION_RUN_STATUS,
+} from '../constants';
+import {
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Citation,
   MonitoringFinding,
   MonitoringFindingLink,
   MonitoringFindingStatus,
   MonitoringFindingStatusLink,
+  Objective,
   sequelize,
   ValidationAlert,
   ValidationRun,
 } from '../models';
+import { createGoal, createGrant, createReport, destroyGoal, destroyReport } from '../testUtils';
 import validateMonitoringGate from './validateMonitoringGate';
 import { resolveGateHalt } from './validation/gateHaltPolicy';
 
@@ -46,10 +57,20 @@ const linkTimestamps = { createdAt: now, updatedAt: now };
 // green when the thresholds are tuned against real data.
 const GONE_FINDING_IDS = Array.from({ length: 120 }, () => uuidv4());
 
+// The first 20 (the open_ar_findings_gone min-denominator) get cited on an open
+// AR below, so that check fires too: all 20 are gone, unambiguously past its 20%
+// critical threshold, same reasoning as GONE_FINDING_IDS above.
+const OPEN_AR_FINDING_IDS = GONE_FINDING_IDS.slice(0, 20);
+
 // This is a thread: one setup, then a sequence of steps that walk the gate from a
 // recorded run through the critical verdict that pauses the import.
 describe('validateMonitoringGate', () => {
   let firstResult;
+  let openReport;
+  let openGoal;
+  let openObjective;
+  let openAro;
+  let openCitation;
 
   beforeAll(async () => {
     await MonitoringFindingStatusLink.findOrCreate({
@@ -77,6 +98,55 @@ describe('validateMonitoringGate', () => {
         sourceDeletedAt: now,
       }))
     );
+
+    // open_ar_findings_gone: cite OPEN_AR_FINDING_IDS (already source-deleted
+    // above) on an open (draft) Activity Report, so the check's join chain
+    // (ActivityReportObjectiveCitations -> ActivityReportObjectives ->
+    // ActivityReports) finds them and its MonitoringFindings liveness check
+    // marks all 20 gone.
+    const openGrant = await createGrant({});
+    openReport = await createReport({
+      activityRecipients: [{ grantId: openGrant.id }],
+      regionId: openGrant.regionId,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    });
+    openGoal = await createGoal({ grantId: openGrant.id, status: GOAL_STATUS.IN_PROGRESS });
+    openObjective = await Objective.create({
+      goalId: openGoal.id,
+      title: 'Gate test open-AR objective',
+      status: 'In Progress',
+    });
+    openAro = await ActivityReportObjective.create({
+      activityReportId: openReport.id,
+      objectiveId: openObjective.id,
+    });
+    openCitation = await Citation.create({
+      mfid: Math.floor(Math.random() * 1_000_000_000),
+      finding_uuid: uuidv4(),
+      calculated_finding_type: 'Deficiency',
+      reported_date: '2025-01-10',
+      initial_report_delivery_date: '2025-01-10',
+    });
+    await ActivityReportObjectiveCitation.bulkCreate(
+      OPEN_AR_FINDING_IDS.map((findingId) => ({
+        activityReportObjectiveId: openAro.id,
+        citationId: openCitation.id,
+        citation: '1302.12(d)(1)',
+        findingId,
+        grantId: openGrant.id,
+        grantNumber: openGrant.number,
+        reviewName: 'Gate test open-AR review',
+        standardId: 1,
+        findingType: 'Deficiency',
+        acro: 'DEF',
+        name: 'Gate test open-AR citation',
+        severity: 2,
+        reportDeliveryDate: '2025-01-10',
+        monitoringFindingStatusName: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      }))
+    );
   });
 
   afterAll(async () => {
@@ -96,6 +166,21 @@ describe('validateMonitoringGate', () => {
       where: { statusId: FINDING_STATUS_ID },
       force: true,
     });
+
+    await ActivityReportObjectiveCitation.destroy({
+      where: { activityReportObjectiveId: openAro.id },
+      force: true,
+    });
+    await ActivityReportObjective.destroy({ where: { id: openAro.id }, force: true });
+    await Objective.destroy({
+      where: { id: openObjective.id },
+      force: true,
+      individualHooks: true,
+    });
+    await destroyGoal(openGoal);
+    await Citation.destroy({ where: { id: openCitation.id }, force: true });
+    await destroyReport(openReport);
+
     await sequelize.close();
   });
 
@@ -142,17 +227,15 @@ describe('validateMonitoringGate', () => {
     expect(resolveGateHalt(firstResult.alerts, 'open_ar_findings_gone, all').mode).toBe('all');
   });
 
-  // PLACEHOLDER: open_ar_findings_gone is only smoke-covered here. Its SQL runs as
-  // part of the gate and correctly emits nothing when there are no qualifying
-  // open-AR citations (the seed DB has none, and this thread adds none). A
-  // data-driven firing test needs the full open AR -> objective -> citation chain,
-  // including the required Citations FK on ActivityReportObjectiveCitations; add
-  // one when the final open_ar_findings_gone logic is settled.
-  it('runs the open_ar_findings_gone check without firing on empty open-AR data', async () => {
+  it('raises a critical alert when findings cited on open ARs are gone from the import', async () => {
+    // OPEN_AR_FINDING_IDS are cited on openReport (an open/draft AR) above, and are
+    // among the source-deleted GONE_FINDING_IDS, so all 20 are "gone" - unambiguously
+    // past the check's 20% critical threshold.
     const alert = await ValidationAlert.findOne({
       where: { run_id: firstResult.runId, check_name: 'open_ar_findings_gone' },
     });
-    expect(alert).toBeNull();
+    expect(alert).not.toBeNull();
+    expect(alert.severity).toBe(VALIDATION_ALERT_SEVERITY.CRITICAL);
   });
 
   it('keeps only the latest run’s alerts when the gate runs again', async () => {

@@ -91,7 +91,7 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 
 ## The pre-refresh gate process
 
-`monitoring_gate` (`src/tools/validateMonitoringGate.ts`) runs a single step, `monitoringGateChecks.ts`, and writes only `ValidationAlerts`. Its CLI acts on the result: it exits `1` when `criticalCount > 0` (or on error), which breaks the pipeline loop before `update_fact_tables`. A run with only non-critical alerts, or none, exits `0` and the import proceeds.
+`monitoring_gate` (`src/tools/validateMonitoringGate.ts`) runs a single step, `monitoringGateChecks.ts`, and writes only `ValidationAlerts`. Its CLI acts on the result: it exits `1` when `criticalCount > 0` (or on error), which breaks the pipeline loop before `update_fact_tables`. A run with only non-critical alerts, or none, exits `0` and the import proceeds. (This is the enforced behavior — see [Enforcement controls](#reporting-and-acting-on-results) for the report-only default.)
 
 Both checks were prompted by a real incident in which an unexpectedly large fraction of findings became source-deleted in the imported data. Each check carries a minimum-denominator guard so a small or empty dataset can never false-pause.
 
@@ -236,7 +236,7 @@ Indexes on `(check_name)` and `(run_id, severity)`.
 
 ```bash
 yarn cli:validate-monitoring-data          # post-refresh: time series + observations + alerts
-yarn cli:validate-monitoring-gate          # pre-refresh gate; exit 1 on any critical
+yarn cli:validate-monitoring-gate          # pre-refresh gate; exit 1 on any critical when enforced (report-only by default)
 yarn cli:check-monitoring-validation-ran   # watchdog
 ```
 

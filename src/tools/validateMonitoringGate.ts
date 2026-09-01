@@ -12,8 +12,9 @@ import runValidation from './validation/runValidation';
  * can block the refresh instead of propagating into the fact tables and goals.
  *
  * Returns the runner verdict; the CLI (validateMonitoringGateCLI.ts) exits
- * nonzero when criticalCount > 0, which stops the CI import phase loop before
- * update_fact_tables runs. This is the "prevent" path; a future in-refresh gate
+ * nonzero when criticalCount > 0 and enforcement is configured (report-only
+ * by default), which stops the CI import phase loop before update_fact_tables
+ * runs. This is the "prevent" path; a future in-refresh gate
  * would instead throw inside updateMonitoringFactTables' transaction to roll
  * back a bad swap.
  */
