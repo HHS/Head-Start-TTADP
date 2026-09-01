@@ -196,7 +196,6 @@ describe('session reports service', () => {
 
       await destroySession(created.id);
     });
-
   });
 
   describe('destroySession', () => {
@@ -781,7 +780,11 @@ describe('session reports service', () => {
 
       await updateSession(created.id, {
         eventId: 'R01-PD-99_777',
-        data: { startDate: '06/10/2024', endDate: '06/11/2024', sessionName: 'updated session name' },
+        data: {
+          startDate: '06/10/2024',
+          endDate: '06/11/2024',
+          sessionName: 'updated session name',
+        },
       });
 
       const raw = await SessionReportPilot.findByPk(created.id);
@@ -1208,6 +1211,45 @@ describe('session reports service', () => {
       expect(filteredResults.count).toBe(filteredResults.rows.length);
       expect(filteredResults.count).toBe(1);
       expect(filteredResults.rows[0].id).toBe(specificSessionId);
+    });
+
+    it('resolves the "TR event creator" myReports filter using the passed-in userId', async () => {
+      // testEvent is owned by uniqueOwnerId; a report by another owner must be excluded.
+      const otherOwnerEvent = await createEvent({
+        ownerId: 99_801,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: 'R01-PD-99801-myreports',
+          eventName: 'Other Owner Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+      const otherOwnerSession = await createSession({
+        eventId: otherOwnerEvent.id,
+        data: {
+          sessionName: 'Other Owner Session',
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      });
+
+      try {
+        const result = await getSessionReports({
+          'myReports.in': ['TR event creator'],
+          userId: uniqueOwnerId,
+        });
+
+        expect(result.rows.map((r) => r.id)).toEqual(
+          expect.arrayContaining(testSessions.map((s) => s.id))
+        );
+        expect(result.rows.map((r) => r.id)).not.toEqual(
+          expect.arrayContaining([otherOwnerSession.id])
+        );
+      } finally {
+        await destroySession(otherOwnerSession.id);
+        await destroyEvent(otherOwnerEvent.id);
+      }
     });
 
     describe('sort by startDate with mixed date formats', () => {
