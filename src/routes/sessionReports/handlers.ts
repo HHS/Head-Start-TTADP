@@ -187,7 +187,7 @@ export const createHandler = async (req: Request, res: Response) => {
       data: {
         ...data,
         eventName: event.data.eventName,
-        eventDisplayId: event.data.eventId,
+        eventDisplayId: event.eventId,
         regionId: event.regionId,
         eventOwner: event.ownerId,
       },

@@ -499,9 +499,9 @@ describe('event service', () => {
       });
 
       // expect date to be priority sorted, followed by title:
-      expect(found[0].data).toHaveProperty('eventId', 'A');
-      expect(found[1].data).toHaveProperty('eventId', 'B');
-      expect(found[2].data).toHaveProperty('eventId', 'C');
+      expect(found[0]).toHaveProperty('eventId', 'A');
+      expect(found[1]).toHaveProperty('eventId', 'B');
+      expect(found[2]).toHaveProperty('eventId', 'C');
 
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
