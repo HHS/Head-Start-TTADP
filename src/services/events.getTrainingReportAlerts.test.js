@@ -297,6 +297,7 @@ describe('getTrainingReportAlerts', () => {
         collaboratorIds: [faker.datatype.number()],
         pocIds: [faker.datatype.number()],
         regionId: 1,
+        eventId: `R01-TR-ENDDATE-${ownerId}`,
         data: {
           eventName: 'Missing Event Info Test',
           eventId: `R01-TR-ENDDATE-${ownerId}`,
@@ -359,6 +360,7 @@ describe('getTrainingReportAlerts', () => {
         collaboratorIds: [approver.id], // Add approver as collaborator so they see the event
         pocIds: [],
         regionId: 1,
+        eventId: 'R01-PD-TESTAPPROVAL',
         data: {
           eventId: 'R01-PD-TESTAPPROVAL',
           eventName: 'Test Approval Event',
