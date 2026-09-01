@@ -1792,6 +1792,8 @@ describe('mailer tests', () => {
         .mockImplementation(async () => Promise.resolve());
     });
     afterEach(async () => {
+      notificationQueueMock.add.mockClear();
+      notificationDigestQueueMock.add.mockClear();
       await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
       await ActivityReportApprover.destroy({
         where: {
@@ -1836,7 +1838,6 @@ describe('mailer tests', () => {
     });
 
     it('"approver assigned" includes resubmission flag on the notificationQueue', async () => {
-      notificationQueueMock.add.mockClear();
       const report = await ActivityReport.create(reportObject);
 
       approverAssignedNotification(report, [mockApprover], true);
