@@ -792,18 +792,17 @@ export async function submitReport(req, res) {
 
     await createApproverSubmittedNotification(approversToNotify, savedReport);
 
+    // Exclude the submitting user from collaborator notifications so they are not
+    // notified about an action they themselves kicked off.
+    const collaboratorsToNotify = (report.activityReportCollaborators || []).filter(
+      (c) => c.userId !== userId
+    );
     // On resubmission, collaborators receive the "revised report" notification instead of
     // the standard collaborator-submitted one.
     if (isResubmission) {
-      await createResubmittedNotificationForCollaborators(
-        report.activityReportCollaborators || [],
-        savedReport
-      );
+      await createResubmittedNotificationForCollaborators(collaboratorsToNotify || [], savedReport);
     } else {
-      await createCollaboratorSubmittedNotification(
-        report.activityReportCollaborators || [],
-        savedReport
-      );
+      await createCollaboratorSubmittedNotification(collaboratorsToNotify || [], savedReport);
     }
 
     // Notify creator when a collaborator (not the creator) submits the report
@@ -820,17 +819,21 @@ export async function submitReport(req, res) {
     }
 
     // Notify collaborators that the report has been submitted for approval
-    if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {
+    if (collaboratorsToNotify.length > 0) {
       const settingsForCollabs = await Promise.all(
-        report.activityReportCollaborators.map((c) =>
+        collaboratorsToNotify.map((c) =>
           userSettingOverridesById(c.userId, EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW)
         )
       );
-      const collabsToNotify = report.activityReportCollaborators.filter((_value, index) => {
+      const collabsToNotify = collaboratorsToNotify.filter((_value, index) => {
         if (!settingsForCollabs[index]) return false;
         return settingsForCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
       });
-      collaboratorReportSubmittedForReviewNotification(savedReport, collabsToNotify);
+      collaboratorReportSubmittedForReviewNotification(
+        savedReport,
+        collabsToNotify,
+        isResubmission
+      );
     }
 
     // Resubmitting resets any needs_action status to null ("pending" status)
