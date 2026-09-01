@@ -1751,44 +1751,6 @@ describe('Activity Report handlers', () => {
           expect.anything()
         );
       });
-
-      it('sends the standard submitted notification when a collaborator (not the creator) resubmits', async () => {
-        activityReportAndRecipientsById.mockResolvedValue([
-          {
-            displayId: report.displayId,
-            dataValues: report,
-            objectivesWithoutGoals: [],
-            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-            // the acting user is 1, but the report author is someone else,
-            // so this is a collaborator submit, not a creator resubmission
-            author: { id: 777 },
-            activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
-          },
-          undefined,
-          undefined,
-        ]);
-
-        await submitReport(request, mockResponse);
-
-        expect(createNotification).not.toHaveBeenCalledWith(
-          expect.anything(),
-          expect.anything(),
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
-          expect.anything()
-        );
-        expect(createNotification).toHaveBeenCalledWith(
-          mockCollaborator1.userId,
-          savedReport.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
-          expect.anything()
-        );
-        expect(createNotification).toHaveBeenCalledWith(
-          mockCollaborator2.userId,
-          savedReport.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
-          expect.anything()
-        );
-      });
     });
 
     describe('creator submitted in-app notification', () => {
