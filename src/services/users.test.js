@@ -478,6 +478,7 @@ describe('Users DB service', () => {
           pocIds: [],
           collaboratorIds: [],
           regionId: [1],
+          eventId: eventDisplayId,
           data: {
             eventId: eventDisplayId,
           },
