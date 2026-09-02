@@ -19,7 +19,7 @@ const renderQualityAssuranceDashboardOverview = (props) => {
 describe('Quality Assurance Dashboard Overview Widget', () => {
   it('handles undefined data', async () => {
     renderQualityAssuranceDashboardOverview({ data: undefined });
-    expect(screen.getByText(/Recipients with no TTA/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Recipients with no TTA/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard FEI goal/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard CLASS goal/i)).toBeInTheDocument();
   });
@@ -42,11 +42,11 @@ describe('Quality Assurance Dashboard Overview Widget', () => {
 
     renderQualityAssuranceDashboardOverview({ data });
 
-    expect(screen.getByText(/Recipients with no TTA/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Recipients with no TTA/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard FEI goal/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard CLASS goal/i)).toBeInTheDocument();
 
-    expect(await screen.findByText(/11%/)).toBeVisible();
+    expect(screen.queryByText(/11%/)).not.toBeInTheDocument();
     expect(await screen.findByText(/22%/)).toBeVisible();
     expect(await screen.findByText(/33.5%/)).toBeVisible();
     expect(
@@ -72,11 +72,11 @@ describe('Quality Assurance Dashboard Overview Widget', () => {
 
     renderQualityAssuranceDashboardOverview({ data });
 
-    expect(screen.getByText(/Recipients with no TTA/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Recipients with no TTA/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard FEI goal/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipients with OHS standard CLASS goal/i)).toBeInTheDocument();
 
-    expect(screen.queryAllByText(/No results/i).length).toBe(3);
+    expect(screen.queryAllByText(/No results/i).length).toBe(2);
     expect(screen.queryAllByText(/display details/i).length).toBe(0);
   });
 });
