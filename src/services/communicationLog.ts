@@ -232,33 +232,38 @@ const logById = async (id: number) => {
 const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {
   const { otherStaff, ...jsonData } = data;
 
-  const log = await CommunicationLog.create(
-    {
-      userId,
-      // otherStaff is intentionally excluded from the JSON column; the
-      // CommunicationLogStaff table is the source of truth going forward.
-      data: formatCommunicationDateWithJsonData(jsonData as CommLogData),
-    },
-    { returning: ['id'] }
-  );
-
-  await CommunicationLogRecipient.bulkCreate(
-    recipientIds.map((recipientId) => ({
-      recipientId,
-      communicationLogId: log.id,
-    }))
-  );
-
-  const staffUserIds = extractStaffUserIds(otherStaff);
-  if (staffUserIds.length > 0) {
-    await CommunicationLogStaff.bulkCreate(
-      staffUserIds.map((staffUserId) => ({
-        userId: staffUserId,
-        communicationLogId: log.id,
-      })),
-      { ignoreDuplicates: true }
+  const log = await sequelize.transaction(async (transaction) => {
+    const createdLog = await CommunicationLog.create(
+      {
+        userId,
+        // otherStaff is intentionally excluded from the JSON column; the
+        // CommunicationLogStaff table is the source of truth going forward.
+        data: formatCommunicationDateWithJsonData(jsonData as CommLogData),
+      },
+      { returning: ['id'], transaction }
     );
-  }
+
+    await CommunicationLogRecipient.bulkCreate(
+      recipientIds.map((recipientId) => ({
+        recipientId,
+        communicationLogId: createdLog.id,
+      })),
+      { transaction }
+    );
+
+    const staffUserIds = extractStaffUserIds(otherStaff);
+    if (staffUserIds.length > 0) {
+      await CommunicationLogStaff.bulkCreate(
+        staffUserIds.map((staffUserId) => ({
+          userId: staffUserId,
+          communicationLogId: createdLog.id,
+        })),
+        { ignoreDuplicates: true, transaction }
+      );
+    }
+
+    return createdLog;
+  });
 
   return logById(log.id);
 };
@@ -458,70 +463,82 @@ const updateLog = async (id: number, logData: CommLogData) => {
     ? recipients.map((recipient) => Number(recipient.value)).filter((rid) => rid > 0)
     : [];
 
-  if (recipientIds.length > 0) {
-    await CommunicationLogRecipient.destroy({
-      where: {
-        communicationLogId: id,
-        recipientId: {
-          [Op.notIn]: recipientIds,
+  // Reconcile recipients, staff, and the JSON data in a single transaction so an
+  // error partway through cannot leave the source-of-truth tables in an
+  // inconsistent state relative to the CommunicationLog record.
+  await sequelize.transaction(async (transaction) => {
+    if (recipientIds.length > 0) {
+      await CommunicationLogRecipient.destroy({
+        where: {
+          communicationLogId: id,
+          recipientId: {
+            [Op.notIn]: recipientIds,
+          },
         },
-      },
-    });
+        transaction,
+      });
 
-    await CommunicationLogRecipient.bulkCreate(
-      recipientIds.map((recipientId) => ({
-        recipientId,
-        communicationLogId: id,
-      })),
-      {
-        ignoreDuplicates: true,
-      }
-    );
-  }
-
-  // The CommunicationLogStaff table is the source of truth for "other TTA staff".
-  // Only reconcile when the caller explicitly provides an otherStaff array; an
-  // empty array clears the staff, undefined leaves them untouched.
-  if (Array.isArray(otherStaff)) {
-    const staffUserIds = extractStaffUserIds(otherStaff);
-
-    await CommunicationLogStaff.destroy({
-      where: {
-        communicationLogId: id,
-        ...(staffUserIds.length > 0 ? { userId: { [Op.notIn]: staffUserIds } } : {}),
-      },
-    });
-
-    if (staffUserIds.length > 0) {
-      await CommunicationLogStaff.bulkCreate(
-        staffUserIds.map((staffUserId) => ({
-          userId: staffUserId,
+      await CommunicationLogRecipient.bulkCreate(
+        recipientIds.map((recipientId) => ({
+          recipientId,
           communicationLogId: id,
         })),
-        { ignoreDuplicates: true }
+        {
+          ignoreDuplicates: true,
+          transaction,
+        }
       );
     }
-  }
 
-  // Preserve any legacy otherStaff value already stored in the JSON column but do
-  // not update it going forward — the join table is now the source of truth.
-  const existingLog = await CommunicationLog.findByPk(id, { attributes: ['data'] });
-  const dataToSave = formatCommunicationDateWithJsonData(data as CommLogData);
-  const preservedOtherStaff = existingLog?.data?.otherStaff;
-  if (preservedOtherStaff !== undefined) {
-    dataToSave.otherStaff = preservedOtherStaff;
-  }
+    // The CommunicationLogStaff table is the source of truth for "other TTA staff".
+    // Only reconcile when the caller explicitly provides an otherStaff array; an
+    // empty array clears the staff, undefined leaves them untouched.
+    if (Array.isArray(otherStaff)) {
+      const staffUserIds = extractStaffUserIds(otherStaff);
 
-  await CommunicationLog.update(
-    {
-      data: dataToSave,
-    },
-    {
-      where: {
-        id,
-      },
+      await CommunicationLogStaff.destroy({
+        where: {
+          communicationLogId: id,
+          ...(staffUserIds.length > 0 ? { userId: { [Op.notIn]: staffUserIds } } : {}),
+        },
+        transaction,
+      });
+
+      if (staffUserIds.length > 0) {
+        await CommunicationLogStaff.bulkCreate(
+          staffUserIds.map((staffUserId) => ({
+            userId: staffUserId,
+            communicationLogId: id,
+          })),
+          { ignoreDuplicates: true, transaction }
+        );
+      }
     }
-  );
+
+    // Preserve any legacy otherStaff value already stored in the JSON column but do
+    // not update it going forward — the join table is now the source of truth.
+    const existingLog = await CommunicationLog.findByPk(id, {
+      attributes: ['data'],
+      transaction,
+    });
+    const dataToSave = formatCommunicationDateWithJsonData(data as CommLogData);
+    const preservedOtherStaff = existingLog?.data?.otherStaff;
+    if (preservedOtherStaff !== undefined) {
+      dataToSave.otherStaff = preservedOtherStaff;
+    }
+
+    await CommunicationLog.update(
+      {
+        data: dataToSave,
+      },
+      {
+        where: {
+          id,
+        },
+        transaction,
+      }
+    );
+  });
 
   return logById(id);
 };

@@ -3,13 +3,22 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class CommunicationLogStaff extends Model {
     static associate(models) {
-      CommunicationLogStaff.belongsTo(models.CommunicationLog, {
+      models.CommunicationLogStaff.belongsTo(models.CommunicationLog, {
         foreignKey: 'communicationLogId',
         as: 'communicationLog',
       });
-      CommunicationLogStaff.belongsTo(models.User, {
+      models.CommunicationLog.hasMany(models.CommunicationLogStaff, {
+        foreignKey: 'communicationLogId',
+        as: 'communicationLogStaff',
+      });
+
+      models.CommunicationLogStaff.belongsTo(models.User, {
         foreignKey: 'userId',
         as: 'user',
+      });
+      models.User.hasMany(models.CommunicationLogStaff, {
+        foreignKey: 'userId',
+        as: 'communicationLogStaff',
       });
     }
   }
