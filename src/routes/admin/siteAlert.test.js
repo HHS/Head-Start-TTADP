@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import moment from 'moment';
@@ -18,11 +18,11 @@ describe('site alert admin handler', () => {
   let adminUser;
   beforeAll(async () => {
     adminUser = await User.create({
-      hsesUserId: faker.datatype.string(),
-      name: faker.name.findName(),
+      hsesUserId: faker.string.sample(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       homeRegionId: 1,
-      hsesUsername: faker.internet.userName(),
+      hsesUsername: faker.internet.username(),
       lastLogin: new Date(),
     });
 

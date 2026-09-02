@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { uniq } from 'lodash';
 import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
@@ -84,7 +84,7 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
     await GoalFieldResponse.create({
       goalTemplateFieldPromptId: prompt.id,
       goalId: goalOne.id,
-      response: [faker.datatype.string(100), faker.datatype.string(100)],
+      response: [faker.string.sample(100), faker.string.sample(100)],
       onAR: false,
       onApprovedAR: false,
     });

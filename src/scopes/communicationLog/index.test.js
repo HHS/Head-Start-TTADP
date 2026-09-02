@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import {
   COMMUNICATION_METHODS,
   COMMUNICATION_PURPOSES,
@@ -15,13 +15,13 @@ import { withoutPurpose, withPurpose } from './purpose';
 import { withoutRoles, withRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
-  const userName = faker.name.findName();
-  const secondUserName = faker.name.findName();
+  const userName = faker.person.fullName();
+  const secondUserName = faker.person.fullName();
   let user;
   let secondUser;
   let recipient;
   let ignoredRecipient;
-  const regionId = faker.datatype.number({ min: 10000, max: 100000 });
+  const regionId = faker.number.int({ min: 10000, max: 100000 });
   let region;
   let userRole;
   let secondUserRole;
@@ -453,8 +453,8 @@ describe('communicationLog filtersToScopes', () => {
       targetRecipient = await createRecipient();
 
       groupedGrant = await db.Grant.create({
-        id: faker.datatype.number({ min: 100000, max: 999999 }),
-        number: `group-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+        id: faker.number.int({ min: 100000, max: 999999 }),
+        number: `group-${faker.number.int({ min: 1000, max: 9999 })}`,
         recipientId: groupedRecipient.id,
         regionId,
         status: 'Active',
@@ -462,8 +462,8 @@ describe('communicationLog filtersToScopes', () => {
       });
 
       notGroupedGrant = await db.Grant.create({
-        id: faker.datatype.number({ min: 100000, max: 999999 }),
-        number: `group2-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+        id: faker.number.int({ min: 100000, max: 999999 }),
+        number: `group2-${faker.number.int({ min: 1000, max: 9999 })}`,
         recipientId: notGroupedRecipient.id,
         regionId,
         status: 'Active',
@@ -471,12 +471,12 @@ describe('communicationLog filtersToScopes', () => {
       });
 
       group = await db.Group.create({
-        name: `Communication Log Group ${faker.datatype.number({ min: 1, max: 9999 })}`,
+        name: `Communication Log Group ${faker.number.int({ min: 1, max: 9999 })}`,
         isPublic: false,
       });
 
       group2 = await db.Group.create({
-        name: `Communication Log Group2 ${faker.datatype.number({ min: 1, max: 9999 })}`,
+        name: `Communication Log Group2 ${faker.number.int({ min: 1, max: 9999 })}`,
         isPublic: true,
       });
 

@@ -48,10 +48,10 @@ describe('activityReportGoalResource hooks', () => {
 
   beforeEach(async () => {
     mockUser = await User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.string.sample(),
+      hsesUserId: faker.string.sample(),
       lastLogin: new Date(),
     });
 

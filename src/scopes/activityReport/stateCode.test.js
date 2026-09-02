@@ -36,7 +36,7 @@ describe('stateCode filtersToScopes', () => {
       });
 
       reportOne = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -44,7 +44,7 @@ describe('stateCode filtersToScopes', () => {
         ],
       });
       reportTwo = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -55,7 +55,7 @@ describe('stateCode filtersToScopes', () => {
         ],
       });
       reportThree = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantTwo.id,

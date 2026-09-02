@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../constants';
@@ -55,16 +55,16 @@ describe('cacheCourses', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
     courseOne = await Course.create({
-      name: faker.datatype.string(200),
+      name: faker.string.sample(200),
     });
 
     courseTwo = await Course.create({
-      name: faker.datatype.string(200),
+      name: faker.string.sample(200),
     });
 
     aro = await ActivityReportObjective.create({
@@ -264,19 +264,19 @@ describe('activityReportObjectiveCitation', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
     nonMonitoringObjective = await Objective.create({
       goalId: nonMonitoringGoal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
     rtrObjective = await Objective.create({
       goalId: goal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
@@ -295,13 +295,13 @@ describe('activityReportObjectiveCitation', () => {
       activityReportId: activityReport.id,
     });
 
-    findingIdOne = faker.datatype.uuid();
-    findingIdTwo = faker.datatype.uuid();
-    findingIdThree = faker.datatype.uuid();
-    nonMonitoringFindingId = faker.datatype.uuid();
-    rtrFindingId = faker.datatype.uuid();
+    findingIdOne = faker.string.uuid();
+    findingIdTwo = faker.string.uuid();
+    findingIdThree = faker.string.uuid();
+    nonMonitoringFindingId = faker.string.uuid();
+    rtrFindingId = faker.string.uuid();
 
-    const startingMfid = faker.datatype.number({ min: 100000, max: 999999 });
+    const startingMfid = faker.number.int({ min: 100000, max: 999999 });
     await Citation.bulkCreate([
       {
         mfid: startingMfid + 1,
@@ -725,7 +725,7 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   it('throws when a citation findingId cannot be resolved to a Citation record', async () => {
-    const missingFindingId = faker.datatype.uuid();
+    const missingFindingId = faker.string.uuid();
     const citationsToCreate = [
       {
         citation: 'Citation with unresolved finding',
@@ -766,7 +766,7 @@ describe('activityReportObjectiveCitation', () => {
 
     await cacheCitations(objective.id, aro.id, originalCitations);
 
-    const missingFindingId = faker.datatype.uuid();
+    const missingFindingId = faker.string.uuid();
     const unresolvedCitations = [
       {
         citation: 'Resolved citation update',
@@ -913,7 +913,7 @@ describe('cacheGoalMetadata', () => {
   let snapShot;
 
   const mockUser = {
-    id: faker.datatype.number(),
+    id: faker.number.int({ min: 0, max: 99999 }),
     homeRegionId: 1,
     name: 'user13706689',
     hsesUsername: 'user13706689',
@@ -926,7 +926,7 @@ describe('cacheGoalMetadata', () => {
     snapShot = await captureSnapshot();
 
     await User.create(mockUser);
-    const grantId = faker.datatype.number();
+    const grantId = faker.number.int({ min: 0, max: 99999 });
 
     activityReport = await createReport({
       activityRecipients: [

@@ -1,6 +1,7 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD } from '../constants';
+import fakerUnique from '../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -16,9 +17,9 @@ import standardGoalsList from './standardGoalsList';
 
 const mockUser = {
   homeRegionId: 1,
-  name: faker.name.findName(),
+  name: faker.person.fullName(),
   hsesUsername: faker.internet.email(),
-  hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+  hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
   lastLogin: new Date(),
 };
 
@@ -49,21 +50,21 @@ describe('standardGoalsList', () => {
 
     // Create test recipients
     recipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Test Recipient 1',
       uei: 'TEST123456789',
     });
 
     recipient2 = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Test Recipient 2',
       uei: 'TEST987654321',
     });
 
     // Create test grants
     grant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
-      number: faker.datatype.string(),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
+      number: faker.string.sample(),
       regionId: 1,
       status: 'Active',
       startDate: new Date(),
@@ -72,8 +73,8 @@ describe('standardGoalsList', () => {
     });
 
     grant2 = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
-      number: faker.datatype.string(),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
+      number: faker.string.sample(),
       regionId: 1,
       status: 'Active',
       startDate: new Date(),
@@ -83,8 +84,8 @@ describe('standardGoalsList', () => {
 
     // Create a third grant for prestandard goal
     grantPrestandard = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
-      number: faker.datatype.string(),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
+      number: faker.string.sample(),
       regionId: 1,
       status: 'Active',
       startDate: new Date(),

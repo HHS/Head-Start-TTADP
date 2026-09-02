@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import httpContext from 'express-http-context';
@@ -56,9 +56,9 @@ describe('getGoalHistory (database-backed)', () => {
     user = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.datatype.number({ min: 1, max: 100000 })}`,
+      hsesUserId: `fake${faker.number.int({ min: 1, max: 100000 })}`,
       email: faker.internet.email(),
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       role: ['Grants Specialist'],
       lastLogin: new Date(),
     });
@@ -73,14 +73,14 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     recipient = await Recipient.create({
-      id: faker.datatype.number({ min: 10000, max: 99999 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 99999 }),
+      name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     grant = await Grant.create({
       id: getUniqueId(),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -88,7 +88,7 @@ describe('getGoalHistory (database-backed)', () => {
       recipientId: recipient.id,
     });
 
-    const templateName = faker.random.words(5);
+    const templateName = faker.word.words(5);
     const hash = crypto.createHmac('md5', templateName).update(templateName).digest('hex');
     goalTemplate = await GoalTemplate.create({
       hash,
@@ -99,7 +99,7 @@ describe('getGoalHistory (database-backed)', () => {
     // The Closed goal is created first so it doesn't conflict with the partial unique index.
     // (index only constrains non-Closed goals with goalTemplateId IS NOT NULL)
     goalClosed = await Goal.create({
-      name: faker.random.words(5),
+      name: faker.word.words(5),
       status: 'Closed',
       grantId: grant.id,
       goalTemplateId: goalTemplate.id,
@@ -109,7 +109,7 @@ describe('getGoalHistory (database-backed)', () => {
 
     // One non-Closed goal (Suspended) is allowed alongside Closed goals.
     goalSuspended = await Goal.create({
-      name: faker.random.words(5),
+      name: faker.word.words(5),
       status: 'Suspended',
       grantId: grant.id,
       goalTemplateId: goalTemplate.id,
@@ -120,13 +120,13 @@ describe('getGoalHistory (database-backed)', () => {
     // Two objectives on the Suspended goal
     [objective1, objective2] = await Promise.all([
       Objective.create({
-        title: faker.random.words(5),
+        title: faker.word.words(5),
         goalId: goalSuspended.id,
         status: 'Suspended',
         createdVia: 'rtr',
       }),
       Objective.create({
-        title: faker.random.words(5),
+        title: faker.word.words(5),
         goalId: goalSuspended.id,
         status: 'Suspended',
         createdVia: 'rtr',
@@ -200,9 +200,9 @@ describe('getGoalHistory (database-backed)', () => {
     collaboratorUser = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.datatype.number({ min: 100001, max: 200000 })}`,
+      hsesUserId: `fake${faker.number.int({ min: 100001, max: 200000 })}`,
       email: faker.internet.email(),
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       role: ['Health Specialist'],
       lastLogin: new Date(),
     });
@@ -282,7 +282,7 @@ describe('getGoalHistory (database-backed)', () => {
   it('only includes objectives created via RTR or on approved ARs', async () => {
     // Create an objective that should NOT be included by the service filter
     const excludedObjective = await Objective.create({
-      title: faker.random.words(5),
+      title: faker.word.words(5),
       goalId: goalSuspended.id,
       status: 'Suspended',
       createdVia: 'activityReport',
@@ -530,7 +530,7 @@ describe('getGoalHistory (database-backed)', () => {
     // one non-Closed goal per (grantId, goalTemplateId).
     const isolatedGrant = await Grant.create({
       id: getUniqueId(),
-      number: `0${faker.datatype.number({ min: 10000, max: 99999 })}${faker.animal.type()}`,
+      number: `0${faker.number.int({ min: 10000, max: 99999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -538,7 +538,7 @@ describe('getGoalHistory (database-backed)', () => {
       recipientId: recipient.id,
     });
 
-    const isolatedTemplateName = faker.random.words(5);
+    const isolatedTemplateName = faker.word.words(5);
     const isolatedHash = crypto
       .createHmac('md5', isolatedTemplateName)
       .update(isolatedTemplateName)
@@ -550,7 +550,7 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     const draftArGoal = await Goal.create({
-      name: faker.random.words(5),
+      name: faker.word.words(5),
       status: 'Not Started',
       grantId: isolatedGrant.id,
       goalTemplateId: isolatedTemplate.id,

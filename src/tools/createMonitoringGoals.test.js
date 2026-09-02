@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
@@ -33,7 +33,7 @@ describe('createMonitoringGoals', () => {
 
   const createGrant = (overrides = {}) =>
     Grant.create({
-      id: faker.datatype.number({ min: 9999 }),
+      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
       number: uuidv4(),
       recipientId: recipient.id,
       regionId: 1,
@@ -46,14 +46,14 @@ describe('createMonitoringGoals', () => {
   // Creates a Citation that is active by default, linked to a DeliveredReview.
   const createCitation = async (overrides = {}, reviewType = 'FA-1') => {
     const dr = await DeliveredReview.create({
-      mrid: faker.datatype.number({ min: 99999 }),
+      mrid: faker.number.int({ min: 99999, max: 99999 + 99999 }),
       review_uuid: uuidv4(),
       review_type: reviewType,
       review_status: 'Complete',
       report_delivery_date: new Date('2025-06-01'),
     });
     const citation = await Citation.create({
-      mfid: faker.datatype.number({ min: 9999 }),
+      mfid: faker.number.int({ min: 9999, max: 9999 + 99999 }),
       finding_uuid: uuidv4(),
       active: true,
       last_review_delivered: true,
@@ -92,8 +92,8 @@ describe('createMonitoringGoals', () => {
     snapshot = await captureSnapshot();
 
     recipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     goalTemplate = await GoalTemplate.findOne({

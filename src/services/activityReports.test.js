@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import httpContext from 'express-http-context';
 import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
@@ -58,12 +58,12 @@ const ALERT_RECIPIENT_ID = 345;
 const RECIPIENT_WITH_PROGRAMS_ID = 425;
 const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
 
-const INACTIVE_GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_BOUNDARY = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_NULL_DATE = faker.datatype.number({ min: 9999 });
-const GRANT_ON_ACTIVITY_REPORT_ID = faker.datatype.number({ min: 9999 });
-const OTHER_ENTITY_TEST_ID = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_ONE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_BOUNDARY = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_NULL_DATE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const GRANT_ON_ACTIVITY_REPORT_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const OTHER_ENTITY_TEST_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
 
 let testActivityReport;
 
@@ -411,7 +411,7 @@ describe('Activity report service', () => {
       // Create a inactive grant with a 'inactivationDate' date less than 60 days ago.
       await Grant.create({
         id: INACTIVE_GRANT_ID_ONE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -423,7 +423,7 @@ describe('Activity report service', () => {
       // Create a inactive grant exactly 365 days ago (boundary condition)
       await Grant.create({
         id: INACTIVE_GRANT_ID_BOUNDARY,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -435,7 +435,7 @@ describe('Activity report service', () => {
       // Create a inactive grant more than 365 days ago (should be excluded)
       await Grant.create({
         id: INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -447,7 +447,7 @@ describe('Activity report service', () => {
       // Create a inactive grant with NULL inactivationDate (should be excluded)
       await Grant.create({
         id: INACTIVE_GRANT_ID_NULL_DATE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -459,7 +459,7 @@ describe('Activity report service', () => {
       // Create a inactive grant already on an activity report
       await Grant.create({
         id: GRANT_ON_ACTIVITY_REPORT_ID,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -489,7 +489,7 @@ describe('Activity report service', () => {
       // Create an other entity for testing
       await OtherEntity.create({
         id: OTHER_ENTITY_TEST_ID,
-        name: `Test Other Entity ${faker.datatype.uuid()}`,
+        name: `Test Other Entity ${faker.string.uuid()}`,
       });
     });
 
@@ -2448,8 +2448,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });
@@ -2632,8 +2632,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });
