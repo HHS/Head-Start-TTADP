@@ -280,7 +280,7 @@ export const participantsFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterParticipantsSelect
-      inputId={`participants-${condition}-${id}`}
+      inputId={`participants-${condition.replace(/\s+/g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
