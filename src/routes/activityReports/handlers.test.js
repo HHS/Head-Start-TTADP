@@ -1790,6 +1790,40 @@ describe('Activity Report handlers', () => {
         );
       });
 
+      it('sends the resubmitted approver notification instead of the standard submitted one', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+      });
+
+      it('emails approvers with the revised (isResubmission) flag on resubmission', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(mailer.approverAssignedNotification).toHaveBeenCalledWith(
+          savedReport,
+          expect.any(Array),
+          true
+        );
+      });
+
       it('sends the standard submitted notification (not resubmitted) on first submission', async () => {
         activityReportAndRecipientsById.mockResolvedValue([
           {
@@ -1809,6 +1843,18 @@ describe('Activity Report handlers', () => {
           expect.anything(),
           expect.anything(),
           NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+          expect.anything()
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+          expect.anything()
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
           expect.anything()
         );
         expect(createNotification).toHaveBeenCalledWith(

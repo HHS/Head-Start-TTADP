@@ -57,6 +57,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -792,7 +793,13 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings, isResubmission);
 
-    await createApproverSubmittedNotification(approversToNotify, savedReport);
+    // On resubmission, approvers receive the "revised report" notification (Take action)
+    // instead of the standard submitted one.
+    if (isResubmission) {
+      await createResubmittedNotificationForApprovers(approversToNotify, savedReport);
+    } else {
+      await createApproverSubmittedNotification(approversToNotify, savedReport);
+    }
 
     // Exclude the submitting user from collaborator notifications so they are not
     // notified about an action they themselves kicked off.
