@@ -127,7 +127,7 @@
     "@axe-core/playwright": "^4.11.0",
     "@babel/runtime": "^7.26.10",
     "@braintree/sanitize-url": "^7.1.1",
-    "@faker-js/faker": "^6.3.1",
+    "@faker-js/faker": "^10.5.0",
     "@mesh-kit/core": "^1.0.160",
     "@ttahub/common": "2.4.4",
     "@types/ioredis-mock": "^8.2.6",
