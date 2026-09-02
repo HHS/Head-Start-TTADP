@@ -2429,6 +2429,24 @@ describe('Activity report service', () => {
         });
         await ActivityReport.destroy({ where: { id: draftReport.id } });
       });
+      it('returns all approved reports when userId is null and rejects invalid userIds', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const allApproved = await activityReportsApprovedByDate(null, "NOW() - INTERVAL '1 DAY'");
+        expect(allApproved.some((r) => r.id === report.id)).toBe(true);
+
+        await expect(activityReportsApprovedByDate(0, "NOW() - INTERVAL '1 DAY'")).rejects.toThrow(
+          'Invalid userId provided'
+        );
+        await expect(
+          activityReportsApprovedByDate('abc', "NOW() - INTERVAL '1 DAY'")
+        ).rejects.toThrow('Invalid userId provided');
+
+        await ActivityReport.destroy({ where: { id: report.id } });
+      });
     });
   });
   describe('handleSoftDeleteReport', () => {
