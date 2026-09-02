@@ -33,7 +33,6 @@ import Logout from './pages/Logout';
 import Notifications from './pages/Notifications';
 import QADashboard from './pages/QADashboard';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
-import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
@@ -221,15 +220,6 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <CourseDashboard />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/dashboards/qa-dashboard/recipients-with-no-tta"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <RecipientsWithNoTta />
             </AppWrapper>
           )}
         />
