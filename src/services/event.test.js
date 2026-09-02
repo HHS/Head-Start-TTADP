@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
 import { Op } from 'sequelize';
@@ -57,7 +57,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
-        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        eventId: `R01-TR-${faker.string.uuid()}`,
         status: 'active',
         owner: {
           id: num,
@@ -74,7 +74,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
-        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        eventId: `R01-TR-${faker.string.uuid()}`,
         status,
       },
     });
@@ -86,7 +86,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
-        eventId: `R01-TR-${faker.datatype.uuid()}`,
+        eventId: `R01-TR-${faker.string.uuid()}`,
         ...data,
       },
     });
@@ -100,7 +100,7 @@ describe('event service', () => {
     });
 
     it('stores the eventId in the dedicated column and not in the JSONB data', async () => {
-      const eventId = `R01-TR-${faker.datatype.uuid()}`;
+      const eventId = `R01-TR-${faker.string.uuid()}`;
       const created = await createEvent({
         ownerId: 98_989,
         regionId: 98_989,
@@ -122,7 +122,7 @@ describe('event service', () => {
     });
 
     it('throws when creating an event whose eventId already exists', async () => {
-      const eventId = `R01-TR-${faker.datatype.uuid()}`;
+      const eventId = `R01-TR-${faker.string.uuid()}`;
       const first = await createAnEventWithData(98_989, { eventId });
 
       await expect(createAnEventWithData(98_989, { eventId })).rejects.toThrow();
@@ -188,7 +188,7 @@ describe('event service', () => {
           pocIds: [123],
           regionId: 123,
           collaboratorIds: [123],
-          data: { eventId: `R01-TR-${faker.datatype.uuid()}` },
+          data: { eventId: `R01-TR-${faker.string.uuid()}` },
         })
       ).rejects.toThrow('eventId is immutable and cannot be changed');
 
@@ -231,7 +231,7 @@ describe('event service', () => {
         pocIds: [123],
         regionId: 123,
         collaboratorIds: [123],
-        data: { eventId: `R01-TR-${faker.datatype.uuid()}` },
+        data: { eventId: `R01-TR-${faker.string.uuid()}` },
       });
 
       expect(updated).toHaveProperty('id');
@@ -563,13 +563,13 @@ describe('event service', () => {
     let buffer;
     let created;
 
-    const userId = faker.datatype.number();
-    const ncUserId = faker.datatype.number();
-    const regionalUserId = faker.datatype.number();
-    const ncWithoutScopeUserId = faker.datatype.number();
-    const pocId = faker.datatype.number();
+    const userId = faker.number.int({ min: 0, max: 99999 });
+    const ncUserId = faker.number.int({ min: 0, max: 99999 });
+    const regionalUserId = faker.number.int({ min: 0, max: 99999 });
+    const ncWithoutScopeUserId = faker.number.int({ min: 0, max: 99999 });
+    const pocId = faker.number.int({ min: 0, max: 99999 });
     let poc;
-    const collaboratorId = faker.datatype.number();
+    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
     let collaborator;
     let ncRole;
     let regionalRole;
@@ -665,8 +665,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: userId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email,
         lastLogin: new Date(),
         name: ownerName,
@@ -698,8 +698,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: ncUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: ncEmail,
         lastLogin: new Date(),
         name: ncUserName,
@@ -719,8 +719,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: regionalUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: regionalEmail,
         lastLogin: new Date(),
         name: regionalUserName,
@@ -740,8 +740,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: ncWithoutScopeUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: ncWithoutScopeEmail,
         lastLogin: new Date(),
         name: ncWithoutScopeUserName,
@@ -762,8 +762,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       collaborator = await db.User.create({
         id: collaboratorId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
         name: collaboratorName,
@@ -779,8 +779,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       poc = await db.User.create({
         id: pocId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
         name: pocName,
