@@ -67,5 +67,5 @@ applications:
         disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
-        command: yarn start:worker
+        command: WORKER_CONCURRENCY=((worker_concurrency)) node --max-old-space-size=((worker_max_old_space_size)) ./build/server/src/worker.js
         memory: ((worker_memory))

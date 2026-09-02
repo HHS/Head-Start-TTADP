@@ -4,6 +4,8 @@ web_memory: 3GB
 web_disk_quota: 2GB
 worker_instances: 2
 worker_memory: 1GB
+worker_concurrency: 2
+worker_max_old_space_size: 256
 worker_disk_quota: 2GB
 
 app_name: tta-smarthub-sandbox
