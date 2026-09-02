@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import moment from 'moment';
 import React from 'react';
 import { Router } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
@@ -29,17 +28,11 @@ const defaultUser = {
   ],
 };
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-const today = moment().format('YYYY/MM/DD');
-
-// Convert todayMinus12Months to the format used in the API.
-const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`;
-
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
-const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`;
-const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
-const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
-const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
+const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget`;
+const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
+const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
+const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_class_widget`;
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
     data_set: 'no_tta_widget',
@@ -253,7 +246,7 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     const filters = await screen.findByRole('button', {
-      name: /open filters for this page , 2 currently applied/i,
+      name: /open filters for this page/i,
     });
 
     act(() => {
@@ -265,7 +258,8 @@ describe('Resource Dashboard page', () => {
     act(() => {
       userEvent.click(addFilter);
     });
-    const select = screen.queryAllByLabelText(/select a filter/i)[2];
+    const selectFilters = screen.queryAllByLabelText(/select a filter/i);
+    const select = selectFilters[selectFilters.length - 1];
 
     // expect select not to have "region" as an option
     const option = select.querySelector('option[value="region"]');

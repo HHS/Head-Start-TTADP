@@ -1,9 +1,7 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
-import moment from 'moment';
 import React, { useContext, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { v4 as uuidv4 } from 'uuid';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import Drawer from '../../components/Drawer';
 import DrawerTriggerButton from '../../components/DrawerTriggerButton';
@@ -13,7 +11,6 @@ import Loader from '../../components/Loader';
 import { containsFiltersThatAreNotApplicable, getSelfServiceData } from '../../fetchers/ssdi';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
-import { formatDateRange } from '../../utils';
 import ApprovalRateByDeadline from '../../widgets/ApprovalRateByDeadlineWidget';
 import DeliveryMethod from '../../widgets/DeliveryMethodGraph';
 import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
@@ -32,13 +29,6 @@ const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id).filter
   (id) => !DISALLOWED_FILTERS.includes(id)
 );
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-const defaultDate = formatDateRange({
-  forDateTime: true,
-  string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
-  withSpaces: false,
-});
-
 export default function QADashboard() {
   const { user } = useContext(UserContext);
   const drawerTriggerRef = useRef(null);
@@ -46,20 +36,7 @@ export default function QADashboard() {
   const [error, updateError] = useState();
   const [qaData, setQaData] = useState({});
 
-  const additionalDefaultFilters = [
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    },
-    {
-      id: uuidv4(),
-      topic: 'createDate',
-      condition: 'is within',
-      query: defaultDate,
-    },
-  ];
+  const additionalDefaultFilters = [];
 
   const {
     // from useUserDefaultRegionFilters
