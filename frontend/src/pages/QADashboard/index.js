@@ -1,5 +1,5 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
@@ -55,11 +55,19 @@ export default function QADashboard() {
     QA_DASHBOARD_FILTER_CONFIG
   );
 
+  // Only include filters that are selectable on this page. Filters that were removed from the
+  // config (e.g. AR start/end date) can still linger in session/URL state; they are hidden in the
+  // UI, so we must also exclude them from the SSDI requests to avoid silently filtering the data.
+  const sanitizedFilters = useMemo(
+    () => filters.filter((filter) => ALLOWED_SUBFILTERS.includes(filter.topic)),
+    [filters]
+  );
+
   // This widget only supports region filtering; other filters are ignored by the API.
-  const regionFilters = filters.filter((filter) => filter.topic === 'region');
+  const regionFilters = sanitizedFilters.filter((filter) => filter.topic === 'region');
   const showApprovalRateFiltersNotApplicable = containsFiltersThatAreNotApplicable(
     'qa-dashboard',
-    filters
+    sanitizedFilters
   );
 
   useDeepCompareEffect(() => {
@@ -68,15 +76,15 @@ export default function QADashboard() {
       // Filters passed also contains region.
       try {
         const [recipientsWithNoTtaData, feiData, classData, dashboardData] = await Promise.all([
-          getSelfServiceData('recipients-with-no-tta', filters, ['no_tta_widget']),
-          getSelfServiceData('recipients-with-ohs-standard-fei-goal', filters, [
+          getSelfServiceData('recipients-with-no-tta', sanitizedFilters, ['no_tta_widget']),
+          getSelfServiceData('recipients-with-ohs-standard-fei-goal', sanitizedFilters, [
             'with_fei_widget',
             'with_fei_graph',
           ]),
-          getSelfServiceData('recipients-with-class-scores-and-goals', filters, [
+          getSelfServiceData('recipients-with-class-scores-and-goals', sanitizedFilters, [
             'with_class_widget',
           ]),
-          getSelfServiceData('qa-dashboard', filters, [
+          getSelfServiceData('qa-dashboard', sanitizedFilters, [
             'delivery_method_graph',
             'role_graph',
             'activity_widget',
@@ -85,13 +93,13 @@ export default function QADashboard() {
 
         const noTTAContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable(
           'recipients-with-no-tta',
-          filters
+          sanitizedFilters
         );
         const noTTAData = recipientsWithNoTtaData.find((item) => item.data_set === 'no_tta_widget');
 
         const feiContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable(
           'recipients-with-ohs-standard-fei-goal',
-          filters
+          sanitizedFilters
         );
         const feiOverviewData = feiData.find((item) => item.data_set === 'with_fei_widget');
         const feiGraphData = feiData.find((item) => item.data_set === 'with_fei_graph');
@@ -107,7 +115,7 @@ export default function QADashboard() {
 
         const classContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable(
           'recipients-with-class-scores-and-goals',
-          filters
+          sanitizedFilters
         );
         const classOverviewData = classData.find((item) => item.data_set === 'with_class_widget');
 
@@ -140,7 +148,7 @@ export default function QADashboard() {
 
         const showDashboardFiltersNotApplicable = containsFiltersThatAreNotApplicable(
           'qa-dashboard',
-          filters
+          sanitizedFilters
         );
 
         const deliveryMethodData = dashboardData.find(
@@ -190,7 +198,7 @@ export default function QADashboard() {
     }
     // Call resources fetch.
     fetchQaData();
-  }, [filters]);
+  }, [sanitizedFilters]);
 
   return (
     <>

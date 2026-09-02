@@ -9,6 +9,7 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import QADashboard from '../index';
 
 const history = createMemoryHistory();
@@ -264,6 +265,32 @@ describe('Resource Dashboard page', () => {
     // expect select not to have "region" as an option
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
+  });
+
+  it('does not send removed date filters that linger in the URL to the SSDI requests', async () => {
+    // Simulate a previously-saved AR start date filter still present in the URL/session state.
+    // This topic was removed from the QA dashboard filter config, so it is hidden in the UI and
+    // must not be forwarded to the SSDI requests.
+    const persistedFilters = [
+      { id: '1', topic: 'region', condition: 'is', query: 1 },
+      { id: '2', topic: 'region', condition: 'is', query: 2 },
+      { id: '3', topic: 'startDate', condition: 'is within', query: '2024/01/01-2024/12/31' },
+    ];
+    history.push({ search: `?${filtersToQueryString(persistedFilters)}` });
+
+    try {
+      renderQADashboard();
+
+      // The mocked SSDI endpoints intentionally omit any startDate param. Data only renders when
+      // every request matches a mock, so a leaked startDate filter would prevent this from showing.
+      expect(await screen.findByText('54.38%')).toBeVisible();
+
+      // Explicitly assert no SSDI request carried the removed startDate filter.
+      const requestedStartDate = fetchMock.calls().some(([url]) => url.includes('startDate'));
+      expect(requestedStartDate).toBe(false);
+    } finally {
+      history.push({ search: '' });
+    }
   });
 
   it('renders the graphs correctly if the records are null', async () => {
