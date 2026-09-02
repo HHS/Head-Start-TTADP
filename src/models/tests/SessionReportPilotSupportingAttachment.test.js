@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../../constants';
 import db, {
@@ -19,10 +19,10 @@ describe('SessionReportPilotSupportingAttachment', () => {
   beforeAll(async () => {
     // Create mock user.
     user = await User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.string.sample(),
+      hsesUserId: faker.string.sample(),
       lastLogin: new Date(),
     });
 
@@ -70,7 +70,7 @@ describe('SessionReportPilotSupportingAttachment', () => {
 
     // Create SessionReportPilotSupportingAttachment.
     await SessionReportPilotSupportingAttachment.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       sessionReportPilotId: session.id,
       fileId: file.id,
     });

@@ -37,7 +37,7 @@ describe('groups filtersToScopes', () => {
 
     beforeAll(async () => {
       group = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         isPublic: false,
       });
 
@@ -48,7 +48,7 @@ describe('groups filtersToScopes', () => {
       });
 
       publicGroup = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         isPublic: true,
       });
 
@@ -62,7 +62,7 @@ describe('groups filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Active',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       });
 
       await GroupGrant.create({
