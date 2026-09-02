@@ -57,6 +57,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -576,6 +577,24 @@ export async function reviewReport(req, res) {
     if (status === REPORT_STATUSES.APPROVED) {
       await createReportApprovedNotification(
         reviewedReport.author.id,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
+      );
+
+      // Notify collaborators (excluding the acting approver and the author, who is
+      // already notified above) that an approver has approved the report.
+      const collaboratorsToNotify = (reviewedReport.activityReportCollaborators || [])
+        .map((collab) => ({ userId: collab.user.id }))
+        .filter(
+          ({ userId: collabUserId }) =>
+            collabUserId !== userId && collabUserId !== reviewedReport.author.id
+        );
+
+      await createReportApprovedNotificationForCollaborators(
+        collaboratorsToNotify,
         {
           ...reviewedReport.toJSON(),
           activityRecipients,
