@@ -245,6 +245,7 @@
     "umzug": "^3.2.1"
   },
   "resolutions": {
+    "@faker-js/faker": "^10.6.0",
     "@opentelemetry/core": "^2.8.0",
     "@protobufjs/utf8": "^1.1.1",
     "@tootallnate/once": "^3.0.1",
