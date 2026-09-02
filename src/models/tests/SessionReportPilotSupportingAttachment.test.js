@@ -32,7 +32,9 @@ describe('SessionReportPilotSupportingAttachment', () => {
       pocIds: [],
       collaboratorIds: [],
       regionId: [1],
+      eventId: 'SRPSA-TEST-1',
       data: {
+        eventId: 'SRPSA-TEST-1',
         status: EVENT_REPORT_STATUSES.IN_PROGRESS,
       },
       imported: {},
