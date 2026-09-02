@@ -587,10 +587,12 @@ export async function reviewReport(req, res) {
       // Notify collaborators (excluding the acting approver and the author, who is
       // already notified above) that an approver has approved the report.
       const collaboratorsToNotify = (reviewedReport.activityReportCollaborators || [])
-        .map((collab) => ({ userId: collab.user.id }))
+        .map((collab) => ({ userId: collab.user?.id ?? collab.userId }))
         .filter(
           ({ userId: collabUserId }) =>
-            collabUserId !== userId && collabUserId !== reviewedReport.author.id
+            typeof collabUserId === 'number' &&
+            collabUserId !== userId &&
+            collabUserId !== reviewedReport.author.id
         );
 
       await createReportApprovedNotificationForCollaborators(
