@@ -99,6 +99,7 @@ jest.mock('../../services/activityReportApprovers', () => ({
 
 jest.mock('../../services/notifications', () => ({
   archiveNotificationsByEntityAndType: jest.fn(),
+  archiveNotificationsByUserEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
@@ -364,10 +365,10 @@ describe('Activity Report handlers', () => {
           skipExisting: 'archived',
         }
       );
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(
-        report.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED
-      );
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
     });
     it('notifies author and collaborators on each approver approval, naming the approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
@@ -979,10 +980,10 @@ describe('Activity Report handlers', () => {
 
       await reviewReport(needsActionReportRequest, mockResponse);
 
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(
-        report.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED
-      );
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
     });
     it('sends collaborator-type in-app needs-action notifications to collaborators', async () => {
       const mockApproverRecord = {
