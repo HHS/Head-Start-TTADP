@@ -44,6 +44,7 @@ export type EventShape = {
   pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
+  eventId: string;
   data: {
     startDate: string;
     endDate: string;
@@ -71,6 +72,7 @@ export type CreateEventRequest = {
   data: {
     owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
+    eventId: string;
   };
 };
 

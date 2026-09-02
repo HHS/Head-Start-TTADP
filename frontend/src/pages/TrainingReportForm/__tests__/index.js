@@ -13,6 +13,7 @@ const completedForm = {
   regionId: '1',
   reportId: 1,
   id: 1,
+  eventId: 'R01-PD-1234',
   collaboratorIds: [1, 2, 3],
   ownerId: 1,
   owner: {
