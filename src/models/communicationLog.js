@@ -12,6 +12,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'communicationLogId',
         as: 'communicationLogRecipients',
       });
+      CommunicationLog.hasMany(models.CommunicationLogStaff, {
+        foreignKey: 'communicationLogId',
+        as: 'communicationLogStaff',
+      });
       CommunicationLog.belongsToMany(models.File, {
         through: models.CommunicationLogFile,
         foreignKey: 'communicationLogId',

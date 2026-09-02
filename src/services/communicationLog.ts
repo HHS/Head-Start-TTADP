@@ -5,7 +5,13 @@ import { SORT_DIR } from '../constants';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
 
-const { sequelize, CommunicationLog, CommunicationLogRecipient, CommunicationLogFile } = db;
+const {
+  sequelize,
+  CommunicationLog,
+  CommunicationLogRecipient,
+  CommunicationLogStaff,
+  CommunicationLogFile,
+} = db;
 
 interface CommLogData {
   id: number;
@@ -21,6 +27,10 @@ interface CommLogData {
     value: string | number;
     label: string;
   };
+  otherStaff?: {
+    value: string | number;
+    label?: string;
+  }[];
   files?: {
     id: number;
   }[];
@@ -158,6 +168,18 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
       as: 'files',
     },
     {
+      model: db.CommunicationLogStaff,
+      as: 'communicationLogStaff',
+      required: false,
+      include: [
+        {
+          model: db.User,
+          attributes: ['id', 'name'],
+          as: 'user',
+        },
+      ],
+    },
+    {
       model: db.User,
       attributes: ['name', 'id'],
       as: 'author',
@@ -166,17 +188,56 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
   ],
 });
 
-const logById = async (id: number) =>
-  CommunicationLog.findOne({
+// Extract a de-duplicated list of valid, positive integer user ids from the
+// incoming "otherStaff" selection ([{ value, label }]).
+const extractStaffUserIds = (otherStaff: CommLogData['otherStaff']): number[] =>
+  Array.isArray(otherStaff)
+    ? [
+        ...new Set(
+          otherStaff
+            .map((staff) => Number(staff.value))
+            .filter((staffId) => Number.isInteger(staffId) && staffId > 0)
+        ),
+      ]
+    : [];
+
+// The CommunicationLogStaff join table is the single source of truth for "other TTA staff".
+// Reshape the eager-loaded association into the [{ value, label }] shape the rest of the
+// application (and the frontend) expects, and drop the raw association from the output.
+const withOtherStaff = (log) => {
+  if (!log) {
+    return log;
+  }
+
+  const plain = typeof log.toJSON === 'function' ? log.toJSON() : log;
+  plain.otherStaff = (plain.communicationLogStaff || [])
+    .filter((staff) => staff.user)
+    .map((staff) => ({
+      value: String(staff.user.id),
+      label: staff.user.name,
+    }));
+  delete plain.communicationLogStaff;
+  return plain;
+};
+
+const logById = async (id: number) => {
+  const log = await CommunicationLog.findOne({
     ...LOG_WHERE_OPTIONS(id),
     attributes: LOG_INCLUDE_ATTRIBUTES,
   });
 
+  return withOtherStaff(log);
+};
+
 const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {
+  const { otherStaff, ...jsonData } = data;
+
   const log = await CommunicationLog.create(
     {
       userId,
-      data: formatCommunicationDateWithJsonData(data),
+      // otherStaff is intentionally excluded from the JSON column; the
+      // CommunicationLogStaff table is the source of truth going forward.
+      data: formatCommunicationDateWithJsonData(jsonData as CommLogData),
     },
     { returning: ['id'] }
   );
@@ -187,6 +248,17 @@ const createLog = async (recipientIds: number[], userId: number, data: CommLogDa
       communicationLogId: log.id,
     }))
   );
+
+  const staffUserIds = extractStaffUserIds(otherStaff);
+  if (staffUserIds.length > 0) {
+    await CommunicationLogStaff.bulkCreate(
+      staffUserIds.map((staffUserId) => ({
+        userId: staffUserId,
+        communicationLogId: log.id,
+      })),
+      { ignoreDuplicates: true }
+    );
+  }
 
   return logById(log.id);
 };
@@ -248,6 +320,18 @@ const logsByScopes = async (
         required: false,
       },
       {
+        model: db.CommunicationLogStaff,
+        as: 'communicationLogStaff',
+        required: false,
+        include: [
+          {
+            model: db.User,
+            attributes: ['id', 'name'],
+            as: 'user',
+          },
+        ],
+      },
+      {
         model: db.User,
         attributes: ['name', 'id'],
         as: 'author',
@@ -260,7 +344,7 @@ const logsByScopes = async (
     // using the sequelize literal in the where clause above causes the count to be incorrect
     // given the outer join, so we have to manually count the rows
     count: scopedLogs.count,
-    rows: logs,
+    rows: logs.map(withOtherStaff),
   };
 };
 
@@ -350,6 +434,13 @@ const deleteLog = async (id: number) =>
       transaction,
     });
 
+    await CommunicationLogStaff.destroy({
+      where: {
+        communicationLogId: id,
+      },
+      transaction,
+    });
+
     return CommunicationLog.destroy({
       where: {
         id,
@@ -359,7 +450,7 @@ const deleteLog = async (id: number) =>
   });
 
 const updateLog = async (id: number, logData: CommLogData) => {
-  const { files, id: logId, userId, author, authorName, recipients, ...data } = logData;
+  const { files, id: logId, userId, author, authorName, recipients, otherStaff, ...data } = logData;
 
   // Only process recipients if array is provided and non-empty
   // This prevents accidental deletion of all recipients when recipients array is empty/undefined
@@ -388,9 +479,42 @@ const updateLog = async (id: number, logData: CommLogData) => {
     );
   }
 
+  // The CommunicationLogStaff table is the source of truth for "other TTA staff".
+  // Only reconcile when the caller explicitly provides an otherStaff array; an
+  // empty array clears the staff, undefined leaves them untouched.
+  if (Array.isArray(otherStaff)) {
+    const staffUserIds = extractStaffUserIds(otherStaff);
+
+    await CommunicationLogStaff.destroy({
+      where: {
+        communicationLogId: id,
+        ...(staffUserIds.length > 0 ? { userId: { [Op.notIn]: staffUserIds } } : {}),
+      },
+    });
+
+    if (staffUserIds.length > 0) {
+      await CommunicationLogStaff.bulkCreate(
+        staffUserIds.map((staffUserId) => ({
+          userId: staffUserId,
+          communicationLogId: id,
+        })),
+        { ignoreDuplicates: true }
+      );
+    }
+  }
+
+  // Preserve any legacy otherStaff value already stored in the JSON column but do
+  // not update it going forward — the join table is now the source of truth.
+  const existingLog = await CommunicationLog.findByPk(id, { attributes: ['data'] });
+  const dataToSave = formatCommunicationDateWithJsonData(data as CommLogData);
+  const preservedOtherStaff = existingLog?.data?.otherStaff;
+  if (preservedOtherStaff !== undefined) {
+    dataToSave.otherStaff = preservedOtherStaff;
+  }
+
   await CommunicationLog.update(
     {
-      data: formatCommunicationDateWithJsonData(data as CommLogData),
+      data: dataToSave,
     },
     {
       where: {

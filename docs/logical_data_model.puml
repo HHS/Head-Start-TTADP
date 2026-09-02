@@ -390,6 +390,14 @@ class CommunicationLogRecipients{
  * updatedAt : timestamp with time zone : now()
 }
 
+class CommunicationLogStaff{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
@@ -1802,6 +1810,20 @@ class ZALCommunicationLogRecipients{
  session_sig : text
 }
 
+class ZALCommunicationLogStaff{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALCommunicationLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2998,6 +3020,8 @@ class ZALZAFilter{
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" CommunicationLogStaff : user
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -3032,6 +3056,7 @@ CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators :
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : communicationLog, communicationLogRecipients
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogStaff : communicationLog, communicationLogStaff
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
 DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReview, deliveredReviewCitations
