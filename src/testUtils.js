@@ -391,8 +391,11 @@ export async function createTrainingReport(report) {
     })
   );
 
+  const trainingReportData = mockTrainingReportData(data || {});
+
   return EventReportPilot.create({
-    data: mockTrainingReportData(data || {}),
+    eventId: trainingReportData.eventId,
+    data: trainingReportData,
     collaboratorIds: userCollaborators,
     ownerId: userCreator.id,
     regionId: userCreator.homeRegionId,

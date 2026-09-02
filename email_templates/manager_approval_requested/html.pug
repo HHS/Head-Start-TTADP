@@ -1,7 +1,7 @@
 style
   include ../email.css
 p Hello,
-p Activity Report #{displayId} has been submitted for your approval. 
+p #{isResubmission ? 'Revised ' : ''}Activity Report #{displayId} has been submitted for your approval.
 a(href=reportPath) Approve this report in the TTA Hub. 
 p Best wishes,
   br

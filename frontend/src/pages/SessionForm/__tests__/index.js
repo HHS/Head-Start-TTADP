@@ -1341,6 +1341,7 @@ describe('SessionReportForm', () => {
           ownerId: 2,
           pocIds: [],
           collaboratorIds: [],
+          eventId: '1',
           data: {
             eventId: '1',
             eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
@@ -1459,6 +1460,7 @@ describe('SessionReportForm', () => {
           ownerId: 2,
           pocIds: [],
           collaboratorIds: [],
+          eventId: '1',
           data: {
             eventId: '1',
             eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',

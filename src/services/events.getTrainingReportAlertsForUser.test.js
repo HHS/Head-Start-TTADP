@@ -20,9 +20,13 @@ async function createEvents({
     collaboratorIds: [collaboratorId],
     pocIds: [pocId],
     regionId: 1,
+    // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+    // UNIQUE `eventId` column never collides across the many events created below.
+    get eventId() {
+      return `R0${regionId}-TR-${faker.datatype.uuid()}`;
+    },
     data: {
       eventName: faker.datatype.string(),
-      eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
@@ -33,7 +37,7 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  await EventReportPilot.create(baseEvent);
+  await EventReportPilot.create({ ...baseEvent, data: { ...baseEvent.data } });
 
   // event with no sessions and a start date of today (Will not appear in alerts)
   await EventReportPilot.create({
@@ -408,6 +412,7 @@ describe('getTrainingReportAlertsForUser', () => {
         collaboratorIds: [collaboratorId],
         pocIds: [],
         regionId,
+        eventId: `R0${regionId}-TR-OWN-${faker.datatype.uuid()}`,
         data: {
           ...baseEventData,
           eventId: `R0${regionId}-TR-OWN-${faker.datatype.number(4)}`,
@@ -436,6 +441,7 @@ describe('getTrainingReportAlertsForUser', () => {
         collaboratorIds: [collaboratorId],
         pocIds: [],
         regionId,
+        eventId: `R0${regionId}-TR-COL-${faker.datatype.uuid()}`,
         data: {
           ...baseEventData,
           eventId: `R0${regionId}-TR-COL-${faker.datatype.number(4)}`,
@@ -464,6 +470,7 @@ describe('getTrainingReportAlertsForUser', () => {
         collaboratorIds: [collaboratorId],
         pocIds: [],
         regionId,
+        eventId: `R0${regionId}-TR-OK-${faker.datatype.uuid()}`,
         data: {
           ...baseEventData,
           eventId: `R0${regionId}-TR-OK-${faker.datatype.number(4)}`,
@@ -495,6 +502,7 @@ describe('getTrainingReportAlertsForUser', () => {
         collaboratorIds: [collaboratorId],
         pocIds: [pocId],
         regionId,
+        eventId: `R0${regionId}-TR-POC-${faker.datatype.uuid()}`,
         data: {
           ...baseEventData,
           eventId: `R0${regionId}-TR-POC-${faker.datatype.number(4)}`,
