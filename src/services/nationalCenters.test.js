@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db from '../models';
@@ -49,11 +49,11 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
     });
@@ -105,20 +105,20 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create first mock users.
       firstCenterUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
       // Create second mock users.
       secondCenterUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -231,9 +231,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
-        eventId: `R01-PD-${faker.datatype.number()}`,
+        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         data: {
-          eventId: `R01-PD-${faker.datatype.number()}`,
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -244,9 +244,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
-        eventId: `R01-PD-${faker.datatype.number()}`,
+        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         data: {
-          eventId: `R01-PD-${faker.datatype.number()}`,
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -321,11 +321,11 @@ describe('nationalCenters service', () => {
     beforeAll(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 

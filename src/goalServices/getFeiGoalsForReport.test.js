@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
@@ -39,8 +39,10 @@ describe('getFeiGoalsForReport', () => {
   let prompt;
   beforeAll(async () => {
     // Create User.
-    const userName = faker.random.word();
-    const idIterator = faker.helpers.uniqueArray(faker.datatype.number({ min: 1000 })).values();
+    const userName = faker.word.sample();
+    const idIterator = faker.helpers
+      .uniqueArray(faker.number.int({ min: 1000, max: 1000 + 99999 }))
+      .values();
 
     // User.
     user = await User.create({
