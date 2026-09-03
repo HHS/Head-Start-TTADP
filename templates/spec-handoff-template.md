@@ -12,7 +12,7 @@ Copy to specs/<feature-slug>/handoff.md, fill it in, then handoff to an agent:
 
 ---
 
-## 1. Where the work is defined
+## 1. Definition of work
 
 | | |
 |---|---|
@@ -21,8 +21,7 @@ Copy to specs/<feature-slug>/handoff.md, fill it in, then handoff to an agent:
 | Acceptance criteria live in | ticket description / a custom field / comments / not written yet |
 | Figma file | <URL> |
 | Figma frames that matter | <frame name — node-id>, one per line |
-| Design status | in progress / ready for dev / signed off |
-| Other sources | FigJam board, ADR, Confluence, Slack thread, prior spec |
+| Other sources | Other links accessible to a local agent |
 
 Paste the ticket body and its acceptance criteria here:
 
@@ -32,11 +31,7 @@ Paste the ticket body and its acceptance criteria here:
 
 ---
 
-## 2. What and why
-
-**In one sentence, what should be true when this ships?**
-
-<...>
+## 2. Why
 
 **Who is this for?** Roles or personas, and their permission level.
 
@@ -50,7 +45,7 @@ Paste the ticket body and its acceptance criteria here:
 
 ## 3. Boundaries
 
-**Explicitly out of scope** — at least two items. If you can't name two, scope isn't settled yet.
+**Explicitly out of scope** 
 
 - <...>
 - <...>
@@ -67,7 +62,7 @@ Paste the ticket body and its acceptance criteria here:
 
 ## 4. The things Figma and Jira don't say
 
-This is the important section. Answer what you know; leave the rest blank so the agent flags it.
+Answer what you know; leave the rest blank so the agent flags it.
 
 | Question | Answer |
 |---|---|
@@ -85,9 +80,9 @@ This is the important section. Answer what you know; leave the rest blank so the
 
 ---
 
-## 5. Technical constraints you already know
+## 5. Technical constraints
 
-Things you'd tell a new teammate before they started. Leave blank if none.
+Things you'd tell a new teammate before they started.
 
 - Data model: <new tables? new columns? existing models to reuse?>
 - API shape: <new endpoints? changes to existing?>
@@ -95,20 +90,3 @@ Things you'd tell a new teammate before they started. Leave blank if none.
 - Reuse this, don't rebuild it: <existing components, hooks, services, constants>
 - Known traps for this area: <...>
 - Performance or volume concerns: <...>
-
----
-
-## 6. Done means
-
-**How will you demo this?**
-
-<...>
-
-**How will you test it?** Unit / integration / E2E, and anything that needs manual checking.
-
-<...>
-
-**Docs to update when this ships:** OpenAPI, ADR, guides, `AGENTS.md`.
-
-<...>
-
