@@ -1834,9 +1834,9 @@ describe('Activity report service', () => {
 
     describe('activityReportsChangesRequestedByDate', () => {
       beforeEach(async () => {
-        await User.create(digestMockCollabOne, { validate: false }, { individualHooks: false });
-        await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
-        await User.create(mockUser, { validate: false }, { individualHooks: false });
+        await User.create(digestMockCollabOne, { validate: false });
+        await User.create(digestMockApprover, { validate: false });
+        await User.create(mockUser, { validate: false });
       });
       afterEach(async () => {
         await ActivityReportCollaborator.destroy({
@@ -2073,6 +2073,37 @@ describe('Activity report service', () => {
         expect(dailyDigestReport).toBeUndefined();
       });
 
+      it('does not retrieve reports for a changes-requesting approver who is also a collaborator', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // This user requested the changes (NEEDS_ACTION approver row)...
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // ...and is also a collaborator on the same report. The NEEDS_ACTION
+        // approver status must win, so they should not be notified.
+        await ActivityReportCollaborator.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+        });
+        // Another approver approved, so the report remains in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeUndefined();
+      });
+
       it('returns a single row when a user is both author and approver', async () => {
         const report = await ActivityReport.create({
           ...submittedReport,
@@ -2101,8 +2132,8 @@ describe('Activity report service', () => {
 
     describe('activityReportsSubmittedByDate', () => {
       beforeEach(async () => {
-        await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
-        await User.create(mockUser, { validate: false }, { individualHooks: false });
+        await User.create(digestMockApprover, { validate: false });
+        await User.create(mockUser, { validate: false });
       });
       afterEach(async () => {
         await ActivityReportApprover.destroy({

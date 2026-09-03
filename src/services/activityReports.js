@@ -1630,6 +1630,13 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsChangesRequestedByDate(userId, date) {
+  // userId is interpolated into a raw subquery below, so validate it is an integer
+  // to guard against SQL injection regardless of the caller.
+  const numericUserId = Number.parseInt(userId, 10);
+  if (Number.isNaN(numericUserId)) {
+    return [];
+  }
+
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1643,15 +1650,25 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           [Op.or]: [
             { userId },
             { '$activityReportCollaborators.userId$': userId },
-            {
-              // Approvers are notified too, but not the approver who requested the
-              // changes (their approver row has a NEEDS_ACTION status).
-              [Op.and]: [
-                { '$approvers.userId$': userId },
-                { '$approvers.status$': { [Op.ne]: APPROVER_STATUSES.NEEDS_ACTION } },
-              ],
-            },
+            // Approvers are notified too. The approver who requested the changes is
+            // filtered out separately below so this only needs to match on userId.
+            { '$approvers.userId$': userId },
           ],
+        },
+        {
+          // Exclude reports where this user is the approver who requested the
+          // changes (their approver row has a NEEDS_ACTION status). This is applied
+          // regardless of any other role the user has on the report (e.g. also a
+          // collaborator), and correctly handles NULL approver statuses.
+          id: {
+            [Op.notIn]: sequelize.literal(
+              `(SELECT "activityReportId"
+          FROM "ActivityReportApprovers"
+          WHERE "userId" = ${numericUserId}
+            AND "status" = '${APPROVER_STATUSES.NEEDS_ACTION}'
+            AND "deletedAt" IS NULL)`
+            ),
+          },
         },
         {
           id: {
@@ -1675,7 +1692,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
       {
         model: ActivityReportApprover,
         as: 'approvers',
-        attributes: ['userId', 'status'],
+        attributes: ['userId'],
         required: false,
       },
     ],
