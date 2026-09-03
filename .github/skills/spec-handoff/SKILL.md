@@ -34,7 +34,7 @@ This skill exists because Figma cannot express interaction states, content rules
 
 - A handoff form exists and its Jira key and acceptance criteria fields are filled.
 - You are on a feature branch, not `main`.
-- You have read this repo's `AGENTS.md`.
+- You have read this repo's `AGENTS.md` and `best_practices.md`.
 
 Stop and ask if any of these are false. Do not fill in a missing form yourself.
 
@@ -78,7 +78,7 @@ grep -rIn "<feature-keyword>" src/ frontend/src/ packages/ --include="*.js" --in
 grep -rn "<domain-noun>" src/constants.js packages/common/src/ 2>/dev/null | head -20
 ```
 
-Write down at least three constraints that will shape this feature. If you cannot name any, you have not read enough.
+Write down constraints that will shape this feature. If you cannot name any, you have not read enough.
 
 ## Gate 2, step 2 — Pull the ticket
 
@@ -166,7 +166,7 @@ Only after a human has approved the spec.
 
 ## Gate 4 — Record
 
-- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Template file, `.figma.js`, colocated for our components or in `frontend/figma/connect/` for `@trussworks/react-uswds`. Tick it off in `frontend/figma/README.md`. This is how coverage grows — one ticket at a time, prioritised by what the team actually touches, never as its own project.
+- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Template file, `.figma.js`, colocated for our components or in `frontend/figma/connect/` for `@trussworks/react-uswds`. Tick it off in `frontend/figma/README.md`. This is how coverage grows — one ticket at a time, prioritized by what the team actually touches, never as its own project.
 - Run the `self-improve` skill. It reconstructs the session from git and proposes doc updates.
 - If an architectural decision was made, write an ADR using the repo's ADR template and directory.
 - Update the spec's status line: draft → approved → implemented.
