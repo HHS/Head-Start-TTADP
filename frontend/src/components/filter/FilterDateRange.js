@@ -11,7 +11,7 @@ import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
-const MIN_DATE = '2020-09-01';
+const MIN_DATE = '2025-01-21';
 const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
