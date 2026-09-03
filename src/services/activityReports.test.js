@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import httpContext from 'express-http-context';
 import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
@@ -58,12 +58,12 @@ const ALERT_RECIPIENT_ID = 345;
 const RECIPIENT_WITH_PROGRAMS_ID = 425;
 const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
 
-const INACTIVE_GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_BOUNDARY = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_NULL_DATE = faker.datatype.number({ min: 9999 });
-const GRANT_ON_ACTIVITY_REPORT_ID = faker.datatype.number({ min: 9999 });
-const OTHER_ENTITY_TEST_ID = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_ONE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_BOUNDARY = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_NULL_DATE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const GRANT_ON_ACTIVITY_REPORT_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const OTHER_ENTITY_TEST_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
 
 let testActivityReport;
 
@@ -411,7 +411,7 @@ describe('Activity report service', () => {
       // Create a inactive grant with a 'inactivationDate' date less than 60 days ago.
       await Grant.create({
         id: INACTIVE_GRANT_ID_ONE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -423,7 +423,7 @@ describe('Activity report service', () => {
       // Create a inactive grant exactly 365 days ago (boundary condition)
       await Grant.create({
         id: INACTIVE_GRANT_ID_BOUNDARY,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -435,7 +435,7 @@ describe('Activity report service', () => {
       // Create a inactive grant more than 365 days ago (should be excluded)
       await Grant.create({
         id: INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -447,7 +447,7 @@ describe('Activity report service', () => {
       // Create a inactive grant with NULL inactivationDate (should be excluded)
       await Grant.create({
         id: INACTIVE_GRANT_ID_NULL_DATE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -459,7 +459,7 @@ describe('Activity report service', () => {
       // Create a inactive grant already on an activity report
       await Grant.create({
         id: GRANT_ON_ACTIVITY_REPORT_ID,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -489,7 +489,7 @@ describe('Activity report service', () => {
       // Create an other entity for testing
       await OtherEntity.create({
         id: OTHER_ENTITY_TEST_ID,
-        name: `Test Other Entity ${faker.datatype.uuid()}`,
+        name: `Test Other Entity ${faker.string.uuid()}`,
       });
     });
 
@@ -810,7 +810,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(1);
-        expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.recipientNextSteps[0].note).toBe('');
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['i am groot', 'harry'])
@@ -843,7 +843,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(1);
-        expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.specialistNextSteps[0].note).toBe('');
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['One Piece', 'Toy Story'])
@@ -940,9 +940,9 @@ describe('Activity report service', () => {
         // Then we see the report was updated correctly
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.recipientNextSteps.length).toBe(1);
-        expect(updatedReport.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.recipientNextSteps[0].note).toBe('');
         expect(updatedReport.specialistNextSteps.length).toBe(1);
-        expect(updatedReport.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.specialistNextSteps[0].note).toBe('');
       });
 
       it('handles notes being the same', async () => {
@@ -1037,6 +1037,21 @@ describe('Activity report service', () => {
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
+      });
+      it('returns a serializable report when there are no next steps', async () => {
+        // Regression: a report with no next steps used to receive a plain-object placeholder in its
+        // specialistNextSteps/recipientNextSteps associations. That broke Sequelize's toJSON (used
+        // when the report is enqueued to the notification queue via JSON.stringify), throwing
+        // "instance.get is not a function" and 502-ing report approval.
+        const report = await ActivityReport.create(reportObject);
+
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
+        expect(foundReport.specialistNextSteps.length).toBe(1);
+        expect(foundReport.specialistNextSteps[0].note).toBe('');
+        expect(foundReport.recipientNextSteps.length).toBe(1);
+        expect(foundReport.recipientNextSteps[0].note).toBe('');
+        // Mirrors what Bull does when enqueuing the notification job.
+        expect(() => JSON.stringify(foundReport)).not.toThrow();
       });
       it('includes approver with full name', async () => {
         const report = await ActivityReport.create({ ...submittedReport, regionId: 5 });
@@ -2433,8 +2448,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });
@@ -2617,8 +2632,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });

@@ -56,7 +56,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-1',
+      data: { eventId: 'TR-STANDARD-TEST-1' },
     });
 
     reportWithERSEA = await EventReportPilot.create({
@@ -64,7 +65,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-2',
+      data: { eventId: 'TR-STANDARD-TEST-2' },
     });
 
     reportWithBothStandards = await EventReportPilot.create({
@@ -72,7 +74,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-3',
+      data: { eventId: 'TR-STANDARD-TEST-3' },
     });
 
     // Create session reports

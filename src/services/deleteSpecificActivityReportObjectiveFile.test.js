@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../constants';
 import db, {
@@ -18,9 +18,9 @@ import { deleteSpecificActivityReportObjectiveFile } from './files';
 
 jest.mock('bull');
 
-const mockUserUniqueId = faker.random.alphaNumeric(12);
+const mockUserUniqueId = faker.string.alphanumeric(12);
 const mockUser = {
-  id: faker.datatype.number({ min: 10000000 }),
+  id: faker.number.int({ min: 10000000, max: 10000000 + 99999 }),
   homeRegionId: 1,
   name: `user${mockUserUniqueId}`,
   hsesUsername: `user${mockUserUniqueId}`,
@@ -70,8 +70,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
   let arof2;
 
   const mockGrant = {
-    id: faker.datatype.number(),
-    number: faker.random.alphaNumeric(5),
+    id: faker.number.int({ min: 0, max: 99999 }),
+    number: faker.string.alphanumeric(5),
     cdi: false,
     regionId: 1,
     startDate: new Date(),
@@ -85,8 +85,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     // Recipient.
     recipient = await Recipient.create({
       name: 'recipient',
-      id: faker.datatype.number(),
-      uei: faker.datatype.string(12),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      uei: faker.string.sample(12),
     });
 
     // Grant.

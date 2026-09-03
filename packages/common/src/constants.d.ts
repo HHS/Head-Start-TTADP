@@ -131,3 +131,29 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenAddedAsCoOwner',
   'inAppWhenSharedMyGroup',
 ];
+
+export const TIMELINE_FILTER_TOPICS: readonly ['date', 'purpose', 'standard', 'eventType'];
+
+export const TIMELINE_DATE_FILTER_CONDITIONS: readonly [
+  'is',
+  'is within',
+  'is on or after',
+  'is on or before',
+];
+
+export const TIMELINE_SELECT_FILTER_CONDITIONS: readonly ['is', 'is not'];
+
+export const TIMELINE_EVENT_TYPES: readonly [
+  'Email communication',
+  'Phone communication',
+  'In person communication',
+  'Virtual communication',
+  'TTA activity',
+  'Training session',
+  'Goal added',
+  'Goal suspended',
+  'Goal closed',
+  'Goal reopened',
+  'TTA request',
+  'Monitoring report received',
+];

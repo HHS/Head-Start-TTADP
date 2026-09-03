@@ -86,6 +86,7 @@ const mockEvent = (data = {}) => ({
   collaboratorIds: [2],
   regionId: 1,
   version: 2,
+  eventId: 'R03-PD-23-1037',
   data: {
     vision: 'Oral Health',
     creator: 'cucumber@hogwarts.com',
@@ -818,6 +819,71 @@ describe('ViewTrainingReport', () => {
     expect(fetchMock.called('/api/users/names?ids=2')).toBe(true);
 
     expect(await screen.findByText('USER 2')).toBeInTheDocument();
+  });
+
+  it('renders the session objective and TTA provided rich text as parsed HTML', async () => {
+    const e = mockEvent();
+    e.sessionReports = [
+      {
+        ...e.sessionReports[0],
+        data: {
+          ...e.sessionReports[0].data,
+          objective: '<p>Improve <strong>ERSEA</strong> enrollment.</p>',
+          ttaProvided: '<p>Provided <strong>coaching</strong>.</p>',
+        },
+      },
+    ];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
+
+    // The objective renders as parsed rich text (matching TTA provided), so the bold
+    // markup is preserved rather than shown as raw HTML tags.
+    const objectiveBold = await screen.findByText('ERSEA');
+    expect(objectiveBold.tagName).toBe('STRONG');
+
+    const ttaBold = await screen.findByText('coaching');
+    expect(ttaBold.tagName).toBe('STRONG');
+  });
+
+  it('preserves paragraph and line-break returns in the session objective', async () => {
+    const e = mockEvent();
+    e.sessionReports = [
+      {
+        ...e.sessionReports[0],
+        data: {
+          ...e.sessionReports[0].data,
+          objective: '<p>Paragraph one</p><p>Second line<br />after a break</p>',
+        },
+      },
+    ];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
+
+    const objectiveContent = await screen.findByLabelText('Session objective');
+
+    // Hard returns (new paragraphs) render as separate <p> elements.
+    const paragraphs = objectiveContent.querySelectorAll('p');
+    expect(paragraphs.length).toBe(2);
+    expect(paragraphs[0]).toHaveTextContent('Paragraph one');
+
+    // Soft returns (shift+enter) render as a <br> element.
+    expect(objectiveContent.querySelector('br')).not.toBeNull();
   });
 
   it('displays the delivery method field and the appropriate participants attending', async () => {

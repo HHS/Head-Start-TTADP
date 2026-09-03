@@ -458,6 +458,7 @@ class EventReportPilots{
  * collaboratorIds : integer[]
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ * eventId : text
  * ownerId : integer
  * regionId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
@@ -1299,6 +1300,8 @@ class SessionReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ endDate : date
+ startDate : date
 }
 
 class SiteAlerts{
@@ -1381,6 +1384,7 @@ enum enum_Users_flags {
  compliant_follow_up_reviews_tta_support
  monitoring-regional-dashboard
  quality_assurance_dashboard
+ tta_timeline
 }
 
 enum_Users_flags <|-- Users

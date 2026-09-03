@@ -13,6 +13,7 @@ const completedForm = {
   regionId: '1',
   reportId: 1,
   id: 1,
+  eventId: 'R01-PD-1234',
   collaboratorIds: [1, 2, 3],
   ownerId: 1,
   owner: {
@@ -228,7 +229,8 @@ describe('TrainingReportForm', () => {
         email: 'ted.user@computers.always',
       },
     });
-    const onSaveDraftButton = screen.getByText(/save draft/i);
+
+    const onSaveDraftButton = await screen.findByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
     });
@@ -257,7 +259,8 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', 500);
-    const onSaveDraftButton = screen.getByText(/save draft/i);
+
+    const onSaveDraftButton = await screen.findByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
     });

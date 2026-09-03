@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import moment from 'moment';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
@@ -65,6 +66,8 @@ describe('eventSummary', () => {
       creators = defaultCreators,
       defaultValues = defaultFormValues,
       onHookForm = () => {},
+      showSavedDraft = false,
+      lastSaveTime = null,
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
@@ -111,6 +114,9 @@ describe('eventSummary', () => {
                   datePickerKey="key"
                   Alert={() => <></>}
                   showSubmitModal={jest.fn()}
+                  showSavedDraft={showSavedDraft}
+                  lastSaveTime={lastSaveTime}
+                  updateShowSavedDraft={jest.fn()}
                 />
               </NetworkContext.Provider>
             </UserContext.Provider>
@@ -170,6 +176,31 @@ describe('eventSummary', () => {
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
+    });
+
+    it('shows the draft saved alert when showSavedDraft is true', async () => {
+      const lastSaveTime = moment('2023-08-01 09:14:00');
+      act(() => {
+        render(<RenderEventSummary user={adminUser} showSavedDraft lastSaveTime={lastSaveTime} />);
+      });
+
+      expect(
+        await screen.findByText(/Draft saved on 08\/01\/2023 at 9:14 am/i)
+      ).toBeInTheDocument();
+    });
+
+    it('does not show the draft saved alert when showSavedDraft is false', async () => {
+      act(() => {
+        render(
+          <RenderEventSummary
+            user={adminUser}
+            showSavedDraft={false}
+            lastSaveTime={moment('2023-08-01 09:14:00')}
+          />
+        );
+      });
+
+      expect(screen.queryByText(/Draft saved on/i)).not.toBeInTheDocument();
     });
 
     it('filters the event owner out of grouped collaborator options', async () => {

@@ -1001,7 +1001,7 @@ describe('Horizontal Table Widget', () => {
     const sortBtn = screen.getByRole('button', { name: /count.*activate to sort/i });
     expect(sortBtn).toBeInTheDocument();
     userEvent.click(sortBtn);
-    expect(requestSort).toHaveBeenCalled();
+    expect(requestSort).toHaveBeenCalledWith('count_col');
   });
 
   it('renders spacer column in header, body, and footer when showSpacerColumn is true', () => {

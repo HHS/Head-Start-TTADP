@@ -127,9 +127,9 @@
     "@axe-core/playwright": "^4.11.0",
     "@babel/runtime": "^7.26.10",
     "@braintree/sanitize-url": "^7.1.1",
-    "@faker-js/faker": "^6.3.1",
+    "@faker-js/faker": "^10.6.0",
     "@mesh-kit/core": "^1.0.160",
-    "@ttahub/common": "2.4.3",
+    "@ttahub/common": "2.4.4",
     "@types/ioredis-mock": "^8.2.6",
     "adm-zip": "^0.6.0",
     "ajv": "^8.18.0",
@@ -149,6 +149,7 @@
     "csv-parse": "^4.14.1",
     "csv-stringify": "^5.6.2",
     "deepmerge": "^4.3.1",
+    "brace-expansion": "^5.0.8",
     "dompurify": "^3.4.13",
     "dot-wild": "^3.0.1",
     "dotenv": "^17.4.2",
@@ -232,7 +233,7 @@
     "markdown-table": "^3.0.4",
     "mock-fs": "^5.4.1",
     "nodemon": "^3.1.14",
-    "nyc": "^17.1.0",
+    "nyc": "^18.0.0",
     "playwright-core": "^1.56.1",
     "puppeteer": "^21.11.0",
     "puppeteer-select": "^1.0.3",
@@ -244,15 +245,15 @@
     "umzug": "^3.2.1"
   },
   "resolutions": {
+    "@faker-js/faker": "^10.6.0",
     "@opentelemetry/core": "^2.8.0",
     "@protobufjs/utf8": "^1.1.1",
     "@tootallnate/once": "^3.0.1",
     "axios": "^1.18.0",
     "body-parser": "^1.20.6",
-    "brace-expansion": "^2.1.2",
     "dompurify": "^3.4.13",
     "fast-xml-parser": "^5.7.0",
-    "fast-uri": ">=4.1.2",
+    "fast-uri": ">=4.1.3",
     "form-data": "^4.0.6",
     "flatted": "^3.4.2",
     "follow-redirects": "^1.16.0",
@@ -262,8 +263,11 @@
     "lodash": "^4.18.1",
     "nodemailer": "^9.0.1",
     "protobufjs": "^7.6.5",
-    "qs": "^6.15.2",
+    "qs": "^6.16.0",
+    "filelist": "^2.0.2",
+    "node-gyp": "^12.4.0",
     "sqlite3": "^5.1.7",
+    "test-exclude": "^8.0.0",
     "tar": "^7.5.21",
     "undici": "^7.29.0",
     "ws": "^8.21.0"
@@ -276,7 +280,7 @@
       "^file-type$": "<rootDir>/src/__mocks__/file-type.js"
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!uuid/)"
+      "/node_modules/(?!(uuid|@faker-js/faker)/)"
     ],
     "transform": {
       "^.+\\.[jt]sx?$": [
@@ -294,6 +298,7 @@
       "<rootDir>/src/makecolors.js",
       "<rootDir>/src/newrelic.js",
       "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/fakerUnique.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
       "<rootDir>/packages/",
@@ -316,6 +321,7 @@
       "<rootDir>/src/makecolors.js",
       "<rootDir>/src/newrelic.js",
       "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/fakerUnique.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
