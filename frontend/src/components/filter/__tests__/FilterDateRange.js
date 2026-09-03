@@ -74,6 +74,32 @@ describe('FilterDateRange', () => {
     expect(onApplyDateRange).not.toHaveBeenCalled();
   });
 
+  it('rejects dates after today', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.clear(date);
+    userEvent.type(date, '12/31/209');
+    onApplyDateRange.mockClear();
+    userEvent.type(date, '9');
+
+    expect(setError).toHaveBeenCalledWith('Please enter a valid date');
+    expect(onApplyDateRange).not.toHaveBeenCalled();
+  });
+
+  it('applies a valid date and clears the error', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.clear(date);
+    userEvent.type(date, '02/01/2025');
+
+    expect(onApplyDateRange).toHaveBeenCalledWith('2025/02/01');
+    expect(setError).toHaveBeenLastCalledWith('');
+  });
+
   it('renders the is dropdown', async () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', 'is', onApplyDateRange);

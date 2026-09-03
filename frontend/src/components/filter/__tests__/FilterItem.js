@@ -28,7 +28,8 @@ describe('Filter menu item', () => {
     filter,
     onRemoveFilter = jest.fn(),
     onUpdateFilter = jest.fn(),
-    setErrors = jest.fn()
+    setErrors = jest.fn(),
+    selectedTopicOverride = selectedTopic
   ) => {
     const setError = jest.fn((error) => {
       setErrors([error]);
@@ -44,7 +45,7 @@ describe('Filter menu item', () => {
             index={0}
             key={filter.id}
             topicOptions={topicOptions}
-            selectedTopic={selectedTopic}
+            selectedTopic={selectedTopicOverride}
           />
         </FilterErrorContext.Provider>
         <button type="button">BIG DUMB BUTTON</button>
@@ -86,6 +87,31 @@ describe('Filter menu item', () => {
     const selector = screen.getByRole('combobox', { name: 'condition' });
     expect(selector).toBeVisible();
     expect(screen.getByRole('textbox', { name: /date/i })).toBeVisible();
+  });
+
+  it('passes a configured minimum date to the filter input', () => {
+    const renderInput = jest.fn(() => <input aria-label="date" />);
+    const configuredTopic = {
+      ...selectedTopic,
+      minDate: '2025-01-21',
+      renderInput,
+    };
+    const filter = {
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2025/01/22',
+    };
+
+    renderFilterItem(filter, jest.fn(), jest.fn(), jest.fn(), configuredTopic);
+
+    expect(renderInput).toHaveBeenCalledWith(
+      'gibberish',
+      'is on or after',
+      '2025/01/22',
+      expect.any(Function),
+      '2025-01-21'
+    );
   });
 
   it('applies the proper date range', async () => {
