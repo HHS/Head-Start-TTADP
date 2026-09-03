@@ -50,6 +50,17 @@ describe('FilterDateRange', () => {
     expect(setError).toHaveBeenCalledWith(message);
   });
 
+  it('rejects dates before the minimum date', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/20/2025');
+
+    expect(setError).toHaveBeenCalledWith('Please enter a valid date');
+    expect(onApplyDateRange).not.toHaveBeenCalled();
+  });
+
   it('renders the is dropdown', async () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', 'is', onApplyDateRange);
