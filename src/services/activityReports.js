@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/quotes */
 
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
@@ -1640,7 +1640,18 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           },
         },
         {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [
+            { userId },
+            { '$activityReportCollaborators.userId$': userId },
+            {
+              // Approvers are notified too, but not the approver who requested the
+              // changes (their approver row has a NEEDS_ACTION status).
+              [Op.and]: [
+                { '$approvers.userId$': userId },
+                { '$approvers.status$': { [Op.ne]: APPROVER_STATUSES.NEEDS_ACTION } },
+              ],
+            },
+          ],
         },
         {
           id: {
@@ -1661,9 +1672,17 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
         attributes: ['userId'],
         required: false,
       },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+        attributes: ['userId', 'status'],
+        required: false,
+      },
     ],
   });
-  return reports;
+  // The report can join multiple collaborator/approver rows, so de-duplicate by id to
+  // avoid listing the same report more than once in a digest.
+  return _.uniqBy(reports, 'id');
 }
 
 /**

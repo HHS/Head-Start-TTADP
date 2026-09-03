@@ -145,8 +145,8 @@ const digestMockApprover = {
   id: 21161430,
   homeRegionId: 1,
   name: 'b',
-  hsesUserId: 'b',
-  hsesUsername: 'b',
+  hsesUserId: 'digestMockApprover',
+  hsesUsername: 'digestMockApprover',
   role: [],
   lastLogin: new Date(),
 };
@@ -1835,6 +1835,7 @@ describe('Activity report service', () => {
     describe('activityReportsChangesRequestedByDate', () => {
       beforeEach(async () => {
         await User.create(digestMockCollabOne, { validate: false }, { individualHooks: false });
+        await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
@@ -1842,8 +1843,13 @@ describe('Activity report service', () => {
           where: { userId: digestMockCollabOne.id },
           force: true,
         });
+        await ActivityReportApprover.destroy({
+          where: { userId: [digestMockApprover.id, digestMockCollabOne.id, mockUser.id] },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id }, force: true });
+        await User.destroy({ where: { id: digestMockApprover.id }, force: true });
         await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
@@ -2014,6 +2020,82 @@ describe('Activity report service', () => {
           "NOW() - INTERVAL '1 DAY'"
         );
         expect(authorDigest).toBeUndefined();
+      });
+
+      it('retrieves reports for an approver who did not request the changes', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // A second approver requested the changes, keeping the report in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // This approver approved (i.e. did not request the changes).
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeDefined();
+        expect(dailyDigestReport.id).toBe(report.id);
+      });
+
+      it('does not retrieve reports for the approver who requested the changes', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // The approver who requested the changes has a NEEDS_ACTION approver status.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // Another approver approved, so the report remains in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeUndefined();
+      });
+
+      it('returns a single row when a user is both author and approver', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // A second approver requested the changes, keeping the report in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // mockUser is the author and also an approver who approved.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUser.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const reports = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(reports.filter((r) => r.id === report.id)).toHaveLength(1);
       });
     });
 
