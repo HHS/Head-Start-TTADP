@@ -557,4 +557,20 @@ describe('QA Dashboard page', () => {
       });
     });
   });
+
+  it('shows an error when fetching QA data fails', async () => {
+    fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
+    // Force the SSDI requests to fail so the catch branch runs.
+    fetchMock.get(noTtaApi, 500);
+    fetchMock.get(feiApi, 500);
+    fetchMock.get(classApi, 500);
+    fetchMock.get(dashboardApi, 500);
+
+    renderQADashboard();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to fetch QA data');
+  });
 });
