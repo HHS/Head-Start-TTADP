@@ -11,7 +11,7 @@ import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
-const DEFAULT_MIN_DATE = '2020-09-01';
+const MIN_DATE = '2020-09-01';
 const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
@@ -167,5 +167,5 @@ FilterDateRange.propTypes = {
 
 FilterDateRange.defaultProps = {
   customDateOptions: null,
-  minDate: DEFAULT_MIN_DATE,
+  minDate: MIN_DATE,
 };

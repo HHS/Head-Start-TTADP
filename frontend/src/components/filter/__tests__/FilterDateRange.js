@@ -41,6 +41,15 @@ describe('FilterDateRange', () => {
     expect(hidden).toHaveValue('2025-02-01');
   });
 
+  it('allows dates before the monitoring minimum date by default', () => {
+    const onApplyDateRange = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/01/2021');
+
+    expect(onApplyDateRange).toHaveBeenCalledWith('2021/01/01');
+  });
+
   it('checks for valid dates', async () => {
     const onApplyDateRange = jest.fn();
     const setError = jest.fn();
