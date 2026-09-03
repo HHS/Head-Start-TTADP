@@ -125,6 +125,7 @@ The team uses a combination of repository artifacts, CI checks, and JIRA workflo
 - production deployments are built from annotated release tags that point to commits contained in the `production` branch
 - accessibility and security scans run in CI/CD on every check-in
 - changes that affect the system boundary or ATO require the appropriate security review and approvals
+- the declared release inventory is reconciled against repository state on every branch build and against the production space on every production deploy; this control is in reporting mode until the first clean production reconciliation is accepted as its baseline
 
 ### Expected engineering evidence
 
@@ -139,6 +140,7 @@ Depending on the change, the following may be used as evidence:
 - UI review outcome
 - ADRs for major architecture decisions
 - system boundary approval records when applicable
+- approved CI version export from the release inventory for production baseline audits
 
 ### Documentation and artifact expectations
 
@@ -147,6 +149,7 @@ Depending on the change, the following may be used as evidence:
 - **ADRs**: required for major architectural changes or changes that affect the system boundary
 - **Logical Data Model**: updated automatically as part of the migration process
 - **Boundary diagram**: update when system boundaries change, after required SSPO approval
+- **Release inventory**: update `release/inventory.json` in the same PR as any change to the deployed shape of the system, meaning a new or removed application, bound service, route, or process type, a change to `manifest.yml` or `deployment_config/`, a Node version change in `.nvmrc` or `Dockerfile`, or a new external integration. Each entry needs an authorization reference. See [ADR 0029](../adr/0029-release-inventory-baseline-reconciliation.md)
 - **API documentation**: update project documentation when API behavior materially changes; OpenAPI updates are not currently treated as a consistent blocking gate
 
 ## Production deployment controls

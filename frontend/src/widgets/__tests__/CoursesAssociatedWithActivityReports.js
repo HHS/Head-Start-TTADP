@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
@@ -117,7 +117,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
   it('renders correctly without data', async () => {
     renderCoursesAssociatedWithActivityReports(emptyData);
 
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -129,14 +129,14 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Displays the foot note.
     expect(
-      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+      screen.getByText('* Collection of EEP courses in the TTA Hub began on March 7, 2024.')
     ).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
     renderCoursesAssociatedWithActivityReports(mockData);
 
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Displays the foot note.
     expect(
-      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+      screen.getByText('* Collection of EEP courses in the TTA Hub began on March 7, 2024.')
     ).toBeInTheDocument();
   });
 
@@ -181,7 +181,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
         },
       ],
     });
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -203,7 +203,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     const sortColBtn = await screen.findByRole('button', {
       name: /feb-22\. activate to sort ascending/i,
     });
-    act(() => fireEvent.click(sortColBtn));
+    fireEvent.click(sortColBtn);
 
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -222,7 +222,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
   it('correctly handles heading sort', async () => {
     renderCoursesAssociatedWithActivityReports(mockSortData);
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -240,24 +240,22 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
     const cellValues = [/Sample Course 1/i, /1/i, /3/i, /Sample Course 2/i, /2/i, /4/i];
 
-    await act(async () => {
-      fireEvent.click(sortColBtn);
-      await waitFor(() => {
-        const tableCells = screen.getAllByRole('cell');
-        expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-        expect(tableCells[1]).toHaveTextContent(cellValues[0]);
-        expect(tableCells[2]).toHaveTextContent(cellValues[1]);
-        expect(tableCells[3]).toHaveTextContent(cellValues[2]);
-        expect(tableCells[5]).toHaveTextContent(cellValues[3]);
-        expect(tableCells[6]).toHaveTextContent(cellValues[4]);
-        expect(tableCells[7]).toHaveTextContent(cellValues[5]);
-      });
+    fireEvent.click(sortColBtn);
+    await waitFor(() => {
+      const tableCells = screen.getAllByRole('cell');
+      expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
+      expect(tableCells[1]).toHaveTextContent(cellValues[0]);
+      expect(tableCells[2]).toHaveTextContent(cellValues[1]);
+      expect(tableCells[3]).toHaveTextContent(cellValues[2]);
+      expect(tableCells[5]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[7]).toHaveTextContent(cellValues[5]);
     });
 
     sortColBtn = await screen.findByRole('button', {
       name: /course name\. activate to sort descending/i,
     });
-    act(() => fireEvent.click(sortColBtn));
+    fireEvent.click(sortColBtn);
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -272,7 +270,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     sortColBtn = await screen.findByRole('button', {
       name: /course name\. activate to sort ascending/i,
     });
-    act(() => fireEvent.click(sortColBtn));
+    fireEvent.click(sortColBtn);
 
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -290,7 +288,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     renderCoursesAssociatedWithActivityReports(mockSortData, 1);
 
     // On first page.
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Sample Course 2/i)).toBeInTheDocument();
@@ -298,7 +296,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Go to second page.
     const pageTwoBtn = screen.getByRole('button', { name: /page 2/i });
-    act(() => fireEvent.click(pageTwoBtn));
+    fireEvent.click(pageTwoBtn);
 
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -307,10 +305,10 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Click reset.
     const [resetButton] = await screen.findAllByTestId('reset-pagination');
-    act(() => fireEvent.click(resetButton));
+    fireEvent.click(resetButton);
 
     // Verify reset back to first page.
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Sample Course 2/i)).toBeInTheDocument();
@@ -318,7 +316,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Click next >.
     const nextPageBtn = await screen.findByRole('button', { name: /next page/i });
-    act(() => fireEvent.click(nextPageBtn));
+    fireEvent.click(nextPageBtn);
 
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -327,7 +325,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Click prev >.
     const prevPageBtn = await screen.findByRole('button', { name: /previous page/i });
-    act(() => fireEvent.click(prevPageBtn));
+    fireEvent.click(prevPageBtn);
 
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -352,7 +350,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Sort.
     const sortColBtn = screen.getByRole('button', { name: /feb-22\. activate to sort ascending/i });
-    act(() => fireEvent.click(sortColBtn));
+    fireEvent.click(sortColBtn);
 
     // assert all check boxes are not selected
     checkBoxes = screen.getAllByRole('checkbox');
@@ -377,7 +375,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Go to second page.
     const pageTwoBtn = screen.getByRole('button', { name: /page 2/i });
-    act(() => fireEvent.click(pageTwoBtn));
+    fireEvent.click(pageTwoBtn);
 
     // assert all check boxes are not selected
     checkBoxes = screen.getAllByRole('checkbox');

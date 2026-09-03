@@ -458,6 +458,7 @@ class EventReportPilots{
  * collaboratorIds : integer[]
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
+ * eventId : text
  * ownerId : integer
  * regionId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
@@ -677,6 +678,8 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+ feiEhsStatus : varchar(255)
+ feiHsStatus : varchar(255)
  geographicRegion : varchar(255)
  geographicRegionId : integer
  granteeName : varchar(255)
@@ -1070,6 +1073,7 @@ class NotificationUserStates{
 class Notifications{
  * id : integer : <generated>
  userId : integer : REFERENCES "Users".id
+ * actionable : boolean : false
  * createdAt : timestamp with time zone
  * type : enum
  * updatedAt : timestamp with time zone
@@ -1296,6 +1300,8 @@ class SessionReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ endDate : date
+ startDate : date
 }
 
 class SiteAlerts{
@@ -1375,8 +1381,10 @@ class Users{
 
 enum enum_Users_flags {
  actionable_notifications
+ compliant_follow_up_reviews_tta_support
  monitoring-regional-dashboard
  quality_assurance_dashboard
+ tta_timeline
 }
 
 enum_Users_flags <|-- Users
@@ -3007,6 +3015,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" Notifications : notifications, activityReport
 Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation

@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Grant,
@@ -7,7 +7,7 @@ import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
-import { createGoal, createGrant, destroyGoal } from '../testUtils';
+import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -17,6 +17,7 @@ import {
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
   validateFields,
 } from './sessionReports';
@@ -64,6 +65,81 @@ describe('session reports service', () => {
         'Event with id 999999 not found'
       );
     });
+
+    it('does not persist hydrated event or approver associations into data', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: {
+          card: 'ace',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(created.data.card).toBe('ace');
+      expect(created.data.event).toBeUndefined();
+      expect(created.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+  });
+
+  describe('createSession additionalRegions', () => {
+    let createdEvent;
+    let createdEventWithoutAdditionalRegions;
+    let createdSession;
+    let createdSessionWithoutAdditionalRegions;
+
+    beforeAll(async () => {
+      createdEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: faker.number.int({ min: 0, max: 99999 }),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: ['11', '12'],
+        },
+      });
+
+      createdEventWithoutAdditionalRegions = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: faker.number.int({ min: 0, max: 99999 }),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      if (createdSession) {
+        await destroySession(createdSession.id);
+      }
+
+      if (createdSessionWithoutAdditionalRegions) {
+        await destroySession(createdSessionWithoutAdditionalRegions.id);
+      }
+
+      await destroyEvent(createdEvent.id);
+      await destroyEvent(createdEventWithoutAdditionalRegions.id);
+    });
+
+    it('copies additionalRegions from the event into the created session data', async () => {
+      createdSession = await createSession({ eventId: createdEvent.id, data: { card: 'ace' } });
+
+      expect(createdSession.data.additionalRegions).toEqual(['11', '12']);
+    });
+
+    it('defaults additionalRegions to an empty array when the event does not define it', async () => {
+      createdSessionWithoutAdditionalRegions = await createSession({
+        eventId: createdEventWithoutAdditionalRegions.id,
+        data: { card: 'ace' },
+      });
+
+      expect(createdSessionWithoutAdditionalRegions.data.additionalRegions).toEqual([]);
+    });
   });
 
   describe('updateSession', () => {
@@ -100,6 +176,25 @@ describe('session reports service', () => {
       });
 
       await destroySession(updated.id);
+    });
+
+    it('strips hydrated event and approver associations from incoming data', async () => {
+      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: {
+          harry: 'potter',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(updated.data.harry).toBe('potter');
+      expect(updated.data.event).toBeUndefined();
+      expect(updated.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
     });
   });
 
@@ -210,62 +305,99 @@ describe('session reports service', () => {
   });
 
   describe('getPossibleSessionParticipants', () => {
-    const mockRegionId = faker.datatype.number({ min: 20 });
+    const mockRegionId = faker.number.int({ min: 20, max: 20 + 99999 });
 
     let program;
     let program2;
+    let program3;
     let recipient;
     let alternateRecipient;
+    let additionalRegionRecipient;
+    let arizonaGrantRecipient;
+
+    // Events and sessions created for each scenario.
+    let eventBase;
+    let eventWithAdditionalRegion;
+    let eventWithAdditionalState;
+    let eventWithBoth;
+    let sessionBase;
+    let sessionWithAdditionalRegion;
+    let sessionWithAdditionalState;
+    let sessionWithBoth;
 
     beforeAll(async () => {
-      await db.Region.create({
-        id: mockRegionId,
-        name: `Random test region ${mockRegionId}`,
-      });
-
+      await db.Region.create({ id: mockRegionId, name: `Random test region ${mockRegionId}` });
       await db.Region.create({
         id: mockRegionId + 1,
         name: `Random test region ${mockRegionId + 1}`,
       });
-
-      recipient = await db.Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+      await db.Region.create({
+        id: mockRegionId + 2,
+        name: `Random test region ${mockRegionId + 2}`,
       });
 
+      recipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
       alternateRecipient = await db.Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
+      additionalRegionRecipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
+      arizonaGrantRecipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       const grant = await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
         status: 'Active',
       });
 
       await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: alternateRecipient.id,
         regionId: mockRegionId + 1,
         stateCode: 'CA',
         status: 'Active',
       });
 
+      const additionalRegionGrant = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: additionalRegionRecipient.id,
+        regionId: mockRegionId + 2,
+        status: 'Active',
+      });
+
       const oldGrant = await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
         status: 'Inactive',
       });
 
+      await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: arizonaGrantRecipient.id,
+        regionId: mockRegionId + 2,
+        status: 'Active',
+        stateCode: 'AZ',
+      });
+
       program = await db.Program.create({
-        id: faker.datatype.number(),
-        name: faker.company.companyName() + faker.company.bsBuzz(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
         grantId: grant.id,
         programType: 'HS',
         startYear: 2016,
@@ -275,8 +407,8 @@ describe('session reports service', () => {
       });
 
       program2 = await db.Program.create({
-        id: faker.datatype.number(),
-        name: faker.company.companyName() + faker.company.bsBuzz(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
         grantId: oldGrant.id,
         programType: 'HS',
         startYear: 2016,
@@ -284,35 +416,120 @@ describe('session reports service', () => {
         endDate: null,
         status: 'Inactive',
       });
+
+      program3 = await db.Program.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
+        grantId: additionalRegionGrant.id,
+        programType: 'HS',
+        startYear: 2016,
+        startDate: '2016-11-01',
+        endDate: null,
+        status: 'Active',
+      });
+
+      // Event: base region only
+      eventBase = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        },
+      });
+      sessionBase = await createSession({ eventId: eventBase.id, data: {} });
+
+      // Event: base region + additionalRegions
+      eventWithAdditionalRegion = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: [mockRegionId + 2],
+        },
+      });
+      sessionWithAdditionalRegion = await createSession({
+        eventId: eventWithAdditionalRegion.id,
+        data: {},
+      });
+
+      // Event: base region + additionalStates (state code parsed from "Name (CA)" format)
+      eventWithAdditionalState = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalStates: ['California (CA)', 'Arizona'],
+        },
+      });
+      sessionWithAdditionalState = await createSession({
+        eventId: eventWithAdditionalState.id,
+        data: {},
+      });
+
+      // Event: base region + additionalRegions + additionalStates
+      eventWithBoth = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: [mockRegionId + 2],
+          additionalStates: ['California (CA)'],
+        },
+      });
+      sessionWithBoth = await createSession({ eventId: eventWithBoth.id, data: {} });
     });
 
     afterAll(async () => {
-      await db.Program.destroy({
-        where: {
-          id: [program.id, program2.id],
-        },
-      });
+      await destroySession(sessionBase.id);
+      await destroySession(sessionWithAdditionalRegion.id);
+      await destroySession(sessionWithAdditionalState.id);
+      await destroySession(sessionWithBoth.id);
+
+      await destroyEvent(eventBase.id);
+      await destroyEvent(eventWithAdditionalRegion.id);
+      await destroyEvent(eventWithAdditionalState.id);
+      await destroyEvent(eventWithBoth.id);
+
+      await db.Program.destroy({ where: { id: [program.id, program2.id, program3.id] } });
 
       await db.Grant.destroy({
         where: {
-          recipientId: [recipient.id, alternateRecipient.id],
+          recipientId: [
+            recipient.id,
+            alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
+          ],
         },
         individualHooks: true,
       });
 
       await db.Recipient.destroy({
         where: {
-          id: [recipient.id, alternateRecipient.id],
+          id: [
+            recipient.id,
+            alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
+          ],
         },
       });
+
       await db.Region.destroy({
-        where: {
-          id: [mockRegionId, mockRegionId + 1],
-        },
+        where: { id: [mockRegionId, mockRegionId + 1, mockRegionId + 2] },
       });
     });
-    it('retrieves possible participants', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId);
+
+    it('retrieves participants for the base region derived from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionBase.id);
       expect(participants.length).toBe(1);
       expect(participants[0].id).toBe(recipient.id);
       expect(participants[0]).toHaveProperty('id');
@@ -320,20 +537,33 @@ describe('session reports service', () => {
       expect(participants[0].grants.length).toBe(1);
     });
 
-    it('ignores an empty states array', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, []);
-      expect(participants.length).toBe(1);
-      expect(participants[0].id).toBe(recipient.id);
-      expect(participants[0]).toHaveProperty('id');
-      expect(participants[0]).toHaveProperty('name');
-      expect(participants[0].grants.length).toBe(1);
-    });
-
-    it('retrieves participants from alternate states', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
-      expect(participants.length).toBe(2);
+    it('includes recipients from additionalRegions stored on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalRegion.id);
+      expect(participants).toHaveLength(3);
       expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, alternateRecipient.id])
+        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
+      );
+      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
+    });
+
+    it('includes recipients matching state codes parsed from additionalStates on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalState.id);
+      expect(participants.length).toBe(3);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id, arizonaGrantRecipient.id])
+      );
+    });
+
+    it('combines additionalRegions and additionalStates from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithBoth.id);
+      expect(participants).toHaveLength(4);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([
+          recipient.id,
+          alternateRecipient.id,
+          additionalRegionRecipient.id,
+          arizonaGrantRecipient.id,
+        ])
       );
     });
   });
@@ -347,7 +577,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId,
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         },
       };
       createdEvent = await createEvent(eventData);
@@ -409,7 +639,8 @@ describe('session reports service', () => {
 
       const foundSession = await findSessionHelper({ id: createdSession.id });
 
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
 
@@ -421,9 +652,147 @@ describe('session reports service', () => {
       const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
       expect(foundSession).toHaveProperty('eventId', null);
       expect(foundSession).toHaveProperty('id', 999);
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null/undefined)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
+
+    it('returns eventId null when the session has no event', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1000,
+        data: {},
+      });
+
+      await expect(findSessionHelper({ id: 'missing event' })).resolves.toMatchObject({
+        id: 1000,
+        eventId: null,
+      });
+    });
+
+    it('returns eventId null when the event data has no eventId', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1001,
+        data: {},
+        event: {
+          data: {},
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'missing eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1001,
+        eventId: null,
+      });
+    });
+
+    it('returns the eventId when the event data includes it', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1002,
+        data: {},
+        event: {
+          eventId: 'R01-PD-1002',
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'with eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1002,
+        eventId: 'R01-PD-1002',
+      });
+    });
+  });
+
+  describe('session date columns (single source of truth)', () => {
+    let dateEvent;
+    const createdSessionIds = [];
+
+    beforeAll(async () => {
+      dateEvent = await createEvent({
+        ownerId: 99_777,
+        regionId: 99_777,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: 'R01-PD-99_777' },
+      });
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({ where: { id: createdSessionIds } });
+      await destroyEvent(dateEvent.id);
+    });
+
+    it('createSession writes dates to the startDate/endDate columns and strips them from data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '03/15/2024', endDate: '03/16/2024', sessionName: 'col test' },
+      });
+      createdSessionIds.push(created.id);
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      // Columns hold the parsed dates (DATEONLY -> YYYY-MM-DD string).
+      expect(raw.startDate).toBe('2024-03-15');
+      expect(raw.endDate).toBe('2024-03-16');
+      // The JSONB data no longer mirrors the dates on write.
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+    });
+
+    it('findSessionHelper re-derives data dates from the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '07/04/2024', endDate: '07/05/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      const found = await findSessionHelper({ id: created.id });
+      expect(found.data.startDate).toBe('07/04/2024');
+      expect(found.data.endDate).toBe('07/05/2024');
+    });
+
+    it('columns win even when stale dates linger in the JSONB data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '01/01/2024', endDate: '01/02/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      // Simulate a legacy/stale JSONB value that disagrees with the columns.
+      await SessionReportPilot.update(
+        { data: { startDate: '12/31/1999', endDate: '12/31/1999' } },
+        { where: { id: created.id }, individualHooks: false }
+      );
+
+      const found = await findSessionHelper({ id: created.id });
+      // The column value (not the stale JSONB value) is surfaced.
+      expect(found.data.startDate).toBe('01/01/2024');
+      expect(found.data.endDate).toBe('01/02/2024');
+    });
+
+    it('updateSession persists new dates to the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '05/01/2024', endDate: '05/02/2024', sessionName: 'updated session' },
+      });
+      createdSessionIds.push(created.id);
+
+      await updateSession(created.id, {
+        eventId: 'R01-PD-99_777',
+        data: {
+          startDate: '06/10/2024',
+          endDate: '06/11/2024',
+          sessionName: 'updated session name',
+        },
+      });
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      expect(raw.startDate).toBe('2024-06-10');
+      expect(raw.endDate).toBe('2024-06-11');
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+      expect(raw.data.sessionName).toBe('updated session name');
     });
   });
 
@@ -844,6 +1213,45 @@ describe('session reports service', () => {
       expect(filteredResults.rows[0].id).toBe(specificSessionId);
     });
 
+    it('resolves the "TR event creator" myReports filter using the passed-in userId', async () => {
+      // testEvent is owned by uniqueOwnerId; a report by another owner must be excluded.
+      const otherOwnerEvent = await createEvent({
+        ownerId: 99_801,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: 'R01-PD-99801-myreports',
+          eventName: 'Other Owner Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+      const otherOwnerSession = await createSession({
+        eventId: otherOwnerEvent.id,
+        data: {
+          sessionName: 'Other Owner Session',
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      });
+
+      try {
+        const result = await getSessionReports({
+          'myReports.in': ['TR event creator'],
+          userId: uniqueOwnerId,
+        });
+
+        expect(result.rows.map((r) => r.id)).toEqual(
+          expect.arrayContaining(testSessions.map((s) => s.id))
+        );
+        expect(result.rows.map((r) => r.id)).not.toEqual(
+          expect.arrayContaining([otherOwnerSession.id])
+        );
+      } finally {
+        await destroySession(otherOwnerSession.id);
+        await destroyEvent(otherOwnerEvent.id);
+      }
+    });
+
     describe('sort by startDate with mixed date formats', () => {
       // These three formats were all found in production data.
       // MM/DD/YYYY is the dominant format (428 rows).
@@ -1073,6 +1481,162 @@ describe('session reports service', () => {
           expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
       });
+    });
+  });
+
+  describe('getSessionReportsByRecipient', () => {
+    let recipient;
+    let otherRecipient;
+    let recipientGrantInRegion1;
+    let recipientGrantInRegion2;
+    let otherRecipientGrant;
+    let regionOneEvent;
+    let regionTwoEvent;
+    let createdSessions = [];
+
+    beforeAll(async () => {
+      recipient = await createRecipient({
+        name: `Recipient-${faker.string.uuid()}`,
+      });
+
+      otherRecipient = await createRecipient({
+        name: `Recipient-${faker.string.uuid()}`,
+      });
+
+      recipientGrantInRegion1 = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: recipient.id,
+        regionId: 1,
+        status: 'Active',
+      });
+
+      recipientGrantInRegion2 = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: recipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      otherRecipientGrant = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: otherRecipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      regionOneEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R01-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventName: 'Recipient Filter Region 1',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      regionTwoEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: 2,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R02-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventName: 'Recipient Filter Region 2',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      createdSessions = await Promise.all([
+        createSession({
+          eventId: regionOneEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 1',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Grant 1', value: recipientGrantInRegion1.id }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 2',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            // store as string to validate cast guard logic
+            recipients: [{ label: 'Grant 2', value: String(recipientGrantInRegion2.id) }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Other Recipient Session',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Other Grant', value: otherRecipientGrant.id }],
+          },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all((createdSessions || []).map((s) => destroySession(s.id)));
+
+      if (regionOneEvent) await destroyEvent(regionOneEvent.id);
+      if (regionTwoEvent) await destroyEvent(regionTwoEvent.id);
+
+      await db.Grant.destroy({
+        where: {
+          id: [
+            recipientGrantInRegion1?.id,
+            recipientGrantInRegion2?.id,
+            otherRecipientGrant?.id,
+          ].filter(Boolean),
+        },
+        individualHooks: true,
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: [recipient?.id, otherRecipient?.id].filter(Boolean),
+        },
+      });
+    });
+
+    it('returns sessions where the recipient grant ids are listed in session recipients', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
+      expect(names).not.toContain('Other Recipient Session');
+    });
+
+    it('ignores region restrictions and still returns sessions from all regions', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+        // Deliberately restrictive; cloned function should ignore region filters.
+        'region.in': ['1'],
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
     });
   });
 });

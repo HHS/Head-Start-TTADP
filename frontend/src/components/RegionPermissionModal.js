@@ -10,18 +10,20 @@ function RegionPermissionModal({ filters, user, showFilterWithMyRegions }) {
   const modalRef = useRef();
   const userRegions = getUserRegions(user);
 
-  const missingRegions = useMemo(
-    () =>
-      filters
-        .filter(
-          (f) =>
-            f.topic === 'region' &&
-            f.condition !== 'is not' &&
-            !userRegions.includes(parseInt(f.query, DECIMAL_BASE))
-        )
-        .map((m) => Number(m.query)),
-    [filters, userRegions]
-  );
+  const missingRegions = useMemo(() => {
+    const missing = [];
+    filters.forEach((f) => {
+      if (f.topic !== 'region' || f.condition === 'is not') return;
+      const queryValues = Array.isArray(f.query) ? f.query : [f.query];
+      queryValues.forEach((v) => {
+        const regionId = parseInt(v, DECIMAL_BASE);
+        if (!userRegions.includes(regionId)) {
+          missing.push(regionId);
+        }
+      });
+    });
+    return missing;
+  }, [filters, userRegions]);
 
   const showMultipleRegions = missingRegions && missingRegions.length > 1 ? 's' : '';
   const missingRegionsList =

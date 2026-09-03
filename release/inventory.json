@@ -1,0 +1,699 @@
+{
+  "schemaVersion": 1,
+  "space": {
+    "org": "hhs-acf-ohs-tta",
+    "name": "ttahub-prod",
+    "environment": "prod"
+  },
+  "components": [
+    {
+      "id": "app.ttaSmarthub",
+      "class": "application",
+      "name": "tta-smarthub-((env))",
+      "description": "TTA Hub web and worker application. The subject of this repository's build and deploy pipeline.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryApp", "value": "tta-smarthub-((env))" },
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0002-deployment-of-frontend.md",
+        "note": "Worker process authorized separately by ADR 0013."
+      }
+    },
+    {
+      "id": "app.clamavApi",
+      "class": "application",
+      "name": "clamav-api-ttahub-((env))",
+      "description": "Internal ClamAV scanning API. Reached by the worker over an internal route, never bound as a service.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryApp", "value": "clamav-api-ttahub-((env))" },
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0012-malware-scanning.md",
+        "note": "Also shown as the file scanning API container in docs/boundary_diagram.md."
+      },
+      "notes": "Not declared in manifest.yml and invisible to release-manifest.json before ADR 0029. Reached through CLAMAV_ENDPOINT in deployment_config."
+    },
+    {
+      "id": "app.similarityApi",
+      "class": "application",
+      "name": "tta-similarity-api-((env))",
+      "description": "Python similarity API used to identify duplicate goals. Currently stopped in production.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryApp", "value": "tta-similarity-api-((env))" },
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0017-python-analytics-processing.md",
+        "note": "Shown as the Similarity API container in docs/boundary_diagram.md."
+      },
+      "notes": "Stopped but still bound to the production database service. See disposition INV-2026-0001."
+    },
+    {
+      "id": "app.automation",
+      "class": "application",
+      "name": "tta-automation",
+      "description": "Automation application for production backup, PII removal, and restore into lower environment databases. Stopped unless a task is running.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryApp", "value": "tta-automation" },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Automation boundary. The diagram records that at most one configuration is enabled at a time, connections are unbound when not in use, and no routes are configured."
+      },
+      "notes": "The diagram states no routes are configured for this application, but an unattached route exists. See disposition INV-2026-0003."
+    },
+    {
+      "id": "app.maintenancePage",
+      "class": "application",
+      "name": "tta-smarthub-maintenance-page-((env))",
+      "description": "Static page served in place of the TTA Hub during incident response or blocking maintenance. The primary hostname is remapped to this application so users cannot reach the live site while work is in progress.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryApp", "value": "tta-smarthub-maintenance-page-((env))" },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Maintenance Page container in the Application boundary. Added by TTAHUB-5245; the diagram change requires SSPO approval, tracked by disposition INV-2026-0002."
+      },
+      "notes": "Runs continuously so the primary hostname can be remapped without a deploy. Route destinations are recorded but not reconciled, precisely so a maintenance remap does not read as drift."
+    },
+    {
+      "id": "process.web",
+      "class": "process",
+      "name": "tta-smarthub-((env)):web",
+      "description": "Express API and React single page application. Three instances in production.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryProcess", "value": "web", "processInstances": 3 },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": { "type": "adr", "reference": "docs/adr/0002-deployment-of-frontend.md" }
+    },
+    {
+      "id": "process.worker",
+      "class": "process",
+      "name": "tta-smarthub-((env)):worker",
+      "description": "Bull queue worker for background processing. Two instances in production. Only instance 0 runs cron jobs.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryProcess", "value": "worker", "processInstances": 2 },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": { "type": "adr", "reference": "docs/adr/0013-add-job-queue-and-worker.md" }
+    },
+    {
+      "id": "service.database",
+      "class": "service",
+      "name": "ttahub-((env))",
+      "description": "Primary PostgreSQL database holding TTA Hub content and configuration.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-((env))",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "small-psql-replica"
+      },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0006-database.md",
+        "note": "Read replica plan authorized by ADR 0016."
+      },
+      "notes": "Also bound to tta-similarity-api-((env)). See disposition INV-2026-0001."
+    },
+    {
+      "id": "service.redis",
+      "class": "service",
+      "name": "ttahub-redis-((env))",
+      "description": "Redis instance backing the Bull job queues and session store.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-redis-((env))",
+        "serviceOffering": "aws-elasticache-redis",
+        "servicePlan": "redis-3node"
+      },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": { "type": "adr", "reference": "docs/adr/0013-add-job-queue-and-worker.md" }
+    },
+    {
+      "id": "service.documentUpload",
+      "class": "service",
+      "name": "ttahub-document-upload-((env))",
+      "description": "S3 bucket storing user uploaded file attachments.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-document-upload-((env))",
+        "serviceOffering": "s3",
+        "servicePlan": "basic"
+      },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "AWS S3 bucket container storing static file assets."
+      }
+    },
+    {
+      "id": "service.automationDatabase",
+      "class": "service",
+      "name": "ttahub-process",
+      "description": "PostgreSQL database used to process production data and remove PII before restore into lower environments.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-process",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Automation PostgreSQL Database container."
+      }
+    },
+    {
+      "id": "service.databaseBackups",
+      "class": "service",
+      "name": "ttahub-db-backups",
+      "description": "S3 bucket storing encrypted production and processed database backups.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-db-backups",
+        "serviceOffering": "s3",
+        "servicePlan": "basic"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Automation AWS S3 bucket container."
+      }
+    },
+    {
+      "id": "service.logTransfer",
+      "class": "service",
+      "name": "ttahub-log-transfer",
+      "description": "S3 bucket receiving production database logs when requested from cloud.gov.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-log-transfer",
+        "serviceOffering": "s3",
+        "servicePlan": "basic"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Log transfer AWS S3 bucket container."
+      }
+    },
+    {
+      "id": "service.stagingDatabase",
+      "class": "service",
+      "name": "ttahub-staging",
+      "description": "Staging PostgreSQL database. Resides in the production space so the automation application can restore PII free data into it.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-staging",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Staging boundary, restore target of the automation application."
+      }
+    },
+    {
+      "id": "service.devDatabaseBlue",
+      "class": "service",
+      "name": "ttahub-dev-blue",
+      "description": "Dev blue PostgreSQL database. Restore target of the automation application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-dev-blue",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Dev boundary."
+      }
+    },
+    {
+      "id": "service.devDatabaseGold",
+      "class": "service",
+      "name": "ttahub-dev-gold",
+      "description": "Dev gold PostgreSQL database. Restore target of the automation application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-dev-gold",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Dev boundary."
+      }
+    },
+    {
+      "id": "service.devDatabaseGreen",
+      "class": "service",
+      "name": "ttahub-dev-green",
+      "description": "Dev green PostgreSQL database. Restore target of the automation application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-dev-green",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Dev boundary."
+      }
+    },
+    {
+      "id": "service.devDatabasePink",
+      "class": "service",
+      "name": "ttahub-dev-pink",
+      "description": "Dev pink PostgreSQL database. Restore target of the automation application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-dev-pink",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Dev boundary."
+      }
+    },
+    {
+      "id": "service.devDatabaseRed",
+      "class": "service",
+      "name": "ttahub-dev-red",
+      "description": "Dev red PostgreSQL database. Restore target of the automation application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "ttahub-dev-red",
+        "serviceOffering": "aws-rds",
+        "servicePlan": "micro-psql"
+      },
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Services - Dev boundary."
+      }
+    },
+    {
+      "id": "service.externalDomain",
+      "class": "service",
+      "name": "domain-((env))",
+      "description": "External domain service providing the custom production hostname and its certificate.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "domain-((env))",
+        "serviceOffering": "external-domain",
+        "servicePlan": "domain"
+      },
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": "deployment_config/prod_vars.yml",
+        "note": "Backs TTA_SMART_HUB_URI, https://ttahub.ohs.acf.hhs.gov."
+      }
+    },
+    {
+      "id": "service.deployerAccount",
+      "class": "service",
+      "name": "((env))-app-deployer",
+      "description": "Cloud.gov space deployer service account used by CircleCI to authenticate and push the application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryService",
+        "value": "((env))-app-deployer",
+        "serviceOffering": "cloud-gov-service-account",
+        "servicePlan": "space-deployer"
+      },
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": ".circleci/config.yml",
+        "note": "Credentials supplied to the deploy job through CLOUDGOV_PROD_USERNAME and the matching password."
+      }
+    },
+    {
+      "id": "route.customDomain",
+      "class": "route",
+      "name": "ttahub.ohs.acf.hhs.gov",
+      "description": "Primary production hostname serving end users.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryRoute", "value": "ttahub.ohs.acf.hhs.gov" },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": "deployment_config/prod_vars.yml",
+        "note": "Declared as TTA_SMART_HUB_URI and REDIRECT_URI_HOST."
+      }
+    },
+    {
+      "id": "route.platformDefault",
+      "class": "route",
+      "name": "tta-smarthub-((env))1.app.cloud.gov",
+      "description": "Platform hostname currently mapped to the application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryRoute", "value": "tta-smarthub-((env))1.app.cloud.gov" },
+      "boundAppName": "tta-smarthub-((env))",
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": "deployment_config/prod_vars.yml",
+        "note": "app_url in prod_vars.yml records tta-smarthub-prod.app.cloud.gov, which is not the mapped route. See disposition INV-2026-0004."
+      }
+    },
+    {
+      "id": "route.clamavInternal",
+      "class": "route",
+      "name": "clamapi-ttahub-((env)).apps.internal",
+      "description": "Internal route the worker uses to reach the ClamAV scanning API. Not reachable from outside the platform.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryRoute", "value": "clamapi-ttahub-((env)).apps.internal" },
+      "boundAppName": "clamav-api-ttahub-((env))",
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": "deployment_config/prod_vars.yml",
+        "note": "Declared as CLAMAV_ENDPOINT. Authorized by ADR 0012."
+      }
+    },
+    {
+      "id": "route.maintenancePage",
+      "class": "route",
+      "name": "tta-smarthub-maintenance-page-((env)).app.cloud.gov",
+      "description": "Route serving the maintenance page application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryRoute",
+        "value": "tta-smarthub-maintenance-page-((env)).app.cloud.gov"
+      },
+      "boundAppName": "tta-smarthub-maintenance-page-((env))",
+      "authorization": {
+        "type": "boundaryDiagram",
+        "reference": "docs/boundary_diagram.md",
+        "note": "Inherits the authorization of the application it serves."
+      }
+    },
+    {
+      "id": "route.similarityApi",
+      "class": "route",
+      "name": "tta-similarity-api-((env)).app.cloud.gov",
+      "description": "Route mapped to the similarity API application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryRoute",
+        "value": "tta-similarity-api-((env)).app.cloud.gov"
+      },
+      "boundAppName": "tta-similarity-api-((env))",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0017-python-analytics-processing.md"
+      }
+    },
+    {
+      "id": "platform.stack",
+      "class": "platformRuntime",
+      "name": "cflinuxfs4",
+      "description": "Cloud Foundry root filesystem the application runs on.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "cloudFoundryStack", "value": "cflinuxfs4", "pinned": true },
+      "authorization": { "type": "repositoryConfiguration", "reference": "manifest.yml" }
+    },
+    {
+      "id": "platform.buildpack",
+      "class": "platformRuntime",
+      "name": "nodejs-buildpack",
+      "description": "Node.js buildpack that stages the application.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": {
+        "type": "cloudFoundryBuildpack",
+        "value": "1.9.4",
+        "pinned": false
+      },
+      "authorization": {
+        "type": "repositoryConfiguration",
+        "reference": "manifest.yml",
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git with no tag or commit, so the staged version can change without a repository change."
+      },
+      "notes": "Known gap recorded by ADR 0029. The declared value is the version cloud.gov reported for the current droplet, not a pinned source reference. See disposition INV-2026-0005."
+    },
+    {
+      "id": "platform.nodeVersion",
+      "class": "platformRuntime",
+      "name": ".nvmrc",
+      "description": "Node runtime version pinned for local development, CI, and buildpack detection.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": ".nvmrc", "pinned": true },
+      "sha256": "9c579c4eab1d526e689fe7cda201a0ab2f39070304043bb55c459a3d90954250",
+      "authorization": { "type": "repositoryConfiguration", "reference": ".nvmrc" }
+    },
+    {
+      "id": "platform.dockerBaseImage",
+      "class": "platformRuntime",
+      "name": "Dockerfile",
+      "description": "Base image used for local development and CI containers.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "Dockerfile", "pinned": true },
+      "sha256": "a506474aa40e4509fc0d7788fc334241658513a94e2a500d0b3bf6a15d099a8d",
+      "authorization": { "type": "repositoryConfiguration", "reference": "Dockerfile" }
+    },
+    {
+      "id": "configuration.manifest",
+      "class": "configurationArtifact",
+      "name": "manifest.yml",
+      "description": "Cloud Foundry application manifest declaring the deployed shape.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "manifest.yml" },
+      "sha256": "b60105495b5e9a8bd2d09bc69dbae28ddf07722ba8333357ca8ced713033299c",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0003-configuration-by-environment-variable.md"
+      }
+    },
+    {
+      "id": "configuration.deploymentConfigProd",
+      "class": "configurationArtifact",
+      "name": "deployment_config/prod_vars.yml",
+      "description": "Production environment variable values supplied to cf push.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "deployment_config/prod_vars.yml" },
+      "sha256": "298ee90658f92f4662cb6ed3054847e1a1f91a409f46c7e2b1c5aa14091e7280",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0003-configuration-by-environment-variable.md"
+      }
+    },
+    {
+      "id": "configuration.deploymentConfigStaging",
+      "class": "configurationArtifact",
+      "name": "deployment_config/staging_vars.yml",
+      "description": "Staging environment variable values.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "deployment_config/staging_vars.yml" },
+      "sha256": "dd44dc73789b804fedf0212f1b13bdc92a25c852d3cab9972fd32165ccc69765",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0003-configuration-by-environment-variable.md"
+      }
+    },
+    {
+      "id": "configuration.deploymentConfigDev",
+      "class": "configurationArtifact",
+      "name": "deployment_config/dev_vars.yml",
+      "description": "Dev environment variable values, shared by every dev colour environment.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "deployment_config/dev_vars.yml" },
+      "sha256": "5a85b141a74d128ae7ecd5dee39b8c22e6803c110ea88b0b23178bed161898ac",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0003-configuration-by-environment-variable.md"
+      }
+    },
+    {
+      "id": "configuration.deploymentConfigSandbox",
+      "class": "configurationArtifact",
+      "name": "deployment_config/sandbox_vars.yml",
+      "description": "Sandbox environment variable values.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "deployment_config/sandbox_vars.yml" },
+      "sha256": "0c2c46afb2a93f061b9f618053f1584999e39d42d8a1e3f61e30611a9f1a2911",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0003-configuration-by-environment-variable.md"
+      }
+    },
+    {
+      "id": "dependency.backendLockfile",
+      "class": "dependencyBoundary",
+      "name": "yarn.lock",
+      "description": "Authoritative resolved dependency set for the backend and worker. Individual packages are not declared; the lockfile is the boundary.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "yarn.lock" },
+      "sha256": "cb8aa119cf174f9ef3e2ab4274a41ca9fc656dbd8286654ccdd51c64a13afacb",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
+        "note": "Vulnerability disposition for these packages is owned by ADR 0027."
+      }
+    },
+    {
+      "id": "dependency.frontendLockfile",
+      "class": "dependencyBoundary",
+      "name": "frontend/yarn.lock",
+      "description": "Authoritative resolved dependency set for the frontend.",
+      "owner": "TTA Hub Engineering",
+      "tier": "reconciled",
+      "locator": { "type": "repositoryFile", "value": "frontend/yarn.lock" },
+      "sha256": "91ad80b5bf83ca14c4cb1f46bc12111be702e032b5539ca5c9480a3b3a2f3677",
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
+        "note": "Vulnerability disposition for these packages is owned by ADR 0027."
+      }
+    },
+    {
+      "id": "program.pmp",
+      "class": "programmaticConfigurationItem",
+      "name": "TTA Hub Project Management Plan",
+      "description": "Approved PMP. The configuration management owner confirmed this document includes the CM Plan and is the only programmatic CI in scope for TTAHUB-5246.",
+      "owner": "TTA Hub Configuration Management",
+      "tier": "attested",
+      "locator": {
+        "type": "cmsDocument",
+        "value": "https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15"
+      },
+      "approvedVersion": "2.4",
+      "authorization": {
+        "type": "cmsDocument",
+        "reference": "https://docs.google.com/document/d/1ffJALlNAG7JKhUl3HxZo90sRZoAu_yCZ/edit#heading=h.asmrzkiini15",
+        "note": "The CM owner, confirmed the PMP includes the CM Plan and is the only programmatic CI in scope for TTAHUB-5246."
+      }
+    },
+    {
+      "id": "integration.hsesAuth",
+      "class": "externalIntegration",
+      "name": "HSES authentication",
+      "description": "OIDC single sign on with authorization code and PKCE, client authentication by private key JWT.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "AUTH_BASE" },
+      "authorization": {
+        "type": "adr",
+        "reference": "docs/adr/0005-hses-oauth2-integration-backend.md"
+      }
+    },
+    {
+      "id": "integration.hsesData",
+      "class": "externalIntegration",
+      "name": "HSES recipient data",
+      "description": "Source of grantee and recipient data retrieved over HTTPS.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "HSES_DATA_FILE_URL" },
+      "authorization": { "type": "boundaryDiagram", "reference": "docs/boundary_diagram.md" }
+    },
+    {
+      "id": "integration.itamsSftp",
+      "class": "externalIntegration",
+      "name": "ITAMS SFTP",
+      "description": "SFTP source for monitoring and CLASS data files.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "ITAMS_MD_HOST" },
+      "authorization": { "type": "boundaryDiagram", "reference": "docs/boundary_diagram.md" }
+    },
+    {
+      "id": "integration.smtp",
+      "class": "externalIntegration",
+      "name": "AWS SES SMTP",
+      "description": "Outbound email delivery for user notifications, with bounce and complaint handling through SNS.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "SMTP_HOST" },
+      "authorization": { "type": "boundaryDiagram", "reference": "docs/boundary_diagram.md" }
+    },
+    {
+      "id": "integration.newRelic",
+      "class": "externalIntegration",
+      "name": "New Relic",
+      "description": "Application performance monitoring, log forwarding, and health check alerting.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "NEW_RELIC_APP_NAME" },
+      "authorization": { "type": "adr", "reference": "docs/adr/0011-monitoring.md" }
+    },
+    {
+      "id": "integration.googleTagManager",
+      "class": "externalIntegration",
+      "name": "Google Tag Manager and Google Analytics",
+      "description": "Web analytics tagging. Sends non PII traffic data only.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "REACT_APP_GTM_ID" },
+      "authorization": { "type": "adr", "reference": "docs/adr/0014-web-analytics.md" }
+    },
+    {
+      "id": "integration.smartsheet",
+      "class": "externalIntegration",
+      "name": "Smartsheet",
+      "description": "Smartsheet API integration. SMARTSHEET_ENDPOINT is empty in production, so the integration is configured but inactive there.",
+      "owner": "TTA Hub Engineering",
+      "tier": "attested",
+      "locator": { "type": "externalEndpoint", "value": "SMARTSHEET_ENDPOINT" },
+      "authorization": {
+        "type": "none",
+        "reference": "none",
+        "note": "Not present in docs/boundary_diagram.md and no ADR covers it. Requires disposition."
+      },
+      "notes": "See disposition INV-2026-0006."
+    }
+  ]
+}

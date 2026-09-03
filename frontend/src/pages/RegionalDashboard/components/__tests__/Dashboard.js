@@ -25,7 +25,7 @@ describe('Dashboard - monitoring date filter expansion', () => {
     userHasOnlyOneRegion: false,
   };
 
-  it('expands startDate filter into both startDate and reportDeliveryDate for monitoring', () => {
+  it('expands startDate filter into startDate, completeDate, and reportDeliveryDate for monitoring', () => {
     const filters = [
       {
         id: 'date-1',
@@ -40,11 +40,12 @@ describe('Dashboard - monitoring date filter expansion', () => {
     expect(MonitoringReportDashboard).toHaveBeenCalledTimes(1);
     const passedFilters = MonitoringReportDashboard.mock.calls[0][0].filtersToApply;
 
-    // Should contain both the original startDate filter and a duplicated reportDeliveryDate filter
     const startDateFilters = passedFilters.filter((f) => f.topic === 'startDate');
+    const completeDateFilters = passedFilters.filter((f) => f.topic === 'completeDate');
     const reportDeliveryDateFilters = passedFilters.filter((f) => f.topic === 'reportDeliveryDate');
 
     expect(startDateFilters).toHaveLength(1);
+    expect(completeDateFilters).toHaveLength(1);
     expect(reportDeliveryDateFilters).toHaveLength(1);
 
     expect(startDateFilters[0]).toEqual({
@@ -59,9 +60,15 @@ describe('Dashboard - monitoring date filter expansion', () => {
       condition: 'is within',
       query: '2025/01/01-2025/06/30',
     });
+
+    expect(completeDateFilters[0]).toEqual({
+      topic: 'completeDate',
+      condition: 'is within',
+      query: '2025/01/01-2025/06/30',
+    });
   });
 
-  it('expands array startDate queries into multiple reportDeliveryDate entries', () => {
+  it('expands array startDate queries into multiple generated date entries', () => {
     const filters = [
       {
         id: 'date-2',
@@ -76,10 +83,12 @@ describe('Dashboard - monitoring date filter expansion', () => {
     const passedFilters = MonitoringReportDashboard.mock.calls[0][0].filtersToApply;
 
     const startDateFilters = passedFilters.filter((f) => f.topic === 'startDate');
+    const completeDateFilters = passedFilters.filter((f) => f.topic === 'completeDate');
     const reportDeliveryDateFilters = passedFilters.filter((f) => f.topic === 'reportDeliveryDate');
 
     // Array queries expand each element individually
     expect(startDateFilters).toHaveLength(2);
+    expect(completeDateFilters).toHaveLength(2);
     expect(reportDeliveryDateFilters).toHaveLength(2);
 
     expect(reportDeliveryDateFilters[0]).toEqual({
@@ -93,9 +102,21 @@ describe('Dashboard - monitoring date filter expansion', () => {
       condition: 'is within',
       query: '2025/04/01-2025/06/30',
     });
+
+    expect(completeDateFilters[0]).toEqual({
+      topic: 'completeDate',
+      condition: 'is within',
+      query: '2025/01/01-2025/03/31',
+    });
+
+    expect(completeDateFilters[1]).toEqual({
+      topic: 'completeDate',
+      condition: 'is within',
+      query: '2025/04/01-2025/06/30',
+    });
   });
 
-  it('does not add reportDeliveryDate for non-startDate filters in monitoring', () => {
+  it('does not add hidden date filters for non-startDate filters in monitoring', () => {
     const filters = [
       {
         id: 'region-1',
@@ -110,11 +131,12 @@ describe('Dashboard - monitoring date filter expansion', () => {
     const passedFilters = MonitoringReportDashboard.mock.calls[0][0].filtersToApply;
 
     const reportDeliveryDateFilters = passedFilters.filter((f) => f.topic === 'reportDeliveryDate');
+    const completeDateFilters = passedFilters.filter((f) => f.topic === 'completeDate');
     expect(reportDeliveryDateFilters).toHaveLength(0);
+    expect(completeDateFilters).toHaveLength(0);
   });
 
-  it('does not expand startDate into reportDeliveryDate for non-monitoring report types', () => {
-    // expandFilters (used for non-monitoring) does not duplicate startDate as reportDeliveryDate
+  it('does not expand startDate into hidden date filters for non-monitoring report types', () => {
     const { expandFilters } = require('../../../../utils');
 
     const filters = [
@@ -128,6 +150,8 @@ describe('Dashboard - monitoring date filter expansion', () => {
 
     const expanded = expandFilters(filters);
     const reportDeliveryDateFilters = expanded.filter((f) => f.topic === 'reportDeliveryDate');
+    const completeDateFilters = expanded.filter((f) => f.topic === 'completeDate');
     expect(reportDeliveryDateFilters).toHaveLength(0);
+    expect(completeDateFilters).toHaveLength(0);
   });
 });

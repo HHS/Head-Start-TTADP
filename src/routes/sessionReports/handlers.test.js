@@ -1,15 +1,18 @@
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
-import { findEventByDbId, findEventBySmartsheetId } from '../../services/event';
+import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
   findSessionById,
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
   updateSession,
 } from '../../services/sessionReports';
 import { userById } from '../../services/users';
@@ -25,7 +28,11 @@ import {
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
+jest.mock('../../policies/recipient');
 jest.mock('../../services/sessionReports');
+jest.mock('../../services/recipient', () => ({
+  recipientById: jest.fn(),
+}));
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
@@ -54,11 +61,14 @@ describe('session report handlers', () => {
     data: {},
   };
 
+  const mockStatusSend = jest.fn();
+  const mockStatusEnd = jest.fn();
+
   const mockResponse = {
     send: jest.fn(),
     status: jest.fn(() => ({
-      send: jest.fn(),
-      end: jest.fn(),
+      send: mockStatusSend,
+      end: mockStatusEnd,
     })),
     sendStatus: jest.fn(),
     json: jest.fn(),
@@ -68,6 +78,8 @@ describe('session report handlers', () => {
   beforeEach(() => {
     mockResponse.status.mockClear();
     mockResponse.send.mockClear();
+    mockStatusSend.mockClear();
+    mockStatusEnd.mockClear();
   });
 
   afterAll(async () => {
@@ -127,6 +139,60 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue(completedEventSession);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockStatusSend).toHaveBeenCalledWith({
+        message: 'Sessions on completed training events cannot be edited.',
+      });
+    });
+
+    it('returns 403 with completed session event data status', async () => {
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: { status: 'Complete' } },
+      });
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockStatusSend).toHaveBeenCalledWith({
+        message: 'Sessions on completed training events cannot be edited.',
+      });
+    });
+
+    it('does not return 403 when the session event is undefined', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: undefined,
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('does not return 403 when the session event data is undefined', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: undefined },
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('does not return 403 when the session event status is not complete', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: { status: 'In Progress' } },
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('returns 403 when event is complete', async () => {
@@ -205,6 +271,42 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('allows a POC to create a session for a regional PD with national centers event', async () => {
+      const pocEvent = {
+        ...mockEvent,
+        eventId: 'R01-PD-100',
+        data: {
+          eventId: 'R01-PD-100',
+          eventName: 'Regional PD Event (with National Centers)',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      };
+      const createdSession = {
+        ...mockSession,
+        eventId: pocEvent.id,
+      };
+
+      findEventBySmartsheetId.mockResolvedValue(pocEvent);
+      EventReport.mockImplementation(() => ({
+        canCreateSession: () => true,
+      }));
+      createSession.mockResolvedValue(createdSession);
+
+      await createHandler(mockRequest, mockResponse);
+
+      expect(createSession).toHaveBeenCalledWith({
+        eventId: pocEvent.id,
+        data: {
+          ...mockRequest.body.data,
+          eventName: pocEvent.data.eventName,
+          eventDisplayId: pocEvent.eventId,
+          regionId: pocEvent.regionId,
+          eventOwner: pocEvent.ownerId,
+        },
+      });
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
     it('returns 400 when there is no body', async () => {
       await createHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -245,7 +347,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       updateSession.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -256,7 +358,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       updateSession.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -267,7 +369,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => false,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -289,7 +391,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canDeleteSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -302,7 +404,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canDeleteSession: () => false,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -311,14 +413,65 @@ describe('session report handlers', () => {
 
   describe('getParticipants', () => {
     it('returns participants', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants({ params: { id: 1 } }, mockResponse);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(42);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
+    it('returns 404 when session is not found', async () => {
+      findSessionById.mockResolvedValue(null);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockStatusSend).toHaveBeenCalledWith({ message: 'Session not found' });
+    });
+
+    it('returns 404 when event is not found', async () => {
+      findSessionById.mockResolvedValue(mockSession);
+      findEventBySmartsheetId.mockResolvedValue(null);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockStatusSend).toHaveBeenCalledWith({ message: 'Event not found' });
+    });
+
+    it('returns 403 when user cannot edit session', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => false,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
     it('handles errors', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
-      await getParticipants({ params: { id: 1 } }, mockResponse);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
@@ -334,6 +487,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 1',
           startDate: '2024-01-01',
           endDate: '2024-01-02',
+          participantCount: 13,
+          deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
         },
         {
@@ -343,6 +498,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 2',
           startDate: '2024-01-03',
           endDate: '2024-01-04',
+          participantCount: 8,
+          deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
         },
       ],
@@ -382,6 +539,25 @@ describe('session report handlers', () => {
           limit: 10,
           format: 'json',
         })
+      );
+    });
+
+    it('uses the authenticated user ID when the query includes a user ID', async () => {
+      setTrainingReportReadRegions.mockResolvedValue({
+        userId: 'another-user',
+        'myReports.in[]': 'TR POC',
+      });
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithUserIdFilter = {
+        session: { userId: 1 },
+        query: { userId: 'another-user', 'myReports.in[]': 'TR POC' },
+      };
+
+      await getSessionReportsHandler(requestWithUserIdFilter, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 1, 'myReports.in[]': 'TR POC' })
       );
     });
 
@@ -433,6 +609,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Session Start Date');
       expect(csvOutput).toContain('Session End Date');
       expect(csvOutput).toContain('Topics');
+      expect(csvOutput).toContain('Participant Count');
+      expect(csvOutput).toContain('Delivery type');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -441,6 +619,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-01');
       expect(csvOutput).toContain('Topic 1');
       expect(csvOutput).toContain('Topic 2');
+      expect(csvOutput).toContain('13');
+      expect(csvOutput).toContain('hybrid');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');
@@ -448,6 +628,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-03');
       expect(csvOutput).toContain('2024-01-04');
       expect(csvOutput).toContain('Topic 3');
+      expect(csvOutput).toContain('8');
+      expect(csvOutput).toContain('virtual');
     });
 
     it('supports sorting by event fields (eventId, eventName)', async () => {
@@ -501,6 +683,60 @@ describe('session report handlers', () => {
       await getSessionReportsHandler(mockRequest, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+
+    it('uses recipient-specific service and skips region scoping when recipientId is provided and user is authorized', async () => {
+      recipientById.mockResolvedValue({ id: 123, grants: [{ regionId: 1 }] });
+      userById.mockResolvedValue({ id: 1, permissions: [] });
+      RecipientPolicy.mockImplementation(() => ({ canViewTrainingReports: () => true }));
+      getSessionReportsByRecipient.mockResolvedValue(mockTrainingReportResponse);
+      const readRegionCallsBefore = setTrainingReportReadRegions.mock.calls.length;
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: {
+          recipientId: '123',
+          'region.in': ['1'],
+        },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(setTrainingReportReadRegions.mock.calls.length).toBe(readRegionCallsBefore);
+      expect(getSessionReportsByRecipient).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientId: '123' })
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(mockTrainingReportResponse);
+    });
+
+    it('returns 404 when recipientId does not resolve to a recipient', async () => {
+      recipientById.mockResolvedValue(null);
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: { recipientId: '123' },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when user is not authorized to view the recipient training reports', async () => {
+      recipientById.mockResolvedValue({ id: 123, grants: [{ regionId: 1 }] });
+      userById.mockResolvedValue({ id: 1, permissions: [] });
+      RecipientPolicy.mockImplementation(() => ({ canViewTrainingReports: () => false }));
+
+      const requestWithRecipient = {
+        session: { userId: 1 },
+        query: { recipientId: '123' },
+      };
+
+      await getSessionReportsHandler(requestWithRecipient, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
     });
   });
 });

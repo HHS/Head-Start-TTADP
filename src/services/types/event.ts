@@ -10,6 +10,9 @@ export type SessionShape = {
   id: number;
   eventId?: number;
   approverId?: number;
+  // Dedicated columns; single source of truth for session dates (YYYY-MM-DD).
+  startDate?: string | null;
+  endDate?: string | null;
   data: {
     sessionName: string;
     status: string;
@@ -23,6 +26,10 @@ export type SessionShape = {
     nextSteps: { completeDate: string; note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
+    ownerComplete?: boolean;
+    ownerCompleteId?: number;
+    ownerCompleteDate?: string;
+    facilitation?: string;
     objectiveTrainers: string[];
   };
   submitterId: number | null;
@@ -31,21 +38,13 @@ export type SessionShape = {
   updatedAt?: string;
 };
 
-type EventReportPilotNationalCenterUserType = {
-  id: number;
-  eventReportPilotId: number;
-  nationalCenterId: number;
-  nationalCenterName: string;
-  userName: string;
-  userId: number;
-};
-
 export type EventShape = {
   id: number;
   ownerId: number;
   pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
+  eventId: string;
   data: {
     startDate: string;
     endDate: string;
@@ -54,6 +53,7 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
+    additionalRegions?: string[];
     eventOrganizer?:
       | 'Regional TTA Hosted Event (no National Centers)'
       | 'Regional PD Event (with National Centers)';
@@ -72,6 +72,7 @@ export type CreateEventRequest = {
   data: {
     owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
+    eventId: string;
   };
 };
 

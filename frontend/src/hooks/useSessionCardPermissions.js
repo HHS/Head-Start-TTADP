@@ -1,6 +1,7 @@
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import { isNationalCenterFacilitator, isSessionSubmitted } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 
@@ -13,17 +14,13 @@ export default function useSessionCardPermissions({
   eventOrganizer,
 }) {
   const { approverId } = session;
-  const { status, pocComplete, collabComplete, facilitation } = session.data;
+  const { status, pocComplete, collabComplete, ownerComplete, facilitation } = session.data;
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
   const isSessionApprover = user.id === Number(approverId);
 
   const showSessionEdit = useMemo(() => {
-    const submitted = !!(pocComplete && collabComplete && approverId);
-    const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
-    const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
-    // eslint-disable-next-line max-len
     const isRegionalNoNationalCenters =
       eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
     // eslint-disable-next-line max-len
@@ -32,6 +29,18 @@ export default function useSessionCardPermissions({
     const facilitationIncludesRegion =
       facilitation === 'regional_tta_staff' || facilitation === 'both';
     const facilitationIsNationalCenters = facilitation === 'national_center';
+    const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
+
+    const submitted = isSessionSubmitted({
+      eventOrganizer,
+      facilitation,
+      pocComplete,
+      ownerComplete,
+      collabComplete,
+      approverId,
+    });
+    const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+    const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
 
     // Admin override - can edit until event is complete
     if (isAdminUser) {
@@ -60,14 +69,18 @@ export default function useSessionCardPermissions({
       !(pocComplete && !statusIsNeedsAction) &&
       !(facilitationIsNationalCenters && statusIsNeedsAction);
 
-    // For EDIT permissions, owners are treated identically to collaborators.
-    // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
-    const ownerOrCollabCanEdit =
-      (isCollaborator || isOwner) &&
-      !(collabComplete && !statusIsNeedsAction) &&
+    const ownerSideComplete = isNationalCenterFlow ? !!ownerComplete : !!collabComplete;
+    const collabSideComplete = !!collabComplete;
+    const ownerCanEdit =
+      isOwner &&
+      !(ownerSideComplete && !statusIsNeedsAction) &&
+      !(isRegionalWithNationalCenters && facilitationIncludesRegion);
+    const collabCanEdit =
+      isCollaborator &&
+      !(collabSideComplete && !statusIsNeedsAction) &&
       !(isRegionalWithNationalCenters && facilitationIncludesRegion);
 
-    return pocCanEdit || ownerOrCollabCanEdit;
+    return pocCanEdit || ownerCanEdit || collabCanEdit;
   }, [
     status,
     eventOrganizer,
@@ -78,6 +91,7 @@ export default function useSessionCardPermissions({
     isAdminUser,
     isCollaborator,
     collabComplete,
+    ownerComplete,
     eventStatus,
     isOwner,
     approverId,

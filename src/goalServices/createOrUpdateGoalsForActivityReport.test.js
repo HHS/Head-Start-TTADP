@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from '../constants';
@@ -16,12 +16,13 @@ import db, {
 } from '../models';
 import { createOrUpdateGoalsForActivityReport } from './goals';
 
+const mockUserUniqueId = faker.string.alphanumeric(12);
 const mockUser = {
-  id: faker.datatype.number(),
+  id: faker.number.int({ min: 10000000, max: 10000000 + 99999 }),
   homeRegionId: 1,
-  name: 'user1134265161',
-  hsesUsername: 'user1134265161',
-  hsesUserId: 'user1134265161',
+  name: `user${mockUserUniqueId}`,
+  hsesUsername: `user${mockUserUniqueId}`,
+  hsesUserId: `user${mockUserUniqueId}`,
   lastLogin: new Date(),
 };
 
@@ -59,16 +60,16 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
   let grants = [
     {
-      id: faker.datatype.number(),
-      number: faker.random.alphaNumeric(5),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
       startDate: new Date(),
       endDate: new Date(),
     },
     {
-      id: faker.datatype.number(),
-      number: faker.random.alphaNumeric(5),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
       startDate: new Date(),
@@ -92,8 +93,8 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
     recipient = await Recipient.create({
       name: 'recipient',
-      id: faker.datatype.number(),
-      uei: faker.datatype.string(12),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      uei: faker.string.sample(12),
     });
 
     grants = await Promise.all(

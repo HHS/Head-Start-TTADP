@@ -812,6 +812,22 @@ export async function getGoalsByActivityRecipient(
         ),
         'isFei',
       ],
+      [
+        sequelize.literal(`
+          EXISTS (
+            SELECT 1
+            FROM "ActivityReportGoals" arg
+            JOIN "ActivityReports" ar ON ar.id = arg."activityReportId"
+            WHERE arg."goalId" = "Goal"."id"
+              AND ar."calculatedStatus" IN (
+                '${REPORT_STATUSES.DRAFT}',
+                '${REPORT_STATUSES.SUBMITTED}',
+                '${REPORT_STATUSES.NEEDS_ACTION}'
+              )
+          )
+        `),
+        'hasActiveActivityReports',
+      ],
     ],
     where: goalWhere,
     include: [
@@ -1006,6 +1022,7 @@ export async function getGoalsByActivityRecipient(
       createdVia: current.createdVia,
       collaborators: [],
       onAR: current.onAR,
+      hasActiveActivityReports: current.dataValues.hasActiveActivityReports,
       responses: current.responses,
       isFei: current.dataValues.isFei,
     };

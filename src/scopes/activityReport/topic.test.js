@@ -62,18 +62,18 @@ describe('topic filtersToScopes', () => {
 
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 64000 }),
-        name: faker.random.alphaNumeric(6),
-        uei: faker.datatype.string(12),
+        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+        name: faker.string.alphanumeric(6),
+        uei: faker.string.sample(12),
       });
 
       // Grant.
       grant = await Grant.create({
         number: recipient.id,
         recipientId: recipient.id,
-        programSpecialistName: faker.name.firstName(),
+        programSpecialistName: faker.person.firstName(),
         regionId: 1,
-        id: faker.datatype.number({ min: 64000 }),
+        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
       });
 
       // Goal.
@@ -83,7 +83,7 @@ describe('topic filtersToScopes', () => {
         timeframe: '12 months',
         grantId: grant.id,
         isFromSmartsheetTtaPlan: false,
-        id: faker.datatype.number({ min: 64000 }),
+        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
       });
 
       // Objective.

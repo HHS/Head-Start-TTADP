@@ -1,10 +1,13 @@
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
+import parseDate from '../lib/date';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import type {
+  GetSessionReportsForRecipientParams,
   GetSessionReportsParams,
   GetSessionReportsResponse,
   SessionReportShape,
@@ -18,12 +21,45 @@ const {
   SessionReportPilotSupportingAttachment,
   SessionReportPilotGoalTemplate,
   SessionReportPilotTrainer,
+  Grant,
 } = db;
 
 type WhereOptions = {
   id?: number;
   eventId?: number;
   data?: unknown;
+};
+
+// Hydrated associations (the parent event record and the approver user record)
+// are returned to the client as separate associations and must never be persisted
+// back into the session's JSONB `data` column. Storing them creates a stale,
+// duplicate source of truth. This is a server-side backstop so no client payload
+// can reintroduce the duplication regardless of how the form serializes its state.
+export const SESSION_ASSOCIATION_KEYS = ['approver', 'event'] as const;
+
+export const removeAssociationsFromData = (data: unknown): Record<string, unknown> => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
+  }
+
+  const cleaned: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  for (const key of SESSION_ASSOCIATION_KEYS) {
+    delete cleaned[key];
+  }
+  return cleaned;
+};
+
+const normalizeStates = (states: string[] | undefined): string[] => {
+  return (states || [])
+    .map((state: string) => {
+      const match = state.match(/\(([^)]+)\)/);
+      const key = match ? match[1] : state;
+      const normalizedState = ALL_STATES_FLATTENED.find((s: { label: string; value: string }) =>
+        s.label.includes(key)
+      );
+      return normalizedState?.value || null;
+    })
+    .filter((code: string | null) => code !== null) as string[];
 };
 
 const userInclude = (as: string) => ({
@@ -120,8 +156,8 @@ export async function findSessionHelper(
       'approverId',
       'submitterId',
       'submitted',
-      // eslint-disable-next-line @typescript-eslint/quotes
-      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+      'startDate',
+      'endDate',
     ],
     where,
     order: [['startDate', 'ASC']],
@@ -162,15 +198,37 @@ export async function findSessionHelper(
   }
 
   if (Array.isArray(session)) {
-    return session;
+    return (session as Model[]).map((s) => {
+      const sd = s.get('startDate') as string | null;
+      const ed = s.get('endDate') as string | null;
+      return {
+        ...s.get({ plain: true }),
+        data: {
+          ...((s.get('data') as Record<string, unknown>) ?? {}),
+          startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+          endDate: ed ? moment(ed, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+        },
+      };
+    }) as unknown as SessionReportShape[];
   }
 
-  const eventId = session.event ? session.event.data.eventId : null;
+  const eventId = session?.event?.eventId ?? null;
+
+  const startDate = session?.startDate
+    ? moment(session.startDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+  const endDate = session?.endDate
+    ? moment(session.endDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
 
   return {
     id: session?.id,
     eventId,
-    data: session?.data ?? {},
+    data: {
+      ...((session?.data as Record<string, unknown>) ?? {}),
+      startDate,
+      endDate,
+    },
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     goalTemplates: session?.goalTemplates ?? [],
@@ -196,14 +254,20 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
+  const cleanData = removeAssociationsFromData(data);
+  const { startDate, endDate, ...restData } = cleanData;
+
   const created = await SessionReportPilot.create(
     {
       eventId: event.id,
+      startDate: parseDate(startDate as string),
+      endDate: parseDate(endDate as string),
       data: cast(
         JSON.stringify({
-          ...data,
+          ...restData,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
+          additionalRegions: event.data.additionalRegions || [],
         }),
         'jsonb'
       ),
@@ -232,19 +296,39 @@ export async function updateSession(id: number, request) {
     data: { approverId, goalTemplates, submitterId, trainers, ...data },
   } = request;
 
-  // Combine existing session data with new data.
-  const existingData = session.data;
-  const newData = { ...existingData, ...data };
+  // Combine existing session data with new data. The dedicated startDate/endDate
+  // columns are the source of truth; the JSONB `data` keeps a mirror that is
+  // re-derived from the columns on read (see findSessionHelper).
+  const existingData = session.data as Record<string, unknown>;
+  const { startDate, endDate, ...restExistingData } = existingData;
+  const cleanIncomingData = removeAssociationsFromData(data);
+  const {
+    startDate: incomingStartDate,
+    endDate: incomingEndDate,
+    ...restIncomingData
+  } = cleanIncomingData;
+  const newData = { ...restExistingData, ...restIncomingData };
 
   const event = await findEventBySmartsheetId(eventId);
 
+  const hasStartDate = Object.hasOwn(cleanIncomingData, 'startDate');
+  const hasEndDate = Object.hasOwn(cleanIncomingData, 'endDate');
+
   const update = {
     eventId: event.id,
+    startDate: hasStartDate
+      ? (parseDate(incomingStartDate as string | null | undefined) as Date | null)
+      : (session.get('startDate') as unknown as Date | null),
+    endDate: hasEndDate
+      ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
+      : (session.get('endDate') as unknown as Date | null),
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
     approverId?: number;
     submitterId?: number;
+    startDate?: Date | null;
+    endDate?: Date | null;
     data: Cast;
   };
 
@@ -275,16 +359,9 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id)
-    );
-  }
-
-  if (trainers) {
-    await updateSessionReportRelatedModels(
-      id,
-      SessionReportPilotTrainer,
-      'userId',
-      trainers.map((trainer: { id: number }) => trainer.id)
+      trainers
+        .map((trainer: { id: number | 'other' }) => trainer.id)
+        .filter((id: number | 'other') => id !== 'other')
     );
   }
 
@@ -300,24 +377,45 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 }
 
 export async function getPossibleSessionParticipants(
-  regionId: number,
-  states?: string[]
+  sessionReportId: number
 ): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
   } as {
     status: string;
-    regionId?: number;
+    regionId?: { [Op.in]: number[] };
     [Op.or]?: {
-      regionId?: number;
+      regionId?: { [Op.in]: number[] };
       '$grants.stateCode$'?: string[];
     }[];
   };
 
+  const event = await db.EventReportPilot.findOne({
+    attributes: ['data', 'regionId'],
+    include: [
+      {
+        model: db.SessionReportPilot,
+        as: 'sessionReports',
+        attributes: [],
+        where: { id: sessionReportId },
+        required: true,
+      },
+    ],
+  });
+
+  const regionId = event?.regionId;
+  const additionalRegions = event?.data?.additionalRegions;
+  const states = normalizeStates(event?.data?.additionalStates);
+
+  const whereRegions = [regionId, ...(additionalRegions || [])];
+
   if (states && states.length > 0) {
-    where[Op.or] = [{ regionId }, { '$grants.stateCode$': states }];
+    where[Op.or] = [
+      { regionId: { [Op.in]: whereRegions.map(Number) } },
+      { '$grants.stateCode$': states },
+    ];
   } else {
-    where.regionId = regionId;
+    where.regionId = { [Op.in]: whereRegions.map(Number) };
   }
 
   return db.Recipient.findAll({
@@ -328,7 +426,7 @@ export async function getPossibleSessionParticipants(
         where,
         model: db.Grant,
         as: 'grants',
-        attributes: ['id', 'name', 'number'],
+        attributes: ['id', 'name', 'number', 'regionId', 'stateCode'],
         include: [
           {
             model: db.Recipient,
@@ -346,64 +444,52 @@ export async function getPossibleSessionParticipants(
   });
 }
 
-/**
- * Builds a SQL CASE expression that casts a JSONB date string field to a proper date,
- * handling the inconsistent formats found in production data:
- *   YYYY-MM-DD  (ISO — direct cast, strict match)
- *   M/D/YY or MM/DD/YY  (short year — TO_DATE MM/DD/YY)
- *   M/D/YYYY or MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY)
- *   null / ''   (guarded by NULLIF → NULL)
- *   any other value (unrecognized format → NULL to prevent sort errors)
- */
-function sessionReportDateSort(field: string): string {
-  const col = `"SessionReportPilot".data->>'${field}'`;
-  return `CASE
-    WHEN NULLIF(${col}, '') IS NULL THEN NULL
-    WHEN ${col} ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN (${col})::date
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${col}, 'MM/DD/YYYY')
-    ELSE NULL
-  END`;
+function removeRegionFilters(filters: Record<string, unknown>): Record<string, unknown> {
+  return Object.keys(filters || {}).reduce((acc, key) => {
+    if (key === 'region.in' || key === 'region.in[]' || key === 'region.nin') {
+      return acc;
+    }
+
+    return {
+      ...acc,
+      [key]: filters[key],
+    };
+  }, {});
 }
 
-/**
- * Get training reports (sessions) with pagination, sorting, and filtering
- * @param params Query parameters including pagination, sorting, filtering, and format
- * @returns JSON object with count and rows
- */
-export async function getSessionReports(
-  params: GetSessionReportsParams
-): Promise<GetSessionReportsResponse> {
-  const {
-    sortBy = 'id',
-    sortDir = 'DESC',
-    offset = 0,
-    limit = 10,
-    format = 'json',
-    ...filterParams
-  } = params;
+function recipientGrantFilter(grantIds: number[]) {
+  return sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements("SessionReportPilot"."data"->'recipients') elem
+    WHERE (
+      jsonb_typeof(elem->'value') = 'number'
+      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
+    )
+    AND (elem->>'value')::integer IN (${grantIds.join(', ')})
+  )`);
+}
 
-  // Map frontend column header keys to backend sort keys
-  // The frontend HorizontalTableWidget sends displayName.replaceAll(' ', '_') as sortBy
-  const sortByAliases: Record<string, string> = {
-    Session_name: 'sessionName',
-    Session_start_date: 'startDate',
-    Session_end_date: 'endDate',
-    Event_ID: 'eventId',
-    Event_title: 'eventName',
-    Supporting_goals: 'supportingGoals',
-    Topics: 'topics',
-  };
+// Map frontend column header keys (HorizontalTableWidget sends displayName.replaceAll(' ', '_')) to backend sort keys
+const sessionReportSortByAliases: Record<string, string> = {
+  Session_name: 'sessionName',
+  Session_start_date: 'startDate',
+  Session_end_date: 'endDate',
+  Event_ID: 'eventId',
+  Event_title: 'eventName',
+  Supporting_goals: 'supportingGoals',
+  Topics: 'topics',
+};
 
-  const resolvedSortBy = sortByAliases[sortBy] || sortBy;
+function sessionReportOrderClause(sortBy: string, sortDir: string) {
+  const resolvedSortBy = sessionReportSortByAliases[sortBy] || sortBy;
 
   // Define allowed sort columns with their actual database paths
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
-    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
-    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
+    endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
+    eventId: ['event', 'eventId'],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [
       sequelize.literal(
@@ -415,11 +501,60 @@ export async function getSessionReports(
 
   // Use the requested sort column or default to id descending
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
-  const orderClause = [[...sortEntry, sortDir]];
+  return [[...sortEntry, sortDir]];
+}
+
+const sessionReportAttributes = [
+  'id',
+  [sequelize.literal('"event"."eventId"'), 'eventId'],
+  [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
+  'startDate',
+  'endDate',
+  [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
+  [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
+  [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
+  [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  [
+    sequelize.literal(`CASE
+      WHEN "SessionReportPilot"."data"->>'deliveryMethod' = 'hybrid' THEN
+        COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsInPerson')::integer, 0)
+        + COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsVirtually')::integer, 0)
+      ELSE ("SessionReportPilot"."data"->>'numberOfParticipants')::integer
+    END`),
+    'participantCount',
+  ],
+];
+
+/**
+ * Shared implementation backing getSessionReports and getSessionReportsByRecipient.
+ * `extraWhereClauses` allows callers (e.g. the recipient-scoped variant) to layer
+ * additional restrictions onto both the ID-selection query and the final data query.
+ */
+async function fetchSessionReports(
+  filterParams: Record<string, unknown>,
+  {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10 as number | 'all',
+    extraWhereClauses = [] as unknown[],
+    userId,
+  }: {
+    sortBy?: string;
+    sortDir?: string;
+    offset?: number;
+    limit?: number | 'all';
+    extraWhereClauses?: unknown[];
+    userId?: number;
+  }
+): Promise<GetSessionReportsResponse> {
+  const orderClause = sessionReportOrderClause(sortBy, sortDir);
 
   // Get scopes from filters
   const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
-    await filtersToScopes(filterParams, {});
+    await filtersToScopes(filterParams, { userId });
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -439,58 +574,19 @@ export async function getSessionReports(
     },
   });
 
-  // Build query options
-  const queryOptions = {
-    attributes: [
-      'id',
-      [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
-      [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
-      [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
-      [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
-      [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
-      [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
-      [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
-      [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
-      [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
-    ],
-    where: {
-      eventId: events.map(({ id }) => id),
-      data: {
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-      },
+  const baseWhere = {
+    eventId: events.map(({ id }) => id),
+    data: {
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
     },
-    include: [
-      {
-        model: EventReportPilot,
-        as: 'event',
-        attributes: [],
-        required: true,
-      },
-      {
-        model: db.GoalTemplate,
-        as: 'goalTemplates',
-        attributes: ['standard'],
-        through: { attributes: [] },
-        required: false,
-      },
-    ],
-    order: orderClause,
-    subQuery: true,
-    distinct: true,
-  } as Record<string, unknown>;
-
-  queryOptions.offset = offset;
-
-  if (limit !== 'all') {
-    queryOptions.limit = limit;
-  }
+  };
 
   // First get the IDs of sessions for this page (without the goalTemplates join
   // which inflates row counts and breaks LIMIT/OFFSET)
   const idQuery = {
     attributes: ['id'],
     where: {
-      [Op.and]: [queryOptions.where, ...sessionReportScopes],
+      [Op.and]: [baseWhere, ...sessionReportScopes, ...extraWhereClauses],
     },
     include: [
       {
@@ -514,11 +610,25 @@ export async function getSessionReports(
 
   // Now fetch full data for just those IDs (with goalTemplates)
   const result = await SessionReportPilot.findAll({
-    attributes: queryOptions.attributes,
+    attributes: sessionReportAttributes,
     where: {
-      [Op.and]: [{ id: sessionIds }, ...sessionReportScopes],
+      [Op.and]: [{ id: sessionIds }, ...sessionReportScopes, ...extraWhereClauses],
     },
-    include: queryOptions.include,
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: [],
+        required: true,
+      },
+      {
+        model: db.GoalTemplate,
+        as: 'goalTemplates',
+        attributes: ['standard'],
+        through: { attributes: [] },
+        required: false,
+      },
+    ],
     order: orderClause,
     subQuery: false,
   });
@@ -538,6 +648,8 @@ export async function getSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
+      participantCount: plain.participantCount,
+      deliveryMethod: plain.deliveryMethod,
     };
   });
 
@@ -545,4 +657,77 @@ export async function getSessionReports(
     count,
     rows,
   };
+}
+
+/**
+ * Get training reports (sessions) with pagination, sorting, and filtering
+ * @param params Query parameters including pagination, sorting, filtering, and format
+ * @returns JSON object with count and rows
+ */
+export async function getSessionReports(
+  params: GetSessionReportsParams
+): Promise<GetSessionReportsResponse> {
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    userId,
+    ...filterParams
+  } = params;
+
+  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit, userId });
+}
+
+/**
+ * Variant of getSessionReports that filters rows to sessions listing grants
+ * from a specific recipient, and ignores any region restrictions.
+ */
+export async function getSessionReportsByRecipient(
+  params: GetSessionReportsForRecipientParams
+): Promise<GetSessionReportsResponse> {
+  const {
+    recipientId,
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    userId,
+    ...filterParams
+  } = params;
+
+  const parsedRecipientId = Number(recipientId);
+  if (!Number.isInteger(parsedRecipientId) || parsedRecipientId <= 0) {
+    throw new Error('recipientId must be a positive integer');
+  }
+
+  const grants = (await Grant.findAll({
+    attributes: ['id'],
+    where: { recipientId: parsedRecipientId },
+    raw: true,
+  })) as { id: number }[];
+
+  // Validate grant ids independently before interpolation into SQL literal.
+  const grantIds = [...new Set(grants.map((g) => Number(g.id)))].filter(
+    (id) => Number.isInteger(id) && id > 0
+  );
+
+  if (grantIds.length === 0) {
+    return {
+      count: 0,
+      rows: [],
+    };
+  }
+
+  // Explicitly ignore all region filters/restrictions for recipient-based query.
+  const regionlessFilterParams = removeRegionFilters(filterParams as Record<string, unknown>);
+
+  return fetchSessionReports(regionlessFilterParams, {
+    sortBy,
+    sortDir,
+    offset,
+    limit,
+    userId,
+    extraWhereClauses: [recipientGrantFilter(grantIds)],
+  });
 }

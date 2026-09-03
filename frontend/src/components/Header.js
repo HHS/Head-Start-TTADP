@@ -9,8 +9,8 @@ import SiteAlert from './SiteAlert';
 function Header({
   authenticated,
   alert,
-  areThereUnreadNotifications,
-  setAreThereUnreadNotifications,
+  areThereUnreadWhatsNewNotifications,
+  setAreThereUnreadWhatsNewNotifications,
 }) {
   const headerClassNames = [
     'smart-hub-header',
@@ -29,11 +29,9 @@ function Header({
   return (
     <header className={headerClassNames.join(' ')} style={{ zIndex: '99' }}>
       {alert && authenticated && (
-        <>
-          <SiteAlert heading={alert.title} variant={alert.variant} size={alert.size}>
-            <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
-          </SiteAlert>
-        </>
+        <SiteAlert heading={alert.title} variant={alert.variant} size={alert.size}>
+          <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
+        </SiteAlert>
       )}
       <div className="display-flex flex-row flex-align-center flex-justify padding-x-2">
         <div className="display-flex flex-align-center">
@@ -53,8 +51,8 @@ function Header({
         </div>
         <div className="flex-column flex-align-self-center">
           <HeaderUserMenu
-            areThereUnreadNotifications={areThereUnreadNotifications}
-            setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+            areThereUnreadWhatsNewNotifications={areThereUnreadWhatsNewNotifications}
+            setAreThereUnreadWhatsNewNotifications={setAreThereUnreadWhatsNewNotifications}
           />
         </div>
       </div>
@@ -70,8 +68,8 @@ Header.propTypes = {
     variant: PropTypes.string,
     size: PropTypes.string,
   }),
-  areThereUnreadNotifications: PropTypes.bool.isRequired,
-  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+  areThereUnreadWhatsNewNotifications: PropTypes.bool.isRequired,
+  setAreThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
 };
 
 Header.defaultProps = {

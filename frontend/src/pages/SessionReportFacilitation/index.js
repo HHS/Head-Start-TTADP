@@ -47,7 +47,11 @@ export default function SessionReportFacilitation({ match }) {
       return;
     }
 
-    const trUsers = [...trainingReport.collaboratorIds, trainingReport.owner.id];
+    const trUsers = [
+      ...trainingReport.collaboratorIds,
+      trainingReport.owner.id,
+      ...trainingReport.pocIds,
+    ];
 
     if (!isAdminUser && !trUsers.includes(user.id)) {
       history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
@@ -70,15 +74,15 @@ export default function SessionReportFacilitation({ match }) {
       // we can infer that the user is an the owner, or collaborator
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
-      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
       const isOwner = trainingReport.owner.id === user.id;
+      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
       const { facilitation } = data;
 
       const facilitationIncludesRegion =
         facilitation === 'both' || facilitation === 'regional_tta_staff';
       const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
-      const { eventId } = trainingReport.data;
+      const { eventId } = trainingReport;
 
       const message = {
         messageTemplate: 'sessionCreated',
@@ -93,7 +97,7 @@ export default function SessionReportFacilitation({ match }) {
       }
 
       history.push(`/training-report/${session.eventId}/session/${session.id}`);
-    } catch (err) {
+    } catch (_err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
   };
@@ -108,7 +112,7 @@ export default function SessionReportFacilitation({ match }) {
       <BackLink to={TRAINING_REPORT_URL_NOT_STARTED}>Back to Training Reports</BackLink>
       <h1 className="landing margin-bottom-2">Training Report - Create a session</h1>
       <p className="margin-0 margin-bottom-4 font-serif-md text-normal">
-        {trainingReport.data.eventId}: {trainingReport.data.eventName}
+        {trainingReport.eventId}: {trainingReport.data.eventName}
       </p>
       <Container className="maxw-tablet" paddingX={4} paddingY={5}>
         <h2 className="font-serif-xl margin-top-0 margin-bottom-1">Training facilitation</h2>

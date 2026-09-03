@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../constants';
 import db, {
@@ -18,12 +18,13 @@ import { deleteSpecificActivityReportObjectiveFile } from './files';
 
 jest.mock('bull');
 
+const mockUserUniqueId = faker.string.alphanumeric(12);
 const mockUser = {
-  id: faker.datatype.number(),
+  id: faker.number.int({ min: 10000000, max: 10000000 + 99999 }),
   homeRegionId: 1,
-  name: 'user1134265161',
-  hsesUsername: 'user1134265161',
-  hsesUserId: 'user1134265161',
+  name: `user${mockUserUniqueId}`,
+  hsesUsername: `user${mockUserUniqueId}`,
+  hsesUserId: `user${mockUserUniqueId}`,
   lastLogin: new Date(),
 };
 
@@ -69,8 +70,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
   let arof2;
 
   const mockGrant = {
-    id: faker.datatype.number(),
-    number: faker.random.alphaNumeric(5),
+    id: faker.number.int({ min: 0, max: 99999 }),
+    number: faker.string.alphanumeric(5),
     cdi: false,
     regionId: 1,
     startDate: new Date(),
@@ -84,8 +85,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     // Recipient.
     recipient = await Recipient.create({
       name: 'recipient',
-      id: faker.datatype.number(),
-      uei: faker.datatype.string(12),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      uei: faker.string.sample(12),
     });
 
     // Grant.
@@ -172,69 +173,83 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
 
   afterAll(async () => {
     // Delete ARO File.
-    await ActivityReportObjectiveFile.destroy({
-      where: {
-        fileId: file.id,
-      },
-    });
+    if (file) {
+      await ActivityReportObjectiveFile.destroy({
+        where: {
+          fileId: file.id,
+        },
+      });
+    }
 
     // Delete ARO.
-    await ActivityReportObjective.destroy({
-      where: {
-        activityReportId: [activityReport1.id, activityReport2.id],
-      },
-    });
+    if (activityReport1 && activityReport2) {
+      await ActivityReportObjective.destroy({
+        where: {
+          activityReportId: [activityReport1.id, activityReport2.id],
+        },
+      });
 
-    // Delete ARG.
-    await ActivityReportGoal.destroy({
-      where: {
-        activityReportId: [activityReport1.id, activityReport2.id],
-      },
-    });
+      // Delete ARG.
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [activityReport1.id, activityReport2.id],
+        },
+      });
 
-    // Delete Recipient AR.
-    await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
+      // Delete Recipient AR.
+      await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
+    }
 
     // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goal.id }, force: true });
+    if (goal) {
+      await Objective.destroy({ where: { goalId: goal.id }, force: true });
 
-    // Delete Goal.
-    await Goal.destroy({
-      where: {
-        id: goal.id,
-      },
-      force: true,
-    });
+      // Delete Goal.
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+        force: true,
+      });
+    }
 
     // Delete Grant.
-    await Grant.destroy({
-      where: {
-        id: grant.id,
-      },
-      individualHooks: true,
-    });
+    if (grant) {
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+        individualHooks: true,
+      });
+    }
 
     // Delete Recipient.
-    await Recipient.destroy({
-      where: {
-        id: recipient.id,
-      },
-    });
+    if (recipient) {
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+    }
 
     // Delete file.
-    await File.destroy({
-      where: {
-        id: file.id,
-      },
-      individualHooks: true,
-    });
+    if (file) {
+      await File.destroy({
+        where: {
+          id: file.id,
+        },
+        individualHooks: true,
+      });
+    }
 
     // Delete User.
-    await User.destroy({
-      where: {
-        id: user.id,
-      },
-    });
+    if (user) {
+      await User.destroy({
+        where: {
+          id: user.id,
+        },
+      });
+    }
 
     // Close Conn.
     await db.sequelize.close();

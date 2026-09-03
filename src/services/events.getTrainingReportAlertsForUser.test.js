@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { EventReportPilot, SessionReportPilot, sequelize, User } from '../models';
@@ -10,9 +10,9 @@ jest.mock('bull');
 const regionId = 1;
 
 async function createEvents({
-  ownerId = faker.datatype.number(),
-  collaboratorId = faker.datatype.number(),
-  pocId = faker.datatype.number(),
+  ownerId = faker.number.int({ min: 0, max: 99999 }),
+  collaboratorId = faker.number.int({ min: 0, max: 99999 }),
+  pocId = faker.number.int({ min: 0, max: 99999 }),
 }) {
   // create some events!!!
   const baseEvent = {
@@ -20,9 +20,13 @@ async function createEvents({
     collaboratorIds: [collaboratorId],
     pocIds: [pocId],
     regionId: 1,
+    // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+    // UNIQUE `eventId` column never collides across the many events created below.
+    get eventId() {
+      return `R0${regionId}-TR-${faker.string.uuid()}`;
+    },
     data: {
-      eventName: faker.datatype.string(),
-      eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
+      eventName: faker.string.sample(),
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
@@ -33,7 +37,7 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  await EventReportPilot.create(baseEvent);
+  await EventReportPilot.create({ ...baseEvent, data: { ...baseEvent.data } });
 
   // event with no sessions and a start date of today (Will not appear in alerts)
   await EventReportPilot.create({
@@ -97,7 +101,7 @@ async function createEvents({
   await SessionReportPilot.create({
     eventId: c.id,
     data: {
-      sessionName: faker.datatype.string(),
+      sessionName: faker.string.sample(),
     },
   });
 
@@ -131,11 +135,15 @@ async function createEvents({
   });
 
   // poc incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const f1StartDate = new Date(new Date().setMonth(new Date().getMonth() - 1));
   const f1 = await SessionReportPilot.create({
     eventId: f.id,
+    startDate: f1StartDate,
+    endDate: new Date(),
     data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      sessionName: faker.string.sample(),
+      startDate: f1StartDate,
       endDate: new Date(),
       duration: 'Series',
       objective: 'This is an objective',
@@ -168,11 +176,15 @@ async function createEvents({
   });
 
   // owner incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const g1StartDate = new Date(new Date().setMonth(new Date().getMonth() - 1));
   const g1 = await SessionReportPilot.create({
     eventId: g.id,
+    startDate: g1StartDate,
+    endDate: new Date(),
     data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      sessionName: faker.string.sample(),
+      startDate: g1StartDate,
       endDate: new Date(),
       duration: 'Series',
       objective: 'This is an objective',
@@ -198,7 +210,7 @@ async function createEvents({
     eventId: g.id,
     data: {
       status: TRAINING_REPORT_STATUSES.COMPLETE,
-      sessionName: faker.datatype.string(),
+      sessionName: faker.string.sample(),
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
       duration: 'Series',
@@ -226,14 +238,14 @@ describe('getTrainingReportAlertsForUser', () => {
   });
 
   describe('event owner', () => {
-    const ownerId = faker.datatype.number();
+    const ownerId = faker.number.int({ min: 0, max: 99999 });
     let testData;
     beforeAll(async () => {
       await User.create({
         id: ownerId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
       });
@@ -262,14 +274,14 @@ describe('getTrainingReportAlertsForUser', () => {
   });
 
   describe('event collaborator', () => {
-    const collaboratorId = faker.datatype.number();
+    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
     let testData;
     beforeAll(async () => {
       await User.create({
         id: collaboratorId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
       });
@@ -303,14 +315,14 @@ describe('getTrainingReportAlertsForUser', () => {
     });
   });
   describe('event poc', () => {
-    const pocId = faker.datatype.number();
+    const pocId = faker.number.int({ min: 0, max: 99999 });
     let testData;
     beforeAll(async () => {
       await User.create({
         id: pocId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
       });
@@ -335,6 +347,234 @@ describe('getTrainingReportAlertsForUser', () => {
       expect(alerts.map(({ id }) => id).sort()).toStrictEqual(
         testData.poc.missingSessionInfo.sort()
       );
+    });
+  });
+
+  describe('national center facilitation flow (Regional PD w/ NC + facilitation = national_center)', () => {
+    const ownerId = faker.number.int({ min: 0, max: 99999 });
+    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
+    const pocId = faker.number.int({ min: 0, max: 99999 });
+
+    let eventOwnerMissing;
+    let eventCollabMissing;
+    let eventBothComplete;
+    let eventPocCreated;
+    let sessionOwnerMissing;
+    let sessionCollabMissing;
+    let sessionBothComplete;
+    let sessionPocCreated;
+
+    const oneMonthAgo = () => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    };
+
+    beforeAll(async () => {
+      await User.bulkCreate([
+        {
+          id: ownerId,
+          homeRegionId: regionId,
+          hsesUsername: faker.string.sample(),
+          hsesUserId: faker.string.sample(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+        {
+          id: collaboratorId,
+          homeRegionId: regionId,
+          hsesUsername: faker.string.sample(),
+          hsesUserId: faker.string.sample(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+        {
+          id: pocId,
+          homeRegionId: regionId,
+          hsesUsername: faker.string.sample(),
+          hsesUserId: faker.string.sample(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+      ]);
+
+      const baseEventData = {
+        eventName: faker.string.sample(),
+        eventId: `R0${regionId}-TR-${faker.number.int({ max: 4 })}`,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        eventSubmitted: true,
+        eventOrganizer: 'Regional PD Event (with National Centers)',
+      };
+
+      // Owner-side missing: ownerComplete=false, collabComplete=true.
+      eventOwnerMissing = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        eventId: `R0${regionId}-TR-OWN-${faker.string.uuid()}`,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-OWN-${faker.number.int({ max: 4 })}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionOwnerMissing = await SessionReportPilot.create({
+        eventId: eventOwnerMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+        data: {
+          sessionName: faker.string.sample(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: false,
+          collabComplete: true,
+        },
+      });
+
+      // Collab-side missing: ownerComplete=true, collabComplete=false.
+      eventCollabMissing = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        eventId: `R0${regionId}-TR-COL-${faker.string.uuid()}`,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-COL-${faker.number.int({ max: 4 })}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionCollabMissing = await SessionReportPilot.create({
+        eventId: eventCollabMissing.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+        data: {
+          sessionName: faker.string.sample(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: true,
+          collabComplete: false,
+        },
+      });
+
+      // Both sides complete: no missing-session alert.
+      eventBothComplete = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        eventId: `R0${regionId}-TR-OK-${faker.string.uuid()}`,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-OK-${faker.number.int({ max: 4 })}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionBothComplete = await SessionReportPilot.create({
+        eventId: eventBothComplete.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+        data: {
+          sessionName: faker.string.sample(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: true,
+          collabComplete: true,
+        },
+      });
+
+      // POC-created new-flow session: pocComplete is the completion signal
+      // (per SessionForm/index.js submit handler). With pocComplete: false and
+      // ownerComplete undefined the POC should still receive a
+      // missingSessionInfo alert at 19+ days past startDate.
+      eventPocCreated = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [pocId],
+        regionId,
+        eventId: `R0${regionId}-TR-POC-${faker.string.uuid()}`,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-POC-${faker.number.int({ max: 4 })}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionPocCreated = await SessionReportPilot.create({
+        eventId: eventPocCreated.id,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+        data: {
+          sessionName: faker.string.sample(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          pocComplete: false,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      const eventIds = [
+        eventOwnerMissing.id,
+        eventCollabMissing.id,
+        eventBothComplete.id,
+        eventPocCreated.id,
+      ];
+      await SessionReportPilot.destroy({ where: { eventId: eventIds } });
+      await EventReportPilot.destroy({ where: { id: eventIds } });
+      await User.destroy({ where: { id: [ownerId, collaboratorId, pocId] } });
+    });
+
+    it('owner sees a missingSessionInfo alert when ownerComplete is false', async () => {
+      const alerts = await getTrainingReportAlertsForUser(ownerId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionOwnerMissing.id);
+      // The owner does NOT get an alert for the session where their side is
+      // already complete (even though collabComplete is false there).
+      expect(sessionIds).not.toContain(sessionCollabMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
+    });
+
+    it('collaborator sees a missingSessionInfo alert when collabComplete is false', async () => {
+      const alerts = await getTrainingReportAlertsForUser(collaboratorId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionCollabMissing.id);
+      // Collaborator does NOT get an alert for the session where their side
+      // is already complete.
+      expect(sessionIds).not.toContain(sessionOwnerMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
+    });
+
+    it('POC sees a missingSessionInfo alert when pocComplete is false on a POC-created new-flow session', async () => {
+      // Regression test for the case where canCreateSession() now includes
+      // POCs: a POC who creates a new-flow session must still receive the
+      // 19-day missingSessionInfo alert even though POC is typically not
+      // involved in the national center facilitation flow.
+      const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionPocCreated.id);
+    });
+
+    it('POC does not see missingSessionInfo for owner-driven new-flow sessions (using ownerComplete)', async () => {
+      // For owner-created new-flow sessions where ownerComplete is the
+      // completion signal (and pocComplete is undefined), POCs should not
+      // be alerted.
+      const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).not.toContain(sessionOwnerMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
     });
   });
 });

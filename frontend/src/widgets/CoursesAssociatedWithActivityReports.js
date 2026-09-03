@@ -7,7 +7,7 @@ import useSessionSort from '../hooks/useSessionSort';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 export const parseValue = (value) => {
-  const noCommasValue = value.replaceAll(',', '');
+  const noCommasValue = String(value).replaceAll(',', '');
   const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
   if (Number.isNaN(parsedValue)) {
     return value;
@@ -81,7 +81,7 @@ function CoursesAssociatedWithActivityReports({
       direction = 'desc';
     }
 
-    const sortingCourseName = sortBy === 'Course_name';
+    const sortingCourseName = sortBy === 'Course_name' || sortBy === 'Course name';
 
     // Set the value we want to sort by.
     const valuesToSort = sortingCourseName
@@ -89,10 +89,13 @@ function CoursesAssociatedWithActivityReports({
           ...t,
           sortBy: t.heading,
         }))
-      : courseUse.map((t) => ({
-          ...t,
-          sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
-        }));
+      : courseUse.map((t) => {
+          const sortCell = t.data.find((tp) => tp.title === sortBy);
+          return {
+            ...t,
+            sortBy: parseValue(sortCell ? sortCell.value : ''),
+          };
+        });
 
     // Value sort.
     const sortValueA = direction === 'asc' ? 1 : -1;
@@ -190,8 +193,8 @@ function CoursesAssociatedWithActivityReports({
 
   return (
     <WidgetContainer
-      title="iPD courses cited on Activity Reports"
-      subtitle="Unique iPD courses cited within Activity Reports."
+      title="EEP courses cited on Activity Reports"
+      subtitle="Unique EEP courses cited within Activity Reports."
       loading={loading || localLoading}
       loadingLabel="Courses associated with Activity Reports loading"
       showPagingBottom
@@ -201,7 +204,7 @@ function CoursesAssociatedWithActivityReports({
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
       menuItems={menuItems}
-      footNote="* Collection of iPD courses in the TTA Hub began on March 7, 2024."
+      footNote="* Collection of EEP courses in the TTA Hub began on March 7, 2024."
       titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget

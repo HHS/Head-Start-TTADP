@@ -4,7 +4,7 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
 
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
 import { Permission, RequestErrors, sequelize, User } from '../models';
 
@@ -54,12 +54,6 @@ const hsesUsers = [
     hsesUsername: 'test.tta.kelly',
     hsesUserId: '51113',
     email: 'kelly.born@adhocteam.us',
-  },
-  {
-    name: 'Lauren tta',
-    hsesUsername: 'test.tta.lauren',
-    hsesUserId: '51130',
-    email: 'lauren.rodriguez@adhocteam.us',
   },
   {
     name: 'Maria tta',
@@ -113,19 +107,31 @@ const hsesUsers = [
     name: 'Fletcher tta',
     hsesUsername: 'test.tta.fletcher',
     hsesUserId: '55815',
-    email: 'no-send_smith95@yahoo.com',
+    email: 'fletcher.bonds@adhocteam.us',
   },
   {
     name: 'Corinne tta',
     hsesUsername: 'test.tta.corinne',
     hsesUserId: '55228',
-    email: 'no-send_smith96@yahoo.com',
+    email: 'corinne.aherne@adhocteam.us',
   },
   {
     name: 'Yvette tta',
     hsesUsername: 'test.tta.juanayvette',
     hsesUserId: '58238',
     email: 'no-send_smith97@yahoo.com',
+  },
+  {
+    name: 'Nicole tta',
+    hsesUsername: 'test.tta.nicole',
+    hsesUserId: '58819',
+    email: 'nicole.rodriguez@adhocteam.us',
+  },
+  {
+    name: 'Marshall tta',
+    hsesUsername: 'test.tta.marshall',
+    hsesUserId: '58820',
+    email: 'marshall.haymond@adhocteam.us',
   },
   {
     name: 'Does tta',
@@ -277,7 +283,7 @@ export const convertName = (name, email) => {
     // and email
     foundTransformedUser = {
       id: foundUser.id,
-      name: faker.name.findName(), // Generate a fake name
+      name: faker.person.fullName(), // Generate a fake name
       email: generateFakeEmail(), // Generate a fake email
     };
     transformedUsers.push(foundTransformedUser);
@@ -538,9 +544,9 @@ export const hideUsers = async (userIds) => {
       hsesUsername,
       email,
       // Generate a fake phone number
-      phoneNumber: faker.phone.phoneNumber(),
+      phoneNumber: faker.phone.number(),
       // Generate a fake name and remove any single quotes
-      name: faker.name.findName().replace(/'/g, ''),
+      name: faker.person.fullName().replace(/'/g, ''),
     };
   });
 
@@ -605,7 +611,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   const fakeRecipientData = realRecipients.map((recipient) => ({
     id: recipient.id,
     // Generate a fake company name and remove any single quotes
-    name: faker.company.companyName().replace(/'/g, ''),
+    name: faker.company.name().replace(/'/g, ''),
   }));
 
   // Query the database to retrieve real grant data based on the WHERE clause

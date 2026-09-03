@@ -14,6 +14,7 @@ describe('EventCards', () => {
       ownerId: 1,
       collaboratorIds: [],
       pocIds: [],
+      eventId: 'Sample event ID 1',
       data: {
         eventName: 'Sample event 1',
         eventId: 'Sample event ID 1',
@@ -28,6 +29,7 @@ describe('EventCards', () => {
       ownerId: 1,
       collaboratorIds: [],
       pocIds: [],
+      eventId: 'Sample event ID 2',
       data: {
         eventName: 'Sample event 2',
         eventId: 'Sample event ID 2',
@@ -42,6 +44,7 @@ describe('EventCards', () => {
       ownerId: 1,
       collaboratorIds: [],
       pocIds: [],
+      eventId: 'Sample event ID 3',
       data: {
         eventName: 'Sample event 3',
         eventId: 'Sample event ID 3',
@@ -147,6 +150,7 @@ describe('EventCards', () => {
         regionId: 1,
         collaboratorIds: [],
         pocIds: [2],
+        eventId: 'TR-R01-1234',
         data: {
           eventName: 'Collab Event 1',
           eventId: 'TR-R01-1234',
@@ -162,6 +166,7 @@ describe('EventCards', () => {
         ownerId: 12,
         collaboratorIds: [],
         pocIds: [3],
+        eventId: 'TR-R02-1235',
         data: {
           eventName: 'Region event 2',
           eventId: 'TR-R02-1235',
@@ -217,7 +222,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
-  it('POC cannot create sessions', () => {
+  it('POC can create sessions', () => {
     const collaboratorEvents = [
       {
         id: 1,
@@ -225,6 +230,7 @@ describe('EventCards', () => {
         regionId: 1,
         collaboratorIds: [],
         pocIds: [2],
+        eventId: 'TR-R01-1234',
         data: {
           eventName: 'Collab Event 1',
           eventId: 'TR-R01-1234',
@@ -260,7 +266,7 @@ describe('EventCards', () => {
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
-    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
@@ -274,6 +280,7 @@ describe('EventCards', () => {
         regionId: 1,
         collaboratorIds: [2],
         pocIds: [4],
+        eventId: 'TR-R01-1234',
         data: {
           eventName: 'Collab Event 1',
           eventId: 'TR-R01-1234',
@@ -323,6 +330,7 @@ describe('EventCards', () => {
         regionId: 1,
         collaboratorIds: [3],
         pocIds: [4],
+        eventId: 'TR-R01-1234',
         data: {
           eventName: 'Collab Event 1',
           eventId: 'TR-R01-1234',
@@ -374,6 +382,7 @@ describe('EventCards', () => {
         regionId: 1,
         collaboratorIds: [3],
         pocIds: [4],
+        eventId: 'R01-PD-25-1234',
         data: {
           eventName: 'Collab Event 1',
           eventId: 'R01-PD-25-1234',

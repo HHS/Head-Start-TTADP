@@ -4,6 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
 import UserContext from '../../../../UserContext';
 import Submit from '../Submit';
@@ -49,6 +50,7 @@ describe('Submit', () => {
     ],
     isPoc: false,
     isAdmin: false,
+    isOwner: false,
   };
 
   const mockApprovers = [
@@ -185,6 +187,49 @@ describe('Submit', () => {
 
       // Only Approver Three should be visible
       expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('hides approver selection for a non-POC regional owner on national center facilitation and excludes them', () => {
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
+
+      renderSubmit({ ...defaultProps, isOwner: true }, defaultValues, user);
+
+      expect(
+        screen.queryByRole('combobox', { name: /Approving manager/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('still shows approver selection for an admin regional owner on national center facilitation', () => {
+      // Regression: admin override in useCanSelectApprover. An admin who
+      // happens to be the event owner of a Regional PD w/ NC + Trainer = NC
+      // event must still see and use the approver dropdown for remediation.
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
+
+      renderSubmit({ ...defaultProps, isOwner: true, isAdmin: true }, defaultValues, user);
+
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
     });
   });
 });

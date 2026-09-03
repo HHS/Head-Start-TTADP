@@ -35,5 +35,20 @@ describe('widget query helper functions', () => {
       expect(result['standard.in']).toEqual(['FEI']);
       expect(result.badKey).toBeUndefined();
     });
+
+    it('preserves stateCode operators from goals and grants scopes', () => {
+      const query = {
+        'stateCode.in': ['CA'],
+        'stateCode.nin': ['TX'],
+        'stateCode.ctn': ['A'],
+        badKey: 'dropped',
+      };
+      const result = onlyAllowedKeys(query);
+
+      expect(result['stateCode.in']).toEqual(['CA']);
+      expect(result['stateCode.nin']).toEqual(['TX']);
+      expect(result['stateCode.ctn']).toEqual(['A']);
+      expect(result.badKey).toBeUndefined();
+    });
   });
 });

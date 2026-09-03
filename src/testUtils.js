@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from './constants';
@@ -22,7 +22,7 @@ const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 
 function defaultGoal() {
   return {
-    name: faker.random.words(10),
+    name: faker.word.words(10),
     status: GOAL_STATUS[Math.floor(Math.random() * GOAL_STATUS.length)],
     isFromSmartsheetTtaPlan: false,
   };
@@ -33,10 +33,10 @@ function defaultReport() {
     activityRecipientType: 'recipient',
     submissionStatus: REPORT_STATUSES.SUBMITTED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
-    ECLKCResourcesUsed: [faker.random.words(1)],
-    numberOfParticipants: faker.datatype.number({ min: 1, max: 20 }),
+    ECLKCResourcesUsed: [faker.word.words(1)],
+    numberOfParticipants: faker.number.int({ min: 1, max: 20 }),
     deliveryMethod: 'in-person',
-    duration: faker.datatype.number({ min: 1, max: 10 }),
+    duration: faker.number.int({ min: 1, max: 10 }),
     regionId: 20,
     endDate: '2021-01-01T12:00:00Z',
     startDate: '2021-01-01T12:00:00Z',
@@ -54,10 +54,10 @@ function defaultUser() {
   return {
     homeRegionId: 5,
     hsesUsername: faker.internet.email(),
-    hsesUserId: `fake${faker.datatype.number({ min: 1, max: 100000 })}`,
+    hsesUserId: `fake${faker.number.int({ min: 1, max: 100000 })}`,
     email: faker.internet.email(),
-    phoneNumber: faker.phone.phoneNumber(),
-    name: faker.name.findName(),
+    phoneNumber: faker.phone.number(),
+    name: faker.person.fullName(),
     role: ['Grants Specialist'],
     lastLogin: new Date(),
   };
@@ -88,7 +88,7 @@ export async function createRegion(region) {
 function defaultGrant() {
   return {
     id: getUniqueId(),
-    number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+    number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
@@ -101,10 +101,7 @@ export async function createRecipient(recipient) {
   return Recipient.create({
     id: recipientId,
     // eslint-disable-next-line max-len
-    name:
-      faker.company.companyName() +
-      faker.company.companySuffix() +
-      faker.datatype.number({ min: 1, max: 1000 }),
+    name: faker.company.name() + faker.string.alpha(5) + faker.number.int({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',
     ...recipient,
   });
@@ -325,7 +322,7 @@ export function mockTrainingReportData(data) {
       '\nThe series will have the following five sessions for recipients who have 6-12 months to complete their application.\n1. Grant Application Process & Nuts and Bolts of Strategic Planning \n2. Development of the Community & Self-Assessment\n3. Program and School Readiness Goals\n4. Education & Health Services\n5. Financial Essentials to Create a Fundable Application\n\nWe selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
     creator: faker.internet.email(),
     endDate: '12/11/2023',
-    eventId: `R08-TR-23-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+    eventId: `R08-TR-23-${faker.number.int({ min: 1000, max: 9999 })}`,
     reasons: ['Full Enrollment', 'Ongoing Quality Improvement', 'School Readiness Goals'],
     audience: 'Recipients',
     'IST Name:': faker.hacker.noun(),
@@ -391,8 +388,11 @@ export async function createTrainingReport(report) {
     })
   );
 
+  const trainingReportData = mockTrainingReportData(data || {});
+
   return EventReportPilot.create({
-    data: mockTrainingReportData(data || {}),
+    eventId: trainingReportData.eventId,
+    data: trainingReportData,
     collaboratorIds: userCollaborators,
     ownerId: userCreator.id,
     regionId: userCreator.homeRegionId,
@@ -426,8 +426,8 @@ export function mockSessionData(data) {
     ownerId: null,
     duration: 1,
     regionId: 8,
-    eventName: faker.datatype.string(100),
-    objective: faker.datatype.string(100),
+    eventName: faker.string.sample(100),
+    objective: faker.string.sample(100),
     pageState: {
       1: 'Complete',
       2: 'Complete',
@@ -439,21 +439,21 @@ export function mockSessionData(data) {
     eventOwner: 305,
     recipients: [
       {
-        label: faker.datatype.string(100),
-        value: faker.datatype.number(10000),
+        label: faker.string.sample(100),
+        value: faker.number.int({ max: 10000 }),
       },
       {
-        label: faker.datatype.string(100),
-        value: faker.datatype.number(10000),
+        label: faker.string.sample(100),
+        value: faker.number.int({ max: 10000 }),
       },
       {
-        label: faker.datatype.string(100),
-        value: faker.datatype.number(10000),
+        label: faker.string.sample(100),
+        value: faker.number.int({ max: 10000 }),
       },
     ],
     pocComplete: true,
-    sessionName: faker.datatype.string(100),
-    ttaProvided: faker.datatype.string(250),
+    sessionName: faker.string.sample(100),
+    ttaProvided: faker.string.sample(250),
     participants: [
       'CEO / CFO / Executive',
       'Coach',

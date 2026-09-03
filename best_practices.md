@@ -46,6 +46,9 @@ For detailed testing patterns including database state management helpers, see `
 
 ## Frontend
 
+### Typescript
+- TypeScript is available on the frontend. Any new components should be authored in TypeScript, and existing "vanilla" JavaScript components should be updated where possible.
+
 ### Hook and Component Reuse
 - Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 
 - Use `@trussworks/react-uswds` components.
@@ -62,3 +65,14 @@ For detailed testing patterns including database state management helpers, see `
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
 - Update `docs/adr/` if an architecture decision is introduced or changed.
+- Use `.github/pull_request_template.md` for PR descriptions — do not roll a custom format. Keep "Description of change" and "How to test" to a few brief sentences each, and fill in the Jira issue link and checklists.
+
+## Unit testing
+- Prefer userEvent from '@testing-library/user-event' over fireEvent from '@testing-library/react' per the official guidance
+
+## Domain Terminology
+- The `EventReportPilot` model is referred to in specs and documentation as **Training Reports**.
+- The `SessionReportPilot` model is referred to in specs and documentation as **Sessions**.
+
+## Sharing code
+- The `common` package can and should be used to share constants, functional code, and types

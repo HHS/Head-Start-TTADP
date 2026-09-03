@@ -3,6 +3,7 @@ import {
   closeMultiRecipientGoalsFromAdmin,
   createMultiRecipientGoalsFromAdmin,
 } from '../../goalServices/goals';
+import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
 import { getCuratedTemplates } from '../../services/goalTemplates';
 import { closeGoalsFromAdmin, createGoalsFromAdmin, getCuratedGoalOptions } from './goal';
 
@@ -68,6 +69,20 @@ describe('goal router', () => {
       closeMultiRecipientGoalsFromAdmin.mockRejectedValueOnce(new Error('Failed to close goals'));
       await closeGoalsFromAdmin(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('returns conflict details when closing is blocked', async () => {
+      closeMultiRecipientGoalsFromAdmin.mockRejectedValueOnce(
+        new GoalStatusChangeBlockedError(['ACTIVE_ACTIVITY_REPORT'])
+      );
+
+      await closeGoalsFromAdmin(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.CONFLICT);
+      expect(json).toHaveBeenCalledWith({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      });
     });
   });
 

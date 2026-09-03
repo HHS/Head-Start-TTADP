@@ -66,7 +66,7 @@ describe('showFilterWithMyRegions', () => {
     expect(setFilters).toHaveBeenCalledWith([{ query: 1 }, { topic: 'status', query: 'approved' }]);
   });
 
-  it('handles alternate case', async () => {
+  it('handles alternate case when accessible region filter is preserved', async () => {
     const allRegionsFilters = [
       {
         query: 1,
@@ -84,7 +84,8 @@ describe('showFilterWithMyRegions', () => {
     ];
     const setFilters = jest.fn();
     showFilterWithMyRegions(allRegionsFilters, filters, setFilters);
-    expect(setFilters).toHaveBeenCalledWith([{ query: 1 }, { query: 2 }]);
+    // region 2 is accessible, so it is kept rather than replaced with allRegionsFilters
+    expect(setFilters).toHaveBeenCalledWith([{ topic: 'region', query: 2 }]);
   });
 
   it('and another', async () => {

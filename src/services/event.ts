@@ -62,9 +62,35 @@ const INCLUDED_SESSION_ATTRIBUTES = [
   'approverId',
   'submitted',
   'submitterId',
-  // eslint-disable-next-line @typescript-eslint/quotes
-  [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+  // startDate/endDate are dedicated columns and the single source of truth for
+  // session dates; the JSONB data.startDate/data.endDate are re-derived from them
+  // on read (see injectSessionColumnDates).
+  'startDate',
+  'endDate',
 ];
+
+/**
+ * Re-derives the display `data.startDate` / `data.endDate` (MM/DD/YYYY) from the
+ * dedicated startDate/endDate columns, which are the single source of truth.
+ * Mirrors services/sessionReports.ts#findSessionHelper so the JSONB values the
+ * frontend and alert logic read stay in sync with the columns. Mutates and
+ * returns the given session model instance.
+ */
+const injectSessionColumnDates = (session) => {
+  if (!session) return session;
+  const rawStart = session.get('startDate') as string | null;
+  const rawEnd = session.get('endDate') as string | null;
+  session.set(
+    'data',
+    {
+      ...((session.get('data') as Record<string, unknown>) ?? {}),
+      startDate: rawStart ? moment(rawStart, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+      endDate: rawEnd ? moment(rawEnd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+    },
+    { raw: true }
+  );
+  return session;
+};
 
 /**
  * Creates an event.
@@ -85,12 +111,22 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 
   const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
+  // The event display id is provided via `data.eventId` but is stored solely in
+  // the dedicated `eventId` column (the single source of truth); it is not
+  // persisted back into the JSONB `data`.
+  const { eventId, ...dataWithoutEventId } = data;
+
+  if (!eventId) {
+    throw new Error('Missing required field: data.eventId');
+  }
+
   return EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
     regionId,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    eventId,
+    data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 }
 
@@ -126,6 +162,7 @@ export async function findEventHelper(
       'pocIds',
       'collaboratorIds',
       'regionId',
+      'eventId',
       'data',
       'updatedAt',
       'version',
@@ -190,6 +227,9 @@ export async function findEventHelper(
   }
 
   if (Array.isArray(event)) {
+    event.forEach((e) => {
+      (e.sessionReports ?? []).forEach(injectSessionColumnDates);
+    });
     return event;
   }
 
@@ -221,9 +261,10 @@ export async function findEventHelper(
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
+    eventId: event?.eventId,
     data: event?.data,
     updatedAt: event?.updatedAt,
-    sessionReports: event?.sessionReports ?? [],
+    sessionReports: (event?.sessionReports ?? []).map(injectSessionColumnDates),
     version: event?.version ?? EVENT_REPORT_PILOT_VERSION,
   };
 }
@@ -267,7 +308,7 @@ export async function findEventHelperBlob({
   }
 
   const events = await EventReportPilot.findAll({
-    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
+    attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     include: [
       {
         model: SessionReportPilot,
@@ -308,9 +349,14 @@ export async function findEventHelperBlob({
     ],
     where,
     order: [
-      ['data.eventId', 'ASC'],
+      ['eventId', 'ASC'],
       ['data.startDate', 'ASC'],
     ],
+  });
+
+  // Re-derive each session's display dates from the dedicated columns.
+  (events || []).forEach((event) => {
+    (event.sessionReports ?? []).forEach(injectSessionColumnDates);
   });
 
   // if a fallbackValue was provided for this key search
@@ -376,13 +422,25 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
+  // eventId is an immutable identifier stored in the dedicated `eventId` column,
+  // which is the single source of truth. Reject any attempt to change it, and
+  // never persist it back into the JSONB `data`.
+  const { eventId: requestedEventId, ...dataWithoutEventId } = data as {
+    eventId?: string;
+  } & Record<string, unknown>;
+
+  if (requestedEventId && requestedEventId !== evt.eventId) {
+    throw new Error('eventId is immutable and cannot be changed');
+  }
+
   await evt.update(
     {
       ownerId,
       pocIds,
       collaboratorIds,
       regionId,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      eventId: evt.eventId,
+      data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
   );
@@ -406,8 +464,8 @@ const parseMinimalEventForAlert = (
     ownerId: number;
     pocIds: number[];
     collaboratorIds: number[];
+    eventId: string;
     data: {
-      eventId: string;
       eventName: string;
       startDate: string;
       endDate: string;
@@ -418,7 +476,7 @@ const parseMinimalEventForAlert = (
   sessionName = '--'
 ): TRAlertShape => ({
   id: event.id,
-  eventId: event.data.eventId,
+  eventId: event.eventId,
   eventName: event.data.eventName,
   alertType,
   sessionName,
@@ -433,7 +491,21 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'collabComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete' | 'ownerComplete';
+
+// Re-export shared predicates so existing imports from ./services/event keep
+// working (e.g. `import { isNationalCenterUser } from '../services/event'`).
+// The canonical definitions live in `./eventFlow` to avoid a circular import
+// with `../policies/event`.
+export {
+  FACILITATION_NATIONAL_CENTER,
+  isNationalCenterFacilitator,
+  isNationalCenterUser,
+  NATIONAL_CENTER_ROLE_NAME,
+  REGIONAL_PD_WITH_NATIONAL_CENTERS,
+} from './eventFlow';
+
+import { isNationalCenterFacilitator } from './eventFlow';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -449,7 +521,7 @@ const checkSessionForCompletion = (
   if (!sessionValid) {
     missingSessionInfo.push({
       id: session.id,
-      eventId: event.data.eventId,
+      eventId: event.eventId,
       isSession: true,
       sessionName: session.data.sessionName,
       eventName: event.data.eventName,
@@ -471,7 +543,9 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   alerts.forEach((alert) => {
     if (alert.approverId) userIds.add(alert.approverId);
     if (alert.submitterId) userIds.add(alert.submitterId);
-    alert.collaboratorIds.forEach((id) => userIds.add(id));
+    alert.collaboratorIds.forEach((id) => {
+      userIds.add(id);
+    });
   });
 
   // If no user IDs to fetch, return alerts as-is
@@ -596,7 +670,27 @@ export async function getTrainingReportAlerts(
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          if (isNationalCenterFacilitator(event, session)) {
+            // In the national center facilitation flow, owner-side completion is tracked via
+            // ownerComplete and collaborator-side via collabComplete. Pick
+            // the checker for this user's role; when no user is provided
+            // (system-wide alerts), check ownerComplete first and fall back
+            // to collabComplete (the existing per-session dedupe ensures at
+            // most one alert per session per pass).
+            const checkers: TChecker[] = [];
+            if (userId) {
+              if (event.ownerId === userId) checkers.push('ownerComplete');
+              if (event.collaboratorIds.includes(userId)) checkers.push('collabComplete');
+            } else {
+              checkers.push('ownerComplete', 'collabComplete');
+            }
+            for (const checker of checkers) {
+              if (alerts.find((alert) => alert.isSession && alert.id === session.id)) break;
+              checkSessionForCompletion(session, event, checker, alerts);
+            }
+          } else {
+            checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          }
         }
       });
     }
@@ -610,6 +704,21 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
+        // POC is normally not involved — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. However, POCs can now
+        // create sessions (canCreateSession() includes isPoc()), and when they
+        // do they still set pocComplete on submit (see SessionForm/index.js).
+        // Only skip the alert when we have evidence the session is using
+        // ownerComplete and not pocComplete (i.e. owner-created in the new
+        // flow); otherwise fall through and check pocComplete as usual.
+        if (
+          isNationalCenterFacilitator(event, session) &&
+          session.data.pocComplete === undefined &&
+          session.data.ownerComplete !== undefined
+        ) {
+          return;
+        }
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
@@ -638,7 +747,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter || isApprover) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -667,7 +776,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -730,10 +839,8 @@ export async function findEventBySmartsheetId(
   const where = {
     [Op.and]: [
       {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
+        eventId: {
+          [Op.eq]: eventId,
         },
       },
       ...scopes,
@@ -889,13 +996,7 @@ const checkUserExistsByEmail = async (email: string) => checkUserExists('email',
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
     attributes: ['id'],
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`
-        ),
-      },
-    },
+    where: { eventId },
   });
 
   if (event) throw new Error(`Event ${eventId} already exists`);
@@ -1026,11 +1127,16 @@ export async function csvImport(buffer: Buffer) {
       // Additional States Involved, remove duplicates.
       data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
 
+      // The event display id is stored solely in the dedicated `eventId` column
+      // (the single source of truth); it is not persisted back into the JSONB `data`.
+      delete data.eventId;
+
       await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
+        eventId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,

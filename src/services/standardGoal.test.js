@@ -1,10 +1,13 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
+import { UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
+  ActivityReportCollaborator,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
@@ -18,6 +21,7 @@ import db, {
   Grant,
   Objective,
   ObjectiveTemplate,
+  Permission,
   Recipient,
   Role,
   Topic,
@@ -29,6 +33,7 @@ import {
   createGrant,
   createRecipient,
   createReport,
+  createUser,
   destroyReport,
 } from '../testUtils';
 import {
@@ -38,6 +43,23 @@ import {
   standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from './standardGoals';
+
+const createUniqueConstraintError = (constraint) =>
+  new UniqueConstraintError({
+    errors: [],
+    fields: {
+      goalTemplateId: 1,
+      grantId: 1,
+    },
+    parent: {
+      code: '23505',
+      constraint,
+      detail: 'Key (grantId, goalTemplateId) already exists.',
+      message: `duplicate key value violates unique constraint "${constraint}"`,
+      name: 'error',
+      sql: 'INSERT INTO "Goals" ...',
+    },
+  });
 
 describe('standardGoal service', () => {
   let recipient;
@@ -98,6 +120,7 @@ describe('standardGoal service', () => {
           force: true,
         });
       });
+
       it('fetches open goal for the rtr', async () => {
         const g = await goalForRtr(grant.id, goalTemplate.id);
         expect(g).toBeDefined();
@@ -216,6 +239,53 @@ describe('standardGoal service', () => {
         });
       });
 
+      const createActivityReportBlocker = async ({
+        calculatedStatus,
+        goalStatus = GOAL_STATUS.DRAFT,
+        onApprovedAR = false,
+        userId,
+      }) => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateWithPrompt.id,
+          },
+          force: true,
+        });
+        const hiddenGoal = await Goal.create({
+          createdVia: 'activityReport',
+          goalTemplateId: goalTemplateWithPrompt.id,
+          grantId: grant.id,
+          onApprovedAR,
+          status: goalStatus,
+        });
+        const submissionStatus =
+          calculatedStatus === REPORT_STATUSES.DRAFT
+            ? REPORT_STATUSES.DRAFT
+            : REPORT_STATUSES.SUBMITTED;
+        const report = await createReport({
+          activityRecipients: [{ grantId: grant.id }],
+          calculatedStatus,
+          creatorRole: 'Grants Specialist',
+          regionId: grant.regionId,
+          submissionStatus,
+          userId,
+        });
+        await ActivityReportGoal.create({
+          activityReportId: report.id,
+          goalId: hiddenGoal.id,
+          status: hiddenGoal.status,
+        });
+
+        return { hiddenGoal, report };
+      };
+
+      const destroyActivityReportBlocker = async ({ hiddenGoal, report }) => {
+        await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
+        await destroyReport(report);
+        await hiddenGoal.destroy({ force: true });
+      };
+
       it('creates a new standard goal', async () => {
         const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
         expect(g).toBeDefined();
@@ -289,8 +359,12 @@ describe('standardGoal service', () => {
         await expect(newStandardGoal(grant.id, 999)).rejects.toThrow();
       });
 
-      it('throws an error if the standard goal is already used', async () => {
-        // First, make sure we don't have any existing goals for this template/grant
+      it.each([
+        GOAL_STATUS.DRAFT,
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.IN_PROGRESS,
+        GOAL_STATUS.SUSPENDED,
+      ])('returns a conflict for an existing %s goal', async (status) => {
         await Goal.destroy({
           where: {
             grantId: grant.id,
@@ -298,17 +372,235 @@ describe('standardGoal service', () => {
           },
           force: true,
         });
-
-        // Now create a goal with the specific grant and template
-        await Goal.create({
-          grantId: grant.id,
-          goalTemplateId: goalTemplateNoPrompt.id,
-          status: GOAL_STATUS.NOT_STARTED,
+        const existingGoal = await Goal.create({
           createdVia: 'rtr',
+          goalTemplateId: goalTemplateNoPrompt.id,
+          grantId: grant.id,
+          status,
+        });
+        const goalCountBeforeRequest = await Goal.count({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
         });
 
-        // Try to create another goal with the same grant and template - should throw
-        await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toThrow();
+        try {
+          await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+          await expect(
+            Goal.count({
+              where: {
+                grantId: grant.id,
+                goalTemplateId: goalTemplateNoPrompt.id,
+              },
+            })
+          ).resolves.toBe(goalCountBeforeRequest);
+        } finally {
+          await existingGoal.destroy({ force: true });
+        }
+      });
+
+      it.each([
+        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.NEEDS_ACTION,
+      ])('returns %s activity report blockers before validating required prompts', async (calculatedStatus) => {
+        const blocker = await createActivityReportBlocker({ calculatedStatus });
+        const goalCountBeforeRequest = await Goal.count({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateWithPrompt.id,
+          },
+        });
+
+        try {
+          await expect(
+            newStandardGoal(grant.id, goalTemplateWithPrompt.id, undefined, undefined, undefined, {
+              userId: blocker.report.userId,
+            })
+          ).rejects.toMatchObject({
+            responseBody: {
+              blockingActivityReports: [
+                expect.objectContaining({
+                  displayId: blocker.report.displayId,
+                }),
+              ],
+              code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+            },
+            statusCode: 409,
+          });
+          await expect(
+            Goal.count({
+              where: {
+                grantId: grant.id,
+                goalTemplateId: goalTemplateWithPrompt.id,
+              },
+            })
+          ).resolves.toBe(goalCountBeforeRequest);
+        } finally {
+          await destroyActivityReportBlocker(blocker);
+        }
+      });
+
+      it('treats a goal on an Approved activity report as already used, not blocked by the report', async () => {
+        const blocker = await createActivityReportBlocker({
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          goalStatus: GOAL_STATUS.IN_PROGRESS,
+          onApprovedAR: true,
+        });
+        const goalCountBeforeRequest = await Goal.count({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateWithPrompt.id,
+          },
+        });
+
+        try {
+          await expect(
+            newStandardGoal(grant.id, goalTemplateWithPrompt.id, undefined, undefined, undefined, {
+              userId: blocker.report.userId,
+            })
+          ).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+          await expect(
+            Goal.count({
+              where: {
+                grantId: grant.id,
+                goalTemplateId: goalTemplateWithPrompt.id,
+              },
+            })
+          ).resolves.toBe(goalCountBeforeRequest);
+        } finally {
+          await destroyActivityReportBlocker(blocker);
+        }
+      });
+
+      it('authorizes activity report links in POST conflicts at the service boundary', async () => {
+        const creator = await createUser({ name: 'POST blocker creator' });
+        const collaborator = await createUser({ name: 'POST blocker collaborator' });
+        const unrelatedRegionalUser = await createUser({ name: 'POST blocker regional user' });
+        const users = [creator, collaborator, unrelatedRegionalUser];
+        let blocker;
+
+        try {
+          await Permission.bulkCreate(
+            users.map((user) => ({
+              regionId: grant.regionId,
+              scopeId: SCOPES.READ_WRITE_REPORTS,
+              userId: user.id,
+            }))
+          );
+          blocker = await createActivityReportBlocker({
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            userId: creator.id,
+          });
+          await ActivityReportCollaborator.create({
+            activityReportId: blocker.report.id,
+            userId: collaborator.id,
+          });
+
+          for (const [user, href] of [
+            [creator, `/activity-reports/${blocker.report.id}`],
+            [collaborator, `/activity-reports/${blocker.report.id}`],
+            [unrelatedRegionalUser, null],
+          ]) {
+            await expect(
+              newStandardGoal(
+                grant.id,
+                goalTemplateWithPrompt.id,
+                undefined,
+                undefined,
+                undefined,
+                { userId: user.id }
+              )
+            ).rejects.toMatchObject({
+              responseBody: {
+                blockingActivityReports: [
+                  expect.objectContaining({
+                    displayId: blocker.report.displayId,
+                    href,
+                  }),
+                ],
+                code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+              },
+              statusCode: 409,
+            });
+          }
+        } finally {
+          if (blocker) {
+            await ActivityReportCollaborator.destroy({
+              where: { activityReportId: blocker.report.id },
+            });
+          }
+          await Permission.destroy({ where: { userId: users.map((user) => user.id) } });
+          if (blocker) {
+            await destroyActivityReportBlocker(blocker);
+          }
+          await User.destroy({ where: { id: users.map((user) => user.id) } });
+        }
+      });
+
+      it('translates a standard goal uniqueness race into a conflict', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+        const uniquenessError = createUniqueConstraintError('unique_grantId_goalTemplateId');
+        const createSpy = jest.spyOn(Goal, 'create').mockRejectedValueOnce(uniquenessError);
+
+        try {
+          await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+        } finally {
+          createSpy.mockRestore();
+        }
+      });
+
+      it('does not translate an unrelated uniqueness error', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+        const uniquenessError = createUniqueConstraintError('unrelated_objective_constraint');
+        const createObjectivesSpy = jest
+          .spyOn(Objective, 'bulkCreate')
+          .mockRejectedValueOnce(uniquenessError);
+
+        try {
+          await expect(
+            newStandardGoal(grant.id, goalTemplateNoPrompt.id, [
+              { title: 'Objective that encounters a uniqueness error' },
+            ])
+          ).rejects.toBe(uniquenessError);
+        } finally {
+          createObjectivesSpy.mockRestore();
+          await Goal.destroy({
+            where: {
+              grantId: grant.id,
+              goalTemplateId: goalTemplateNoPrompt.id,
+            },
+            force: true,
+          });
+        }
       });
 
       it('creates objectives', async () => {
@@ -409,6 +701,7 @@ describe('standardGoal service', () => {
           objectiveTemplateId: objectiveTemplate.id,
           goalId: goal.id,
           status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'rtr',
         });
       });
 
@@ -588,6 +881,17 @@ describe('standardGoal service', () => {
       });
 
       it('creates a new objective if its not found by id or title and goal id', async () => {
+        // The preceding test leaves objectiveWithoutId in the DB (it is still returned by goalForRtr
+        // because onApprovedAR=true, but it is not removed by updateExistingStandardGoal's selective
+        // delete because it only deletes objectives with createdVia='rtr' and onAR=false). Remove it
+        // explicitly so this test starts from a clean slate.
+        if (objectiveWithoutId) {
+          await Objective.destroy({
+            where: { id: objectiveWithoutId.id },
+            force: true,
+          });
+        }
+
         // Create the test objecitve here so its not dlelete by other tests in this block.
         const g = await updateExistingStandardGoal(
           grant.id,
@@ -1014,6 +1318,36 @@ describe('standardGoal service', () => {
       expect(result.statuses).toBeDefined();
     });
 
+    it.each([
+      REPORT_STATUSES.DRAFT,
+      REPORT_STATUSES.SUBMITTED,
+      REPORT_STATUSES.NEEDS_ACTION,
+    ])('identifies goals on %s activity reports', async (calculatedStatus) => {
+      await db.ActivityReport.update(
+        { calculatedStatus },
+        { where: { id: activityReportTwo.id }, hooks: false }
+      );
+
+      try {
+        const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+        const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+        expect(goal.hasActiveActivityReports).toBe(true);
+      } finally {
+        await db.ActivityReport.update(
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          { where: { id: activityReportTwo.id }, hooks: false }
+        );
+      }
+    });
+
+    it('does not identify goals on approved activity reports as active', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+      const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+      expect(goal.hasActiveActivityReports).toBe(false);
+    });
+
     it('paginates standard goals correctly using limit and offset', async () => {
       // Get all goals for reference
       const allGoals = await standardGoalsForRecipient(recipient.id, grant.regionId, {
@@ -1172,7 +1506,7 @@ describe('standardGoal service', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         homeRegionId: 1,
         name: 'Test Param User',
         hsesUsername: 'Test Param User',
@@ -1418,7 +1752,7 @@ describe('standardGoal service', () => {
         isNew: true,
         ttaProvided: 'TTA provided details',
         title: 'Objective title 2',
-        status: 'NOT_STARTED',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
         topics: ['topic2'],
         resources: ['resource2'],
         files: ['file2'],
@@ -1521,13 +1855,13 @@ describe('standardGoal service', () => {
           return Promise.resolve({
             id: 2,
             title: 'Objective title 2',
-            status: OBJECTIVE_STATUS.NOT_STARTED,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
             update: jest.fn().mockResolvedValue(true),
             save: jest.fn().mockResolvedValue(true),
             toJSON: () => ({
               id: 2,
               title: 'Objective title 2',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
               goalId: goal.id,
             }),
           });
@@ -1556,6 +1890,90 @@ describe('standardGoal service', () => {
       expect(result).toHaveLength(2);
       expect(result[1].id).toBe(2);
       expect(result[1].title).toBe('Objective title 2');
+      expect(result[1].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[1].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should honor submitted status when reusing an existing objective by title', async () => {
+      const reportId = 456;
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        if (where.title === 'Objective title 2') {
+          return Promise.resolve({
+            id: 2,
+            title: 'Objective title 2',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            createdVia: 'activityReport',
+            createdViaActivityReportId: 123,
+            update: jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
+            toJSON: () => ({
+              id: 2,
+              title: 'Objective title 2',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              goalId: goal.id,
+              createdVia: 'activityReport',
+              createdViaActivityReportId: 123,
+            }),
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[1],
+            status: OBJECTIVE_STATUS.COMPLETE,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(2);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(result[0].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should keep existing objective status when stale form data submits not started by id', async () => {
+      const reportId = 456;
+      const existingObj = {
+        id: 1,
+        title: 'Objective title 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        createdVia: 'activityReport',
+        createdViaActivityReportId: 123,
+        onApprovedAR: false,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          goalId: goal.id,
+          createdVia: 'activityReport',
+          createdViaActivityReportId: 123,
+        }),
+      };
+
+      Objective.findOne = jest.fn().mockResolvedValue(existingObj);
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[0],
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            createdHere: true,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[0].objectiveCreatedHere).toBe(false);
     });
 
     it('should handle undefined fields without throwing an error', async () => {

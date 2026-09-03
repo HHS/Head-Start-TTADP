@@ -4,12 +4,13 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { REPORTS_PER_PAGE } from '../constants';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
 import orderReportsBy from '../lib/orderReportsBy';
+import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import {
@@ -30,6 +31,7 @@ import {
   Grant,
   GrantReplacements,
   NextStep,
+  Notification,
   Objective,
   OtherEntity,
   Program,
@@ -40,6 +42,7 @@ import {
   Topic,
   User,
 } from '../models';
+import activityReportObjectivesSchema from '../models/schemas/activityReportObjective';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
@@ -452,7 +455,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'fullName'],
+            attributes: ['id', 'name', 'fullName', 'email'],
             include: [
               {
                 model: Role,
@@ -466,19 +469,15 @@ export async function activityReportAndRecipientsById(activityReportId) {
     order: [[{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC']],
   });
 
+  // Use real NextStep model instances (not plain objects) for the empty-note placeholder so the
+  // report instance can still be serialized via toJSON (e.g. when enqueued to the notification
+  // queue, which serializes the job data via JSON.stringify). A plain object here has no `.get()`
+  // method and breaks Sequelize's association serialization.
   if (report?.specialistNextSteps?.length === 0) {
-    report.specialistNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.specialistNextSteps[0] = NextStep.build({ note: '' });
   }
   if (report?.recipientNextSteps?.length === 0) {
-    report.recipientNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.recipientNextSteps[0] = NextStep.build({ note: '' });
   }
 
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
@@ -940,6 +939,22 @@ export function formatResources(resources) {
   }, []);
 }
 
+/**
+ * Validates that every objective on a report has a support type, the
+ * requirement enforced at the submission gate. Returns a user-facing error
+ * message when validation fails, or null when the report's objectives are valid.
+ */
+export async function getObjectiveSupportTypeSubmissionError(activityReportId) {
+  const objectives = await ActivityReportObjective.findAll({
+    attributes: ['id', 'supportType'],
+    where: { activityReportId },
+    raw: true,
+  });
+
+  const { error } = activityReportObjectivesSchema.validate(objectives, { abortEarly: true });
+  return error ? error.details[0].message : null;
+}
+
 export async function createOrUpdate(newActivityReport, report, userId) {
   let savedReport;
   const {
@@ -1081,12 +1096,98 @@ export async function createOrUpdate(newActivityReport, report, userId) {
   };
 }
 
-export async function setStatus(report, status) {
-  await report.update({ submissionStatus: status });
+export async function setStatus(report, status, transaction = undefined) {
+  await report.update({ submissionStatus: status }, { transaction });
   return activityReportAndRecipientsById(report.id);
 }
 
+/**
+ * Removes ActivityReportObjectives and Objectives that become orphaned when a
+ * report is soft-deleted.
+ *
+ * ActivityReportObjectives are not paranoid, so the links to the deleted report
+ * are hard-deleted (history is retained in the ZALActivityReportObjectives audit
+ * log). Objectives that were created via an activity report and are no longer
+ * used by any non-deleted report are soft-deleted. Objectives that are still
+ * shared with a live report are left in place — only the ARO pointing at the
+ * deleted report is removed.
+ *
+ * @param {number} reportId - id of the report being soft-deleted
+ * @param {import('sequelize').Transaction} [transaction] - optional transaction to run within
+ */
+export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = undefined) {
+  // Objectives linked to this report, captured before the AROs are removed.
+  const linkedObjectiveIds = [
+    ...new Set(
+      (
+        await ActivityReportObjective.findAll({
+          attributes: ['objectiveId'],
+          where: { activityReportId: reportId },
+          raw: true,
+          transaction,
+        })
+      ).map((aro) => aro.objectiveId)
+    ),
+  ];
+
+  // Hard-delete the AROs that linked this (now deleted) report to its objectives.
+  await ActivityReportObjective.destroy({
+    where: { activityReportId: reportId },
+    individualHooks: true,
+    transaction,
+  });
+
+  if (!linkedObjectiveIds.length) {
+    return;
+  }
+
+  // Of those objectives, find the ones that are still used by a non-deleted
+  // report. This is derived from the actual ActivityReportObjective/ActivityReport
+  // rows (the join), never from the cached onAR/onApprovedAR flags, which can be
+  // stale. Keep it that way.
+  const objectivesStillInUse = new Set(
+    (
+      await ActivityReportObjective.findAll({
+        attributes: ['objectiveId'],
+        where: { objectiveId: { [Op.in]: linkedObjectiveIds } },
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            attributes: [],
+            required: true,
+            where: {
+              calculatedStatus: { [Op.ne]: REPORT_STATUSES.DELETED },
+            },
+          },
+        ],
+        raw: true,
+        transaction,
+      })
+    ).map((aro) => aro.objectiveId)
+  );
+
+  const orphanedObjectiveIds = linkedObjectiveIds.filter((id) => !objectivesStillInUse.has(id));
+
+  if (!orphanedObjectiveIds.length) {
+    return;
+  }
+
+  // Soft-delete only objectives that were created via an activity report.
+  await Objective.destroy({
+    where: {
+      id: { [Op.in]: orphanedObjectiveIds },
+      createdVia: 'activityReport',
+    },
+    individualHooks: true,
+    transaction,
+  });
+}
+
 export async function handleSoftDeleteReport(report) {
+  // The soft-delete endpoint is already wrapped by `transactionWrapper`, and the
+  // project enables `Sequelize.useCLS`, so every model operation below automatically
+  // joins the ambient transaction. No explicit transaction is needed here.
   const goalsToCleanup = (
     await Goal.findAll({
       attributes: ['id'],
@@ -1124,6 +1225,18 @@ export async function handleSoftDeleteReport(report) {
       },
     });
   }
+
+  await Notification.destroy({
+    where: {
+      entityId: report.id,
+      type: {
+        [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
+      },
+    },
+  });
+
+  await cleanupOrphanedObjectivesAndAROs(report.id);
+
   return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
@@ -1591,6 +1704,77 @@ export async function activityReportsSubmittedByDate(userId, date) {
 }
 
 /**
+ * Fetches ActivityReports that were submitted for review where the given user is a collaborator.
+ *
+ * @param {integer} userId - collaborator's user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedWhereCollaboratorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports"
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were submitted for review by a collaborator (not the
+ * creator) where the given user is the report's creator. Only reports currently in
+ * the submitted state are returned, so reports since approved or sent back for
+ * changes are excluded.
+ *
+ * @param {integer} userId - creator's user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { userId },
+        { calculatedStatus: REPORT_STATUSES.SUBMITTED },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports"
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}' AND
+          dml_by != ${userId})`
+            ),
+          },
+        },
+      ],
+    },
+  });
+  return reports;
+}
+
+/**
  * Fetches ActivityReports that were approved for authors and collaborators
  *
  * @param {integer} userId - user's id
@@ -1598,6 +1782,12 @@ export async function activityReportsSubmittedByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
+  const safeUserId = parsePositiveInteger(userId);
+
+  if (!safeUserId) {
+    throw new Error('Invalid userId provided');
+  }
+
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1605,8 +1795,18 @@ export async function activityReportsApprovedByDate(userId, date) {
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
-        userId && {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        safeUserId && {
+          [Op.or]: [
+            { userId: sequelize.escape(safeUserId) },
+            { '$activityReportCollaborators.userId$': sequelize.escape(safeUserId) },
+            {
+              id: {
+                [Op.in]: sequelize.literal(
+                  `(SELECT "activityReportId" FROM "ActivityReportApprovers" WHERE "userId" = ${sequelize.escape(safeUserId)} AND "deletedAt" IS NULL)`
+                ),
+              },
+            },
+          ],
         },
         {
           id: {
