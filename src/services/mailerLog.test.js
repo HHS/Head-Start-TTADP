@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EMAIL_ACTIONS } from '../constants';
 import db, { MailerLogs } from '../models';
 import { createMailerLog } from './mailerLog';

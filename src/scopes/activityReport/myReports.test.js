@@ -37,7 +37,7 @@ describe('myReports filtersToScopes', () => {
 
     beforeAll(async () => {
       collaborator = await User.create({
-        id: faker.datatype.number({ min: 1000000, max: 9999999 }),
+        id: faker.number.int({ min: 1000000, max: 9999999 }),
         homeRegionId: 1,
         name: 'collaboratoruser',
         hsesUsername: 'collaboratoruser',
@@ -46,7 +46,7 @@ describe('myReports filtersToScopes', () => {
       });
 
       approver = await User.create({
-        id: faker.datatype.number({ min: 1000000, max: 9999999 }),
+        id: faker.number.int({ min: 1000000, max: 9999999 }),
         homeRegionId: 1,
         name: 'approveruser',
         hsesUsername: 'approveruser',

@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
@@ -437,12 +437,12 @@ describe('Recipient DB service', () => {
 
     it('returns missing standard goals if only one of the grants for the recipient has goals', async () => {
       multiGrantRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant4 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '3423423',
@@ -454,7 +454,7 @@ describe('Recipient DB service', () => {
       });
 
       grant5 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '4234666',
@@ -517,15 +517,15 @@ describe('Recipient DB service', () => {
 
     it('does not count templates as missing when each grant uses a template that shares a name', async () => {
       recipientWithTemplatesWithSameName = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       duplicateGrantOne = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         programSpecialistName: 'Gus',
         status: 'Active',
         endDate: new Date(2024, 10, 2),
@@ -534,10 +534,10 @@ describe('Recipient DB service', () => {
       });
 
       duplicateGrantTwo = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         programSpecialistName: 'Gus',
         status: 'Active',
         endDate: new Date(2024, 10, 2),
@@ -545,7 +545,7 @@ describe('Recipient DB service', () => {
         annualFundingMonth: 'October',
       });
 
-      const duplicateTemplateName = `duplicate standard goal ${faker.datatype.number()}`;
+      const duplicateTemplateName = `duplicate standard goal ${faker.number.int({ min: 0, max: 99999 })}`;
 
       const curatedTemplates = await GoalTemplate.findAll({
         where: {
@@ -585,12 +585,12 @@ describe('Recipient DB service', () => {
       );
 
       duplicateGoalTemplateOne = await GoalTemplate.create({
-        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        templateName: `${duplicateTemplateName}-${faker.number.int({ min: 0, max: 99999 })}`,
         creationMethod: CREATION_METHOD.CURATED,
       });
 
       duplicateGoalTemplateTwo = await GoalTemplate.create({
-        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        templateName: `${duplicateTemplateName}-${faker.number.int({ min: 0, max: 99999 })}`,
         creationMethod: CREATION_METHOD.CURATED,
       });
 
@@ -634,12 +634,12 @@ describe('Recipient DB service', () => {
 
     it('returns an empty array when no standard goals are missing', async () => {
       recipient1 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant1 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient1.id,
         regionId: 1,
         number: '234234',
@@ -680,12 +680,12 @@ describe('Recipient DB service', () => {
 
     it('returns an array of missing standard goals', async () => {
       recipient2 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant2 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient2.id,
         regionId: 1,
         number: '323456',
@@ -704,12 +704,12 @@ describe('Recipient DB service', () => {
 
     it('returns some of the goal templates when some are missing', async () => {
       recipient3 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant3 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient3.id,
         regionId: 1,
         number: '323457',
@@ -745,13 +745,13 @@ describe('Recipient DB service', () => {
     it('does not count inactive grants or Monitoring standard templates as missing goals', async () => {
       // Create recipient with inactive grant
       recipientWithInactiveGrant = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       // Create an inactive grant
       inactiveGrant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithInactiveGrant.id,
         regionId: 1,
         number: '323458',
@@ -764,13 +764,13 @@ describe('Recipient DB service', () => {
 
       // Create recipient with active grant for monitoring goal
       recipientWithMonitoringGoal = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       // Create an active grant
       monitoringGrant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithMonitoringGoal.id,
         regionId: 1,
         number: '323459',
@@ -1160,10 +1160,10 @@ describe('Recipient DB service', () => {
     beforeAll(async () => {
       region = await Region.create({ name: 'Test Region 200', id: 200 });
       user = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -1174,40 +1174,40 @@ describe('Recipient DB service', () => {
       });
 
       firstRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         name: 'Test Recipient 200',
       });
 
       secondRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         name: 'Test Recipient 201',
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: firstRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
@@ -1255,8 +1255,8 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        uei: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        uei: faker.string.sample(),
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       });
 
@@ -1273,8 +1273,8 @@ describe('Recipient DB service', () => {
       grant = await Grant.create({
         status: 'Active',
         regionId: region,
-        id: faker.datatype.number({ min: 1000 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         startDate: '2019-01-01',
         endDate: '2024-01-01',
@@ -2366,10 +2366,10 @@ describe('Recipient DB service', () => {
         programId,
         role,
         title: '',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        suffix: faker.name.suffix(),
-        prefix: faker.name.prefix(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        suffix: faker.person.suffix(),
+        prefix: faker.person.prefix(),
         active,
         effectiveDate: active ? new Date() : new Date('2020/01/01'),
         mapsTo: null,
@@ -2396,13 +2396,13 @@ describe('Recipient DB service', () => {
     const REGION_ID = 10;
 
     const recipient = {
-      name: faker.datatype.string({ min: 10 }),
-      id: faker.datatype.number({ min: 10000 }),
-      uei: faker.datatype.string({ min: 10 }),
+      name: faker.string.sample(10),
+      id: faker.number.int({ min: 10000, max: 10000 + 99999 }),
+      uei: faker.string.sample(10),
     };
     const grant = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2411,8 +2411,8 @@ describe('Recipient DB service', () => {
     };
 
     const grant2 = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2421,8 +2421,8 @@ describe('Recipient DB service', () => {
     };
 
     const irrelevantGrant = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID + 1,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2436,7 +2436,7 @@ describe('Recipient DB service', () => {
       startDate: '2023/01/01',
       endDate: '2023/12/31',
       status: 'Active',
-      name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      name: `${faker.animal.type() + faker.company.name()} Program`,
       programType: 'HS',
     };
 
@@ -2450,20 +2450,20 @@ describe('Recipient DB service', () => {
 
       const program1 = await db.Program.create({
         ...dummyProgram,
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       const program2 = await db.Program.create({
         ...dummyProgram,
         grantId: grant2.id,
         programType: 'EHS',
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       const irrelevantProgram = await db.Program.create({
         ...dummyProgram,
         grantId: irrelevantGrant.id,
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       // Program personnel to ignore
@@ -2544,64 +2544,64 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       author = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       collaboratorOne = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       collaboratorTwo = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       approverOne = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       approverTwo = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       dummyUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
-        uei: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
+        uei: faker.string.sample(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),

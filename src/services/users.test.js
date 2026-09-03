@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
 import db, { EventReportPilot, Permission, Role, User, UserRole } from '../models';
 import {
@@ -183,11 +183,11 @@ describe('Users DB service', () => {
     beforeAll(async () => {
       // User 1.
       user1 = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -199,11 +199,11 @@ describe('Users DB service', () => {
 
       // User 2.
       user2 = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 2,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -215,11 +215,11 @@ describe('Users DB service', () => {
 
       // User 3.
       user3 = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 3,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -408,12 +408,12 @@ describe('Users DB service', () => {
 
   describe('getTrainingReportUsersByRegion', () => {
     const userIds = [
-      faker.datatype.number({ min: 25000 }),
-      faker.datatype.number({ min: 25000 }),
-      faker.datatype.number({ min: 25000 }),
-      faker.datatype.number({ min: 25000 }),
-      faker.datatype.number({ min: 25000 }),
-      faker.datatype.number({ min: 25000 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      faker.number.int({ min: 25000, max: 25000 + 99999 }),
     ];
     const users = [
       {
@@ -448,7 +448,7 @@ describe('Users DB service', () => {
       },
     ];
 
-    const eventReportPilotId = faker.datatype.number({ min: 25000 });
+    const eventReportPilotId = faker.number.int({ min: 25000, max: 25000 + 99999 });
     const eventDisplayId = `R01-PD-25-${eventReportPilotId}`;
 
     beforeAll(async () => {
@@ -534,10 +534,10 @@ describe('Users DB service', () => {
 
       beforeAll(async () => {
         dualPermUser = await User.create({
-          id: faker.datatype.number({ min: 25000 }),
+          id: faker.number.int({ min: 25000, max: 25000 + 99999 }),
           name: 'dual-perm-user',
-          hsesUsername: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
-          hsesUserId: `dual-perm-${faker.datatype.number({ min: 25000 })}`,
+          hsesUsername: `dual-perm-${faker.number.int({ min: 25000, max: 25000 + 99999 })}`,
+          hsesUserId: `dual-perm-${faker.number.int({ min: 25000, max: 25000 + 99999 })}`,
           lastLogin: new Date(),
         });
         await Permission.bulkCreate([
@@ -573,14 +573,14 @@ describe('Users DB service', () => {
     beforeAll(async () => {
       // Create roles with high IDs to avoid conflicts
       role1 = await Role.create({
-        id: faker.datatype.number({ min: 40000 }),
+        id: faker.number.int({ min: 40000, max: 40000 + 99999 }),
         name: 'Wiggler',
         fullName: 'Wiggler',
         isSpecialist: true,
       });
 
       role2 = await Role.create({
-        id: faker.datatype.number({ min: 40000 }),
+        id: faker.number.int({ min: 40000, max: 40000 + 99999 }),
         name: 'Waggler',
         fullName: 'Waggler',
         isSpecialist: true,
@@ -588,12 +588,12 @@ describe('Users DB service', () => {
 
       // User 1 - Health Specialist in region 1
       user1 = await User.create({
-        id: faker.datatype.number({ min: 30000 }),
+        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
         name: 'user1',
         email: 'user1@test.gov',
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -604,12 +604,12 @@ describe('Users DB service', () => {
 
       // User 2 - Health Specialist in region 2
       user2 = await User.create({
-        id: faker.datatype.number({ min: 30000 }),
+        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
         name: 'user2',
         email: 'user2@test.gov',
         homeRegionId: 2,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -620,12 +620,12 @@ describe('Users DB service', () => {
 
       // User 3 - Early Childhood Specialist in region 1
       user3 = await User.create({
-        id: faker.datatype.number({ min: 30000 }),
+        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
         name: 'user3',
         email: 'user3@test.gov',
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -636,12 +636,12 @@ describe('Users DB service', () => {
 
       // User 4 - Early Childhood Specialist in region 2
       user4 = await User.create({
-        id: faker.datatype.number({ min: 30000 }),
+        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
         name: 'user4',
         email: 'user4@test.gov',
         homeRegionId: 2,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 

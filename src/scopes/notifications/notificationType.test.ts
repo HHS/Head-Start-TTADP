@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { NOTIFICATION_TYPES } from '../../constants';
 import db from '../../models';
@@ -179,10 +179,10 @@ describe('notifications/notificationType scope', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.datatype.number({ min: 400000, max: 449999 }),
-        name: faker.name.findName(),
-        hsesUsername: faker.internet.userName(),
-        hsesUserId: faker.datatype.uuid(),
+        id: faker.number.int({ min: 400000, max: 449999 }),
+        name: faker.person.fullName(),
+        hsesUsername: faker.internet.username(),
+        hsesUserId: faker.string.uuid(),
         email: faker.internet.email(),
         role: ['Specialist'],
         lastLogin: new Date(),
@@ -307,10 +307,10 @@ describe('notifications/notificationType scope', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.datatype.number({ min: 450000, max: 499999 }),
-        name: faker.name.findName(),
-        hsesUsername: faker.internet.userName(),
-        hsesUserId: faker.datatype.uuid(),
+        id: faker.number.int({ min: 450000, max: 499999 }),
+        name: faker.person.fullName(),
+        hsesUsername: faker.internet.username(),
+        hsesUserId: faker.string.uuid(),
         email: faker.internet.email(),
         role: ['Specialist'],
         lastLogin: new Date(),
