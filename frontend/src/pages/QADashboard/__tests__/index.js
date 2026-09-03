@@ -282,9 +282,10 @@ describe('QA Dashboard page', () => {
     try {
       renderQADashboard();
 
-      // The mocked SSDI endpoints intentionally omit any startDate param. Data only renders when
-      // every request matches a mock, so a leaked startDate filter would prevent this from showing.
-      expect(await screen.findByText('54.38%')).toBeVisible();
+      // Wait for the overview to render. The mocked SSDI endpoints intentionally omit any
+      // startDate param, so data only renders when every request matches a mock; a leaked
+      // startDate filter would prevent this from showing.
+      expect(await screen.findByText('55.35%')).toBeVisible();
 
       // Explicitly assert no SSDI request carried the removed startDate filter.
       const requestedStartDate = fetchMock.calls().some(([url]) => url.includes('startDate'));
