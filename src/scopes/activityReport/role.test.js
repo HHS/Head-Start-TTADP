@@ -22,7 +22,11 @@ describe('role filtersToScopes', () => {
   });
 
   describe('role', () => {
-    const possibleIds = [faker.datatype.number(), faker.datatype.number(), faker.datatype.number()];
+    const possibleIds = [
+      faker.number.int({ min: 0, max: 99999 }),
+      faker.number.int({ min: 0, max: 99999 }),
+      faker.number.int({ min: 0, max: 99999 }),
+    ];
 
     beforeAll(async () => {
       const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });

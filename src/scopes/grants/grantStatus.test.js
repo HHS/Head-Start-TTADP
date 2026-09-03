@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { createGrant } from '../../testUtils';
 import {
   filtersToScopes,
@@ -27,7 +27,7 @@ describe('grants/grantStatus', () => {
       userId: sharedTestData.mockUser.id,
       regionId: 1,
       status: 'Active',
-      name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+      name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       cdi: true,
     });
 
@@ -35,7 +35,7 @@ describe('grants/grantStatus', () => {
       userId: sharedTestData.mockUser.id,
       regionId: 1,
       status: 'Inactive',
-      name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+      name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       cdi: true,
     });
 
@@ -43,7 +43,7 @@ describe('grants/grantStatus', () => {
       userId: sharedTestData.mockUser.id,
       regionId: 1,
       status: 'Active',
-      name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+      name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       cdi: false,
     });
 
@@ -51,7 +51,7 @@ describe('grants/grantStatus', () => {
       userId: sharedTestData.mockUser.id,
       regionId: 1,
       status: 'Inactive',
-      name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+      name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       cdi: false,
     });
 
