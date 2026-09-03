@@ -12,7 +12,8 @@ describe('FilterDateRange', () => {
     condition = 'is on or after',
     onApplyDateRange = jest.fn(),
     setError = jest.fn(),
-    customDateOptions = null
+    customDateOptions = null,
+    minDate
   ) => {
     const updateSingleDate = jest.fn();
 
@@ -24,6 +25,7 @@ describe('FilterDateRange', () => {
           updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyDateRange}
           customDateOptions={customDateOptions}
+          minDate={minDate}
         />
       </FilterErrorContext.Provider>
     );
@@ -48,6 +50,25 @@ describe('FilterDateRange', () => {
 
     const message = 'Please enter a valid date';
     expect(setError).toHaveBeenCalledWith(message);
+  });
+
+  it('enforces a supplied minimum date', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange(
+      '',
+      'is on or after',
+      onApplyDateRange,
+      setError,
+      null,
+      '2025-01-21'
+    );
+
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/20/2025');
+
+    expect(onApplyDateRange).not.toHaveBeenCalled();
+    expect(setError).toHaveBeenCalledWith('Please enter a valid date');
   });
 
   it('renders the is dropdown', async () => {
