@@ -41,6 +41,7 @@ const MONITORING_FILTER_CONFIG = [
   {
     ...startDateFilter,
     display: 'Date',
+    minDate: '2025-01-21',
   },
 ];
 

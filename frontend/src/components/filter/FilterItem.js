@@ -191,7 +191,8 @@ export default function FilterItem({
           id, // filter id
           condition, // filter condition
           query, // filter query
-          onApplyQuery // the on apply query function handler
+          onApplyQuery, // the on apply query function handler
+          selectedTopic.minDate // optional minimum date
         )
       ) : (
         <DummySelect />
