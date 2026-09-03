@@ -30,6 +30,9 @@ import {
   findingTypeFilter,
 } from '../../components/filter/grantCitationFilters';
 import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
+import FilterDateRange from '../../components/filter/FilterDateRange';
+
+const MONITORING_MIN_DATE = '2025-01-21';
 
 const MONITORING_FILTER_CONFIG = [
   findingCategoryFilter,
@@ -41,6 +44,14 @@ const MONITORING_FILTER_CONFIG = [
   {
     ...startDateFilter,
     display: 'Date',
+    renderInput: (id, condition, query, onApplyQuery) => (
+      <FilterDateRange
+        condition={condition}
+        minDate={MONITORING_MIN_DATE}
+        onApplyDateRange={onApplyQuery}
+        query={query}
+      />
+    ),
   },
 ];
 
