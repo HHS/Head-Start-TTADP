@@ -12,7 +12,8 @@ describe('FilterDateRange', () => {
     condition = 'is on or after',
     onApplyDateRange = jest.fn(),
     setError = jest.fn(),
-    customDateOptions = null
+    customDateOptions = null,
+    minDate
   ) => {
     const updateSingleDate = jest.fn();
 
@@ -24,6 +25,7 @@ describe('FilterDateRange', () => {
           updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyDateRange}
           customDateOptions={customDateOptions}
+          minDate={minDate}
         />
       </FilterErrorContext.Provider>
     );
@@ -37,6 +39,15 @@ describe('FilterDateRange', () => {
     expect(onApplyDateRange).toHaveBeenCalled();
     const [hidden] = await screen.findAllByRole('textbox', { hidden: true });
     expect(hidden).toHaveValue('2025-02-01');
+  });
+
+  it('allows dates before the monitoring minimum date by default', () => {
+    const onApplyDateRange = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/01/2021');
+
+    expect(onApplyDateRange).toHaveBeenCalledWith('2021/01/01');
   });
 
   it('checks for valid dates', async () => {
@@ -53,7 +64,7 @@ describe('FilterDateRange', () => {
   it('rejects dates before the minimum date', () => {
     const onApplyDateRange = jest.fn();
     const setError = jest.fn();
-    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError, null, '2025-01-21');
     const date = screen.getByRole('textbox', { name: /date/i });
     userEvent.type(date, '01/20/2025');
 

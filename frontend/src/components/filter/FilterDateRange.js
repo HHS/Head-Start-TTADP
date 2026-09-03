@@ -11,7 +11,7 @@ import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
-const MIN_DATE = '2025-01-21';
+const MIN_DATE = '2020-09-01';
 const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
 
 const DATE_OPTIONS = [
@@ -29,7 +29,13 @@ const DATE_OPTIONS = [
   },
 ];
 
-export default function FilterDateRange({ condition, onApplyDateRange, query, customDateOptions }) {
+export default function FilterDateRange({
+  condition,
+  onApplyDateRange,
+  query,
+  customDateOptions,
+  minDate,
+}) {
   const { setError } = useContext(FilterErrorContext);
 
   // If we have any additional date options, we'll need to include and sort them
@@ -63,7 +69,7 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
       return;
     }
 
-    if (d.isBefore(moment(MIN_DATE).format(DATEPICKER_DATE_FORMAT))) {
+    if (d.isBefore(moment(minDate).format(DATEPICKER_DATE_FORMAT))) {
       setError('Please enter a valid date');
       return;
     }
@@ -118,7 +124,7 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
             id="filter-date-range"
             name="filter-date-range"
             onChange={onChange}
-            minDate={MIN_DATE}
+            minDate={minDate}
             maxDate={MAX_DATE}
             defaultValue={defaultValue}
           />
@@ -135,7 +141,7 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
             id="filter-date-range"
             name="filter-date-range"
             onChange={onChange}
-            minDate={MIN_DATE}
+            minDate={minDate}
             maxDate={MAX_DATE}
             defaultValue={defaultValue}
           />
@@ -156,8 +162,10 @@ FilterDateRange.propTypes = {
       value: PropTypes.string.isRequired,
     })
   ),
+  minDate: PropTypes.string,
 };
 
 FilterDateRange.defaultProps = {
   customDateOptions: null,
+  minDate: MIN_DATE,
 };

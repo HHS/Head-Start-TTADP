@@ -78,6 +78,13 @@ describe('RegionalDashboard constants', () => {
       expect(filterIds).toContain('stateCode');
     });
 
+    it('limits monitoring dates to January 21, 2025', () => {
+      const startDateFilter = MONITORING_FILTER_CONFIG.find(({ id }) => id === 'startDate');
+      const input = startDateFilter.renderInput(1, 'is on or after', '', jest.fn());
+
+      expect(input.props.minDate).toBe('2025-01-21');
+    });
+
     it('filters are sorted alphabetically by display name', () => {
       const displays = MONITORING_FILTER_CONFIG.map((filter) => filter.display);
       const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
