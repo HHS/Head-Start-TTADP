@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import {
   ActivityReportGoal,
@@ -44,7 +44,7 @@ describe('goal filtersToScopes', () => {
       nextStepsReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -68,7 +68,7 @@ describe('goal filtersToScopes', () => {
       argNameReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -86,7 +86,7 @@ describe('goal filtersToScopes', () => {
       objectiveTitleReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -114,7 +114,7 @@ describe('goal filtersToScopes', () => {
       objectiveTTAProvidedReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -141,7 +141,7 @@ describe('goal filtersToScopes', () => {
       arContextReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
         context: arContext,
@@ -159,7 +159,7 @@ describe('goal filtersToScopes', () => {
       arAdditionalNotesReport = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
         additionalNotes: arAdditionalNotes,

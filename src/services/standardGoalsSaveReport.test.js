@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -346,11 +346,11 @@ describe('save standard goals for report', () => {
         });
 
         const courseOne = await Course.create({
-          name: faker.datatype.string(200),
+          name: faker.string.sample(200),
         });
 
         const courseTwo = await Course.create({
-          name: faker.datatype.string(200),
+          name: faker.string.sample(200),
         });
 
         courses = [courseOne, courseTwo];
@@ -1264,9 +1264,9 @@ describe('save standard goals for report', () => {
         createdVia: 'monitoring',
       });
 
-      monitoringFindingId = faker.datatype.uuid();
+      monitoringFindingId = faker.string.uuid();
       monitoringCitation = await Citation.create({
-        mfid: faker.datatype.number({ min: 1000000, max: 9999999 }),
+        mfid: faker.number.int({ min: 1000000, max: 9999999 }),
         finding_uuid: monitoringFindingId,
         citation: 'Citation 1',
       });

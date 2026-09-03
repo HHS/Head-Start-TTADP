@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
@@ -1506,7 +1506,7 @@ describe('standardGoal service', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         homeRegionId: 1,
         name: 'Test Param User',
         hsesUsername: 'Test Param User',

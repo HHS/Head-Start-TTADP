@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { updateById } from '../../services/nationalCenters';
 import db from '..';
@@ -29,7 +29,9 @@ describe('nationalCenter hooks', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: 'NC-HOOK-TEST-1',
         data: {
+          eventId: 'NC-HOOK-TEST-1',
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},

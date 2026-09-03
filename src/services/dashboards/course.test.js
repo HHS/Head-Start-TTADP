@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -14,12 +14,12 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { getCourseUrlWidgetData, rollUpCourseUrlData } from './course';
 
-const RECIPIENT_ID = faker.datatype.number({ min: 9999 });
-const GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
+const RECIPIENT_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const GRANT_ID_ONE = faker.number.int({ min: 9999, max: 9999 + 99999 });
 const REGION_ID = 14;
 
 const mockUser = {
-  id: faker.datatype.number({ min: 9999 }),
+  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
   homeRegionId: 1,
   name: 'user5426862',
   hsesUsername: 'user5426862',

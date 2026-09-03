@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
 import { Op } from 'sequelize';
@@ -57,6 +57,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
+        eventId: `R01-TR-${faker.string.uuid()}`,
         status: 'active',
         owner: {
           id: num,
@@ -73,6 +74,7 @@ describe('event service', () => {
       pocIds: [num],
       collaboratorIds: [num],
       data: {
+        eventId: `R01-TR-${faker.string.uuid()}`,
         status,
       },
     });
@@ -83,7 +85,10 @@ describe('event service', () => {
       regionId: num,
       pocIds: [num],
       collaboratorIds: [num],
-      data,
+      data: {
+        eventId: `R01-TR-${faker.string.uuid()}`,
+        ...data,
+      },
     });
 
   describe('createEvent', () => {
@@ -92,6 +97,49 @@ describe('event service', () => {
       expect(created).toHaveProperty('id');
       expect(created).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
+    });
+
+    it('stores the eventId in the dedicated column and not in the JSONB data', async () => {
+      const eventId = `R01-TR-${faker.string.uuid()}`;
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [98_989],
+        collaboratorIds: [98_989],
+        data: { eventId, status: 'active' },
+      });
+
+      expect(created.eventId).toEqual(eventId);
+      // The eventId column is the single source of truth; it is not duplicated
+      // into the JSONB `data`.
+      expect(created.data.eventId).toBeUndefined();
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.eventId).toEqual(eventId);
+      expect(reloaded.data.eventId).toBeUndefined();
+
+      await destroyEvent(created.id);
+    });
+
+    it('throws when creating an event whose eventId already exists', async () => {
+      const eventId = `R01-TR-${faker.string.uuid()}`;
+      const first = await createAnEventWithData(98_989, { eventId });
+
+      await expect(createAnEventWithData(98_989, { eventId })).rejects.toThrow();
+
+      await destroyEvent(first.id);
+    });
+
+    it('throws when the eventId is missing', async () => {
+      await expect(
+        db.EventReportPilot.create({
+          ownerId: 98_989,
+          regionId: 98_989,
+          pocIds: [98_989],
+          collaboratorIds: [98_989],
+          data: { status: 'active' },
+        })
+      ).rejects.toThrow(/eventId cannot be null/);
     });
   });
 
@@ -108,6 +156,41 @@ describe('event service', () => {
       });
 
       expect(updated).toHaveProperty('ownerId', 123);
+
+      await destroyEvent(created.id);
+    });
+
+    it('keeps the eventId column stable when the request omits it', async () => {
+      const created = await createAnEvent(98_989);
+      const originalEventId = created.eventId;
+
+      const updated = await updateEvent(created.id, {
+        ownerId: 123,
+        pocIds: [123],
+        regionId: 123,
+        collaboratorIds: [123],
+        data: {},
+      });
+
+      // The dedicated eventId column is the single source of truth and is
+      // immutable, so it remains stable even when the request omits it.
+      expect(updated.eventId).toBe(originalEventId);
+
+      await destroyEvent(created.id);
+    });
+
+    it('throws when the request attempts to change the eventId', async () => {
+      const created = await createAnEvent(98_989);
+
+      await expect(
+        updateEvent(created.id, {
+          ownerId: 123,
+          pocIds: [123],
+          regionId: 123,
+          collaboratorIds: [123],
+          data: { eventId: `R01-TR-${faker.string.uuid()}` },
+        })
+      ).rejects.toThrow('eventId is immutable and cannot be changed');
 
       await destroyEvent(created.id);
     });
@@ -148,7 +231,7 @@ describe('event service', () => {
         pocIds: [123],
         regionId: 123,
         collaboratorIds: [123],
-        data: {},
+        data: { eventId: `R01-TR-${faker.string.uuid()}` },
       });
 
       expect(updated).toHaveProperty('id');
@@ -416,78 +499,13 @@ describe('event service', () => {
       });
 
       // expect date to be priority sorted, followed by title:
-      expect(found[0].data).toHaveProperty('eventId', 'A');
-      expect(found[1].data).toHaveProperty('eventId', 'B');
-      expect(found[2].data).toHaveProperty('eventId', 'C');
+      expect(found[0]).toHaveProperty('eventId', 'A');
+      expect(found[1]).toHaveProperty('eventId', 'B');
+      expect(found[2]).toHaveProperty('eventId', 'C');
 
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
       await destroyEvent(found[2].id);
-
-      // when eventId is missing, sort by startDate:
-      const e4 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-02',
-        status: TRS.NOT_STARTED,
-      });
-      const e5 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-03',
-        status: TRS.NOT_STARTED,
-      });
-      const e6 = await createAnEventWithData(11_112, {
-        startDate: '2020-01-01',
-        status: TRS.NOT_STARTED,
-      });
-
-      const found2 = await findEventHelperBlob({
-        key: 'status',
-        value: TRS.NOT_STARTED,
-        regions: [],
-        fallbackValue: null,
-        allowNull: true,
-        scopes: [{ id: [e4.id, e5.id, e6.id] }],
-      });
-
-      expect(found2[0].data).toHaveProperty('startDate', '2020-01-01');
-      expect(found2[1].data).toHaveProperty('startDate', '2020-01-02');
-      expect(found2[2].data).toHaveProperty('startDate', '2020-01-03');
-
-      await destroyEvent(found2[0].id);
-      await destroyEvent(found2[1].id);
-      await destroyEvent(found2[2].id);
-
-      // when eventId is the same, sort by startDate:
-      const e7 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-02',
-        status: TRS.NOT_STARTED,
-      });
-      const e8 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-03',
-        status: TRS.NOT_STARTED,
-      });
-      const e9 = await createAnEventWithData(11_113, {
-        eventId: 'A',
-        startDate: '2020-01-01',
-        status: TRS.NOT_STARTED,
-      });
-
-      const found3 = await findEventHelperBlob({
-        key: 'status',
-        value: TRS.NOT_STARTED,
-        regions: [],
-        fallbackValue: null,
-        allowNull: true,
-        scopes: [{ id: [e7.id, e8.id, e9.id] }],
-      });
-
-      expect(found3[0].data).toHaveProperty('startDate', '2020-01-01');
-      expect(found3[1].data).toHaveProperty('startDate', '2020-01-02');
-      expect(found3[2].data).toHaveProperty('startDate', '2020-01-03');
-
-      await destroyEvent(found3[0].id);
-      await destroyEvent(found3[1].id);
-      await destroyEvent(found3[2].id);
     });
 
     it('findEventHelperBlob use scopes', async () => {
@@ -545,13 +563,13 @@ describe('event service', () => {
     let buffer;
     let created;
 
-    const userId = faker.datatype.number();
-    const ncUserId = faker.datatype.number();
-    const regionalUserId = faker.datatype.number();
-    const ncWithoutScopeUserId = faker.datatype.number();
-    const pocId = faker.datatype.number();
+    const userId = faker.number.int({ min: 0, max: 99999 });
+    const ncUserId = faker.number.int({ min: 0, max: 99999 });
+    const regionalUserId = faker.number.int({ min: 0, max: 99999 });
+    const ncWithoutScopeUserId = faker.number.int({ min: 0, max: 99999 });
+    const pocId = faker.number.int({ min: 0, max: 99999 });
     let poc;
-    const collaboratorId = faker.datatype.number();
+    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
     let collaborator;
     let ncRole;
     let regionalRole;
@@ -647,8 +665,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: userId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email,
         lastLogin: new Date(),
         name: ownerName,
@@ -680,8 +698,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: ncUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: ncEmail,
         lastLogin: new Date(),
         name: ncUserName,
@@ -701,8 +719,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: regionalUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: regionalEmail,
         lastLogin: new Date(),
         name: regionalUserName,
@@ -722,8 +740,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       await db.User.create({
         id: ncWithoutScopeUserId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: ncWithoutScopeEmail,
         lastLogin: new Date(),
         name: ncWithoutScopeUserName,
@@ -744,8 +762,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       collaborator = await db.User.create({
         id: collaboratorId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
         name: collaboratorName,
@@ -761,8 +779,8 @@ ${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainin
       poc = await db.User.create({
         id: pocId,
         homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         email: faker.internet.email(),
         lastLogin: new Date(),
         name: pocName,
@@ -836,16 +854,17 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
       expect(result.count).toEqual(1);
 
-      // eventId is now a field in the jsonb body of the "data" column on
-      // db.EventReportPilot.
-      // Let's make sure it exists.
+      // eventId is stored solely in the dedicated `eventId` column and not in
+      // the JSONB `data`.
       created = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': eventId },
+        where: { eventId },
       });
 
       expect(created).not.toBeNull();
+      expect(created.data.eventId).toBeUndefined();
 
       expect(created).toHaveProperty('ownerId', userId);
+      expect(created).toHaveProperty('eventId', eventId);
       expect(created).toHaveProperty('regionId', regionId);
       expect(created.data.reasons).toEqual(['Complaint', 'Planning/Coordination']);
       expect(created.data.vision).toEqual(vision);
@@ -873,7 +892,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': ncEventId },
+        where: { eventId: ncEventId },
       });
 
       expect(importedEvent).not.toBeNull();
@@ -887,7 +906,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.errors).toEqual([]);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': regionalEventId },
+        where: { eventId: regionalEventId },
       });
 
       expect(importedEvent).not.toBeNull();
@@ -947,7 +966,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
 
@@ -971,7 +990,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
       expect(importedEvent.data.reasons).toEqual([
@@ -997,7 +1016,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.errors.length).toEqual(0);
 
       const importedEvent = await db.EventReportPilot.findOne({
-        where: { 'data.eventId': reportId },
+        where: { eventId: reportId },
       });
       expect(importedEvent).not.toBeNull();
       expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Expectant families']);
@@ -1069,6 +1088,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         pocIds: [ownerId],
         collaboratorIds: [ownerId],
         regionId: 1,
+        eventId: 'E123',
         data: {
           eventId: 'E123',
           eventName: 'Test Event',
