@@ -919,6 +919,27 @@ describe('communicationLog filtersToScopes', () => {
 
       expect(count).toBe(3);
     });
+
+    it('ignores non-numeric other TTA staff values (is not)', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.nin': ['not-a-number'],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(3);
+    });
   });
 
   describe('role scope unit tests', () => {
