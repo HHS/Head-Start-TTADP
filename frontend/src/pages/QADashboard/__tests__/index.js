@@ -558,6 +558,59 @@ describe('QA Dashboard page', () => {
     });
   });
 
+  it('defaults filtered reports to zero when the activity widget has no data', async () => {
+    fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
+    fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
+    fetchMock.get(feiApi, ROOT_CAUSE_FEI_GOALS_DATA);
+    fetchMock.get(classApi, RECIPIENT_CLASS_DATA);
+
+    // Mock Dashboard data with an empty activity_widget data set so the
+    // `activityWidgetData.data.length ? ... : 0` fallback branch runs.
+    fetchMock.get(dashboardApi, [
+      {
+        data_set: 'role_graph',
+        records: '0',
+        data: null,
+      },
+      {
+        data_set: 'delivery_method_graph',
+        records: '1',
+        data: [
+          {
+            month: 'Total',
+            hybrid_count: null,
+            virtual_count: null,
+            in_person_count: null,
+            hybrid_percentage: 0,
+            virtual_percentage: 0,
+            in_person_percentage: 0,
+          },
+        ],
+      },
+      {
+        data_set: 'activity_widget',
+        records: '0',
+        data: [],
+      },
+    ]);
+
+    renderQADashboard();
+
+    // Header
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+
+    // Assert the dashboard still renders its graphs.
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Delivery method')).toBeVisible();
+        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible();
+      });
+    });
+  });
+
   it('shows an error when fetching QA data fails', async () => {
     fetchMock.restore();
 
