@@ -46,9 +46,6 @@ jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
-  <div>Recipients With No TTA Page</div>
-));
 jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => (
   <div>Recipients With Class Scores and Goals Page</div>
 ));
@@ -317,9 +314,9 @@ describe('Routes', () => {
     expect(await screen.findByText('QA Dashboard Page')).toBeInTheDocument();
   });
 
-  it('renders the QA Recipients With No TTA page', async () => {
+  it('redirects the removed QA Recipients With No TTA route to 404', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-no-tta');
-    expect(await screen.findByText('Recipients With No TTA Page')).toBeInTheDocument();
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With Class Scores and Goals page', async () => {

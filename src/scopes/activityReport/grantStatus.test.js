@@ -39,7 +39,7 @@ describe('grantStatus filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Active',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         cdi: true,
       });
 
@@ -47,7 +47,7 @@ describe('grantStatus filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Inactive',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         cdi: true,
       });
 
@@ -55,7 +55,7 @@ describe('grantStatus filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Active',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         cdi: false,
       });
 
@@ -63,7 +63,7 @@ describe('grantStatus filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Inactive',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         cdi: false,
       });
 
