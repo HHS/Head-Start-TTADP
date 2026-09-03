@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ActivityReport,
@@ -65,7 +65,7 @@ const linkTimestamps = {
 };
 
 const granteeRow = (grantNumber, reviewId, granteeId) => ({
-  id: faker.datatype.number({ min: 9999 }),
+  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
   grantNumber,
   reviewId,
   granteeId,
@@ -80,9 +80,9 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario A: Active deficiency, TWO grants on same review
   // ----------------------------------------------------------
-  const recipientIdA = faker.datatype.number({ min: 70000 });
-  const grantIdA1 = faker.datatype.number({ min: 70000 });
-  const grantIdA2 = faker.datatype.number({ min: 70000 });
+  const recipientIdA = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdA1 = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdA2 = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberA1 = `UFT-${uuidv4().slice(0, 8)}`;
   const grantNumberA2 = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdA = uuidv4();
@@ -95,8 +95,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
   // ----------------------------------------------------------
-  const recipientIdB = faker.datatype.number({ min: 70000 });
-  const grantIdB = faker.datatype.number({ min: 70000 });
+  const recipientIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberB = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdB1 = uuidv4();
   const reviewIdB2 = uuidv4();
@@ -106,8 +106,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario C: AOC closed by monitoring goal
   // ----------------------------------------------------------
-  const recipientIdC = faker.datatype.number({ min: 70000 });
-  const grantIdC = faker.datatype.number({ min: 70000 });
+  const recipientIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberC = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdC = uuidv4();
   const granteeIdC = uuidv4();
@@ -117,8 +117,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario E: CLASS review with scores, no findings
   // ----------------------------------------------------------
-  const recipientIdE = faker.datatype.number({ min: 70000 });
-  const grantIdE = faker.datatype.number({ min: 70000 });
+  const recipientIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberE = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdE = uuidv4();
   const granteeIdE = uuidv4();
@@ -129,8 +129,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario D: Undelivered current review forces Active
   // ----------------------------------------------------------
-  const recipientIdD = faker.datatype.number({ min: 70000 });
-  const grantIdD = faker.datatype.number({ min: 70000 });
+  const recipientIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberD = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdD1 = uuidv4();
   const reviewIdD2 = uuidv4();
@@ -140,8 +140,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario F: Excluded finding type (Withdrawn) — must not produce any fact table rows
   // ----------------------------------------------------------
-  const recipientIdF = faker.datatype.number({ min: 70000 });
-  const grantIdF = faker.datatype.number({ min: 70000 });
+  const recipientIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdF = uuidv4();
   const granteeIdF = uuidv4();
@@ -150,19 +150,19 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario G: last_tta computed from ActivityReport.endDate
   // ----------------------------------------------------------
-  const userIdG = faker.datatype.number({ min: 70000 });
+  const userIdG = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const expectedLastTtaDate = '2026-01-15';
 
   // ----------------------------------------------------------
   // Scenario H: live-value views pick latest endDate; null & tie
   // ----------------------------------------------------------
-  const userIdH = faker.datatype.number({ min: 70000 });
+  const userIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
 
   // ----------------------------------------------------------
   // Scenario H: Elevated Deficiency + Compliant outcome → Corrected
   // ----------------------------------------------------------
-  const recipientIdH = faker.datatype.number({ min: 70000 });
-  const grantIdH = faker.datatype.number({ min: 70000 });
+  const recipientIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberH = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdH = uuidv4();
   const granteeIdH = uuidv4();
@@ -171,8 +171,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario I: Elevated Deficiency + Compliant but undelivered → Active
   // ----------------------------------------------------------
-  const recipientIdI = faker.datatype.number({ min: 70000 });
-  const grantIdI = faker.datatype.number({ min: 70000 });
+  const recipientIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberI = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdI1 = uuidv4();
   const reviewIdI2 = uuidv4();
@@ -184,8 +184,8 @@ describe('updateMonitoringFactTables', () => {
   // Must be included because MonitoringClassSummaries scores exist,
   // even though reportDeliveryDate and sourceCreatedAt predate 2025-01-21.
   // ----------------------------------------------------------
-  const recipientIdJ = faker.datatype.number({ min: 70000 });
-  const grantIdJ = faker.datatype.number({ min: 70000 });
+  const recipientIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberJ = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdJ = uuidv4();
   const granteeIdJ = uuidv4();
@@ -199,8 +199,8 @@ describe('updateMonitoringFactTables', () => {
   // (lower id) to confirm the UPDATE picks by reportDeliveryDate DESC, not
   // insertion order. A CLASS review is also present and must not count.
   // ----------------------------------------------------------
-  const recipientIdK = faker.datatype.number({ min: 70000 });
-  const grantIdK = faker.datatype.number({ min: 70000 });
+  const recipientIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberK = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdK1 = uuidv4(); // created first, older delivery date — must NOT win
   const reviewIdK2 = uuidv4(); // created second, newer delivery date — must win
@@ -752,7 +752,7 @@ describe('updateMonitoringFactTables', () => {
       paranoid: false,
     });
     const goalC = await Goal.create({
-      id: faker.datatype.number({ min: 90000 }),
+      id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       name: goalTemplate.templateName,
       grantId: grantIdC,
       goalTemplateId: goalTemplate.id,

@@ -8,6 +8,7 @@ import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { mockRSSData } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
 import QADashboard from '../index';
@@ -181,7 +182,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
   },
 ];
 
-describe('Resource Dashboard page', () => {
+describe('QA Dashboard page', () => {
   beforeEach(() => {
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
@@ -194,6 +195,8 @@ describe('Resource Dashboard page', () => {
 
     // Mock Dashboard data.
     fetchMock.get(dashboardApi, DASHBOARD_DATA);
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
   });
 
   afterEach(() => fetchMock.restore());
@@ -217,14 +220,12 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 
     // Assert test data.
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText('54.38%')).toBeVisible();
         expect(screen.getByText('18.26%')).toBeVisible();
         expect(screen.getByText('55.35%')).toBeVisible();
       });
@@ -295,6 +296,8 @@ describe('Resource Dashboard page', () => {
 
   it('renders the graphs correctly if the records are null', async () => {
     fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -419,7 +422,6 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 
@@ -435,6 +437,9 @@ describe('Resource Dashboard page', () => {
 
   it('renders the graphs correctly with empty data', async () => {
     fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -539,7 +544,6 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 

@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GOAL_STATUS } from '../constants';
 import { Goal, Grant, Recipient, sequelize } from '../models';
 import { updateGoalStatusById, verifyAllowedGoalStatusTransition } from './goals';
@@ -11,14 +11,14 @@ describe('Change Goal Status', () => {
   beforeAll(async () => {
     // create recipient
     recipient = await Recipient.create({
-      id: faker.datatype.number(),
-      name: faker.name.firstName(),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      name: faker.person.firstName(),
     });
 
     // create grant
     grant = await Grant.create({
-      id: faker.datatype.number(),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
       startDate: new Date(),
