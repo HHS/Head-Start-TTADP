@@ -371,7 +371,15 @@ SELECT
   participant_roles,
   num_participants,
   attachments,
-  context,
+  -- Formula-injection guard: context is raw, user-entered free text with no id prefix
+  -- protecting it, so a value starting with =/+/-/@ would read as a formula when the CSV
+  -- opens in Excel/Sheets. Prefixing with a single quote forces text interpretation (the
+  -- apostrophe itself is hidden on direct CSV open, so unaffected values round-trip
+  -- unchanged). Applied only to columns like this one that are raw free text without a
+  -- leading id/arid prefix; aggregated columns elsewhere in this file are already safe
+  -- because their assembled value always starts with a digit. Repeated below and in
+  -- goals.sql / objectives.sql without restating this rationale.
+  CASE WHEN context ~ '^\s*[-=+@]' THEN '''' || context ELSE context END context,
   goal_cnt,
   goal_uniq_cnt,
   goal_standards,
@@ -393,9 +401,11 @@ SELECT
   objective_non_resource_links,
   objective_tta_short,
   objective_support_types,
-  specialist_next_steps,
+  -- Formula-injection guard (see context, above) applied to these two: raw note text with
+  -- no id prefix.
+  CASE WHEN specialist_next_steps ~ '^\s*[-=+@]' THEN '''' || specialist_next_steps ELSE specialist_next_steps END specialist_next_steps,
   specialist_next_steps_dates,
-  recipient_next_steps,
+  CASE WHEN recipient_next_steps ~ '^\s*[-=+@]' THEN '''' || recipient_next_steps ELSE recipient_next_steps END recipient_next_steps,
   recipient_next_steps_dates,
   submitted_date,
   last_saved,
