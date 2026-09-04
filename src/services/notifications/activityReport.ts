@@ -234,6 +234,57 @@ async function createResubmittedNotificationForCollaborators(
 }
 
 /**
+ * Creates the "revised report resubmitted for approval" in-app notification for each
+ * approver on an activity report. Fired when a report is resubmitted for approval
+ * (i.e. submitted while it was in "needs action" status), regardless of whether the
+ * creator or a collaborator performed the resubmission. Replaces the standard
+ * approver-submitted notification on resubmission (spec AR-4a / AR-5a).
+ * @param currentApprovers The report's approvers to notify.
+ * @param savedReport The saved activity report.
+ * @returns {Promise<void>} Resolves once notifications are created and stale ones archived.
+ */
+async function createResubmittedNotificationForApprovers(
+  currentApprovers: { userId: number }[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+  }
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  await Promise.all(
+    currentApprovers.map((approver) =>
+      createNotification(
+        approver.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+          },
+          skipExisting: 'archived',
+        }
+      )
+    )
+  );
+
+  return Promise.all(
+    currentApprovers.map((approver) =>
+      archiveNotificationsByUserEntityAndType(
+        savedReport.id,
+        approver.userId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED
+      )
+    )
+  );
+}
+
+/**
  * Archives the "needs action" in-app notifications for an activity report.
  * Called when a report is (re)submitted for approval so that any pending needs-action
  * notifications for that report are moved to the archived list.
@@ -250,15 +301,16 @@ async function archiveNeedsActionNotifications(reportId: number): Promise<void> 
 /**
  * Archives the "revised report resubmitted" in-app notifications for an activity report.
  * Called when a report is approved or returned to "needs action" so that the resubmission
- * notifications for that report are moved to the archived list.
+ * notifications (both collaborator- and approver-facing) for that report are moved to the
+ * archived list.
  * @param {number} reportId The activity report ID whose resubmitted notifications to archive.
  * @returns {Promise<void>} Resolves once archiving is complete.
  */
 async function archiveResubmittedNotifications(reportId: number): Promise<void> {
-  return archiveNotificationsByEntityAndType(
-    reportId,
-    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED
-  );
+  return archiveNotificationsByEntityAndType(reportId, [
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+  ]);
 }
 
 export {
@@ -270,5 +322,6 @@ export {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
 };

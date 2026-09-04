@@ -186,6 +186,37 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER];
+
+    it('textFn interpolates recipientName', () => {
+      expect(config.textFn({ recipientName: 'Head Start Program' })).toBe(
+        'A revised Activity Report for Head Start Program has been submitted for approval.'
+      );
+    });
+
+    it('actionable is true', () => {
+      expect(config.actionable).toBe(true);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "Take action"', () => {
+      expect(config.linkText()).toBe('Take action');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+
+    it('uses the approver submitted-for-review settings key', () => {
+      expect(config.settingsKey).toBe('inAppWhenReportSubmittedForReview');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE];
 
