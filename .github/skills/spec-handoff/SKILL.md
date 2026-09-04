@@ -2,7 +2,7 @@
 name: spec-handoff
 description: Turn a filled handoff form and a Figma design into an approved markdown spec at specs/<slug>/index.md, then implement it to codebase convention. Use when starting a ticket that has a design attached, or when asked to write a spec, plan a feature, or translate a Figma deliverable into text.
 license: MIT
-compatibility: Requires git. Optional: a Figma MCP server, a local Jira export.
+compatibility: Requires git. Optional - a Figma MCP server, a local Jira export.
 ---
 
 
