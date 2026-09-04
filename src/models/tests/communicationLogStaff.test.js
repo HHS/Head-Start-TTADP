@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import db, { CommunicationLog, CommunicationLogStaff, User } from '..';
 
 describe('CommunicationLogStaff', () => {
@@ -9,10 +9,10 @@ describe('CommunicationLogStaff', () => {
 
   const createMockUser = () =>
     User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.internet.username(),
+      hsesUserId: faker.string.uuid(),
       lastLogin: new Date(),
     });
 
