@@ -16,7 +16,7 @@ This skill exists because Figma cannot express interaction states, content rules
 
 | Input | Required | Notes |
 |---|---|---|
-| Filled handoff form | yes | `assets/spec-handoff-template.md`, filled and saved to `specs/<slug>/handoff.md` |
+| Filled handoff form | yes | `templates/spec-handoff-template.md`, filled and saved to `specs/<slug>/handoff.md` |
 | Jira issue or epic key | yes | e.g. `TTAHUB-5383` |
 | Figma frame URLs | if the work has a design | must include `node-id` |
 | Feature slug | yes | kebab-case, e.g. `actionable-notifications` |
@@ -166,7 +166,7 @@ Only after a human has approved the spec.
 
 ## Gate 4 — Record
 
-- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Template file, `.figma.js`, colocated for our components or in `frontend/figma/connect/` for `@trussworks/react-uswds`. Tick it off in `frontend/figma/README.md`. This is how coverage grows — one ticket at a time, prioritized by what the team actually touches, never as its own project.
+- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Template file, `.figma.js`, colocated for our components or in a component-specific location for `@trussworks/react-uswds`. This is how coverage grows — one ticket at a time, prioritized by what the team actually touches, never as its own project.
 - Run the `self-improve` skill. It reconstructs the session from git and proposes doc updates.
 - If an architectural decision was made, write an ADR using the repo's ADR template and directory.
 - Update the spec's status line: draft → approved → implemented.
