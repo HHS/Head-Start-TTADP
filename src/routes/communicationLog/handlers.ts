@@ -25,6 +25,8 @@ import { userById, usersByRoles } from '../../services/users';
 
 const { GoalTemplate, Grant, Permission, Recipient, Role, User, UserRole } = db;
 
+const CENTRAL_OFFICE = 14;
+
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
 const logContext = { namespace };
@@ -54,14 +56,22 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   const { regionId } = req.params;
   const authorization = new UserPolicy(user);
 
-  if (!authorization.canViewUsersInRegion(parseInt(String(regionId), DECIMAL_BASE))) {
+  // Central Office users view communication logs across every region, but region 14
+  // itself has no home-based TTA staff. Return staff from all regions for them so the
+  // "other TTA staff" filter is populated.
+  const isCentralOfficeUser = user.homeRegionId === CENTRAL_OFFICE;
+
+  if (
+    !isCentralOfficeUser &&
+    !authorization.canViewUsersInRegion(parseInt(String(regionId), DECIMAL_BASE))
+  ) {
     return null;
   }
   const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
 
   const users = (await usersByRoles(
     ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
-    regionId
+    isCentralOfficeUser ? null : regionId
   )) as {
     id: number;
     name: string;

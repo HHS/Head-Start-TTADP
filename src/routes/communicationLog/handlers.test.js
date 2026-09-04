@@ -99,6 +99,12 @@ describe('communicationLog handlers', () => {
     permissions: [],
   };
 
+  const centralOffice = {
+    id: 5,
+    homeRegionId: 14,
+    permissions: [],
+  };
+
   const admin = {
     id: 4,
     permissions: [
@@ -1058,6 +1064,35 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(unauthorized));
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       expect(result).toBeNull();
+    });
+
+    it('returns users from all regions for central office users', async () => {
+      const mockRequest = {
+        session: {
+          userId: centralOffice.id,
+        },
+        params: {
+          regionId: 14,
+        },
+      };
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ];
+      userById.mockResolvedValue(centralOffice);
+      usersByRoles.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue([]);
+      Group.findAll.mockResolvedValue([]);
+
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      // central office should not be scoped to a single region
+      expect(usersByRoles).toHaveBeenCalledWith(
+        ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
+        null
+      );
+      expect(result.regionalUsers).toEqual(mockUsers.map((u) => ({ label: u.name, value: u.id })));
     });
   });
 
