@@ -112,7 +112,7 @@ export default function FilterDateRange({
       );
 
     case 'is within':
-      return <DateRangePicker query={query} onApply={onApplyDateRange} />;
+      return <DateRangePicker query={query} onApply={onApplyDateRange} minDate={minDate} />;
     case 'is on or before':
       return (
         <span ref={container}>
