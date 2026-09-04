@@ -143,6 +143,19 @@ workflows:
             only:
             - production
 
+  dev_dependency_audit_report:
+    # Scheduled report-only audit for dev dependencies so PR builds stay focused
+    # on runtime dependency gates while dev advisories remain visible.
+    triggers:
+    - schedule:
+        cron: "0 12 * * 1-5"
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - dependency_audit_report
+
   deploy_only:
     # job to be triggered manually, will build the app and deploy to target env
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
@@ -486,6 +499,29 @@ jobs:
         - build
         - node_modules
         - frontend/node_modules
+
+      dependency_audit_report:
+      executor: docker-executor
+      resource_class: medium
+      steps:
+      - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+        name: Restore tarball cache
+        keys:
+        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+      - restore_cache:
+        name: Restore deps cache
+        keys:
+        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - yarn-deps-
+      - run:
+        name: Install dependencies
+        no_output_timeout: 20m
+        command: yarn deps
+      - run:
+        name: Report dev package audits
+        command: yarn deps:audit:dev
 
   test_backend:
     executor: docker-postgres-executor

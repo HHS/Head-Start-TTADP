@@ -13,6 +13,9 @@
     "build": "vite build",
     "test": "cross-env TZ=America/New_York jest --watch",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
+    "deps:audit": "yarn deps:audit:runtime",
+    "deps:audit:runtime": "../tools/run-yarn-audit.js",
+    "deps:audit:dev": "../tools/run-yarn-audit.js --groups devDependencies --report-only",
     "lint": "biome lint --diagnostic-level=error --no-errors-on-unmatched",
     "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched"
   },
