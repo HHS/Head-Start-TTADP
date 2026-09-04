@@ -166,7 +166,7 @@ Only after a human has approved the spec.
 
 ## Gate 4 — Record
 
-- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Add a `.figma.tsx` file under `frontend/src/codeConnect/` and validate it with `yarn figma:parse` (from `frontend/`). See `frontend/src/codeConnect/README.md` for the setup, conventions, and the Alert pilot. This is how coverage grows — one ticket at a time, prioritized by what the team actually touches, never as its own project.
+- **If any frame in this spec used a component with no Code Connect mapping, write the mapping now.** Add a `.figma.ts` template file under `frontend/src/codeConnect/` and validate it with `yarn figma:parse` (from `frontend/`). See `frontend/src/codeConnect/README.md` for the setup, conventions, and the Alert pilot. This is how coverage grows — one ticket at a time, prioritized by what the team actually touches, never as its own project.
 - Run the `self-improve` skill. It reconstructs the session from git and proposes doc updates.
 - If an architectural decision was made, write an ADR using the repo's ADR template and directory.
 - Update the spec's status line: draft → approved → implemented.

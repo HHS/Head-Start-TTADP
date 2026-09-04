@@ -12,44 +12,57 @@ local validation. Publishing and CI are intentionally out of scope for now — s
 
 ## Layout
 
-- `frontend/figma.config.json` — Code Connect config (React parser, include globs).
-- `frontend/src/codeConnect/*.figma.tsx` — one file per mapped component.
+- `frontend/figma.config.json` — Code Connect config (`codeConnect` block: include
+  globs, `label`, `language`).
+- `frontend/src/codeConnect/*.figma.ts` — one template file per mapped component.
 - `frontend/package.json` scripts:
   - `yarn figma:parse` — validate mappings locally. **No Figma token needed.**
   - `yarn figma:publish` — publish mappings to Figma. **Requires a token; do not run casually.**
 
-## Version note (important)
+`src/codeConnect/**` is excluded from the app `tsconfig.json`: template files
+import a virtual `figma` module and are only ever executed by the Figma CLI, so
+they must not be typechecked or bundled into the app.
 
-We pin `@figma/code-connect@^1` on purpose. Code Connect **v2 removed the
-framework-specific React parser** (the `figma.connect(Component, url, {...})`
-author-time API used here) in favor of lower-level template files. v1 is the
-supported way to author React `.figma.tsx` mappings today.
+## Format: v2 template files
 
-Figma has announced parser-based Code Connect will stop receiving updates on
-**2026-08-17**. Migrating to v2 template files is a future task — tracked as a
-`[NEEDS DECISION]`, not part of this pilot. See the
-[templates migration guide](https://developers.figma.com/docs/code-connect/templates-migration-guide/).
+We use `@figma/code-connect@^2`, which uses **template files** (`.figma.ts`).
+Figma removed the older framework-specific parser (`.figma.tsx` +
+`figma.connect(Component, url, {...})`) and **stopped maintaining it on
+2026-08-17**, so we author templates directly — no parser.
+
+A template file is plain TypeScript that reads the selected Figma instance and
+returns the snippet to show. See the
+[template file docs](https://developers.figma.com/docs/code-connect/template-files/).
 
 ## Adding a mapping
 
-1. In Figma, open the component and copy its URL (must contain a `node-id`).
-2. Create `src/codeConnect/<Component>.figma.tsx`.
-3. Import the real component and `figma`, then call `figma.connect`:
+1. In Figma, open the component and "Copy link to selection" (URL must contain a `node-id`).
+2. Create `src/codeConnect/<Component>.figma.ts`.
+3. Start with the header comment block, then read instance props and return the snippet:
 
-   ```tsx
-   import React from 'react';
-   import { Button } from '@trussworks/react-uswds';
-   import figma from '@figma/code-connect';
+   ```ts
+   // url=<figma-url-with-node-id>
+   // component=Button
 
-   figma.connect(Button, '<figma-url-with-node-id>', {
-     props: {
-       // Map Figma variant/props -> code props
-       type: figma.enum('State', { Primary: 'button', Secondary: 'outline' }),
-     },
-     example: ({ type }) => <Button type="button" outline={type === 'outline'}>Label</Button>,
-   });
+   import figma from "figma"
+
+   const variant = figma.selectedInstance.getEnum("State", {
+     Primary: "button",
+     Secondary: "outline",
+   })
+
+   export default {
+     id: "Button",
+     imports: ["import { Button } from '@trussworks/react-uswds';"],
+     example: figma.code`<Button${figma.helpers.react.renderProp("type", variant)}>Label</Button>`,
+     metadata: { nestable: true },
+   }
    ```
 
+   - `figma.selectedInstance.getEnum/getString/getBoolean(...)` reads Figma props.
+   - Wrap the snippet in `figma.code`; use `figma.helpers.react.renderProp` for
+     correct JSX prop rendering (handles quoting/booleans). For a value you know
+     the exact shape of, you can inline it instead, e.g. `count={${count}}`.
 4. Prefer Figma variables/tokens over hardcoded values (`get_variable_defs` via the
    Figma MCP server). Map to `@trussworks/react-uswds` components and USWDS utility
    classes — never author new CSS (`best_practices.md`).
@@ -57,9 +70,12 @@ Figma has announced parser-based Code Connect will stop receiving updates on
 6. Record the Figma `node-id` and the date you read the design in a file comment —
    designs change and nothing notifies you.
 
+Tip: to convert an old `.figma.tsx` parser file, run `yarn figma connect migrate`
+and then simplify the generated template.
+
 ## The Alert pilot & its known gaps
 
-`Alert.figma.tsx` maps the design library **Alert** set (`node-id 1786:15733`)
+`Alert.figma.ts` maps the design library **Alert** set (`node-id 1786:15733`)
 to the trussworks `Alert`. Only the `State` variant is mapped (→ `type`). Two
 Figma variants have **no 1:1 code equivalent** and are intentionally left
 unmapped — resolve as `[NEEDS DECISION]` with design before mapping:
