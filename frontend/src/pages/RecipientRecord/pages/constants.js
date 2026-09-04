@@ -6,7 +6,7 @@ import {
 } from '../../../components/filter/activityReportFilters';
 import {
   createDateFilter,
-  goalNameFilter,
+  goalCategoryFilter,
   grantNumberFilter,
   reasonsFilter,
   statusFilter,
@@ -17,7 +17,7 @@ import {
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) =>
   [
     createDateFilter,
-    goalNameFilter,
+    goalCategoryFilter,
     grantNumberFilter(grantNumberParams),
     reasonsFilter,
     statusFilter,
