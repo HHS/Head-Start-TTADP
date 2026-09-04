@@ -80,12 +80,13 @@ export const startDateFilter = {
     }
     return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
   },
-  renderInput: (id, condition, query, onApplyQuery) => (
+  renderInput: (id, condition, query, onApplyQuery, minDate) => (
     <FilterDateRange
       condition={condition}
       query={query}
       updateSingleDate={onApplyQuery}
       onApplyDateRange={onApplyQuery}
+      minDate={minDate}
     />
   ),
 };
@@ -106,12 +107,13 @@ export const endDateFilter = {
     }
     return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
   },
-  renderInput: (id, condition, query, onApplyQuery) => (
+  renderInput: (id, condition, query, onApplyQuery, minDate) => (
     <FilterDateRange
       condition={condition}
       query={query}
       updateSingleDate={onApplyQuery}
       onApplyDateRange={onApplyQuery}
+      minDate={minDate}
     />
   ),
 };

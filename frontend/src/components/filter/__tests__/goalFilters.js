@@ -51,7 +51,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => createDateFilter.renderInput(null, 'is on or after', '', apply));
       const dateInput = await screen.findByLabelText('date');
-      userEvent.type(dateInput, '01/02/2022');
+      userEvent.type(dateInput, '02/01/2025');
       await waitFor(() => expect(apply).toHaveBeenCalled());
     });
   });

@@ -240,7 +240,7 @@ describe('Filter Menu', () => {
         id: 'filter1234',
         topic: 'startDate',
         condition: 'is on or after',
-        query: '2021/10/31',
+        query: '2025/02/01',
       },
     ];
 
@@ -253,7 +253,7 @@ describe('Filter Menu', () => {
     userEvent.click(button);
 
     let date = screen.getByRole('textbox', { name: /date/i });
-    expect(date.value).toBe('10/31/2021');
+    expect(date.value).toBe('02/01/2025');
 
     const topic = screen.getByRole('combobox', { name: 'topic' });
     userEvent.selectOptions(topic, 'role');
@@ -269,7 +269,7 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(condition, 'is on or before');
 
     date = await screen.findByRole('textbox', { name: /date/i });
-    userEvent.type(date, '10/31/2020');
+    userEvent.type(date, '02/01/2025');
 
     const addNew = screen.getByRole('button', { name: /Add new filter/i });
     userEvent.click(addNew);
