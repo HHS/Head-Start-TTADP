@@ -4,7 +4,7 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
 
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
 import { Permission, RequestErrors, sequelize, User } from '../models';
 
@@ -283,7 +283,7 @@ export const convertName = (name, email) => {
     // and email
     foundTransformedUser = {
       id: foundUser.id,
-      name: faker.name.findName(), // Generate a fake name
+      name: faker.person.fullName(), // Generate a fake name
       email: generateFakeEmail(), // Generate a fake email
     };
     transformedUsers.push(foundTransformedUser);
@@ -544,9 +544,9 @@ export const hideUsers = async (userIds) => {
       hsesUsername,
       email,
       // Generate a fake phone number
-      phoneNumber: faker.phone.phoneNumber(),
+      phoneNumber: faker.phone.number(),
       // Generate a fake name and remove any single quotes
-      name: faker.name.findName().replace(/'/g, ''),
+      name: faker.person.fullName().replace(/'/g, ''),
     };
   });
 
@@ -611,7 +611,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   const fakeRecipientData = realRecipients.map((recipient) => ({
     id: recipient.id,
     // Generate a fake company name and remove any single quotes
-    name: faker.company.companyName().replace(/'/g, ''),
+    name: faker.company.name().replace(/'/g, ''),
   }));
 
   // Query the database to retrieve real grant data based on the WHERE clause

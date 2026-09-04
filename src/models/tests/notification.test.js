@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { NOTIFICATION_TYPES } from '../../constants';
 import db, { ActivityReport, Notification, NotificationUserState, User } from '..';
@@ -9,10 +9,10 @@ describe('Notification model', () => {
 
   beforeAll(async () => {
     user = await User.create({
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      name: faker.name.findName(),
-      hsesUsername: faker.internet.userName(),
-      hsesUserId: faker.datatype.uuid(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      name: faker.person.fullName(),
+      hsesUsername: faker.internet.username(),
+      hsesUserId: faker.string.uuid(),
       email: faker.internet.email(),
       role: ['Specialist'],
       lastLogin: new Date(),

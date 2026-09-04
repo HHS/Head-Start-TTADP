@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import db, { Goal, Grant, Objective, Recipient } from '../models';
 import { createOrUpdateGoals } from './goals';
@@ -15,16 +15,16 @@ describe('createOrUpdateGoals', () => {
   let newGoals;
   let grants = [
     {
-      id: faker.datatype.number(),
-      number: faker.random.alphaNumeric(5),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
       startDate: new Date(),
       endDate: new Date(),
     },
     {
-      id: faker.datatype.number(),
-      number: faker.random.alphaNumeric(5),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
       startDate: new Date(),
@@ -35,8 +35,8 @@ describe('createOrUpdateGoals', () => {
   beforeAll(async () => {
     recipient = await Recipient.create({
       name: 'recipient',
-      id: faker.datatype.number(),
-      uei: faker.datatype.string(12),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      uei: faker.string.sample(12),
     });
     grants = await Promise.all(
       grants.map((g) => Grant.create({ ...g, recipientId: recipient.id }))

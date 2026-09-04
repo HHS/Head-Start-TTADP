@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
@@ -321,29 +321,29 @@ describe('activity report model hooks', () => {
 
       auditLogger.info('Creating recipient, user, and grant');
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       mockUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       mockApprover = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -1053,8 +1053,8 @@ describe('activity report model hooks', () => {
       const goalCreatedAt = selectedAt.clone().subtract(2, 'hours');
       const closedAt = selectedAt.clone().subtract(1, 'hour');
       const secondGrant = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -1550,21 +1550,21 @@ describe('activity report model hooks', () => {
 
       beforeAll(async () => {
         objStatusUser = await User.create({
-          id: faker.datatype.number(),
+          id: faker.number.int({ min: 0, max: 99999 }),
           homeRegionId: 1,
-          hsesUsername: faker.datatype.string(),
-          hsesUserId: faker.datatype.string(),
+          hsesUsername: faker.string.sample(),
+          hsesUserId: faker.string.sample(),
           lastLogin: new Date(),
         });
 
         objStatusRecipient = await Recipient.create({
-          id: faker.datatype.number(),
-          name: faker.name.firstName(),
+          id: faker.number.int({ min: 0, max: 99999 }),
+          name: faker.person.firstName(),
         });
 
         objStatusGrant = await Grant.create({
-          id: faker.datatype.number({ min: 133434 }),
-          number: faker.datatype.string(),
+          id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+          number: faker.string.sample(),
           recipientId: objStatusRecipient.id,
           regionId: 1,
           startDate: new Date(),

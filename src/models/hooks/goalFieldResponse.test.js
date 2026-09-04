@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
@@ -72,26 +72,26 @@ describe('goalFieldResponseHooks', () => {
 
     beforeAll(async () => {
       mockUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 133434 }),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientToNotUpdate = await Recipient.create({
-        id: faker.datatype.number({ min: 133434 }),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        name: faker.person.firstName(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -99,8 +99,8 @@ describe('goalFieldResponseHooks', () => {
       });
 
       grantNotToUpdate = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientToNotUpdate.id,
         regionId: 1,
         startDate: new Date(),
