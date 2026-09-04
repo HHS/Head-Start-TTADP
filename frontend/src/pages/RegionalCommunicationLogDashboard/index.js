@@ -4,6 +4,7 @@ import moment from 'moment';
 import React, { useContext, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
+import CommunicationLogUsersProvider from '../../components/CommunicationLogUsersProvider';
 import { regionFilter } from '../../components/filter/communicationLogFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
@@ -152,16 +153,18 @@ export default function RegionalCommunicationLog() {
         )}
       </div>
 
-      <FilterPanelContainer>
-        <FilterPanel
-          applyButtonAria="apply filters for regional communication log dashboard"
-          filters={filtersToApply}
-          onApplyFilters={onApplyFilters}
-          onRemoveFilter={onRemoveFilter}
-          filterConfig={filterConfig}
-          allUserRegions={regions}
-        />
-      </FilterPanelContainer>
+      <CommunicationLogUsersProvider regionId={defaultRegion}>
+        <FilterPanelContainer>
+          <FilterPanel
+            applyButtonAria="apply filters for regional communication log dashboard"
+            filters={filtersToApply}
+            onApplyFilters={onApplyFilters}
+            onRemoveFilter={onRemoveFilter}
+            filterConfig={filterConfig}
+            allUserRegions={regions}
+          />
+        </FilterPanelContainer>
+      </CommunicationLogUsersProvider>
       <Grid row gap="lg">
         <Grid
           desktop={{ col: 12 }}
