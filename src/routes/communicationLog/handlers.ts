@@ -8,7 +8,7 @@ import db from '../../models';
 import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
 import filtersToScopes from '../../scopes';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
+import { setTrainingAndActivityReportReadRegions, getUserReadRegions } from '../../services/accessValidation';
 import {
   createLog,
   csvLogsByRecipientAndScopes,
@@ -57,8 +57,8 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   const authorization = new UserPolicy(user);
 
   // Central Office users view communication logs across every region, but region 14
-  // itself has no home-based TTA staff. Return staff from all regions for them so the
-  // "other TTA staff" filter is populated.
+  // itself has no home-based TTA staff. Scope their "other TTA staff" filter to the
+  // regions they actually have read access to so it is populated correctly.
   const isCentralOfficeUser = user.homeRegionId === CENTRAL_OFFICE;
 
   if (
@@ -69,9 +69,11 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   }
   const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
 
+  const staffRegions = isCentralOfficeUser ? await getUserReadRegions(userId) : regionId;
+
   const users = (await usersByRoles(
     ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
-    isCentralOfficeUser ? null : regionId
+    staffRegions
   )) as {
     id: number;
     name: string;

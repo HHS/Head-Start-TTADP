@@ -2,7 +2,7 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import SCOPES from '../../middleware/scopeConstants';
 import { GoalTemplate, Grant, Group, Recipient, sequelize, User } from '../../models';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
+import { setTrainingAndActivityReportReadRegions, getUserReadRegions } from '../../services/accessValidation';
 import {
   createLog,
   csvLogsByRecipientAndScopes,
@@ -1080,6 +1080,7 @@ describe('communicationLog handlers', () => {
         { id: 2, name: 'UserB' },
       ];
       userById.mockResolvedValue(centralOffice);
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
       usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue([]);
       Recipient.findAll.mockResolvedValue([]);
@@ -1087,10 +1088,10 @@ describe('communicationLog handlers', () => {
 
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
 
-      // central office should not be scoped to a single region
+      // central office should be scoped to the regions they can read, not a single region
       expect(usersByRoles).toHaveBeenCalledWith(
         ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
-        null
+        [1, 2, 3]
       );
       expect(result.regionalUsers).toEqual(mockUsers.map((u) => ({ label: u.name, value: u.id })));
     });
