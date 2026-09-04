@@ -1,5 +1,6 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import fakerUnique from '../fakerUnique';
 import {
   EventReportPilot,
   GoalTemplate,
@@ -14,13 +15,13 @@ import trStandardGoalList from './trStandardGoalList';
 
 const mockUser = {
   homeRegionId: 1,
-  name: faker.name.findName(),
+  name: faker.person.fullName(),
   hsesUsername: faker.internet.email(),
-  hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+  hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
   lastLogin: new Date(),
 };
 
-const testEventLongId = `R99-TRSG-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`;
+const testEventLongId = `R99-TRSG-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`;
 
 describe('trStandardGoalList', () => {
   let user;
@@ -169,7 +170,7 @@ describe('trStandardGoalList', () => {
     await sequelize.query(`
       UPDATE "EventReportPilots"
         SET data = JSONB_SET(data,'{status}','"${TRAINING_REPORT_STATUSES.COMPLETE}"')
-      WHERE id IN (${eventReportComplete1.id}, ${eventReportComplete2.id});      
+      WHERE id IN (${eventReportComplete1.id}, ${eventReportComplete2.id});
     `);
   });
 
