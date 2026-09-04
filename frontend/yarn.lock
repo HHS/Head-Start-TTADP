@@ -1431,10 +1431,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.27.7.tgz#8fe30b3088b89b4873c3a6cc87597ae3920c0a8b"
   integrity sha512-56hiAJPhwQ1R4i+21FVF7V8kSD5zZTdHcVuRFMW0hn753vVfQN8xlx4uOPT4xoGH0Z/oVATuR82AiqSTDIpaHg==
 
-"@figma/code-connect@^1":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@figma/code-connect/-/code-connect-1.5.3.tgz#7640a4455aaece851a54c65dc7d255a39072431d"
-  integrity sha512-rQ3cBKVK0z5n8oNW0ypojcLm0rrmTm1y8W0IUHQdlhyf/STnz7eCsIdCRZ6k5iXRW4D6PF0IHPKK7V+6bTa7RQ==
+"@figma/code-connect@^2":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@figma/code-connect/-/code-connect-2.0.0.tgz#6b2e86e4817bec6238b8386db2e79d77daac213d"
+  integrity sha512-FNpemwBciNCpskBZ8TK0iRa+oZR5H6+NP8XVDawww8Vz1bFoIrPu0y3NvPR0xnjtrOhAu+3DXqZmSR4cb0V+2w==
   dependencies:
     boxen "5.1.1"
     chalk "^4.1.2"
