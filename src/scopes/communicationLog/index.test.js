@@ -841,6 +841,15 @@ describe('communicationLog filtersToScopes', () => {
         expect(sql).toContain("'Early Childhood Specialist'");
         expect(sql).toContain("'Health Specialist'");
       });
+
+      it('accepts the newly added specialist roles', () => {
+        const result = withRoles(['Early Childhood Manager', 'Grantee Specialist Manager', 'TTAC']);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain("'Early Childhood Manager'");
+        expect(sql).toContain("'Grantee Specialist Manager'");
+        expect(sql).toContain("'TTAC'");
+      });
     });
 
     describe('withoutRoles', () => {
@@ -863,6 +872,15 @@ describe('communicationLog filtersToScopes', () => {
 
         expect(sql).toContain("'Early Childhood Specialist'");
         expect(sql).toContain("'Health Specialist'");
+      });
+
+      it('excludes the newly added specialist roles', () => {
+        const result = withoutRoles(['Early Childhood Manager', 'Grantee Specialist Manager', 'TTAC']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Manager'");
+        expect(sql).toContain("'Grantee Specialist Manager'");
+        expect(sql).toContain("'TTAC'");
       });
     });
   });

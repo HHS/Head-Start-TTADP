@@ -179,4 +179,139 @@ describe('role filtersToScopes', () => {
       expect(found.map((f) => f.id).sort()).toStrictEqual(possibleIds.sort());
     });
   });
+
+  describe('newly added specialist roles', () => {
+    const newRoleIds = [
+      faker.number.int({ min: 0, max: 99999 }),
+      faker.number.int({ min: 0, max: 99999 }),
+      faker.number.int({ min: 0, max: 99999 }),
+      faker.number.int({ min: 0, max: 99999 }),
+    ];
+
+    beforeAll(async () => {
+      const earlyChildhoodManager = await Role.findOne({ where: { fullName: 'Early Childhood Manager' } });
+      const granteeSpecialistManager = await Role.findOne({ where: { fullName: 'Grantee Specialist Manager' } });
+      const ttac = await Role.findOne({ where: { fullName: 'TTAC' } });
+
+      await User.create({
+        id: newRoleIds[0],
+        name: 'u780',
+        hsesUsername: 'u780',
+        hsesUserId: '780',
+        lastLogin: new Date(),
+      });
+
+      await UserRole.create({
+        userId: newRoleIds[0],
+        roleId: earlyChildhoodManager.id,
+      });
+
+      await ActivityReport.create({
+        ...approvedReport,
+        id: newRoleIds[0],
+        userId: newRoleIds[0],
+      });
+
+      // a report whose author has no matching role, used to confirm filtering
+      await User.create({
+        id: newRoleIds[1],
+        name: 'u781',
+        hsesUsername: 'u781',
+        hsesUserId: '781',
+        lastLogin: new Date(),
+      });
+
+      await ActivityReport.create({
+        ...approvedReport,
+        id: newRoleIds[1],
+        userId: newRoleIds[1],
+      });
+
+      await User.create({
+        id: newRoleIds[2],
+        name: 'u782',
+        hsesUsername: 'u782',
+        hsesUserId: '782',
+        lastLogin: new Date(),
+      });
+
+      await UserRole.create({
+        userId: newRoleIds[2],
+        roleId: granteeSpecialistManager.id,
+      });
+
+      await ActivityReport.create({
+        ...approvedReport,
+        id: newRoleIds[2],
+        userId: newRoleIds[2],
+      });
+
+      await User.create({
+        id: newRoleIds[3],
+        name: 'u783',
+        hsesUsername: 'u783',
+        hsesUserId: '783',
+        lastLogin: new Date(),
+      });
+
+      await UserRole.create({
+        userId: newRoleIds[3],
+        roleId: ttac.id,
+      });
+
+      await ActivityReport.create({
+        ...approvedReport,
+        id: newRoleIds[3],
+        userId: newRoleIds[3],
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({ where: { id: newRoleIds } });
+      await UserRole.destroy({ where: { userId: newRoleIds } });
+      await User.destroy({ where: { id: newRoleIds } });
+    });
+
+    it('finds reports for a newly added specialist role', async () => {
+      const filters = { 'role.in': ['Early Childhood Manager'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: newRoleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toStrictEqual([newRoleIds[0]]);
+    });
+
+    it('filters out reports for a newly added specialist role', async () => {
+      const filters = { 'role.nin': ['Early Childhood Manager'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: newRoleIds }] },
+      });
+
+      expect(found.map((f) => f.id).sort((a, b) => a - b)).toStrictEqual(
+        [newRoleIds[1], newRoleIds[2], newRoleIds[3]].sort((a, b) => a - b),
+      );
+    });
+
+    it('finds reports for the Grantee Specialist Manager role', async () => {
+      const filters = { 'role.in': ['Grantee Specialist Manager'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: newRoleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toStrictEqual([newRoleIds[2]]);
+    });
+
+    it('finds reports for the TTAC role', async () => {
+      const filters = { 'role.in': ['TTAC'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: newRoleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toStrictEqual([newRoleIds[3]]);
+    });
+  });
 });
