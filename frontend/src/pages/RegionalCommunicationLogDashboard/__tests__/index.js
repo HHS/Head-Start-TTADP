@@ -433,7 +433,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     expect(lastTopic.innerHTML).not.toContain('region');
   });
 
-  it('does show the region filter when the user has two regions', async () => {
+  it('shows alphabetized filters including region when the user has two regions', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
@@ -446,7 +446,14 @@ describe('RegionalCommunicationLogDashboard', () => {
     );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
-    expect(lastTopic.innerHTML).toContain('region');
+    const topicDisplays = Array.from(lastTopic.options)
+      .map((option) => option.textContent)
+      .filter((display) => display !== '- Select -');
+
+    expect(topicDisplays).toContain('Region');
+    expect(topicDisplays).toEqual(
+      [...topicDisplays].sort((first, second) => first.localeCompare(second))
+    );
   });
 
   it('allows you to remove a filter', async () => {
