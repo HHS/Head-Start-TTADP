@@ -500,26 +500,26 @@ jobs:
         - node_modules
         - frontend/node_modules
 
-      dependency_audit_report:
-      executor: docker-executor
-      resource_class: medium
-      steps:
-      - checkout
-      - create_combined_yarnlock
-      - restore_cache:
+  dependency_audit_report:
+    executor: docker-executor
+    resource_class: medium
+    steps:
+    - checkout
+    - create_combined_yarnlock
+    - restore_cache:
         name: Restore tarball cache
         keys:
         - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-      - restore_cache:
+    - restore_cache:
         name: Restore deps cache
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         - yarn-deps-
-      - run:
+    - run:
         name: Install dependencies
         no_output_timeout: 20m
         command: yarn deps
-      - run:
+    - run:
         name: Report dev package audits
         command: yarn deps:audit:dev
 
