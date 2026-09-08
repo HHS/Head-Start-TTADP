@@ -36,6 +36,8 @@ describe('getMonitoringImportCycle', () => {
     const cycle = await getMonitoringImportCycle();
     expect(cycle.import_id).toBe(newer.id);
     expect(new Date(cycle.source_updated_at).toISOString()).toBe(newerDate.toISOString());
+    // processed_at is when the row was touched (now), not the source date above.
+    expect(Date.now() - new Date(cycle.processed_at).getTime()).toBeLessThan(60_000);
   });
 
   it('ignores import files that have not finished processing', async () => {

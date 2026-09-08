@@ -21,6 +21,10 @@ export interface WatchdogResult {
 const easternTime = (date: Date): string =>
   moment(date).tz('America/New_York').format('YYYY-MM-DD HH:mm z');
 
+// import_data_cron runs daily, but real gaps up to ~48h happen occasionally
+// (per 6 months of prod history). 72h stays above that to avoid flapping.
+const STALE_IMPORT_CYCLE_HOURS = 72;
+
 /**
  * Watchdog for the daily monitoring data validation: confirms a successful
  * ValidationRun exists for the current import cycle (the latest processed ITAMS
@@ -30,6 +34,9 @@ const easternTime = (date: Date): string =>
  *
  * Outcomes:
  * - no processed import yet -> ok (nothing to validate; import watchdog's job)
+ * - the latest processed import is stale -> not ok ("latest processed import is
+ *   stale"); catches import_data_cron never firing at all, which would otherwise
+ *   keep resolving to an old cycle with an old successful run and read as ok
  * - a run for the cycle succeeded -> ok
  * - the latest run for the cycle failed -> not ok ("run failed")
  * - the latest run for the cycle is still 'started' -> not ok ("run incomplete")
@@ -40,6 +47,17 @@ const checkMonitoringValidationRan = async (): Promise<WatchdogResult> => {
 
   if (cycle.import_id == null) {
     return { ok: true, reason: 'no processed monitoring import to validate' };
+  }
+
+  if (cycle.processed_at != null) {
+    const ageHours = (Date.now() - cycle.processed_at.getTime()) / (1000 * 60 * 60);
+    if (ageHours > STALE_IMPORT_CYCLE_HOURS) {
+      return {
+        ok: false,
+        reason: 'latest processed import is stale',
+        asOf: easternTime(cycle.processed_at),
+      };
+    }
   }
 
   const run = await ValidationRun.findOne({

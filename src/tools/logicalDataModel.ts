@@ -103,10 +103,10 @@ export function processEnum(name, table, schemaEnum, modelEnum) {
  * Anything that isn't a plain quoted literal after de-casting keeps its shape:
  * function calls like `now()`, booleans, and numbers are returned untouched, and a
  * parenthesized expression like `('now'::text)::date` may lose only its trailing
- * cast (`('now'::text)`) but never collapses to a bare value. Because both the DB
- * default and a `sequelize.literal` model default are run through this same
- * normalization, and the default's cast is redundant with the column-type check
- * above, this can never mask a genuine mismatch.
+ * cast (`('now'::text)`) but never collapses to a bare value. This is only for
+ * comparing a bare model default against the DB default - a `sequelize.literal`
+ * model default is compared to the DB default unnormalized, cast included, so a
+ * cast to the wrong type isn't normalized away.
  */
 export function normalizeColumnDefault(dbDefault) {
   if (typeof dbDefault !== 'string') return dbDefault;
@@ -164,14 +164,15 @@ export function processClassDefinition(schema, key) {
 
     if (modelField) {
       const normalizedDefault = normalizeColumnDefault(field.default);
-      // A model default can be a bare value (`'alert'`) or a `sequelize.literal`
-      // carrying the fully-cast form on `.val` (`'IDENTIFIED'::"enum_..."`).
-      // Normalize both sides so either style compares equal to the DB default.
+      // A bare model default (`'alert'`) is normalized against the DB default.
+      // A `sequelize.literal` default's `.val` carries its own cast
+      // (`'IDENTIFIED'::"enum_..."`) and is compared to the DB default as-is,
+      // so a cast to the wrong enum type doesn't get normalized away.
       if (
         !(
           normalizedDefault === modelField.defaultValue ||
           normalizedDefault === modelField.defaultValue?.toString() ||
-          normalizedDefault === normalizeColumnDefault(modelField.defaultValue?.val)
+          field.default === modelField.defaultValue?.val
         ) &&
         field.default !== '<generated>' &&
         !(

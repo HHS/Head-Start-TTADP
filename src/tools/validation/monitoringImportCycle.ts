@@ -9,6 +9,11 @@ const MONITORING_IMPORT_NAME = 'ITAMS Monitoring Data';
 export interface MonitoringImportCycle {
   import_id: number | null;
   source_updated_at: Date | null;
+  // When this ImportFile row itself was last touched (i.e. transitioned to
+  // PROCESSED) - distinct from source_updated_at, which is the source data's own
+  // date and can legitimately lag. Lets callers (the watchdog) tell "our pipeline
+  // actually ran recently" apart from "the source data is recent".
+  processed_at: Date | null;
 }
 
 /**
@@ -19,11 +24,16 @@ export interface MonitoringImportCycle {
  * docs/monitoring-data-validation.md.
  */
 export const getMonitoringImportCycle = async (): Promise<MonitoringImportCycle> => {
-  const rows = await sequelize.query<{ import_id: number; source_updated_at: Date | null }>(
+  const rows = await sequelize.query<{
+    import_id: number;
+    source_updated_at: Date | null;
+    processed_at: Date;
+  }>(
     `
     SELECT
       imf.id AS import_id,
-      NULLIF(imf."ftpFileInfo"->>'date', '')::timestamptz AS source_updated_at
+      NULLIF(imf."ftpFileInfo"->>'date', '')::timestamptz AS source_updated_at,
+      imf."updatedAt" AS processed_at
     FROM "ImportFiles" imf
     JOIN "Imports" i ON i.id = imf."importId"
     WHERE i.name = :name
@@ -42,6 +52,7 @@ export const getMonitoringImportCycle = async (): Promise<MonitoringImportCycle>
   return {
     import_id: row?.import_id ?? null,
     source_updated_at: row?.source_updated_at ?? null,
+    processed_at: row?.processed_at ?? null,
   };
 };
 

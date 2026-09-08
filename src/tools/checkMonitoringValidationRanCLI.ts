@@ -9,7 +9,7 @@ checkMonitoringValidationRan().then(
     // Monitoring Validation Watchdog: {"ok":true,"runId":42,"status":"success",
     //   "startedAt":"2026-07-22T13:05:11.000Z","completedAt":"2026-07-22T13:07:02.000Z",
     //   "alertCount":3}
-    // Monitoring Validation Watchdog: {"ok":false,"reason":"no validation run in last 24 hours"}
+    // Monitoring Validation Watchdog: {"ok":false,"reason":"latest processed import is stale"}
     console.info(`Monitoring Validation Watchdog: ${JSON.stringify(result)}`);
     process.exit(result.ok ? 0 : 1);
   },

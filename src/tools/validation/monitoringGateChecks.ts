@@ -52,13 +52,12 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
     -- in months with heavy re-import churn. So aggregate to findingId and count
     -- only findings with NO live row left, the actual "the source dropped this
     -- finding" signal (~1% on healthy data). This is the same finding-level
-    -- liveness test check B applies to open-AR citations. Reading sourceDeletedAt
-    -- directly (not deletedAt) keeps it correct whether or not the maintenance job
-    -- has propagated the delete.
+    -- liveness test check B applies to open-AR citations. Checks sourceDeletedAt
+    -- only - this gate runs pre-refresh, before deletedAt is updated.
     WITH finding_rows AS (
     SELECT
       mf."findingId",
-      bool_or(mf."sourceDeletedAt" IS NULL AND mf."deletedAt" IS NULL) has_live_row,
+      bool_or(mf."sourceDeletedAt" IS NULL) has_live_row,
       MAX(COALESCE(mf."reportedDate", mf."sourceCreatedAt")) recency
     FROM "MonitoringFindings" mf
     GROUP BY mf."findingId"
@@ -102,8 +101,9 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
 
     -- open_ar_findings_gone: findings cited on open activity reports
     -- (ActivityReportObjectiveCitations.findingId -> MonitoringFindings.findingId)
-    -- that are no longer live in the import - absent entirely, or source/soft
-    -- deleted. Open reports are inherently timely, so no recency window.
+    -- that are no longer live in the import - absent entirely, or source-deleted.
+    -- Checks sourceDeletedAt only - this gate runs pre-refresh, before deletedAt
+    -- is updated. Open reports are inherently timely, so no recency window.
     -- alert > 10%, critical > 20%.
     WITH open_ar_findings AS (
     SELECT DISTINCT aroc."findingId"
@@ -123,7 +123,6 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
         FROM "MonitoringFindings" mf
         WHERE mf."findingId" = oaf."findingId"
           AND mf."sourceDeletedAt" IS NULL
-          AND mf."deletedAt" IS NULL
       ) live
     FROM open_ar_findings oaf
     ),

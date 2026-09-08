@@ -1,4 +1,4 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /**
  * Tables backing the daily validation of imported data (initially ITAMS Monitoring data).
@@ -304,13 +304,12 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      // FK dependents before ValidationRuns
-      await removeTables(queryInterface, transaction, [
-        'ValidationAlerts',
-        'ValidationRecords',
-        'ValidationTimeSeries',
-        'ValidationRuns',
-      ]);
+      // Not removeTables(): up() already dropped the ZAL tables it expects.
+      // FK dependents before ValidationRuns.
+      await queryInterface.dropTable('ValidationAlerts', { transaction });
+      await queryInterface.dropTable('ValidationRecords', { transaction });
+      await queryInterface.dropTable('ValidationTimeSeries', { transaction });
+      await queryInterface.dropTable('ValidationRuns', { transaction });
 
       await queryInterface.sequelize.query(
         `

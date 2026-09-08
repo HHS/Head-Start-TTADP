@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import { VALIDATION_PROCESS, VALIDATION_RUN_STATUS } from '../constants';
 import {
@@ -66,8 +66,8 @@ const lastCompleteWeekDate = (dayOffset = 2) => {
 };
 
 describe('validateMonitoringData', () => {
-  const recipientId = faker.datatype.number({ min: 90000 });
-  const grantId = faker.datatype.number({ min: 90000 });
+  const recipientId = faker.number.int({ min: 90000, max: 899999 });
+  const grantId = faker.number.int({ min: 90000, max: 899999 });
   const grantNumber = `VMD-${uuidv4().slice(0, 8)}`;
   // A second grant in a different region on the same grantee, so the seeded
   // findings span two regions and the national total must deduplicate them.
@@ -155,8 +155,9 @@ describe('validateMonitoringData', () => {
       ...timestamps,
       sourceCreatedAt: reviewSourceCreatedAt,
     });
+    const reviewGranteeId = faker.number.int({ min: 99999, max: 899999 });
     await MonitoringReviewGrantee.create({
-      id: faker.datatype.number({ min: 99999 }),
+      id: reviewGranteeId,
       grantNumber,
       reviewId,
       granteeId,
@@ -167,7 +168,7 @@ describe('validateMonitoringData', () => {
       sourceUpdatedAt: new Date(),
     });
     await MonitoringReviewGrantee.create({
-      id: faker.datatype.number({ min: 99999 }),
+      id: reviewGranteeId + 1,
       grantNumber: grantNumber2,
       reviewId,
       granteeId,

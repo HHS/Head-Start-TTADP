@@ -31,6 +31,7 @@ describe('checkMonitoringValidationRan', () => {
     getMonitoringImportCycle.mockResolvedValue({
       import_id: CURRENT_IMPORT_ID,
       source_updated_at: new Date(),
+      processed_at: new Date(),
     });
   });
 
@@ -44,6 +45,17 @@ describe('checkMonitoringValidationRan', () => {
     const result = await checkMonitoringValidationRan();
     expect(result.ok).toBe(true);
     expect(result.reason).toBe('no processed monitoring import to validate');
+  });
+
+  it('reports stale when the latest processed import is too old', async () => {
+    getMonitoringImportCycle.mockResolvedValue({
+      import_id: CURRENT_IMPORT_ID,
+      source_updated_at: new Date(),
+      processed_at: new Date(Date.now() - 73 * 60 * 60 * 1000),
+    });
+    const result = await checkMonitoringValidationRan();
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('latest processed import is stale');
   });
 
   it('reports no run when nothing ran for the current import cycle', async () => {
