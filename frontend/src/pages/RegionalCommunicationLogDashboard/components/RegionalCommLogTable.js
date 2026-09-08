@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -77,7 +77,7 @@ DeleteLogModal.defaultProps = {
   log: null,
 };
 
-export default function RegionalCommLogTable({ filters }) {
+export default function RegionalCommLogTable({ filters, resetPagination, setResetPagination }) {
   const [logs, setLogs] = useState();
   const [error, setError] = useState();
   const [showTabularData, setShowTabularData] = useState(true);
@@ -141,7 +141,6 @@ export default function RegionalCommLogTable({ filters }) {
       offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE,
     });
   };
-
   const handleRowActionClick = (action, row, regionId) => {
     if (action === 'View') {
       history.push(`/communication-log/region/${regionId}/log/${row.id}/view`);
@@ -149,6 +148,14 @@ export default function RegionalCommLogTable({ filters }) {
       handleDelete(row);
     }
   };
+
+  // When the filters change, reset the pagination back to the first page.
+  useEffect(() => {
+    if (resetPagination) {
+      setSortConfig((prevSortConfig) => ({ ...prevSortConfig, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   useDeepCompareEffect(() => {
     async function fetchLogs() {
@@ -287,8 +294,12 @@ RegionalCommLogTable.propTypes = {
       ]),
     })
   ),
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
 };
 
 RegionalCommLogTable.defaultProps = {
   filters: [],
+  resetPagination: false,
+  setResetPagination: () => {},
 };
