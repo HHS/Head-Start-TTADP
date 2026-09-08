@@ -33,8 +33,11 @@ const formatCSVParams = (params) => {
   return params;
 };
 
-export const getSessionReportsTable = async (sortConfig, filters = []) => {
+export const getSessionReportsTable = async (sortConfig, filters = [], recipientId = null) => {
   const params = getSortConfigParams(sortConfig);
+  if (recipientId) {
+    params.append('recipientId', recipientId);
+  }
   const filterParams = filtersToQueryString(filters);
   const url = filterParams
     ? `${sessionsUrl}?${params.toString()}&${filterParams}`
@@ -52,9 +55,12 @@ const getSessionReportCSV = async (url) => {
   );
 };
 
-export const getSessionReportsCSV = async (sortConfig, filters = []) => {
+export const getSessionReportsCSV = async (sortConfig, filters = [], recipientId = null) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
   params.append('format', 'csv');
+  if (recipientId) {
+    params.append('recipientId', recipientId);
+  }
   const filterParams = filtersToQueryString(filters);
   const url = filterParams
     ? `${sessionsUrl}?${params.toString()}&${filterParams}`
@@ -62,9 +68,17 @@ export const getSessionReportsCSV = async (sortConfig, filters = []) => {
   return getSessionReportCSV(url);
 };
 
-export const getSessionReportsCSVById = async (ids, sortConfig, filters = []) => {
+export const getSessionReportsCSVById = async (
+  ids,
+  sortConfig,
+  filters = [],
+  recipientId = null
+) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
   params.append('format', 'csv');
+  if (recipientId) {
+    params.append('recipientId', recipientId);
+  }
   const reportIds = ids.map((id) => `sessionId.in[]=${id}`).join('&');
   const filterParams = filtersToQueryString(filters);
   const url = filterParams

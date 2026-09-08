@@ -1,4 +1,4 @@
-const { default: faker } = require('@faker-js/faker');
+const { faker } = require('@faker-js/faker');
 const { sample } = require('lodash');
 
 const grants = [
@@ -141,7 +141,7 @@ const programTypes = ['Migrant HS', 'Migrant EHS', 'EHS', 'HS', 'AIAN HS', 'AIAN
 
 const programs = grants.map((grant) => ({
   ...baseGrant,
-  name: faker.company.companyName(),
+  name: faker.company.name(),
   id: grant.id,
   grantId: grant.id,
   programType: sample(programTypes),

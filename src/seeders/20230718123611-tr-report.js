@@ -35,6 +35,7 @@ module.exports = {
       "ownerId",
       "collaboratorIds",
       "regionId",
+      "eventId",
       "data",
       "imported",
       "createdAt",
@@ -45,6 +46,7 @@ module.exports = {
       5,
       ARRAY[]::INTEGER[],
       1,
+      'R01-PD-23-1037',
       CAST('{"eventId":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventName":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","eventOrganizer":"Regional PD Event (with National Centers)","audience":"Recipients","Event Duration/# NC Days of Support":"Series","targetPopulations":["None"],"vision":"Oral Health","creator":"cucumber@hogwarts.com"}' AS JSONB),
       CAST('{"Event ID":"R01-PD-23-1037","Full Event Title":"R01 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Edit Title":"Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Ongoing Quality Improvement","Target Population(s)":"None","Overall Vision/Goal for the PD Event":"Oral Health","Creator":"cucumber@hogwarts.com"}' AS JSONB),
       NOW(),
@@ -60,7 +62,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
       DELETE FROM "EventReportPilots"
       WHERE data->>'eventId' IN (
-        'R01-PD-23-1037',
+        'R01-PD-23-1037'
      );
     `);
 

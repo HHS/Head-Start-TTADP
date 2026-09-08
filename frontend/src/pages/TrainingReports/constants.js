@@ -47,6 +47,7 @@ export const eventPropTypes = PropTypes.shape({
   pocIds: PropTypes.arrayOf(PropTypes.number),
   collaboratorIds: PropTypes.arrayOf(PropTypes.number),
   regionId: PropTypes.number,
+  eventId: PropTypes.string,
   data: dataPropTypes,
 });
 

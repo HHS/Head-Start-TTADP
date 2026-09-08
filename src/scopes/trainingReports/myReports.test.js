@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { EventReportPilot, sequelize, User } from '../../models';
 import filtersToScopes from '../index';
@@ -16,20 +16,20 @@ describe('trainingReports/myReports', () => {
 
   beforeAll(async () => {
     me = await User.create({
-      id: faker.datatype.number({ min: 1000000, max: 9999999 }),
+      id: faker.number.int({ min: 1000000, max: 9999999 }),
       homeRegionId: 1,
       name: 'tr my reports me',
-      hsesUsername: faker.datatype.string(12),
-      hsesUserId: faker.datatype.string(12),
+      hsesUsername: faker.string.sample(12),
+      hsesUserId: faker.string.sample(12),
       lastLogin: new Date(),
     });
 
     other = await User.create({
-      id: faker.datatype.number({ min: 1000000, max: 9999999 }),
+      id: faker.number.int({ min: 1000000, max: 9999999 }),
       homeRegionId: 1,
       name: 'tr my reports other',
-      hsesUsername: faker.datatype.string(12),
-      hsesUserId: faker.datatype.string(12),
+      hsesUsername: faker.string.sample(12),
+      hsesUserId: faker.string.sample(12),
       lastLogin: new Date(),
     });
 
@@ -38,7 +38,8 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      eventId: 'TR-MYREPORTS-TEST-1',
+      data: { eventId: 'TR-MYREPORTS-TEST-1' },
     });
 
     eventCollabByMe = await EventReportPilot.create({
@@ -46,7 +47,8 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [me.id],
       regionId: 1,
-      data: {},
+      eventId: 'TR-MYREPORTS-TEST-2',
+      data: { eventId: 'TR-MYREPORTS-TEST-2' },
     });
 
     eventPocByMe = await EventReportPilot.create({
@@ -54,7 +56,8 @@ describe('trainingReports/myReports', () => {
       pocIds: [me.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      eventId: 'TR-MYREPORTS-TEST-3',
+      data: { eventId: 'TR-MYREPORTS-TEST-3' },
     });
 
     eventWithoutMe = await EventReportPilot.create({
@@ -62,7 +65,8 @@ describe('trainingReports/myReports', () => {
       pocIds: [other.id],
       collaboratorIds: [other.id],
       regionId: 1,
-      data: {},
+      eventId: 'TR-MYREPORTS-TEST-4',
+      data: { eventId: 'TR-MYREPORTS-TEST-4' },
     });
 
     possibleIds = [eventOwnedByMe.id, eventCollabByMe.id, eventPocByMe.id, eventWithoutMe.id];

@@ -181,13 +181,7 @@ describe('eventSummary', () => {
     it('shows the draft saved alert when showSavedDraft is true', async () => {
       const lastSaveTime = moment('2023-08-01 09:14:00');
       act(() => {
-        render(
-          <RenderEventSummary
-            user={adminUser}
-            showSavedDraft
-            lastSaveTime={lastSaveTime}
-          />
-        );
+        render(<RenderEventSummary user={adminUser} showSavedDraft lastSaveTime={lastSaveTime} />);
       });
 
       expect(

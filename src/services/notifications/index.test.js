@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import {
   ACTIVITY_REPORT_NOTIFICATION_TYPES,
   NOTIFICATION_CONFIGURATION,
@@ -7,6 +7,7 @@ import {
 import db from '../../models';
 import {
   archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
   createGlobalNotification,
   createNotification,
   deleteExpiredArchivedNotifications,
@@ -31,18 +32,18 @@ describe('Notification service', () => {
   let createdNotificationIds = [];
   let createdActivityReportIds = [];
 
-  const activityMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
+  const activityMetadata = (id = faker.number.int({ min: 99001, max: 99999 })) => ({
     id,
-    recipientName: faker.company.companyName(),
-    userName: faker.name.findName(),
+    recipientName: faker.company.name(),
+    userName: faker.person.fullName(),
     date: '01/15/2026',
     displayId: `R01-AR-${id}`,
   });
 
   const outageMetadata = {
-    id: faker.datatype.number({ min: 99001, max: 99999 }),
-    recipientName: faker.company.companyName(),
-    userName: faker.name.findName(),
+    id: faker.number.int({ min: 99001, max: 99999 }),
+    recipientName: faker.company.name(),
+    userName: faker.person.fullName(),
     date: '01/15/2026 12:00 PM ET',
   };
 
@@ -104,7 +105,7 @@ describe('Notification service', () => {
   const createTrackedNotification = async (overrides = {}) => {
     const attributes = await ensureActivityReportForNotification({
       userId: user.id,
-      entityId: faker.datatype.number({ min: 99001, max: 99999 }),
+      entityId: faker.number.int({ min: 99001, max: 99999 }),
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       text: faker.lorem.sentence(),
       ...overrides,
@@ -116,18 +117,18 @@ describe('Notification service', () => {
 
   beforeAll(async () => {
     user = await User.create({
-      id: faker.datatype.number({ min: 99001, max: 99999 }),
-      name: faker.name.findName(),
-      hsesUsername: faker.internet.userName(),
-      hsesUserId: faker.datatype.uuid(),
+      id: faker.number.int({ min: 99001, max: 99999 }),
+      name: faker.person.fullName(),
+      hsesUsername: faker.internet.username(),
+      hsesUserId: faker.string.uuid(),
       lastLogin: new Date(),
     });
 
     otherUser = await User.create({
-      id: faker.datatype.number({ min: 88001, max: 88999 }),
-      name: faker.name.findName(),
-      hsesUsername: faker.internet.userName(),
-      hsesUserId: faker.datatype.uuid(),
+      id: faker.number.int({ min: 88001, max: 88999 }),
+      name: faker.person.fullName(),
+      hsesUsername: faker.internet.username(),
+      hsesUserId: faker.string.uuid(),
       lastLogin: new Date(),
     });
   });
@@ -190,7 +191,7 @@ describe('Notification service', () => {
       const notification = trackNotification(
         await createNotification(
           user.id,
-          faker.datatype.number({ min: 99001, max: 99999 }),
+          faker.number.int({ min: 99001, max: 99999 }),
           NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
           { metadata: outageMetadata }
         )
@@ -208,12 +209,9 @@ describe('Notification service', () => {
 
     it('throws an error when the notification type has no configuration', async () => {
       await expect(
-        createNotification(
-          user.id,
-          faker.datatype.number({ min: 99001, max: 99999 }),
-          'invalidType',
-          { metadata: activityMetadata() }
-        )
+        createNotification(user.id, faker.number.int({ min: 99001, max: 99999 }), 'invalidType', {
+          metadata: activityMetadata(),
+        })
       ).rejects.toThrow('No notification configuration found for type invalidType');
     });
 
@@ -598,10 +596,10 @@ describe('Notification service', () => {
       });
 
       describe('ACTIVITY_REPORT_SUBMITTED_COLLABORATOR (settingsKey: inAppWhenCollaboratorReportSubmittedForReview)', () => {
-        const collaboratorMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
+        const collaboratorMetadata = (id = faker.number.int({ min: 99001, max: 99999 })) => ({
           id,
           displayId: `R01-AR-${id}`,
-          author: faker.name.findName(),
+          author: faker.person.fullName(),
         });
 
         it('creates the notification when no user setting override exists (defaults to enabled)', async () => {
@@ -702,11 +700,11 @@ describe('Notification service', () => {
       });
 
       describe('ACTIVITY_REPORT_APPROVED (settingsKey: inAppWhenReportApproval)', () => {
-        const approvedMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
+        const approvedMetadata = (id = faker.number.int({ min: 99001, max: 99999 })) => ({
           id,
           displayId: `R01-AR-${id}`,
-          recipientName: faker.company.companyName(),
-          approver: faker.name.findName(),
+          recipientName: faker.company.name(),
+          approver: faker.person.fullName(),
         });
 
         it('returns null and does not create a notification when user setting is "false"', async () => {
@@ -850,7 +848,7 @@ describe('Notification service', () => {
 
   describe('deleteNotificationsByEntityAndType', () => {
     it('destroys all notifications for the given entityId and type', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       const matchingOne = await createTrackedNotification({
         entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
@@ -878,7 +876,7 @@ describe('Notification service', () => {
     });
 
     it('returns 0 when no notifications match', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       await createTrackedNotification({ entityId, type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE });
 
       const deletedCount = await deleteNotificationsByEntityAndType(
@@ -902,7 +900,7 @@ describe('Notification service', () => {
     });
 
     it('throws when notificationType is falsy', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       await expect(deleteNotificationsByEntityAndType(entityId, null)).rejects.toThrow(
         'notificationType is required'
       );
@@ -1082,7 +1080,7 @@ describe('Notification service', () => {
   });
   describe('archiveNotificationsByEntityAndType', () => {
     it('archives existing user states for matching notifications and leaves other types untouched', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       const needsAction = await createTrackedNotification({
         entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
@@ -1132,7 +1130,7 @@ describe('Notification service', () => {
     });
 
     it('creates an archived and viewed state row for notifications with a userId but no state', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       const notification = await createTrackedNotification({
         entityId,
         userId: otherUser.id,
@@ -1156,7 +1154,7 @@ describe('Notification service', () => {
     });
 
     it('does not re-archive user states that are already archived', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       const notification = await createTrackedNotification({
         entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
@@ -1182,7 +1180,7 @@ describe('Notification service', () => {
     });
 
     it('accepts a single notification type and no-ops when nothing matches', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       await createTrackedNotification({
         entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
@@ -1203,11 +1201,200 @@ describe('Notification service', () => {
     });
 
     it('throws when notificationType is falsy or empty', async () => {
-      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
       await expect(archiveNotificationsByEntityAndType(entityId, null)).rejects.toThrow(
         'notificationType is required'
       );
       await expect(archiveNotificationsByEntityAndType(entityId, [])).rejects.toThrow(
+        'notificationType is required'
+      );
+    });
+  });
+
+  describe('archiveNotificationsByUserEntityAndType', () => {
+    it("archives only the target user's matching notification and leaves other users untouched", async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const userNotification = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      });
+      const otherUserNotification = await createTrackedNotification({
+        entityId,
+        userId: otherUser.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      });
+
+      const [userState, otherUserState] = await Promise.all([
+        NotificationUserState.create({
+          notificationId: userNotification.id,
+          userId: user.id,
+          archivedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: otherUserNotification.id,
+          userId: otherUser.id,
+          archivedAt: null,
+        }),
+      ]);
+
+      await archiveNotificationsByUserEntityAndType(
+        entityId,
+        user.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+
+      const updatedUserState = await NotificationUserState.findByPk(userState.id);
+      const updatedOtherUserState = await NotificationUserState.findByPk(otherUserState.id);
+
+      expect(updatedUserState.archivedAt).not.toBeNull();
+      expect(updatedOtherUserState.archivedAt).toBeNull();
+
+      await NotificationUserState.destroy({
+        where: { notificationId: [userNotification.id, otherUserNotification.id] },
+      });
+    });
+
+    it('leaves non-matching notification types untouched', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const matching = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      });
+      const otherType = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+
+      const [matchingState, otherTypeState] = await Promise.all([
+        NotificationUserState.create({
+          notificationId: matching.id,
+          userId: user.id,
+          archivedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: otherType.id,
+          userId: user.id,
+          archivedAt: null,
+        }),
+      ]);
+
+      await archiveNotificationsByUserEntityAndType(
+        entityId,
+        user.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+
+      const updatedMatching = await NotificationUserState.findByPk(matchingState.id);
+      const updatedOtherType = await NotificationUserState.findByPk(otherTypeState.id);
+
+      expect(updatedMatching.archivedAt).not.toBeNull();
+      expect(updatedOtherType.archivedAt).toBeNull();
+
+      await NotificationUserState.destroy({
+        where: { notificationId: [matching.id, otherType.id] },
+      });
+    });
+
+    it('creates an archived and viewed state row when the user has no state yet', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const notification = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      });
+
+      await archiveNotificationsByUserEntityAndType(
+        entityId,
+        user.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+
+      const createdState = await NotificationUserState.findOne({
+        where: { notificationId: notification.id, userId: user.id },
+      });
+
+      expect(createdState).not.toBeNull();
+      expect(createdState.archivedAt).not.toBeNull();
+      expect(createdState.viewedAt).not.toBeNull();
+
+      await NotificationUserState.destroy({ where: { notificationId: notification.id } });
+    });
+
+    it('does not re-archive a state that is already archived', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const notification = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      });
+
+      const originalArchivedAt = new Date('2020-01-01T00:00:00Z');
+      const state = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: user.id,
+        archivedAt: originalArchivedAt,
+      });
+      const storedArchivedAt = (await NotificationUserState.findByPk(state.id)).archivedAt;
+
+      await archiveNotificationsByUserEntityAndType(
+        entityId,
+        user.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+      );
+
+      const updated = await NotificationUserState.findByPk(state.id);
+      expect(updated.archivedAt).toEqual(storedArchivedAt);
+
+      await NotificationUserState.destroy({ where: { id: state.id } });
+    });
+
+    it('accepts a single notification type and no-ops when nothing matches', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+
+      await expect(
+        archiveNotificationsByUserEntityAndType(
+          entityId,
+          user.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+        )
+      ).resolves.toBeUndefined();
+    });
+
+    it('throws when entityId is falsy', async () => {
+      await expect(
+        archiveNotificationsByUserEntityAndType(
+          null,
+          user.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+        )
+      ).rejects.toThrow('entityId is required');
+    });
+
+    it('throws when userId is falsy', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      await expect(
+        archiveNotificationsByUserEntityAndType(
+          entityId,
+          null,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR
+        )
+      ).rejects.toThrow('userId is required');
+    });
+
+    it('throws when notificationType is falsy or empty', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      await expect(
+        archiveNotificationsByUserEntityAndType(entityId, user.id, null)
+      ).rejects.toThrow('notificationType is required');
+      await expect(archiveNotificationsByUserEntityAndType(entityId, user.id, [])).rejects.toThrow(
         'notificationType is required'
       );
     });
@@ -1558,10 +1745,10 @@ describe('Notification service', () => {
 
     beforeAll(async () => {
       associationUser = await User.create({
-        id: faker.datatype.number({ min: 99001, max: 99999 }),
-        name: faker.name.findName(),
-        hsesUsername: faker.internet.userName(),
-        hsesUserId: faker.datatype.uuid(),
+        id: faker.number.int({ min: 99001, max: 99999 }),
+        name: faker.person.fullName(),
+        hsesUsername: faker.internet.username(),
+        hsesUserId: faker.string.uuid(),
         lastLogin: new Date(),
       });
     });

@@ -14,6 +14,7 @@ const buildEvent = (overrides: Partial<EventShape['data']> = {}): EventShape => 
   pocIds: [],
   collaboratorIds: [],
   regionId: 1,
+  eventId: 'R01-TR-1',
   data: {
     startDate: '2024-01-01',
     endDate: '2024-01-02',

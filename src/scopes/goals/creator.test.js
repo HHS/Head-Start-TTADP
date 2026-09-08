@@ -1,6 +1,13 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
-import { CollaboratorType, Goal, GoalCollaborator, GoalTemplate, Grant, Recipient } from '../../models';
+import {
+  CollaboratorType,
+  Goal,
+  GoalCollaborator,
+  GoalTemplate,
+  Grant,
+  Recipient,
+} from '../../models';
 import { createGoal, createGrant, createRecipient, createUser } from '../../testUtils';
 import filtersToScopes from '../index';
 
@@ -17,8 +24,8 @@ describe('goal filtersToScopes', () => {
     let recipient;
     let availableGoalIds;
 
-    const creatorName = `Creator ${faker.lorem.word()} ${faker.datatype.uuid()}`;
-    const otherCreatorName = `Other ${faker.lorem.word()} ${faker.datatype.uuid()}`;
+    const creatorName = `Creator ${faker.lorem.word()} ${faker.string.uuid()}`;
+    const otherCreatorName = `Other ${faker.lorem.word()} ${faker.string.uuid()}`;
 
     beforeAll(async () => {
       recipient = await createRecipient();
@@ -28,7 +35,8 @@ describe('goal filtersToScopes', () => {
       otherUser = await createUser({ name: otherCreatorName });
 
       monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
-      if (!monitoringTemplate) throw new Error('No Monitoring template found — seeders may not have run');
+      if (!monitoringTemplate)
+        throw new Error('No Monitoring template found — seeders may not have run');
 
       creatorCollabType = (
         await CollaboratorType.findOrCreate({

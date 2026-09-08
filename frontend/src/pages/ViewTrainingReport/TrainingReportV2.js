@@ -144,8 +144,8 @@ export default function TrainingReportV2({
   const hideBackLink = searchParams.get('back_link') === 'hide';
 
   const pageTitle =
-    event && event.data && event.data.eventId
-      ? `Training event report ${event.data.eventId}`
+    event && event.eventId
+      ? `Training event report ${event.eventId}`
       : 'Training event report';
   const ownerName = formatOwnerName(event);
 
@@ -338,7 +338,7 @@ export default function TrainingReportV2({
   return (
     <>
       <Helmet>
-        <title>Training Event Report {event && event.data ? String(event.data.eventId) : ''}</title>
+        <title>Training Event Report {event && event.eventId ? String(event.eventId) : ''}</title>
       </Helmet>
       {!hideBackLink && <BackLink to={backLinkUrl}>Back to Training Reports</BackLink>}
       <ApprovedReportSpecialButtons

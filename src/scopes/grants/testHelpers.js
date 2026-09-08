@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import {

@@ -40,8 +40,18 @@ describe('token service', () => {
     });
 
     it('updates a token where a token already exists', async () => {
-      const token = await createAndStoreVerificationToken(1000, 'email');
-      const token2 = await createAndStoreVerificationToken(1000, 'email');
+      // Pin the clock so both tokens share the same `iat`/`exp` claims;
+      // otherwise crossing a one-second boundary yields different tokens.
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1704067200000);
+
+      let token;
+      let token2;
+      try {
+        token = await createAndStoreVerificationToken(1000, 'email');
+        token2 = await createAndStoreVerificationToken(1000, 'email');
+      } finally {
+        nowSpy.mockRestore();
+      }
       expect(token).toEqual(token2);
 
       const pair = await UserValidationStatus.findOne({

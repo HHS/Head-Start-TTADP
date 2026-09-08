@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db, {
@@ -51,9 +51,9 @@ describe('standardGoals with Data', () => {
     let normalizedCitationOnNonApprovedReport;
 
     beforeAll(async () => {
-      const uniqueUserId = `Test Topics User ${Date.now()}-${faker.datatype.number({ min: 1000, max: 9999 })}`;
+      const uniqueUserId = `Test Topics User ${Date.now()}-${faker.number.int({ min: 1000, max: 9999 })}`;
       user = await User.create({
-        id: faker.datatype.number({ min: 2000000, max: 2999999 }),
+        id: faker.number.int({ min: 2000000, max: 2999999 }),
         homeRegionId: 1,
         name: uniqueUserId,
         hsesUsername: uniqueUserId,
@@ -162,7 +162,7 @@ describe('standardGoals with Data', () => {
       });
 
       normalizedCitationOnApprovedReport = await Citation.create({
-        mfid: faker.datatype.number({ min: 100000, max: 999999 }),
+        mfid: faker.number.int({ min: 100000, max: 999999 }),
         finding_uuid: `approved-finding-${Date.now()}`,
         citation: 'Citation on approved report',
         raw_finding_type: 'Type 1',
@@ -170,7 +170,7 @@ describe('standardGoals with Data', () => {
       });
 
       normalizedCitationOnNonApprovedReport = await Citation.create({
-        mfid: faker.datatype.number({ min: 1000000, max: 1999999 }),
+        mfid: faker.number.int({ min: 1000000, max: 1999999 }),
         finding_uuid: `non-approved-finding-${Date.now()}`,
         citation: 'Citation on non-approved report',
         raw_finding_type: 'Type 2',
@@ -486,7 +486,7 @@ describe('standardGoals with Data', () => {
       // Create test user with unique hsesUserId
       const uniqueUserId = `Test Objective User ${Date.now()}`;
       user = await User.create({
-        id: faker.datatype.number({ min: 3000 }),
+        id: faker.number.int({ min: 3000, max: 3000 + 99999 }),
         homeRegionId: 1,
         name: uniqueUserId,
         hsesUsername: uniqueUserId,

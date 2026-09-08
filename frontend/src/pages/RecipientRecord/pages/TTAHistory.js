@@ -1,6 +1,6 @@
-import { Grid } from '@trussworks/react-uswds';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
@@ -9,7 +9,11 @@ import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
+import { getSessionReportsTable } from '../../../fetchers/session';
+import useFetch from '../../../hooks/useFetch';
+import useRequestSort from '../../../hooks/useRequestSort';
 import useSanitizedFilters from '../../../hooks/useSanitizedFilters';
+import useSessionSort from '../../../hooks/useSessionSort';
 import { getUserRegions } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { expandFilters, formatDateRange } from '../../../utils';
@@ -17,7 +21,74 @@ import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoa
 import { TTAHistoryOverview } from '../../../widgets/DashboardOverview';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
+
+function TrainingReportsSectionInContext({
+  recipientId,
+  filters,
+  resetPagination,
+  setResetPagination,
+}) {
+  const [trainingReportsSortConfig, setTrainingReportsSortConfig] = useSessionSort(
+    {
+      sortBy: 'Event_ID',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    },
+    'trainingReportsTable'
+  );
+
+  const requestTrainingReportsSort = useRequestSort(setTrainingReportsSortConfig);
+
+  // reset pagination to page 1 when filters change so a stale offset can't hide matching rows
+  useEffect(() => {
+    if (resetPagination) {
+      setTrainingReportsSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setTrainingReportsSortConfig]);
+
+  const { data: trainingReportsData, error: trainingReportsError } = useFetch(
+    { rows: [], count: 0 },
+    () => getSessionReportsTable(trainingReportsSortConfig, filters, recipientId),
+    [trainingReportsSortConfig, filters, recipientId],
+    'Unable to fetch training reports'
+  );
+
+  return (
+    <>
+      {trainingReportsError && (
+        <Alert type="error" role="alert">
+          {trainingReportsError}
+        </Alert>
+      )}
+      <TrainingReportsTable
+        data={trainingReportsData}
+        title="Training Reports"
+        emptyMsg="No training reports found"
+        requestSort={requestTrainingReportsSort}
+        sortConfig={trainingReportsSortConfig}
+        setSortConfig={setTrainingReportsSortConfig}
+        filters={filters}
+        recipientId={recipientId}
+      />
+    </>
+  );
+}
+
+TrainingReportsSectionInContext.defaultProps = {
+  resetPagination: false,
+  setResetPagination: () => {},
+};
+
+TrainingReportsSectionInContext.propTypes = {
+  recipientId: PropTypes.string.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
+};
 
 const defaultDate = formatDateRange({
   yearToDate: true,
@@ -142,6 +213,12 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             showFilter={false}
             tableCaption="Approved activity reports"
             exportIdPrefix="tta-history-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
+          />
+          <TrainingReportsSectionInContext
+            recipientId={recipientId}
+            filters={filtersToApply}
             resetPagination={resetPagination}
             setResetPagination={setResetPagination}
           />

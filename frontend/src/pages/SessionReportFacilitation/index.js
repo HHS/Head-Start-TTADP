@@ -82,7 +82,7 @@ export default function SessionReportFacilitation({ match }) {
         facilitation === 'both' || facilitation === 'regional_tta_staff';
       const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
-      const { eventId } = trainingReport.data;
+      const { eventId } = trainingReport;
 
       const message = {
         messageTemplate: 'sessionCreated',
@@ -112,7 +112,7 @@ export default function SessionReportFacilitation({ match }) {
       <BackLink to={TRAINING_REPORT_URL_NOT_STARTED}>Back to Training Reports</BackLink>
       <h1 className="landing margin-bottom-2">Training Report - Create a session</h1>
       <p className="margin-0 margin-bottom-4 font-serif-md text-normal">
-        {trainingReport.data.eventId}: {trainingReport.data.eventName}
+        {trainingReport.eventId}: {trainingReport.data.eventName}
       </p>
       <Container className="maxw-tablet" paddingX={4} paddingY={5}>
         <h2 className="font-serif-xl margin-top-0 margin-bottom-1">Training facilitation</h2>

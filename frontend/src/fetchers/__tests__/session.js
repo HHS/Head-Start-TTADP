@@ -123,6 +123,14 @@ describe('session fetchers', () => {
       const result = await getSessionReportsTable(sortConfig, filters);
       expect(result).toEqual(response);
     });
+
+    it('includes recipientId in the request URL', async () => {
+      const response = { rows: [], count: 0 };
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, response);
+      await getSessionReportsTable(sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
+    });
   });
 
   describe('getSessionReportsCSV', () => {
@@ -143,6 +151,14 @@ describe('session fetchers', () => {
       fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
       await getSessionReportsCSV(sortConfig, filters);
       expect(fetchMock.called()).toBeTruthy();
+    });
+
+    it('includes recipientId in the request URL', async () => {
+      const mockCsvData = 'id,name\n1,Report 1';
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
+      await getSessionReportsCSV(sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
     });
   });
 
@@ -166,6 +182,15 @@ describe('session fetchers', () => {
       fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
       await getSessionReportsCSVById(ids, sortConfig, filters);
       expect(fetchMock.called()).toBeTruthy();
+    });
+
+    it('includes recipientId in the request URL', async () => {
+      const mockCsvData = 'id,name\n1,Report 1';
+      const ids = [1];
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
+      await getSessionReportsCSVById(ids, sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
     });
   });
 });

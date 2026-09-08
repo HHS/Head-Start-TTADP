@@ -4,7 +4,11 @@ import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { FormProvider } from 'react-hook-form';
-import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
+import {
+  DEFAULT_STATUS_CHANGE_BLOCKING_REASONS,
+  GOAL_FORM_FIELDS,
+} from '../../pages/StandardGoalForm/constants';
+import GoalStatusChangeAlert from '../GoalCards/components/GoalStatusChangeAlert';
 import ReadOnlyField from '../ReadOnlyField';
 import GoalFormButtonIterator from './GoalFormButtonIterator';
 import GoalFormContainer from './GoalFormContainer';
@@ -24,6 +28,7 @@ export default function GoalFormUpdateOrRestart({
   onSubmit,
   goalTemplatePrompts,
   isRestart,
+  statusChangeBlockingReasons,
 }) {
   const Objectives = isRestart ? RestartStandardGoalObjectives : ObjectivesSection;
 
@@ -46,6 +51,11 @@ export default function GoalFormUpdateOrRestart({
         <form onSubmit={hookForm.handleSubmit(onSubmit)}>
           <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} />
           <Objectives fieldName={GOAL_FORM_FIELDS.OBJECTIVES} options={goal.objectives} />
+          <GoalStatusChangeAlert
+            invalidStatusChangeAttempted={statusChangeBlockingReasons.invalidStatusChangeAttempted}
+            activeActivityReport={statusChangeBlockingReasons.activeActivityReport}
+            incompleteObjectives={statusChangeBlockingReasons.incompleteObjectives}
+          />
           <GoalFormButtonIterator buttons={standardGoalFormButtons} />
         </form>
       </GoalFormContainer>
@@ -103,9 +113,16 @@ GoalFormUpdateOrRestart.propTypes = {
     })
   ),
   isRestart: PropTypes.bool,
+  statusChangeBlockingReasons: PropTypes.shape({
+    activeActivityReport: PropTypes.bool,
+    incompleteObjectives: PropTypes.bool,
+    fromApi: PropTypes.bool,
+    invalidStatusChangeAttempted: PropTypes.bool,
+  }),
 };
 
 GoalFormUpdateOrRestart.defaultProps = {
   goalTemplatePrompts: null,
   isRestart: false,
+  statusChangeBlockingReasons: DEFAULT_STATUS_CHANGE_BLOCKING_REASONS,
 };
