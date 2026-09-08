@@ -32,7 +32,7 @@
     "@uswds/uswds": "3.1.0",
     "async": "^3.2.3",
     "classnames": "^2.5.1",
-    "csv-parse": "^4.14.1",
+    "csv-parse": ">=7.0.2",
     "detect-file-encoding-and-language": "^2.4.0",
     "brace-expansion": "^5.0.8",
     "dompurify": "^3.4.13",
@@ -163,7 +163,7 @@
     ],
     "testEnvironment": "jsdom",
     "transformIgnorePatterns": [
-      "/node_modules/(?!(?:@react-hook|@juggle|uuid)/)"
+      "/node_modules/(?!(?:@react-hook|@juggle|csv-parse|uuid)/)"
     ],
     "transform": {
       "^.+\\.[jt]sx?$": [
