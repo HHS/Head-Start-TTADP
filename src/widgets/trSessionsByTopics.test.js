@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, { EventReportPilot, Grant, Recipient, SessionReportPilot, Topic, User } from '../models';
 import {

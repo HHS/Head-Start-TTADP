@@ -59,6 +59,23 @@ describe('RegionalCommunicationLogDashboard', () => {
       },
     ],
   };
+  // Mirrors an "Anchor TTAC" whose home region (4) is not the first region in
+  // their permission list (2). They have read/write in their home region but only
+  // read access in the lower-numbered region.
+  const userHomeRegionNotFirstPermission = {
+    homeRegionId: 4,
+    permissions: [
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 4,
+        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+      },
+    ],
+  };
+
   const history = createMemoryHistory();
 
   const renderComm = (u, route) => {
@@ -416,7 +433,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     expect(lastTopic.innerHTML).not.toContain('region');
   });
 
-  it('does show the region filter when the user has two regions', async () => {
+  it('shows alphabetized filters including region when the user has two regions', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
@@ -429,7 +446,14 @@ describe('RegionalCommunicationLogDashboard', () => {
     );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
-    expect(lastTopic.innerHTML).toContain('region');
+    const topicDisplays = Array.from(lastTopic.options)
+      .map((option) => option.textContent)
+      .filter((display) => display !== '- Select -');
+
+    expect(topicDisplays).toContain('Region');
+    expect(topicDisplays).toEqual(
+      [...topicDisplays].sort((first, second) => first.localeCompare(second))
+    );
   });
 
   it('allows you to remove a filter', async () => {
@@ -454,5 +478,33 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() =>
       expect(screen.getByText(/error fetching communication logs/i)).toBeInTheDocument()
     );
+  });
+
+  it('defaults the add communication button to the home region, not the first permission region', async () => {
+    window.sessionStorage.clear();
+    const regionURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&region.in[]=4&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(regionURL, { count: 0, rows: [] });
+
+    act(() => renderComm(userHomeRegionNotFirstPermission, '/communication-log'));
+
+    const addButton = await screen.findByRole('link', { name: /add communication/i });
+    // The button must target the user's home region (4) where they have
+    // read/write access, not the first region in their permission list (2).
+    expect(addButton).toHaveAttribute('href', '/communication-log/region/4/log/new');
+  });
+
+  it('defaults the region filter to the home region, not the first permission region', async () => {
+    // This hook persists filters in session storage across tests; clear it so we
+    // assert against the freshly-computed default rather than a prior test's state.
+    window.sessionStorage.clear();
+    const regionURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&region.in[]=4&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(regionURL, { count: 0, rows: [] });
+
+    act(() => renderComm(userHomeRegionNotFirstPermission, '/communication-log'));
+
+    const removeRegionFilter = await screen.findByRole('button', {
+      name: /this button removes the filter: region is 4/i,
+    });
+    expect(removeRegionFilter).toBeInTheDocument();
   });
 });

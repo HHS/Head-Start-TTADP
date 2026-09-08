@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db, {
@@ -272,17 +272,17 @@ describe('Programmatic Transaction', () => {
     }
 
     let grant = {
-      id: faker.datatype.number({ min: 97000, max: 98000 }),
-      number: faker.random.alphaNumeric(10),
+      id: faker.number.int({ min: 97000, max: 98000 }),
+      number: faker.string.alphanumeric(10),
       cdi: false,
       regionId: 1,
       startDate: new Date(),
       endDate: new Date(),
     };
     const recipient = await Recipient.create({
-      name: `recipient${faker.datatype.number()}`,
-      id: faker.datatype.number({ min: 67000, max: 68000 }),
-      uei: faker.datatype.string(12),
+      name: `recipient${faker.number.int({ min: 0, max: 99999 })}`,
+      id: faker.number.int({ min: 67000, max: 68000 }),
+      uei: faker.string.sample(12),
     });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     const goal = await Goal.create({
@@ -319,7 +319,7 @@ describe('Programmatic Transaction', () => {
 
     await expect(
       GoalFieldResponse.create({
-        goalId: faker.datatype.number(),
+        goalId: faker.number.int({ min: 0, max: 99999 }),
         goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
         response: malformedJsonString,
       })

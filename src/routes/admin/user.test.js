@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db, { Permission, Role, User, UserRole } from '../../models';
@@ -259,10 +259,10 @@ describe('User route handler', () => {
 
   describe('createUserRoles', () => {
     const mockUserTheFirst = {
-      id: faker.datatype.number({ min: 10000, max: 99999 }),
-      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      id: faker.number.int({ min: 10000, max: 99999 }),
+      name: `${faker.person.firstName()} ${faker.person.lastName()}`,
       phoneNumber: '555-555-554',
-      hsesUserId: `${faker.datatype.number({ min: 10000, max: 99999 })}`,
+      hsesUserId: `${faker.number.int({ min: 10000, max: 99999 })}`,
       hsesUsername: faker.internet.email(),
       hsesAuthorities: ['ROLE_FEDERAL'],
       email: faker.internet.email(),
@@ -275,9 +275,9 @@ describe('User route handler', () => {
     };
 
     const mockRole = {
-      id: faker.datatype.number({ min: 10000, max: 99999 }),
-      name: faker.random.alpha(100),
-      fullName: faker.name.jobTitle(),
+      id: faker.number.int({ min: 10000, max: 99999 }),
+      name: faker.string.alpha(100),
+      fullName: faker.person.jobTitle(),
       isSpecialist: false,
       mapsTo: null,
       createdAt: new Date(),

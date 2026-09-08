@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { updateById } from '../../services/nationalCenters';
 import db from '..';

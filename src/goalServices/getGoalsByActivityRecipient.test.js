@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
@@ -103,7 +103,7 @@ describe('Goals by Recipient Test', () => {
     grantSpecialistName: 'Glen',
   };
 
-  const userKey = faker.datatype.number({ min: 7500 });
+  const userKey = faker.number.int({ min: 7500, max: 7500 + 99999 });
   const mockGoalUser = {
     id: userKey,
     homeRegionId: 1,
