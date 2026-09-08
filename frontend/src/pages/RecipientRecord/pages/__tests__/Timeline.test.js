@@ -83,6 +83,7 @@ describe('Recipient Record - TTA Timeline', () => {
       ],
       TIMELINE_FILTER_CONFIG
     );
+    expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).not.toContain('purpose');
   });
 
   it('sends the multi-recipient communication checkbox state with the timeline request', async () => {
@@ -105,6 +106,39 @@ describe('Recipient Record - TTA Timeline', () => {
       '1',
       expect.objectContaining({ excludeMultiRecipientCommunications: true })
     );
+  });
+
+  it('does not render or submit filters removed from the timeline configuration', async () => {
+    useFilters.mockReturnValue({
+      filters: [
+        ...createInitialTimelineFilters(),
+        {
+          id: 'stale-purpose-filter',
+          topic: 'purpose',
+          condition: 'is',
+          query: ['General Check-In'],
+        },
+      ],
+      onApplyFilters,
+      onRemoveFilter,
+      filterConfig: TIMELINE_FILTER_CONFIG,
+    });
+
+    renderTimeline();
+
+    expect(screen.queryByText('General Check-In')).not.toBeInTheDocument();
+
+    const [, fetchTimeline] = useFetch.mock.calls[useFetch.mock.calls.length - 1];
+    await fetchTimeline();
+
+    expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+      '401',
+      '1',
+      expect.objectContaining({
+        filters: [expect.stringContaining('"topic":"date"')],
+      })
+    );
+    expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toHaveLength(1);
   });
 
   it('renders a loading state', () => {
