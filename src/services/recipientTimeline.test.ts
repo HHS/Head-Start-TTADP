@@ -285,6 +285,18 @@ describe('hydrateTimelineEventIndex', () => {
   it('restores index order and protects authoritative fields from hydrator output', async () => {
     const activityPresentation = {
       ...presentation('TTA activity'),
+      durationHours: 1.5,
+      subtitle: 'On-site support',
+      byline: { label: 'Specialists', values: ['Alex Smith, GS'] },
+      indicators: ['multiRecipient'],
+      tags: [{ label: 'Monitoring', flagged: true }],
+      details: [
+        {
+          label: 'Citations addressed',
+          items: [{ text: 'Citation 1', link: '/citations/1' }],
+        },
+      ],
+      links: [{ label: 'View activity report', to: '/activity-reports/view/20', external: false }],
       source: 'wrongSource',
       sourceId: 999,
       date: '1900-01-01',
@@ -349,6 +361,45 @@ describe('hydrateTimelineEventIndex', () => {
 
     await expect(hydrateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
       'Timeline source activityReport hydrated unexpected sourceId 21'
+    );
+  });
+
+  it.each([
+    ['a negative duration', { durationHours: -1 }],
+    ['a blank title', { title: ' ' }],
+    ['a non-string subtitle', { subtitle: 1 }],
+    ['a blank byline label', { byline: { label: ' ', values: ['Alex Smith'] } }],
+    ['a blank byline value', { byline: { label: 'Specialists', values: [' '] } }],
+    ['an unsupported indicator', { indicators: ['unexpected'] }],
+    ['a blank tag label', { tags: [{ label: ' ', flagged: false }] }],
+    ['a non-boolean tag flag', { tags: [{ label: 'Monitoring', flagged: 'yes' }] }],
+    ['a blank detail label', { details: [{ label: ' ', items: [{ text: 'Value' }] }] }],
+    ['a blank detail item', { details: [{ label: 'Topics', items: [{ text: ' ' }] }] }],
+    [
+      'a non-string detail link',
+      { details: [{ label: 'Topics', items: [{ text: 'Value', link: 1 }] }] },
+    ],
+    ['a blank supporting-link label', { links: [{ label: ' ', to: '/reports/20' }] }],
+    ['a blank supporting-link target', { links: [{ label: 'View report', to: ' ' }] }],
+    [
+      'a non-boolean external flag',
+      { links: [{ label: 'View report', to: '/reports/20', external: 'yes' }] },
+    ],
+  ])('rejects presentation data with %s', async (_description, invalidFields) => {
+    const invalidPresentation = {
+      ...presentation('TTA activity'),
+      ...invalidFields,
+    } as unknown as RecipientTimelineEventPresentation;
+    const singleEventIndex: TimelineIndexResponse = {
+      count: 1,
+      events: [index.events[0]],
+    };
+    const sources = [source('activityReport', 'SELECT 1', new Map([[20, invalidPresentation]]))];
+
+    await expect(
+      hydrateTimelineEventIndex(singleEventIndex, timelineParams, sources)
+    ).rejects.toThrow(
+      'Timeline source activityReport returned invalid presentation for sourceId 20'
     );
   });
 });
