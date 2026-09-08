@@ -28,11 +28,8 @@ const type = figma.selectedInstance.getEnum('State', {
 export default {
   id: 'Alert',
   imports: ["import { Alert } from '@trussworks/react-uswds';"],
-  example: figma.code`<Alert${figma.helpers.react.renderProp(
-    'type',
-    type
-  )} headingLevel="h4" heading="Alert heading">
-        Alert content
-      </Alert>`,
+  example: figma.code`<Alert${figma.helpers.react.renderProp('type', type)} headingLevel="h4" heading="Alert heading">
+  Alert content
+</Alert>`,
   metadata: { nestable: true },
 };
