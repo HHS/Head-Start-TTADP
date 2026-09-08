@@ -19,7 +19,7 @@ local validation. Publishing and CI are intentionally out of scope for now — s
   - `yarn figma:parse` — validate mappings locally. **No Figma token needed.**
   - `yarn figma:publish` — publish mappings to Figma. **Requires a token; do not run casually.**
 
-`src/codeConnect/**` is excluded from the app `tsconfig.json`: template files
+`src/codeConnect` is excluded from the app `tsconfig.json`: template files
 import a virtual `figma` module and are only ever executed by the Figma CLI, so
 they must not be typechecked or bundled into the app.
 
