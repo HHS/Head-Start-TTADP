@@ -1,6 +1,7 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import fakerUnique from '../../fakerUnique';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityRecipient,
@@ -32,7 +33,7 @@ describe('saveReport', () => {
   let firstUser;
   let secondUser;
 
-  const grantAndRecipientId = faker.datatype.number({ min: 999 });
+  const grantAndRecipientId = faker.number.int({ min: 999, max: 999 + 99999 });
 
   let firstGoal;
   let secondGoal;
@@ -53,10 +54,10 @@ describe('saveReport', () => {
     firstUser = await User.create({
       homeRegionId: 1,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
       email: faker.internet.email(),
-      phoneNumber: faker.phone.phoneNumber(),
-      name: faker.name.findName(),
+      phoneNumber: faker.phone.number(),
+      name: faker.person.fullName(),
       role: ['Grants Specialist'],
       lastLogin: new Date(),
     });
@@ -64,10 +65,10 @@ describe('saveReport', () => {
     secondUser = await User.create({
       homeRegionId: 1,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
       email: faker.internet.email(),
-      phoneNumber: faker.phone.phoneNumber(),
-      name: faker.name.findName(),
+      phoneNumber: faker.phone.number(),
+      name: faker.person.fullName(),
       role: ['Grants Specialist'],
       lastLogin: new Date(),
     });
@@ -85,7 +86,7 @@ describe('saveReport', () => {
     });
 
     recipient = await Recipient.create({
-      name: faker.company.companyName(),
+      name: faker.company.name(),
       id: grantAndRecipientId,
     });
 
@@ -100,7 +101,7 @@ describe('saveReport', () => {
       regionId: 1,
     });
 
-    const secondGrantId = faker.datatype.number({ min: 999 });
+    const secondGrantId = faker.number.int({ min: 999, max: 999 + 99999 });
 
     secondGrant = await Grant.create({
       id: secondGrantId,
@@ -121,8 +122,8 @@ describe('saveReport', () => {
       name: 'New topic 2',
     });
 
-    const firstGoalName = `GOAL ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
-    const secondGoalName = `GOAL ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
+    const firstGoalName = `GOAL ${faker.animal.dog()} ${faker.number.int({ min: 999, max: 999 + 99999 })}`;
+    const secondGoalName = `GOAL ${faker.animal.dog()} ${faker.number.int({ min: 999, max: 999 + 99999 })}`;
 
     firstGoal = await Goal.create({
       goalTemplateId: 1,

@@ -1,6 +1,7 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD } from '../constants';
+import fakerUnique from '../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -24,9 +25,9 @@ import approvedARAndTRByGoalCategory, {
 
 const mockUser = {
   homeRegionId: 1,
-  name: faker.name.findName(),
+  name: faker.person.fullName(),
   hsesUsername: faker.internet.email(),
-  hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+  hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
   lastLogin: new Date(),
 };
 
@@ -159,8 +160,8 @@ describe('approvedARAndTRByGoalCategory', () => {
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 20000, max: 40000 })),
-      number: faker.datatype.string(8),
+      id: fakerUnique(() => faker.number.int({ min: 20000, max: 40000 })),
+      number: faker.string.sample(8),
       regionId,
       status: 'Active',
       startDate: new Date(),
@@ -172,9 +173,9 @@ describe('approvedARAndTRByGoalCategory', () => {
     user = await User.create(mockUser);
 
     recipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 20000, max: 40000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
+      id: fakerUnique(() => faker.number.int({ min: 20000, max: 40000 })),
+      name: faker.company.name(),
+      uei: faker.string.sample(12).toUpperCase(),
     });
 
     grant = await makeGrant(recipient.id, 1);
@@ -205,7 +206,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     // ── Create a test-only GoalTemplate for the TR date filter test ───────────
     // The templateName pattern "(Standard) ..." causes Postgres to auto-generate
     // standard = 'Standard', giving us a clean isolated category.
-    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    const uniqueSuffix = fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }));
     templateForOldTRTest = await GoalTemplate.create({
       templateName: `(TR Date Test ${uniqueSuffix}) Isolation Template`,
       creationMethod: CREATION_METHOD.CURATED,
@@ -389,9 +390,9 @@ describe('approvedARAndTRByGoalCategory', () => {
       regionId: 1,
       pocIds: [user.id],
       collaboratorIds: [user.id],
-      eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
+      eventId: `R01-TR-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`,
       data: {
-        eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
+        eventId: `R01-TR-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`,
         startDate: '10/01/2025',
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
@@ -453,9 +454,9 @@ describe('approvedARAndTRByGoalCategory', () => {
       regionId: 1,
       pocIds: [user.id],
       collaboratorIds: [user.id],
-      eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
+      eventId: `R01-TR-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`,
       data: {
-        eventId: `R01-TR-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`,
+        eventId: `R01-TR-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`,
         startDate: '10/01/2025',
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
@@ -587,13 +588,13 @@ describe('approvedARAndTRByGoalCategory', () => {
     // Create a dedicated recipient whose only ERSEA link goes through approvedReportOld.id
     // (startDate=2025-08-15). This lets us assert that specific report is excluded.
     const oldRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 60000, max: 80000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
+      id: fakerUnique(() => faker.number.int({ min: 60000, max: 80000 })),
+      name: faker.company.name(),
+      uei: faker.string.sample(12).toUpperCase(),
     });
     const oldGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 60000, max: 80000 })),
-      number: faker.datatype.string(8),
+      id: fakerUnique(() => faker.number.int({ min: 60000, max: 80000 })),
+      number: faker.string.sample(8),
       regionId: grant.regionId,
       status: 'Active',
       startDate: new Date(),
@@ -891,13 +892,13 @@ describe('approvedARAndTRByGoalCategory', () => {
     // Create a second recipient with its own grant (same region so it passes the
     // region scope, but different recipientId so it fails a recipientId scope).
     const otherRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      name: faker.company.name(),
+      uei: faker.string.sample(12).toUpperCase(),
     });
     const otherGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      number: faker.datatype.string(8),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      number: faker.string.sample(8),
       regionId: grant.regionId,
       status: 'Active',
       startDate: new Date(),
@@ -956,13 +957,13 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('TR count excludes sessions belonging to a different recipient in the same region', async () => {
     // Second recipient — same region, different recipientId.
     const otherRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      name: faker.company.name(),
+      uei: faker.string.sample(12).toUpperCase(),
     });
     const otherGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      number: faker.datatype.string(8),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      number: faker.string.sample(8),
       regionId: grant.regionId,
       status: 'Active',
       startDate: new Date(),
@@ -1023,7 +1024,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
   it('AR count excludes a template whose only post-cutoff Goal belongs to a different recipient', async () => {
     // Create a template with no qualifying goal for the first recipient.
-    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    const uniqueSuffix = fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }));
     const leakTemplate = await GoalTemplate.create({
       templateName: `(AR Leak Test ${uniqueSuffix}) Recipient Cutoff Template`,
       creationMethod: CREATION_METHOD.CURATED,
@@ -1031,13 +1032,13 @@ describe('approvedARAndTRByGoalCategory', () => {
 
     // Second recipient in same region.
     const otherRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      name: faker.company.name(),
+      uei: faker.string.sample(12).toUpperCase(),
     });
     const otherGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      number: faker.datatype.string(8),
+      id: fakerUnique(() => faker.number.int({ min: 50000, max: 70000 })),
+      number: faker.string.sample(8),
       regionId: grant.regionId,
       status: 'Active',
       startDate: new Date(),

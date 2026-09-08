@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../constants';
 import {
@@ -23,10 +23,10 @@ describe('getGoalsForReport', () => {
 
   beforeAll(async () => {
     // Create User.
-    const userName = faker.random.word();
+    const userName = faker.word.sample();
 
     user = await User.create({
-      id: faker.datatype.number({ min: 1000 }),
+      id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
       homeRegionId: 1,
       name: userName,
       hsesUsername: userName,
