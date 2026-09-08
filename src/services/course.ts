@@ -1,4 +1,4 @@
-import parse from 'csv-parse/lib/sync';
+import { parse } from 'csv-parse /sync';
 import Sequelize, { Op, type WhereOptions } from 'sequelize';
 import db, { sequelize } from '../models';
 

@@ -9,7 +9,7 @@ import {
   TARGET_POPULATIONS,
   TRAINING_REPORT_STATUSES as TRS,
 } from '@ttahub/common';
-import parse from 'csv-parse/lib/sync';
+import { parse } from 'csv-parse/sync';
 import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
