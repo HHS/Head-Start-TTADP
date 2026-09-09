@@ -109,6 +109,36 @@ describe('goals/standard', () => {
     expect(foundIds).toContain(goalERSEA.id);
     expect(foundIds).toContain(goalNoStandard.id);
   });
+
+  it('does not restrict results when all curated standards are included', async () => {
+    const standards = await GoalTemplate.findAll({
+      attributes: ['standard'],
+      where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
+      raw: true,
+    });
+    const { goal: scope } = await filtersToScopes({
+      'standard.in': standards.map(({ standard }) => standard),
+    });
+    const found = await Goal.findAll({
+      where: { [Op.and]: [scope, { id: createdGoalIds }] },
+    });
+    expect(found).toHaveLength(3);
+  });
+
+  it('does not restrict results when all curated standards are excluded', async () => {
+    const standards = await GoalTemplate.findAll({
+      attributes: ['standard'],
+      where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
+      raw: true,
+    });
+    const { goal: scope } = await filtersToScopes({
+      'standard.nin': standards.map(({ standard }) => standard),
+    });
+    const found = await Goal.findAll({
+      where: { [Op.and]: [scope, { id: createdGoalIds }] },
+    });
+    expect(found).toHaveLength(3);
+  });
 });
 
 describe('goals/standard empty filters', () => {
