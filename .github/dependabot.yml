@@ -1,0 +1,39 @@
+version: 2
+updates:
+- package-ecosystem: "npm"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+    day: "monday"
+    time: "10:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: "*"
+    update-types:
+    - "version-update:semver-major"
+  groups:
+    backend-minor-patch:
+      update-types:
+      - "minor"
+      - "patch"
+      patterns:
+      - "*"
+- package-ecosystem: "npm"
+  directory: "/frontend"
+  schedule:
+    interval: "weekly"
+    day: "monday"
+    time: "11:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: "@fortawesome/*"
+  - dependency-name: "*"
+    update-types:
+    - "version-update:semver-major"
+  groups:
+    frontend-minor-patch:
+      update-types:
+      - "minor"
+      - "patch"
+      patterns:
+      - "*"

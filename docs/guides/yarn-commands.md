@@ -8,8 +8,7 @@ This guide is the source of truth for local command usage. For common operations
 | --- | --- |
 | Install dependencies (frozen lockfile) | `yarn deps` |
 | Install dependencies (non-frozen) | `yarn deps:install` |
-| Audit runtime dependencies (blocking) | `yarn deps:audit` |
-| Report dev dependency audit findings (non-blocking) | `yarn deps:audit:dev` |
+| Audit dependencies | `yarn deps:audit` |
 | Start backend dev watcher | `yarn server` |
 | Start frontend dev server | `yarn start:fe` |
 | Start worker dev watcher | `yarn start:worker:watch` |

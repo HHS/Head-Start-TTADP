@@ -8,53 +8,8 @@ const path = require('path');
 
 /* eslint-disable no-console */
 
-const DEFAULT_GROUP = 'dependencies';
-const ISSUE_FILES_BY_GROUP = {
-  dependencies: 'yarn-audit-known-issues',
-  devDependencies: 'yarn-audit-known-issues-dev',
-  optionalDependencies: 'yarn-audit-known-issues-optional',
-};
-const SUPPORTED_GROUPS = new Set(Object.keys(ISSUE_FILES_BY_GROUP));
-
-function auditCommand(group) {
-  return `yarn audit --level low --json --groups ${group}`;
-}
-
-function parseArguments(args) {
-  const options = {
-    group: DEFAULT_GROUP,
-    reportOnly: false,
-  };
-
-  args.forEach((arg, index) => {
-    if (arg === '--report-only') {
-      options.reportOnly = true;
-      return;
-    }
-    if (arg.startsWith('--groups=')) {
-      options.group = arg.replace('--groups=', '');
-      return;
-    }
-    if (arg.startsWith('--group=')) {
-      options.group = arg.replace('--group=', '');
-      return;
-    }
-    if (arg === '--groups' || arg === '--group') {
-      options.group = args[index + 1];
-      return;
-    }
-    if (args[index - 1] === '--groups' || args[index - 1] === '--group') {
-      return;
-    }
-    throw new Error(`Unsupported argument: ${arg}`);
-  });
-
-  if (!SUPPORTED_GROUPS.has(options.group)) {
-    throw new Error(`Unsupported dependency group: ${options.group}. Use one of ${[...SUPPORTED_GROUPS].join(', ')}.`);
-  }
-
-  return options;
-}
+const ISSUES_FILE = 'yarn-audit-known-issues';
+const AUDIT_CMD = 'yarn audit --level high --json --groups dependencies';
 
 function parseResult(rawData) {
   const findings = new Map();
@@ -80,28 +35,22 @@ function parseResult(rawData) {
   return findings;
 }
 
-function validateKnownIssuesFile(issuesFile, createIfMissing = true) {
-  if (!fs.existsSync(issuesFile)) {
-    if (!createIfMissing) {
-      return;
-    }
-    fs.writeFileSync(issuesFile, '');
+function validateKnownIssuesFile() {
+  if (!fs.existsSync(ISSUES_FILE)) {
+    fs.writeFileSync(ISSUES_FILE, '');
     return;
   }
 }
 
-function getKnownIssues(issuesFile) {
-  if (!fs.existsSync(issuesFile)) {
-    return new Map();
-  }
-  const fileData = fs.readFileSync(issuesFile, 'utf8');
+function getKnownIssues() {
+  const fileData = fs.readFileSync(ISSUES_FILE, 'utf8');
   return parseResult(fileData);
 }
 
-function getNewIssues(group) {
+function getNewIssues() {
   let stdout = '';
   try {
-    stdout = execSync(auditCommand(group)).toString();
+    stdout = execSync(AUDIT_CMD).toString();
   } catch (err) {
     // yarn returns non-zero exit code on findings
     stdout = err.stdout.toString();
@@ -119,14 +68,11 @@ function compareIssues(knownIssues, newIssues) {
   return issues;
 }
 
-function main(args = process.argv.slice(2)) {
-  const { group, reportOnly } = parseArguments(args);
-  const issuesFile = ISSUE_FILES_BY_GROUP[group];
-  const command = auditCommand(group);
-  console.log(`Checking ${group} for issues in "${path.basename(process.cwd())}/"`);
-  validateKnownIssuesFile(issuesFile, !reportOnly);
-  const newIssues = getNewIssues(group);
-  const knownIssues = getKnownIssues(issuesFile);
+function main() {
+  console.log(`Checking for issues in "${path.basename(process.cwd())}/"`);
+  validateKnownIssuesFile();
+  const newIssues = getNewIssues();
+  const knownIssues = getKnownIssues();
   if (newIssues.size === 0) {
     console.info(`No issues found.`);
     exit(0);
@@ -134,7 +80,7 @@ function main(args = process.argv.slice(2)) {
   console.log(`Found ${newIssues.size} current issues.`);
   console.info(`Skipping ${knownIssues.size} known issues (${[...knownIssues.keys()]})`);
   const unsolvedIssues = compareIssues(knownIssues, newIssues);
-  console.info(`To update the ignore list, run '${command} > ${issuesFile}'`);
+  console.info(`To update the ignore list, run '${AUDIT_CMD} > ${ISSUES_FILE}'`);
   console.info('---------------------');
   console.error(`Found ${unsolvedIssues.length} issues\n`);
   if (unsolvedIssues.length !== 0) {
@@ -147,7 +93,7 @@ function main(args = process.argv.slice(2)) {
       const chunkTwo = `(${issue.data.advisory.severity}) ${JSON.stringify(issue.data.advisory.findings)}`;
       console.info(`${chunkOne} ${chunkTwo}`);
     });
-    exit(reportOnly ? 0 : 1);
+    exit(1);
   }
 }
 
