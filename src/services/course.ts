@@ -45,7 +45,14 @@ export async function csvImport(buffer: Buffer | string) {
 
   const importedCourseIds = [];
 
-  const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  let parsed: DecodedCSV[];
+  try {
+    parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  } catch (error) {
+    errors.push(`CSV parse error: ${error.message}`);
+    return { count: 0, created, updated, replaced, deleted, skipped, errors };
+  }
+
   let rowCount = 1;
   let results;
 

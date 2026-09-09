@@ -1019,7 +1019,14 @@ export async function csvImport(buffer: Buffer) {
   const skipped: string[] = [];
   const errors: string[] = [];
 
-  const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  let parsed: Record<string, string>[];
+  try {
+    parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  } catch (error) {
+    errors.push(`CSV parse error: ${error.message}`);
+    return { count: 0, skipped, errors };
+  }
+
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
       const cleanLine = Object.fromEntries(
