@@ -37,6 +37,18 @@ jest.mock('./validation/monitoringImportCycle', () => ({
 
 const DEFAULT_CYCLE = { import_id: 90000, source_updated_at: new Date('2026-07-20T00:00:00.000Z') };
 
+// The cycles the retention test rotates through, below.
+const CYCLE_A_ID = 90001;
+const CYCLE_B_ID = 90002;
+const CYCLE_C_ID = 90003;
+// Every import_id this file's validateMonitoringData() calls use - distinct from
+// other suites sharing the monitoring_post_refresh process_name (e.g.
+// checkMonitoringValidationRan.test.js) - so cleanup below can scope to exactly
+// the runs this file created instead of every run for the process. (The
+// programmatic-transaction snapshot/rollback helper doesn't apply here: these
+// tables have auditing removed, so there's no audit log for it to revert.)
+const OWN_IMPORT_IDS = [DEFAULT_CYCLE.import_id, CYCLE_A_ID, CYCLE_B_ID, CYCLE_C_ID];
+
 // High ids to avoid colliding with seed data (shared test database)
 const REVIEW_STATUS_COMPLETE_ID = 90001;
 const FINDING_STATUS_ACTIVE_ID = 90002;
@@ -236,7 +248,10 @@ describe('validateMonitoringData', () => {
   afterAll(async () => {
     const runIds = (
       await ValidationRun.findAll({
-        where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+        where: {
+          process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+          import_id: OWN_IMPORT_IDS,
+        },
         attributes: ['id'],
         raw: true,
       })
@@ -244,7 +259,14 @@ describe('validateMonitoringData', () => {
     await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
     await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
     await ValidationRun.destroy({ where: { id: runIds }, force: true });
-    await ValidationTimeSeries.destroy({ where: {}, force: true });
+    // ValidationTimeSeries has no run/import column - it's recomputed globally,
+    // not scoped per run - so narrow to the feature_set/region keys this file's
+    // own fixtures (regions 1 and 2, plus their region_id 0 national dedup) can
+    // produce, rather than wiping the shared table.
+    await ValidationTimeSeries.destroy({
+      where: { feature_set: ['monitoring_reviews', 'monitoring_findings'], region_id: [0, 1, 2] },
+      force: true,
+    });
 
     await MonitoringFindingGrant.destroy({
       where: { findingId: [findingIdClosed, findingIdNoCategory] },
@@ -287,7 +309,10 @@ describe('validateMonitoringData', () => {
     await validateMonitoringData();
 
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+      where: {
+        process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+        import_id: DEFAULT_CYCLE.import_id,
+      },
       order: [['id', 'DESC']],
     });
     expect(run.status).toBe(VALIDATION_RUN_STATUS.SUCCESS);
@@ -334,7 +359,10 @@ describe('validateMonitoringData', () => {
 
   it('captures per-entity observations for the seeded findings and review', async () => {
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+      where: {
+        process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+        import_id: DEFAULT_CYCLE.import_id,
+      },
       order: [['id', 'DESC']],
     });
     const [closedFinding, noCategoryFinding] = await Promise.all([
@@ -390,7 +418,10 @@ describe('validateMonitoringData', () => {
 
   it('raises alerts derived from the observations', async () => {
     const run = await ValidationRun.findOne({
-      where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+      where: {
+        process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+        import_id: DEFAULT_CYCLE.import_id,
+      },
       order: [['id', 'DESC']],
     });
     const alerts = await ValidationAlert.findAll({
@@ -423,42 +454,42 @@ describe('validateMonitoringData', () => {
   });
 
   it('retains by cycle: replaces a same-cycle re-run, keeps a different cycle, rolls off old ones', async () => {
-    const latestRun = () =>
+    const latestRun = (importId) =>
       ValidationRun.findOne({
-        where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH },
+        where: { process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH, import_id: importId },
         order: [['id', 'DESC']],
       });
     const recordCount = (runId) => ValidationRecord.count({ where: { run_id: runId } });
 
     // Cycle A, then cycle B (distinct import ids = distinct data versions).
     getMonitoringImportCycle.mockResolvedValueOnce({
-      import_id: 90001,
+      import_id: CYCLE_A_ID,
       source_updated_at: new Date('2026-07-20T00:00:00.000Z'),
     });
     await validateMonitoringData();
-    const runA = await latestRun();
+    const runA = await latestRun(CYCLE_A_ID);
 
     getMonitoringImportCycle.mockResolvedValueOnce({
-      import_id: 90002,
+      import_id: CYCLE_B_ID,
       source_updated_at: new Date('2026-07-27T00:00:00.000Z'),
     });
     await validateMonitoringData();
-    const runB = await latestRun();
+    const runB = await latestRun(CYCLE_B_ID);
 
     // grouping: each run is stamped with its own cycle
-    expect(runA.import_id).toBe(90001);
-    expect(runB.import_id).toBe(90002);
+    expect(runA.import_id).toBe(CYCLE_A_ID);
+    expect(runB.import_id).toBe(CYCLE_B_ID);
     // a different cycle is never collateral damage
     expect(await recordCount(runA.id)).toBeGreaterThan(0);
     expect(await recordCount(runB.id)).toBeGreaterThan(0);
 
     // Re-run cycle B: replaces runB's data, leaves cycle A untouched.
     getMonitoringImportCycle.mockResolvedValueOnce({
-      import_id: 90002,
+      import_id: CYCLE_B_ID,
       source_updated_at: new Date('2026-07-27T00:00:00.000Z'),
     });
     await validateMonitoringData();
-    const runB2 = await latestRun();
+    const runB2 = await latestRun(CYCLE_B_ID);
 
     expect(await recordCount(runB2.id)).toBeGreaterThan(0);
     expect(await recordCount(runB.id)).toBe(0); // same-cycle predecessor deleted
@@ -466,11 +497,11 @@ describe('validateMonitoringData', () => {
 
     // Cycle C: cycle A (now two back) rolls off; previous cycle (B2) stays.
     getMonitoringImportCycle.mockResolvedValueOnce({
-      import_id: 90003,
+      import_id: CYCLE_C_ID,
       source_updated_at: new Date('2026-08-03T00:00:00.000Z'),
     });
     await validateMonitoringData();
-    const runC = await latestRun();
+    const runC = await latestRun(CYCLE_C_ID);
 
     expect(await recordCount(runC.id)).toBeGreaterThan(0);
     expect(await recordCount(runB2.id)).toBeGreaterThan(0); // previous cycle kept
