@@ -1,4 +1,5 @@
 import type {
+  RecipientTimelineEventPresentation,
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
 } from '@ttahub/common/src/recipientTimeline';
@@ -23,18 +24,6 @@ const {
   Topic,
   User,
 } = db;
-
-/** Source-owned fields that cannot override identity or ordering fields from the shared index. */
-export interface RecipientTimelineEventPresentation {
-  durationHours: number | null;
-  title: string;
-  subtitle: string | null;
-  byline: { label: string; values: string[] } | null;
-  indicators: Array<'multiRecipient'>;
-  tags: Array<{ label: string; flagged: boolean }>;
-  details: Array<{ label: string; items: Array<{ text: string; link?: string }> }>;
-  links: Array<{ label: string; to: string; external?: boolean }>;
-}
 
 export interface TimelineSourceBindings {
   /** Add a source-owned replacement and return its SQL placeholder. */
@@ -168,14 +157,21 @@ async function hydrateActivityReports(
   if (sourceIds.length === 0) return new Map();
 
   const reportIds = [...new Set(sourceIds)];
-  const [
-    reports,
-    collaborators,
-    recipientGrants,
-    activityRecipients,
-    reportGoals,
-    reportObjectives,
-  ] = await Promise.all([
+  const activityRecipients = await ActivityRecipient.unscoped().findAll({
+    attributes: ['activityReportId', 'grantId'],
+    where: {
+      activityReportId: { [Op.in]: reportIds },
+      grantId: { [Op.ne]: null },
+    },
+  });
+  const referencedGrantIds = [
+    ...new Set(
+      activityRecipients
+        .map(({ grantId }) => grantId)
+        .filter((grantId): grantId is number => Number.isInteger(grantId))
+    ),
+  ];
+  const hydrationResults = await Promise.all([
     ActivityReport.unscoped().findAll({
       attributes: ['id', 'duration', 'deliveryMethod', 'legacyId', 'userId', 'creatorRole'],
       where: { id: { [Op.in]: reportIds } },
@@ -202,25 +198,24 @@ async function hydrateActivityReports(
         },
       ],
     }),
-    Grant.unscoped().findAll({
-      attributes: ['id', 'number'],
-      where: { recipientId: context.recipientId, regionId: context.regionId },
-      include: [
-        {
-          model: Program,
-          as: 'programs',
-          attributes: ['programType'],
-          required: false,
-        },
-      ],
-    }),
-    ActivityRecipient.unscoped().findAll({
-      attributes: ['activityReportId', 'grantId'],
-      where: {
-        activityReportId: { [Op.in]: reportIds },
-        grantId: { [Op.ne]: null },
-      },
-    }),
+    referencedGrantIds.length
+      ? Grant.unscoped().findAll({
+          attributes: ['id', 'number'],
+          where: {
+            id: { [Op.in]: referencedGrantIds },
+            recipientId: context.recipientId,
+            regionId: context.regionId,
+          },
+          include: [
+            {
+              model: Program,
+              as: 'programs',
+              attributes: ['programType'],
+              required: false,
+            },
+          ],
+        })
+      : Promise.resolve([]),
     ActivityReportGoal.findAll({
       attributes: ['activityReportId', 'goalId'],
       where: { activityReportId: { [Op.in]: reportIds } },
@@ -230,6 +225,7 @@ async function hydrateActivityReports(
       where: { activityReportId: { [Op.in]: reportIds } },
     }),
   ]);
+  const [reports, collaborators, recipientGrants, reportGoals, reportObjectives] = hydrationResults;
 
   const grantById = new Map<number, any>(recipientGrants.map((grant) => [grant.id, grant]));
   const recipientGrantIds = [...grantById.keys()];

@@ -1,9 +1,11 @@
 import { TIMELINE_EVENT_TYPES } from '@ttahub/common/src/constants';
 import type {
   RecipientTimelineEvent,
+  RecipientTimelineEventPresentation,
   RecipientTimelineFilter,
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
+  RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
 import { QueryTypes } from 'sequelize';
@@ -12,7 +14,6 @@ import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 import {
   RECIPIENT_TIMELINE_SOURCES,
-  type RecipientTimelineEventPresentation,
   type TimelineEventSource,
   type TimelineSourceBindings,
 } from './recipientTimelineSources';
@@ -22,15 +23,6 @@ interface RecipientTimelineEventIndex {
   sourceId: number;
   date: string;
   eventType: RecipientTimelineEvent['eventType'];
-}
-
-interface HydratedRecipientTimelineEvent
-  extends RecipientTimelineEventIndex,
-    RecipientTimelineEventPresentation {}
-
-interface RecipientTimelineResponse {
-  count: number;
-  events: HydratedRecipientTimelineEvent[];
 }
 
 interface TimelineQueryRow {
@@ -455,7 +447,7 @@ export async function hydrateTimelineEventIndex(
     })
   );
 
-  const events = index.events.map((indexEvent): HydratedRecipientTimelineEvent => {
+  const events = index.events.map((indexEvent): RecipientTimelineEvent => {
     const presentation = hydratedBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
       throw new Error(

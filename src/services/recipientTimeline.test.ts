@@ -1,14 +1,14 @@
-import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
+import type {
+  RecipientTimelineEventPresentation,
+  RecipientTimelineRequestParams,
+} from '@ttahub/common/src/recipientTimeline';
 import { sequelize } from '../models';
 import {
   hydrateTimelineEventIndex,
   queryTimelineEventIndex,
   type TimelineIndexResponse,
 } from './recipientTimeline';
-import type {
-  RecipientTimelineEventPresentation,
-  TimelineEventSource,
-} from './recipientTimelineSources';
+import type { TimelineEventSource } from './recipientTimelineSources';
 
 const timelineParams: RecipientTimelineRequestParams = {
   recipientId: 100000,
