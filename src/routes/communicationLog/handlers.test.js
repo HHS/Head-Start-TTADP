@@ -2,7 +2,7 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import SCOPES from '../../middleware/scopeConstants';
 import { GoalTemplate, Grant, Group, Recipient, sequelize, User } from '../../models';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
+import { setTrainingAndActivityReportReadRegions, getUserReadRegions } from '../../services/accessValidation';
 import {
   createLog,
   csvLogsByRecipientAndScopes,
@@ -96,6 +96,12 @@ describe('communicationLog handlers', () => {
 
   const unauthorized = {
     id: 3,
+    permissions: [],
+  };
+
+  const centralOffice = {
+    id: 5,
+    homeRegionId: 14,
     permissions: [],
   };
 
@@ -1058,6 +1064,36 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(unauthorized));
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       expect(result).toBeNull();
+    });
+
+    it('returns users from all regions for central office users', async () => {
+      const mockRequest = {
+        session: {
+          userId: centralOffice.id,
+        },
+        params: {
+          regionId: 14,
+        },
+      };
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ];
+      userById.mockResolvedValue(centralOffice);
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      usersByRoles.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue([]);
+      Group.findAll.mockResolvedValue([]);
+
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      // central office should be scoped to the regions they can read, not a single region
+      expect(usersByRoles).toHaveBeenCalledWith(
+        ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
+        [1, 2, 3]
+      );
+      expect(result.regionalUsers).toEqual(mockUsers.map((u) => ({ label: u.name, value: u.id })));
     });
   });
 
