@@ -1,9 +1,10 @@
 import { Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
+import CommunicationLogUsersProvider from '../../components/CommunicationLogUsersProvider';
 import { regionFilter } from '../../components/filter/communicationLogFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
@@ -63,7 +64,10 @@ export default function RegionalCommunicationLog() {
   const hasCentralOffice = useMemo(() => user?.homeRegionId && user.homeRegionId === 14, [user]);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-  const defaultRegion = useMemo(() => String(user?.homeRegionId ?? regions[0]?.id ?? 0), [user?.homeRegionId, regions]);
+  const defaultRegion = useMemo(
+    () => String(user?.homeRegionId ?? regions[0]?.id ?? 0),
+    [user?.homeRegionId, regions]
+  );
 
   const canCreateCommLog = useMemo(
     () => canCreateCommunicationLog(user, parseInt(defaultRegion, DECIMAL_BASE)),
@@ -103,6 +107,9 @@ export default function RegionalCommunicationLog() {
     defaultFilters
   );
 
+  // When filters change, reset pagination back to the first page.
+  const [resetPagination, setResetPagination] = useState(false);
+
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
     if (addBackDefaultRegions) {
       // We always want the regions to appear in the URL.
@@ -110,6 +117,7 @@ export default function RegionalCommunicationLog() {
     } else {
       setFiltersInHook(newFilters);
     }
+    setResetPagination(true);
   };
 
   // Remove Filters.
@@ -124,6 +132,7 @@ export default function RegionalCommunicationLog() {
       } else {
         setFiltersInHook(newFilters);
       }
+      setResetPagination(true);
     }
   };
 
@@ -135,9 +144,10 @@ export default function RegionalCommunicationLog() {
       <RegionPermissionModal
         filters={filtersToApply}
         user={user}
-        showFilterWithMyRegions={() =>
-          showFilterWithMyRegions(allRegionsFilters, filtersToApply, setFiltersInHook)
-        }
+        showFilterWithMyRegions={() => {
+          showFilterWithMyRegions(allRegionsFilters, filtersToApply, setFiltersInHook);
+          setResetPagination(true);
+        }}
       />
       <div className="comm-log-header flex-align-center margin-top-0 margin-bottom-3">
         <h1 className="landing">
@@ -152,23 +162,29 @@ export default function RegionalCommunicationLog() {
         )}
       </div>
 
-      <FilterPanelContainer>
-        <FilterPanel
-          applyButtonAria="apply filters for regional communication log dashboard"
-          filters={filtersToApply}
-          onApplyFilters={onApplyFilters}
-          onRemoveFilter={onRemoveFilter}
-          filterConfig={filterConfig}
-          allUserRegions={regions}
-        />
-      </FilterPanelContainer>
+      <CommunicationLogUsersProvider regionId={defaultRegion}>
+        <FilterPanelContainer>
+          <FilterPanel
+            applyButtonAria="apply filters for regional communication log dashboard"
+            filters={filtersToApply}
+            onApplyFilters={onApplyFilters}
+            onRemoveFilter={onRemoveFilter}
+            filterConfig={filterConfig}
+            allUserRegions={regions}
+          />
+        </FilterPanelContainer>
+      </CommunicationLogUsersProvider>
       <Grid row gap="lg">
         <Grid
           desktop={{ col: 12 }}
           tabletLg={{ col: 12 }}
           className="display-flex flex-align-stretch"
         >
-          <RegionalCommLogTable filters={filtersToApply} />
+          <RegionalCommLogTable
+            filters={filtersToApply}
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
+          />
         </Grid>
       </Grid>
     </div>

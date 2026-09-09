@@ -178,8 +178,21 @@ describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
     expect(reportFindAll).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: { [db.Sequelize.Op.in]: [50] } } })
     );
+    expect(activityRecipientFindAll).toHaveBeenCalledWith({
+      attributes: ['activityReportId', 'grantId'],
+      where: {
+        activityReportId: { [db.Sequelize.Op.in]: [50] },
+        grantId: { [db.Sequelize.Op.ne]: null },
+      },
+    });
     expect(grantFindAll).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { recipientId: 100, regionId: 14 } })
+      expect.objectContaining({
+        where: {
+          id: { [db.Sequelize.Op.in]: [10, 11, 999] },
+          recipientId: 100,
+          regionId: 14,
+        },
+      })
     );
     expect(goalFindAll).toHaveBeenCalledWith(
       expect.objectContaining({

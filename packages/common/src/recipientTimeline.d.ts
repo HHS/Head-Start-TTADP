@@ -31,7 +31,18 @@ export interface RecipientTimelineRequestParams {
   excludeMultiRecipientCommunications: boolean;
 }
 
-export interface RecipientTimelineEvent {
+export interface RecipientTimelineEventPresentation {
+  durationHours: number | null;
+  title: string;
+  subtitle: string | null;
+  byline: { label: string; values: string[] } | null;
+  indicators: Array<'multiRecipient'>;
+  tags: Array<{ label: string; flagged: boolean }>;
+  details: Array<{ label: string; items: Array<{ text: string; link?: string }> }>;
+  links: Array<{ label: string; to: string; external?: boolean }>;
+}
+
+export interface RecipientTimelineEvent extends RecipientTimelineEventPresentation {
   source: string;
   sourceId: number;
   date: string;

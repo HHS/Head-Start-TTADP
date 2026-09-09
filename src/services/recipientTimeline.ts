@@ -1,9 +1,11 @@
 import { TIMELINE_EVENT_TYPES } from '@ttahub/common/src/constants';
 import type {
   RecipientTimelineEvent,
+  RecipientTimelineEventPresentation,
   RecipientTimelineFilter,
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
+  RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
 import { QueryTypes } from 'sequelize';
@@ -12,7 +14,6 @@ import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 import {
   RECIPIENT_TIMELINE_SOURCES,
-  type RecipientTimelineEventPresentation,
   type TimelineEventSource,
   type TimelineSourceBindings,
 } from './recipientTimelineSources';
@@ -22,15 +23,6 @@ interface RecipientTimelineEventIndex {
   sourceId: number;
   date: string;
   eventType: RecipientTimelineEvent['eventType'];
-}
-
-interface DetailedRecipientTimelineEvent
-  extends RecipientTimelineEventIndex,
-    RecipientTimelineEventPresentation {}
-
-interface RecipientTimelineResponse {
-  count: number;
-  events: DetailedRecipientTimelineEvent[];
 }
 
 interface TimelineQueryRow {
@@ -402,7 +394,8 @@ const assertPresentation = (
       (!Number.isFinite(presentation.durationHours) || presentation.durationHours < 0)) ||
     typeof presentation.title !== 'string' ||
     !presentation.title.trim() ||
-    (presentation.subtitle !== null && typeof presentation.subtitle !== 'string') ||
+    (presentation.subtitle !== null &&
+      (typeof presentation.subtitle !== 'string' || !presentation.subtitle.trim())) ||
     !validByline ||
     !Array.isArray(presentation.indicators) ||
     presentation.indicators.some((indicator) => indicator !== 'multiRecipient') ||
@@ -461,7 +454,7 @@ export async function loadTimelineEventDetails(
     })
   );
 
-  const events = index.events.map((indexEvent): DetailedRecipientTimelineEvent => {
+  const events = index.events.map((indexEvent): RecipientTimelineEvent => {
     const presentation = detailsBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
       throw new Error(
