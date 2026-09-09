@@ -166,7 +166,8 @@ If publishing the remote release tag or GitHub Release evidence fails after a su
 ### Deploy changes directly to a test environment
 
 You can deploy changes from any remote branch to a non-production environment by following these steps:
-- Log in to CircleCI, go to pipelines https://app.circleci.com/pipelines
+
+- Log in to CircleCI, go to pipelines <https://app.circleci.com/pipelines>
 - Select your branch from the dropdown on the top right side
 - Click "Trigger Pipeline" button in the top right
 - Select `deploy_manual`, choose the environment you want to deploy to (ie dev-blue) from the dropdown, then run the pipeline.
@@ -188,20 +189,21 @@ Exception:
 - The environment specific postgres database URI is automatically available in the relevant cloud.gov application environment (because they share a cloud.gov "space"). The URI is accessible to the application as POSTGRES_URL. Consequently, this secret does not need to be managed by developers.
 
 ### Adding environment variables to an application
+
 There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
-* First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
-* Next, add the value to each of the files under [deployment_config/](../../deployment_config/).
-  * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
-  * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
-* If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
-  * Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
+- First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
+- Next, add the value to each of the files under [deployment_config/](../../deployment_config/).
+  - If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
+  - If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
+- If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
+  - Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
 
 ## Interacting with a deployed application or database
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
 
-Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod).
+Our project includes three deployed Postgres databases, one to interact with each application environment (dev, staging, prod).
 
 ### First, log into Cloud Foundry instance
 
@@ -235,7 +237,7 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
 
    ```bash
    # Mac OSX ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_arm64 
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_arm64
    # Mac OSX non-ARM
    cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_amd64
    # Windows
@@ -250,10 +252,10 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    # list services (ie postgres, redis, etc)
    cf services
    cf connect-to-service <app_name> <service_instance_name>
-   # Example for sandbox pg
-   cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
-   # Example for sandbox redis
-   cf connect-to-service tta-smarthub-sandbox ttahub-redis-sandbox
+    # Example for dev pg
+    cf connect-to-service tta-smarthub-dev-blue ttahub-dev
+    # Example for dev redis
+    cf connect-to-service tta-smarthub-dev-blue ttahub-redis-dev
    # ctrl-d to disconnect
    ```
 
@@ -262,13 +264,14 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    You will need to have the pg/redis client installed locally and findable in your $PATH.
    Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
-   Note: This plugin will not work for connecting to a replica database.  
+   Note: This plugin will not work for connecting to a replica database.
    Instead, use the script `./bin/replica-connect.sh` from this repo.
+
    ```
    ./bin/replica-connect.sh tta-smarthub-dev-blue
     Establishing SSH tunnel with PID: 38115
     Connecting to db replica for tta-smarthub-dev-blue on port 5432...
-    cgawsbrokerprodbt584djy6n6cnuz=> 
+    cgawsbrokerprodbt584djy6n6cnuz=>
     ```
 
 #### Run script as task
@@ -277,20 +280,20 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
 
    ```bash
    cf run-task <app_name> --command "<yarn command>"
-   # Example 1: running data validation script against sandbox
-   cf run-task tta-smarthub-sandbox --command "yarn db:validation"
+    # Example 1: running data validation script against dev
+    cf run-task tta-smarthub-dev-blue --command "yarn db:validation"
    # Example 2: undo most recent database migration
-   cf run-task tta-smarthub-sandbox --command "yarn db:migrate:undo:prod:last"
+    cf run-task tta-smarthub-dev-blue --command "yarn db:migrate:undo:prod:last"
    ```
 
 1. Check log output, including those from task
 
    ```bash
    cf logs <app_name> --recent
-   # Example 1: checking sandbox logs
-   cf logs tta-smarthub-sandbox --recent
-   # Example 2: checking sandbox logs, grep just for task logs
-   cf logs tta-smarthub-sandbox --recent | grep APP/TASK/
+    # Example 1: checking dev logs
+    cf logs tta-smarthub-dev-blue --recent
+    # Example 2: checking dev logs, grep just for task logs
+    cf logs tta-smarthub-dev-blue --recent | grep APP/TASK/
    ```
 
 #### Run script in an interactive shell
@@ -305,8 +308,8 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
 
    ```bash
    cf ssh <app_name>
-   # ssh example for sandbox application
-   cf ssh tta-smarthub-sandbox
+    # ssh example for dev application
+    cf ssh tta-smarthub-dev-blue
    ```
 
 1. Open shell
@@ -341,6 +344,7 @@ These are the steps to manually import monitoring and generate any Goals associa
 ```bash
 cf login -a api.fr.cloud.gov --sso
 ```
+
 and choose the production option (option 2 as of the writing of these instructions)
 
 **Basic command sequence:**
@@ -395,7 +399,7 @@ The script takes two flags
 - \-m | \-\-maintenance\-mode controls whether the script takes the app into maintenance mode or out of it.
   - Options are "on" or "off
 - \-e | \-\-environment controls which environment you are targeting.
-  - Options are "sandbox", "dev", "staging", and "prod"
+  - Options are "dev", "staging", and "prod"
 
 Ex.
 
@@ -404,8 +408,7 @@ Ex.
 ./bin/maintenance -e dev -m on
 ```
 
-If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
-
+If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at <https://login.fr.cloud.gov/passcode>. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 ## Creating a new environment
 
@@ -456,20 +459,18 @@ An automated script will run in that environment and run updates and migrations 
 [cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
 [cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 
-
-
 ## Creating and Applying a Deploy Key
 
 In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.  This has already been done for existing environments but documented here for future reference
 
 The following links outline the steps to take:
-https://circleci.com/docs/github-integration/#create-a-github-deploy-key
-https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+<https://circleci.com/docs/github-integration/#create-a-github-deploy-key>
+<https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>
 
 Steps to create and apply deploy token:
 
 1. Open the Git Bash CMD window
-2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "<your_email@example.com>"
 3. When prompted to enter a file name leave blank and press ENTER
 4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
 5. Search for the file created with the name "id_rsa"
@@ -484,7 +485,6 @@ Steps to create and apply deploy token:
 14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
 15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
 16. Click 'Add SSH Key'
-
 
 ## Removing, creating and binding a service from the command line
 
@@ -516,9 +516,9 @@ ex:
 ex:
 `cf bs ttahub-smarthub-staging ttahub-redis-staging`
 
-5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+1. Trigger a redeploy through the Circle CI UI (rather than restaging)
 
-6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+2. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
    `cf network-policies`
    If you see nothing there, you'll need to add an appropriate policy.
    `cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443`
@@ -527,7 +527,6 @@ ex:
    You may need to connect across spaces (for example, our clamav-api-ttahub-dev app is shared by all of our ephemeral environments). If so, use the -s flag.
    ex:
    `cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443`
-
 
 ## Terraform
 

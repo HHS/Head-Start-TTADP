@@ -33,7 +33,6 @@ describe('Node deployment configuration', () => {
     it.each<[string, number, number, number]>([
         ['dev', 512, 1, 192],
         ['staging', 512, 1, 192],
-        ['sandbox', 1024, 2, 256],
         ['prod', 1024, 2, 256],
     ])(
         'keeps %s aggregate worker old-space within 75 percent of its container',
