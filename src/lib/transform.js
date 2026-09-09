@@ -599,7 +599,7 @@ const logTransformers = [
   transformRelatedModelPropHTML('data', 'notes'),
   transformRelatedModelProp('data', 'result'),
   transformRelatedModelPropNested('data', 'goals'),
-  transformRelatedModelPropNested('data', 'otherStaff'),
+  transformRelatedModel('otherStaff', 'label'),
   transformRelatedModel('files', 'originalFileName'),
   transformRelatedModelPropNested('data', 'recipientNextSteps', 'note'),
   transformRelatedModelPropNested('data', 'specialistNextSteps', 'note'),

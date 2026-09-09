@@ -120,15 +120,21 @@ describe('RegionalCommunicationLogDashboard', () => {
             communicationDate: '2023-01-01',
             purpose: 'Purpose',
             goals: [{ label: 'Goal' }],
-            otherStaff: [{ label: 'Other Staff' }],
             result: 'A great result',
           },
+          otherStaff: [{ label: 'Other Staff', value: 1 }],
           authorName: 'Author',
           recipients: [{ id: 1 }],
         },
       ],
     };
     fetchMock.get(defaultURL, logs);
+    fetchMock.get('express:/api/communication-logs/region/:regionId/additional-data', {
+      regionalUsers: [{ label: 'Other Staff', value: 1 }],
+      standardGoals: [],
+      recipients: [],
+      groups: [],
+    });
   });
 
   afterEach(() => {

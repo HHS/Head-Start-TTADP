@@ -390,6 +390,14 @@ class CommunicationLogRecipients{
  * updatedAt : timestamp with time zone : now()
 }
 
+class CommunicationLogStaff{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
  * userId : integer : REFERENCES "Users".id
@@ -1802,6 +1810,20 @@ class ZALCommunicationLogRecipients{
  session_sig : text
 }
 
+class ZALCommunicationLogStaff{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALCommunicationLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3032,6 +3054,7 @@ CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators :
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : communicationLog, communicationLogRecipients
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogStaff : communicationLog, communicationLogStaff
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
 DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReview, deliveredReviewCitations
@@ -3144,6 +3167,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : us
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, collabReportApprovers, approvers
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
+Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogStaff : user, communicationLogStaff
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
