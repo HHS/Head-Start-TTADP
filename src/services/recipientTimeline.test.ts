@@ -368,6 +368,7 @@ describe('hydrateTimelineEventIndex', () => {
     ['a negative duration', { durationHours: -1 }],
     ['a blank title', { title: ' ' }],
     ['a non-string subtitle', { subtitle: 1 }],
+    ['a blank subtitle', { subtitle: ' ' }],
     ['a blank byline label', { byline: { label: ' ', values: ['Alex Smith'] } }],
     ['a blank byline value', { byline: { label: 'Specialists', values: [' '] } }],
     ['an unsupported indicator', { indicators: ['unexpected'] }],

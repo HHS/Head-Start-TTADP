@@ -392,7 +392,8 @@ const assertPresentation = (
       (!Number.isFinite(presentation.durationHours) || presentation.durationHours < 0)) ||
     typeof presentation.title !== 'string' ||
     !presentation.title.trim() ||
-    (presentation.subtitle !== null && typeof presentation.subtitle !== 'string') ||
+    (presentation.subtitle !== null &&
+      (typeof presentation.subtitle !== 'string' || !presentation.subtitle.trim())) ||
     !validByline ||
     !Array.isArray(presentation.indicators) ||
     presentation.indicators.some((indicator) => indicator !== 'multiRecipient') ||
