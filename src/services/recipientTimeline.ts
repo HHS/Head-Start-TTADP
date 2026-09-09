@@ -24,13 +24,13 @@ interface RecipientTimelineEventIndex {
   eventType: RecipientTimelineEvent['eventType'];
 }
 
-interface HydratedRecipientTimelineEvent
+interface DetailedRecipientTimelineEvent
   extends RecipientTimelineEventIndex,
     RecipientTimelineEventPresentation {}
 
 interface RecipientTimelineResponse {
   count: number;
-  events: HydratedRecipientTimelineEvent[];
+  events: DetailedRecipientTimelineEvent[];
 }
 
 interface TimelineQueryRow {
@@ -99,15 +99,15 @@ const validateQueryOptions = ({
   const sourceNames = sources.map(({ name }) => name);
   if (
     sources.some(
-      ({ name, buildIndexQuery, hydrate }) =>
+      ({ name, buildIndexQuery, loadDetails }) =>
         !/^[A-Za-z][A-Za-z0-9]*$/.test(name) ||
         typeof buildIndexQuery !== 'function' ||
-        typeof hydrate !== 'function'
+        typeof loadDetails !== 'function'
     ) ||
     new Set(sourceNames).size !== sourceNames.length
   ) {
     throw new Error(
-      'Timeline event sources must have unique alphanumeric names, index builders, and hydrators'
+      'Timeline event sources must have unique alphanumeric names, index builders, and detail loaders'
     );
   }
 };
@@ -249,6 +249,7 @@ const buildTimelineIndexCte = (
         CAST(:${sourceKey} AS TEXT) AS "source",
         "sourceEvent"."sourceId",
         CAST("sourceEvent"."date" AS DATE) AS "date",
+        CAST("sourceEvent"."date" AS TIMESTAMP WITH TIME ZONE) AS "occurredAt",
         CAST("sourceEvent"."eventType" AS TEXT) AS "eventType",
         "sourceEvent"."recipientId",
         "sourceEvent"."regionId"
@@ -270,16 +271,17 @@ const buildTimelineIndexCte = (
         "source",
         "sourceId",
         "date",
+        "occurredAt",
         "eventType"
       FROM "timelineSourceEvents"
       WHERE
         "sourceId" IS NOT NULL
         AND "date" IS NOT NULL
         AND "eventType" IS NOT NULL
-      ORDER BY "source", "sourceId", "date", "eventType"
+      ORDER BY "source", "sourceId", "occurredAt", "eventType"
     ),
     "filteredTimelineEvents" AS (
-      SELECT "source", "sourceId", "date", "eventType"
+      SELECT "source", "sourceId", "date", "occurredAt", "eventType"
       FROM "timelineEvents"
       ${sharedFilters}
     )`;
@@ -306,9 +308,9 @@ export async function queryTimelineEventIndex(
   const rows = (await sequelize.query(
     `${cte}
     , "timelinePage" AS (
-      SELECT "source", "sourceId", "date", "eventType"
+      SELECT "source", "sourceId", "date", "occurredAt", "eventType"
       FROM "filteredTimelineEvents"
-      ORDER BY "date" ${safeDirection}, "source" ASC, "sourceId" ASC, "eventType" ASC
+      ORDER BY "occurredAt" ${safeDirection}, "source" ASC, "sourceId" ASC, "eventType" ASC
       LIMIT :timelineLimit
       OFFSET :timelineOffset
     ),
@@ -325,7 +327,7 @@ export async function queryTimelineEventIndex(
     FROM "timelineCount"
     LEFT JOIN "timelinePage" ON TRUE
     ORDER BY
-      "timelinePage"."date" ${safeDirection},
+      "timelinePage"."occurredAt" ${safeDirection},
       "timelinePage"."source" ASC,
       "timelinePage"."sourceId" ASC,
       "timelinePage"."eventType" ASC`,
@@ -414,8 +416,8 @@ const assertPresentation = (
   }
 };
 
-/** Hydrate a page while preserving the authoritative index identity and order. */
-export async function hydrateTimelineEventIndex(
+/** Load details for a page while preserving the authoritative index identity and order. */
+export async function loadTimelineEventDetails(
   index: TimelineIndexResponse,
   params: RecipientTimelineRequestParams,
   sources: readonly TimelineEventSource[]
@@ -430,36 +432,40 @@ export async function hydrateTimelineEventIndex(
     idsBySource.set(source, ids);
   });
 
-  const hydratedBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
+  const detailsBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
   await Promise.all(
     [...idsBySource].map(async ([sourceName, sourceIds]) => {
       const source = sourceByName.get(sourceName);
       if (!source) throw new Error(`Timeline index returned an unregistered source: ${sourceName}`);
       const requestedIds = new Set(sourceIds);
-      const presentations = await source.hydrate(sourceIds, params);
+      const presentations = await source.loadDetails(sourceIds, params);
       if (!(presentations instanceof Map)) {
-        throw new Error(`Timeline source ${sourceName} returned an invalid hydration result`);
+        throw new Error(`Timeline source ${sourceName} returned an invalid detail loading result`);
       }
       for (const sourceId of presentations.keys()) {
         if (!requestedIds.has(sourceId)) {
-          throw new Error(`Timeline source ${sourceName} hydrated unexpected sourceId ${sourceId}`);
+          throw new Error(
+            `Timeline source ${sourceName} loaded details for unexpected sourceId ${sourceId}`
+          );
         }
       }
       sourceIds.forEach((sourceId) => {
         if (!presentations.has(sourceId)) {
-          auditLogger.error(`Timeline hydration missing ${sourceName} sourceId ${sourceId}`);
-          throw new Error(`Timeline source ${sourceName} did not hydrate sourceId ${sourceId}`);
+          auditLogger.error(`Timeline details missing for ${sourceName} sourceId ${sourceId}`);
+          throw new Error(
+            `Timeline source ${sourceName} did not load details for sourceId ${sourceId}`
+          );
         }
       });
-      hydratedBySource.set(sourceName, presentations);
+      detailsBySource.set(sourceName, presentations);
     })
   );
 
-  const events = index.events.map((indexEvent): HydratedRecipientTimelineEvent => {
-    const presentation = hydratedBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
+  const events = index.events.map((indexEvent): DetailedRecipientTimelineEvent => {
+    const presentation = detailsBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
       throw new Error(
-        `Timeline source ${indexEvent.source} did not hydrate sourceId ${indexEvent.sourceId}`
+        `Timeline source ${indexEvent.source} did not load details for sourceId ${indexEvent.sourceId}`
       );
     }
     assertPresentation(indexEvent.source, indexEvent.sourceId, presentation);
@@ -483,10 +489,10 @@ export async function hydrateTimelineEventIndex(
   return { count: index.count, events };
 }
 
-/** Query the code-owned registry, then hydrate each represented source in a bounded batch. */
+/** Query the code-owned registry, then load details for each represented source in a bounded batch. */
 export async function getRecipientTimeline(
   params: RecipientTimelineRequestParams
 ): Promise<RecipientTimelineResponse> {
   const index = await queryTimelineEventIndex({ ...params, sources: RECIPIENT_TIMELINE_SOURCES });
-  return hydrateTimelineEventIndex(index, params, RECIPIENT_TIMELINE_SOURCES);
+  return loadTimelineEventDetails(index, params, RECIPIENT_TIMELINE_SOURCES);
 }

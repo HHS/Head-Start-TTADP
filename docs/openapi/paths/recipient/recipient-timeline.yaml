@@ -2,6 +2,25 @@ get:
   tags:
     - recipient
   summary: Retrieve timeline events for a recipient in a region
+  description: |
+    Includes approved TTA activities and goal status history for the recipient and region.
+    Goal events use source `goalStatusChange` and the status-change row ID as `sourceId`.
+    Initial non-draft statuses and transitions out of Draft are Goal added events;
+    transitions to Suspended or Closed are Goal suspended or Goal closed events;
+    transitions from Suspended or Closed to Not Started or In Progress are Goal reopened events.
+    An initial Not Started or In Progress event (including transitions out of Draft) also counts
+    as Goal reopened when an earlier closed goal exists for the same grant, template, and
+    pre-standard classification. Deleted and merged child goals do not count as earlier goals.
+    Draft, deleted, and merged child goals are excluded, as are no-op changes and transitions
+    without a supported timeline event type.
+    Events are ordered by their full timestamp (performedAt, falling back to createdAt for
+    goal history), then source and sourceId ascending for ties. Date-only sources sort at midnight.
+    Date filters include the entire calendar day, and response dates remain YYYY-MM-DD.
+    Goal presentations include the event title, goal name as subtitle, recorded author and roles
+    as byline (falling back to the associated user's name), and available previous/new status,
+    reason, context, and grant number details. Missing optional values are omitted from details;
+    missing subtitle/byline values are null. Standard tags and a View goal link are included
+    when available.
   operationId: getRecipientTimeline
   parameters:
     - in: path
@@ -109,7 +128,7 @@ get:
                     date:
                       type: string
                       format: date
-                      description: Event date used for timeline ordering.
+                      description: Calendar date of the event; ordering preserves the underlying event time.
                     eventType:
                       type: string
                       enum:

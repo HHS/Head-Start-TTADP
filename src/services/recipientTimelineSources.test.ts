@@ -57,7 +57,7 @@ describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
     expect(replacements).toEqual({ standard_0: ['Monitoring', "a'value"] });
   });
 
-  it('hydrates the Figma fields and scopes multi-recipient details to recipient goals', async () => {
+  it('loads the event fields and scopes multi-recipient details to recipient goals', async () => {
     const reportFindAll = jest.fn().mockResolvedValue([
       {
         id: 50,
@@ -143,7 +143,7 @@ describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
       },
     ] as never);
 
-    const result = await ACTIVITY_REPORT_TIMELINE_SOURCE.hydrate([50], params);
+    const result = await ACTIVITY_REPORT_TIMELINE_SOURCE.loadDetails([50], params);
 
     expect(result.get(50)).toEqual({
       durationHours: 4.5,
@@ -243,7 +243,7 @@ describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
       },
     ] as never);
 
-    const result = await ACTIVITY_REPORT_TIMELINE_SOURCE.hydrate([51], params);
+    const result = await ACTIVITY_REPORT_TIMELINE_SOURCE.loadDetails([51], params);
     const event = result.get(51);
 
     expect(event?.byline).toBeNull();

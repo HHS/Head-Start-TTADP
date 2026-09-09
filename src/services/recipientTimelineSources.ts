@@ -1,8 +1,9 @@
 import type {
+  RecipientTimelineEventType,
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
 } from '@ttahub/common/src/recipientTimeline';
-import { Op } from 'sequelize';
+import { literal, Op } from 'sequelize';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import db from '../models';
 
@@ -15,6 +16,7 @@ const {
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalStatusChange,
   GoalTemplate,
   Grant,
   Objective,
@@ -45,13 +47,13 @@ export interface TimelineEventSource {
   /** Stable discriminator that, together with sourceId, identifies an event globally. */
   readonly name: string;
   readonly supportedFilterTopics: readonly RecipientTimelineFilterTopic[];
-  /** Return only trusted SQL. URL-derived values must be added through bindings. */
+  /** Return trusted SQL with the full event timestamp as date. Bind URL-derived values. */
   buildIndexQuery(
     context: RecipientTimelineRequestParams,
     bindings: TimelineSourceBindings
   ): string;
-  /** Hydrate exact page IDs without reapplying index eligibility or filter predicates. */
-  hydrate(
+  /** Load details for exact page IDs without reapplying index eligibility or filter predicates. */
+  loadDetails(
     sourceIds: readonly number[],
     context: RecipientTimelineRequestParams
   ): Promise<Map<number, RecipientTimelineEventPresentation>>;
@@ -161,7 +163,7 @@ const emptyActivityReportPresentation = (): RecipientTimelineEventPresentation =
   links: [],
 });
 
-async function hydrateActivityReports(
+async function loadActivityReportDetails(
   sourceIds: readonly number[],
   context: RecipientTimelineRequestParams
 ): Promise<Map<number, RecipientTimelineEventPresentation>> {
@@ -395,10 +397,197 @@ export const ACTIVITY_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freez
   name: 'activityReport',
   supportedFilterTopics: ['standard'] as const,
   buildIndexQuery: buildActivityReportIndexQuery,
-  hydrate: hydrateActivityReports,
+  loadDetails: loadActivityReportDetails,
+});
+
+// These rules also drive presentation titles, keeping index filters and detail loading consistent.
+const GOAL_STATUS_EVENT_RULES: Array<{
+  eventType: RecipientTimelineEventType;
+  oldStatuses: Array<string | null>;
+  newStatuses: string[];
+  requiresPriorClosedGoal?: boolean;
+}> = [
+  {
+    eventType: 'Goal reopened',
+    oldStatuses: [null, 'Draft'],
+    newStatuses: ['Not Started', 'In Progress'],
+    requiresPriorClosedGoal: true,
+  },
+  {
+    eventType: 'Goal added',
+    oldStatuses: [null, 'Draft'],
+    newStatuses: ['Not Started', 'In Progress', 'Suspended', 'Closed'],
+  },
+  {
+    eventType: 'Goal suspended',
+    oldStatuses: ['Not Started', 'In Progress', 'Closed'],
+    newStatuses: ['Suspended'],
+  },
+  {
+    eventType: 'Goal closed',
+    oldStatuses: ['Not Started', 'In Progress', 'Suspended'],
+    newStatuses: ['Closed'],
+  },
+  {
+    eventType: 'Goal reopened',
+    oldStatuses: ['Closed', 'Suspended'],
+    newStatuses: ['Not Started', 'In Progress'],
+  },
+];
+
+// Reopening a standard creates a new goal. Share this predicate between the index and
+// detail query so event filters and titles agree, without fetching prior goals one at a time.
+const PRIOR_CLOSED_GOAL_PREDICATE = `EXISTS (
+  SELECT 1 FROM "Goals" AS "previousGoal"
+  WHERE "previousGoal"."grantId" = "goal"."grantId"
+    AND "previousGoal"."goalTemplateId" = "goal"."goalTemplateId"
+    AND "previousGoal"."prestandard" = "goal"."prestandard"
+    AND "previousGoal"."status" = 'Closed'
+    AND "previousGoal"."deletedAt" IS NULL
+    AND "previousGoal"."mapsToParentGoalId" IS NULL
+    AND ("previousGoal"."createdAt", "previousGoal"."id") < ("goal"."createdAt", "goal"."id")
+)`;
+
+const buildGoalStatusChangeIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const eventTypes = GOAL_STATUS_EVENT_RULES.map((rule, index) => {
+    const oldStatuses = bindings.add(
+      `oldStatuses_${index}`,
+      rule.oldStatuses.filter((status) => status !== null)
+    );
+    const newStatuses = bindings.add(`newStatuses_${index}`, rule.newStatuses);
+    const eventType = bindings.add(`eventType_${index}`, rule.eventType);
+    return `WHEN ("change"."oldStatus" IN (${oldStatuses})
+      ${rule.oldStatuses.includes(null) ? 'OR "change"."oldStatus" IS NULL' : ''})
+      AND "change"."newStatus" IN (${newStatuses})
+      ${rule.requiresPriorClosedGoal ? `AND ${PRIOR_CLOSED_GOAL_PREDICATE}` : ''}
+      THEN ${eventType}`;
+  });
+  const standardPredicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      if (!Array.isArray(filter.query) || filter.query.length === 0) {
+        throw new Error('Timeline standard filters require at least one value');
+      }
+      const replacement = bindings.add(`standard_${index}`, filter.query);
+      return `${filter.condition === 'is not' ? 'NOT ' : ''}EXISTS (
+        SELECT 1 FROM "GoalTemplates" AS "template"
+        WHERE "template"."id" = "goal"."goalTemplateId"
+          AND "template"."deletedAt" IS NULL
+          AND "template"."standard" IN (${replacement})
+      )`;
+    });
+
+  return `
+    SELECT
+      "change"."id" AS "sourceId",
+      COALESCE("change"."performedAt", "change"."createdAt") AS "date",
+      CASE ${eventTypes.join('\n        ')} END AS "eventType",
+      "grant"."recipientId",
+      "grant"."regionId"
+    FROM "GoalStatusChanges" AS "change"
+    INNER JOIN "Goals" AS "goal"
+      ON "goal"."id" = "change"."goalId"
+      AND "goal"."deletedAt" IS NULL
+      AND "goal"."mapsToParentGoalId" IS NULL
+      AND "goal"."status" <> 'Draft'
+    INNER JOIN "Grants" AS "grant"
+      ON "grant"."id" = "goal"."grantId"
+    ${standardPredicates.length ? `WHERE ${standardPredicates.join('\n      AND ')}` : ''}`;
+};
+
+async function loadGoalStatusChangeDetails(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+
+  const changes = await GoalStatusChange.unscoped().findAll({
+    attributes: [
+      'id',
+      'userName',
+      'userRoles',
+      'oldStatus',
+      'newStatus',
+      'reason',
+      'context',
+      [literal(PRIOR_CLOSED_GOAL_PREDICATE), 'hasPriorClosedGoal'],
+    ],
+    where: { id: { [Op.in]: [...new Set(sourceIds)] } },
+    include: [
+      { model: User, as: 'user', attributes: ['name'], required: false },
+      {
+        model: Goal.unscoped(),
+        as: 'goal',
+        attributes: ['id', 'name'],
+        // Eligibility belongs to the index, even if the goal changes before detail loading.
+        paranoid: false,
+        required: false,
+        include: [
+          { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: false },
+          { model: Grant.unscoped(), as: 'grant', attributes: ['number'], required: false },
+        ],
+      },
+    ],
+  });
+
+  return new Map(
+    changes.map((change) => {
+      const title = GOAL_STATUS_EVENT_RULES.find(
+        (rule) =>
+          rule.oldStatuses.includes(change.oldStatus) &&
+          rule.newStatuses.includes(change.newStatus) &&
+          (!rule.requiresPriorClosedGoal || change.get('hasPriorClosedGoal'))
+      )?.eventType;
+      if (!title) throw new Error(`Unsupported timeline goal status change ${change.id}`);
+
+      const author = nameWithRoles(
+        change.userName?.trim() || change.user?.name || null,
+        change.userRoles ?? []
+      );
+      const standard = change.goal?.goalTemplate?.standard?.trim();
+      const details = [
+        ['Previous status', change.oldStatus],
+        ['New status', change.newStatus],
+        ['Reason', change.reason],
+        ['Context', change.context],
+        ['Grant number', change.goal?.grant?.number],
+      ]
+        .filter(([, value]) => value?.trim())
+        .map(([label, value]) => ({ label, items: [{ text: value.trim() }] }));
+      const presentation: RecipientTimelineEventPresentation = {
+        durationHours: null,
+        title,
+        subtitle: change.goal?.name?.trim() || null,
+        byline: author ? { label: 'Author', values: [author] } : null,
+        indicators: [],
+        tags: standard ? [{ label: standard, flagged: standard === 'Monitoring' }] : [],
+        details,
+        links: change.goal
+          ? [
+              {
+                label: 'View goal',
+                to: `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/goals/standard?goalId=${change.goal.id}`,
+              },
+            ]
+          : [],
+      };
+      return [change.id, presentation];
+    })
+  );
+}
+
+export const GOAL_STATUS_CHANGE_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'goalStatusChange',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildGoalStatusChangeIndexQuery,
+  loadDetails: loadGoalStatusChangeDetails,
 });
 
 /** Code-owned source registry; request data cannot select or inject source SQL. */
 export const RECIPIENT_TIMELINE_SOURCES: readonly TimelineEventSource[] = Object.freeze([
   ACTIVITY_REPORT_TIMELINE_SOURCE,
+  GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
 ]);
