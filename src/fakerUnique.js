@@ -14,5 +14,7 @@ export default function fakerUnique(generator, maxRetries = 1000) {
       return value;
     }
   }
-  throw new Error(`fakerUnique: exceeded maximum retries (${maxRetries}) generating a unique value`);
+  throw new Error(
+    `fakerUnique: exceeded maximum retries (${maxRetries}) generating a unique value`
+  );
 }
