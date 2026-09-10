@@ -14,8 +14,9 @@ get:
     Draft, deleted, and merged child goals are excluded, as are no-op changes and transitions
     without a supported timeline event type.
     Events are ordered by their full timestamp (performedAt, falling back to createdAt for
-    goal history), then source and sourceId ascending for ties. Date-only sources sort at midnight.
-    Date filters include the entire calendar day, and response dates remain YYYY-MM-DD.
+    goal history), then source and sourceId ascending for ties. Date-only sources sort at UTC
+    midnight; timestamps without a timezone are interpreted as UTC. Date filters include the
+    entire UTC calendar day, and response dates remain YYYY-MM-DD, independent of session timezone.
     Goal presentations include the event title, goal name as subtitle, recorded author and roles
     as byline (falling back to the associated user's name), and available previous/new status,
     reason, context, and grant number details. Missing optional values are omitted from details;
