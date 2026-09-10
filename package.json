@@ -219,7 +219,6 @@
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.17.24",
     "@types/node": "^24.9.1",
-    "aws-sdk-client-mock": "^4.1.0",
     "babel-jest": "29.7.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

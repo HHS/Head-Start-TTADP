@@ -26,7 +26,6 @@ updates:
     time: "11:00"
   open-pull-requests-limit: 10
   ignore:
-  - dependency-name: "@fortawesome/*"
   - dependency-name: "*"
     update-types:
     - "version-update:semver-major"
