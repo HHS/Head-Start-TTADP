@@ -702,14 +702,12 @@ describe('communicationLog filtersToScopes', () => {
           userId: secondUser.id,
           data: {
             ...baseData,
-            otherStaff: [{ value: String(user.id) }],
           },
         }),
         db.CommunicationLog.create({
           userId: secondUser.id,
           data: {
             ...baseData,
-            otherStaff: [{ value: String(secondUser.id) }],
           },
         }),
       ]);
@@ -720,9 +718,21 @@ describe('communicationLog filtersToScopes', () => {
           communicationLogId: log.id,
         }))
       );
+
+      // "Other TTA staff" now lives in the CommunicationLogStaff join table.
+      await db.CommunicationLogStaff.bulkCreate([
+        { communicationLogId: myReportsLogs[1].id, userId: user.id },
+        { communicationLogId: myReportsLogs[2].id, userId: secondUser.id },
+      ]);
     });
 
     afterAll(async () => {
+      await db.CommunicationLogStaff.destroy({
+        where: {
+          communicationLogId: myReportsLogs.map((log) => log.id),
+        },
+      });
+
       await db.CommunicationLogRecipient.destroy({
         where: {
           communicationLogId: myReportsLogs.map((log) => log.id),
@@ -824,6 +834,111 @@ describe('communicationLog filtersToScopes', () => {
       );
 
       expect(count).toBe(1);
+    });
+
+    it('filters by other TTA staff (is)', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.in': [String(user.id)],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(1);
+    });
+
+    it('filters by other TTA staff with multiple users (is)', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.in': [String(user.id), String(secondUser.id)],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(2);
+    });
+
+    it('filters by other TTA staff (is not)', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.nin': [String(user.id)],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(2);
+    });
+
+    it('ignores non-numeric other TTA staff values', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.in': ['not-a-number'],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(3);
+    });
+
+    it('ignores non-numeric other TTA staff values (is not)', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'otherTtaStaff.nin': ['not-a-number'],
+        },
+        undefined,
+        user.id
+      );
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
+
+      expect(count).toBe(3);
     });
   });
 

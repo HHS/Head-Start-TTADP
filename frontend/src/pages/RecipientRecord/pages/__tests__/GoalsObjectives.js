@@ -676,4 +676,33 @@ describe('Goals and Objectives', () => {
     // Shows 11 selected.
     expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });
+
+  it('filters goals by category', async () => {
+    fetchMock.get('/api/goal-templates/filter-standards', ['ERSEA']);
+    const goalsUrl =
+      '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&standard.in[]=ERSEA';
+    fetchMock.get(
+      goalsUrl,
+      {
+        count: 1,
+        goalRows: goals,
+        statuses: defaultStatuses,
+        allGoalIds: [{ id: goals[0].id, goalIds: goals[0].ids }],
+      },
+      { overwriteRoutes: true }
+    );
+
+    act(() => renderGoalsAndObjectives());
+    userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'standard');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
+
+    const categorySelect = await screen.findByLabelText(/select goal standard to filter by/i);
+    await selectEvent.select(categorySelect, ['ERSEA']);
+
+    userEvent.click(await screen.findByRole('button', { name: /apply filters to goals/i }));
+
+    await waitFor(() => expect(fetchMock.called(goalsUrl)).toBe(true));
+  });
 });
