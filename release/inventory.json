@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "b60105495b5e9a8bd2d09bc69dbae28ddf07722ba8333357ca8ced713033299c",
+      "sha256": "6dfd3f4c51118e9c477dbfa40eb69b27bf42eb9b522927b0567197475656371d",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -589,7 +589,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/prod_vars.yml"
       },
-      "sha256": "298ee90658f92f4662cb6ed3054847e1a1f91a409f46c7e2b1c5aa14091e7280",
+      "sha256": "67b189ed3725f404b5c8aea34e4c418bf1e2b87bab8f64150bce94c574fdd3cf",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -606,7 +606,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/staging_vars.yml"
       },
-      "sha256": "dd44dc73789b804fedf0212f1b13bdc92a25c852d3cab9972fd32165ccc69765",
+      "sha256": "f90cb83cd2e55f43fbf182f64d6653ac773c37b5b642da08863d4baabb495791",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -623,7 +623,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/dev_vars.yml"
       },
-      "sha256": "5a85b141a74d128ae7ecd5dee39b8c22e6803c110ea88b0b23178bed161898ac",
+      "sha256": "01370b2c5307140c372c18164f78bf4128a1d3413e0dd6a6c9781b53b6c9127b",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
