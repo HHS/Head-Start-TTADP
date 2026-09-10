@@ -10,14 +10,18 @@ const standardQuery = `
   WHERE "GoalTemplates"."standard"`;
 
 function allStandardsSelected(standards) {
-  return `(SELECT COUNT(DISTINCT "GoalTemplates"."standard")
+  const values = standards.map((standard) => sequelize.escape(standard)).join(',');
+  return `NOT EXISTS (
+    SELECT 1
     FROM "GoalTemplates"
     INNER JOIN "Goals"
       ON "Goals"."goalTemplateId" = "GoalTemplates"."id"
     WHERE "GoalTemplates"."creationMethod" = ${sequelize.escape(CREATION_METHOD.CURATED)}
       AND "GoalTemplates"."deletedAt" IS NULL
       AND "GoalTemplates"."standard" IS NOT NULL
-      AND "GoalTemplates"."standard" <> '') <= ${new Set(standards).size}`;
+      AND "GoalTemplates"."standard" <> ''
+      AND "GoalTemplates"."standard" NOT IN (${values})
+  )`;
 }
 
 export function withStandard(standards) {
