@@ -2,7 +2,10 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import SCOPES from '../../middleware/scopeConstants';
 import { GoalTemplate, Grant, Group, Recipient, sequelize, User } from '../../models';
-import { setTrainingAndActivityReportReadRegions, getUserReadRegions } from '../../services/accessValidation';
+import {
+  getUserReadRegions,
+  setTrainingAndActivityReportReadRegions,
+} from '../../services/accessValidation';
 import {
   createLog,
   csvLogsByRecipientAndScopes,
