@@ -11,8 +11,6 @@ function allStandardsSelected(standards: string[]) {
   return sequelize.literal(`NOT EXISTS (
     SELECT 1
     FROM "GoalTemplates"
-    INNER JOIN "SessionReportPilotGoalTemplates"
-      ON "SessionReportPilotGoalTemplates"."goalTemplateId" = "GoalTemplates"."id"
     WHERE "GoalTemplates"."creationMethod" = ${sequelize.escape(CREATION_METHOD.CURATED)}
       AND "GoalTemplates"."deletedAt" IS NULL
       AND "GoalTemplates"."standard" IS NOT NULL
