@@ -144,9 +144,7 @@ export default function TrainingReportV2({
   const hideBackLink = searchParams.get('back_link') === 'hide';
 
   const pageTitle =
-    event && event.eventId
-      ? `Training event report ${event.eventId}`
-      : 'Training event report';
+    event && event.eventId ? `Training event report ${event.eventId}` : 'Training event report';
   const ownerName = formatOwnerName(event);
 
   const canCompleteEvent = useMemo(() => {
@@ -280,7 +278,7 @@ export default function TrainingReportV2({
                   ...(session.data.otherTrainers && session.data.otherTrainers.trim() !== ''
                     ? { 'Other trainers': session.data.otherTrainers }
                     : {}),
-'EEP Courses':
+                  'EEP Courses':
                     session.data.courses && session.data.courses.length
                       ? session.data.courses.map((o) => o.name).join(', ')
                       : 'None',
