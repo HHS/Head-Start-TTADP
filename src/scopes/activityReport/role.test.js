@@ -5,8 +5,8 @@ import {
   faker,
   filtersToScopes,
   Op,
-  Role,
   setupSharedTestData,
+  sharedTestData,
   tearDownSharedTestData,
   User,
   UserRole,
@@ -29,9 +29,9 @@ describe('role filtersToScopes', () => {
     ];
 
     beforeAll(async () => {
-      const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
-      const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
-      const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+      const granteeSpecialist = sharedTestData.roles['Grantee Specialist'];
+      const systemSpecialist = sharedTestData.roles['System Specialist'];
+      const grantsSpecialist = sharedTestData.roles['Grants Specialist'];
 
       await User.create({
         id: possibleIds[0],
@@ -189,9 +189,9 @@ describe('role filtersToScopes', () => {
     ];
 
     beforeAll(async () => {
-      const earlyChildhoodManager = await Role.findOne({ where: { fullName: 'Early Childhood Manager' } });
-      const granteeSpecialistManager = await Role.findOne({ where: { fullName: 'Grantee Specialist Manager' } });
-      const ttac = await Role.findOne({ where: { fullName: 'TTAC' } });
+      const earlyChildhoodManager = sharedTestData.roles['Early Childhood Manager'];
+      const granteeSpecialistManager = sharedTestData.roles['Grantee Specialist Manager'];
+      const ttac = sharedTestData.roles.TTAC;
 
       await User.create({
         id: newRoleIds[0],
