@@ -213,7 +213,7 @@ describe('trainingReports/standard', () => {
     expect(found).toHaveLength(3);
   });
 
-  it('does not restrict reports when all curated standards are excluded', async () => {
+  it('returns no reports when all curated standards are excluded', async () => {
     const standards = await GoalTemplate.findAll({
       attributes: ['standard'],
       where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
@@ -225,6 +225,6 @@ describe('trainingReports/standard', () => {
     const found = await EventReportPilot.findAll({
       where: { [Op.and]: [scope, { id: possibleIds }] },
     });
-    expect(found).toHaveLength(3);
+    expect(found).toHaveLength(0);
   });
 });

@@ -125,7 +125,7 @@ describe('goals/standard', () => {
     expect(found).toHaveLength(3);
   });
 
-  it('does not restrict results when all curated standards are excluded', async () => {
+  it('returns no goals when all curated standards are excluded', async () => {
     const standards = await GoalTemplate.findAll({
       attributes: ['standard'],
       where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
@@ -137,7 +137,7 @@ describe('goals/standard', () => {
     const found = await Goal.findAll({
       where: { [Op.and]: [scope, { id: createdGoalIds }] },
     });
-    expect(found).toHaveLength(3);
+    expect(found).toHaveLength(0);
   });
 });
 

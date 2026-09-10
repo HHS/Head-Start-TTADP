@@ -43,7 +43,7 @@ export function withoutStandard(standards) {
 
   return {
     [Op.and]: sequelize.literal(
-      `("Goal"."id" not in (${standardQuery} in (${standards.map((s) => sequelize.escape(s)).join(',')})) OR ${allStandardsSelected(standards)})`
+      `("Goal"."id" not in (${standardQuery} in (${standards.map((s) => sequelize.escape(s)).join(',')})) AND NOT ${allStandardsSelected(standards)})`
     ),
   };
 }

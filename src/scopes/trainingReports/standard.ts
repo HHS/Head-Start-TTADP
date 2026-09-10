@@ -27,7 +27,10 @@ export function withoutStandard(standards: string[]) {
   const scope = filterAssociation(standard, standards, true, '=');
   return {
     where: {
-      [Op.or]: [allStandardsSelected(standards), scope.where[Op.and]],
+      [Op.and]: [
+        ...scope.where[Op.and],
+        sequelize.literal(`NOT ${allStandardsSelected(standards).val}`),
+      ],
     },
   };
 }
