@@ -36,7 +36,10 @@ export interface TimelineEventSource {
   /** Stable discriminator that, together with sourceId, identifies an event globally. */
   readonly name: string;
   readonly supportedFilterTopics: readonly RecipientTimelineFilterTopic[];
-  /** Return trusted SQL with the full event timestamp as date. Bind URL-derived values. */
+  /**
+   * Return trusted SQL with date as a DATE or TIMESTAMP (with or without a timezone).
+   * Preserve full timestamps; timezone-free values are interpreted as UTC. Bind URL-derived values.
+   */
   buildIndexQuery(
     context: RecipientTimelineRequestParams,
     bindings: TimelineSourceBindings

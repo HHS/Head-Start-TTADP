@@ -228,6 +228,13 @@ const buildTimelineIndexCte = (
   params: TimelineEventIndexParams,
   replacements: Record<string, unknown>
 ) => {
+  // Compare UTC timestamps regardless of the database session timezone. DATE values start
+  // at UTC midnight; timestamps without a timezone are also interpreted as UTC.
+  const utcTimestamp = `CASE
+    WHEN pg_typeof("sourceEvent"."date") = 'timestamp with time zone'::regtype
+      THEN CAST("sourceEvent"."date" AS TIMESTAMP WITH TIME ZONE) AT TIME ZONE 'UTC'
+    ELSE CAST("sourceEvent"."date" AS TIMESTAMP WITHOUT TIME ZONE)
+  END`;
   const sourceQueries = params.sources.map((source, index) => {
     const query = source.buildIndexQuery(params, createSourceBindings(source.name, replacements));
     if (!query.trim()) {
@@ -240,8 +247,8 @@ const buildTimelineIndexCte = (
       SELECT
         CAST(:${sourceKey} AS TEXT) AS "source",
         "sourceEvent"."sourceId",
-        CAST("sourceEvent"."date" AS DATE) AS "date",
-        CAST("sourceEvent"."date" AS TIMESTAMP WITH TIME ZONE) AS "occurredAt",
+        CAST(${utcTimestamp} AS DATE) AS "date",
+        ${utcTimestamp} AS "occurredAt",
         CAST("sourceEvent"."eventType" AS TEXT) AS "eventType",
         "sourceEvent"."recipientId",
         "sourceEvent"."regionId"
