@@ -11,7 +11,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
-- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`, `calculated_review_finding_type`).
+- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `raw_history_status`, `latest_review_start`, `latest_review_end`, `calculated_review_finding_type`).
 - **Grant snapshot columns**: `updateMonitoringFactTables` also updates three denormalized columns included within `Grants` (`latestMonitoringReviewDate`, `latestMonitoringReviewType`, `latestMonitoringReviewOutcome`).
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables and all junction tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries.
@@ -60,8 +60,8 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `id` | INTEGER | Auto-increment primary key |
 | `mfid` | INTEGER | Convenience link to `MonitoringFindings.id` |
 | `finding_uuid` | TEXT | `MonitoringFindings.findingId` — the IT-AMS finding UUID |
-| `raw_status` | TEXT | Status name from `MonitoringFindingStatuses` (e.g., Active, Corrected) |
-| `calculated_status` | TEXT | Effective status after applying business rules. An "Area of Concern" will never be marked "Corrected" so we consider it "Closed" if the monitoring goal was closed after the latest review delivery. A finding with an undelivered current review is "Active" regardless of its raw status. Otherwise uses `raw_status`. |
+| `raw_status` | TEXT | Finding-level status name from `MonitoringFindingStatuses` via `MonitoringFindings.statusId` (e.g., Active, Corrected). Not translated; not the source of `calculated_status`. |
+| `calculated_status` | TEXT | Effective status after applying business rules. Derived from `latest_raw_history_status` (the `MonitoringFindingHistories` status for this finding on its latest delivered review), not `raw_status`. See the Calculated Status business rule below. |
 | `active` | BOOLEAN | True if `calculated_status` is "Active" or "Elevated Deficiency" |
 | `last_review_delivered` | BOOLEAN | True if the most recent review for this finding has been delivered (non-null `reportDeliveryDate`) |
 | `raw_finding_type` | TEXT | Finding type directly from `MonitoringFindings.findingType` |
@@ -84,6 +84,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `latest_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the latest review |
 | `latest_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the latest review |
 | `latest_report_delivery_date` | DATE | Delivery date of the latest review |
+| `latest_raw_history_status` | TEXT | Untranslated `MonitoringFindingHistoryStatuses` name for this finding on its latest delivered review (`MonitoringFindingHistories.statusId`). `calculated_status` comes from translating this. |
 | `latest_goal_closure` | TIMESTAMP | Most recent closure timestamp of a related Monitoring Goal (from `GoalStatusChanges.performedAt`) This includes Monitoring goals on both the original Grant or the successor Grant |
 | `active_through` | DATE | The date through which this finding is/was considered active. See the Active Through business rule below for the full logic. |
 
@@ -108,6 +109,7 @@ Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citati
 | `deliveredReviewId` | INTEGER | FK to `DeliveredReviews.id` |
 | `citationId` | INTEGER | FK to `Citations.id` |
 | `determination` | TEXT | `MonitoringFindingHistories.determination` for this finding in this specific review |
+| `raw_history_status` | TEXT | Untranslated `MonitoringFindingHistoryStatuses` name for this finding in this specific review (`MonitoringFindingHistories.statusId`). The review-scoped counterpart to `Citations.latest_raw_history_status`. |
 | `latest_review_start` | DATE | First date on which this review was the most recent delivered review for the citation (equal to `report_delivery_date`). |
 | `latest_review_end` | DATE | Last date on which this review was the most recent delivered review for the citation. One day before the next review's `report_delivery_date`, or `Citations.active_through` if this record is for the most recent review. |
 | `calculated_review_finding_type` | TEXT | Effective finding type for this citation as it appeared in this specific review. As with `Citations.calculated_finding_type`, `calculated_review_finding_type` is computed from `determination` if present, falling back to `MonitoringFindings.findingType`. "Concern" and "Area of Concern" are both normalized to "Area of Concern". |
@@ -187,9 +189,12 @@ Live values are available on the nested `liveValues` association object, not fla
 A finding's `calculated_status` is determined by the following rules, evaluated in order:
 
 1. If the finding type is "Area of Concern" and the monitoring goal was closed after the latest review delivery date, the status is **Closed**.
-2. If the finding's raw status from IT-AMS is "Elevated Deficiency" and the most recent review has been delivered with `outcome = 'Compliant'`, the status is **Corrected**.
-3. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
-4. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
+2. If the finding's most recent review is NOT both delivered and complete, the status is **Active** — the finding is still in flux, so no terminal status is shown and nothing is read from that undelivered review.
+3. Otherwise, translate `latest_raw_history_status` — the `MonitoringFindingHistories` status for this finding on its *latest delivered review*:
+   - `New`, `Not Corrected`, `Not Reviewed` → **Active**
+   - every other value passes through unchanged (`Corrected`, `Elevated Deficiency`, `Withdrawn`, …)
+
+`raw_status` (the finding-level `MonitoringFindings` status) is **not** consulted. The prior "Elevated Deficiency + review `outcome = 'Compliant'` → Corrected" reconciliation was removed: the history status is now trusted verbatim, and a history status that disagrees with the review outcome is treated as an upstream data problem to surface (via monitoring data validation), not to paper over here.
 
 ### Calculated Finding Type
 
@@ -206,7 +211,7 @@ The key difference: `Citations.calculated_finding_type` is the *current* value, 
 The `active_through` date defines the window during which a finding is considered active:
 
 - **Undelivered current review**: `CURRENT_DATE + 1` (the finding is still in progress; recalculated daily)
-- **Final review delivered but calculated_status still Active or Elevated Deficiency**: `9999-12-31` — the delivered review did not resolve the finding (e.g., IT-AMS raw status is still Active, or it is an Elevated Deficiency whose final review outcome was not Compliant), so it has no known end date
+- **Final review delivered but calculated_status still Active or Elevated Deficiency**: `9999-12-31` — the delivered review did not resolve the finding (its latest delivered review's history status is New/Not Corrected/Not Reviewed, or Elevated Deficiency), so it has no known end date
 - **Closed Area of Concern**: The date the monitoring goal was closed (`latest_goal_closure`)
 - **All other closed findings**: The `latest_report_delivery_date`
 
@@ -245,4 +250,4 @@ Updates are scoped to grants that are `Active` or became inactive within the las
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`, `src/migrations/20260602001049-add_calculated_category_to_citations.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`, `src/migrations/20260602001049-add_calculated_category_to_citations.js`, `src/migrations/20260911000000-add_raw_history_status_to_monitoring_fact_tables.js`

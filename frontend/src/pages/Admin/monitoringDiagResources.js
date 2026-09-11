@@ -357,6 +357,7 @@ export const CitationList = (props) => (
         )}
       />
       <DateField source="latest_report_delivery_date" />
+      <TextField source="latest_raw_history_status" />
       <DateField source="latest_goal_closure" showTime />
       <DateField source="updatedAt" showTime />
       <DateField source="deletedAt" showTime />
@@ -415,6 +416,7 @@ export const CitationShow = (props) => (
       <DateField source="latest_report_delivery_date" />
       <TextField source="latest_determination" />
       <TextField source="latest_narrative" />
+      <TextField source="latest_raw_history_status" />
       <DateField source="latest_goal_closure" showTime />
       <DateField source="active_through" />
       <TextField source="standard_text" />

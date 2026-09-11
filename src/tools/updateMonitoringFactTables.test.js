@@ -21,6 +21,7 @@ import {
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingHistoryStatusLink,
   MonitoringFindingLink,
   MonitoringFindingStandard,
@@ -49,6 +50,18 @@ const FINDING_STATUS_CORRECTED_ID = 80003;
 const FINDING_STATUS_ELEVATED_DEFICIENCY_ID = 80004;
 const STANDARD_ID_1 = 80001;
 const STANDARD_ID_2 = 80002;
+
+// MonitoringFindingHistories carry their own status vocabulary, distinct from the
+// finding-level MonitoringFindingStatuses: an active finding's history status reads
+// "New", which the fact-table pipeline translates to "Active". These scenarios reuse
+// the finding-status IDs above for their MonitoringFindingHistory rows, so the
+// MonitoringFindingHistoryStatus name for a given ID differs from the
+// MonitoringFindingStatus name for that same ID (Active -> New, others unchanged).
+const HISTORY_STATUS_NAME_BY_ID = {
+  [FINDING_STATUS_ACTIVE_ID]: 'New',
+  [FINDING_STATUS_CORRECTED_ID]: 'Corrected',
+  [FINDING_STATUS_ELEVATED_DEFICIENCY_ID]: 'Elevated Deficiency',
+};
 
 const timestamps = {
   sourceCreatedAt: new Date(),
@@ -159,7 +172,8 @@ describe('updateMonitoringFactTables', () => {
   const userIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
 
   // ----------------------------------------------------------
-  // Scenario H: Elevated Deficiency + Compliant outcome → Corrected
+  // Scenario H: Elevated Deficiency history status on a Compliant delivered review
+  //             → passes through as Elevated Deficiency (no outcome coercion)
   // ----------------------------------------------------------
   const recipientIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
@@ -426,6 +440,12 @@ describe('updateMonitoringFactTables', () => {
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
       }),
+      ...Object.entries(HISTORY_STATUS_NAME_BY_ID).map(([statusId, name]) =>
+        MonitoringFindingHistoryStatus.findOrCreate({
+          where: { statusId: Number(statusId) },
+          defaults: { statusId: Number(statusId), name, ...timestamps },
+        })
+      ),
     ]);
 
     await GrantRelationshipToActive.refresh();
@@ -829,7 +849,7 @@ describe('updateMonitoringFactTables', () => {
         reviewId: reviewIdD1,
         findingHistoryId: uuidv4(),
         findingId: findingIdD,
-        statusId: FINDING_STATUS_ACTIVE_ID,
+        statusId: FINDING_STATUS_CORRECTED_ID,
         narrative: 'Narrative for finding D initial',
         ordinal: 1,
         determination: 'Deficiency',
@@ -961,7 +981,7 @@ describe('updateMonitoringFactTables', () => {
     });
 
     // =====================================================
-    // Scenario H: Elevated Deficiency + Compliant delivered → Corrected
+    // Scenario H: Elevated Deficiency history status on a Compliant delivered review
     // =====================================================
     await MonitoringReviewLink.findOrCreate({
       where: { reviewId: reviewIdH },
@@ -1383,6 +1403,8 @@ describe('updateMonitoringFactTables', () => {
 
       const citation = citations[0];
       expect(citation.raw_status).toBe('Active');
+      // latest delivered review's history status is "New", which the pipeline translates to "Active"
+      expect(citation.latest_raw_history_status).toBe('New');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(true);
@@ -1480,6 +1502,8 @@ describe('updateMonitoringFactTables', () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
       expect(citation).not.toBeNull();
       expect(citation.raw_status).toBe('Corrected');
+      // latest delivered review (B2) history status is "Corrected", passed through unchanged
+      expect(citation.latest_raw_history_status).toBe('Corrected');
       expect(citation.calculated_status).toBe('Corrected');
       expect(citation.active).toBe(false);
       expect(citation.last_review_delivered).toBe(true);
@@ -1537,6 +1561,22 @@ describe('updateMonitoringFactTables', () => {
       expect(junctions).toHaveLength(2);
     });
 
+    it('records the per-review raw_history_status on each DeliveredReviewCitation', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
+      const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
+      const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
+
+      const drcB1 = await DeliveredReviewCitation.findOne({
+        where: { citationId: citation.id, deliveredReviewId: reviewB1.id },
+      });
+      const drcB2 = await DeliveredReviewCitation.findOne({
+        where: { citationId: citation.id, deliveredReviewId: reviewB2.id },
+      });
+
+      expect(drcB1.raw_history_status).toBe('New');
+      expect(drcB2.raw_history_status).toBe('Corrected');
+    });
+
     it('creates two GrantDeliveredReview entries (one grant × two reviews)', async () => {
       const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
       const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
@@ -1580,10 +1620,13 @@ describe('updateMonitoringFactTables', () => {
   // Scenario D
   // =====================
   describe('Scenario D: undelivered current review', () => {
-    it('overrides calculated_status to Active despite Corrected raw status', async () => {
+    it('overrides calculated_status to Active despite a Corrected latest delivered history status', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdD } });
       expect(citation).not.toBeNull();
       expect(citation.raw_status).toBe('Corrected');
+      // The latest DELIVERED review (D1) says Corrected, but an undelivered follow-up
+      // (D2) is in progress, so calculated_status still overrides to Active.
+      expect(citation.latest_raw_history_status).toBe('Corrected');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(false);
@@ -2188,19 +2231,20 @@ describe('updateMonitoringFactTables', () => {
   // =====================
   // Scenario H
   // =====================
-  describe('Scenario H: Elevated Deficiency with Compliant delivered review', () => {
-    it('sets calculated_status to Corrected and active to false', async () => {
+  describe('Scenario H: Elevated Deficiency history status on a Compliant delivered review', () => {
+    it('passes the Elevated Deficiency history status through unchanged (no outcome-based coercion)', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
       expect(citation).not.toBeNull();
       expect(citation.calculated_finding_type).toBe('Deficiency');
-      expect(citation.calculated_status).toBe('Corrected');
-      expect(citation.active).toBe(false);
+      expect(citation.latest_raw_history_status).toBe('Elevated Deficiency');
+      expect(citation.calculated_status).toBe('Elevated Deficiency');
+      expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(true);
     });
 
-    it('sets active_through to the report delivery date', async () => {
+    it('leaves active_through open-ended because the finding is not resolved', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
-      expect(citation.active_through).toBe('2025-04-15');
+      expect(citation.active_through).toBe('9999-12-31');
     });
   });
 
@@ -2211,6 +2255,9 @@ describe('updateMonitoringFactTables', () => {
     it('keeps calculated_status Active when the latest review has no delivery date', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdI } });
       expect(citation).not.toBeNull();
+      // The latest DELIVERED review (I1) history status is Elevated Deficiency, but the
+      // undelivered follow-up (I2) means calculated_status still overrides to Active.
+      expect(citation.latest_raw_history_status).toBe('Elevated Deficiency');
       expect(citation.calculated_finding_type).toBe('Deficiency');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
