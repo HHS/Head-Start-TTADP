@@ -1782,9 +1782,11 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
-  const safeUserId = parsePositiveInteger(userId);
+  // A null/undefined userId means "no user filter" (fetch all approved reports),
+  // which recipientApprovedDigest relies on. Only validate when a userId is provided.
+  const safeUserId = userId == null ? null : parsePositiveInteger(userId);
 
-  if (!safeUserId) {
+  if (userId != null && !safeUserId) {
     throw new Error('Invalid userId provided');
   }
 
