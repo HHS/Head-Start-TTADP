@@ -98,7 +98,7 @@ const validateQueryOptions = ({
     new Set(sourceNames).size !== sourceNames.length
   ) {
     throw new Error(
-      'Timeline event sources must have unique alphanumeric names, index builders, and populators'
+      'Timeline event sources must have unique alphanumeric names, index builders, and functions that provide presentation data'
     );
   }
 };
@@ -346,8 +346,8 @@ const assertPresentation = (
   presentation: RecipientTimelineEventPresentation
 ) => {
   /**
-   * Presentation data comes from independently implemented source populators. Validate every
-   * nested, source-owned field here before it is combined with the authoritative index fields.
+   * Each source provides presentation data. Validate every nested, source provided field here
+   * before it is combined with the authoritative index fields.
    * The individual checks keep malformed nested values from producing an unclear runtime error.
    */
   const validByline =
@@ -412,7 +412,7 @@ const assertPresentation = (
 /**
  * Populate exactly the indexed page rows without reapplying source eligibility or filters.
  *
- * Sources are grouped so each source can batch-fetch its IDs. Each batch must return exactly one
+ * Sources are grouped so each source can fetch its IDs in batches. Each batch must return exactly one
  * presentation per requested ID; the final map explicitly restores the index's identity and
  * order, preventing a source from changing pagination or sorting semantics.
  */
@@ -424,7 +424,7 @@ export async function populateTimelineEventIndex(
   if (index.events.length === 0) return { count: index.count, events: [] };
 
   const sourceByName = new Map(sources.map((source) => [source.name, source]));
-  // Group page IDs by source so every populator can make one bounded batch request.
+  // Group page IDs by source so every source can make one bounded batch request.
   const idsBySource = new Map<string, number[]>();
   index.events.forEach(({ source, sourceId }) => {
     const ids = idsBySource.get(source) ?? [];

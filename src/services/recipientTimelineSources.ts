@@ -26,7 +26,7 @@ const {
 } = db;
 
 export interface TimelineSourceBindings {
-  /** Add a source-owned replacement and return its SQL placeholder. */
+  /** Add a source provided replacement and return its SQL placeholder. */
   add(name: string, value: unknown): string;
 }
 
