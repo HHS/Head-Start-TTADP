@@ -22,7 +22,6 @@ import {
   MonitoringFindingGrant,
   MonitoringFindingHistory,
   MonitoringFindingHistoryStatus,
-  MonitoringFindingHistoryStatusLink,
   MonitoringFindingLink,
   MonitoringFindingStandard,
   MonitoringFindingStatus,
@@ -431,22 +430,22 @@ describe('updateMonitoringFactTables', () => {
       }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdH } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdI } }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_ACTIVE_ID },
-      }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_CORRECTED_ID },
-      }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
-      }),
-      ...Object.entries(HISTORY_STATUS_NAME_BY_ID).map(([statusId, name]) =>
+    ]);
+
+    // Sequential, not folded into the Promise.all above: MonitoringFindingHistoryStatus's
+    // beforeCreate hook (syncMonitoringFindingHistoryStatusLink) creates the matching
+    // MonitoringFindingHistoryStatusLink row itself. Creating both concurrently races two
+    // independent findOrCreate paths against the same Link row and can throw a duplicate-key
+    // error under load (see genericLink.js's syncLink — its semaphore only serializes hook-driven
+    // syncs against each other, not against an explicit findOrCreate outside the hook).
+    await Promise.all(
+      Object.entries(HISTORY_STATUS_NAME_BY_ID).map(([statusId, name]) =>
         MonitoringFindingHistoryStatus.findOrCreate({
           where: { statusId: Number(statusId) },
           defaults: { statusId: Number(statusId), name, ...timestamps },
         })
-      ),
-    ]);
+      )
+    );
 
     await GrantRelationshipToActive.refresh();
 
