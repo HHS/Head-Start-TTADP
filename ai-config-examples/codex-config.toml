@@ -1,0 +1,7 @@
+# Codex MCP servers.
+# To be pasted into: ~/.codex/config.toml.
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+
