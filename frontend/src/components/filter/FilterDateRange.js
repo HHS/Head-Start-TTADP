@@ -35,6 +35,7 @@ export default function FilterDateRange({
   query,
   customDateOptions,
   minDate,
+  minDateErrorMessage,
 }) {
   const { setError } = useContext(FilterErrorContext);
 
@@ -70,7 +71,7 @@ export default function FilterDateRange({
     }
 
     if (d.isBefore(moment(minDate).format(DATEPICKER_DATE_FORMAT))) {
-      setError('Please enter a valid date');
+      setError(minDateErrorMessage || 'Please enter a valid date');
       return;
     }
 
@@ -163,9 +164,11 @@ FilterDateRange.propTypes = {
     })
   ),
   minDate: PropTypes.string,
+  minDateErrorMessage: PropTypes.string,
 };
 
 FilterDateRange.defaultProps = {
   customDateOptions: null,
   minDate: MIN_DATE,
+  minDateErrorMessage: '',
 };

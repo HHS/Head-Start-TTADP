@@ -81,6 +81,9 @@ describe('RegionalDashboard constants', () => {
     it('restricts monitoring date filters to January 21, 2025', () => {
       const startDateFilter = MONITORING_FILTER_CONFIG.find((filter) => filter.id === 'startDate');
       expect(startDateFilter.minDate).toBe('2025-01-21');
+      expect(startDateFilter.minDateErrorMessage).toBe(
+        'Please enter a date on or after 01/21/2025'
+      );
     });
 
     it('filters are sorted alphabetically by display name', () => {
