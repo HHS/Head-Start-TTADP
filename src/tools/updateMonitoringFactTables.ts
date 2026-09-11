@@ -354,6 +354,7 @@ const updateMonitoringFactTables = async () => {
       AND rdd IS NOT NULL
     LEFT JOIN "MonitoringFindingHistoryStatuses" mfhs
       ON mfh."statusId" = mfhs."statusId"
+      AND mfhs."deletedAt" IS NULL
     LEFT JOIN monitoring_goals
       ON grid = goal_grid
     ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid, ms_id DESC
@@ -841,6 +842,7 @@ const updateMonitoringFactTables = async () => {
       AND mfh."sourceDeletedAt" IS NULL
     LEFT JOIN "MonitoringFindingHistoryStatuses" mfhs
       ON mfh."statusId" = mfhs."statusId"
+      AND mfhs."deletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
     ORDER BY mfid, mrid, mfh.id DESC
