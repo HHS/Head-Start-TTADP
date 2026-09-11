@@ -13,6 +13,7 @@ import db, {
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingStandard,
   MonitoringFindingStatus,
   MonitoringReview,
@@ -104,6 +105,19 @@ const createMonitoringData = async (
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
           sourceDeletedAt,
+        },
+        { individualHooks: true }
+      );
+
+      // MonitoringFindingHistoryStatus. Names the same statusId used on the
+      // MonitoringFindingHistory row above, so Citations.latest_raw_history_status
+      // (and therefore calculated_status/active) resolves instead of staying null.
+      await MonitoringFindingHistoryStatus.create(
+        {
+          statusId: findingStatusId,
+          name: citation.monitoringFindingStatusName,
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
         },
         { individualHooks: true }
       );
@@ -674,12 +688,13 @@ describe('citations service', () => {
     );
 
     // Link the Corrected Finding to the new review
+    const followUpHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
     await MonitoringFindingHistory.create(
       {
         reviewId: followUpReviewId,
         findingHistoryId: uuidv4(),
         findingId: followUpFindingId,
-        statusId: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        statusId: followUpHistoryStatusId,
         narrative: faker.word.words(10),
         ordinal: faker.number.int({ min: 1, max: 10 }),
         determination: null,
@@ -687,6 +702,15 @@ describe('citations service', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistoryStatus.create(
+      {
+        statusId: followUpHistoryStatusId,
+        name: 'New',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
       },
       { individualHooks: true }
     );
@@ -763,12 +787,13 @@ describe('citations service', () => {
       { individualHooks: true }
     );
 
+    const multiReviewHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
     await MonitoringFindingHistory.create(
       {
         reviewId: multiReviewId2,
         findingHistoryId: uuidv4(),
         findingId: multiReviewFindingId,
-        statusId: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        statusId: multiReviewHistoryStatusId,
         narrative: faker.word.words(10),
         ordinal: faker.number.int({ min: 1, max: 10 }),
         determination: null,
@@ -776,6 +801,15 @@ describe('citations service', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistoryStatus.create(
+      {
+        statusId: multiReviewHistoryStatusId,
+        name: 'New',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
       },
       { individualHooks: true }
     );

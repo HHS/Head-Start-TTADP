@@ -55,6 +55,7 @@ const {
   MonitoringFinding,
   MonitoringFindingStatus,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingGrant,
   ProgramPersonnel,
   ActivityReport,
@@ -96,6 +97,7 @@ describe('recipientSpotlight service', () => {
 
   let monitoringReviewStatus;
   let monitoringFindingStatus;
+  let monitoringFindingHistoryStatus;
   let deficiencyFinding;
 
   // Fact-table records created by updateMonitoringFactTables; used in tests and afterAll cleanup
@@ -169,6 +171,16 @@ describe('recipientSpotlight service', () => {
     monitoringFindingStatus = await MonitoringFindingStatus.create({
       statusId: faker.number.int({ min: 1000, max: 9999 }), // Using integer for statusId
       name: 'Active',
+      sourceCreatedAt: createDate,
+      sourceUpdatedAt: createDate,
+    });
+
+    // MonitoringFindingHistories has its own status vocabulary (e.g. "New") distinct from
+    // MonitoringFindingStatuses ("Active"); Citations.calculated_status/active is derived
+    // from the history status, so a matching row is needed here too.
+    monitoringFindingHistoryStatus = await MonitoringFindingHistoryStatus.create({
+      statusId: faker.number.int({ min: 1000, max: 9999 }),
+      name: 'New',
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
@@ -464,6 +476,7 @@ describe('recipientSpotlight service', () => {
     await MonitoringFindingHistory.create({
       findingId: deficiencyFinding.findingId,
       reviewId: deficiencyReview.reviewId,
+      statusId: monitoringFindingHistoryStatus.statusId,
       determination: 'Deficiency',
       findingHistoryId: fakerUnique(() => faker.number.int({ min: 90001, max: 100000 })).toString(),
       sourceCreatedAt: createDate,
@@ -717,6 +730,14 @@ describe('recipientSpotlight service', () => {
       if (monitoringFindingStatus?.statusId) {
         await MonitoringFindingStatus.destroy({
           where: { statusId: monitoringFindingStatus.statusId },
+          force: true,
+          transaction,
+        });
+      }
+
+      if (monitoringFindingHistoryStatus?.statusId) {
+        await MonitoringFindingHistoryStatus.destroy({
+          where: { statusId: monitoringFindingHistoryStatus.statusId },
           force: true,
           transaction,
         });
