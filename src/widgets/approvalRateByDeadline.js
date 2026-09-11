@@ -1,11 +1,12 @@
 import { QueryTypes } from 'sequelize';
+import federalHolidays from '../lib/federalHolidays';
 import { sequelize } from '../models';
 
 const MONTHS_BACK = 11;
 
 // Business rules:
 // - Service month is based on report endDate/startDate.
-// - Deadline is the 5th working day of the following month.
+// - Deadline is the 5th weekday of the following month, excluding observed federal holidays.
 // - approvedAtTimezone is required to interpret approvedAt in the approver's timezone.
 // - Regional series uses only requested regions; national series uses all regions.
 const SQL = `
@@ -55,6 +56,7 @@ reports_with_deadline AS (
         interval '1 day'
       ) d
       WHERE EXTRACT(ISODOW FROM d) <= 5
+        AND NOT (d::date = ANY($holidays::date[]))
       ORDER BY d
       OFFSET 4
       LIMIT 1
@@ -121,11 +123,16 @@ export default async function approvalRateByDeadline(_scopes, query) {
     return { records: [] };
   }
 
+  // The 12 service months can span last year, with deadlines extending into next year.
+  const currentYear = new Date(Date.now()).getUTCFullYear();
+  const holidays = [currentYear - 1, currentYear, currentYear + 1].flatMap(federalHolidays);
+
   const rows = await sequelize.query(SQL, {
     type: QueryTypes.SELECT,
     bind: {
       monthsBack: MONTHS_BACK,
       regionIds,
+      holidays,
     },
   });
 
