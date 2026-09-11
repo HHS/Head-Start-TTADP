@@ -42,7 +42,6 @@ interface TimelineEventIndexParams extends RecipientTimelineRequestParams {
   sources: readonly TimelineEventSource[];
 }
 
-const TIMELINE_EVENT_TYPE_SET = new Set<string>(TIMELINE_EVENT_TYPES);
 const SHARED_FILTER_TOPICS = new Set<RecipientTimelineFilterTopic>(['date', 'eventType']);
 const DATE_INPUT_FORMATS = [
   'YYYY/MM/DD',
@@ -131,10 +130,7 @@ const validateFilters = (
       throw badTimelineRequest(`Timeline ${topic} filter is invalid`);
     }
 
-    if (
-      topic === 'eventType' &&
-      query.some((eventType) => !TIMELINE_EVENT_TYPE_SET.has(eventType))
-    ) {
+    if (topic === 'eventType' && query.some((eventType) => !isValidTimelineEventType(eventType))) {
       throw badTimelineRequest('Timeline eventType filter contains an unsupported event type');
     }
   });
@@ -142,7 +138,8 @@ const validateFilters = (
 
 const isValidTimelineEventType = (
   eventType: string
-): eventType is RecipientTimelineEvent['eventType'] => TIMELINE_EVENT_TYPE_SET.has(eventType);
+): eventType is RecipientTimelineEvent['eventType'] =>
+  (TIMELINE_EVENT_TYPES as readonly string[]).includes(eventType);
 
 const toIsoDate = (value: string): string | null => {
   const parsed = moment(value.trim(), DATE_INPUT_FORMATS, true);
@@ -348,6 +345,11 @@ const assertPresentation = (
   sourceId: number,
   presentation: RecipientTimelineEventPresentation
 ) => {
+  /**
+   * Presentation data comes from independently implemented source hydrators. Validate every
+   * nested, source-owned field here before it is combined with the authoritative index fields.
+   * The individual checks keep malformed nested values from producing an unclear runtime error.
+   */
   const validByline =
     presentation?.byline === null ||
     (typeof presentation?.byline?.label === 'string' &&
@@ -407,7 +409,13 @@ const assertPresentation = (
   }
 };
 
-/** Hydrate a page while preserving the authoritative index identity and order. */
+/**
+ * Hydrate exactly the indexed page rows without reapplying source eligibility or filters.
+ *
+ * Sources are grouped so each source can batch-fetch its IDs. Each batch must return exactly one
+ * presentation per requested ID; the final map explicitly restores the index's identity and
+ * order, preventing a hydrator from changing pagination or sorting semantics.
+ */
 export async function hydrateTimelineEventIndex(
   index: TimelineIndexResponse,
   params: RecipientTimelineRequestParams,
@@ -416,6 +424,7 @@ export async function hydrateTimelineEventIndex(
   if (index.events.length === 0) return { count: index.count, events: [] };
 
   const sourceByName = new Map(sources.map((source) => [source.name, source]));
+  // Group page IDs by source so every hydrator can make one bounded batch request.
   const idsBySource = new Map<string, number[]>();
   index.events.forEach(({ source, sourceId }) => {
     const ids = idsBySource.get(source) ?? [];
@@ -433,6 +442,7 @@ export async function hydrateTimelineEventIndex(
       if (!(presentations instanceof Map)) {
         throw new Error(`Timeline source ${sourceName} returned an invalid hydration result`);
       }
+      // Reject both extra and missing IDs instead of silently changing the page length.
       for (const sourceId of presentations.keys()) {
         if (!requestedIds.has(sourceId)) {
           throw new Error(`Timeline source ${sourceName} hydrated unexpected sourceId ${sourceId}`);
@@ -448,6 +458,7 @@ export async function hydrateTimelineEventIndex(
     })
   );
 
+  // Construct the response explicitly: index identity/order always wins over hydrator output.
   const events = index.events.map((indexEvent): RecipientTimelineEvent => {
     const presentation = hydratedBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
