@@ -53,11 +53,14 @@ function generateWhere(escapedSearchTerms, exclude) {
 function escapeRole(role) {
   // our values (which doesn't include all db roles, only the roles selectable on the front end)
   const acceptableRoles = [
+    'Early Childhood Manager',
     'Early Childhood Specialist',
     'Family Engagement Specialist',
     'Grantee Specialist',
+    'Grantee Specialist Manager',
     'Health Specialist',
     'System Specialist',
+    'TTAC',
   ];
 
   // is our role amongst them?

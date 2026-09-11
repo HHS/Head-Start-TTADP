@@ -4,11 +4,14 @@ import { sequelize } from '../../models';
 type RoleFilter = string | string[] | null | undefined;
 
 const ACCEPTABLE_ROLES = [
+  'Early Childhood Manager',
   'Early Childhood Specialist',
   'Family Engagement Specialist',
   'Grantee Specialist',
+  'Grantee Specialist Manager',
   'Health Specialist',
   'System Specialist',
+  'TTAC',
 ];
 
 function roleQuery(escapedRoles: string): string {
