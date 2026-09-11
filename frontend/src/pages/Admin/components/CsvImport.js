@@ -1,5 +1,5 @@
 import { Alert, Button, FileInput, FormGroup, Label } from '@trussworks/react-uswds';
-import parse from 'csv-parse/lib/browser';
+import { parse } from 'csv-parse/browser/esm';
 import languageEncoding from 'detect-file-encoding-and-language';
 import PropTypes from 'prop-types';
 import React, { useContext, useRef, useState } from 'react';

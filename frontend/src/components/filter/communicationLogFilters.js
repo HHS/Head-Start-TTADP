@@ -10,6 +10,7 @@ import {
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
 import FilterCommunicationGoal from './FilterCommunicationGoal';
+import FilterCommunicationLogStaff from './FilterCommunicationLogStaff';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
@@ -20,7 +21,11 @@ import FilterRegionalSelect from './FilterRegionSelect';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import { handleArrayQuery } from './helpers';
 import MyReportsSelect from './MyReportsSelect';
-import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
+import {
+  fixQueryWhetherStringOrArray,
+  useDisplayCommunicationLogStaff,
+  useDisplayGroups,
+} from './utils';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -165,6 +170,21 @@ export const myReportsFilter = {
       onApply={onApplyQuery}
       query={query}
       isFor="commLog"
+    />
+  ),
+};
+
+export const otherTtaStaffFilter = {
+  id: 'otherTtaStaff',
+  display: 'Other TTA staff',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayCommunicationLogStaff,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationLogStaff
+      inputId={`otherTtaStaff-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
