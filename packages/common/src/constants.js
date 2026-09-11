@@ -676,6 +676,8 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   // AR-4/5: Creator or collaborator re-submits a report for approval
   ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
+  // AR-4a/5a: Approver notified when a report is re-submitted for approval
+  ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover',
 
   // ── Collaborative Report ──────────────────────────────────────────────────────
   // CR-1: Creator adds collaborator

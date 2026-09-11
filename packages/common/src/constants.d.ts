@@ -16,6 +16,7 @@ export const NOTIFICATION_TYPES: {
   readonly ACTIVITY_REPORT_APPROVED: 'reportApproved';
   readonly ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved';
   readonly ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted';
+  readonly ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover';
   readonly COLLAB_REPORT_COLLABORATOR_ADDED: 'collabReportCollaboratorAdded';
   readonly COLLAB_REPORT_SUBMITTED: 'collabReportSubmitted';
   readonly COLLAB_REPORT_RESUBMITTED: 'collabReportResubmitted';
