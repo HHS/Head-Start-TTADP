@@ -28,7 +28,7 @@ const {
 } = db;
 
 export interface TimelineSourceBindings {
-  /** Add a source-owned replacement and return its SQL placeholder. */
+  /** Add a source provided replacement and return its SQL placeholder. */
   add(name: string, value: unknown): string;
 }
 
@@ -44,8 +44,8 @@ export interface TimelineEventSource {
     context: RecipientTimelineRequestParams,
     bindings: TimelineSourceBindings
   ): string;
-  /** Load details for exact page IDs without reapplying index eligibility or filter predicates. */
-  loadDetails(
+  /** Populate exact page IDs without reapplying index eligibility or filter predicates. */
+  populate(
     sourceIds: readonly number[],
     context: RecipientTimelineRequestParams
   ): Promise<Map<number, RecipientTimelineEventPresentation>>;
@@ -155,7 +155,7 @@ const emptyActivityReportPresentation = (): RecipientTimelineEventPresentation =
   links: [],
 });
 
-async function loadActivityReportDetails(
+async function populateActivityReports(
   sourceIds: readonly number[],
   context: RecipientTimelineRequestParams
 ): Promise<Map<number, RecipientTimelineEventPresentation>> {
@@ -176,7 +176,7 @@ async function loadActivityReportDetails(
         .filter((grantId): grantId is number => Number.isInteger(grantId))
     ),
   ];
-  const hydrationResults = await Promise.all([
+  const populationResults = await Promise.all([
     ActivityReport.unscoped().findAll({
       attributes: ['id', 'duration', 'deliveryMethod', 'legacyId', 'userId', 'creatorRole'],
       where: { id: { [Op.in]: reportIds } },
@@ -230,7 +230,8 @@ async function loadActivityReportDetails(
       where: { activityReportId: { [Op.in]: reportIds } },
     }),
   ]);
-  const [reports, collaborators, recipientGrants, reportGoals, reportObjectives] = hydrationResults;
+  const [reports, collaborators, recipientGrants, reportGoals, reportObjectives] =
+    populationResults;
 
   const grantById = new Map<number, any>(recipientGrants.map((grant) => [grant.id, grant]));
   const recipientGrantIds = [...grantById.keys()];
@@ -396,10 +397,10 @@ export const ACTIVITY_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freez
   name: 'activityReport',
   supportedFilterTopics: ['standard'] as const,
   buildIndexQuery: buildActivityReportIndexQuery,
-  loadDetails: loadActivityReportDetails,
+  populate: populateActivityReports,
 });
 
-// These rules also drive presentation titles, keeping index filters and detail loading consistent.
+// These rules also drive presentation titles, keeping index filters and population consistent.
 const GOAL_STATUS_EVENT_RULES: Array<{
   eventType: RecipientTimelineEventType;
   oldStatuses: Array<string | null>;
@@ -435,7 +436,7 @@ const GOAL_STATUS_EVENT_RULES: Array<{
 ];
 
 // Reopening a standard creates a new goal. Share this predicate between the index and
-// detail query so event filters and titles agree, without fetching prior goals one at a time.
+// population query so event filters and titles agree, without fetching prior goals one at a time.
 const PRIOR_CLOSED_GOAL_PREDICATE = `EXISTS (
   SELECT 1 FROM "Goals" AS "previousGoal"
   WHERE "previousGoal"."grantId" = "goal"."grantId"
@@ -497,7 +498,7 @@ const buildGoalStatusChangeIndexQuery = (
     ${standardPredicates.length ? `WHERE ${standardPredicates.join('\n      AND ')}` : ''}`;
 };
 
-async function loadGoalStatusChangeDetails(
+async function populateGoalStatusChanges(
   sourceIds: readonly number[],
   context: RecipientTimelineRequestParams
 ): Promise<Map<number, RecipientTimelineEventPresentation>> {
@@ -521,7 +522,7 @@ async function loadGoalStatusChangeDetails(
         model: Goal.unscoped(),
         as: 'goal',
         attributes: ['id', 'name'],
-        // Eligibility belongs to the index, even if the goal changes before detail loading.
+        // Eligibility belongs to the index, even if the goal changes before population.
         paranoid: false,
         required: false,
         include: [
@@ -582,7 +583,7 @@ export const GOAL_STATUS_CHANGE_TIMELINE_SOURCE: TimelineEventSource = Object.fr
   name: 'goalStatusChange',
   supportedFilterTopics: ['standard'] as const,
   buildIndexQuery: buildGoalStatusChangeIndexQuery,
-  loadDetails: loadGoalStatusChangeDetails,
+  populate: populateGoalStatusChanges,
 });
 
 /** Code-owned source registry; request data cannot select or inject source SQL. */

@@ -42,7 +42,6 @@ interface TimelineEventIndexParams extends RecipientTimelineRequestParams {
   sources: readonly TimelineEventSource[];
 }
 
-const TIMELINE_EVENT_TYPE_SET = new Set<string>(TIMELINE_EVENT_TYPES);
 const SHARED_FILTER_TOPICS = new Set<RecipientTimelineFilterTopic>(['date', 'eventType']);
 const DATE_INPUT_FORMATS = [
   'YYYY/MM/DD',
@@ -91,15 +90,15 @@ const validateQueryOptions = ({
   const sourceNames = sources.map(({ name }) => name);
   if (
     sources.some(
-      ({ name, buildIndexQuery, loadDetails }) =>
+      ({ name, buildIndexQuery, populate }) =>
         !/^[A-Za-z][A-Za-z0-9]*$/.test(name) ||
         typeof buildIndexQuery !== 'function' ||
-        typeof loadDetails !== 'function'
+        typeof populate !== 'function'
     ) ||
     new Set(sourceNames).size !== sourceNames.length
   ) {
     throw new Error(
-      'Timeline event sources must have unique alphanumeric names, index builders, and detail loaders'
+      'Timeline event sources must have unique alphanumeric names, index builders, and functions that provide presentation data'
     );
   }
 };
@@ -131,10 +130,7 @@ const validateFilters = (
       throw badTimelineRequest(`Timeline ${topic} filter is invalid`);
     }
 
-    if (
-      topic === 'eventType' &&
-      query.some((eventType) => !TIMELINE_EVENT_TYPE_SET.has(eventType))
-    ) {
+    if (topic === 'eventType' && query.some((eventType) => !isValidTimelineEventType(eventType))) {
       throw badTimelineRequest('Timeline eventType filter contains an unsupported event type');
     }
   });
@@ -142,7 +138,8 @@ const validateFilters = (
 
 const isValidTimelineEventType = (
   eventType: string
-): eventType is RecipientTimelineEvent['eventType'] => TIMELINE_EVENT_TYPE_SET.has(eventType);
+): eventType is RecipientTimelineEvent['eventType'] =>
+  (TIMELINE_EVENT_TYPES as readonly string[]).includes(eventType);
 
 const toIsoDate = (value: string): string | null => {
   const parsed = moment(value.trim(), DATE_INPUT_FORMATS, true);
@@ -357,6 +354,11 @@ const assertPresentation = (
   sourceId: number,
   presentation: RecipientTimelineEventPresentation
 ) => {
+  /**
+   * Each source provides presentation data. Validate every nested, source provided field here
+   * before it is combined with the authoritative index fields.
+   * The individual checks keep malformed nested values from producing an unclear runtime error.
+   */
   const validByline =
     presentation?.byline === null ||
     (typeof presentation?.byline?.label === 'string' &&
@@ -416,8 +418,14 @@ const assertPresentation = (
   }
 };
 
-/** Load details for a page while preserving the authoritative index identity and order. */
-export async function loadTimelineEventDetails(
+/**
+ * Populate exactly the indexed page rows without reapplying source eligibility or filters.
+ *
+ * Sources are grouped so each source can fetch its IDs in batches. Each batch must return exactly one
+ * presentation per requested ID; the final map explicitly restores the index's identity and
+ * order, preventing a source from changing pagination or sorting semantics.
+ */
+export async function populateTimelineEventIndex(
   index: TimelineIndexResponse,
   params: RecipientTimelineRequestParams,
   sources: readonly TimelineEventSource[]
@@ -425,6 +433,7 @@ export async function loadTimelineEventDetails(
   if (index.events.length === 0) return { count: index.count, events: [] };
 
   const sourceByName = new Map(sources.map((source) => [source.name, source]));
+  // Group page IDs by source so every source can make one bounded batch request.
   const idsBySource = new Map<string, number[]>();
   index.events.forEach(({ source, sourceId }) => {
     const ids = idsBySource.get(source) ?? [];
@@ -432,40 +441,40 @@ export async function loadTimelineEventDetails(
     idsBySource.set(source, ids);
   });
 
-  const detailsBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
+  const presentationsBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
   await Promise.all(
     [...idsBySource].map(async ([sourceName, sourceIds]) => {
       const source = sourceByName.get(sourceName);
       if (!source) throw new Error(`Timeline index returned an unregistered source: ${sourceName}`);
       const requestedIds = new Set(sourceIds);
-      const presentations = await source.loadDetails(sourceIds, params);
+      const presentations = await source.populate(sourceIds, params);
       if (!(presentations instanceof Map)) {
-        throw new Error(`Timeline source ${sourceName} returned an invalid detail loading result`);
+        throw new Error(`Timeline source ${sourceName} returned an invalid population result`);
       }
+      // Reject both extra and missing IDs instead of silently changing the page length.
       for (const sourceId of presentations.keys()) {
         if (!requestedIds.has(sourceId)) {
           throw new Error(
-            `Timeline source ${sourceName} loaded details for unexpected sourceId ${sourceId}`
+            `Timeline source ${sourceName} populated unexpected sourceId ${sourceId}`
           );
         }
       }
       sourceIds.forEach((sourceId) => {
         if (!presentations.has(sourceId)) {
-          auditLogger.error(`Timeline details missing for ${sourceName} sourceId ${sourceId}`);
-          throw new Error(
-            `Timeline source ${sourceName} did not load details for sourceId ${sourceId}`
-          );
+          auditLogger.error(`Timeline population missing ${sourceName} sourceId ${sourceId}`);
+          throw new Error(`Timeline source ${sourceName} did not populate sourceId ${sourceId}`);
         }
       });
-      detailsBySource.set(sourceName, presentations);
+      presentationsBySource.set(sourceName, presentations);
     })
   );
 
+  // Construct the response explicitly: index identity/order always wins over source output.
   const events = index.events.map((indexEvent): RecipientTimelineEvent => {
-    const presentation = detailsBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
+    const presentation = presentationsBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
       throw new Error(
-        `Timeline source ${indexEvent.source} did not load details for sourceId ${indexEvent.sourceId}`
+        `Timeline source ${indexEvent.source} did not populate sourceId ${indexEvent.sourceId}`
       );
     }
     assertPresentation(indexEvent.source, indexEvent.sourceId, presentation);
@@ -489,10 +498,10 @@ export async function loadTimelineEventDetails(
   return { count: index.count, events };
 }
 
-/** Query the code-owned registry, then load details for each represented source in a bounded batch. */
+/** Query the code-owned registry, then populate each represented source in a bounded batch. */
 export async function getRecipientTimeline(
   params: RecipientTimelineRequestParams
 ): Promise<RecipientTimelineResponse> {
   const index = await queryTimelineEventIndex({ ...params, sources: RECIPIENT_TIMELINE_SOURCES });
-  return loadTimelineEventDetails(index, params, RECIPIENT_TIMELINE_SOURCES);
+  return populateTimelineEventIndex(index, params, RECIPIENT_TIMELINE_SOURCES);
 }

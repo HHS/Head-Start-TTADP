@@ -277,7 +277,7 @@ describe('goal status change timeline integration', () => {
           supportedFilterTopics: [],
           buildIndexQuery: () => `SELECT 1 AS "sourceId", DATE '2026-08-22' AS "date",
             'TTA activity' AS "eventType", :recipientId AS "recipientId", :regionId AS "regionId"`,
-          loadDetails: async () => new Map(),
+          populate: async () => new Map(),
         },
       ],
     });
@@ -376,7 +376,7 @@ describe('goal status change timeline integration', () => {
 describe('goal status change detail loading', () => {
   it('does not query the database for an empty page', async () => {
     const query = jest.spyOn(GoalStatusChange, 'unscoped');
-    await expect(GOAL_STATUS_CHANGE_TIMELINE_SOURCE.loadDetails([], params)).resolves.toEqual(
+    await expect(GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([], params)).resolves.toEqual(
       new Map()
     );
     expect(query).not.toHaveBeenCalled();
@@ -401,7 +401,7 @@ describe('goal status change detail loading', () => {
       },
     ]);
     jest.spyOn(GoalStatusChange, 'unscoped').mockReturnValue({ findAll } as never);
-    const result = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.loadDetails([1, 1], params);
+    const result = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([1, 1], params);
     expect(result.get(1)).toMatchObject({
       title: 'Goal added',
       subtitle: null,

@@ -4,7 +4,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import { sequelize } from '../models';
 import {
-  loadTimelineEventDetails,
+  populateTimelineEventIndex,
   queryTimelineEventIndex,
   type TimelineIndexResponse,
 } from './recipientTimeline';
@@ -40,7 +40,7 @@ const source = (
   name,
   supportedFilterTopics: [],
   buildIndexQuery: () => query,
-  loadDetails: async () => presentations,
+  populate: async () => presentations,
 });
 
 const timelineSources: TimelineEventSource[] = [
@@ -243,7 +243,7 @@ describe('queryTimelineEventIndex', () => {
           CAST(${bindings.add('recipientId', 'TTA activity')} AS TEXT) AS "eventType",
           100000 AS "recipientId",
           1 AS "regionId"`,
-      loadDetails: async () => new Map(),
+      populate: async () => new Map(),
     };
 
     const result = await queryTestTimeline(timelineParams, [namespacedSource]);
@@ -321,7 +321,7 @@ describe('queryTimelineEventIndex', () => {
   });
 });
 
-describe('loadTimelineEventDetails', () => {
+describe('populateTimelineEventIndex', () => {
   const index: TimelineIndexResponse = {
     count: 2,
     events: [
@@ -340,7 +340,7 @@ describe('loadTimelineEventDetails', () => {
     ],
   };
 
-  it('restores index order and protects authoritative fields from detail loader output', async () => {
+  it('restores index order and protects authoritative fields from source output', async () => {
     const activityPresentation = {
       ...presentation('TTA activity'),
       durationHours: 1.5,
@@ -365,7 +365,7 @@ describe('loadTimelineEventDetails', () => {
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email communication')]])),
     ];
 
-    const result = await loadTimelineEventDetails(index, timelineParams, sources);
+    const result = await populateTimelineEventIndex(index, timelineParams, sources);
 
     expect(
       result.events.map(({ source, sourceId, date, eventType, title }) => ({
@@ -393,18 +393,18 @@ describe('loadTimelineEventDetails', () => {
     ]);
   });
 
-  it('fails rather than silently dropping a missing detail loading result', async () => {
+  it('fails rather than silently dropping a missing population result', async () => {
     const sources = [
       source('activityReport', 'SELECT 1', new Map()),
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email')]])),
     ];
 
-    await expect(loadTimelineEventDetails(index, timelineParams, sources)).rejects.toThrow(
-      'Timeline source activityReport did not load details for sourceId 20'
+    await expect(populateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
+      'Timeline source activityReport did not populate sourceId 20'
     );
   });
 
-  it('fails when a detail loader returns an unexpected ID', async () => {
+  it('fails when a source returns an unexpected ID', async () => {
     const sources = [
       source(
         'activityReport',
@@ -417,8 +417,8 @@ describe('loadTimelineEventDetails', () => {
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email')]])),
     ];
 
-    await expect(loadTimelineEventDetails(index, timelineParams, sources)).rejects.toThrow(
-      'Timeline source activityReport loaded details for unexpected sourceId 21'
+    await expect(populateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
+      'Timeline source activityReport populated unexpected sourceId 21'
     );
   });
 
@@ -456,7 +456,7 @@ describe('loadTimelineEventDetails', () => {
     const sources = [source('activityReport', 'SELECT 1', new Map([[20, invalidPresentation]]))];
 
     await expect(
-      loadTimelineEventDetails(singleEventIndex, timelineParams, sources)
+      populateTimelineEventIndex(singleEventIndex, timelineParams, sources)
     ).rejects.toThrow(
       'Timeline source activityReport returned invalid presentation for sourceId 20'
     );
