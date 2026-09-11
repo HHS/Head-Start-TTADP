@@ -63,13 +63,13 @@ If you use VS Code, install the `Biome` extension so diagnostics and safe fixes 
 
 ## Dependency Security
 
-CI runs `yarn deps:audit` against backend and frontend production dependencies. The audit blocks builds for new high or critical findings. Low and moderate findings remain visible in GitHub Dependabot alerts and the weekly Slack security digest, but do not block unrelated development.
+CI runs `yarn deps:audit` against backend and frontend production dependencies.
 
 Dependabot checks the root and frontend packages each Monday. Production and development minor or patch updates are combined into one grouped pull request per package location when updates are available. Scheduled major version updates are ignored to limit pull request volume. Major security findings remain visible through GitHub alerts and the Slack digest and are handled as planned engineering work with broader regression testing.
 
 When a vulnerability can be resolved with a minor or patch update, review the Dependabot pull request and verify the normal CI suite. If remediation requires a major update, create planned engineering work, review the migration guidance, and run tests for the affected behavior before merging. Continue tracking the finding through the GitHub alert and Slack digest until it is resolved.
 
-If a high or critical production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file. Do not baseline a finding solely to make CI pass; remove the exception after remediation.
+If a production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file. Do not baseline a finding solely to make CI pass; remove the exception after remediation.
 
 ## Precommit hooks
 
