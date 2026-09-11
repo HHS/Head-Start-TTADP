@@ -5,7 +5,7 @@ set -euo pipefail
 ARTIFACT_DIR="${1:-import-artifacts}"
 STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
 SUMMARY_FILE="${2:-monitoring-updates.txt}"
-EXPECTED_TASKS="${3:-6}"
+EXPECTED_TASKS="${3:-8}"
 LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
@@ -85,6 +85,122 @@ extract_failure_message() {
   fi
 }
 
+validation_log="${ARTIFACT_DIR}/logs/phase-validate_monitoring_data.log"
+gate_log="${ARTIFACT_DIR}/logs/phase-validate_monitoring_gate.log"
+
+# True when the gate itself failed the import: it exited nonzero (so the phase
+# loop broke with failed_phase=validate_monitoring_gate) because of a blocking
+# critical - distinguished from a gate execution error by the gate line's own
+# status/criticalCount. Used only to word the critical section (blocked vs not);
+# the criticals themselves are reported the same way regardless.
+gate_blocked() {
+  [[ "$failed_phase" == "validate_monitoring_gate" ]] || return 1
+  [[ -f "$gate_log" ]] || return 1
+
+  local line json_data status critical_count
+  line=$(grep -o "Monitoring Gate: .*" "$gate_log" | tail -n 1 || true)
+  [[ -n "$line" ]] || return 1
+  json_data=${line#*: }
+  status=$(echo "$json_data" | jq -r '.status // empty' 2>/dev/null || true)
+  critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
+
+  [[ "$status" == "success" && "${critical_count:-0}" -gt 0 ]]
+}
+
+# Appends a section for the validation phase's alerts to the summary file.
+# The phase prints one "Monitoring Validation Alerts: {...}" JSON line
+# (see src/tools/validateMonitoringData.ts).
+append_validation_summary() {
+  local results
+  local json_data
+  local alerts
+  local as_of
+
+  if [[ -f "$validation_log" ]]; then
+    results=$(grep -o "Monitoring Validation Alerts: .*" "$validation_log" | tail -n 1 || true)
+    if [[ -n "$results" ]]; then
+      json_data=${results#*: }
+      as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
+      alerts=$(echo "$json_data" | jq -jr '.alerts[]? | .message, "\n"' 2>/dev/null || true)
+      if [[ -n "$alerts" ]]; then
+        {
+          printf 'Monitoring Validation Alerts (as of %s): ```\n' "${as_of:-unknown}"
+          printf '%s\n' "$alerts"
+          printf '```\n'
+        } >> "$SUMMARY_FILE"
+      else
+        printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+      fi
+      return
+    fi
+  fi
+
+  printf 'Monitoring Validation: no result found\n' >> "$SUMMARY_FILE"
+}
+
+# Reports the gate result, and is called unconditionally after the primary body,
+# so a critical always reaches the channel regardless of how it arose (report-only,
+# a check off the halt list, or a block) or which phase failed. The critical data
+# condition is the headline; whether it blocked the refresh is a clause on it. The
+# benign "no critical / no result" confirmations are shown only on success, so a
+# failure unrelated to data doesn't pick up confusing validation commentary.
+# Parsed from the gate's single "Monitoring Gate: {...}" line. See
+# docs/monitoring-data-validation.md ("Enforcement controls").
+append_gate_summary() {
+  local results
+  local json_data
+  local critical_count
+  local critical
+  local as_of
+  local status
+  local refresh_clause
+
+  if [[ -f "$gate_log" ]]; then
+    results=$(grep -o "Monitoring Gate: .*" "$gate_log" | tail -n 1 || true)
+    if [[ -n "$results" ]]; then
+      json_data=${results#*: }
+      as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
+      critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
+      status=$(echo "$json_data" | jq -r '.status // empty' 2>/dev/null || true)
+
+      if [[ "${critical_count:-0}" -gt 0 ]]; then
+        if gate_blocked; then
+          refresh_clause="blocked the fact-table refresh"
+        else
+          refresh_clause="did not block the fact-table refresh"
+        fi
+        critical=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "critical") | .message, "\n"' 2>/dev/null || true)
+        # Separate from any preceding primary body that didn't end in a newline.
+        [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
+        {
+          printf 'Monitoring Gate Criticals (as of %s) - %s: ```\n' "${as_of:-unknown}" "$refresh_clause"
+          printf '%s\n' "$critical"
+          printf '```\n'
+        } >> "$SUMMARY_FILE"
+        return
+      fi
+
+      # The gate ran but did not finish (a check errored); it validated nothing,
+      # so it cannot be reported as "no critical findings". In report-only mode
+      # this still exits 0 and the import can SUCCEED, so surface it either way.
+      if [[ -n "$status" && "$status" != "success" ]]; then
+        [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
+        printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+        return
+      fi
+
+      # No criticals: confirm only on success.
+      [[ "$overall_status" == "SUCCEEDED" ]] || return 0
+      printf 'Monitoring Gate: no critical findings (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+      return
+    fi
+  fi
+
+  # No gate line: confirm only on success.
+  [[ "$overall_status" == "SUCCEEDED" ]] || return 0
+  printf 'Monitoring Gate: no result found\n' >> "$SUMMARY_FILE"
+}
+
 write_success_summary() {
   local results
   local json_data
@@ -101,16 +217,25 @@ write_success_summary() {
           printf '%s\n' "$goals"
           printf '```\n'
         } > "$SUMMARY_FILE"
+        append_validation_summary
         return
       fi
     fi
   fi
 
   printf 'Monitoring Updates: none\n' > "$SUMMARY_FILE"
+  append_validation_summary
 }
 
 write_failure_summary() {
   local failure_message
+
+  # A gate block is not a generic failure: skip the failure body and let the gate
+  # section (appended unconditionally below) carry the critical and the block.
+  if gate_blocked; then
+    return
+  fi
+
   failure_message=$(extract_failure_message "$failed_phase")
   {
     printf 'Monitoring job failure: ```\n'
@@ -119,11 +244,14 @@ write_failure_summary() {
   } > "$SUMMARY_FILE"
 }
 
+: > "$SUMMARY_FILE"
 if [[ "$overall_status" == "SUCCEEDED" ]]; then
   write_success_summary
 else
   write_failure_summary
 fi
+# Always report the gate result, so a critical always reaches the channel.
+append_gate_summary
 
 echo
 cat "$SUMMARY_FILE"
