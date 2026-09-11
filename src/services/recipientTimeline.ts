@@ -90,15 +90,15 @@ const validateQueryOptions = ({
   const sourceNames = sources.map(({ name }) => name);
   if (
     sources.some(
-      ({ name, buildIndexQuery, hydrate }) =>
+      ({ name, buildIndexQuery, populate }) =>
         !/^[A-Za-z][A-Za-z0-9]*$/.test(name) ||
         typeof buildIndexQuery !== 'function' ||
-        typeof hydrate !== 'function'
+        typeof populate !== 'function'
     ) ||
     new Set(sourceNames).size !== sourceNames.length
   ) {
     throw new Error(
-      'Timeline event sources must have unique alphanumeric names, index builders, and hydrators'
+      'Timeline event sources must have unique alphanumeric names, index builders, and populators'
     );
   }
 };
@@ -346,7 +346,7 @@ const assertPresentation = (
   presentation: RecipientTimelineEventPresentation
 ) => {
   /**
-   * Presentation data comes from independently implemented source hydrators. Validate every
+   * Presentation data comes from independently implemented source populators. Validate every
    * nested, source-owned field here before it is combined with the authoritative index fields.
    * The individual checks keep malformed nested values from producing an unclear runtime error.
    */
@@ -410,13 +410,13 @@ const assertPresentation = (
 };
 
 /**
- * Hydrate exactly the indexed page rows without reapplying source eligibility or filters.
+ * Populate exactly the indexed page rows without reapplying source eligibility or filters.
  *
  * Sources are grouped so each source can batch-fetch its IDs. Each batch must return exactly one
  * presentation per requested ID; the final map explicitly restores the index's identity and
- * order, preventing a hydrator from changing pagination or sorting semantics.
+ * order, preventing a source from changing pagination or sorting semantics.
  */
-export async function hydrateTimelineEventIndex(
+export async function populateTimelineEventIndex(
   index: TimelineIndexResponse,
   params: RecipientTimelineRequestParams,
   sources: readonly TimelineEventSource[]
@@ -424,7 +424,7 @@ export async function hydrateTimelineEventIndex(
   if (index.events.length === 0) return { count: index.count, events: [] };
 
   const sourceByName = new Map(sources.map((source) => [source.name, source]));
-  // Group page IDs by source so every hydrator can make one bounded batch request.
+  // Group page IDs by source so every populator can make one bounded batch request.
   const idsBySource = new Map<string, number[]>();
   index.events.forEach(({ source, sourceId }) => {
     const ids = idsBySource.get(source) ?? [];
@@ -432,38 +432,40 @@ export async function hydrateTimelineEventIndex(
     idsBySource.set(source, ids);
   });
 
-  const hydratedBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
+  const presentationsBySource = new Map<string, Map<number, RecipientTimelineEventPresentation>>();
   await Promise.all(
     [...idsBySource].map(async ([sourceName, sourceIds]) => {
       const source = sourceByName.get(sourceName);
       if (!source) throw new Error(`Timeline index returned an unregistered source: ${sourceName}`);
       const requestedIds = new Set(sourceIds);
-      const presentations = await source.hydrate(sourceIds, params);
+      const presentations = await source.populate(sourceIds, params);
       if (!(presentations instanceof Map)) {
-        throw new Error(`Timeline source ${sourceName} returned an invalid hydration result`);
+        throw new Error(`Timeline source ${sourceName} returned an invalid population result`);
       }
       // Reject both extra and missing IDs instead of silently changing the page length.
       for (const sourceId of presentations.keys()) {
         if (!requestedIds.has(sourceId)) {
-          throw new Error(`Timeline source ${sourceName} hydrated unexpected sourceId ${sourceId}`);
+          throw new Error(
+            `Timeline source ${sourceName} populated unexpected sourceId ${sourceId}`
+          );
         }
       }
       sourceIds.forEach((sourceId) => {
         if (!presentations.has(sourceId)) {
-          auditLogger.error(`Timeline hydration missing ${sourceName} sourceId ${sourceId}`);
-          throw new Error(`Timeline source ${sourceName} did not hydrate sourceId ${sourceId}`);
+          auditLogger.error(`Timeline population missing ${sourceName} sourceId ${sourceId}`);
+          throw new Error(`Timeline source ${sourceName} did not populate sourceId ${sourceId}`);
         }
       });
-      hydratedBySource.set(sourceName, presentations);
+      presentationsBySource.set(sourceName, presentations);
     })
   );
 
-  // Construct the response explicitly: index identity/order always wins over hydrator output.
+  // Construct the response explicitly: index identity/order always wins over source output.
   const events = index.events.map((indexEvent): RecipientTimelineEvent => {
-    const presentation = hydratedBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
+    const presentation = presentationsBySource.get(indexEvent.source)?.get(indexEvent.sourceId);
     if (!presentation) {
       throw new Error(
-        `Timeline source ${indexEvent.source} did not hydrate sourceId ${indexEvent.sourceId}`
+        `Timeline source ${indexEvent.source} did not populate sourceId ${indexEvent.sourceId}`
       );
     }
     assertPresentation(indexEvent.source, indexEvent.sourceId, presentation);
@@ -487,10 +489,10 @@ export async function hydrateTimelineEventIndex(
   return { count: index.count, events };
 }
 
-/** Query the code-owned registry, then hydrate each represented source in a bounded batch. */
+/** Query the code-owned registry, then populate each represented source in a bounded batch. */
 export async function getRecipientTimeline(
   params: RecipientTimelineRequestParams
 ): Promise<RecipientTimelineResponse> {
   const index = await queryTimelineEventIndex({ ...params, sources: RECIPIENT_TIMELINE_SOURCES });
-  return hydrateTimelineEventIndex(index, params, RECIPIENT_TIMELINE_SOURCES);
+  return populateTimelineEventIndex(index, params, RECIPIENT_TIMELINE_SOURCES);
 }

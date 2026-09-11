@@ -4,7 +4,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import { sequelize } from '../models';
 import {
-  hydrateTimelineEventIndex,
+  populateTimelineEventIndex,
   queryTimelineEventIndex,
   type TimelineIndexResponse,
 } from './recipientTimeline';
@@ -40,7 +40,7 @@ const source = (
   name,
   supportedFilterTopics: [],
   buildIndexQuery: () => query,
-  hydrate: async () => presentations,
+  populate: async () => presentations,
 });
 
 const timelineSources: TimelineEventSource[] = [
@@ -185,7 +185,7 @@ describe('queryTimelineEventIndex', () => {
           CAST(${bindings.add('recipientId', 'TTA activity')} AS TEXT) AS "eventType",
           100000 AS "recipientId",
           1 AS "regionId"`,
-      hydrate: async () => new Map(),
+      populate: async () => new Map(),
     };
 
     const result = await queryTestTimeline(timelineParams, [namespacedSource]);
@@ -263,7 +263,7 @@ describe('queryTimelineEventIndex', () => {
   });
 });
 
-describe('hydrateTimelineEventIndex', () => {
+describe('populateTimelineEventIndex', () => {
   const index: TimelineIndexResponse = {
     count: 2,
     events: [
@@ -282,7 +282,7 @@ describe('hydrateTimelineEventIndex', () => {
     ],
   };
 
-  it('restores index order and protects authoritative fields from hydrator output', async () => {
+  it('restores index order and protects authoritative fields from source output', async () => {
     const activityPresentation = {
       ...presentation('TTA activity'),
       durationHours: 1.5,
@@ -307,7 +307,7 @@ describe('hydrateTimelineEventIndex', () => {
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email communication')]])),
     ];
 
-    const result = await hydrateTimelineEventIndex(index, timelineParams, sources);
+    const result = await populateTimelineEventIndex(index, timelineParams, sources);
 
     expect(
       result.events.map(({ source, sourceId, date, eventType, title }) => ({
@@ -335,18 +335,18 @@ describe('hydrateTimelineEventIndex', () => {
     ]);
   });
 
-  it('fails rather than silently dropping a missing hydration result', async () => {
+  it('fails rather than silently dropping a missing population result', async () => {
     const sources = [
       source('activityReport', 'SELECT 1', new Map()),
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email')]])),
     ];
 
-    await expect(hydrateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
-      'Timeline source activityReport did not hydrate sourceId 20'
+    await expect(populateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
+      'Timeline source activityReport did not populate sourceId 20'
     );
   });
 
-  it('fails when a hydrator returns an unexpected ID', async () => {
+  it('fails when a source returns an unexpected ID', async () => {
     const sources = [
       source(
         'activityReport',
@@ -359,8 +359,8 @@ describe('hydrateTimelineEventIndex', () => {
       source('communicationLog', 'SELECT 1', new Map([[10, presentation('Email')]])),
     ];
 
-    await expect(hydrateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
-      'Timeline source activityReport hydrated unexpected sourceId 21'
+    await expect(populateTimelineEventIndex(index, timelineParams, sources)).rejects.toThrow(
+      'Timeline source activityReport populated unexpected sourceId 21'
     );
   });
 
@@ -398,7 +398,7 @@ describe('hydrateTimelineEventIndex', () => {
     const sources = [source('activityReport', 'SELECT 1', new Map([[20, invalidPresentation]]))];
 
     await expect(
-      hydrateTimelineEventIndex(singleEventIndex, timelineParams, sources)
+      populateTimelineEventIndex(singleEventIndex, timelineParams, sources)
     ).rejects.toThrow(
       'Timeline source activityReport returned invalid presentation for sourceId 20'
     );

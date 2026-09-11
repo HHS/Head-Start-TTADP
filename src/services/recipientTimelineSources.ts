@@ -39,8 +39,8 @@ export interface TimelineEventSource {
     context: RecipientTimelineRequestParams,
     bindings: TimelineSourceBindings
   ): string;
-  /** Hydrate exact page IDs without reapplying index eligibility or filter predicates. */
-  hydrate(
+  /** Populate exact page IDs without reapplying index eligibility or filter predicates. */
+  populate(
     sourceIds: readonly number[],
     context: RecipientTimelineRequestParams
   ): Promise<Map<number, RecipientTimelineEventPresentation>>;
@@ -150,7 +150,7 @@ const emptyActivityReportPresentation = (): RecipientTimelineEventPresentation =
   links: [],
 });
 
-async function hydrateActivityReports(
+async function populateActivityReports(
   sourceIds: readonly number[],
   context: RecipientTimelineRequestParams
 ): Promise<Map<number, RecipientTimelineEventPresentation>> {
@@ -171,7 +171,7 @@ async function hydrateActivityReports(
         .filter((grantId): grantId is number => Number.isInteger(grantId))
     ),
   ];
-  const hydrationResults = await Promise.all([
+  const populationResults = await Promise.all([
     ActivityReport.unscoped().findAll({
       attributes: ['id', 'duration', 'deliveryMethod', 'legacyId', 'userId', 'creatorRole'],
       where: { id: { [Op.in]: reportIds } },
@@ -225,7 +225,8 @@ async function hydrateActivityReports(
       where: { activityReportId: { [Op.in]: reportIds } },
     }),
   ]);
-  const [reports, collaborators, recipientGrants, reportGoals, reportObjectives] = hydrationResults;
+  const [reports, collaborators, recipientGrants, reportGoals, reportObjectives] =
+    populationResults;
 
   const grantById = new Map<number, any>(recipientGrants.map((grant) => [grant.id, grant]));
   const recipientGrantIds = [...grantById.keys()];
@@ -391,7 +392,7 @@ export const ACTIVITY_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freez
   name: 'activityReport',
   supportedFilterTopics: ['standard'] as const,
   buildIndexQuery: buildActivityReportIndexQuery,
-  hydrate: hydrateActivityReports,
+  populate: populateActivityReports,
 });
 
 /** Code-owned source registry; request data cannot select or inject source SQL. */
