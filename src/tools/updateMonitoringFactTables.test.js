@@ -49,6 +49,10 @@ const FINDING_STATUS_CORRECTED_ID = 80003;
 const FINDING_STATUS_ELEVATED_DEFICIENCY_ID = 80004;
 const STANDARD_ID_1 = 80001;
 const STANDARD_ID_2 = 80002;
+// History-status-only IDs (no matching MonitoringFindingStatus row) — used solely to
+// exercise the other two "translates to Active" history statuses in Scenario L below.
+const HISTORY_STATUS_ONLY_NOT_CORRECTED_ID = 80005;
+const HISTORY_STATUS_ONLY_NOT_REVIEWED_ID = 80006;
 
 // MonitoringFindingHistories carry their own status vocabulary, distinct from the
 // finding-level MonitoringFindingStatuses: an active finding's history status reads
@@ -60,6 +64,8 @@ const HISTORY_STATUS_NAME_BY_ID = {
   [FINDING_STATUS_ACTIVE_ID]: 'New',
   [FINDING_STATUS_CORRECTED_ID]: 'Corrected',
   [FINDING_STATUS_ELEVATED_DEFICIENCY_ID]: 'Elevated Deficiency',
+  [HISTORY_STATUS_ONLY_NOT_CORRECTED_ID]: 'Not Corrected',
+  [HISTORY_STATUS_ONLY_NOT_REVIEWED_ID]: 'Not Reviewed',
 };
 
 const timestamps = {
@@ -103,6 +109,14 @@ describe('updateMonitoringFactTables', () => {
   const findingIdA = uuidv4();
   const findingIdADeleted = uuidv4(); // Active-status finding with sourceDeletedAt — must not produce a Citation
   const findingIdADeletedStandard = uuidv4(); // Finding whose only MonitoringFindingStandard is source-deleted — must not produce a Citation
+
+  // ----------------------------------------------------------
+  // Scenario L: "Not Corrected" / "Not Reviewed" history statuses translate to Active
+  // Reuses reviewIdA/grantNumberA1/granteeIdA1 above (already delivered + Complete) so no
+  // additional grant/recipient/review scaffolding is needed — just two more findings on it.
+  // ----------------------------------------------------------
+  const findingIdNotCorrected = uuidv4();
+  const findingIdNotReviewed = uuidv4();
 
   // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
@@ -606,6 +620,56 @@ describe('updateMonitoringFactTables', () => {
       hash: `hash-${uuidv4()}`,
       ...timestamps,
     });
+
+    // =====================================================
+    // Scenario L: "Not Corrected" / "Not Reviewed" history statuses translate to Active
+    // Both findings ride on reviewIdA/grantNumberA1/granteeIdA1 (already delivered + Complete).
+    // =====================================================
+    await Promise.all(
+      [
+        [findingIdNotCorrected, HISTORY_STATUS_ONLY_NOT_CORRECTED_ID, 'Finding L (Not Corrected)'],
+        [findingIdNotReviewed, HISTORY_STATUS_ONLY_NOT_REVIEWED_ID, 'Finding L (Not Reviewed)'],
+      ].map(async ([findingId, historyStatusId, name]) => {
+        await MonitoringFindingLink.findOrCreate({
+          where: { findingId },
+          defaults: linkTimestamps,
+        });
+        await MonitoringFinding.create({
+          findingId,
+          statusId: FINDING_STATUS_CORRECTED_ID,
+          findingType: 'Deficiency',
+          source: 'FA-1',
+          name,
+          hash: `hash-${uuidv4()}`,
+          ...timestamps,
+        });
+        await MonitoringFindingHistory.create({
+          reviewId: reviewIdA,
+          findingHistoryId: uuidv4(),
+          findingId,
+          statusId: historyStatusId,
+          narrative: `Narrative for ${name}`,
+          ordinal: 1,
+          determination: 'Deficiency',
+          name: `History ${name}`,
+          ...timestamps,
+        });
+        await MonitoringFindingStandard.create({
+          findingId,
+          standardId: STANDARD_ID_1,
+          name: `Standard ${name}`,
+          ...timestamps,
+        });
+        await MonitoringFindingGrant.create({
+          findingId,
+          granteeId: granteeIdA1,
+          statusId: FINDING_STATUS_CORRECTED_ID,
+          findingType: 'Deficiency',
+          hash: `hash-${uuidv4()}`,
+          ...timestamps,
+        });
+      })
+    );
 
     // =====================================================
     // Scenario B: Corrected finding, two delivered reviews
@@ -1295,6 +1359,8 @@ describe('updateMonitoringFactTables', () => {
       findingIdA,
       findingIdADeleted,
       findingIdADeletedStandard,
+      findingIdNotCorrected,
+      findingIdNotReviewed,
       findingIdB,
       findingIdC,
       findingIdD,
@@ -1490,6 +1556,29 @@ describe('updateMonitoringFactTables', () => {
         where: { finding_uuid: findingIdADeletedStandard },
       });
       expect(citation).toBeNull();
+    });
+  });
+
+  // =====================
+  // Scenario L
+  // =====================
+  describe('Scenario L: Not Corrected / Not Reviewed history statuses translate to Active', () => {
+    it('translates a Not Corrected history status to Active', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdNotCorrected } });
+      expect(citation).not.toBeNull();
+      expect(citation.raw_status).toBe('Corrected');
+      expect(citation.latest_raw_history_status).toBe('Not Corrected');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
+    });
+
+    it('translates a Not Reviewed history status to Active', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdNotReviewed } });
+      expect(citation).not.toBeNull();
+      expect(citation.raw_status).toBe('Corrected');
+      expect(citation.latest_raw_history_status).toBe('Not Reviewed');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
     });
   });
 
