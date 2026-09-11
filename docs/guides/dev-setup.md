@@ -81,23 +81,10 @@ On macOS:
 3. `bash ./bin/latest_backup.sh`
 4. Ensure `psql` is installed.
 5. Start the Docker stack: `yarn docker:start`
-6. Create `bounce.sql` in repo root:
+6. Load the downloaded backup and run migrations: `./bin/load-prod-db -m db.sql`
+7. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
 
-```sql
-select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
-drop database ttasmarthub;
-create database ttasmarthub;
-```
-
-1. Load backup data (replace credentials from `.env`):
-
-```bash
-psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql
-psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
-```
-
-1. Run migrations: `yarn docker:db:migrate`
-2. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
+To reset the local database to seed data instead, run `./bin/load-test-db`.
 
 ## Puppeteer & Playwright
 
