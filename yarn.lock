@@ -10434,11 +10434,6 @@ pure-rand@^6.0.0:
   resolved "https://registry.yarnpkg.com/pure-rand/-/pure-rand-6.1.0.tgz#d173cf23258231976ccbdb05247c9787957604f2"
   integrity sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==
 
-q@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/q/-/q-1.5.1.tgz#7e32f75b41381291d04611f1bf14109ac00651d7"
-  integrity sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==
-
 qs@^6.14.0, qs@^6.14.1, qs@^6.16.0, qs@~6.15.1:
   version "6.16.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.16.0.tgz#c22c723a28a920f3aacdce8289fabd43eccb79fd"
@@ -12348,7 +12343,7 @@ underscore.deep@~0.5.1:
   resolved "https://registry.yarnpkg.com/underscore.deep/-/underscore.deep-0.5.3.tgz#210969d58025339cecabd2a2ad8c3e8925e5c095"
   integrity sha512-4OuSOlFNkiVFVc3khkeG112Pdu1gbitMj7t9B9ENb61uFmN70Jq7Iluhi3oflcSgexkKfDdJ5XAJET2gEq6ikA==
 
-underscore@^1.13.1, underscore@^1.8.2, underscore@~1.13.1:
+underscore@^1.8.2, underscore@~1.13.1:
   version "1.13.8"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.13.8.tgz#a93a21186c049dbf0e847496dba72b7bd8c1e92b"
   integrity sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==
@@ -13009,14 +13004,10 @@ yauzl@^2.10.0:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-yayson@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/yayson/-/yayson-2.1.0.tgz#f261cb4269a16d80001938d96a2050d5e5f70e3b"
-  integrity sha512-VhLT75PkrPnvB3wjP1/VsTUfOHhlcIshTDYBiTvnNODVN4y7o5jq4YkrNo2oJkbN5VEFQcZheLCwkS64V0ut7g==
-  optionalDependencies:
-    lodash "^4.17.21"
-    q "^1.5.1"
-    underscore "^1.13.1"
+yayson@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/yayson/-/yayson-4.3.0.tgz#70c0b6165bffda67782ac5040068d2027a5595b2"
+  integrity sha512-z3SNv9xqvxkPrKhJbNLM9ZUJz7lO5M1AjnwFftleLYpZc6/1h7zl13LECCIzVwEASlSaAYIN3yXajqpVKIsXKA==
 
 yocto-queue@^0.1.0:
   version "0.1.0"
