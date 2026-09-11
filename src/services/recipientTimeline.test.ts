@@ -130,6 +130,64 @@ describe('queryTimelineEventIndex', () => {
     ]);
   });
 
+  it.each([
+    'UTC',
+    'America/Los_Angeles',
+    'Asia/Tokyo',
+  ])('keeps mixed-source dates, ordering, and pagination stable in the %s session timezone', async (timeZone) => {
+    const sources = [
+      source(
+        'activityReport',
+        `SELECT 1 AS "sourceId", DATE '2026-08-22' AS "date",
+            'TTA activity' AS "eventType", 100000 AS "recipientId", 1 AS "regionId"`
+      ),
+      source(
+        'goalStatusChange',
+        `SELECT * FROM (VALUES
+            (10, TIMESTAMPTZ '2026-08-21T23:30:00Z', 'Goal added', 100000, 1),
+            (11, TIMESTAMPTZ '2026-08-22T01:00:00Z', 'Goal suspended', 100000, 1),
+            (12, TIMESTAMPTZ '2026-08-22T03:30:00+02:00', 'Goal reopened', 100000, 1),
+            (13, TIMESTAMPTZ '2026-08-22T23:30:00Z', 'Goal closed', 100000, 1)
+          ) AS "event"("sourceId", "date", "eventType", "recipientId", "regionId")`
+      ),
+      source(
+        'communicationLog',
+        `SELECT 20 AS "sourceId", TIMESTAMP '2026-08-22 00:30:00' AS "date",
+            'Email communication' AS "eventType", 100000 AS "recipientId", 1 AS "regionId"`
+      ),
+    ];
+
+    await sequelize.transaction(async (transaction) => {
+      // Transaction-local settings cannot leak into other tests through the connection pool.
+      await sequelize.query("SELECT set_config('TimeZone', :timeZone, true)", {
+        replacements: { timeZone },
+        transaction,
+      });
+      const descending = await queryTestTimeline(timelineParams, sources);
+      expect(descending.count).toBe(6);
+      expect(descending.events.map(({ sourceId, date }) => [sourceId, date])).toEqual([
+        [13, '2026-08-22'],
+        [12, '2026-08-22'],
+        [11, '2026-08-22'],
+        [20, '2026-08-22'],
+        [1, '2026-08-22'],
+        [10, '2026-08-21'],
+      ]);
+      const ascending = await queryTestTimeline({ ...timelineParams, direction: 'asc' }, sources);
+      expect(ascending.events).toEqual([...descending.events].reverse());
+      const page = await queryTestTimeline({ ...timelineParams, limit: 2, offset: 2 }, sources);
+      expect(page).toEqual({ count: 6, events: descending.events.slice(2, 4) });
+      const filtered = await queryTestTimeline(
+        {
+          ...timelineParams,
+          filters: [{ topic: 'date', condition: 'is within', query: '2026/08/22-2026/08/22' }],
+        },
+        sources
+      );
+      expect(filtered).toEqual({ count: 5, events: descending.events.slice(0, 5) });
+    });
+  });
+
   it('applies date filters after combining and deduplicating sources', async () => {
     const result = await queryTestTimeline({
       ...timelineParams,
