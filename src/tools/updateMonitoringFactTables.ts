@@ -400,7 +400,7 @@ const updateMonitoringFactTables = async () => {
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
-    ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid
+    ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid, mfh.id
     ;
 
     -- Connect the Finding with the initial delivered review that made

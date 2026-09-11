@@ -718,9 +718,16 @@ describe('recipientSpotlight service', () => {
         });
       }
 
-      // Clean up monitoring statuses
+      // Clean up monitoring statuses. Each *Status create() hook (syncLink) auto-creates a
+      // matching *StatusLink row (the real FK target — see genericLink.js), so the Link row
+      // must be destroyed too, and only after nothing still references it.
       if (monitoringReviewStatus?.statusId) {
         await MonitoringReviewStatus.destroy({
+          where: { statusId: monitoringReviewStatus.statusId },
+          force: true,
+          transaction,
+        });
+        await db.MonitoringReviewStatusLink.destroy({
           where: { statusId: monitoringReviewStatus.statusId },
           force: true,
           transaction,
@@ -733,10 +740,20 @@ describe('recipientSpotlight service', () => {
           force: true,
           transaction,
         });
+        await db.MonitoringFindingStatusLink.destroy({
+          where: { statusId: monitoringFindingStatus.statusId },
+          force: true,
+          transaction,
+        });
       }
 
       if (monitoringFindingHistoryStatus?.statusId) {
         await MonitoringFindingHistoryStatus.destroy({
+          where: { statusId: monitoringFindingHistoryStatus.statusId },
+          force: true,
+          transaction,
+        });
+        await db.MonitoringFindingHistoryStatusLink.destroy({
           where: { statusId: monitoringFindingHistoryStatus.statusId },
           force: true,
           transaction,
