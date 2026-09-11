@@ -184,6 +184,49 @@ async function createReportApprovedNotification(
 }
 
 /**
+ * Creates the "report approved" in-app notification for each collaborator on an activity
+ * report. Fired when an approver approves the report, naming the approver who just acted.
+ * Mirrors {@link createReportApprovedNotification} (which notifies the creator) so that
+ * collaborators also receive the approval notification.
+ * @param currentCollaborators The report's collaborators to notify.
+ * @param savedReport The saved activity report.
+ * @param approverName The name of the approver who approved the report.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+async function createReportApprovedNotificationForCollaborators(
+  currentCollaborators: { userId: number }[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+  },
+  approverName: string
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return Promise.all(
+    currentCollaborators.map((collaborator) =>
+      createNotification(
+        collaborator.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+            approver: approverName,
+          },
+          skipExisting: 'archived',
+        }
+      )
+    )
+  );
+}
+
+/**
  * Creates the "revised report resubmitted for approval" in-app notification for each
  * collaborator on an activity report. Fired when a report is resubmitted for approval
  * (i.e. submitted while it was in "needs action" status). Replaces the standard
@@ -270,5 +313,6 @@ export {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForCollaborators,
 };
