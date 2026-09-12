@@ -8,6 +8,7 @@ For general coding standards, follow existing style in the surrounding code.
 - Follow existing style in the surrounding code.
 - Ensure changes pass Biome lint checks.
 - Reuse existing components and hooks before creating new ones.
+- **Search for an existing helper/utility before writing a new one — this is required, not optional.** Before authoring inline logic for any common operation (type checks like "is this a number", deduping/cleaning a list, ensuring a value is an array, formatting dates, escaping/sanitizing input), you MUST first search for an existing helper. Search these locations in order: shared `common` package (`packages/common`), backend `src/lib` and `src/utils` (start with `src/lib/utils.ts`, which already exports helpers such as `uniqueStrings`, `ensureArray`, and `formatDate`), `frontend/src/utils`, and the surrounding code. If a suitable helper exists, import and use it. If a near-match exists, extend it. Only write new inline logic or a new helper when none fits — and say so explicitly in your response. Re-implementing something like `[...new Set(...)]` when `uniqueStrings` already exists is a mistake.
 
 ## Testing
 - Add or update tests for behavior changes unless the change is purely documentation or formatting.
