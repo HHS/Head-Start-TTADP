@@ -8,6 +8,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForCollaborators,
 } from './activityReport';
 
@@ -221,6 +222,69 @@ describe('activityReport notification helpers', () => {
         'Approver Name'
       );
 
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createReportApprovedNotificationForCollaborators', () => {
+    it('calls createNotification once per collaborator with the ACTIVITY_REPORT_APPROVED type', async () => {
+      const collaborators = [{ userId: 10 }, { userId: 11 }];
+      await createReportApprovedNotificationForCollaborators(
+        collaborators,
+        reportBase,
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        10,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        11,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createReportApprovedNotificationForCollaborators(
+        [{ userId: 10 }],
+        { ...reportBase, activityRecipients: [] },
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns an empty array and makes no calls when passed no collaborators', async () => {
+      const result = await createReportApprovedNotificationForCollaborators(
+        [],
+        reportBase,
+        'Approver Name'
+      );
+      expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
     });
   });
