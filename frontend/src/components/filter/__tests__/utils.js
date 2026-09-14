@@ -1,7 +1,12 @@
 import { renderHook } from '@testing-library/react-hooks';
 import React from 'react';
+import { CommunicationLogUsersContext } from '../../CommunicationLogUsersProvider';
 import { MyGroupsContext } from '../../MyGroupsProvider';
-import { fixQueryWhetherStringOrArray, useDisplayGroups } from '../utils';
+import {
+  fixQueryWhetherStringOrArray,
+  useDisplayCommunicationLogStaff,
+  useDisplayGroups,
+} from '../utils';
 
 describe('useDisplayGroups', () => {
   it('returns empty string for empty or no query', () => {
@@ -34,6 +39,39 @@ describe('useDisplayGroups', () => {
     );
     const { result } = renderHook(() => useDisplayGroups(['2']), { wrapper });
     expect(result.current).toBe('Group2');
+  });
+});
+
+describe('useDisplayCommunicationLogStaff', () => {
+  const users = [
+    { id: 1, name: 'Jane Roe' },
+    { id: 2, name: 'Sam Poe' },
+  ];
+
+  const wrapper = ({ children }) => (
+    <CommunicationLogUsersContext.Provider value={{ users }}>
+      {children}
+    </CommunicationLogUsersContext.Provider>
+  );
+
+  it('returns empty string for an empty query', () => {
+    const { result } = renderHook(() => useDisplayCommunicationLogStaff([]), { wrapper });
+    expect(result.current).toBe('');
+  });
+
+  it('returns empty string when no query is provided', () => {
+    const { result } = renderHook(() => useDisplayCommunicationLogStaff(undefined), { wrapper });
+    expect(result.current).toBe('');
+  });
+
+  it('returns the user name for a matching query', () => {
+    const { result } = renderHook(() => useDisplayCommunicationLogStaff([1]), { wrapper });
+    expect(result.current).toBe('Jane Roe');
+  });
+
+  it('returns multiple user names for multiple matching queries', () => {
+    const { result } = renderHook(() => useDisplayCommunicationLogStaff([1, 2]), { wrapper });
+    expect(result.current).toBe('Jane Roe, Sam Poe');
   });
 });
 

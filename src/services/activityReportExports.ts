@@ -9,11 +9,13 @@
 //   1. A per-process concurrency cap (MAX_CONCURRENT_EXPORTS) bounds how many
 //      pool connections exports can ever hold at once, so a wedged export can't
 //      swallow the whole pool the rest of the app shares.
-//   2. A wall-clock deadline (EXPORT_DEADLINE_MS) races the per-chunk backpressure
-//      wait. Postgres' statement/idle timeouts only fire while a query is in
-//      flight; between FETCH batches we're parked on the response 'drain' event,
-//      where a client that stalls without disconnecting would otherwise hold the
-//      connection indefinitely. The deadline forces rollback and release.
+//   2. A wall-clock deadline (EXPORT_DEADLINE_MS) caps total export duration,
+//      bounding both how long one export holds a connection and how much a single
+//      request can pull from the database. It is enforced two ways: a flag checked
+//      at the top of the fetch loop stops a healthy client that would otherwise
+//      keep pulling past the deadline, and a race against the per-chunk
+//      backpressure wait stops a client stalled on 'drain' (which Postgres'
+//      statement/idle timeouts can't catch, since no query is in flight there).
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes, type Transaction } from 'sequelize';
 import db from '../models';
@@ -49,10 +51,11 @@ const IDLE_IN_TRANSACTION_TIMEOUT = '30s';
 // Cap on how many reports one export may cover, to stay inside the performance
 // envelope. Callers over this must narrow their filters.
 export const MAX_EXPORT_REPORT_IDS = 10000;
-// Most a single export may run before we force rollback and release its pooled
-// connection. Forgiving enough for slow clients; anything slower than this is not
-// realistically going to finish.
-export const EXPORT_DEADLINE_MS = 10 * 60 * 1000;
+// Hard cap on total export duration, enforced regardless of client speed. Bounds
+// both how long one export can hold a pooled connection and how much a single
+// request can pull from the database in one go. Five minutes is ample to download
+// reports even on a slow connection.
+export const EXPORT_DEADLINE_MS = 5 * 60 * 1000;
 // Most exports one process will run concurrently. Three lets a user pull one of
 // each data set at once; beyond that we reject rather than let exports encroach
 // on the connection pool shared with the rest of the app.
@@ -243,18 +246,21 @@ export async function streamActivityReportExportCsv(
   try {
     transaction = await db.sequelize.transaction();
 
-    // Rejects once the wall-clock deadline passes; raced against the per-chunk
-    // backpressure wait so a stalled-but-connected client can't pin the
-    // connection past the deadline. The .catch keeps its eventual rejection from
-    // surfacing as an unhandled rejection when nothing is awaiting it.
+    // Enforced two ways. The race (below) stops a client stalled on 'drain':
+    // onChunk stays pending, so the deadline is the only thing that settles.
+    // deadlineExceeded stops a healthy client that keeps pulling: onChunk resolves
+    // synchronously, and an already-fulfilled onChunk beats an already-rejected
+    // deadline in Promise.race, so the flag checked at the top of the loop — not
+    // the race — is what halts the pull once the deadline has passed. The .catch
+    // keeps the rejection from surfacing as unhandled when nothing is awaiting it.
+    let deadlineExceeded = false;
+    const deadlineError = () =>
+      new ExportTimeoutError(`Export exceeded ${EXPORT_DEADLINE_MS}ms and was aborted.`);
     const deadline = new Promise<never>((_, reject) => {
-      deadlineTimer = setTimeout(
-        () =>
-          reject(
-            new ExportTimeoutError(`Export exceeded ${EXPORT_DEADLINE_MS}ms and was aborted.`)
-          ),
-        EXPORT_DEADLINE_MS
-      );
+      deadlineTimer = setTimeout(() => {
+        deadlineExceeded = true;
+        reject(deadlineError());
+      }, EXPORT_DEADLINE_MS);
     });
     deadline.catch(() => {});
 
@@ -281,6 +287,9 @@ export async function streamActivityReportExportCsv(
 
     let firstBatch = true;
     for (;;) {
+      if (deadlineExceeded) {
+        throw deadlineError();
+      }
       const rows = (await db.sequelize.query(
         `FETCH FORWARD ${FETCH_BATCH_SIZE} FROM ${EXPORT_CURSOR}`,
         { transaction, type: QueryTypes.SELECT }
@@ -292,8 +301,9 @@ export async function streamActivityReportExportCsv(
       rowCount += rows.length;
       const chunk = stringify(rows, { header: firstBatch, quoted: true, quoted_empty: true });
       // UTF-8 BOM on the first chunk so Excel reads the CSV as UTF-8. Race the
-      // deadline so a client parked in backpressure can't hold the connection
-      // indefinitely.
+      // deadline so a client parked on 'drain' (onChunk pending) can't hold the
+      // connection past the deadline; a fast client is bounded by the loop-top
+      // deadlineExceeded check instead.
       await Promise.race([onChunk(firstBatch ? `﻿${chunk}` : chunk), deadline]);
       firstBatch = false;
       if (rows.length < FETCH_BATCH_SIZE) {

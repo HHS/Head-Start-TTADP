@@ -220,6 +220,45 @@ describe('Course', () => {
       verifyPersistedCourse('Forever course');
     });
 
+    it('skips empty lines between rows', async () => {
+      const course1 = 'Course With Empty Lines Alpha';
+      const course2 = 'Course With Empty Lines Beta';
+      courseNamesToCleanup.push(course1, course2);
+
+      const importData = `course name\n\n${course1}\n\n${course2}\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response.count).toBe(2);
+      expect(response.created.length).toBe(2);
+      expect(response.errors.length).toBe(0);
+      const names = response.created.map((c) => c.name.trim());
+      expect(names).toContain(course1);
+      expect(names).toContain(course2);
+    });
+
+    it('returns a parse error gracefully when a row has more fields than the header', async () => {
+      const importData = `course name\nValid Course Name,unexpected extra value\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response).not.toBe(false);
+      expect(response.count).toBe(0);
+      expect(response.errors.length).toBe(1);
+      expect(response.errors[0]).toMatch(/CSV parse error/i);
+    });
+
+    it('returns a parse error gracefully when a row has fewer fields than the header', async () => {
+      const importData = `course name,second column\nOnly One Value\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response).not.toBe(false);
+      expect(response.count).toBe(0);
+      expect(response.errors.length).toBe(1);
+      expect(response.errors[0]).toMatch(/CSV parse error/i);
+    });
+
     it('deletes unused courses', async () => {
       const courseToAdd = "Existing course with; exact' match!";
       courseNamesToCleanup.push(courseToAdd);

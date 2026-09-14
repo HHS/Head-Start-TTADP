@@ -310,7 +310,10 @@ SELECT
   o.status objective_status,
   o."createdVia" created_via,
   o."closeSuspendReason" close_suspend_reason,
-  o."closeSuspendContext" close_suspend_context,
+  -- Formula-injection guard: prefixes raw, non-id-prefixed free text starting with
+  -- =/+/-/@ with a single quote so it can't be read as a formula when the CSV opens in
+  -- Excel/Sheets. See the fuller rationale on `context` in activity-reports.sql.
+  CASE WHEN o."closeSuspendContext" ~ '^\s*[-=+@]' THEN '''' || o."closeSuspendContext" ELSE o."closeSuspendContext" END close_suspend_context,
   gc.gid goal_id,
   gc.goal_standard,
   gc.goal_status,
@@ -388,7 +391,9 @@ SELECT
   o."lastSuspendedAt"::date last_suspended_at,
   o."firstCompleteAt"::date first_complete_at,
   o."lastCompleteAt"::date last_complete_at,
-  o.title full_title,
+  -- Formula-injection guard (see close_suspend_context, above): raw objective title, no
+  -- id prefix.
+  CASE WHEN o.title ~ '^\s*[-=+@]' THEN '''' || o.title ELSE o.title END full_title,
   ad.tta_provided,
   -- full parent-goal name kept at the end; goal_standard above is the short handle
   gc.goal
