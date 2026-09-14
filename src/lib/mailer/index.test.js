@@ -432,6 +432,7 @@ describe('mailer tests', () => {
       expect(approverMessage.text).toContain(
         `${mockManager.name} requested changes to report ${mockReport.displayId}.`
       );
+      expect(approverMessage.text).toContain('Make changes and resubmit this report');
       expect(approverMessage.text).toContain(mockApprover.note);
       expect(approverMessage.text).toContain(reportPath);
     });
