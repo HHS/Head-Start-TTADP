@@ -177,6 +177,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenCollaboratorReportSubmittedForReview',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER]: {
+    textFn: ({ recipientName }) =>
+      `A revised Activity Report for ${recipientName} has been submitted for approval.`,
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'Take action',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportSubmittedForReview',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -202,6 +211,7 @@ const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
   NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
 ];
 
 const EMAIL_ACTIONS = {
@@ -401,6 +411,24 @@ const SORT_DIR = {
 
 const REGIONS = ['Northeast', 'Midwest', 'West', 'AIAN', 'Southeast', 'Southwest'];
 
+const VALIDATION_RUN_STATUS = {
+  STARTED: 'started',
+  SUCCESS: 'success',
+  FAILURE: 'failure',
+};
+
+const VALIDATION_PROCESS = {
+  // post-refresh, non-blocking: time series + observations + threshold alerts
+  MONITORING_POST_REFRESH: 'monitoring_post_refresh',
+  // pre-refresh gate: critical-capable checks that can block the fact-table refresh
+  MONITORING_GATE: 'monitoring_gate',
+};
+
+const VALIDATION_ALERT_SEVERITY = {
+  ALERT: 'alert',
+  CRITICAL: 'critical',
+};
+
 module.exports = {
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
@@ -445,4 +473,7 @@ module.exports = {
   SORT_DIR,
   COMMUNICATION_LOG_LIMIT_MAX,
   REGIONS,
+  VALIDATION_RUN_STATUS,
+  VALIDATION_PROCESS,
+  VALIDATION_ALERT_SEVERITY,
 };

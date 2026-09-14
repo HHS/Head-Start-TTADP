@@ -486,6 +486,16 @@ const updateMonitoringFactTables = async () => {
     GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ;
 
+    -- FUTURE mid-refresh gate (see docs/monitoring-data-validation.md, "In-refresh
+    -- gate" under Future work): this is the point
+    -- where the staged temp tables (delivered_reviews, full_citations, ...) exist
+    -- but the live DeliveredReviews / Citations have not yet been overwritten, so
+    -- their pre-refresh contents are still available to diff against. Because the
+    -- whole refresh is one transaction, an outage-level diff gets true rollback
+    -- for free - either RAISE EXCEPTION here, or split this query so
+    -- validateMonitoringGate's runner can be invoked between staging and upsert
+    -- and throw on criticalCount > 0 (logging the reason so it survives the
+    -- rollback). Not built yet; the pre-refresh gate phase covers today's needs.
     ----------------------------------
     -- Primary Entity Table Upserts --
     ----------------------------------
