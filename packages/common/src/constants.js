@@ -664,6 +664,8 @@ const NOTIFICATION_TYPES = {
   // AR-6/8: Approver requests changes (existing)
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
   ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
+  // AR-8 (TTAHUB-5683): Approver 1 notified when a second+ approver requests changes
+  ACTIVITY_REPORT_NEEDS_ACTION_APPROVER: 'changesRequestedApprover',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   //
@@ -672,12 +674,16 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_SUBMITTED_CREATOR: 'approverAssignedCreator',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
+  // TTAHUB-5581: Approver notified when another approver approves the report
+  ACTIVITY_REPORT_APPROVED_APPROVER: 'reportApprovedApprover',
   // Recipient notified when their AR is approved (existing)
   ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   // AR-4/5: Creator or collaborator re-submits a report for approval
   ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
   // AR-4a/5a: Approver notified when a report is re-submitted for approval
   ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover',
+  // AR-4b: Creator notified when a collaborator re-submits a report for approval
+  ACTIVITY_REPORT_RESUBMITTED_CREATOR: 'activityReportResubmittedCreator',
 
   // ── Collaborative Report ──────────────────────────────────────────────────────
   // CR-1: Creator adds collaborator

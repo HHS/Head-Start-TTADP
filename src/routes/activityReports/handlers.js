@@ -60,6 +60,7 @@ import {
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
+  createResubmittedNotificationForCreator,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -837,7 +838,13 @@ export async function submitReport(req, res) {
 
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {
-      await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+      // On resubmission, the creator receives the "revised report" notification instead of
+      // the standard collaborator-submitted one (TTAHUB-5677).
+      if (isResubmission) {
+        await createResubmittedNotificationForCreator(report.author.id, savedReport, user.name);
+      } else {
+        await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+      }
 
       const creatorSetting = await userSettingOverridesById(
         report.author.id,
