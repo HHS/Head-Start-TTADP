@@ -61,6 +61,16 @@ Configuration is in [`biome.json`](../../biome.json)
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
 
+## Dependency Security
+
+CI runs `yarn deps:audit` against backend and frontend production dependencies.
+
+Dependabot checks the root and frontend packages each Monday. Production and development minor or patch updates are combined into one grouped pull request per package location when updates are available. Scheduled major version updates are ignored to limit pull request volume. Major security findings remain visible through GitHub alerts and the Slack digest and are handled as planned engineering work with broader regression testing.
+
+When a vulnerability can be resolved with a minor or patch update, review the Dependabot pull request and verify the normal CI suite. If remediation requires a major update, create planned engineering work, review the migration guidance, and run tests for the affected behavior before merging. Continue tracking the finding through the GitHub alert and Slack digest until it is resolved.
+
+If a production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file. Do not baseline a finding solely to make CI pass; remove the exception after remediation.
+
 ## Precommit hooks
 
 Our CI will fail if code is committed that does not pass Biome linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
@@ -85,7 +95,6 @@ On macOS:
 7. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
 
 To reset the local database to seed data instead, run `./bin/load-test-db`.
-
 ## Puppeteer & Playwright
 
 If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
