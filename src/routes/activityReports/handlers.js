@@ -57,6 +57,8 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForCollaborators,
+  createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -582,6 +584,26 @@ export async function reviewReport(req, res) {
         },
         user.name
       );
+
+      // Notify collaborators (excluding the acting approver and the author, who is
+      // already notified above) that an approver has approved the report.
+      const collaboratorsToNotify = (reviewedReport.activityReportCollaborators || [])
+        .map((collab) => ({ userId: collab.user?.id ?? collab.userId }))
+        .filter(
+          ({ userId: collabUserId }) =>
+            typeof collabUserId === 'number' &&
+            collabUserId !== userId &&
+            collabUserId !== reviewedReport.author.id
+        );
+
+      await createReportApprovedNotificationForCollaborators(
+        collaboratorsToNotify,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
+      );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
@@ -792,7 +814,13 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings, isResubmission);
 
-    await createApproverSubmittedNotification(approversToNotify, savedReport);
+    // On resubmission, approvers receive the "revised report" notification (Take action)
+    // instead of the standard submitted one.
+    if (isResubmission) {
+      await createResubmittedNotificationForApprovers(approversToNotify, savedReport);
+    } else {
+      await createApproverSubmittedNotification(approversToNotify, savedReport);
+    }
 
     // Exclude the submitting user from collaborator notifications so they are not
     // notified about an action they themselves kicked off.

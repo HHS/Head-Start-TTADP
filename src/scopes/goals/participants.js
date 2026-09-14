@@ -1,5 +1,5 @@
 import { ALL_PARTICIPANTS } from '@ttahub/common';
-import filterArray, { filterAssociation } from './utils';
+import { filterAssociation } from './utils';
 
 export function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {
@@ -38,5 +38,5 @@ export function withoutParticipants(query) {
 
   participants = participants.map((participant) => `%${participant}%`);
 
-  return filterAssociation(baseQuery, participants, false, 'NOT ILIKE');
+  return filterAssociation(baseQuery, participants, true, 'ILIKE');
 }
