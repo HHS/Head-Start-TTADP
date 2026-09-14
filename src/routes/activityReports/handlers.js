@@ -572,8 +572,10 @@ export async function reviewReport(req, res) {
       changesRequestedNotification(
         reviewedReport,
         savedApprover,
-        authorWithSetting,
-        collabsWithSettings,
+        // author, unless they are the approver who triggered this workflow
+        authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null,
+        // collaborators, minus the approver whose review triggered this workflow
+        collabsWithSettings.filter((c) => c.userId !== userId),
         // approvers, minus the approver whose review triggered this workflow
         approversWithSettings.filter((a) => a.user.id !== userId)
       );
