@@ -66,6 +66,18 @@ We compared npm and Yarn 4 against the capabilities and migration concerns most 
 
 Both alternatives meet TTA Hub's core package-management requirements. Yarn 4 is preferred because it removes the risks of continuing with Yarn Classic while requiring fewer simultaneous changes than a switch to npm. In particular, it preserves the existing `resolutions` model and Yarn-oriented command structure. This reduces migration risk, although the audit integration, cache handling, immutable-install options, and publishing commands still require updates.
 
+### What This Migration Enables
+
+Yarn 4 provides a supported foundation for:
+
+- Replacing the Yarn Classic-specific `auditAdvisory` parser with a `yarn npm audit` integration.
+- Pinning package-manager tooling through Corepack or a project-local Yarn release.
+- Using `yarn install --immutable` for repeatable CI installs.
+- Retaining the existing `resolutions` model for transitive dependency overrides.
+- Improving workspace and dependency-update automation over time.
+
+These changes do not alter audit enforcement policy on their own. Changes to severity thresholds and the scheduled SCA workflow require separate implementation and validation.
+
 The repository also contains the separately published `@ttahub/common` package. The backend and frontend currently consume a pinned registry release rather than a local workspace reference. Converting this package to a workspace-linked dependency would change what application builds and tests exercise and could allow unpublished source changes to satisfy local builds. That change requires a separate evaluation of package publishing, versioning, and release validation.
 
 ## Decision
@@ -76,3 +88,18 @@ The migration will continue using the conventional `node_modules` installation m
 
 ```yaml
 nodeLinker: node-modules
+```
+
+This preserves the installation layout expected by the application's existing tooling and deployment environment while allowing Yarn 4 to manage dependencies.
+
+### Migration requirements
+
+The migration will pin Yarn through Corepack or a project-local Yarn release, regenerate and validate backend and frontend lockfiles, and update CI, Docker, deployment, cache-recovery, publishing, and audit commands for Yarn 4. Existing `resolutions` entries will be retained where supported and validated against the regenerated lockfiles.
+
+The migration will not change dependency-audit severity thresholds or the policy for blocking pull requests. Those changes require separate implementation and validation of the scheduled SCA workflow described in ADR 0027.
+
+## Consequences
+
+Yarn 4 provides a maintained, reproducible package-management toolchain with pinned tooling and immutable installs. It retains the current `resolutions` model and Yarn-oriented commands, reducing the scope of changes compared with a move to npm. The migration also enables replacement of the Yarn Classic-specific audit parser and supports future workspace and dependency-update automation improvements.
+
+The migration requires coordinated updates to lockfiles, CI, Docker, deployment, publishing, and audit tooling. Developers and CI environments must use the pinned Yarn 4 version; stale Yarn Classic installations will not be supported. The audit integration must be validated against Yarn 4 output, and its enforcement policy remains separate work so the migration does not inadvertently reduce security coverage.
