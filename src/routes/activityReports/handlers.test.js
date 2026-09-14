@@ -370,6 +370,13 @@ describe('Activity Report handlers', () => {
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
       ]);
+      // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
+      // archived once the report is fully approved.
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+      ]);
     });
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
@@ -683,7 +690,7 @@ describe('Activity Report handlers', () => {
         2,
         secondMockManager.id,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -803,7 +810,7 @@ describe('Activity Report handlers', () => {
       expect(createNotification).toHaveBeenCalledWith(
         888,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -990,7 +997,7 @@ describe('Activity Report handlers', () => {
         2,
         890,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -1146,7 +1153,7 @@ describe('Activity Report handlers', () => {
         }
       );
     });
-    it('sends collaborator-type in-app needs-action notifications to non-reviewing approvers', async () => {
+    it('sends approver-type in-app needs-action notifications to non-reviewing approvers', async () => {
       const mockApproverRecord = {
         id: 1,
         userId: needsActionReportRequest.session.userId,
@@ -1185,7 +1192,7 @@ describe('Activity Report handlers', () => {
       expect(createNotification).toHaveBeenCalledWith(
         890,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -1614,6 +1621,7 @@ describe('Activity Report handlers', () => {
         expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(1, [
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         ]);
       });
     });
