@@ -4,8 +4,8 @@ if (process.env.NODE_ENV === 'production') {
   require('newrelic');
 }
 
-import {} from 'dotenv/config';
-import { EventEmitter } from 'events';
+import 'dotenv/config';
+import { EventEmitter } from 'node:events';
 import httpContext from 'express-http-context';
 import throng from 'throng';
 import { isTrue } from './envParser';
@@ -46,14 +46,15 @@ async function start(contextId: number) {
     processNotificationQueue();
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
+    const instanceId = process.env.CF_INSTANCE_INDEX;
     logger.info(
-      `Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`
+      `Starting worker, cf_instance: ${instanceId}, contextId: ${contextId}`
     );
-    if (process.env.CF_INSTANCE_INDEX === '0' || isTrue('FORCE_CRON')) {
+    if (contextId === 1 && (instanceId === '0' || isTrue('FORCE_CRON'))) {
       await executeCronEnrollmentFunctions(
-        process.env.CF_INSTANCE_INDEX,
+        instanceId ?? '0',
         contextId,
-        process.env.NODE_ENV
+        process.env.NODE_ENV ?? 'development'
       );
       runMaintenanceCronJobs(timezone);
     }
