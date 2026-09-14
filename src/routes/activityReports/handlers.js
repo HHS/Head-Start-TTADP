@@ -49,6 +49,8 @@ import {
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
+  archiveApproverApprovedNotificationForUser,
+  archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
@@ -57,6 +59,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -605,6 +608,38 @@ export async function reviewReport(req, res) {
         },
         user.name
       );
+
+      // TTAHUB-5581: notify the report's other approvers that an approver approved it.
+      // The acting approver just approved, so their own approver-approved notification is
+      // archived rather than re-created.
+      await archiveApproverApprovedNotificationForUser(Number(activityReportId), userId);
+
+      if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+        // Fully approved by all approvers: any pending approver-approved notifications for
+        // this report are now obsolete.
+        await archiveApproverApprovedNotifications(Number(activityReportId));
+      } else {
+        // Still awaiting other approvals: notify the other approvers, excluding the acting
+        // approver. The CTA depends on whether each recipient has already approved.
+        const otherApproversToNotify = (reviewedReport.approvers || [])
+          .map((approver) => ({
+            userId: approver.user?.id ?? approver.userId,
+            hasApproved: approver.status === APPROVER_STATUSES.APPROVED,
+          }))
+          .filter(
+            ({ userId: approverUserId }) =>
+              typeof approverUserId === 'number' && approverUserId !== userId
+          );
+
+        await createReportApprovedNotificationForApprovers(
+          otherApproversToNotify,
+          {
+            ...reviewedReport.toJSON(),
+            activityRecipients,
+          },
+          user.name
+        );
+      }
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
