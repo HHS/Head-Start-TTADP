@@ -22,11 +22,15 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  const notificationType =
-    creatorOrCollaborator === 'creator'
-      ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
-      : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
-  // collaborator type == approver type notification, functionally
+  let notificationType: string;
+  if (creatorOrCollaborator === 'creator') {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
+  } else if (creatorOrCollaborator === 'approver') {
+    // Approver 1 is told a second+ approver requested changes (TTAHUB-5683).
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER;
+  } else {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+  }
 
   if (!checkRecipientName(savedReport.activityRecipients)) {
     return Promise.resolve();
@@ -363,8 +367,9 @@ async function createResubmittedNotificationForCreator(
 
 /**
  * Archives the "needs action" in-app notifications for an activity report.
- * Called when a report is (re)submitted for approval so that any pending needs-action
- * notifications for that report are moved to the archived list.
+ * Called when a report is (re)submitted for approval or fully approved so that any pending
+ * needs-action notifications (creator-, collaborator-, and approver-facing) for that report
+ * are moved to the archived list.
  * @param {number} reportId The activity report ID whose needs-action notifications to archive.
  * @returns {Promise<void>} Resolves once archiving is complete.
  */
@@ -372,6 +377,7 @@ async function archiveNeedsActionNotifications(reportId: number): Promise<void> 
   return archiveNotificationsByEntityAndType(reportId, [
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
   ]);
 }
 
