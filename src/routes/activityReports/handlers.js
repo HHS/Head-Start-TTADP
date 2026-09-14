@@ -8,6 +8,7 @@ import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goa
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   approverAssignedNotification,
+  approverReportApprovedNotification,
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorReportSubmittedForReviewNotification,
@@ -413,7 +414,9 @@ export async function getGroups(req, res) {
  */
 async function checkEmailSettings(report, setting) {
   const { author, activityReportCollaborators, approvers } = report;
-  const shouldCheckApprovers = setting === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+  const shouldCheckApprovers =
+    setting === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED ||
+    setting === USER_SETTINGS.EMAIL.KEYS.APPROVAL;
 
   const settingForAuthor = author ? await userSettingOverridesById(author.id, setting) : null;
 
@@ -551,10 +554,8 @@ export async function reviewReport(req, res) {
     // naming the approver who just acted. The acting approver is excluded so they don't
     // email themselves.
     if (status === REPORT_STATUSES.APPROVED) {
-      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
-        reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.APPROVAL
-      );
+      const [authorWithSetting, collabsWithSettings, , approversWithSettings] =
+        await checkEmailSettings(reviewedReport, USER_SETTINGS.EMAIL.KEYS.APPROVAL);
 
       const recipientAuthor =
         authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null;
@@ -563,6 +564,11 @@ export async function reviewReport(req, res) {
         savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
 
       reportApprovedNotification(reviewedReport, recipientAuthor, recipientCollabs, approverName);
+
+      // TTAHUB-5583: notify the report's other approvers (excluding the acting approver)
+      // that an approver has approved the report.
+      const recipientApprovers = approversWithSettings.filter((a) => a.user.id !== userId);
+      approverReportApprovedNotification(reviewedReport, recipientApprovers, approverName);
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {

@@ -538,6 +538,9 @@ describe('Activity Report handlers', () => {
       upsertApprover.mockResolvedValue(mockApproverRecord);
       jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
       jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+      const approverEmail = jest
+        .spyOn(mailer, 'approverReportApprovedNotification')
+        .mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
         key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
@@ -595,6 +598,16 @@ describe('Activity Report handlers', () => {
       expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
+      // TTAHUB-5583: the other approvers (222, 333) receive the approver-approved email,
+      // and the acting approver (id 1) is excluded from the recipients.
+      expect(approverEmail).toHaveBeenCalledWith(
+        reviewedReport,
+        [
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          { user: { id: 333 }, status: null },
+        ],
+        'Approver McApproverface'
+      );
     });
     it('does not archive resubmission notifications until the report is fully approved', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
