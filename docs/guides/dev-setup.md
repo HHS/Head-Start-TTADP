@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.23.2`).
+2. Install Node using the version in `.nvmrc` (`24.19.0`).
 3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
 4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
@@ -91,24 +91,10 @@ On macOS:
 3. `bash ./bin/latest_backup.sh`
 4. Ensure `psql` is installed.
 5. Start the Docker stack: `yarn docker:start`
-6. Create `bounce.sql` in repo root:
+6. Load the downloaded backup and run migrations: `./bin/load-prod-db -m db.sql`
+7. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
 
-```sql
-select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
-drop database ttasmarthub;
-create database ttasmarthub;
-```
-
-1. Load backup data (replace credentials from `.env`):
-
-```bash
-psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql
-psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
-```
-
-1. Run migrations: `yarn docker:db:migrate`
-2. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
-
+To reset the local database to seed data instead, run `./bin/load-test-db`.
 ## Puppeteer & Playwright
 
 If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
