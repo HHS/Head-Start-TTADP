@@ -47,9 +47,7 @@ async function start(contextId: number) {
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
     const instanceId = process.env.CF_INSTANCE_INDEX;
-    logger.info(
-      `Starting worker, cf_instance: ${instanceId}, contextId: ${contextId}`
-    );
+    logger.info(`Starting worker, cf_instance: ${instanceId}, contextId: ${contextId}`);
     if (contextId === 1 && (instanceId === '0' || isTrue('FORCE_CRON'))) {
       await executeCronEnrollmentFunctions(
         instanceId ?? '0',
