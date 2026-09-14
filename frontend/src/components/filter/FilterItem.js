@@ -112,29 +112,21 @@ export default function FilterItem({
     'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
   let fieldsetErrorClass = '';
 
-  switch (error) {
-    case 'Please enter a valid date':
-      fieldsetErrorClass =
-        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
-    case 'Please enter a valid date range':
-      fieldsetErrorClass =
-        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
-    case 'Please enter a value':
-      fieldsetErrorClass =
-        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
-      break;
-    case 'Please enter a condition':
-      fieldsetErrorClass =
-        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
-      break;
-    case 'Please enter a filter':
-      fieldsetErrorClass =
-        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
-      break;
-    default:
-      break;
+  if (error) {
+    switch (error) {
+      case 'Please enter a condition':
+        fieldsetErrorClass =
+          'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+        break;
+      case 'Please enter a filter':
+        fieldsetErrorClass =
+          'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+        break;
+      default:
+        fieldsetErrorClass =
+          'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+        break;
+    }
   }
 
   const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`;

@@ -29,15 +29,16 @@ describe('Filter menu item', () => {
     onRemoveFilter = jest.fn(),
     onUpdateFilter = jest.fn(),
     setErrors = jest.fn(),
-    selectedTopicOverride = selectedTopic
+    selectedTopicOverride = selectedTopic,
+    error = ''
   ) => {
-    const setError = jest.fn((error) => {
-      setErrors([error]);
+    const setError = jest.fn((e) => {
+      setErrors([e]);
     });
 
     render(
       <div>
-        <FilterErrorContext.Provider value={{ setError, error: '' }}>
+        <FilterErrorContext.Provider value={{ setError, error }}>
           <FilterItem
             filter={filter}
             onRemoveFilter={onRemoveFilter}
@@ -94,6 +95,7 @@ describe('Filter menu item', () => {
     const configuredTopic = {
       ...selectedTopic,
       minDate: '2025-01-21',
+      minDateErrorMessage: 'Please enter a date on or after 01/21/2025',
       renderInput,
     };
     const filter = {
@@ -110,8 +112,42 @@ describe('Filter menu item', () => {
       'is on or after',
       '2025/01/22',
       expect.any(Function),
-      '2025-01-21'
+      '2025-01-21',
+      'Please enter a date on or after 01/21/2025'
     );
+  });
+
+  it('renders custom date error message with value error formatting classes', () => {
+    const filter = {
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2025/01/20',
+    };
+
+    const { container } = render(
+      <FilterErrorContext.Provider
+        value={{ setError: jest.fn(), error: 'Please enter a date on or after 01/21/2025' }}
+      >
+        <FilterItem
+          filter={filter}
+          onRemoveFilter={jest.fn()}
+          onUpdateFilter={jest.fn()}
+          index={0}
+          key={filter.id}
+          topicOptions={topicOptions}
+          selectedTopic={selectedTopic}
+        />
+      </FilterErrorContext.Provider>
+    );
+
+    const errorSpan = screen.getByText('Please enter a date on or after 01/21/2025');
+    expect(errorSpan).toBeVisible();
+
+    const formGroup = container.querySelector('.ttahub-filter-menu-item');
+    expect(formGroup).toHaveClass('usa-form-group--error');
+    expect(formGroup).toHaveClass('ttahub-filter-menu-item--error');
+    expect(formGroup).toHaveClass('ttahub-filter-menu-item--error--value');
   });
 
   it('applies the proper date range', async () => {
