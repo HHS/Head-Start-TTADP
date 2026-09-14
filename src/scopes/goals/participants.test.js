@@ -1,3 +1,4 @@
+import { withoutParticipants } from './participants';
 import {
   filtersToScopes,
   Goal,
@@ -51,6 +52,15 @@ describe('goals/participants', () => {
     });
 
     expect(found.length).toBeGreaterThan(0);
+  });
+
+  it('excludes goals that have a matching participant on any activity report', () => {
+    const scope = withoutParticipants(['Other']);
+    const predicate = scope.where[Op.and][0].val;
+
+    expect(predicate).toContain('"Goal"."id" NOT IN');
+    expect(predicate).toContain(' ILIKE ');
+    expect(predicate).not.toContain('NOT ILIKE');
   });
 
   describe('onlyValidParticipants', () => {

@@ -11,6 +11,7 @@ import {
   goalCreatorFilter,
   goalNameFilter,
   grantNumberFilter,
+  participantsFilter,
   reasonsFilter,
   statusFilter,
   topicsFilter,
@@ -235,6 +236,27 @@ describe('goalFilters', () => {
       const input = await screen.findByLabelText('Enter a creator name');
       userEvent.type(input, 'Jane');
       expect(apply).toHaveBeenCalled();
+    });
+  });
+
+  describe('participantsFilter', () => {
+    it('renders correctly', async () => {
+      renderFilter(() => participantsFilter.renderInput('1', 'test', [], () => {}));
+      const input = await screen.findByLabelText('Select participants to filter by');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('calls onApply', async () => {
+      const apply = jest.fn();
+      renderFilter(() => participantsFilter.renderInput('1', 'test', [], apply));
+      const input = await screen.findByLabelText('Select participants to filter by');
+      await selectEvent.select(input, ['HSCO']);
+      expect(apply).toHaveBeenCalled();
+    });
+
+    it('displays the correct query', () => {
+      const q = participantsFilter.displayQuery(['HSCO']);
+      expect(q).toBe('HSCO');
     });
   });
 });

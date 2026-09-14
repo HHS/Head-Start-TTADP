@@ -5,28 +5,43 @@ import { filterSelectProps } from './props';
 const ROLES_MAP = [
   {
     selectValue: 1,
+    value: 'Early Childhood Manager',
+    label: 'Early Childhood Manager (ECM)',
+  },
+  {
+    selectValue: 2,
     value: 'Early Childhood Specialist',
     label: 'Early Childhood Specialist (ECS)',
   },
   {
-    selectValue: 2,
+    selectValue: 3,
     value: 'Family Engagement Specialist',
     label: 'Family Engagement Specialist (FES)',
   },
   {
-    selectValue: 3,
+    selectValue: 4,
     value: 'Grantee Specialist',
     label: 'Grantee Specialist (GS)',
   },
   {
-    selectValue: 4,
+    selectValue: 5,
+    value: 'Grantee Specialist Manager',
+    label: 'Grantee Specialist Manager (GSM)',
+  },
+  {
+    selectValue: 6,
     value: 'Health Specialist',
     label: 'Health Specialist (HS)',
   },
   {
-    selectValue: 5,
+    selectValue: 7,
     value: 'System Specialist',
     label: 'System Specialist (SS)',
+  },
+  {
+    selectValue: 8,
+    value: 'TTAC',
+    label: 'TTAC',
   },
 ];
 
