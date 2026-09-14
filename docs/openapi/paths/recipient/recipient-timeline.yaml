@@ -89,6 +89,14 @@ get:
                     - sourceId
                     - date
                     - eventType
+                    - durationHours
+                    - title
+                    - subtitle
+                    - byline
+                    - indicators
+                    - tags
+                    - details
+                    - links
                   properties:
                     source:
                       type: string
@@ -118,9 +126,117 @@ get:
                         - TTA request
                         - Monitoring report received
                       minLength: 1
+                    durationHours:
+                      type: number
+                      nullable: true
+                      minimum: 0
+                    title:
+                      type: string
+                      minLength: 1
+                    subtitle:
+                      type: string
+                      nullable: true
+                    byline:
+                      type: object
+                      nullable: true
+                      required:
+                        - label
+                        - values
+                      properties:
+                        label:
+                          type: string
+                          minLength: 1
+                        values:
+                          type: array
+                          items:
+                            type: string
+                            minLength: 1
+                    indicators:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - multiRecipient
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - flagged
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          flagged:
+                            type: boolean
+                    details:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - items
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - text
+                              properties:
+                                text:
+                                  type: string
+                                  minLength: 1
+                                link:
+                                  type: string
+                    links:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - to
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          to:
+                            type: string
+                            minLength: 1
+                          external:
+                            type: boolean
           example:
-            count: 0
-            events: []
+            count: 1
+            events:
+              - source: activityReport
+                sourceId: 123
+                date: 2026-05-09
+                eventType: TTA activity
+                durationHours: 5
+                title: TTA activity
+                subtitle: null
+                byline:
+                  label: Specialists
+                  values:
+                    - Isabella Baker, GS
+                indicators: []
+                tags:
+                  - label: New Leaders
+                    flagged: false
+                details:
+                  - label: Delivery method
+                    items:
+                      - text: Virtual
+                  - label: Grant numbers
+                    items:
+                      - text: 14CH012057 - HS
+                links:
+                  - label: View activity report
+                    to: /activity-reports/view/123
     400:
       description: Invalid path or query parameters
     401:
