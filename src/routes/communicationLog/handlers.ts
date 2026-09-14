@@ -8,7 +8,10 @@ import db from '../../models';
 import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
 import filtersToScopes from '../../scopes';
-import { setTrainingAndActivityReportReadRegions, getUserReadRegions } from '../../services/accessValidation';
+import {
+  getUserReadRegions,
+  setTrainingAndActivityReportReadRegions,
+} from '../../services/accessValidation';
 import {
   createLog,
   csvLogsByRecipientAndScopes,

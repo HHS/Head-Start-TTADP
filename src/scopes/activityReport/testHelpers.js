@@ -133,8 +133,24 @@ export const approverRejected = {
 
 export const validTopics = new Set(['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'another topic']);
 
+// Roles the scope tests filter on. Tests must never rely on seed data, so these
+// are created if missing and torn down only when this suite created them.
+export const requiredRoles = [
+  { name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true },
+  { name: 'SS', fullName: 'System Specialist', isSpecialist: true },
+  { name: 'GS', fullName: 'Grants Specialist', isSpecialist: true },
+  { name: 'ECM', fullName: 'Early Childhood Manager', isSpecialist: false },
+  { name: 'GSM', fullName: 'Grantee Specialist Manager', isSpecialist: false },
+  { name: 'TTAC', fullName: 'TTAC', isSpecialist: false },
+];
+
 // Shared test data
-export const sharedTestData = {};
+export const sharedTestData = {
+  // roles keyed by fullName, populated by setupSharedTestData
+  roles: {},
+  // ids of roles this suite created, so teardown leaves pre-existing roles alone
+  createdRoleIds: [],
+};
 
 /**
  * Sets up shared test data used across multiple test files
@@ -182,39 +198,30 @@ export async function setupSharedTestData() {
     }
   );
 
-  // Create roles if they don't exist
-  const granteeSpecialist = await Role.findOne({
-    where: { fullName: 'Grantee Specialist' },
-  });
-  if (!granteeSpecialist) {
-    await Role.create({
-      name: 'GS',
-      fullName: 'Grantee Specialist',
-      isSpecialist: true,
-    });
-  }
+  // Create roles if they don't exist. Roles are seeded with explicit ids, which
+  // leaves the id sequence behind the highest existing id, so an insert that
+  // relies on the sequence collides on the primary key -- allocate ids above the
+  // current max instead. Each role gets its own candidate id so the lookups can
+  // still run in parallel.
+  sharedTestData.roles = {};
+  sharedTestData.createdRoleIds = [];
 
-  const systemSpecialist = await Role.findOne({
-    where: { fullName: 'System Specialist' },
-  });
-  if (!systemSpecialist) {
-    await Role.create({
-      name: 'SS',
-      fullName: 'System Specialist',
-      isSpecialist: true,
-    });
-  }
+  const maxRoleId = (await Role.max('id')) || 0;
 
-  const grantsSpecialist = await Role.findOne({
-    where: { fullName: 'Grants Specialist' },
-  });
-  if (!grantsSpecialist) {
-    await Role.create({
-      name: 'GS',
-      fullName: 'Grants Specialist',
-      isSpecialist: true,
-    });
-  }
+  await Promise.all(
+    requiredRoles.map(async ({ fullName, ...defaults }, index) => {
+      const [role, created] = await Role.findOrCreate({
+        where: { fullName },
+        defaults: { ...defaults, fullName, id: maxRoleId + index + 1 },
+      });
+
+      sharedTestData.roles[fullName] = role;
+
+      if (created) {
+        sharedTestData.createdRoleIds.push(role.id);
+      }
+    })
+  );
 
   jest.spyOn(utils, 'getValidTopicsSet').mockResolvedValue(validTopics);
 }
@@ -250,6 +257,13 @@ export async function tearDownSharedTestData() {
       id: userIds,
     },
   });
+
+  // only remove roles this suite created; pre-existing roles are left in place
+  if (sharedTestData.createdRoleIds.length) {
+    await UserRole.destroy({ where: { roleId: sharedTestData.createdRoleIds } });
+    await Role.destroy({ where: { id: sharedTestData.createdRoleIds } });
+    sharedTestData.createdRoleIds = [];
+  }
 
   await db.sequelize.close();
 }
