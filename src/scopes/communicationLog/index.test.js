@@ -990,7 +990,11 @@ describe('communicationLog filtersToScopes', () => {
       });
 
       it('excludes the newly added specialist roles', () => {
-        const result = withoutRoles(['Early Childhood Manager', 'Grantee Specialist Manager', 'TTAC']);
+        const result = withoutRoles([
+          'Early Childhood Manager',
+          'Grantee Specialist Manager',
+          'TTAC',
+        ]);
         const sql = result.id[Op.notIn].val;
 
         expect(sql).toContain("'Early Childhood Manager'");

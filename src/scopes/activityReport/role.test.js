@@ -290,7 +290,7 @@ describe('role filtersToScopes', () => {
       });
 
       expect(found.map((f) => f.id).sort((a, b) => a - b)).toStrictEqual(
-        [newRoleIds[1], newRoleIds[2], newRoleIds[3]].sort((a, b) => a - b),
+        [newRoleIds[1], newRoleIds[2], newRoleIds[3]].sort((a, b) => a - b)
       );
     });
 
