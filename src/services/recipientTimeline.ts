@@ -225,6 +225,13 @@ const buildTimelineIndexCte = (
   params: TimelineEventIndexParams,
   replacements: Record<string, unknown>
 ) => {
+  // Compare UTC timestamps regardless of the database session timezone. DATE values start
+  // at UTC midnight; timestamps without a timezone are also interpreted as UTC.
+  const utcTimestamp = `CASE
+    WHEN pg_typeof("sourceEvent"."date") = 'timestamp with time zone'::regtype
+      THEN CAST("sourceEvent"."date" AS TIMESTAMP WITH TIME ZONE) AT TIME ZONE 'UTC'
+    ELSE CAST("sourceEvent"."date" AS TIMESTAMP WITHOUT TIME ZONE)
+  END`;
   const sourceQueries = params.sources.map((source, index) => {
     const query = source.buildIndexQuery(params, createSourceBindings(source.name, replacements));
     if (!query.trim()) {
@@ -237,7 +244,8 @@ const buildTimelineIndexCte = (
       SELECT
         CAST(:${sourceKey} AS TEXT) AS "source",
         "sourceEvent"."sourceId",
-        CAST("sourceEvent"."date" AS DATE) AS "date",
+        CAST(${utcTimestamp} AS DATE) AS "date",
+        ${utcTimestamp} AS "occurredAt",
         CAST("sourceEvent"."eventType" AS TEXT) AS "eventType",
         "sourceEvent"."recipientId",
         "sourceEvent"."regionId"
@@ -259,16 +267,17 @@ const buildTimelineIndexCte = (
         "source",
         "sourceId",
         "date",
+        "occurredAt",
         "eventType"
       FROM "timelineSourceEvents"
       WHERE
         "sourceId" IS NOT NULL
         AND "date" IS NOT NULL
         AND "eventType" IS NOT NULL
-      ORDER BY "source", "sourceId", "date", "eventType"
+      ORDER BY "source", "sourceId", "occurredAt", "eventType"
     ),
     "filteredTimelineEvents" AS (
-      SELECT "source", "sourceId", "date", "eventType"
+      SELECT "source", "sourceId", "date", "occurredAt", "eventType"
       FROM "timelineEvents"
       ${sharedFilters}
     )`;
@@ -295,9 +304,9 @@ export async function queryTimelineEventIndex(
   const rows = (await sequelize.query(
     `${cte}
     , "timelinePage" AS (
-      SELECT "source", "sourceId", "date", "eventType"
+      SELECT "source", "sourceId", "date", "occurredAt", "eventType"
       FROM "filteredTimelineEvents"
-      ORDER BY "date" ${safeDirection}, "source" ASC, "sourceId" ASC, "eventType" ASC
+      ORDER BY "occurredAt" ${safeDirection}, "source" ASC, "sourceId" ASC, "eventType" ASC
       LIMIT :timelineLimit
       OFFSET :timelineOffset
     ),
@@ -314,7 +323,7 @@ export async function queryTimelineEventIndex(
     FROM "timelineCount"
     LEFT JOIN "timelinePage" ON TRUE
     ORDER BY
-      "timelinePage"."date" ${safeDirection},
+      "timelinePage"."occurredAt" ${safeDirection},
       "timelinePage"."source" ASC,
       "timelinePage"."sourceId" ASC,
       "timelinePage"."eventType" ASC`,
