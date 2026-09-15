@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.23.2-browsers
+    - image: cimg/node:24.19.0-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.23.2-browsers
+    - image: cimg/node:24.19.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -195,7 +195,6 @@ workflows:
     - run_validation_watchdog:
         target_env: "prod"
         slack_channel: acf-head-start-alerts
-        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
@@ -1631,15 +1630,20 @@ jobs:
           LOG_DIR="${ARTIFACT_DIR}/logs"
           mkdir -p "${LOG_DIR}"
 
+          # report_updates runs right after create_monitoring_goals - not at the
+          # end - so its "Recent Monitoring Updates" log line (the only source of
+          # goal-creation content for the Slack summary) is captured even if
+          # maintain_monitoring_data or validate_monitoring_data fails afterward.
+          # See build_import_summary.sh (write_goal_summary).
           PHASE_NAMES=(
             "download"
             "process"
             "validate_monitoring_gate"
             "update_fact_tables"
             "create_monitoring_goals"
+            "report_updates"
             "maintain_monitoring_data"
             "validate_monitoring_data"
-            "report_updates"
           )
 
           PHASE_COMMANDS=(
@@ -1648,9 +1652,9 @@ jobs:
             "yarn cli:validate-monitoring-gate"
             "yarn cli:updateMonitoringFactTables"
             "yarn cli:create-monitoring-goals"
+            "yarn cli:query-monitoring-data"
             "yarn cli:maintain-monitoring-data"
             "yarn cli:validate-monitoring-data"
-            "yarn cli:query-monitoring-data"
           )
 
           # write initial status file
@@ -1709,18 +1713,39 @@ jobs:
         name: Create monitoring updates summary
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
-          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
+            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt
     - notify_slack:
         step_when: always
         message_text_file: monitoring-updates.txt
         slack_channel: << parameters.slack_channel >>
-        ohs_channel: << parameters.ohs_channel >>
+    - notify_slack:
+        step_when: always
+        # monitoring-ohs-updates.txt already has the OHS_MONITORING_ALERTS_ENABLED
+        # decision baked in (goal-creation only vs. goal-creation + validation
+        # alerts) by build_import_summary.sh, so this posts unconditionally -
+        # empty ohs_channel on non-prod invocations makes it a no-op (notify_slack
+        # skips sending when slack_channel is empty). best_effort: a Slack-side
+        # failure here (bad channel, transient outage) must not fail an otherwise
+        # successful import job. See docs/monitoring-data-validation.md (Channels).
+        message_text_file: monitoring-ohs-updates.txt
+        slack_channel: << parameters.ohs_channel >>
+        best_effort: true
     - store_artifacts:
         when: always
         path: import-artifacts
     - store_artifacts:
         when: always
         path: monitoring-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-goal-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-validation-alerts.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-ohs-updates.txt
     - run:
         when: always
         name: Fail if any import phase failed
@@ -1752,9 +1777,6 @@ jobs:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
-      ohs_channel:
-        type: string
-        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1824,7 +1846,6 @@ jobs:
         step_when: always
         message_text_file: watchdog-summary.txt
         slack_channel: << parameters.slack_channel >>
-        ohs_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: watchdog-artifacts
@@ -2547,6 +2568,10 @@ commands:
         description: "message text_file.  If provided, this will be used instead of message_text"
         type: string
         default: ""
+      best_effort:
+        description: "When true, a Slack API failure (.ok != true) is logged but does not fail the step, instead of the default fatal exit 1."
+        type: boolean
+        default: false
     steps:
     - run:
         when: << parameters.step_when >>
@@ -2572,16 +2597,25 @@ commands:
             --arg channel "<< parameters.slack_channel >>" \
             --arg text "$MESSAGE" \
             '{channel: $channel, text: $text}')
+          # The `|| echo ...` fallback keeps this assignment's exit status 0 even
+          # when curl itself fails (no connection, DNS, timeout) - CircleCI runs
+          # steps with errexit, so without it a transport failure here would exit
+          # the whole step before the .ok check (and best_effort) ever run.
           response=$(curl -s -X POST \
             -H "Authorization: Bearer << parameters.slack_bot_token >>" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "$payload" \
-            https://slack.com/api/chat.postMessage)
-          ok=$(echo $response | jq -r '.ok')
-          error=$(echo $response | jq -r '.error')
+            https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
+          # Same reasoning applies to a non-JSON response (an HTML error page from
+          # a proxy/edge in front of Slack's API): jq's parse failure must not
+          # escape via errexit before the .ok check runs either.
+          ok=$(echo $response | jq -r '.ok' 2>/dev/null || echo 'false')
+          error=$(echo $response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
-            exit 1
+            if [ "<< parameters.best_effort >>" != "true" ]; then
+              exit 1
+            fi
           else
             echo "Slack notification sent successfully"
           fi
@@ -2604,9 +2638,11 @@ commands:
               -H "Authorization: Bearer << parameters.slack_bot_token >>" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data "$ohs_payload" \
-              https://slack.com/api/chat.postMessage)
-            if [ "$(echo $ohs_response | jq -r '.ok')" != "true" ]; then
-              echo "OHS Slack notification failed: $(echo $ohs_response | jq -r '.error')"
+              https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
+            ohs_ok=$(echo $ohs_response | jq -r '.ok' 2>/dev/null || echo 'false')
+            ohs_error=$(echo $ohs_response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
+            if [ "$ohs_ok" != "true" ]; then
+              echo "OHS Slack notification failed: $ohs_error"
             else
               echo "OHS Slack notification sent successfully"
             fi

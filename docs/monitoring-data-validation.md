@@ -52,12 +52,14 @@ download
   -> validate_monitoring_gate     <-- gate process; a nonzero exit stops the process chain before fact table refresh
   -> update_fact_tables
   -> create_monitoring_goals
+  -> report_updates                <-- reads what create_monitoring_goals just wrote; kept here, not last, so its content survives a later phase failing
   -> maintain_monitoring_data
   -> validate_monitoring_data     <-- post-refresh process; never pauses the import
-  -> report_updates
 ```
 
 The gate sits between `process` and `update_fact_tables`, so pausing there holds the refresh and every phase after it, leaving the previous day's data live. The post-refresh process runs late, after the refresh, and only records and alerts.
+
+`report_updates` (`cli:query-monitoring-data`) queries which monitoring goals were just created - it reads only `Goals`/`Grants`/`Recipients`/`MonitoringReviews`, nothing `maintain_monitoring_data` or `validate_monitoring_data` touch. Running it immediately after `create_monitoring_goals`, rather than as the pipeline's last phase, means its "Recent Monitoring Updates" log line exists whenever goals were created, even if one of the two phases after it fails - see [Channels](#reporting-and-acting-on-results) for how that log line then reaches `GOAL_FILE` independent of overall pipeline success.
 
 ## The post-refresh process
 
@@ -111,7 +113,7 @@ Two subtleties in `findings_mass_source_deletion`:
 
 A raised alert reaches people through one chain, and the decision to block the fact-table refresh is a separate, caller-side step.
 
-**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain *why* it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a summary — always appending the gate's result last, so a critical is in the summary regardless of the run's outcome → `notify_slack` posts the summary to the configured channel.
+**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain *why* it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a goal-creation body and a validation/gate body, combines them into the base channel's summary, and (for `run_import_job`) separately decides what the OHS channel gets → `notify_slack` posts each resulting file to its channel (see Channels, below, for which file goes where and when).
 
 **Acting on the result.** `severity` is what separates a condition that merely needs attention from one that should block the fact-table refresh. The runner only *counts* criticals; each caller decides what to do with the count:
 
@@ -133,20 +135,22 @@ A gate **execution error** (DB blip, bad SQL, timeout) is not a detected critica
 
 Because report-only is the default, enabling enforcement needs no code change. Like `ENABLE_MONITORING_GOAL_CREATION`, `MONITORING_GATE_HALT_CHECKS` is declared in `manifest.yml` and set per environment in `deployment_config/<env>_vars.yml` (the `PROD_GATE_HALT_CHECKS` / `DEV_GATE_HALT_CHECKS` / `STAGING_GATE_HALT_CHECKS` CircleCI vars) — set one to e.g. `findings_mass_source_deletion` for a single check, or `all`. Keeping the decision in the CLI — not in the runner or the checks — is what lets the same checks feed both the report-only observation and the enforced gate.
 
-**Channels.** The routine summary, with all alerts including criticals, always goes to a base channel chosen by environment. The OHS contractor–customer channel receives the **same** summary only when it is explicitly enabled:
+**Channels.** The base channel (`acf-head-start-alerts` in prod, `acf-head-start-alerts-lower` in staging/dev — the `run_import_job` / `run_validation_watchdog` `slack_channel` param) always gets the full routine summary, including every critical, report-only or blocking. The OHS contractor–customer channel (`acf-ohs-ttahub--contractor-customer-team`) is reached differently by the two jobs that know about it:
 
-| Destination | Gets | When |
+| Job | OHS gets | When |
 |---|---|---|
-| `acf-head-start-alerts` (prod) / `acf-head-start-alerts-lower` (staging/dev) | the routine import/validation summary, including every critical (report-only or blocking) | always |
-| `acf-ohs-ttahub--contractor-customer-team` | a mirror of that same summary | only while `OHS_MONITORING_ALERTS_ENABLED` is truthy |
+| `run_import_job` (the daily import) | goal-creation content always; validation + gate alerts mixed in **too** | alerts only while `OHS_MONITORING_ALERTS_ENABLED` is truthy — goal creation is unconditional |
+| `run_validation_watchdog` | nothing | never — it has no `ohs_channel` param at all, so `OHS_MONITORING_ALERTS_ENABLED` has no effect on it. Its "did validation run" check is operational, not goal-creation content, so it stays out of the contractor channel entirely. |
 
-`OHS_MONITORING_ALERTS_ENABLED` is a single on/off switch for the whole validation system's access to the OHS contractor–customer channel; it defaults **off**, so nothing reaches that channel and all output stays in the internal `acf-head-start-alerts` / `-lower` channel. It pairs with `MONITORING_GATE_HALT_CHECKS` (which governs whether a critical blocks the refresh) — two independent switches: one controls *what blocks*, the other controls *who is told*.
+`OHS_MONITORING_ALERTS_ENABLED` is a single on/off switch for the validation system's *alerts* reaching the OHS contractor–customer channel; it defaults **off**. It pairs with `MONITORING_GATE_HALT_CHECKS` (which governs whether a critical blocks the refresh) — two independent switches: one controls *what blocks*, the other controls *who is told about alerts*. It does not gate goal-creation content in `run_import_job` — that channel is meant to always hear about new monitoring goals, alerts or no alerts.
 
-How it is wired:
+How `run_import_job` is wired: `build_import_summary.sh` builds the goal-creation body and the validation+gate body separately (`GOAL_FILE` / `ALERTS_FILE`), concatenates them into `monitoring-updates.txt` for the base channel exactly as before, and separately writes `monitoring-ohs-updates.txt` — `GOAL_FILE` alone, or `GOAL_FILE` + `ALERTS_FILE` when `OHS_MONITORING_ALERTS_ENABLED` is truthy (the script reads the env var itself, the same truthy parsing `notify_slack` uses). `.circleci/config.yml` then posts `monitoring-updates.txt` to `slack_channel` and `monitoring-ohs-updates.txt` to `ohs_channel` as two independent, unconditional `notify_slack` calls — the OHS-vs-not decision is already baked into which file was built, not into a runtime mirror gate. `ohs_channel` is only passed by the prod workflow invocation, so a lower environment can never reach the contractor channel (an empty `slack_channel` makes `notify_slack` a no-op). `build_import_summary.sh` still appends the gate's result unconditionally to `ALERTS_FILE` — success, a gate block, or an unrelated later-phase failure — so once the switch is on, a critical always reaches the OHS channel too, not only the base one.
 
-- The base channel is the `run_import_job` / `run_validation_watchdog` `slack_channel` param (`acf-head-start-alerts` for the prod cron, `acf-head-start-alerts-lower` for manual/lower runs).
-- `build_import_summary.sh` appends the gate's result to every summary — success, a gate block, or an unrelated later-phase failure — so a critical always reaches the channel, not only the `Monitoring Gate: {…}` log line. The critical data condition is the headline; whether it blocked the refresh is a clause on it. The benign "no critical / no result" confirmations appear only on success, so a failure unrelated to data isn't given confusing validation commentary.
-- The `notify_slack` command posts to the base channel and, when its `ohs_channel` param is non-empty **and** `OHS_MONITORING_ALERTS_ENABLED` is truthy, mirrors the same message there. `ohs_channel` is only passed by the prod workflow invocations, so a lower environment can never reach the contractor channel even if the env var were set — two independent guards.
+On a pipeline **failure**, `write_goal_summary` runs first, unconditionally: if `report_updates` already produced its log line - true whenever `create_monitoring_goals` and `report_updates` both completed, regardless of what failed afterward - `GOAL_FILE` holds the real goal-creation content, not a generic failure message. The failure message itself then goes into `ALERTS_FILE` instead of `GOAL_FILE` whenever `GOAL_FILE` already holds real content, or the failed phase is `validate_monitoring_gate`/`validate_monitoring_data` (a gate execution error, or the post-refresh validation itself erroring, is just as much alert content as a threshold check firing). Only a failure that happens before `report_updates` has run (`download`, `process`, `validate_monitoring_gate`, `update_fact_tables`, or `create_monitoring_goals` itself) - where there is no real goal-creation content to report yet - puts the generic failure message into `GOAL_FILE`. The base channel sees the failure either way (`SUMMARY_FILE` is still both files combined); only the OHS routing differs.
+
+The OHS post passes `notify_slack`'s `best_effort: true` param: a Slack-side failure there (bad channel, transient API outage) is logged but does not fail the step. The base-channel post keeps the default fatal behavior. This matters because the base and OHS posts are two separate, sequential `notify_slack` steps — without `best_effort` on the OHS one, a Slack failure posting to the contractor channel would fail the whole `run_import_job` CircleCI job even though the import itself succeeded and the base channel was notified.
+
+`run_validation_watchdog` never reaches the OHS channel: its `notify_slack` call passes no `ohs_channel`, so there's nothing for `OHS_MONITORING_ALERTS_ENABLED` to gate. It only ever posts to the base channel.
 
 **The watchdog.** `checkMonitoringValidationRan.ts` (`cli:check-monitoring-validation-ran`) runs on a **separate** schedule a few hours after the import cron, so it can catch the case where the validation — or the whole cron — never fired. It resolves the current [cycle](#architecture) (`getMonitoringImportCycle`) and looks for a `monitoring_post_refresh` run for that cycle's `import_id`, reporting `ok`, `run failed`, `run incomplete` (stuck at `started`), `no validation run for the current import cycle`, or `latest processed import is stale` (the cycle itself is too old). A day with no new processed import stays `ok` (nothing new to validate). This is why the run row is committed as `started` before any work.
 
@@ -270,7 +274,7 @@ Split logic that different future consumers will use (e.g. anomaly-detection mod
 
 ## Example Slack notifications
 
-What `build_import_summary.sh` posts in the main scenarios (the ``` are literal — Slack renders them as code fences). Criticals always appear; benign gate confirmations only on success.
+What `build_import_summary.sh` posts in the main scenarios (the ``` are literal — Slack renders them as code fences). Criticals always appear; benign gate confirmations only on success. Unless noted otherwise, these are the **base channel**'s message (`monitoring-updates.txt` — goal-creation body + validation/gate body, always combined); see [Channels](#reporting-and-acting-on-results) for how the OHS channel's message can differ.
 
 **Successful import** — new goals, plus a report-only critical that did not block:
 
@@ -316,6 +320,26 @@ Monitoring Gate: did not complete, data was not validated (as of 2026-08-29 06:0
 ~~~
 Monitoring job failure: ```
 Error: downstream system unavailable
+```
+~~~
+
+**OHS channel** (`monitoring-ohs-updates.txt`) for the same successful-import scenario above — goal creation is always included; the validation/gate section only appears while `OHS_MONITORING_ALERTS_ENABLED` is truthy:
+
+~~~
+# OHS_MONITORING_ALERTS_ENABLED off (the default) - goal creation only:
+Monitoring Updates: ```
+New Goals: Example Recipient Alpha (Region 1)
+```
+
+# OHS_MONITORING_ALERTS_ENABLED on - identical to the base channel's message:
+Monitoring Updates: ```
+New Goals: Example Recipient Alpha (Region 1)
+```
+Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT): ```
+Region 5 created no monitoring reviews in the last four complete weeks
+```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
 ~~~
 
