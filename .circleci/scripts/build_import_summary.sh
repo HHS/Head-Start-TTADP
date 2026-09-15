@@ -247,6 +247,21 @@ write_failure_summary() {
   fi
 
   failure_message=$(extract_failure_message "$failed_phase")
+
+  # A failure in either validation phase (a gate execution error, or the
+  # post-refresh validation itself erroring) is alert-class information, not
+  # goal-creation content - it goes into ALERTS_FILE like every other
+  # validation signal, so it stays behind OHS_MONITORING_ALERTS_ENABLED
+  # instead of riding GOAL_FILE, which OHS always gets.
+  if [[ "$failed_phase" == "validate_monitoring_gate" || "$failed_phase" == "validate_monitoring_data" ]]; then
+    {
+      printf 'Monitoring job failure: ```\n'
+      printf '%s\n' "$failure_message"
+      printf '```'
+    } >> "$ALERTS_FILE"
+    return
+  fi
+
   {
     printf 'Monitoring job failure: ```\n'
     printf '%s\n' "$failure_message"

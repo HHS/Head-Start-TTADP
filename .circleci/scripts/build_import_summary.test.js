@@ -531,4 +531,89 @@ describe('build_import_summary.sh', () => {
         'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT)\n'
     );
   });
+
+  it('keeps a validate_monitoring_data failure out of the OHS file (goal-creation only) while the base channel still sees it', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-data-fail-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-validate_monitoring_data-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              logFile: path.join(logDir, 'phase-validate_monitoring_data.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Task import-validate_monitoring_data-prod-1 status: RUNNING\nError: connection terminated unexpectedly\nPHASE_FAILURE validate_monitoring_data exit 1\n'
+    );
+
+    const { goalFile, alertsFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '6', {
+      OHS_MONITORING_ALERTS_ENABLED: '',
+    });
+
+    // The failure is validation-class content, not goal-creation content.
+    expect(fs.readFileSync(goalFile, 'utf-8')).toBe('');
+    expect(fs.readFileSync(alertsFile, 'utf-8')).toBe(
+      'Monitoring job failure: ```\nError: connection terminated unexpectedly\n```'
+    );
+    // OHS (switch off) gets nothing - there is no goal-creation content to send.
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toBe('');
+    // The base channel is unaffected: it still sees the failure.
+    expect(fs.readFileSync(summaryFile, 'utf-8')).toBe(
+      'Monitoring job failure: ```\nError: connection terminated unexpectedly\n```'
+    );
+  });
+
+  it('keeps a gate execution-error failure out of the OHS file, same as a validate_monitoring_data failure', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-gate-error-ohs-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-validate_monitoring_gate-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              logFile: path.join(logDir, 'phase-validate_monitoring_gate.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_gate.log'),
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+    );
+
+    const { goalFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '6', {
+      OHS_MONITORING_ALERTS_ENABLED: '',
+    });
+
+    expect(fs.readFileSync(goalFile, 'utf-8')).toBe('');
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toBe('');
+    // Base channel still gets it, same as before this check existed.
+    expect(fs.readFileSync(summaryFile, 'utf-8')).toContain('Monitoring job failure:');
+  });
 });
