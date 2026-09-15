@@ -1,6 +1,59 @@
 import { NOTIFICATION_CONFIGURATION, NOTIFICATION_TYPES } from './constants';
 
 describe('NOTIFICATION_CONFIGURATION', () => {
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR];
+    it('textFn interpolates author', () => {
+      expect(config.textFn({ author: 'Alice' })).toBe(
+        'Alice has submitted a revised Activity Report for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR];
+
+    it('textFn interpolates author', () => {
+      expect(config.textFn({ author: 'Alice' })).toBe(
+        'Alice has submitted an Activity Report for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED];
 
