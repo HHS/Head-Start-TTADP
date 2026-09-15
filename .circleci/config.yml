@@ -2592,11 +2592,15 @@ commands:
             --arg channel "<< parameters.slack_channel >>" \
             --arg text "$MESSAGE" \
             '{channel: $channel, text: $text}')
+          # The `|| echo ...` fallback keeps this assignment's exit status 0 even
+          # when curl itself fails (no connection, DNS, timeout) - CircleCI runs
+          # steps with errexit, so without it a transport failure here would exit
+          # the whole step before the .ok check (and best_effort) ever run.
           response=$(curl -s -X POST \
             -H "Authorization: Bearer << parameters.slack_bot_token >>" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "$payload" \
-            https://slack.com/api/chat.postMessage)
+            https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
           ok=$(echo $response | jq -r '.ok')
           error=$(echo $response | jq -r '.error')
           if [ "$ok" != "true" ]; then
@@ -2626,7 +2630,7 @@ commands:
               -H "Authorization: Bearer << parameters.slack_bot_token >>" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data "$ohs_payload" \
-              https://slack.com/api/chat.postMessage)
+              https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
             if [ "$(echo $ohs_response | jq -r '.ok')" != "true" ]; then
               echo "OHS Slack notification failed: $(echo $ohs_response | jq -r '.error')"
             else
