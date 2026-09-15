@@ -7,6 +7,7 @@ import type {
   NotificationModel,
   NotificationScope,
   NotificationType,
+  NotificationUserStateAttributes,
   NotificationUserStateModel,
   NotificationWithState,
 } from '../types/notifications';
@@ -582,7 +583,7 @@ async function getNotifications(
 
       const plain = notification.get({ plain: true }) as NotificationWithState;
       plain.userState = userState
-        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        ? (userState.get({ plain: true }) as NotificationUserStateAttributes)
         : null;
       plain.viewedAt = userState?.viewedAt ?? null;
       plain.archivedAt = userState?.archivedAt ?? null;
