@@ -65,6 +65,16 @@ workflows:
         filters: &branch_build_filters
           tags:
             ignore: /.*/
+          branches:
+            ignore:
+            - mh/yarn4-poc
+    - yarn4_poc_build:
+        filters:
+          tags:
+            ignore: /.*/
+          branches:
+            only:
+            - mh/yarn4-poc
     - checkpoint:
         name: build_done
         requires:
@@ -360,6 +370,41 @@ workflows:
 # ----------------- Jobs -----------------
 
 jobs:
+  yarn4_poc_build:
+    executor: docker-executor
+    resource_class: large
+    steps:
+    - checkout
+    - run:
+        name: Enable Corepack
+        command: |
+          corepack enable
+          yarn --version
+    - run:
+        name: Install dependencies
+        no_output_timeout: 20m
+        command: |
+          yarn deps
+          yarn --cwd packages/common install --immutable
+          yarn --cwd ops/terraform/circleci install --immutable
+    - run:
+        name: Ensure directories exist
+        command: mkdir -p reports frontend/reports frontend/lint-reports
+    - run:
+        name: Build backend
+        command: yarn build
+    - run:
+        name: Build frontend
+        command: yarn --cwd frontend run build
+    - run:
+        name: Run lint
+        command: |
+          yarn lint:ci
+          cat reports/lint.json
+    - run:
+        name: Note audit exclusion
+        command: echo "Yarn 4 POC excludes dependency audit until tools/run-yarn-audit.js is migrated to yarn npm audit."
+
   build_and_lint:
     executor: docker-executor
     resource_class: large

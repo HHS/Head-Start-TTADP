@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform",
   "main": "index.js",
   "private": true,
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@4.9.2+sha512.1fc009bc09d13cfd0e19efa44cbfc2b9cf6ca61482725eb35bbc5e257e093ebf4130db6dfe15d604ff4b79efd8e1e8e99b25fa7d0a6197c9f9826358d4d65c3c",
   "engines": {
     "node": "24.19.0"
   },
@@ -21,7 +21,7 @@
     "start:testingonly": "node ./build/server/src/testingOnly.js",
     "deps": "yarn deps:frozen",
     "deps:install": "yarn install && yarn --cwd frontend install",
-    "deps:frozen": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
+    "deps:frozen": "yarn install --immutable && yarn --cwd frontend install --immutable",
     "deps:audit": "./tools/run-yarn-audit.js && cd frontend && ../tools/run-yarn-audit.js",
     "security:sca:baseline": "node ./tools/security-findings.js build-sca-baselines",
     "security:register:seed": "node ./tools/security-findings.js seed-register",
