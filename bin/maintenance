@@ -12,7 +12,7 @@ environment=
 help() {
     echo "Usage: maintenance [options...]"
     echo "  -m, --maintenance-mode  boolean value that controls whether maintenance mode is turned on or off. Default is off"
-    echo "  -e, --environment       specifies which environment the script is run on. Options are prod, staging, dev, or sandbox. Default is prod"
+    echo "  -e, --environment       specifies which environment the script is run on. Options are prod, staging, or dev. Default is prod"
     echo "  -h, --help              show this help text"
 }
 
