@@ -96,6 +96,8 @@ This preserves the installation layout expected by the application's existing to
 
 The migration scope includes the root backend, frontend, `packages/common`, and `ops/terraform/circleci` package roots and their lockfiles. It will pin Yarn through Corepack or a project-local Yarn release where Yarn is executed, regenerate and validate each in-scope lockfile, and update CI, Docker, deployment, cache-recovery, publishing, and audit commands for Yarn 4. This includes the `yarn --cwd ./packages/common publish` workflow. Existing `resolutions` entries will be retained where supported and validated against the regenerated lockfiles.
 
+The migration must verify Yarn 4 in a cloud.gov staging deployment. This includes confirming that the Node.js buildpack supports the selected Node.js and Yarn versions, honors the repository's Yarn configuration, authenticates to the private npm registry, completes immutable installation, and successfully starts the web and worker processes. The buildpack reference is currently unpinned and remains a separate infrastructure risk documented in ADR 0029.
+
 The migration will not change dependency-audit severity thresholds or the policy for blocking pull requests. Those changes require separate implementation and validation of the scheduled SCA workflow described in [ADR 0027](0027-security-findings-register.md).
 
 ## Consequences
