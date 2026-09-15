@@ -41,6 +41,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      raw_history_status: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       latest_review_start: {
         type: DataTypes.DATEONLY,
         allowNull: true,

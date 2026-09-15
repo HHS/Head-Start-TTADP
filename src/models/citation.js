@@ -158,6 +158,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
+      latest_raw_history_status: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       latest_goal_closure: {
         type: DataTypes.DATE,
         allowNull: true,
