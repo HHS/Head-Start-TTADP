@@ -94,7 +94,7 @@ This preserves the installation layout expected by the application's existing to
 
 ### Migration requirements
 
-The migration will pin Yarn through Corepack or a project-local Yarn release, regenerate and validate backend and frontend lockfiles, and update CI, Docker, deployment, cache-recovery, publishing, and audit commands for Yarn 4. Existing `resolutions` entries will be retained where supported and validated against the regenerated lockfiles.
+The migration scope includes the root backend, frontend, `packages/common`, and `ops/terraform/circleci` package roots and their lockfiles. It will pin Yarn through Corepack or a project-local Yarn release where Yarn is executed, regenerate and validate each in-scope lockfile, and update CI, Docker, deployment, cache-recovery, publishing, and audit commands for Yarn 4. This includes the `yarn --cwd ./packages/common publish` workflow. Existing `resolutions` entries will be retained where supported and validated against the regenerated lockfiles.
 
 The migration will not change dependency-audit severity thresholds or the policy for blocking pull requests. Those changes require separate implementation and validation of the scheduled SCA workflow described in ADR 0027.
 
@@ -102,4 +102,4 @@ The migration will not change dependency-audit severity thresholds or the policy
 
 Yarn 4 provides a maintained, reproducible package-management toolchain with pinned tooling and immutable installs. It retains the current `resolutions` model and Yarn-oriented commands, reducing the scope of changes compared with a move to npm. The migration also enables replacement of the Yarn Classic-specific audit parser and supports future workspace and dependency-update automation improvements.
 
-The migration requires coordinated updates to lockfiles, CI, Docker, deployment, publishing, and audit tooling. Developers and CI environments must use the pinned Yarn 4 version; stale Yarn Classic installations will not be supported. The audit integration must be validated against Yarn 4 output, and its enforcement policy remains separate work so the migration does not inadvertently reduce security coverage.
+The migration requires coordinated updates to the root backend, frontend, `packages/common`, and `ops/terraform/circleci` lockfiles and related CI, Docker, deployment, publishing, and audit tooling. Developers and CI environments must use the pinned Yarn 4 version; stale Yarn Classic installations will not be supported. The audit integration must be validated against Yarn 4 output, and its enforcement policy remains separate work so the migration does not inadvertently reduce security coverage.
