@@ -253,6 +253,7 @@ class Citations{
  latest_determination : text
  latest_goal_closure : timestamp with time zone
  latest_narrative : text
+ latest_raw_history_status : text
  latest_report_delivery_date : date
  latest_review_uuid : text
  raw_finding_type : text
@@ -426,6 +427,7 @@ class DeliveredReviewCitations{
  determination : text
  latest_review_end : date
  latest_review_start : date
+ raw_history_status : text
 }
 
 class DeliveredReviews{
