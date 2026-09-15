@@ -52,12 +52,14 @@ download
   -> validate_monitoring_gate     <-- gate process; a nonzero exit stops the process chain before fact table refresh
   -> update_fact_tables
   -> create_monitoring_goals
+  -> report_updates                <-- reads what create_monitoring_goals just wrote; kept here, not last, so its content survives a later phase failing
   -> maintain_monitoring_data
   -> validate_monitoring_data     <-- post-refresh process; never pauses the import
-  -> report_updates
 ```
 
 The gate sits between `process` and `update_fact_tables`, so pausing there holds the refresh and every phase after it, leaving the previous day's data live. The post-refresh process runs late, after the refresh, and only records and alerts.
+
+`report_updates` (`cli:query-monitoring-data`) queries which monitoring goals were just created - it reads only `Goals`/`Grants`/`Recipients`/`MonitoringReviews`, nothing `maintain_monitoring_data` or `validate_monitoring_data` touch. Running it immediately after `create_monitoring_goals`, rather than as the pipeline's last phase, means its "Recent Monitoring Updates" log line exists whenever goals were created, even if one of the two phases after it fails - see [Channels](#reporting-and-acting-on-results) for how that log line then reaches `GOAL_FILE` independent of overall pipeline success.
 
 ## The post-refresh process
 
@@ -144,7 +146,7 @@ Because report-only is the default, enabling enforcement needs no code change. L
 
 How `run_import_job` is wired: `build_import_summary.sh` builds the goal-creation body and the validation+gate body separately (`GOAL_FILE` / `ALERTS_FILE`), concatenates them into `monitoring-updates.txt` for the base channel exactly as before, and separately writes `monitoring-ohs-updates.txt` — `GOAL_FILE` alone, or `GOAL_FILE` + `ALERTS_FILE` when `OHS_MONITORING_ALERTS_ENABLED` is truthy (the script reads the env var itself, the same truthy parsing `notify_slack` uses). `.circleci/config.yml` then posts `monitoring-updates.txt` to `slack_channel` and `monitoring-ohs-updates.txt` to `ohs_channel` as two independent, unconditional `notify_slack` calls — the OHS-vs-not decision is already baked into which file was built, not into a runtime mirror gate. `ohs_channel` is only passed by the prod workflow invocation, so a lower environment can never reach the contractor channel (an empty `slack_channel` makes `notify_slack` a no-op). `build_import_summary.sh` still appends the gate's result unconditionally to `ALERTS_FILE` — success, a gate block, or an unrelated later-phase failure — so once the switch is on, a critical always reaches the OHS channel too, not only the base one.
 
-On a pipeline **failure**, which file gets the failure message depends on which phase failed: a failure in `validate_monitoring_gate` or `validate_monitoring_data` goes into `ALERTS_FILE`, since it's validation-class information regardless of whether it was a detected critical (a gate execution error and a post-refresh validation error are just as much alert content as a threshold check firing); a failure in any other phase (`download`, `process`, `update_fact_tables`, `create_monitoring_goals`, `maintain_monitoring_data`, `report_updates`) goes into `GOAL_FILE`. The base channel sees the failure either way (`SUMMARY_FILE` is still both files combined); only the OHS routing differs.
+On a pipeline **failure**, `write_goal_summary` runs first, unconditionally: if `report_updates` already produced its log line - true whenever `create_monitoring_goals` and `report_updates` both completed, regardless of what failed afterward - `GOAL_FILE` holds the real goal-creation content, not a generic failure message. The failure message itself then goes into `ALERTS_FILE` instead of `GOAL_FILE` whenever `GOAL_FILE` already holds real content, or the failed phase is `validate_monitoring_gate`/`validate_monitoring_data` (a gate execution error, or the post-refresh validation itself erroring, is just as much alert content as a threshold check firing). Only a failure that happens before `report_updates` has run (`download`, `process`, `validate_monitoring_gate`, `update_fact_tables`, or `create_monitoring_goals` itself) - where there is no real goal-creation content to report yet - puts the generic failure message into `GOAL_FILE`. The base channel sees the failure either way (`SUMMARY_FILE` is still both files combined); only the OHS routing differs.
 
 The OHS post passes `notify_slack`'s `best_effort: true` param: a Slack-side failure there (bad channel, transient API outage) is logged but does not fail the step. The base-channel post keeps the default fatal behavior. This matters because the base and OHS posts are two separate, sequential `notify_slack` steps — without `best_effort` on the OHS one, a Slack failure posting to the contractor channel would fail the whole `run_import_job` CircleCI job even though the import itself succeeded and the base channel was notified.
 

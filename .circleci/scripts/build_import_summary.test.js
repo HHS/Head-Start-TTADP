@@ -616,4 +616,67 @@ describe('build_import_summary.sh', () => {
     // Base channel still gets it, same as before this check existed.
     expect(fs.readFileSync(summaryFile, 'utf-8')).toContain('Monitoring job failure:');
   });
+
+  it('still reports real goal-creation content to OHS when a later phase (maintain_monitoring_data) fails after report_updates already ran', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-later-fail-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    // report_updates (phase 6) succeeded before maintain_monitoring_data (phase
+    // 7) failed - this is the order after moving report_updates up next to
+    // create_monitoring_goals.
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-report_updates-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-report_updates.log'),
+            },
+            {
+              taskName: 'import-maintain_monitoring_data-prod-1',
+              status: 'FAILED',
+              exitCode: 1,
+              logFile: path.join(logDir, 'phase-maintain_monitoring_data.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-report_updates.log'),
+      'Recent Monitoring Updates: [{"recipient":"New Goals: Example Recipient Alpha","region":1}]\n'
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-maintain_monitoring_data.log'),
+      'Task import-maintain_monitoring_data-prod-1 status: RUNNING\nError: maintenance query timed out\nPHASE_FAILURE maintain_monitoring_data exit 1\n'
+    );
+
+    const { goalFile, alertsFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '8', {
+      OHS_MONITORING_ALERTS_ENABLED: '',
+    });
+
+    // GOAL_FILE holds the real goal listing, not a generic failure message.
+    expect(fs.readFileSync(goalFile, 'utf-8')).toBe(
+      'Monitoring Updates: ```\nNew Goals: Example Recipient Alpha (Region 1)\n```\n'
+    );
+    // The failure itself is downstream of goal creation, so it's alert-class
+    // content now, not goal-creation content.
+    expect(fs.readFileSync(alertsFile, 'utf-8')).toBe(
+      'Monitoring job failure: ```\nError: maintenance query timed out\n```'
+    );
+    // OHS (switch off) still gets the goal-creation content, unconditionally.
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toBe(fs.readFileSync(goalFile, 'utf-8'));
+    // The base channel sees both: the goals and the operational failure.
+    expect(fs.readFileSync(summaryFile, 'utf-8')).toBe(
+      fs.readFileSync(goalFile, 'utf-8') + fs.readFileSync(alertsFile, 'utf-8')
+    );
+  });
 });

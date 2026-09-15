@@ -211,33 +211,36 @@ append_gate_summary() {
   printf 'Monitoring Gate: no result found\n' >> "$ALERTS_FILE"
 }
 
-write_success_summary() {
+# Parses report_log's "Recent Monitoring Updates" line into GOAL_FILE. report_updates
+# runs right after create_monitoring_goals (not at the end), so this log exists -
+# and reflects real goal-creation content - whenever goals were queried, even if
+# maintain_monitoring_data or validate_monitoring_data fails afterward. Returns 1
+# (leaving GOAL_FILE untouched) only when report_log itself is missing, i.e.
+# report_updates never ran: the caller falls back to a generic failure message.
+write_goal_summary() {
   local results
   local json_data
   local goals
 
-  if [[ -f "$report_log" ]]; then
-    results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
-    if [[ -n "$results" ]]; then
-      json_data=${results#*:}
-      goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", (.region | tostring), ")\n"' 2>/dev/null || true)
-      if [[ -n "$goals" ]]; then
-        {
-          printf 'Monitoring Updates: ```\n'
-          printf '%s\n' "$goals"
-          printf '```\n'
-        } > "$GOAL_FILE"
-        append_validation_summary
-        return
-      fi
-    fi
-  fi
+  [[ -f "$report_log" ]] || return 1
+  results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
+  [[ -n "$results" ]] || return 1
 
-  printf 'Monitoring Updates: none\n' > "$GOAL_FILE"
-  append_validation_summary
+  json_data=${results#*:}
+  goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", (.region | tostring), ")\n"' 2>/dev/null || true)
+  if [[ -n "$goals" ]]; then
+    {
+      printf 'Monitoring Updates: ```\n'
+      printf '%s\n' "$goals"
+      printf '```\n'
+    } > "$GOAL_FILE"
+  else
+    printf 'Monitoring Updates: none\n' > "$GOAL_FILE"
+  fi
 }
 
 write_failure_summary() {
+  local goal_content_known="$1"
   local failure_message
 
   # A gate block is not a generic failure: skip the failure body and let the gate
@@ -248,12 +251,14 @@ write_failure_summary() {
 
   failure_message=$(extract_failure_message "$failed_phase")
 
-  # A failure in either validation phase (a gate execution error, or the
-  # post-refresh validation itself erroring) is alert-class information, not
-  # goal-creation content - it goes into ALERTS_FILE like every other
-  # validation signal, so it stays behind OHS_MONITORING_ALERTS_ENABLED
-  # instead of riding GOAL_FILE, which OHS always gets.
-  if [[ "$failed_phase" == "validate_monitoring_gate" || "$failed_phase" == "validate_monitoring_data" ]]; then
+  # Route to ALERTS_FILE, not GOAL_FILE, whenever GOAL_FILE already holds real
+  # goal-creation content (write_goal_summary succeeded - a later phase failed
+  # after report_updates already ran) or the failed phase is itself one of the
+  # two validation phases (a gate execution error, or the post-refresh
+  # validation erroring). Either way this is downstream/operational
+  # information, not goal-creation content, so it stays behind
+  # OHS_MONITORING_ALERTS_ENABLED like every other non-goal signal.
+  if [[ "$goal_content_known" == "true" || "$failed_phase" == "validate_monitoring_gate" || "$failed_phase" == "validate_monitoring_data" ]]; then
     {
       printf 'Monitoring job failure: ```\n'
       printf '%s\n' "$failure_message"
@@ -271,10 +276,13 @@ write_failure_summary() {
 
 : > "$GOAL_FILE"
 : > "$ALERTS_FILE"
+goal_content_known=false
+write_goal_summary && goal_content_known=true
 if [[ "$overall_status" == "SUCCEEDED" ]]; then
-  write_success_summary
+  [[ "$goal_content_known" == "true" ]] || printf 'Monitoring Updates: none\n' > "$GOAL_FILE"
+  append_validation_summary
 else
-  write_failure_summary
+  write_failure_summary "$goal_content_known"
 fi
 # Always report the gate result, so a critical always reaches the channel.
 append_gate_summary

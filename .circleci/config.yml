@@ -1630,15 +1630,20 @@ jobs:
           LOG_DIR="${ARTIFACT_DIR}/logs"
           mkdir -p "${LOG_DIR}"
 
+          # report_updates runs right after create_monitoring_goals - not at the
+          # end - so its "Recent Monitoring Updates" log line (the only source of
+          # goal-creation content for the Slack summary) is captured even if
+          # maintain_monitoring_data or validate_monitoring_data fails afterward.
+          # See build_import_summary.sh (write_goal_summary).
           PHASE_NAMES=(
             "download"
             "process"
             "validate_monitoring_gate"
             "update_fact_tables"
             "create_monitoring_goals"
+            "report_updates"
             "maintain_monitoring_data"
             "validate_monitoring_data"
-            "report_updates"
           )
 
           PHASE_COMMANDS=(
@@ -1647,9 +1652,9 @@ jobs:
             "yarn cli:validate-monitoring-gate"
             "yarn cli:updateMonitoringFactTables"
             "yarn cli:create-monitoring-goals"
+            "yarn cli:query-monitoring-data"
             "yarn cli:maintain-monitoring-data"
             "yarn cli:validate-monitoring-data"
-            "yarn cli:query-monitoring-data"
           )
 
           # write initial status file
