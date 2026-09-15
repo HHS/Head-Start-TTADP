@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
@@ -22,7 +23,7 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  let notificationType: string;
+  let notificationType: NotificationType;
   if (creatorOrCollaborator === 'creator') {
     notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
   } else if (creatorOrCollaborator === 'approver') {
