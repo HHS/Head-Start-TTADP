@@ -14,6 +14,8 @@ const audit = require('./auditModelGenerator');
 const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
+// Model names are discovered at runtime, so TypeScript cannot infer the registry's keys.
+/** @type {Record<string, any>} */
 const db = {};
 
 let sequelize;

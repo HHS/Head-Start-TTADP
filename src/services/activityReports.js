@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/quotes */
 
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
@@ -1630,6 +1630,13 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsChangesRequestedByDate(userId, date) {
+  // userId is interpolated into a raw subquery below, so validate it is an integer
+  // to guard against SQL injection regardless of the caller.
+  const numericUserId = Number.parseInt(userId, 10);
+  if (Number.isNaN(numericUserId)) {
+    return [];
+  }
+
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1640,7 +1647,28 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           },
         },
         {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [
+            { userId },
+            { '$activityReportCollaborators.userId$': userId },
+            // Approvers are notified too. The approver who requested the changes is
+            // filtered out separately below so this only needs to match on userId.
+            { '$approvers.userId$': userId },
+          ],
+        },
+        {
+          // Exclude reports where this user is the approver who requested the
+          // changes (their approver row has a NEEDS_ACTION status). This is applied
+          // regardless of any other role the user has on the report (e.g. also a
+          // collaborator), and correctly handles NULL approver statuses.
+          id: {
+            [Op.notIn]: sequelize.literal(
+              `(SELECT "activityReportId"
+          FROM "ActivityReportApprovers"
+          WHERE "userId" = ${numericUserId}
+            AND "status" = '${APPROVER_STATUSES.NEEDS_ACTION}'
+            AND "deletedAt" IS NULL)`
+            ),
+          },
         },
         {
           id: {
@@ -1661,9 +1689,17 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
         attributes: ['userId'],
         required: false,
       },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+        attributes: ['userId'],
+        required: false,
+      },
     ],
   });
-  return reports;
+  // The report can join multiple collaborator/approver rows, so de-duplicate by id to
+  // avoid listing the same report more than once in a digest.
+  return _.uniqBy(reports, 'id');
 }
 
 /**
