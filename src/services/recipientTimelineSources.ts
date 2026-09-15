@@ -4,8 +4,10 @@ import type {
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
 } from '@ttahub/common/src/recipientTimeline';
+import { convert } from 'html-to-text';
 import { literal, Op } from 'sequelize';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { getSignedDownloadUrl } from '../lib/s3';
 import db from '../models';
 
 const {
@@ -16,6 +18,10 @@ const {
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
+  CommunicationLog,
+  CommunicationLogFile,
+  CommunicationLogRecipient,
+  File,
   Goal,
   GoalStatusChange,
   GoalTemplate,
@@ -586,8 +592,205 @@ export const GOAL_STATUS_CHANGE_TIMELINE_SOURCE: TimelineEventSource = Object.fr
   populate: populateGoalStatusChanges,
 });
 
+// One mapping drives both index event types and presentation titles.
+const COMMUNICATION_EVENT_TYPES: ReadonlyArray<{
+  method: string;
+  eventType: RecipientTimelineEventType;
+}> = [
+  { method: 'Email', eventType: 'Email communication' },
+  { method: 'Phone', eventType: 'Phone communication' },
+  { method: 'In person', eventType: 'In person communication' },
+  { method: 'Virtual', eventType: 'Virtual communication' },
+];
+
+const communicationText = (value: unknown): string | null =>
+  typeof value === 'string' ? value.trim() || null : null;
+
+const buildCommunicationLogIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const eventTypes = COMMUNICATION_EVENT_TYPES.map(
+    ({ method, eventType }, index) =>
+      `WHEN ${bindings.add(`method_${index}`, method)} THEN ${bindings.add(`eventType_${index}`, eventType)}`
+  );
+  const predicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      if (
+        !Array.isArray(filter.query) ||
+        filter.query.length === 0 ||
+        filter.query.some((value) => typeof value !== 'string' || !value.trim())
+      ) {
+        throw new Error('Timeline standard filters require non-empty strings');
+      }
+      const replacement = bindings.add(
+        `standard_${index}`,
+        filter.query.map((value) => value.trim())
+      );
+      return `${filter.condition === 'is not' ? 'NOT ' : ''}EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(CASE
+          WHEN jsonb_typeof("log"."data"->'goals') = 'array' THEN "log"."data"->'goals'
+          ELSE '[]'::jsonb
+        END) AS "goal"
+        WHERE jsonb_typeof("goal"->'label') = 'string'
+          AND BTRIM("goal"->>'label') IN (${replacement})
+      )`;
+    });
+  if (context.excludeMultiRecipientCommunications) {
+    predicates.push(`NOT EXISTS (
+      SELECT 1 FROM "CommunicationLogRecipients" AS "otherRecipient"
+      WHERE "otherRecipient"."communicationLogId" = "log"."id"
+        AND "otherRecipient"."recipientId" <> :recipientId
+    )`);
+  }
+
+  // Region IDs in JSON may be numbers or strings. Compare text instead of casting stored data.
+  // Undated logs have no event date; the shared index excludes them without a createdAt fallback.
+  return `
+    SELECT
+      "log"."id" AS "sourceId",
+      TO_DATE(NULLIF(BTRIM("log"."data"->>'communicationDate', E' \\t\\r\\n'), ''), 'MM/DD/YYYY') AS "date",
+      CASE BTRIM("log"."data"->>'method') ${eventTypes.join('\n        ')} END AS "eventType",
+      "recipient"."recipientId",
+      CAST(:regionId AS INTEGER) AS "regionId"
+    FROM "CommunicationLogs" AS "log"
+    INNER JOIN "CommunicationLogRecipients" AS "recipient"
+      ON "recipient"."communicationLogId" = "log"."id"
+      AND "recipient"."recipientId" = :recipientId
+    WHERE "log"."data"->>'regionId' = CAST(:regionId AS TEXT)
+      ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+async function populateCommunicationLogs(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+  const logIds = [...new Set(sourceIds)];
+  const [logs, recipients, attachments] = await Promise.all([
+    CommunicationLog.findAll({
+      attributes: ['id', 'data'],
+      where: { id: { [Op.in]: logIds } },
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['name'],
+          required: false,
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+              attributes: ['name'],
+              through: { attributes: [] },
+              required: false,
+            },
+          ],
+        },
+      ],
+    }),
+    CommunicationLogRecipient.findAll({
+      attributes: ['communicationLogId', 'recipientId'],
+      // Count all distinct recipients, not just the recipient whose Timeline is being viewed.
+      where: { communicationLogId: { [Op.in]: logIds } },
+    }),
+    CommunicationLogFile.findAll({
+      attributes: ['communicationLogId', 'fileId'],
+      where: { communicationLogId: { [Op.in]: logIds } },
+      include: [
+        {
+          model: File,
+          as: 'file',
+          attributes: ['id', 'originalFileName', 'key'],
+          where: { status: 'APPROVED' },
+          required: true,
+        },
+      ],
+      order: [['fileId', 'ASC']],
+    }),
+  ]);
+
+  const recipientsByLog = new Map<number, Set<number>>();
+  recipients.forEach(({ communicationLogId, recipientId }) => {
+    const ids = recipientsByLog.get(communicationLogId) ?? new Set<number>();
+    ids.add(recipientId);
+    recipientsByLog.set(communicationLogId, ids);
+  });
+  const attachmentsByLog = new Map<number, Map<number, { text: string; link?: string }>>();
+  const itemByFile = new Map<number, { text: string; link?: string }>();
+  attachments.forEach(({ communicationLogId, file }) => {
+    const text = communicationText(file?.originalFileName);
+    if (!text) return;
+    let item = itemByFile.get(file.id);
+    if (!item) {
+      const { url } = getSignedDownloadUrl(file.key);
+      item = { text, ...(url ? { link: url } : {}) };
+      itemByFile.set(file.id, item);
+    }
+    const items = attachmentsByLog.get(communicationLogId) ?? new Map();
+    items.set(file.id, item);
+    attachmentsByLog.set(communicationLogId, items);
+  });
+
+  return new Map(
+    logs.map((log) => {
+      const data = log.data ?? {};
+      const title = COMMUNICATION_EVENT_TYPES.find(
+        ({ method }) => method === communicationText(data.method)
+      )?.eventType;
+      if (!title) throw new Error(`Unsupported timeline communication method for log ${log.id}`);
+      const author = nameWithRoles(
+        log.author?.name ?? null,
+        (log.author?.roles ?? []).map(({ name }) => name)
+      );
+      const rawDuration =
+        typeof data.duration === 'number' ? data.duration : communicationText(data.duration);
+      const duration = rawDuration === null ? null : Number(rawDuration);
+      const notes = convert(communicationText(data.notes) ?? '', { wordwrap: false }).trim();
+      const result = communicationText(data.result);
+      const standards = uniqueSorted(
+        Array.isArray(data.goals) ? data.goals.map((goal) => communicationText(goal?.label)) : []
+      );
+      const files = [...(attachmentsByLog.get(log.id)?.values() ?? [])].sort((left, right) =>
+        left.text.localeCompare(right.text)
+      );
+      const presentation: RecipientTimelineEventPresentation = {
+        title,
+        subtitle: communicationText(data.purpose),
+        durationHours:
+          duration !== null && Number.isFinite(duration) && duration >= 0 ? duration : null,
+        byline: author ? { label: 'By', values: [author] } : null,
+        indicators: (recipientsByLog.get(log.id)?.size ?? 0) > 1 ? ['multiRecipient'] : [],
+        tags: standards.map((label) => ({ label, flagged: label === 'Monitoring' })),
+        details: [
+          ...(notes ? [{ label: 'Notes', items: [{ text: notes }] }] : []),
+          ...(result ? [{ label: 'Result', items: [{ text: result }] }] : []),
+          ...(files.length ? [{ label: 'Supporting attachments', items: files }] : []),
+        ],
+        links: [
+          {
+            label: 'View communication log',
+            to: `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/communication/${log.id}/view`,
+          },
+        ],
+      };
+      return [log.id, presentation];
+    })
+  );
+}
+
+export const COMMUNICATION_LOG_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'communicationLog',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildCommunicationLogIndexQuery,
+  populate: populateCommunicationLogs,
+});
+
 /** Code-owned source registry; request data cannot select or inject source SQL. */
 export const RECIPIENT_TIMELINE_SOURCES: readonly TimelineEventSource[] = Object.freeze([
   ACTIVITY_REPORT_TIMELINE_SOURCE,
   GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
+  COMMUNICATION_LOG_TIMELINE_SOURCE,
 ]);
