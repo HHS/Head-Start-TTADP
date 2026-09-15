@@ -23,12 +23,12 @@ describe('build_import_summary.sh', () => {
       JSON.stringify(
         {
           metadata: {
-            targetEnv: 'sandbox',
+            targetEnv: 'dev',
             startedAt: '2026-03-24T10:00:00Z',
           },
           taskRuns: [
             {
-              taskName: 'import-download-sandbox-1',
+              taskName: 'import-download-dev-1',
               status: 'SUCCEEDED',
               exitCode: 0,
               startedAt: '2026-03-24T10:00:00Z',
@@ -36,7 +36,7 @@ describe('build_import_summary.sh', () => {
               logFile: path.join(logDir, 'phase-download.log'),
             },
             {
-              taskName: 'import-process-sandbox-1',
+              taskName: 'import-process-dev-1',
               status: 'SUCCEEDED',
               exitCode: 0,
               startedAt: '2026-03-24T10:05:00Z',
@@ -92,12 +92,12 @@ describe('build_import_summary.sh', () => {
       JSON.stringify(
         {
           metadata: {
-            targetEnv: 'sandbox',
+            targetEnv: 'dev',
             startedAt: '2026-03-24T10:00:00Z',
           },
           taskRuns: [
             {
-              taskName: 'import-download-sandbox-1',
+              taskName: 'import-download-dev-1',
               status: 'SUCCEEDED',
               exitCode: 0,
               startedAt: '2026-03-24T10:00:00Z',
