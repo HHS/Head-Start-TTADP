@@ -2601,8 +2601,11 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "$payload" \
             https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
-          ok=$(echo $response | jq -r '.ok')
-          error=$(echo $response | jq -r '.error')
+          # Same reasoning applies to a non-JSON response (an HTML error page from
+          # a proxy/edge in front of Slack's API): jq's parse failure must not
+          # escape via errexit before the .ok check runs either.
+          ok=$(echo $response | jq -r '.ok' 2>/dev/null || echo 'false')
+          error=$(echo $response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
             if [ "<< parameters.best_effort >>" != "true" ]; then
@@ -2631,8 +2634,10 @@ commands:
               -H 'Content-type: application/json;charset=utf-8' \
               --data "$ohs_payload" \
               https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
-            if [ "$(echo $ohs_response | jq -r '.ok')" != "true" ]; then
-              echo "OHS Slack notification failed: $(echo $ohs_response | jq -r '.error')"
+            ohs_ok=$(echo $ohs_response | jq -r '.ok' 2>/dev/null || echo 'false')
+            ohs_error=$(echo $ohs_response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
+            if [ "$ohs_ok" != "true" ]; then
+              echo "OHS Slack notification failed: $ohs_error"
             else
               echo "OHS Slack notification sent successfully"
             fi
