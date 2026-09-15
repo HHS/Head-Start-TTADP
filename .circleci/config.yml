@@ -67,6 +67,7 @@ workflows:
             ignore: /.*/
           branches:
             ignore:
+            - MH/yarn4-poc
             - mh/yarn4-poc
     - yarn4_poc_build:
         filters:
@@ -74,6 +75,7 @@ workflows:
             ignore: /.*/
           branches:
             only:
+            - MH/yarn4-poc
             - mh/yarn4-poc
     - checkpoint:
         name: build_done
@@ -467,6 +469,7 @@ jobs:
         name: Install dependencies
         no_output_timeout: 20m
         command: |
+          corepack enable
           # print the yarn cache dirs for debugging purposes
           yarn cache dir
           yarn --cwd frontend cache dir
