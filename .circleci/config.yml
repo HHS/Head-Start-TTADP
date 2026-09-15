@@ -380,7 +380,10 @@ jobs:
     - run:
         name: Enable Corepack
         command: |
-          corepack enable
+          mkdir -p "$HOME/.local/bin"
+          corepack enable --install-directory "$HOME/.local/bin"
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+          export PATH="$HOME/.local/bin:$PATH"
           yarn --version
     - run:
         name: Install dependencies
@@ -469,7 +472,10 @@ jobs:
         name: Install dependencies
         no_output_timeout: 20m
         command: |
-          corepack enable
+          mkdir -p "$HOME/.local/bin"
+          corepack enable --install-directory "$HOME/.local/bin"
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+          export PATH="$HOME/.local/bin:$PATH"
           # print the yarn cache dirs for debugging purposes
           yarn cache dir
           yarn --cwd frontend cache dir
