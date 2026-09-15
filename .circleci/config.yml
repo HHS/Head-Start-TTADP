@@ -195,7 +195,6 @@ workflows:
     - run_validation_watchdog:
         target_env: "prod"
         slack_channel: acf-head-start-alerts
-        ohs_channel: acf-ohs-ttahub--contractor-customer-team
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
@@ -1709,18 +1708,37 @@ jobs:
         name: Create monitoring updates summary
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
-          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
+            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt
     - notify_slack:
         step_when: always
         message_text_file: monitoring-updates.txt
         slack_channel: << parameters.slack_channel >>
-        ohs_channel: << parameters.ohs_channel >>
+    - notify_slack:
+        step_when: always
+        # monitoring-ohs-updates.txt already has the OHS_MONITORING_ALERTS_ENABLED
+        # decision baked in (goal-creation only vs. goal-creation + validation
+        # alerts) by build_import_summary.sh, so this posts unconditionally -
+        # empty ohs_channel on non-prod invocations makes it a no-op (notify_slack
+        # skips sending when slack_channel is empty). See
+        # docs/monitoring-data-validation.md (Channels).
+        message_text_file: monitoring-ohs-updates.txt
+        slack_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: import-artifacts
     - store_artifacts:
         when: always
         path: monitoring-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-goal-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-validation-alerts.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-ohs-updates.txt
     - run:
         when: always
         name: Fail if any import phase failed
@@ -1752,9 +1770,6 @@ jobs:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
-      ohs_channel:
-        type: string
-        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1824,7 +1839,6 @@ jobs:
         step_when: always
         message_text_file: watchdog-summary.txt
         slack_channel: << parameters.slack_channel >>
-        ohs_channel: << parameters.ohs_channel >>
     - store_artifacts:
         when: always
         path: watchdog-artifacts

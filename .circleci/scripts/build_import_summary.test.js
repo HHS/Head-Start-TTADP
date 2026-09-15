@@ -5,10 +5,19 @@ const { execFileSync } = require('node:child_process');
 
 const SCRIPT_PATH = path.join(__dirname, 'build_import_summary.sh');
 
-function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6') {
-  execFileSync('bash', [SCRIPT_PATH, artifactDir, summaryFile, expectedTasks], {
-    encoding: 'utf-8',
-  });
+function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6', env = {}) {
+  const goalFile = path.join(artifactDir, 'monitoring-goal-updates.txt');
+  const alertsFile = path.join(artifactDir, 'monitoring-validation-alerts.txt');
+  const ohsFile = path.join(artifactDir, 'monitoring-ohs-updates.txt');
+  execFileSync(
+    'bash',
+    [SCRIPT_PATH, artifactDir, summaryFile, expectedTasks, goalFile, alertsFile, ohsFile],
+    {
+      encoding: 'utf-8',
+      env: { ...process.env, ...env },
+    }
+  );
+  return { goalFile, alertsFile, ohsFile };
 }
 
 describe('build_import_summary.sh', () => {
@@ -124,6 +133,103 @@ describe('build_import_summary.sh', () => {
         'Monitoring Validation: no result found\n' +
         'Monitoring Gate: no result found\n'
     );
+  });
+
+  it('splits goal-creation and alerts into separate files, and the OHS file gets goal-creation only when the env var is off', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-ohs-off-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'dev', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-download-dev-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-download.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-report_updates.log'),
+      'Recent Monitoring Updates: [{"recipient":"New Goals: Example Recipient Alpha","region":1}]\n'
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+    );
+
+    const { goalFile, alertsFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
+      OHS_MONITORING_ALERTS_ENABLED: '',
+    });
+
+    expect(fs.readFileSync(goalFile, 'utf-8')).toBe(
+      'Monitoring Updates: ```\nNew Goals: Example Recipient Alpha (Region 1)\n```\n'
+    );
+    expect(fs.readFileSync(alertsFile, 'utf-8')).toBe(
+      'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+        'Region 5 created no monitoring reviews in the last four complete weeks\n' +
+        '```\n' +
+        'Monitoring Gate: no result found\n'
+    );
+    // OHS gets goal-creation only - no validation alerts - when the switch is off.
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toBe(fs.readFileSync(goalFile, 'utf-8'));
+    // The base channel's file is unaffected: still the full combined summary.
+    expect(fs.readFileSync(summaryFile, 'utf-8')).toBe(
+      fs.readFileSync(goalFile, 'utf-8') + fs.readFileSync(alertsFile, 'utf-8')
+    );
+  });
+
+  it('gives the OHS file goal-creation plus validation alerts when OHS_MONITORING_ALERTS_ENABLED is true', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-ohs-on-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-download-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-download.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-report_updates.log'),
+      'Recent Monitoring Updates: [{"recipient":"New Goals: Example Recipient Alpha","region":1}]\n'
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+    );
+
+    const { ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
+      OHS_MONITORING_ALERTS_ENABLED: 'true',
+    });
+
+    // With the switch on, OHS gets the same combined content as the base channel.
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toBe(fs.readFileSync(summaryFile, 'utf-8'));
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Updates: ```');
+    expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Validation Alerts');
   });
 
   it('writes a concise failure message from the failed phase log', () => {
