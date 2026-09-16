@@ -77,8 +77,14 @@ describe('communication log timeline integration', () => {
         { name: 'Jane Hooper', hsesUsername: `timeline-${getUniqueId()}` },
         { transaction }
       );
+      // Seeded roles have fixed IDs without advancing Roles_id_seq. Use an isolated test ID.
       role = await Role.create(
-        { name: `Timeline-${getUniqueId()}`, fullName: 'Timeline test role', isSpecialist: true },
+        {
+          id: getUniqueId(),
+          name: `Timeline-${getUniqueId()}`,
+          fullName: 'Timeline test role',
+          isSpecialist: true,
+        },
         { transaction }
       );
       await UserRole.create({ userId: user.id, roleId: role.id }, { transaction });
