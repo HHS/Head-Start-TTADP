@@ -1,0 +1,14 @@
+/*
+  The actions menu is absolutely positioned in the top right of the widget's title
+  group, so the title group is laid out as a grid to drop the per page select onto
+  its own row underneath rather than colliding with the menu.
+*/
+@media (min-width: 64em) {
+  .ttahub-active-tta-requests-table .smart-hub--table-widget-container {
+    display: grid;
+  }
+
+  .ttahub-active-tta-requests-table .smart-hub--pagination-card:nth-child(3) {
+    justify-self: end;
+  }
+}

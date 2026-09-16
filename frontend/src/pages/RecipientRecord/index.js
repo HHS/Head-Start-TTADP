@@ -203,7 +203,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                   </Button>
                 }
               >
-                <TtaRequest />
+                <TtaRequest recipientId={recipientId} regionId={regionId} />
               </PageWithHeading>
             </FeatureFlag>
           )}
