@@ -131,7 +131,7 @@
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^10.6.0",
     "@mesh-kit/core": "^1.0.160",
-    "@ttahub/common": "2.4.8",
+    "@ttahub/common": "2.4.10",
     "adm-zip": "^0.6.1",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
