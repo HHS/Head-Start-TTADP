@@ -6,6 +6,14 @@ ARTIFACT_DIR="${1:-import-artifacts}"
 STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
 SUMMARY_FILE="${2:-monitoring-updates.txt}"
 EXPECTED_TASKS="${3:-8}"
+# GOAL_FILE / ALERTS_FILE are the two halves SUMMARY_FILE is built from (goal
+# creation vs validation+gate). OHS_FILE is what the OHS contractor-customer
+# channel gets: goal creation always, plus the alerts half only when
+# OHS_MONITORING_ALERTS_ENABLED is truthy. See the concatenation at the bottom
+# of this script and docs/monitoring-data-validation.md (Channels).
+GOAL_FILE="${4:-monitoring-goal-updates.txt}"
+ALERTS_FILE="${5:-monitoring-validation-alerts.txt}"
+OHS_FILE="${6:-monitoring-ohs-updates.txt}"
 LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
@@ -107,7 +115,7 @@ gate_blocked() {
   [[ "$status" == "success" && "${critical_count:-0}" -gt 0 ]]
 }
 
-# Appends a section for the validation phase's alerts to the summary file.
+# Appends a section for the validation phase's alerts to ALERTS_FILE.
 # The phase prints one "Monitoring Validation Alerts: {...}" JSON line
 # (see src/tools/validateMonitoringData.ts).
 append_validation_summary() {
@@ -127,25 +135,26 @@ append_validation_summary() {
           printf 'Monitoring Validation Alerts (as of %s): ```\n' "${as_of:-unknown}"
           printf '%s\n' "$alerts"
           printf '```\n'
-        } >> "$SUMMARY_FILE"
+        } >> "$ALERTS_FILE"
       else
-        printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+        printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
       fi
       return
     fi
   fi
 
-  printf 'Monitoring Validation: no result found\n' >> "$SUMMARY_FILE"
+  printf 'Monitoring Validation: no result found\n' >> "$ALERTS_FILE"
 }
 
-# Reports the gate result, and is called unconditionally after the primary body,
-# so a critical always reaches the channel regardless of how it arose (report-only,
-# a check off the halt list, or a block) or which phase failed. The critical data
-# condition is the headline; whether it blocked the refresh is a clause on it. The
-# benign "no critical / no result" confirmations are shown only on success, so a
-# failure unrelated to data doesn't pick up confusing validation commentary.
-# Parsed from the gate's single "Monitoring Gate: {...}" line. See
-# docs/monitoring-data-validation.md ("Enforcement controls").
+# Reports the gate result into ALERTS_FILE, and is called unconditionally after
+# the primary body, so a critical always reaches the channel regardless of how
+# it arose (report-only, a check off the halt list, or a block) or which phase
+# failed. The critical data condition is the headline; whether it blocked the
+# refresh is a clause on it. The benign "no critical / no result" confirmations
+# are shown only on success, so a failure unrelated to data doesn't pick up
+# confusing validation commentary. Parsed from the gate's single
+# "Monitoring Gate: {...}" line. See docs/monitoring-data-validation.md
+# ("Enforcement controls").
 append_gate_summary() {
   local results
   local json_data
@@ -170,13 +179,14 @@ append_gate_summary() {
           refresh_clause="did not block the fact-table refresh"
         fi
         critical=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "critical") | .message, "\n"' 2>/dev/null || true)
-        # Separate from any preceding primary body that didn't end in a newline.
-        [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
+        # Separate from any preceding validation-alerts section that didn't end
+        # in a newline.
+        [[ -s "$ALERTS_FILE" && -n "$(tail -c1 "$ALERTS_FILE")" ]] && printf '\n' >> "$ALERTS_FILE"
         {
           printf 'Monitoring Gate Criticals (as of %s) - %s: ```\n' "${as_of:-unknown}" "$refresh_clause"
           printf '%s\n' "$critical"
           printf '```\n'
-        } >> "$SUMMARY_FILE"
+        } >> "$ALERTS_FILE"
         return
       fi
 
@@ -184,50 +194,53 @@ append_gate_summary() {
       # so it cannot be reported as "no critical findings". In report-only mode
       # this still exits 0 and the import can SUCCEED, so surface it either way.
       if [[ -n "$status" && "$status" != "success" ]]; then
-        [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
-        printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+        [[ -s "$ALERTS_FILE" && -n "$(tail -c1 "$ALERTS_FILE")" ]] && printf '\n' >> "$ALERTS_FILE"
+        printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
         return
       fi
 
       # No criticals: confirm only on success.
       [[ "$overall_status" == "SUCCEEDED" ]] || return 0
-      printf 'Monitoring Gate: no critical findings (as of %s)\n' "${as_of:-unknown}" >> "$SUMMARY_FILE"
+      printf 'Monitoring Gate: no critical findings (as of %s)\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
       return
     fi
   fi
 
   # No gate line: confirm only on success.
   [[ "$overall_status" == "SUCCEEDED" ]] || return 0
-  printf 'Monitoring Gate: no result found\n' >> "$SUMMARY_FILE"
+  printf 'Monitoring Gate: no result found\n' >> "$ALERTS_FILE"
 }
 
-write_success_summary() {
+# Parses report_log's "Recent Monitoring Updates" line into GOAL_FILE. report_updates
+# runs right after create_monitoring_goals (not at the end), so this log exists -
+# and reflects real goal-creation content - whenever goals were queried, even if
+# maintain_monitoring_data or validate_monitoring_data fails afterward. Returns 1
+# (leaving GOAL_FILE untouched) only when report_log itself is missing, i.e.
+# report_updates never ran: the caller falls back to a generic failure message.
+write_goal_summary() {
   local results
   local json_data
   local goals
 
-  if [[ -f "$report_log" ]]; then
-    results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
-    if [[ -n "$results" ]]; then
-      json_data=${results#*:}
-      goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", (.region | tostring), ")\n"' 2>/dev/null || true)
-      if [[ -n "$goals" ]]; then
-        {
-          printf 'Monitoring Updates: ```\n'
-          printf '%s\n' "$goals"
-          printf '```\n'
-        } > "$SUMMARY_FILE"
-        append_validation_summary
-        return
-      fi
-    fi
-  fi
+  [[ -f "$report_log" ]] || return 1
+  results=$(grep -o "Recent Monitoring Updates.*" "$report_log" | tail -n 1 || true)
+  [[ -n "$results" ]] || return 1
 
-  printf 'Monitoring Updates: none\n' > "$SUMMARY_FILE"
-  append_validation_summary
+  json_data=${results#*:}
+  goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", (.region | tostring), ")\n"' 2>/dev/null || true)
+  if [[ -n "$goals" ]]; then
+    {
+      printf 'Monitoring Updates: ```\n'
+      printf '%s\n' "$goals"
+      printf '```\n'
+    } > "$GOAL_FILE"
+  else
+    printf 'Monitoring Updates: none\n' > "$GOAL_FILE"
+  fi
 }
 
 write_failure_summary() {
+  local goal_content_known="$1"
   local failure_message
 
   # A gate block is not a generic failure: skip the failure body and let the gate
@@ -237,21 +250,64 @@ write_failure_summary() {
   fi
 
   failure_message=$(extract_failure_message "$failed_phase")
+
+  # Route to ALERTS_FILE, not GOAL_FILE, whenever GOAL_FILE already holds real
+  # goal-creation content (write_goal_summary succeeded - a later phase failed
+  # after report_updates already ran) or the failed phase is itself one of the
+  # two validation phases (a gate execution error, or the post-refresh
+  # validation erroring). Either way this is downstream/operational
+  # information, not goal-creation content, so it stays behind
+  # OHS_MONITORING_ALERTS_ENABLED like every other non-goal signal.
+  if [[ "$goal_content_known" == "true" || "$failed_phase" == "validate_monitoring_gate" || "$failed_phase" == "validate_monitoring_data" ]]; then
+    {
+      printf 'Monitoring job failure: ```\n'
+      printf '%s\n' "$failure_message"
+      printf '```'
+    } >> "$ALERTS_FILE"
+    return
+  fi
+
   {
     printf 'Monitoring job failure: ```\n'
     printf '%s\n' "$failure_message"
     printf '```'
-  } > "$SUMMARY_FILE"
+  } > "$GOAL_FILE"
 }
 
-: > "$SUMMARY_FILE"
+: > "$GOAL_FILE"
+: > "$ALERTS_FILE"
+goal_content_known=false
+write_goal_summary && goal_content_known=true
 if [[ "$overall_status" == "SUCCEEDED" ]]; then
-  write_success_summary
+  [[ "$goal_content_known" == "true" ]] || printf 'Monitoring Updates: none\n' > "$GOAL_FILE"
+  append_validation_summary
 else
-  write_failure_summary
+  write_failure_summary "$goal_content_known"
 fi
 # Always report the gate result, so a critical always reaches the channel.
 append_gate_summary
+
+# SUMMARY_FILE (the base acf-head-start-alerts channel) is GOAL_FILE and
+# ALERTS_FILE concatenated - identical in content/format to how this script
+# used to build a single combined file directly.
+{
+  cat "$GOAL_FILE"
+  if [[ -s "$ALERTS_FILE" ]]; then
+    [[ -s "$GOAL_FILE" && -n "$(tail -c1 "$GOAL_FILE")" ]] && printf '\n'
+    cat "$ALERTS_FILE"
+  fi
+} > "$SUMMARY_FILE"
+
+# OHS_FILE (the acf-ohs-ttahub--contractor-customer-team channel) always gets
+# goal-creation content; it only gets validation/gate alerts mixed in when
+# OHS_MONITORING_ALERTS_ENABLED is truthy - parsed the same way notify_slack
+# parses it. See docs/monitoring-data-validation.md (Channels).
+ohs_enabled=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
+if [[ "$ohs_enabled" =~ ^(true|1|yes)$ ]]; then
+  cp "$SUMMARY_FILE" "$OHS_FILE"
+else
+  cp "$GOAL_FILE" "$OHS_FILE"
+fi
 
 echo
 cat "$SUMMARY_FILE"
