@@ -646,12 +646,13 @@ const buildCommunicationLogIndexQuery = (
     )`);
   }
 
-  // Region IDs in JSON may be numbers or strings. Compare text instead of casting stored data.
+  // Region IDs may be numbers or zero-padded strings from route params. Strip leading zeros
+  // without casting stored JSON so malformed or oversized values remain harmless nonmatches.
   // Undated logs have no event date; the shared index excludes them without a createdAt fallback.
   return `
     SELECT
       "log"."id" AS "sourceId",
-      TO_DATE(NULLIF(BTRIM("log"."data"->>'communicationDate', E' \\t\\r\\n'), ''), 'MM/DD/YYYY') AS "date",
+      safe_to_date(NULLIF(BTRIM("log"."data"->>'communicationDate', E' \\t\\r\\n'), ''), 'MM/DD/YYYY') AS "date",
       CASE BTRIM("log"."data"->>'method') ${eventTypes.join('\n        ')} END AS "eventType",
       "recipient"."recipientId",
       CAST(:regionId AS INTEGER) AS "regionId"
@@ -659,7 +660,7 @@ const buildCommunicationLogIndexQuery = (
     INNER JOIN "CommunicationLogRecipients" AS "recipient"
       ON "recipient"."communicationLogId" = "log"."id"
       AND "recipient"."recipientId" = :recipientId
-    WHERE "log"."data"->>'regionId' = CAST(:regionId AS TEXT)
+    WHERE LTRIM("log"."data"->>'regionId', '0') = CAST(:regionId AS TEXT)
       ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
 };
 
@@ -685,6 +686,7 @@ async function populateCommunicationLogs(
               as: 'roles',
               attributes: ['name'],
               through: { attributes: [] },
+              where: { deletedAt: null },
               required: false,
             },
           ],

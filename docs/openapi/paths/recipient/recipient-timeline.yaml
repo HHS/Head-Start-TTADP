@@ -14,6 +14,7 @@ get:
     excluded without a createdAt fallback. Email, Phone, In person, and Virtual map to their
     respective communication event types; blank and unsupported methods are excluded.
     Recipient membership comes from CommunicationLogRecipients, and region from the log's data.
+    Numeric and zero-padded string region IDs are equivalent; malformed region values are excluded.
     Logs associated with multiple distinct recipients have indicators: [multiRecipient]. The
     exclusion checkbox removes those communication events before counts and pagination and does
     not affect other event sources. Standard filters match the log's selected supporting-goal
@@ -21,11 +22,11 @@ get:
     returns no communications.
     Communication presentations include purpose as subtitle, numeric durationHours (null when
     blank or invalid), and the creator's name and current role abbreviations as the By byline.
-    Missing roles leave the creator's name; a missing creator produces a null byline. Supporting
-    goals appear as tags, with Monitoring flagged. Details contain nonempty Notes and Result,
-    followed by Supporting attachments when approved files exist. Notes are plain text with
-    entities decoded and paragraph/list line breaks preserved; clients should preserve those
-    line breaks when rendering. Attachment items contain the filename and a signed download link;
+    Retired roles are omitted. Missing roles leave the creator's name; a missing creator produces
+    a null byline. Supporting goals appear as tags, with Monitoring flagged. Details contain
+    nonempty Notes and Result, followed by Supporting attachments when approved files exist.
+    Notes are plain text with entities decoded and paragraph/list line breaks preserved; clients
+    should preserve those line breaks when rendering. Attachment items contain the filename and a signed download link;
     if URL signing fails, the filename remains without a link. Other TTA staff and next-step
     arrays are not card sections. A View communication log link opens the recipient's log view.
     Goal events use source `goalStatusChange` and the status-change row ID as `sourceId`.

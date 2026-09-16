@@ -267,6 +267,83 @@ describe('communication log timeline integration', () => {
     });
   });
 
+  it('omits retired roles while retaining creators with no active roles', async () => {
+    const retiredRole = await Role.create({
+      id: getUniqueId(),
+      name: `Retired-${getUniqueId()}`,
+      fullName: 'Retired timeline test role',
+      isSpecialist: true,
+      deletedAt: new Date(),
+    });
+    try {
+      await UserRole.create({ userId: user.id, roleId: retiredRole.id });
+      const withActiveRole = await getRecipientTimeline(params);
+      expect(withActiveRole.count).toBe(4);
+      expect(withActiveRole.events.map(({ byline }) => byline)).toEqual(
+        Array(4).fill({ label: 'By', values: [`Jane Hooper, ${role.name}`] })
+      );
+
+      await Role.update({ deletedAt: new Date() }, { where: { id: role.id } });
+      const withoutActiveRoles = await getRecipientTimeline(params);
+      expect(withoutActiveRoles.count).toBe(4);
+      expect(withoutActiveRoles.events.map(({ byline }) => byline)).toEqual(
+        Array(4).fill({ label: 'By', values: ['Jane Hooper'] })
+      );
+    } finally {
+      await Role.update({ deletedAt: null }, { where: { id: role.id } });
+      await UserRole.destroy({ where: { userId: user.id, roleId: retiredRole.id } });
+      await retiredRole.destroy();
+    }
+  });
+
+  it('normalizes padded region IDs without matching malformed values or other regions', async () => {
+    const storedRegions = [
+      params.regionId,
+      String(params.regionId),
+      `00${params.regionId}`,
+      `${'0'.repeat(100)}${params.regionId}`,
+      `00${regionIds[1]}`,
+      `${params.regionId}invalid`,
+      '9'.repeat(100),
+      '000',
+      '',
+      null,
+      undefined,
+      { value: params.regionId },
+      [params.regionId],
+    ];
+    const regionLogs = await CommunicationLog.bulkCreate(
+      storedRegions.map((regionId) => ({
+        userId: user.id,
+        data: { regionId, method: 'Email', communicationDate: '03/01/2026' },
+      }))
+    );
+    const logIds = regionLogs.map(({ id }) => id);
+    try {
+      await CommunicationLogRecipient.bulkCreate(
+        logIds.map((communicationLogId) => ({
+          communicationLogId,
+          recipientId: params.recipientId,
+        }))
+      );
+      const response = await request(app)
+        .get(`/recipient/${params.recipientId}/region/00${params.regionId}/timeline`)
+        .query({ limit: 4 });
+      expect(response.status).toBe(200);
+      // Four matching region variants plus the four baseline events; all new events sort first.
+      expect(response.body.count).toBe(8);
+      expect(response.body.events.map(({ sourceId }) => sourceId)).toEqual(logIds.slice(0, 4));
+      response.body.events.forEach(({ links, sourceId }) => {
+        expect(links[0].to).toBe(
+          `/recipient-tta-records/${params.recipientId}/region/${params.regionId}/communication/${sourceId}/view`
+        );
+      });
+    } finally {
+      await CommunicationLogRecipient.destroy({ where: { communicationLogId: logIds } });
+      await CommunicationLog.destroy({ where: { id: logIds } });
+    }
+  });
+
   it('keeps same-day events distinct across page boundaries', async () => {
     const pages = await Promise.all(
       [0, 1, 2, 3, 4].map((offset) => getRecipientTimeline({ ...params, limit: 1, offset }))
@@ -386,6 +463,33 @@ describe('communication log timeline integration', () => {
       });
       expect(excluded.count).toBe(1);
       expect(excluded.events[0]).toMatchObject({ sourceId: log.id, tags: [] });
+    } finally {
+      await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
+      await log.destroy();
+    }
+  });
+
+  it.each([
+    '13/45/2026', // Month and day both out of any calendar's range.
+    '02/30/2026', // Shaped like a valid date, but February never has 30 days.
+    '2026-01-01', // Wrong separator/order entirely.
+  ])('excludes a calendar-invalid communicationDate (%s) instead of crashing the query', async (communicationDate) => {
+    const log = await CommunicationLog.create({
+      userId: user.id,
+      data: {
+        regionId: params.regionId,
+        communicationDate,
+        method: 'Email',
+      },
+    });
+    try {
+      await CommunicationLogRecipient.create({
+        communicationLogId: log.id,
+        recipientId: params.recipientId,
+      });
+      const result = await getRecipientTimeline(params);
+      expect(result.count).toBe(4);
+      expect(result.events.map(({ sourceId }) => sourceId)).not.toContain(log.id);
     } finally {
       await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
       await log.destroy();
