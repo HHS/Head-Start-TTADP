@@ -7,7 +7,11 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/*.min.js"]
+    "includes": [
+      "**",
+      "!**/*.min.js",
+      "!docs/boundary_diagram.svg"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -64,7 +68,9 @@
   },
   "overrides": [
     {
-      "includes": ["frontend/src/**"],
+      "includes": [
+        "frontend/src/**"
+      ],
       "javascript": {
         "jsxRuntime": "reactClassic"
       },
@@ -88,7 +94,9 @@
       }
     },
     {
-      "includes": ["frontend/src/**/*.css"],
+      "includes": [
+        "frontend/src/**/*.css"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
@@ -98,7 +106,10 @@
       }
     },
     {
-      "includes": ["src/models/schemas/**", "src/routes/**/middleware.ts"],
+      "includes": [
+        "src/models/schemas/**",
+        "src/routes/**/middleware.ts"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
