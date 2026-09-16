@@ -586,7 +586,7 @@ export async function reviewReport(req, res) {
           ...reviewedReport.toJSON(),
           activityRecipients,
         },
-        user.name
+        approverName
       );
 
       // Notify collaborators (excluding the acting approver and the author, who is
@@ -606,7 +606,7 @@ export async function reviewReport(req, res) {
           ...reviewedReport.toJSON(),
           activityRecipients,
         },
-        user.name
+        approverName
       );
 
       // TTAHUB-5581: notify the report's other approvers that an approver approved it.
@@ -637,7 +637,7 @@ export async function reviewReport(req, res) {
             ...reviewedReport.toJSON(),
             activityRecipients,
           },
-          user.name
+          approverName
         );
       }
     }
