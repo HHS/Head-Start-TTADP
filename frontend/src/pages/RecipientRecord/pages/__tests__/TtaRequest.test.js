@@ -42,11 +42,12 @@ describe('Recipient Record - TTA Request', () => {
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
   });
 
-  it('renders the active TTA requests table', () => {
+  it('renders the active and approved TTA requests tables', () => {
     renderTtaRequest();
 
     expect(screen.getByRole('heading', { name: 'Active TTA requests' })).toBeVisible();
-    expect(screen.getByRole('columnheader', { name: /request id/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Approved TTA requests' })).toBeVisible();
+    expect(screen.getAllByRole('columnheader', { name: /request id/i })).toHaveLength(2);
   });
 
   it('sets up filters without region management', () => {

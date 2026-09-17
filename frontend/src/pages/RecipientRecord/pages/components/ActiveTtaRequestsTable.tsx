@@ -1,20 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import WidgetContainer from '../../../../components/WidgetContainer';
-import useWidgetExport from '../../../../hooks/useWidgetExport';
-import useWidgetSorting, { parseValue } from '../../../../hooks/useWidgetSorting';
-import HorizontalTableWidget from '../../../../widgets/HorizontalTableWidget';
-import './ActiveTtaRequestsTable.css';
+import React, { useCallback, useMemo } from 'react';
+import TtaRequestsTable, {
+  type TtaRequestsSortableRow,
+  type TtaRequestsTableRow,
+} from './TtaRequestsTable';
 import {
   ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA,
   type ActiveTtaRequest,
   DRAFT_STATUS,
-} from './activeTtaRequestsPlaceholderData';
+} from './ttaRequestsPlaceholderData';
 
-const PER_PAGE = 10;
 const EXPORT_FILE_NAME = 'active-tta-requests.csv';
-
-// this table has no row checkboxes, so there is never a subset to export
-const NO_CHECKBOXES = {};
 
 export const COLUMNS = {
   REQUEST_ID: 'Request ID',
@@ -54,18 +49,9 @@ const DEFAULT_SORT_CONFIG = {
   offset: 0,
 };
 
-type SortConfig = {
-  sortBy: string;
-  direction: string;
-  activePage?: number;
-  offset?: number;
-};
-
-// A row keyed by column display name, which is what `useWidgetSorting` sorts on.
-type SortableRow = ActiveTtaRequest & Record<string, string | number>;
-
-const toSortableRow = (request: ActiveTtaRequest): SortableRow => ({
-  ...request,
+// only the id and the column values are kept, since those are all the table sorts on
+const toSortableRow = (request: ActiveTtaRequest): TtaRequestsSortableRow => ({
+  id: request.id,
   [COLUMNS.REQUEST_ID]: request.requestId,
   [COLUMNS.CREATED_DATE]: request.createdDate,
   [COLUMNS.GOAL]: request.goal,
@@ -75,48 +61,6 @@ const toSortableRow = (request: ActiveTtaRequest): SortableRow => ({
   [COLUMNS.STATUS]: request.status,
 });
 
-/**
- * Sorts rows the same way `useWidgetSorting` does, so that the initial render
- * (and anything restored from session storage) matches the active sort header.
- */
-export const sortRows = (rows: SortableRow[], sortConfig: SortConfig): SortableRow[] => {
-  const { sortBy, direction } = sortConfig;
-
-  if (!sortBy || !rows.length) {
-    return rows;
-  }
-
-  const sortValue = (row: SortableRow) => {
-    if (DATE_SORT_COLUMNS.includes(sortBy)) {
-      const time = new Date(row[sortBy]).getTime();
-      return Number.isNaN(time) ? 0 : time;
-    }
-
-    if (STRING_SORT_COLUMNS.includes(sortBy)) {
-      return String(row[sortBy]).toLowerCase();
-    }
-
-    return parseValue(row[sortBy]);
-  };
-
-  const ascending = direction === 'asc' ? 1 : -1;
-
-  return [...rows].sort((a, b) => {
-    const valueA = sortValue(a);
-    const valueB = sortValue(b);
-
-    if (valueA > valueB) {
-      return ascending;
-    }
-
-    if (valueB > valueA) {
-      return -ascending;
-    }
-
-    return 0;
-  });
-};
-
 /*
   Every link stays inside the recipient record the table is being viewed from. The
   placeholder rows describe requests that don't exist, so linking anywhere derived
@@ -124,29 +68,32 @@ export const sortRows = (rows: SortableRow[], sortConfig: SortConfig): SortableR
 
   TODO: link to the TTA request view/edit pages once they exist.
 */
-const toTableData = (rows: SortableRow[], recipientPath: string) =>
+const toTableData = (
+  rows: TtaRequestsSortableRow[],
+  recipientPath: string
+): TtaRequestsTableRow[] =>
   rows.map((row) => ({
     id: row.id,
-    heading: row.requestId,
+    heading: String(row[COLUMNS.REQUEST_ID]),
     isUrl: true,
     isInternalLink: true,
     link: `${recipientPath}/tta-request`,
     data: [
-      { title: COLUMNS.CREATED_DATE, value: row.createdDate },
-      { title: COLUMNS.GOAL, value: row.goal },
-      { title: COLUMNS.REVIEWER, value: row.reviewer },
-      { title: COLUMNS.APPROVER, value: row.approver },
-      { title: COLUMNS.ASSIGNED_STAFF, value: row.assignedStaff },
+      { title: COLUMNS.CREATED_DATE, value: String(row[COLUMNS.CREATED_DATE]) },
+      { title: COLUMNS.GOAL, value: String(row[COLUMNS.GOAL]) },
+      { title: COLUMNS.REVIEWER, value: String(row[COLUMNS.REVIEWER]) },
+      { title: COLUMNS.APPROVER, value: String(row[COLUMNS.APPROVER]) },
+      { title: COLUMNS.ASSIGNED_STAFF, value: String(row[COLUMNS.ASSIGNED_STAFF]) },
       // only drafts are clickable, they take the creator back into the request
-      row.status === DRAFT_STATUS
+      row[COLUMNS.STATUS] === DRAFT_STATUS
         ? {
             title: COLUMNS.STATUS,
-            value: row.status,
+            value: DRAFT_STATUS,
             isUrl: true,
             isInternalLink: true,
             link: `${recipientPath}/tta-request`,
           }
-        : { title: COLUMNS.STATUS, value: row.status },
+        : { title: COLUMNS.STATUS, value: String(row[COLUMNS.STATUS]) },
     ],
   }));
 
@@ -160,119 +107,29 @@ export default function ActiveTtaRequestsTable({
   regionId,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
   // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
-  const requests = useMemo(() => ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map(toSortableRow), []);
-
-  const [sortableRows, setSortableRows] = useState<SortableRow[]>(requests);
-  const [pageSize, setPageSize] = useState<number | 'all'>(PER_PAGE);
-
-  const {
-    requestSort,
-    sortConfig: storedSortConfig,
-    setSortConfig,
-  } = useWidgetSorting(
-    'active-tta-requests-table', // localStorageKey
-    DEFAULT_SORT_CONFIG, // defaultSortConfig
-    sortableRows, // dataToUse
-    setSortableRows, // setDataToUse
-    STRING_SORT_COLUMNS, // stringColumns
-    DATE_SORT_COLUMNS // dateColumns
-  );
-
-  // useWidgetSorting is untyped, so narrow its config back down for use below
-  const sortConfig = storedSortConfig as unknown as SortConfig;
-
-  useEffect(() => {
-    setSortableRows(sortRows(requests, sortConfig));
-  }, [requests, sortConfig]);
+  const rows = useMemo(() => ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map(toSortableRow), []);
 
   const recipientPath = `/recipient-tta-records/${recipientId}/region/${regionId}`;
 
-  const tableData = useMemo(
-    () => toTableData(sortableRows, recipientPath),
-    [sortableRows, recipientPath]
-  );
-
-  const currentPage = sortConfig.activePage || 1;
-  const currentOffset = sortConfig.offset || 0;
-  const effectivePerPage = pageSize === 'all' ? Math.max(tableData.length, 1) : pageSize;
-
-  const paginatedTableData = useMemo(
-    () => tableData.slice(currentOffset, currentOffset + effectivePerPage),
-    [tableData, currentOffset, effectivePerPage]
-  );
-
-  const handlePerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextPageSize =
-      event.target.value === 'all' ? 'all' : Number.parseInt(event.target.value, 10);
-
-    if (nextPageSize !== 'all' && (!Number.isInteger(nextPageSize) || nextPageSize < 1)) {
-      return;
-    }
-
-    setPageSize(nextPageSize);
-    setSortConfig((prev: SortConfig) => ({ ...prev, activePage: 1, offset: 0 }));
-  };
-
-  const handlePageChange = (pageNumber: number) => {
-    setSortConfig((prev: SortConfig) => ({
-      ...prev,
-      activePage: pageNumber,
-      offset: (pageNumber - 1) * effectivePerPage,
-    }));
-  };
-
-  // the whole table is exported, not just the page being displayed
-  const { exportRows } = useWidgetExport(
-    tableData,
-    HEADERS,
-    NO_CHECKBOXES,
-    COLUMNS.REQUEST_ID,
-    EXPORT_FILE_NAME
-  );
-
-  const menuItems = useMemo(
-    () => (tableData.length ? [{ label: 'Export table', onClick: () => exportRows('all') }] : []),
-    [exportRows, tableData.length]
+  const buildTableData = useCallback(
+    (sortedRows: TtaRequestsSortableRow[]) => toTableData(sortedRows, recipientPath),
+    [recipientPath]
   );
 
   return (
-    <WidgetContainer
+    <TtaRequestsTable
       title="Active TTA requests"
-      className="ttahub-active-tta-requests-table maxw-widescreen"
-      loading={false}
-      showPagingTop={tableData.length > 0}
-      showPagingBottom={tableData.length > 0}
-      currentPage={currentPage}
-      totalCount={tableData.length}
-      offset={currentOffset}
-      perPage={effectivePerPage}
-      handlePageChange={handlePageChange}
-      paginationCardTopProps={{
-        perPageChange: handlePerPageChange,
-        noXofX: true,
-        perPageSelectValue: pageSize,
-        allOptionValue: 'all',
-        hidePagination: true,
-        className: 'margin-bottom-2',
-      }}
-      menuItems={menuItems}
-      titleMargin={{ bottom: 1 }}
-      titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
-    >
-      <HorizontalTableWidget
-        headers={HEADERS}
-        data={paginatedTableData}
-        firstHeading={COLUMNS.REQUEST_ID}
-        caption="Active TTA requests"
-        enableSorting
-        sortConfig={sortConfig}
-        requestSort={requestSort}
-        showTotalColumn={false}
-        stickyLastColumn={false}
-        // Status stays frozen to the right as the table scrolls horizontally
-        stickyLastDataColumn
-        showDashForNullValue
-      />
-    </WidgetContainer>
+      sortStorageKey="active-tta-requests-table"
+      exportFileName={EXPORT_FILE_NAME}
+      firstHeading={COLUMNS.REQUEST_ID}
+      headers={HEADERS}
+      stringSortColumns={STRING_SORT_COLUMNS}
+      dateSortColumns={DATE_SORT_COLUMNS}
+      defaultSortConfig={DEFAULT_SORT_CONFIG}
+      rows={rows}
+      toTableData={buildTableData}
+      // Status stays frozen to the right as the table scrolls horizontally
+      stickyLastDataColumn
+    />
   );
 }

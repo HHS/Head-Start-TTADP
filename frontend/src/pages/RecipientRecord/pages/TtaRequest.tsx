@@ -4,6 +4,7 @@ import FilterPanel from '../../../components/filter/FilterPanel';
 import useFilters from '../../../hooks/useFilters';
 import UserContext from '../../../UserContext';
 import ActiveTtaRequestsTable from './components/ActiveTtaRequestsTable';
+import ApprovedTtaRequestsTable from './components/ApprovedTtaRequestsTable';
 
 const FILTER_KEY = 'tta-request-filters';
 
@@ -47,6 +48,9 @@ export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): 
           />
         </div>
         <ActiveTtaRequestsTable recipientId={recipientId} regionId={regionId} />
+        <div className="margin-top-3">
+          <ApprovedTtaRequestsTable recipientId={recipientId} regionId={regionId} />
+        </div>
       </div>
     </>
   );

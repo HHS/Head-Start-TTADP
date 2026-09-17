@@ -5,7 +5,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { blobToCsvDownload } from '../../../../../utils';
 import ActiveTtaRequestsTable from '../ActiveTtaRequestsTable';
-import { ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA } from '../activeTtaRequestsPlaceholderData';
+import { ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA } from '../ttaRequestsPlaceholderData';
 
 jest.mock('../../../../../utils', () => ({
   ...jest.requireActual('../../../../../utils'),

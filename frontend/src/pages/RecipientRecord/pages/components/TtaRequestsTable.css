@@ -4,11 +4,16 @@
   its own row underneath rather than colliding with the menu.
 */
 @media (min-width: 64em) {
-  .ttahub-active-tta-requests-table .smart-hub--table-widget-container {
+  .ttahub-tta-requests-table .smart-hub--table-widget-container {
     display: grid;
   }
 
-  .ttahub-active-tta-requests-table .smart-hub--pagination-card:nth-child(3) {
+  .ttahub-tta-requests-table .smart-hub--pagination-card:nth-child(3) {
     justify-self: end;
   }
+}
+
+/* lets a cell hold more than one name, one per line */
+.ttahub-tta-requests-table .ttahub-tta-requests-table--multiline {
+  white-space: pre-line;
 }
