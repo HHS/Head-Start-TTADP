@@ -1,3 +1,6 @@
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useContext, useState } from 'react';
@@ -20,7 +23,11 @@ import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
-import { GOALS_OBJECTIVES_FILTER_KEY, TTA_TIMELINE_FEATURE_FLAG } from './pages/constants';
+import {
+  GOALS_OBJECTIVES_FILTER_KEY,
+  RECIPIENT_TTA_REQUEST_FEATURE_FLAG,
+  TTA_TIMELINE_FEATURE_FLAG,
+} from './pages/constants';
 import GoalsObjectives from './pages/GoalsObjectives';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import Monitoring from './pages/Monitoring';
@@ -28,6 +35,7 @@ import PrintGoals from './pages/PrintGoals';
 import Profile from './pages/Profile';
 import Timeline from './pages/Timeline';
 import TTAHistory from './pages/TTAHistory';
+import TtaRequest from './pages/TtaRequest';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import ViewGoalDetails from './pages/ViewStandardGoals';
 
@@ -53,13 +61,13 @@ export function PageWithHeading({
         </div>
       ) : (
         <>
-          <div className="display-flex">
+          <div className="display-flex flex-align-center flex-gap-2">
             <h1
               className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}
             >
               {recipientNameWithRegion}
             </h1>
-            <div>{inlineHeadingChildren}</div>
+            <div className="margin-bottom-3">{inlineHeadingChildren}</div>
           </div>
           {children}
         </>
@@ -178,6 +186,28 @@ export default function RecipientRecord({ match, hasAlerts }) {
       />
 
       <Switch>
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request"
+          render={() => (
+            <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
+              <PageWithHeading
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+                slug="tta-request"
+                hasAlerts={hasAlerts}
+                inlineHeadingChildren={
+                  <Button type="button" className="display-flex flex-align-center">
+                    <FontAwesomeIcon color="white" icon={faPlus} />
+                    <span className="margin-x-1">Add request</span>
+                  </Button>
+                }
+              >
+                <TtaRequest recipientId={recipientId} regionId={regionId} />
+              </PageWithHeading>
+            </FeatureFlag>
+          )}
+        />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/timeline"
           render={() => (
