@@ -351,7 +351,7 @@ async function createResubmittedNotificationForCreator(
   },
   submitterName: string
 ) {
-  return createNotification(
+  await createNotification(
     creatorUserId,
     savedReport.id,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
@@ -363,6 +363,11 @@ async function createResubmittedNotificationForCreator(
       },
       skipExisting: 'archived',
     }
+  );
+  return archiveNotificationsByUserEntityAndType(
+    savedReport.id,
+    creatorUserId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR
   );
 }
 
