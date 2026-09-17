@@ -180,8 +180,9 @@ const NOTIFICATION_CONFIGURATION = {
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER]: {
     textFn: ({ approver, recipientName }) =>
       `${approver} has approved your Activity Report for ${recipientName}.`,
-    // Actionable ("Take action") only when the receiving approver has not yet approved;
-    // once they have approved it is informational ("View AR"). (TTAHUB-5581)
+    // Actionable ("Take action") only when the receiving approver has neither approved nor
+    // marked the report as needs action; once they have done either it is informational
+    // ("View AR"). (TTAHUB-5581)
     actionable: ({ hasApproved }) => !hasApproved,
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: ({ hasApproved }) => (hasApproved ? 'View AR' : 'Take action'),

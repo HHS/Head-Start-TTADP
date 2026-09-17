@@ -500,7 +500,7 @@ describe('Activity Report handlers', () => {
         'Approver McApproverface'
       );
     });
-    it('notifies the other approvers when an approver approves, with a CTA based on their own approval status, excluding the acting approver (TTAHUB-5581)', async () => {
+    it('notifies the other approvers when an approver approves, with a CTA based on whether they have already approved or marked the report as needs action, excluding the acting approver (TTAHUB-5581)', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
         id: 1,
@@ -524,6 +524,8 @@ describe('Activity Report handlers', () => {
           { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
           // an approver who has not approved yet -> actionable "Take action"
           { user: { id: 333 }, status: null },
+          // an approver who marked the report as needs action -> informational "View AR"
+          { user: { id: 444 }, status: APPROVER_STATUSES.NEEDS_ACTION },
         ],
         id: 999999,
         toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
@@ -574,6 +576,22 @@ describe('Activity Report handlers', () => {
             recipientName: 'Recipient A',
             approver: 'Approver McApproverface',
             hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // approver 444 (marked the report as needs action) is notified with hasApproved: true
+      expect(createNotification).toHaveBeenCalledWith(
+        444,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
           },
           skipExisting: 'archived',
         }

@@ -236,10 +236,10 @@ async function createReportApprovedNotificationForCollaborators(
  * report's other approvers. Fired when an approver approves an activity report (and the
  * report is not yet fully approved), naming the approver who just acted. The acting approver
  * is excluded by the caller. The CTA is conditional on whether the recipient has already
- * approved: "Take action" (actionable) when they have not, "View AR" once they have.
- * (TTAHUB-5581)
+ * approved or marked the report as needs action: "Take action" (actionable) when they have
+ * done neither, "View AR" once they have done either. (TTAHUB-5581)
  * @param otherApprovers The report's other approvers to notify, each flagged with whether
- * they have already approved the report.
+ * they have already approved or marked the report as needs action (`hasApproved`).
  * @param savedReport The saved activity report.
  * @param approverName The name of the approver who just approved the report.
  * @returns {Promise<void>} Resolves once notifications are created.

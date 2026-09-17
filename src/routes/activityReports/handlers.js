@@ -620,11 +620,15 @@ export async function reviewReport(req, res) {
         await archiveApproverApprovedNotifications(reviewedReport.id);
       } else {
         // Still awaiting other approvals: notify the other approvers, excluding the acting
-        // approver. The CTA depends on whether each recipient has already approved.
+        // approver. The CTA is informational ("View AR") once the recipient has already
+        // approved OR marked the report as needs action; otherwise it's actionable
+        // ("Take action").
         const otherApproversToNotify = (reviewedReport.approvers || [])
           .map((approver) => ({
             userId: approver.user?.id ?? approver.userId,
-            hasApproved: approver.status === APPROVER_STATUSES.APPROVED,
+            hasApproved:
+              approver.status === APPROVER_STATUSES.APPROVED ||
+              approver.status === APPROVER_STATUSES.NEEDS_ACTION,
           }))
           .filter(
             ({ userId: approverUserId }) =>
