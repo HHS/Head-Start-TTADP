@@ -7,6 +7,7 @@ import type {
   NotificationModel,
   NotificationScope,
   NotificationType,
+  NotificationUserStateAttributes,
   NotificationUserStateModel,
   NotificationWithState,
 } from '../types/notifications';
@@ -105,14 +106,19 @@ async function createNotification(
     ? notificationConfig.linkFn(metadata)
     : undefined;
   const notificationLinkText = notificationConfig.linkText
-    ? notificationConfig.linkText()
+    ? notificationConfig.linkText(metadata)
     : undefined;
 
   const displayId = notificationConfig.displayId
     ? notificationConfig.displayId(metadata)
     : undefined;
 
-  const actionable = Boolean(notificationConfig.actionable);
+  // `actionable` may be a static boolean or a metadata-driven function (e.g. a CTA that
+  // depends on whether the recipient has already approved the report). (TTAHUB-5581)
+  const actionable =
+    typeof notificationConfig.actionable === 'function'
+      ? Boolean(notificationConfig.actionable(metadata))
+      : Boolean(notificationConfig.actionable);
 
   const skipArchived = skipExisting === 'archived';
 
@@ -577,7 +583,7 @@ async function getNotifications(
 
       const plain = notification.get({ plain: true }) as NotificationWithState;
       plain.userState = userState
-        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        ? (userState.get({ plain: true }) as NotificationUserStateAttributes)
         : null;
       plain.viewedAt = userState?.viewedAt ?? null;
       plain.archivedAt = userState?.archivedAt ?? null;
