@@ -40,6 +40,8 @@ export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) =>
 
 export const TTA_TIMELINE_FEATURE_FLAG = 'tta_timeline';
 
+export const RECIPIENT_TTA_REQUEST_FEATURE_FLAG = 'recipient_tta_request';
+
 export const getIdParamArray = (search) => {
   const searchParams = new URLSearchParams(search);
   return searchParams.get('id[]')

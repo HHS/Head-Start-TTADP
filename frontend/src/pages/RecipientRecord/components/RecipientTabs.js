@@ -1,13 +1,18 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import TabsNav from '../../../components/TabsNav';
-import { TTA_TIMELINE_FEATURE_FLAG } from '../pages/constants';
+import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG, TTA_TIMELINE_FEATURE_FLAG } from '../pages/constants';
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
   const links = [
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/profile`,
       label: 'Profile',
+    },
+    {
+      to: `/recipient-tta-records/${recipientId}/region/${region}/tta-request`,
+      label: 'TTA Request',
+      featureFlag: RECIPIENT_TTA_REQUEST_FEATURE_FLAG,
     },
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/rttapa`,
