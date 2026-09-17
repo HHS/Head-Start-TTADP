@@ -57,9 +57,6 @@ Boundary(aws, "AWS GovCloud") {
       Boundary(cloudgov_services_dev, "Services - Dev") {
         ContainerDb(dev_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
       }
-      Boundary(cloudgov_services_sandbox, "Services - Sandbox") {
-        ContainerDb(sandbox_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
-      }
     }
   }
 }
@@ -92,7 +89,6 @@ Rel(auto_proc_backup, auto_s3, "store", "aws s3")
 Rel(auto_s3, auto_proc_restore, "retrieve", "aws s3")
 Rel(auto_proc_restore, staging_db, "restore", "psql")
 Rel(auto_proc_restore, dev_db, "restore", "psql")
-Rel(auto_proc_restore, sandbox_db, "restore", "psql")
 
 Rel(developer, newrelic, "Manage performance & logging", "https GET/POST/PUT/DELETE (443)")
 Rel(www_app, newrelic, "reports telemetry", "tcp (443)")

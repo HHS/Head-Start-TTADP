@@ -682,7 +682,7 @@ export async function reviewReport(req, res) {
       await Promise.all(
         // - for collaborators, excluding the acting approver and anyone already
         //   notified as an approver above
-        uniq(activityReportCollaborators.map((collab) => collab.user.id))
+        uniq(activityReportCollaborators.map((collab) => collab?.user?.id))
           .filter((id) => id !== userId && !approvers.some((a) => a.user.id === id))
           .map((id) =>
             createChangesRequestedNotification({ userId: id }, 'collaborator', {

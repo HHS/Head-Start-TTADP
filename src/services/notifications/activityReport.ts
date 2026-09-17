@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
@@ -22,7 +23,7 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  let notificationType: string;
+  let notificationType: NotificationType;
   if (creatorOrCollaborator === 'creator') {
     notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
   } else if (creatorOrCollaborator === 'approver') {
@@ -430,7 +431,7 @@ async function createResubmittedNotificationForCreator(
   },
   submitterName: string
 ) {
-  return createNotification(
+  await createNotification(
     creatorUserId,
     savedReport.id,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
@@ -442,6 +443,11 @@ async function createResubmittedNotificationForCreator(
       },
       skipExisting: 'archived',
     }
+  );
+  return archiveNotificationsByUserEntityAndType(
+    savedReport.id,
+    creatorUserId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR
   );
 }
 
