@@ -547,6 +547,8 @@ export async function reviewReport(req, res) {
       );
     }
 
+    const approverName = savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
+
     // Notify the author and collaborators every time an approver approves the report,
     // naming the approver who just acted. The acting approver is excluded so they don't
     // email themselves.
@@ -559,8 +561,6 @@ export async function reviewReport(req, res) {
       const recipientAuthor =
         authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null;
       const recipientCollabs = collabsWithSettings.filter((c) => c.userId !== userId);
-      const approverName =
-        savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
 
       reportApprovedNotification(reviewedReport, recipientAuthor, recipientCollabs, approverName);
     }
@@ -612,12 +612,12 @@ export async function reviewReport(req, res) {
       // TTAHUB-5581: notify the report's other approvers that an approver approved it.
       // The acting approver just approved, so their own approver-approved notification is
       // archived rather than re-created.
-      await archiveApproverApprovedNotificationForUser(Number(activityReportId), userId);
+      await archiveApproverApprovedNotificationForUser(reviewedReport.id, userId);
 
       if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
         // Fully approved by all approvers: any pending approver-approved notifications for
         // this report are now obsolete.
-        await archiveApproverApprovedNotifications(Number(activityReportId));
+        await archiveApproverApprovedNotifications(reviewedReport.id);
       } else {
         // Still awaiting other approvals: notify the other approvers, excluding the acting
         // approver. The CTA depends on whether each recipient has already approved.
@@ -644,17 +644,17 @@ export async function reviewReport(req, res) {
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       // A resubmission notification is obsolete once the report is fully approved.
-      await archiveResubmittedNotifications(Number(activityReportId));
+      await archiveResubmittedNotifications(reviewedReport.id);
       // Needs-action notifications (creator/collaborator/approver) are obsolete once the
       // report is fully approved (TTAHUB-5683 archival: AR approved).
-      await archiveNeedsActionNotifications(Number(activityReportId));
+      await archiveNeedsActionNotifications(reviewedReport.id);
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       const { author, activityReportCollaborators, approvers } = reviewedReport;
 
       // A resubmission notification is obsolete once changes are requested.
-      await archiveResubmittedNotifications(Number(activityReportId));
+      await archiveResubmittedNotifications(reviewedReport.id);
 
       // add in-app notification
       // - for creator

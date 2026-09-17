@@ -366,14 +366,14 @@ describe('Activity Report handlers', () => {
           skipExisting: 'archived',
         }
       );
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
       ]);
       // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
       // archived once the report is fully approved.
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
@@ -381,11 +381,11 @@ describe('Activity Report handlers', () => {
       // TTAHUB-5581: the acting approver's own approver-approved notification is archived,
       // and once fully approved all approver-approved notifications for the report are archived.
       expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
-        report.id,
+        999999,
         1,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
       );
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
     });
@@ -1159,7 +1159,7 @@ describe('Activity Report handlers', () => {
 
       await reviewReport(needsActionReportRequest, mockResponse);
 
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
