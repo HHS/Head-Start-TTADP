@@ -38,13 +38,12 @@ const refreshMonitoringValidationStaging = async (transaction: Transaction): Pro
     -- *_learned_at: when we actually found out about a field's current value,
     -- for fields a freshness check needs to gate on. sourceUpdatedAt can't
     -- serve this - the nightly import bumps it on every row regardless of
-    -- whether anything meaningful changed (confirmed on prod: identical
-    -- across all live reviews after one import run). The ZAL audit tables
-    -- can: new_row_data only contains the keys that changed on that row
-    -- (true on INSERT too, so the initial-load event counts as "when
-    -- learned"), so filtering on key presence isolates genuine changes to
-    -- that field with no value-diffing needed. Shared here since more than
-    -- one check needs "when did this field last change" for the same field.
+    -- whether anything meaningful changed. The ZAL audit tables can:
+    -- new_row_data only contains the keys that changed on that row (true on
+    -- INSERT too, so the initial-load event counts as "when learned"), so
+    -- filtering on key presence isolates genuine changes to that field with
+    -- no value-diffing needed. Shared here since more than one check needs
+    -- "when did this field last change" for the same field.
     DROP TABLE IF EXISTS pg_temp.monitoring_review_outcome_learned;
     CREATE TEMP TABLE monitoring_review_outcome_learned
     ON COMMIT DROP

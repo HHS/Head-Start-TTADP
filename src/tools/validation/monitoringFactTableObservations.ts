@@ -5,35 +5,27 @@ import { sequelize } from '../../models';
  * Rebuilds per-entity observations in ValidationRecords for the *fact* tables
  * (updateMonitoringFactTables.ts's output), as opposed to monitoringObservations.ts's
  * raw IT-AMS tables. These check the fact tables' own computed fields directly,
- * rather than re-deriving the same logic a second time from raw data - a check
- * here inherits any future change to that logic instead of drifting from it.
+ * rather than re-deriving the same logic a second time from raw data.
  *
- * entity_type is still only ever 'MonitoringFindings' or 'MonitoringReviews',
- * same as monitoringObservations.ts: Citations.mfid and DeliveredReviews.mrid
- * are exactly MonitoringFindings.id/MonitoringReviews.id (not just
- * correlated - see the unique index on Citations.mfid), so a fact-table
- * observation about a citation or delivered review is really about the same
- * one Finding/Review a raw-data observation about it would be, and is
- * recorded as such rather than proliferating a second, parallel entity
- * family for an anomaly-detection model to reconcile. No separate retention
- * DELETE here - monitoringObservations.ts's own retention pass isn't scoped
- * to an entity_type, so it already covers these rows too.
+ * entity_type is still only ever 'MonitoringFindings' or 'MonitoringReviews':
+ * Citations.mfid and DeliveredReviews.mrid are exactly MonitoringFindings.id/
+ * MonitoringReviews.id (enforced by a unique index on Citations.mfid), so a
+ * fact-table observation about a citation or delivered review is recorded
+ * against the same Finding/Review a raw-data observation would use, not a
+ * separate entity family. No separate retention DELETE here -
+ * monitoringObservations.ts's own retention pass isn't scoped to an
+ * entity_type, so it already covers these rows too.
  *
- * See docs/monitoring-data-validation.md.
+ * See docs/monitoring-validation-checks.md for what each observation means.
  */
 const refreshMonitoringFactTableObservations = async (transaction: Transaction): Promise<void> => {
   await sequelize.query(
     `
-    -- citation_reopened: a Citation's own "active" column (Closed/Corrected ->
-    -- false, Active/Elevated Deficiency -> true) most recently flipped from
-    -- false to true - it was considered resolved and no longer is. Read
-    -- directly from ZALCitations rather than comparing ValidationRecords
-    -- across runs: the Citations upsert only writes a row when a column
-    -- actually changed (see the IS DISTINCT FROM guards in
-    -- updateMonitoringFactTables.ts), so ZALCitations.new_row_data is already
-    -- a clean diff - filtering on key presence isolates real transitions with
-    -- no snapshot-vs-snapshot comparison needed. context.reopened_at is that
-    -- transition's own timestamp, for the alert step to gate freshness on.
+    -- citation_reopened. Read directly from ZALCitations rather than
+    -- comparing ValidationRecords across runs: the Citations upsert only
+    -- writes a row when a column actually changed, so new_row_data is
+    -- already a clean diff - filtering on key presence isolates real
+    -- transitions with no snapshot-vs-snapshot comparison needed.
     WITH active_changes AS (
       SELECT
         data_id,
@@ -69,15 +61,7 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     WHERE c."deletedAt" IS NULL
     ;
 
-    -- delivered_review_completion_state: same idea as citation_reopened, but
-    -- for DeliveredReviews.complete. It's usually driven by the same
-    -- underlying finding reopening (so it'll usually coincide with a
-    -- citation_reopened alert), but not always - e.g. an Area of Concern
-    -- finding's calculated_status can stay 'Closed' on goal-closure timing
-    -- alone even after a new undelivered review links to it, while
-    -- last_review_delivered (and so complete) flips regardless. Kept as its
-    -- own independent check rather than trying to filter out the overlap,
-    -- to catch whatever other paths produce the same gap.
+    -- delivered_review_completion_state
     WITH complete_changes AS (
       SELECT
         data_id,
@@ -113,25 +97,12 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     WHERE dr."deletedAt" IS NULL
     ;
 
-    -- activity_report_citation_source_deleted: a report's citation selections
-    -- are a snapshot from Citations at the time an objective was saved. If
-    -- that Citation is later soft-deleted (IT-AMS no longer supports it - see
-    -- the "Citations deleted record marking" UPDATE in
-    -- updateMonitoringFactTables.ts), the consequence depends on the report's
-    -- status: an approved report is immutable by design (kept as-is for
-    -- FOIA/audit purposes), so this isn't a data bug to fix there - it's a
-    -- fact worth knowing, that an official report now cites monitoring data
-    -- IT-AMS itself says doesn't exist. A still-editable (draft/submitted/
-    -- needs_action) report is different: the stale reference can cause real
-    -- broken behavior for the user, and is something OHS staff can actually
-    -- act on. The alert step (monitoringFactTableAlerts.ts) splits these two
-    -- cases; this observation just records the fact for every finding cited
-    -- on any non-deleted report. A finding can be cited on more than one
-    -- report, so this rolls up with BOOL_OR the same way a raw-data check
-    -- rolls up a junction-table condition onto its Finding/Review.
-    -- context.source_deleted_at is Citations.deletedAt, which that UPDATE
-    -- only ever sets once (guarded by "deletedAt" IS NULL), so it's already
-    -- the "when we learned this" timestamp with no audit-log lookup needed.
+    -- activity_report_citation_source_deleted. Rolled up per finding with
+    -- BOOL_OR, the same way a raw-data check rolls up a junction-table
+    -- condition, since a finding can be cited on more than one report.
+    -- context.source_deleted_at is Citations.deletedAt directly (that column
+    -- is set at most once, guarded by "deletedAt" IS NULL elsewhere), so it's
+    -- already the "when we learned this" timestamp with no audit-log lookup.
     WITH finding_report_citations AS (
       SELECT
         c.mfid,
@@ -162,10 +133,7 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     CROSS JOIN validation_run cur
     ;
 
-    -- citation_review_count / citation_grant_count: not alerted on - raw
-    -- material for anomaly detection, not a violation of anything. How many
-    -- distinct reviews/grants a Citation has ever been linked to via
-    -- DeliveredReviewCitations/GrantCitations.
+    -- citation_review_count / citation_grant_count
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
     SELECT
@@ -202,19 +170,12 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     GROUP BY c.mfid, cur.run_id
     ;
 
-    -- citation_days_review_1_to_2 / citation_days_review_2_to_3: how long a
-    -- citation's first (then second) review stayed the operative one - raw
-    -- material for anomaly detection, not alerted on. Not an open-ended
-    -- timeline: a citation has at most 3 reviews today, so these are just
-    -- two more named per-finding observations, not a separate per-period
-    -- entity. category is the history status that applied during that
-    -- period. latest_review_end is set to a far-future placeholder while a
-    -- period is still the current one (an open deficiency has no real end
-    -- yet) - capped at today so the duration means "how long has this
+    -- citation_days_review_1_to_2 / citation_days_review_2_to_3.
+    -- latest_review_end is a far-future placeholder while a period is still
+    -- current - capped at today so the duration means "how long has this
     -- actually been true" rather than "until the placeholder date". Skips
-    -- DeliveredReviewCitations rows with no latest_review_start (a review
-    -- delivered the same day as another and so never authoritative for any
-    -- period - see delivered_review_citation_no_window below).
+    -- rows with no latest_review_start (see delivered_review_citation_no_window
+    -- below).
     WITH ranked_periods AS (
       SELECT
         c.mfid,
@@ -255,16 +216,11 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     WHERE p.rn = 2
     ;
 
-    -- delivered_review_citation_no_window: a DeliveredReviewCitations row
-    -- whose review was delivered the same day as another review on the same
-    -- citation, and so lost the tie-break and was never the authoritative
-    -- review for any period (see the "If we somehow get two reviews for a
-    -- citation witht the same reportDeliveryDate" comment in
-    -- updateMonitoringFactTables.ts). Rolled up per finding the same way as
-    -- activity_report_citation_source_deleted above. context.learned_at uses
-    -- the row's own createdAt: this table is fully rebuilt from raw data each
-    -- refresh with an IS DISTINCT FROM upsert guard, so createdAt only moves
-    -- when the row is genuinely (re)created, not on every no-op refresh.
+    -- delivered_review_citation_no_window. Rolled up per finding the same way
+    -- as activity_report_citation_source_deleted above. context.learned_at
+    -- uses the row's own createdAt: this table is fully rebuilt each refresh
+    -- with an IS DISTINCT FROM upsert guard, so createdAt only moves when the
+    -- row is genuinely (re)created, not on every no-op refresh.
     WITH finding_no_window AS (
       SELECT
         c.mfid,

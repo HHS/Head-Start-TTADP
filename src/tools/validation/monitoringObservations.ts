@@ -4,21 +4,18 @@ import { sequelize } from '../../models';
 
 /**
  * Rebuilds per-entity observations in ValidationRecords: one row per observation
- * about one entity. Measurements can be both scalar/numeric and categorical.
- * Observations are raw material for the alert checks and future models, and let a
- * human drill into the entities behind an alert.
+ * about one entity, recorded for every entity it applies to (not just the
+ * alert-worthy ones), so later steps/models have the full distribution.
  *
- * Retention is cycle-aware: keeps the current run and the previous cycle's run, so
- * a same-cycle re-run replaces rather than accumulates. See
- * docs/monitoring-data-validation.md.
+ * Retention is cycle-aware: keeps the current run and the previous cycle's run,
+ * so a same-cycle re-run replaces rather than accumulates.
+ *
+ * See docs/monitoring-validation-checks.md for what each observation means.
  */
 const refreshMonitoringObservations = async (transaction: Transaction): Promise<void> => {
-  // Keep only the current run and the latest run of the most recent EARLIER cycle
-  // (a different import_id / data version), scoped through
-  // ValidationRuns.process_name so other processes are untouched. This drops any
-  // prior run of the CURRENT cycle (a same-cycle re-run replaces its data) while
-  // preserving a different data version to compare against. Reuses the cur/prev
-  // cycle pair monitoringValidationStaging.ts already computed.
+  // Keeps the current run and the latest run of the most recent earlier cycle
+  // (reusing the pair monitoringValidationStaging.ts computed), scoped through
+  // ValidationRuns.process_name.
   await sequelize.query(
     `
     DELETE FROM "ValidationRecords" rec
@@ -37,11 +34,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
 
   await sequelize.query(
     `
-    -- category: the category of each finding on a delivered review - the
-    -- coalesced value of the finding's own source and the guidance of an
-    -- associated standard (the same calculated_category logic
-    -- updateMonitoringFactTables uses). NULL means the finding has no
-    -- category, a situation we have actually faced with imported data.
+    -- category
     WITH delivered_findings AS (
     SELECT DISTINCT
       mf.id,
@@ -87,13 +80,8 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     GROUP BY df.id, mf.source, cur.run_id
     ;
 
-    -- delivery_report_lag_days: days between a review's reportDeliveryDate and
-    -- when that delivery date first showed up in the imported ITAMS data (the
-    -- sourceUpdatedAt on the earliest audit row where reportDeliveryDate
-    -- appeared, also recorded in context.learned_date for the alert step to
-    -- filter on). A large lag means we learned about a delivered review well
-    -- after the fact. Reviews with no surviving audit rows produce no
-    -- observation.
+    -- delivery_report_lag_days: no observation when no ZALMonitoringReviews
+    -- audit row survives for a review.
     WITH first_delivery_set AS (
     SELECT DISTINCT ON (zmr.data_id)
       zmr.data_id,
@@ -125,7 +113,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."reportDeliveryDate" >= w.start_date
     ;
 
-    -- finding_count: number of distinct findings linked to each review
+    -- finding_count
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
     SELECT
@@ -147,14 +135,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     GROUP BY mr.id, cur.run_id
     ;
 
-    -- closure_state: an Active finding carrying a closedDate isn't
-    -- necessarily wrong (confirmed on prod: usually a stale finding-level
-    -- statusId that hasn't caught up, the same class of unreliability
-    -- TTAHUB-5740 routes around elsewhere) - recorded as a suspect state for
-    -- anomaly detection, not alerted on. DISTINCT ON, not DISTINCT:
-    -- statuses_table_integrity can find more than one live row for one
-    -- statusId, and a bare DISTINCT would fan out the join below when that
-    -- happens - this deterministically picks one instead.
+    -- closure_state. DISTINCT ON, not DISTINCT: statuses_table_integrity can
+    -- find more than one live row for one statusId, and a bare DISTINCT would
+    -- fan out the join below - this deterministically picks the latest one.
     WITH known_statuses AS (
     SELECT DISTINCT ON ("statusId")
       "statusId",
@@ -185,19 +168,12 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- history_determination_recognized: flags a Finding whose
-    -- MonitoringFindingHistories carry any determination value we haven't
-    -- reviewed yet. updateMonitoringFactTables.ts only recognizes
-    -- Noncompliance/Concern/Deficiency (Concern -> Area of Concern); anything
-    -- else - including a value in the known list below - is silently excluded
-    -- from Citations entirely, with no trace left in the fact tables. A new
-    -- value here needs review: if it's a same-behavior variant of an
-    -- already-excluded value (e.g. "DROPPED", a casing variant of "Dropped"),
-    -- add it to the known list below with no further action; if it's a variant
-    -- of Noncompliance/Concern/Deficiency, update updateMonitoringFactTables.ts
-    -- first so it isn't silently dropped. If a finding's histories carry more
-    -- than one unrecognized value, only one is captured here - the rest are
-    -- still visible in the raw data once this points a human at the finding.
+    -- history_determination_recognized: a new unrecognized value needs review
+    -- before it's added to the known list below - if it's a same-behavior
+    -- variant of an already-excluded value (e.g. a casing variant of
+    -- "Dropped"), add it with no further action; if it's a variant of
+    -- Noncompliance/Concern/Deficiency, fix updateMonitoringFactTables.ts
+    -- first so it isn't silently dropped there too.
     WITH finding_unrecognized_determination AS (
       SELECT
         mfh."findingId",
@@ -231,8 +207,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- review_type_shape: a CLASS review should have no linked findings; a
-    -- non-CLASS review should have no MonitoringClassSummaries row.
+    -- review_type_shape
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -263,17 +238,8 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- review_status_vs_delivery: a review with a reportDeliveryDate has been
-    -- delivered, so its status should say Complete. (The reverse isn't
-    -- checked here: a Complete review with no reportDeliveryDate is a
-    -- separate, already-known gap - updateMonitoringFactTables.ts requires
-    -- reportDeliveryDate, not status, to treat a review as delivered.)
-    -- Scoped to the window like the other reportDeliveryDate-based checks
-    -- (delivery_report_lag_days, finding_latest_delivered): reviews with no
-    -- reportDeliveryDate, or one older than the window, produce no
-    -- observation, so an old already-known mismatch can't alert forever.
-    -- DISTINCT ON, not a bare join: see closure_state's known_statuses above
-    -- - same fan-out risk if statuses_table_integrity's condition occurs.
+    -- review_status_vs_delivery. DISTINCT ON, not a bare join: see
+    -- closure_state's known_statuses above - same fan-out risk.
     WITH known_review_statuses AS (
       SELECT DISTINCT ON ("statusId") "statusId", name
       FROM "MonitoringReviewStatuses"
@@ -305,10 +271,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."reportDeliveryDate" >= w.start_date
     ;
 
-    -- review_grantee_duplicated: flags a Review with more than one live
-    -- MonitoringReviewGrantees row for the same (reviewId, grantNumber) -
-    -- would double-count in any query that doesn't DISTINCT on this pair
-    -- (some already do; some don't).
+    -- review_grantee_duplicated
     WITH review_grantee_pairs AS (
       SELECT "reviewId", "grantNumber", COUNT(*) cnt
       FROM "MonitoringReviewGrantees"
@@ -339,11 +302,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- review_grantee_multi_grant: flags a Review with a grantee link whose
-    -- granteeId also appears on a live MonitoringReviewGrantees row with a
-    -- different grantNumber - would misattribute a finding to the wrong
-    -- grant anywhere granteeId is used to look up "the" grant (e.g.
-    -- finding_grant_on_own_review above).
+    -- review_grantee_multi_grant
     WITH grantee_grant_counts AS (
       SELECT "granteeId", COUNT(DISTINCT "grantNumber") grant_numbers
       FROM "MonitoringReviewGrantees"
@@ -378,10 +337,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- finding_grant_on_own_review: flags a Finding whose directly-attached
-    -- grant(s) (via MonitoringFindingGrants.granteeId) aren't all among the
-    -- grant(s) of the review(s) the finding is actually linked to via
-    -- MonitoringFindingHistories. Nothing in the schema guarantees this.
+    -- finding_grant_on_own_review
     WITH finding_review_grant_numbers AS (
       SELECT DISTINCT
         mfh."findingId",
@@ -443,11 +399,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- finding_review_history_duplicated: flags a Finding with more than one
-    -- live MonitoringFindingHistories row for the same (findingId, reviewId).
-    -- Identical duplicates are just import noise; flagged only when they
-    -- disagree on status or determination, since that's genuine ambiguity
-    -- about the finding's state on that review.
+    -- finding_review_history_duplicated
     WITH finding_review_pairs AS (
       SELECT
         "findingId",
@@ -490,12 +442,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- finding_standard_missing: a finding with no MonitoringFindingStandard
-    -- link resolving to a live MonitoringStandards row silently produces no
-    -- Citation (the fact-table transform inner-joins to live standards, so an
-    -- orphaned link - one whose standardId itself has no live row - is just
-    -- as invisible to it as having no link at all) - nothing else in the fact
-    -- tables would show this finding is missing.
+    -- finding_standard_missing
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -525,10 +472,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     ;
 
     -- history_status_resolvable / finding_status_resolvable /
-    -- review_status_resolvable: a statusId that doesn't resolve to any live
-    -- row in its *Statuses table. Every join in updateMonitoringFactTables.ts
-    -- (and these checks) assumes this always resolves; nothing in the schema
-    -- guarantees it.
+    -- review_status_resolvable
     WITH finding_history_status_unresolved AS (
       SELECT mfh."findingId", BOOL_OR(s."statusId" IS NULL) any_unresolvable
       FROM "MonitoringFindingHistories" mfh
@@ -595,12 +539,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- statuses_table_integrity: more than one live row for the same statusId
-    -- in a *Statuses table. Every status-name lookup in this codebase (and in
-    -- updateMonitoringFactTables.ts) assumes exactly one live row per
-    -- statusId; nothing in the schema enforces it. Exception to anchoring on
-    -- Findings/Reviews: this is about the shared reference table itself, not
-    -- any one finding or review.
+    -- statuses_table_integrity
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -667,11 +606,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     WHERE s."deletedAt" IS NULL
     ;
 
-    -- review_grantee_orphaned_grant: flags a Review with a
-    -- MonitoringReviewGrantees row whose grantNumber has no live
-    -- GrantNumberLinks/Grants match - silently excludes the review (and its
-    -- citations, for that grant) from the fact tables. Real, ongoing
-    -- incidence on prod (~0.4% of review-grantee links).
+    -- review_grantee_orphaned_grant
     WITH review_grantee_orphans AS (
       SELECT mrg."reviewId", BOOL_OR(g.id IS NULL) any_orphaned
       FROM "MonitoringReviewGrantees" mrg
@@ -702,12 +637,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- standard_consistency: a finding's live MonitoringFindingStandard rows
-    -- should agree on citation text always; guidance may disagree only
-    -- harmlessly, when the finding's own source is set (calculated_category
-    -- ignores guidance in that case). Citation text is checked first and is
-    -- the more serious problem, so a finding with both kinds of disagreement
-    -- is only ever flagged as citation_text_disagrees.
+    -- standard_consistency
     WITH standard_variance AS (
       SELECT
         mfst."findingId",
@@ -747,15 +677,10 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     ;
 
     -- history_vs_finding_status / history_vs_outcome share this derivation: a
-    -- finding's history status on its own latest delivered review (delivered
-    -- within monitoring_validation_window), and that review's outcome. This is
-    -- a simplified, validation-only version of the same "latest delivered
-    -- review" concept updateMonitoringFactTables.ts computes for the fact
-    -- tables - duplicated here deliberately, since this raw-data check has to
-    -- run independently of (and would be blind to bugs in) that transform.
-    -- A real temp table, not a CTE, because both checks below are separate
-    -- top-level statements and a CTE only scopes to the statement it's
-    -- attached to.
+    -- finding's history status on its own latest delivered review, and that
+    -- review's outcome. A real temp table, not a CTE, because both checks
+    -- below are separate top-level statements and a CTE only scopes to the
+    -- statement it's attached to.
     DROP TABLE IF EXISTS pg_temp.finding_latest_delivered;
     CREATE TEMP TABLE finding_latest_delivered
     ON COMMIT DROP
@@ -783,7 +708,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     ;
 
     -- DISTINCT ON, not DISTINCT: see closure_state's known_statuses above -
-    -- same fan-out risk if statuses_table_integrity's condition occurs.
+    -- same fan-out risk.
     WITH known_finding_statuses AS (
       SELECT DISTINCT ON ("statusId") "statusId", name
       FROM "MonitoringFindingStatuses"
@@ -791,28 +716,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
 
-    -- history_vs_finding_status: the determination/status MonitoringFindingHistories
-    -- recorded for the finding's own latest delivered review says Corrected,
-    -- but MonitoringFindings.statusId (the finding-level field, not tied to any
-    -- one review) doesn't agree. The other direction - finding-level status
-    -- implying resolution while the linked history still says New/Not
-    -- Reviewed/Not Corrected - is NOT flagged; that happens constantly and is
-    -- already understood (IT-AMS doesn't always link a finding to its
-    -- follow-up review, so the finding-level field can be advanced by
-    -- information this linked history chain has no visibility into). This
-    -- direction is different: the history status is the one side we can trace
-    -- to a specific, real, delivered review, and it disagrees with the
-    -- finding-level field. Confirmed on prod: every current instance also has
-    -- MonitoringFindings.closedDate (a separate field, not used elsewhere in
-    -- our logic) set to a date matching that same delivered review - a second,
-    -- independent piece of IT-AMS's own data pointing the same way, which is
-    -- why this is trusted as the finding-level field being wrong rather than
-    -- the history being wrong. context.learned_at is the more recent of "when
-    -- the history status last changed" and "when the finding status last
-    -- changed" (see monitoringValidationStaging.ts) - whichever moved last is
-    -- when this disagreement became newly visible to us, which is what the
-    -- alert step gates freshness on so a disagreement IT-AMS never fixes
-    -- doesn't alert forever.
+    -- history_vs_finding_status: only the history-says-Corrected direction is
+    -- flagged (see docs) - the history status is the side traceable to a
+    -- specific, real, delivered review, unlike the finding-level field.
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT
@@ -844,21 +750,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- history_vs_outcome: the finding's latest delivered review's history
-    -- status is still open (New/Not Reviewed/Not Corrected/Elevated
-    -- Deficiency) while that same review's own outcome field says Compliant -
-    -- two fields IT-AMS records for one review disagreeing with each other.
-    -- Excludes Area of Concern findings (findingType containing "Concern",
-    -- matching how updateMonitoringFactTables.ts itself detects them - the
-    -- raw value can be "Concern" or "Area of Concern"): they're resolved
-    -- through monitoring goal closure, not the history status cycle this
-    -- check watches, so their history status legitimately stays New
-    -- indefinitely regardless of the review's outcome (confirmed on prod:
-    -- every current New+Compliant instance is an Area of Concern finding).
-    -- context.learned_at mirrors history_vs_finding_status above: the more
-    -- recent of "when the review's outcome last changed" and "when the
-    -- finding's history status last changed" is when this disagreement
-    -- became newly visible to us.
+    -- history_vs_outcome
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT

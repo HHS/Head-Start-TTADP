@@ -3,8 +3,8 @@ import { sequelize } from '../../models';
 
 /**
  * Rebuilds ValidationAlerts derived from monitoringFactTableObservations.ts's
- * observations. See docs/monitoring-data-validation.md and
- * monitoringAlerts.ts (the raw-data equivalent) for conventions.
+ * observations. See docs/monitoring-validation-checks.md and monitoringAlerts.ts
+ * (the raw-data equivalent) for conventions.
  */
 const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promise<void> => {
   await sequelize.query(
@@ -27,12 +27,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       ON c.id = aroc."citationId"
     ;
 
-    -- citation_reopened_on_activity_report: a reopened Citation that's
-    -- actually in use on a report warrants prompt attention, not just a
-    -- team_notification. Both this and citation_reopened below gate on
-    -- context.reopened_at (the transition's own timestamp - see
-    -- monitoringFactTableObservations.ts) so a reopening that's already been
-    -- seen doesn't alert forever.
+    -- citation_reopened_on_activity_report
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -59,8 +54,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     HAVING COUNT(*) > 0
     ;
 
-    -- citation_reopened: the same reopening, but not (yet) cited on any
-    -- report - team_notification rather than alert.
+    -- citation_reopened: the same reopening, but not (yet) cited on any report.
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -88,10 +82,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     HAVING COUNT(*) > 0
     ;
 
-    -- delivered_review_reopened: team_notification only - ARs cite Citations
-    -- (findings), not DeliveredReviews (reviews) directly, so this doesn't
-    -- need the AR-linkage severity split citation_reopened above has. Same
-    -- 7-day freshness gate.
+    -- delivered_review_reopened
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -116,18 +107,10 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     HAVING COUNT(*) > 0
     ;
 
-    -- activity_report_citation_source_deleted / _editable: a report's
-    -- citation selection points at IT-AMS data that no longer exists.
-    -- Split by whether the report can still be changed: an approved report
-    -- is immutable by design, so this is an awareness alert for a
-    -- compliance-relevant fact, not something to fix; a draft/submitted/
-    -- needs_action report is still editable, so the same situation can cause
-    -- real broken behavior and is something OHS staff can act on. Both are
-    -- freshness-gated so a case someone's already seen doesn't alert
-    -- forever. Points at the first affected report (by id) and its
-    -- recipient, rather than a raw id list - enough for OHS staff to start
-    -- following up, with the rest available on request rather than
-    -- cluttering the alert.
+    -- activity_report_citation_source_deleted / _editable. Points at the
+    -- first affected report (by id) and its recipient, rather than a raw id
+    -- list, so OHS staff have enough to start following up without the
+    -- alert itself getting cluttered; the rest are available on request.
     DROP TABLE IF EXISTS pg_temp.aroc_source_deleted;
     CREATE TEMP TABLE aroc_source_deleted
     ON COMMIT DROP
@@ -223,10 +206,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     WHERE summary.report_count > 0
     ;
 
-    -- delivered_review_citation_no_window: team_notification - a review that
-    -- lost a same-day tie-break and so was never the authoritative review
-    -- for any of a citation's periods (see monitoringFactTableObservations.ts).
-    -- Freshness-gated on context.learned_at (the row's own createdAt).
+    -- delivered_review_citation_no_window
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,

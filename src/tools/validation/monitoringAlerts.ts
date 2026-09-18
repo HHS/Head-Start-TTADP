@@ -6,7 +6,7 @@ import { sequelize } from '../../models';
  * Rebuilds ValidationAlerts for the post-refresh process: threshold checks over
  * ValidationTimeSeries and validity checks over ValidationRecords, both produced
  * earlier in the run. This process's previous alerts are deleted first. See
- * docs/monitoring-data-validation.md.
+ * docs/monitoring-validation-checks.md.
  */
 const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> => {
   await sequelize.query(
@@ -66,15 +66,10 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     ;
 
     -- previously_flagged: (entity_type, entity_id, observation_name, category)
-    -- combinations that were already true as of the previous cycle's run
-    -- (monitoring_validation_cycles, from monitoringValidationStaging.ts).
-    -- Most checks below have no single field whose ZAL history means "when
-    -- this became true" (they're joins/aggregates, not one column changing),
-    -- so instead of a per-check context.learned_at they share this generic
-    -- edge gate: an entity only alerts when its flagged category is new
-    -- since last cycle, not carried forward every night. A real temp table,
-    -- not a CTE, since it's reused across every INSERT below, each its own
-    -- top-level statement.
+    -- combinations already true as of the previous cycle's run - the "since
+    -- previous cycle" alert window (see docs/monitoring-data-validation.md,
+    -- Conventions). A real temp table, not a CTE, since it's reused across
+    -- every INSERT below, each its own top-level statement.
     DROP TABLE IF EXISTS pg_temp.previously_flagged;
     CREATE TEMP TABLE previously_flagged
     ON COMMIT DROP
@@ -85,17 +80,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE prev.run_id = cyc.prev_cycle_run_id
     ;
 
-    -- reviews_created_region_zero: regions with no reviews created over the
-    -- last four complete weeks. Some times of year are naturally slow and a
-    -- zero week for one region is not unusual, so this only alerts when the
-    -- average four-week total across all regions is above 5 - meaning there is
-    -- enough national activity that a silent region stands out. The region
-    -- universe comes from Grants so regions with no time series rows at all
-    -- still count as zero. A review spanning multiple region/geo slices is
-    -- counted in each, so this cross-region sum double-counts it; far too rare
-    -- to matter for an order-of-magnitude sparsity gate like this, but the
-    -- imprecision should be accounted for if the stat ever feeds statistical
-    -- modeling.
+    -- reviews_created_region_zero
     WITH region_totals AS (
     SELECT
       g."regionId" region_id,
@@ -132,10 +117,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       AND rt.total = 0
     ;
 
-    -- findings_delivered_month_spike: the last complete month delivered more
-    -- than 50% as many findings as the entire twelve months before it.
-    -- Monitoring activity is spiky, but a single month approaching half a
-    -- year's volume should not be normal.
+    -- findings_delivered_month_spike
     WITH last_month AS (
     SELECT COALESCE(SUM(total), 0) total
     FROM monthly_findings
@@ -167,13 +149,8 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       AND lm.total > 0.5 * py.total
     ;
 
-    -- finding_category_missing: findings on delivered reviews with no category
-    -- (neither source nor standard guidance). team_notification, not alert -
-    -- worth the team looking into, not urgent enough for the customer-visible
-    -- channel. One aggregate notification; individual entities are inspectable
-    -- in ValidationRecords (observation_name = 'category', category IS NULL).
-    -- Gated via previously_flagged (see above) - IS NOT DISTINCT FROM, not =,
-    -- so this check's NULL category compares correctly.
+    -- finding_category_missing. IS NOT DISTINCT FROM, not =, in the
+    -- previously_flagged join: this check's category can be NULL.
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -203,12 +180,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_delivery_report_lag: reviews where the delivery date showed up in
-    -- the imported data more than 7 calendar days after the delivery date
-    -- itself. Limited to lag learned about in the last 3 days (tolerates a
-    -- daily cron occasionally slipping a day) so the same long-known-about
-    -- reviews don't alert every night. One aggregate alert; entities
-    -- inspectable in ValidationRecords (observation_name = 'delivery_report_lag_days').
+    -- review_delivery_report_lag
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -234,9 +206,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- history_determination_unrecognized: team_notification, not alert - a
-    -- new determination value needs review (see
-    -- history_determination_recognized), but isn't urgent on its own.
+    -- history_determination_unrecognized
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -267,9 +237,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_type_shape_violation: a CLASS review with findings, or a
-    -- non-CLASS review with CLASS scores, breaks an assumption the fact
-    -- tables rely on to keep the two apart.
+    -- review_type_shape_violation
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -299,9 +267,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_status_vs_delivery_mismatch: a review reportDeliveryDate marks
-    -- as delivered doesn't have a Complete status - a status value we don't
-    -- currently recognize as "done" on a review we otherwise treat as done.
+    -- review_status_vs_delivery_mismatch
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -331,9 +297,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_grantee_duplicated: team_notification - low real-world impact
-    -- today (traced every consumer; only one Slack-summary count query is
-    -- exposed to it), but worth knowing about.
+    -- review_grantee_duplicated
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -363,10 +327,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_grantee_multi_grant: alert, not team_notification, since a
-    -- granteeId resolving to more than one grantNumber is a real
-    -- misattribution risk wherever granteeId is used to look up "the" grant
-    -- (e.g. finding_grant_on_own_review), not just a display/count issue.
+    -- review_grantee_multi_grant
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -396,9 +357,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_grant_not_on_own_review: a finding attached to a grant that
-    -- isn't on any review the finding is actually linked to - real, ongoing
-    -- incidence on prod (~0.2% of findings with a finding-grant link).
+    -- finding_grant_not_on_own_review
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -428,9 +387,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_review_history_duplicated: a finding whose history disagrees
-    -- with itself about the finding's status/determination on a given
-    -- review - genuine ambiguity about the finding's state, not import noise.
+    -- finding_review_history_duplicated
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -460,8 +417,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_standard_missing: a finding with no live standard at all
-    -- silently produces no Citation.
+    -- finding_standard_missing
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -491,9 +447,8 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- {history_status,finding_status,review_status}_resolvable: a statusId
-    -- that doesn't resolve to any live row in its *Statuses table breaks an
-    -- assumption most of the fact-table/validation joins make.
+    -- history_status_unresolvable / finding_status_unresolvable /
+    -- review_status_unresolvable
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -581,9 +536,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- statuses_table_integrity_violated: more than one live row for the same
-    -- statusId in a *Statuses table - breaks an assumption several joins
-    -- (including this file's own resolvable checks) make.
+    -- statuses_table_integrity_violated
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -612,10 +565,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- review_grantee_orphaned_grant: a review-grantee link whose grantNumber
-    -- has no live grant match - silently excludes the review from the fact
-    -- tables for that grant. Real, ongoing incidence on prod (~0.5% of
-    -- reviews with a grantee link).
+    -- review_grantee_orphaned_grant
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -645,9 +595,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_standard_citation_text_disagrees: a finding's live standards
-    -- disagree on citation text - picking one over the other is a real
-    -- correctness issue, not just a category question.
+    -- finding_standard_citation_text_disagrees
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -678,9 +626,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_standard_category_disagrees: only alertable when the finding
-    -- has no source of its own - that's the one case where the disagreement
-    -- actually changes calculated_category, since source otherwise wins.
+    -- finding_standard_category_disagrees
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -711,11 +657,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- history_vs_finding_status_disagrees: team_notification, not alert - a
-    -- known, understood pattern (see history_vs_finding_status) that doesn't
-    -- need urgent action this round. Gated to disagreements learned about in
-    -- the last 7 days (context.learned_at - see monitoringObservations.ts)
-    -- so one IT-AMS never fixes doesn't alert forever.
+    -- history_vs_finding_status_disagrees
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -740,11 +682,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     HAVING COUNT(*) > 0
     ;
 
-    -- history_vs_outcome_disagrees: two fields IT-AMS records for the same
-    -- review disagreeing with each other is worth prompt attention, unlike
-    -- history_vs_finding_status above (two DIFFERENT fields, one of which is
-    -- already known to be unreliable). Gated to the last 7 days for the same
-    -- reason as history_vs_finding_status_disagrees above.
+    -- history_vs_outcome_disagrees
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
