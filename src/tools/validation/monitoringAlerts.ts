@@ -7,8 +7,6 @@ import { sequelize } from '../../models';
  * ValidationTimeSeries and validity checks over ValidationRecords, both produced
  * earlier in the run. This process's previous alerts are deleted first. See
  * docs/monitoring-data-validation.md.
- *
- * Skeleton: two threshold checks and three observation-derived checks.
  */
 const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> => {
   await sequelize.query(
@@ -150,14 +148,16 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     ;
 
     -- finding_category_missing: findings on delivered reviews with no category
-    -- (neither source nor standard guidance). One aggregate alert; individual
-    -- entities are inspectable in ValidationRecords (observation_name =
-    -- 'category', category IS NULL).
-    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    -- (neither source nor standard guidance). team_notification, not alert -
+    -- worth the team looking into, not urgent enough for the customer-visible
+    -- channel. One aggregate notification; individual entities are inspectable
+    -- in ValidationRecords (observation_name = 'category', category IS NULL).
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_category_missing',
       COUNT(*) || ' finding(s) on delivered reviews have no category',
+      cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'category',
@@ -171,14 +171,16 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'category'
       AND vr.category IS NULL
-    GROUP BY cur.run_id
+    GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
 
     -- review_delivery_report_lag: reviews where the delivery date showed up in
     -- the imported data more than 7 calendar days after the delivery date
-    -- itself. One aggregate alert; entities inspectable in ValidationRecords
-    -- (observation_name = 'delivery_report_lag_days').
+    -- itself. Limited to lag learned about in the last 3 days (tolerates a
+    -- daily cron occasionally slipping a day) so the same long-known-about
+    -- reviews don't alert every night. One aggregate alert; entities
+    -- inspectable in ValidationRecords (observation_name = 'delivery_report_lag_days').
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -199,22 +201,50 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'delivery_report_lag_days'
       AND vr.scalar > 7
+      AND (vr.context->>'learned_date')::date >= (CURRENT_DATE - INTERVAL '3 days')
     GROUP BY cur.run_id
     HAVING COUNT(*) > 0
     ;
 
-    -- finding_active_with_closed_date: findings marked Active that carry a
-    -- closedDate. One aggregate alert; entities inspectable in
-    -- ValidationRecords (observation_name = 'closure_state').
-    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    -- history_determination_unrecognized: team_notification, not alert - a
+    -- new determination value needs review (see
+    -- history_determination_recognized), but isn't urgent on its own.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
-      'finding_active_with_closed_date',
-      COUNT(*) || ' active monitoring finding(s) have a closedDate',
+      'history_determination_unrecognized',
+      COUNT(*) || ' finding(s) carry an unrecognized determination value in their history',
+      cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
-        'observation_name', 'closure_state',
-        'category', 'active_with_closed_date',
+        'observation_name', 'history_determination_recognized',
+        'count', COUNT(*),
+        'distinct_values', (ARRAY_AGG(DISTINCT vr.category))[1:20],
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'history_determination_recognized'
+      AND vr.category <> 'consistent'
+    GROUP BY cur.run_id, cur.team_notification
+    HAVING COUNT(*) > 0
+    ;
+
+    -- review_type_shape_violation: a CLASS review with findings, or a
+    -- non-CLASS review with CLASS scores, breaks an assumption the fact
+    -- tables rely on to keep the two apart.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_type_shape_violation',
+      COUNT(*) || ' review(s) mix CLASS and finding-based review shapes unexpectedly',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_type_shape',
         'count', COUNT(*),
         'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
       ),
@@ -223,9 +253,401 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
     WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'closure_state'
-      AND vr.category = 'active_with_closed_date'
-    GROUP BY cur.run_id
+      AND vr.observation_name = 'review_type_shape'
+      AND vr.category <> 'consistent'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- review_status_vs_delivery_mismatch: a review reportDeliveryDate marks
+    -- as delivered doesn't have a Complete status - a status value we don't
+    -- currently recognize as "done" on a review we otherwise treat as done.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_status_vs_delivery_mismatch',
+      COUNT(*) || ' review(s) have a reportDeliveryDate but a status other than Complete',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_status_vs_delivery',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'review_status_vs_delivery'
+      AND vr.category = 'delivered_not_complete'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- review_grantee_duplicated: team_notification - low real-world impact
+    -- today (traced every consumer; only one Slack-summary count query is
+    -- exposed to it), but worth knowing about.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_grantee_duplicated',
+      COUNT(*) || ' review(s) have a duplicated (review, grant) grantee link',
+      cur.team_notification,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_grantee_duplicated',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'review_grantee_duplicated'
+      AND vr.category = 'duplicated'
+    GROUP BY cur.run_id, cur.team_notification
+    HAVING COUNT(*) > 0
+    ;
+
+    -- review_grantee_multi_grant: alert, not team_notification, since a
+    -- granteeId resolving to more than one grantNumber is a real
+    -- misattribution risk wherever granteeId is used to look up "the" grant
+    -- (e.g. finding_grant_on_own_review), not just a display/count issue.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_grantee_multi_grant',
+      COUNT(*) || ' review(s) have a grantee link whose granteeId resolves to more than one grant',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_grantee_multi_grant',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'review_grantee_multi_grant'
+      AND vr.category = 'grantee_multi_grant'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- finding_grant_not_on_own_review: a finding attached to a grant that
+    -- isn't on any review the finding is actually linked to - real, ongoing
+    -- incidence on prod (~0.2% of findings with a finding-grant link).
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_grant_not_on_own_review',
+      COUNT(*) || ' finding(s) are attached to a grant not on any of their own reviews',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'finding_grant_on_own_review',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'finding_grant_on_own_review'
+      AND vr.category = 'grant_not_on_own_review'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- finding_review_history_duplicated: a finding whose history disagrees
+    -- with itself about the finding's status/determination on a given
+    -- review - genuine ambiguity about the finding's state, not import noise.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_review_history_duplicated',
+      COUNT(*) || ' finding(s) have disagreeing duplicate history rows for the same review',
+      cur.team_notification,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'finding_review_history_duplicated',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'finding_review_history_duplicated'
+      AND vr.category = 'duplicated_disagreeing'
+    GROUP BY cur.run_id, cur.team_notification
+    HAVING COUNT(*) > 0
+    ;
+
+    -- finding_standard_missing: a finding with no live standard at all
+    -- silently produces no Citation.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_standard_missing',
+      COUNT(*) || ' finding(s) have no live standard at all',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'finding_standard_missing',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'finding_standard_missing'
+      AND vr.category = 'no_live_standard'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- {history_status,finding_status,review_status}_resolvable: a statusId
+    -- that doesn't resolve to any live row in its *Statuses table breaks an
+    -- assumption most of the fact-table/validation joins make.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'history_status_unresolvable',
+      COUNT(*) || ' finding(s) have a history statusId that does not resolve',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'history_status_resolvable',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'history_status_resolvable'
+      AND vr.category = 'unresolvable'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_status_unresolvable',
+      COUNT(*) || ' finding(s) have a statusId that does not resolve',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'finding_status_resolvable',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'finding_status_resolvable'
+      AND vr.category = 'unresolvable'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_status_unresolvable',
+      COUNT(*) || ' review(s) have a statusId that does not resolve',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_status_resolvable',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'review_status_resolvable'
+      AND vr.category = 'unresolvable'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- statuses_table_integrity_violated: more than one live row for the same
+    -- statusId in a *Statuses table - breaks an assumption several joins
+    -- (including this file's own resolvable checks) make.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'statuses_table_integrity_violated',
+      COUNT(*) || ' status table row(s) share a statusId with another live row',
+      cur.alert,
+      jsonb_build_object(
+        'observation_name', 'statuses_table_integrity',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(jsonb_build_object('entity_type', vr.entity_type, 'entity_id', vr.entity_id)))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'statuses_table_integrity'
+      AND vr.category = 'duplicate_live_status'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- review_grantee_orphaned_grant: a review-grantee link whose grantNumber
+    -- has no live grant match - silently excludes the review from the fact
+    -- tables for that grant. Real, ongoing incidence on prod (~0.5% of
+    -- reviews with a grantee link).
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_grantee_orphaned_grant',
+      COUNT(*) || ' review(s) have a grantee link with no matching live grant',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringReviews',
+        'observation_name', 'review_grantee_orphaned_grant',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'review_grantee_orphaned_grant'
+      AND vr.category = 'orphaned_grant_number'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- finding_standard_citation_text_disagrees: a finding's live standards
+    -- disagree on citation text - picking one over the other is a real
+    -- correctness issue, not just a category question.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_standard_citation_text_disagrees',
+      COUNT(*) || ' finding(s) have disagreeing citation text across their standards',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'standard_consistency',
+        'category', 'citation_text_disagrees',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'standard_consistency'
+      AND vr.category = 'citation_text_disagrees'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- finding_standard_category_disagrees: only alertable when the finding
+    -- has no source of its own - that's the one case where the disagreement
+    -- actually changes calculated_category, since source otherwise wins.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_standard_category_disagrees',
+      COUNT(*) || ' finding(s) with no source have disagreeing category guidance across their standards',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'standard_consistency',
+        'category', 'category_disagrees_no_source',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'standard_consistency'
+      AND vr.category = 'category_disagrees_no_source'
+    GROUP BY cur.run_id, cur.alert
+    HAVING COUNT(*) > 0
+    ;
+
+    -- history_vs_finding_status_disagrees: team_notification, not alert - a
+    -- known, understood pattern (see history_vs_finding_status) that doesn't
+    -- need urgent action this round. Gated to disagreements learned about in
+    -- the last 7 days (context.learned_at - see monitoringObservations.ts)
+    -- so one IT-AMS never fixes doesn't alert forever.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'history_vs_finding_status_disagrees',
+      COUNT(*) || ' finding(s) have a Corrected history status but a finding-level status that disagrees',
+      cur.team_notification,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'history_vs_finding_status',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'history_vs_finding_status'
+      AND vr.category = 'history_corrected_finding_disagrees'
+      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    GROUP BY cur.run_id, cur.team_notification
+    HAVING COUNT(*) > 0
+    ;
+
+    -- history_vs_outcome_disagrees: two fields IT-AMS records for the same
+    -- review disagreeing with each other is worth prompt attention, unlike
+    -- history_vs_finding_status above (two DIFFERENT fields, one of which is
+    -- already known to be unreliable). Gated to the last 7 days for the same
+    -- reason as history_vs_finding_status_disagrees above.
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'history_vs_outcome_disagrees',
+      COUNT(*) || ' finding(s) have an open history status on a Compliant-outcome review',
+      cur.alert,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'history_vs_outcome',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'history_vs_outcome'
+      AND vr.category = 'open_status_on_compliant_review'
+      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
     `,
