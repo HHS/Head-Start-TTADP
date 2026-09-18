@@ -233,8 +233,8 @@ async function createReportApprovedNotificationForCollaborators(
 
 /**
  * Creates the "another approver approved this report" in-app notification for each of the
- * report's other approvers. Fired when an approver approves an activity report (and the
- * report is not yet fully approved), naming the approver who just acted. The acting approver
+ * report's other approvers. Fired on every approval, including the final approval,
+ * naming the approver who just acted. The acting approver
  * is excluded by the caller. The CTA is conditional on whether the recipient has already
  * approved or marked the report as needs action: "Take action" (actionable) when they have
  * done neither, "View AR" once they have done either. (TTAHUB-5581)
@@ -280,8 +280,8 @@ async function createReportApprovedNotificationForApprovers(
 
 /**
  * Archives the "another approver approved this report" in-app notifications for an activity
- * report. Called when the report is fully approved (approved by all approvers) so that any
- * pending approver-approved notifications for that report are moved to the archived list.
+ * report. Called when the report is fully approved, changes are requested, or the report
+ * is resubmitted so earlier approval notifications no longer remain active or get reused.
  * (TTAHUB-5581)
  * @param {number} reportId The activity report ID whose approver-approved notifications to archive.
  * @returns {Promise<void>} Resolves once archiving is complete.

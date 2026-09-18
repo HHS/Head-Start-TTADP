@@ -6,6 +6,10 @@ import {
 } from '../../constants';
 import db from '../../models';
 import {
+  archiveApproverApprovedNotifications,
+  createReportApprovedNotificationForApprovers,
+} from './activityReport';
+import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
   createGlobalNotification,
@@ -355,6 +359,45 @@ describe('Notification service', () => {
       });
 
       describe('skipExisting option', () => {
+        it('creates a fresh unread approver notification after archiving the previous approval cycle', async () => {
+          const report = await createTrackedActivityReport();
+          const savedReport = {
+            id: report.id,
+            displayId: `R01-AR-${report.id}`,
+            activityRecipients: [{ name: 'Recipient A' }],
+          };
+          const recipients = [{ userId: user.id, hasApproved: false }];
+          const [first] = await createReportApprovedNotificationForApprovers(
+            recipients,
+            savedReport,
+            'Approver A'
+          );
+          trackNotification(first);
+          const oldState = await updateNotificationState(first.id, user.id, {
+            viewedAt: '2026-01-15',
+          });
+
+          await archiveApproverApprovedNotifications(report.id);
+
+          const [next] = await createReportApprovedNotificationForApprovers(
+            recipients,
+            savedReport,
+            'Approver A'
+          );
+          trackNotification(next);
+
+          expect(next.id).not.toBe(first.id);
+          expect(next.text).toBe(first.text);
+          await oldState.reload();
+          expect(oldState.archivedAt).not.toBeNull();
+          // New notifications have no user state until the recipient views or archives them.
+          expect(
+            await NotificationUserState.findOne({
+              where: { notificationId: next.id, userId: user.id },
+            })
+          ).toBeNull();
+        });
+
         it('creates a new notification when the existing notification is archived for the user', async () => {
           const metadata = activityMetadata();
           await createTrackedActivityReport({ id: metadata.id });
