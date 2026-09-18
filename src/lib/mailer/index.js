@@ -271,6 +271,36 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   );
 };
 
+/**
+ * Process function for approverReportApproved jobs added to the notification queue.
+ * Sends an email to the report's other approvers telling them that an approver approved it.
+ */
+export const notifyApproverReportApproved = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, approversWithSettings = [], approverName } = job.data;
+  const { id, displayId } = report;
+  logger.info(
+    `MAILER: Notifying approvers that report ${displayId} was approved by ${approverName}.`
+  );
+  const approverEmailAddresses = approversWithSettings.map((a) => a.user.email);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+
+  return sendIfEnabled(approverEmailAddresses, (toEmails) =>
+    createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'report_approved_approver'),
+      message: {
+        to: toEmails,
+      },
+      locals: {
+        reportPath,
+        displayId,
+        approverName,
+      },
+    })
+  );
+};
+
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
@@ -471,6 +501,20 @@ export const reportApprovedNotification = (
     report,
     authorWithSetting,
     collabsWithSettings,
+    approverName,
+  });
+};
+
+/**
+ * Notifies the report's other approvers, by email, that an approver approved the report.
+ * @param {ActivityReport} report
+ * @param {User[]} approversWithSettings The other approvers opted into immediate emails.
+ * @param {string} approverName The name of the approver who just approved.
+ */
+export const approverReportApprovedNotification = (report, approversWithSettings, approverName) => {
+  enqueueNotification(EMAIL_ACTIONS.APPROVER_APPROVED, {
+    report,
+    approversWithSettings,
     approverName,
   });
 };
@@ -1230,6 +1274,7 @@ export const processNotificationQueue = () => {
     [EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested],
     [EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned],
     [EMAIL_ACTIONS.APPROVED, notifyReportApproved],
+    [EMAIL_ACTIONS.APPROVER_APPROVED, notifyApproverReportApproved],
     [EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned],
     [EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved],
     [
