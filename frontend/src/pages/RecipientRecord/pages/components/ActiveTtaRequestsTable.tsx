@@ -1,9 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import type { WidgetSortConfig } from '../../../../hooks/useWidgetSorting';
 import AddTtaRequestButton from '../../components/AddTtaRequestButton';
-import TtaRequestsTable, {
-  type TtaRequestsSortableRow,
-  type TtaRequestsTableRow,
-} from './TtaRequestsTable';
+import TtaRequestsTable, { type TtaRequestsTableRow } from './TtaRequestsTable';
 import {
   ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA,
   type ActiveTtaRequest,
@@ -46,7 +44,6 @@ const HEADERS = [
 ];
 
 const STRING_SORT_COLUMNS = [
-  COLUMNS.REQUEST_ID,
   COLUMNS.GOAL,
   COLUMNS.REVIEWER,
   COLUMNS.APPROVER,
@@ -56,24 +53,12 @@ const STRING_SORT_COLUMNS = [
 
 const DATE_SORT_COLUMNS = [COLUMNS.CREATED_DATE];
 
-const DEFAULT_SORT_CONFIG = {
+const DEFAULT_SORT_CONFIG: WidgetSortConfig = {
   sortBy: COLUMNS.CREATED_DATE,
   direction: 'desc',
   activePage: 1,
   offset: 0,
 };
-
-// only the id and the column values are kept, since those are all the table sorts on
-const toSortableRow = (request: ActiveTtaRequest): TtaRequestsSortableRow => ({
-  id: request.id,
-  [COLUMNS.REQUEST_ID]: request.requestId,
-  [COLUMNS.CREATED_DATE]: request.createdDate,
-  [COLUMNS.GOAL]: request.goal,
-  [COLUMNS.REVIEWER]: request.reviewer,
-  [COLUMNS.APPROVER]: request.approver,
-  [COLUMNS.ASSIGNED_STAFF]: request.assignedStaff,
-  [COLUMNS.STATUS]: request.status,
-});
 
 /*
   Every link stays inside the recipient record the table is being viewed from. The
@@ -82,34 +67,31 @@ const toSortableRow = (request: ActiveTtaRequest): TtaRequestsSortableRow => ({
 
   TODO: link to the TTA request view/edit pages once they exist.
 */
-const toTableData = (
-  rows: TtaRequestsSortableRow[],
-  recipientPath: string
-): TtaRequestsTableRow[] =>
-  rows.map((row) => ({
-    id: row.id,
-    heading: String(row[COLUMNS.REQUEST_ID]),
-    isUrl: true,
-    isInternalLink: true,
-    link: `${recipientPath}/tta-request`,
-    data: [
-      { title: COLUMNS.CREATED_DATE, value: String(row[COLUMNS.CREATED_DATE]) },
-      { title: COLUMNS.GOAL, value: String(row[COLUMNS.GOAL]) },
-      { title: COLUMNS.REVIEWER, value: String(row[COLUMNS.REVIEWER]) },
-      { title: COLUMNS.APPROVER, value: String(row[COLUMNS.APPROVER]) },
-      { title: COLUMNS.ASSIGNED_STAFF, value: String(row[COLUMNS.ASSIGNED_STAFF]) },
-      // only drafts are clickable, they take the creator back into the request
-      row[COLUMNS.STATUS] === DRAFT_STATUS
-        ? {
-            title: COLUMNS.STATUS,
-            value: DRAFT_STATUS,
-            isUrl: true,
-            isInternalLink: true,
-            link: `${recipientPath}/tta-request`,
-          }
-        : { title: COLUMNS.STATUS, value: String(row[COLUMNS.STATUS]) },
-    ],
-  }));
+const toTableRow = (request: ActiveTtaRequest, recipientPath: string): TtaRequestsTableRow => ({
+  id: request.id,
+  heading: request.requestId,
+  sortKey: request.requestId,
+  isUrl: true,
+  isInternalLink: true,
+  link: `${recipientPath}/tta-request`,
+  data: [
+    { title: COLUMNS.CREATED_DATE, value: request.createdDate },
+    { title: COLUMNS.GOAL, value: request.goal },
+    { title: COLUMNS.REVIEWER, value: request.reviewer },
+    { title: COLUMNS.APPROVER, value: request.approver },
+    { title: COLUMNS.ASSIGNED_STAFF, value: request.assignedStaff },
+    // only drafts are clickable, they take the creator back into the request
+    request.status === DRAFT_STATUS
+      ? {
+          title: COLUMNS.STATUS,
+          value: DRAFT_STATUS,
+          isUrl: true,
+          isInternalLink: true,
+          link: `${recipientPath}/tta-request`,
+        }
+      : { title: COLUMNS.STATUS, value: request.status },
+  ],
+});
 
 interface ActiveTtaRequestsTableProps {
   recipientId: string | number;
@@ -120,13 +102,11 @@ export default function ActiveTtaRequestsTable({
   recipientId,
   regionId,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
-  // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
-  const rows = useMemo(() => ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map(toSortableRow), []);
-
   const recipientPath = `/recipient-tta-records/${recipientId}/region/${regionId}`;
 
-  const buildTableData = useCallback(
-    (sortedRows: TtaRequestsSortableRow[]) => toTableData(sortedRows, recipientPath),
+  // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
+  const rows = useMemo(
+    () => ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map((request) => toTableRow(request, recipientPath)),
     [recipientPath]
   );
 
@@ -141,7 +121,6 @@ export default function ActiveTtaRequestsTable({
       dateSortColumns={DATE_SORT_COLUMNS}
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
-      toTableData={buildTableData}
       emptyState={EMPTY_STATE}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn

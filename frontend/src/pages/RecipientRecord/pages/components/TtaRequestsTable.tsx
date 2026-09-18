@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import WidgetContainer from '../../../../components/WidgetContainer';
-import useWidgetExport from '../../../../hooks/useWidgetExport';
-import useWidgetSorting, { parseValue } from '../../../../hooks/useWidgetSorting';
+import useWidgetPaging from '../../../../hooks/useWidgetPaging';
+import type { WidgetSortConfig } from '../../../../hooks/useWidgetSorting';
 import HorizontalTableWidget from '../../../../widgets/HorizontalTableWidget';
 import './TtaRequestsTable.css';
 
@@ -16,17 +16,7 @@ const NO_CHECKBOXES = {};
   between renders. Remove it (with the toggle below) once the tables are wired
   up to a fetcher and the placeholder data is gone.
 */
-const NO_ROWS: TtaRequestsSortableRow[] = [];
-
-export type TtaRequestsSortConfig = {
-  sortBy: string;
-  direction: string;
-  activePage?: number;
-  offset?: number;
-};
-
-/** A row keyed by column display name, which is what `useWidgetSorting` sorts on. */
-export type TtaRequestsSortableRow = { id: number } & Record<string, string | number>;
+const NO_ROWS: TtaRequestsTableRow[] = [];
 
 export interface TtaRequestsTableCell {
   title: string;
@@ -40,58 +30,13 @@ export interface TtaRequestsTableCell {
 export interface TtaRequestsTableRow {
   id: number;
   heading: string;
+  /** the first column is the row heading rather than a cell, so it sorts on this */
+  sortKey: string;
   isUrl: boolean;
   isInternalLink: boolean;
   link: string;
   data: TtaRequestsTableCell[];
 }
-
-/**
- * Sorts rows the same way `useWidgetSorting` does, so that the initial render
- * (and anything restored from session storage) matches the active sort header.
- */
-export const sortRows = (
-  rows: TtaRequestsSortableRow[],
-  sortConfig: TtaRequestsSortConfig,
-  stringSortColumns: string[],
-  dateSortColumns: string[]
-): TtaRequestsSortableRow[] => {
-  const { sortBy, direction } = sortConfig;
-
-  if (!sortBy || !rows.length) {
-    return rows;
-  }
-
-  const sortValue = (row: TtaRequestsSortableRow) => {
-    if (dateSortColumns.includes(sortBy)) {
-      const time = new Date(row[sortBy]).getTime();
-      return Number.isNaN(time) ? 0 : time;
-    }
-
-    if (stringSortColumns.includes(sortBy)) {
-      return String(row[sortBy]).toLowerCase();
-    }
-
-    return parseValue(row[sortBy]);
-  };
-
-  const ascending = direction === 'asc' ? 1 : -1;
-
-  return [...rows].sort((a, b) => {
-    const valueA = sortValue(a);
-    const valueB = sortValue(b);
-
-    if (valueA > valueB) {
-      return ascending;
-    }
-
-    if (valueB > valueA) {
-      return -ascending;
-    }
-
-    return 0;
-  });
-};
 
 interface TtaRequestsTableProps {
   title: string;
@@ -102,9 +47,8 @@ interface TtaRequestsTableProps {
   headers: string[];
   stringSortColumns: string[];
   dateSortColumns: string[];
-  defaultSortConfig: TtaRequestsSortConfig;
-  rows: TtaRequestsSortableRow[];
-  toTableData: (rows: TtaRequestsSortableRow[]) => TtaRequestsTableRow[];
+  defaultSortConfig: WidgetSortConfig;
+  rows: TtaRequestsTableRow[];
   /** shown in place of the table when there is nothing to list */
   emptyState: React.ReactElement;
   /** freezes the final column against the right edge as the table scrolls */
@@ -125,48 +69,58 @@ export default function TtaRequestsTable({
   dateSortColumns,
   defaultSortConfig,
   rows,
-  toTableData,
   emptyState,
   stickyLastDataColumn = false,
 }: TtaRequestsTableProps): React.ReactElement {
-  const [sortableRows, setSortableRows] = useState<TtaRequestsSortableRow[]>(rows);
+  const [tableData, setTableData] = useState<TtaRequestsTableRow[]>(rows);
+  const [rowsToDisplay, setRowsToDisplay] = useState<TtaRequestsTableRow[]>([]);
   const [pageSize, setPageSize] = useState<number | 'all'>(PER_PAGE);
-  // FOR FRONTEND TESTING ONLY - see the toggle rendered in the title below
+  const [resetPagination, setResetPagination] = useState(false);
+  const [sortNeeded, setSortNeeded] = useState(true);
+  // FOR FRONTEND TESTING ONLY - see the toggle rendered above the table below
   const [showEmptyState, setShowEmptyState] = useState(false);
 
   const displayedRows = showEmptyState ? NO_ROWS : rows;
 
-  const {
-    requestSort,
-    sortConfig: storedSortConfig,
-    setSortConfig,
-  } = useWidgetSorting(
-    sortStorageKey, // localStorageKey
-    defaultSortConfig, // defaultSortConfig
-    sortableRows, // dataToUse
-    setSortableRows, // setDataToUse
-    stringSortColumns, // stringColumns
-    dateSortColumns // dateColumns
-  );
+  const isEmpty = tableData.length === 0;
+  // "all" shows everything on a single page, so the page is as long as the table
+  const perPage = pageSize === 'all' ? Math.max(tableData.length, 1) : pageSize;
 
-  // useWidgetSorting is untyped, so narrow its config back down for use below
-  const sortConfig = storedSortConfig as unknown as TtaRequestsSortConfig;
+  const { offset, activePage, handlePageChange, requestSort, exportRows, sortConfig } =
+    useWidgetPaging(
+      headers,
+      sortStorageKey,
+      defaultSortConfig,
+      perPage,
+      tableData, // dataToUse
+      setTableData,
+      resetPagination,
+      setResetPagination,
+      false, // loading
+      NO_CHECKBOXES,
+      firstHeading, // export heading
+      setRowsToDisplay,
+      stringSortColumns,
+      dateSortColumns,
+      exportFileName,
+      null, // exportDataName
+      [firstHeading] // the first column sorts on the row's sortKey, not a cell
+    );
 
   useEffect(() => {
-    setSortableRows(sortRows(displayedRows, sortConfig, stringSortColumns, dateSortColumns));
-  }, [displayedRows, sortConfig, stringSortColumns, dateSortColumns]);
+    setTableData(displayedRows);
+    setSortNeeded(true);
+  }, [displayedRows]);
 
-  const tableData = useMemo(() => toTableData(sortableRows), [sortableRows, toTableData]);
+  // rows only get sorted on request, so the active sort is applied to new rows here
+  useEffect(() => {
+    if (!sortNeeded || !tableData.length) {
+      return;
+    }
 
-  const isEmpty = tableData.length === 0;
-  const currentPage = sortConfig.activePage || 1;
-  const currentOffset = sortConfig.offset || 0;
-  const effectivePerPage = pageSize === 'all' ? Math.max(tableData.length, 1) : pageSize;
-
-  const paginatedTableData = useMemo(
-    () => tableData.slice(currentOffset, currentOffset + effectivePerPage),
-    [tableData, currentOffset, effectivePerPage]
-  );
+    setSortNeeded(false);
+    requestSort(sortConfig.sortBy, sortConfig.direction);
+  }, [requestSort, sortConfig, sortNeeded, tableData]);
 
   const handlePerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextPageSize =
@@ -177,15 +131,7 @@ export default function TtaRequestsTable({
     }
 
     setPageSize(nextPageSize);
-    setSortConfig((prev: TtaRequestsSortConfig) => ({ ...prev, activePage: 1, offset: 0 }));
-  };
-
-  const handlePageChange = (pageNumber: number) => {
-    setSortConfig((prev: TtaRequestsSortConfig) => ({
-      ...prev,
-      activePage: pageNumber,
-      offset: (pageNumber - 1) * effectivePerPage,
-    }));
+    setResetPagination(true);
   };
 
   /*
@@ -195,7 +141,7 @@ export default function TtaRequestsTable({
   */
   const toggleEmptyState = () => {
     setShowEmptyState((current) => !current);
-    setSortConfig((prev: TtaRequestsSortConfig) => ({ ...prev, activePage: 1, offset: 0 }));
+    setResetPagination(true);
   };
 
   const emptyStateToggle = (
@@ -208,15 +154,6 @@ export default function TtaRequestsTable({
         {showEmptyState ? 'Show placeholder data' : 'Show empty state'}
       </button>
     </div>
-  );
-
-  // the whole table is exported, not just the page being displayed
-  const { exportRows } = useWidgetExport(
-    tableData,
-    headers,
-    NO_CHECKBOXES,
-    firstHeading,
-    exportFileName
   );
 
   /*
@@ -239,10 +176,10 @@ export default function TtaRequestsTable({
         loading={false}
         showPagingTop={!isEmpty}
         showPagingBottom={!isEmpty}
-        currentPage={currentPage}
+        currentPage={activePage}
         totalCount={tableData.length}
-        offset={currentOffset}
-        perPage={effectivePerPage}
+        offset={offset}
+        perPage={perPage}
         handlePageChange={handlePageChange}
         paginationCardTopProps={{
           perPageChange: handlePerPageChange,
@@ -261,7 +198,7 @@ export default function TtaRequestsTable({
         ) : (
           <HorizontalTableWidget
             headers={headers}
-            data={paginatedTableData}
+            data={rowsToDisplay}
             firstHeading={firstHeading}
             caption={title}
             enableSorting
