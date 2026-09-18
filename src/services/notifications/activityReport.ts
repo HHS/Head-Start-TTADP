@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
@@ -22,7 +23,7 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  let notificationType: string;
+  let notificationType: NotificationType;
   if (creatorOrCollaborator === 'creator') {
     notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
   } else if (creatorOrCollaborator === 'approver') {
@@ -231,86 +232,6 @@ async function createReportApprovedNotificationForCollaborators(
 }
 
 /**
- * Creates the "another approver approved this report" in-app notification for each of the
- * report's other approvers. Fired when an approver approves an activity report (and the
- * report is not yet fully approved), naming the approver who just acted. The acting approver
- * is excluded by the caller. The CTA is conditional on whether the recipient has already
- * approved: "Take action" (actionable) when they have not, "View AR" once they have.
- * (TTAHUB-5581)
- * @param otherApprovers The report's other approvers to notify, each flagged with whether
- * they have already approved the report.
- * @param savedReport The saved activity report.
- * @param approverName The name of the approver who just approved the report.
- * @returns {Promise<void>} Resolves once notifications are created.
- */
-async function createReportApprovedNotificationForApprovers(
-  otherApprovers: { userId: number; hasApproved: boolean }[],
-  savedReport: {
-    id: number;
-    displayId: string;
-    activityRecipients: { name: string }[];
-  },
-  approverName: string
-) {
-  if (!checkRecipientName(savedReport.activityRecipients)) {
-    return Promise.resolve();
-  }
-
-  return Promise.all(
-    otherApprovers.map((approver) =>
-      createNotification(
-        approver.userId,
-        savedReport.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
-        {
-          metadata: {
-            id: savedReport.id,
-            displayId: savedReport.displayId,
-            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
-            approver: approverName,
-            hasApproved: approver.hasApproved,
-          },
-          skipExisting: 'archived',
-        }
-      )
-    )
-  );
-}
-
-/**
- * Archives the "another approver approved this report" in-app notifications for an activity
- * report. Called when the report is fully approved (approved by all approvers) so that any
- * pending approver-approved notifications for that report are moved to the archived list.
- * (TTAHUB-5581)
- * @param {number} reportId The activity report ID whose approver-approved notifications to archive.
- * @returns {Promise<void>} Resolves once archiving is complete.
- */
-async function archiveApproverApprovedNotifications(reportId: number): Promise<void> {
-  return archiveNotificationsByEntityAndType(reportId, [
-    NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
-  ]);
-}
-
-/**
- * Archives a single approver's "another approver approved this report" in-app notification
- * for an activity report. Called when that approver themselves approves the report, so the
- * notification nudging them to act is moved to their archived list. (TTAHUB-5581)
- * @param {number} reportId The activity report ID.
- * @param {number} userId The approver whose approver-approved notification to archive.
- * @returns {Promise<void>} Resolves once archiving is complete.
- */
-async function archiveApproverApprovedNotificationForUser(
-  reportId: number,
-  userId: number
-): Promise<void> {
-  return archiveNotificationsByUserEntityAndType(
-    reportId,
-    userId,
-    NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
-  );
-}
-
-/**
  * Creates the "revised report resubmitted for approval" in-app notification for each
  * collaborator on an activity report. Fired when a report is resubmitted for approval
  * (i.e. submitted while it was in "needs action" status). Replaces the standard
@@ -430,7 +351,7 @@ async function createResubmittedNotificationForCreator(
   },
   submitterName: string
 ) {
-  return createNotification(
+  await createNotification(
     creatorUserId,
     savedReport.id,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
@@ -442,6 +363,11 @@ async function createResubmittedNotificationForCreator(
       },
       skipExisting: 'archived',
     }
+  );
+  return archiveNotificationsByUserEntityAndType(
+    savedReport.id,
+    creatorUserId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR
   );
 }
 
@@ -478,8 +404,6 @@ async function archiveResubmittedNotifications(reportId: number): Promise<void> 
 }
 
 export {
-  archiveApproverApprovedNotificationForUser,
-  archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
@@ -488,7 +412,6 @@ export {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
-  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,

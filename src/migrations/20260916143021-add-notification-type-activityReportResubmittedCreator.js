@@ -8,6 +8,8 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       return queryInterface.sequelize.query(
         `
+        ALTER TYPE "enum_Notifications_type" ADD VALUE IF NOT EXISTS 'activityReportResubmittedCreator';
+        ALTER TYPE "enum_Notifications_type" ADD VALUE IF NOT EXISTS 'changesRequestedApprover';
         ALTER TYPE "enum_Notifications_type" ADD VALUE IF NOT EXISTS 'reportApprovedApprover';
       `,
         { transaction }

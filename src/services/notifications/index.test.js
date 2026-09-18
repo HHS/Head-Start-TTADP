@@ -187,47 +187,6 @@ describe('Notification service', () => {
       expect(notification.displayId).toBe(metadata.displayId);
     });
 
-    it('applies conditional link text and actionable flag from metadata (approver already approved)', async () => {
-      const metadata = activityMetadata();
-      await createTrackedActivityReport({ id: metadata.id });
-
-      const notification = trackNotification(
-        await createNotification(
-          user.id,
-          metadata.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
-          {
-            metadata: { ...metadata, approver: metadata.userName, hasApproved: true },
-          }
-        )
-      );
-
-      expect(notification.text).toBe(
-        `${metadata.userName} has approved your Activity Report for ${metadata.recipientName}.`
-      );
-      expect(notification.label).toBe('View AR');
-      expect(notification.actionable).toBe(false);
-    });
-
-    it('applies conditional link text and actionable flag from metadata (approver has not approved)', async () => {
-      const metadata = activityMetadata();
-      await createTrackedActivityReport({ id: metadata.id });
-
-      const notification = trackNotification(
-        await createNotification(
-          user.id,
-          metadata.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
-          {
-            metadata: { ...metadata, approver: metadata.userName, hasApproved: false },
-          }
-        )
-      );
-
-      expect(notification.label).toBe('Take action');
-      expect(notification.actionable).toBe(true);
-    });
-
     it('creates a user notification with null link and label when configuration returns null', async () => {
       const notification = trackNotification(
         await createNotification(
