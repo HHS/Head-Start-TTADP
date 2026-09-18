@@ -8,7 +8,9 @@ import {
   ActivityReportObjectiveCitation,
   Citation,
   DeliveredReview,
+  DeliveredReviewCitation,
   Grant,
+  GrantCitation,
   GrantNumberLink,
   MonitoringFinding,
   MonitoringFindingGrant,
@@ -190,6 +192,15 @@ describe('validateMonitoringData', () => {
   const citationIdStale = faker.number.int({ min: 900000, max: 89999999 }); // reopened a while ago -> recorded, not alerted
   const deliveredReviewIdFresh = faker.number.int({ min: 900000, max: 89999999 }); // complete -> not complete, recently -> team_notification
   const deliveredReviewIdStale = faker.number.int({ min: 900000, max: 89999999 }); // same, but a while ago -> recorded, not alerted
+  // Fact-table observations record against MonitoringFindings/MonitoringReviews,
+  // not Citations/DeliveredReviews - Citations.mfid and DeliveredReviews.mrid
+  // are exactly those ids (see monitoringFactTableObservations.ts), so these
+  // are the values ValidationRecords.entity_id actually holds.
+  const mfidFreshLinked = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidFreshUnlinked = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidStale = faker.number.int({ min: 900000, max: 89999999 });
+  const mridFresh = faker.number.int({ min: 900000, max: 89999999 });
+  const mridStale = faker.number.int({ min: 900000, max: 89999999 });
   const citationReopenedFreshAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const citationReopenedStaleAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Soft-deleted Citations cited on a real report ->
@@ -198,7 +209,32 @@ describe('validateMonitoringData', () => {
   // backdating is needed here - just set it at creation.
   const citationIdOrphanedApproved = faker.number.int({ min: 900000, max: 89999999 });
   const citationIdOrphanedEditable = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidOrphanedApproved = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidOrphanedEditable = faker.number.int({ min: 900000, max: 89999999 });
   const citationSourceDeletedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  // citation_review_count / citation_grant_count / citation_days_review_1_to_2 /
+  // citation_days_review_2_to_3: anomaly-detection raw material, not alerted
+  // on - one citation with two DeliveredReviewCitations (-> review_count 2)
+  // and two GrantCitations on the existing grantId/grantId2 (-> grant_count
+  // 2). The first period is closed (review 2 superseded it); the second has
+  // no third review, so it's still open - latest_review_end is a far-future
+  // placeholder, capped at today by the observation itself.
+  const citationIdTimeline = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidTimeline = faker.number.int({ min: 900000, max: 89999999 });
+  const deliveredReviewIdTimeline1 = faker.number.int({ min: 900000, max: 89999999 });
+  const deliveredReviewIdTimeline2 = faker.number.int({ min: 900000, max: 89999999 });
+  const timelineReview1Start = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000);
+  const timelineReview1End = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+  const timelineReview2Start = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+  const timelineOpenPlaceholderEnd = new Date('9999-12-31');
+  // delivered_review_citation_no_window: a review that lost a same-day
+  // tie-break against another review on the same citation, so it never
+  // became authoritative for any period (null latest_review_start/end) ->
+  // team_notification.
+  const citationIdNoWindow = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidNoWindow = faker.number.int({ min: 900000, max: 89999999 });
+  const deliveredReviewIdNoWindowWinner = faker.number.int({ min: 900000, max: 89999999 });
+  const deliveredReviewIdNoWindowLoser = faker.number.int({ min: 900000, max: 89999999 });
   // Assigned in beforeAll (need generated ids), read in afterAll for cleanup.
   let factTableUser;
   let factTableReport;
@@ -904,26 +940,32 @@ describe('validateMonitoringData', () => {
     // call. For the "stale" cases, the real transition is backdated
     // afterwards by updating its own ZAL row's dml_timestamp directly (a
     // controlled edit to a real transition, not a fabricated one).
-    await Citation.bulkCreate(
-      [citationIdFreshLinked, citationIdFreshUnlinked, citationIdStale].map((id) => ({
-        id,
-        mfid: faker.number.int({ min: 900000, max: 89999999 }),
+    await Citation.bulkCreate([
+      {
+        id: citationIdFreshLinked,
+        mfid: mfidFreshLinked,
         finding_uuid: uuidv4(),
         active: false,
         calculated_status: 'Corrected',
-      }))
-    );
+      },
+      {
+        id: citationIdFreshUnlinked,
+        mfid: mfidFreshUnlinked,
+        finding_uuid: uuidv4(),
+        active: false,
+        calculated_status: 'Corrected',
+      },
+      {
+        id: citationIdStale,
+        mfid: mfidStale,
+        finding_uuid: uuidv4(),
+        active: false,
+        calculated_status: 'Corrected',
+      },
+    ]);
     await DeliveredReview.bulkCreate([
-      {
-        id: deliveredReviewIdFresh,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
-        complete: true,
-      },
-      {
-        id: deliveredReviewIdStale,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
-        complete: true,
-      },
+      { id: deliveredReviewIdFresh, mrid: mridFresh, complete: true },
+      { id: deliveredReviewIdStale, mrid: mridStale, complete: true },
     ]);
     await Promise.all([
       Citation.update(
@@ -1063,7 +1105,7 @@ describe('validateMonitoringData', () => {
     await Citation.bulkCreate([
       {
         id: citationIdOrphanedApproved,
-        mfid: faker.number.int({ min: 900000, max: 89999999 }),
+        mfid: mfidOrphanedApproved,
         finding_uuid: uuidv4(),
         active: false,
         calculated_status: 'Corrected',
@@ -1071,7 +1113,7 @@ describe('validateMonitoringData', () => {
       },
       {
         id: citationIdOrphanedEditable,
-        mfid: faker.number.int({ min: 900000, max: 89999999 }),
+        mfid: mfidOrphanedEditable,
         finding_uuid: uuidv4(),
         active: false,
         calculated_status: 'Corrected',
@@ -1113,6 +1155,81 @@ describe('validateMonitoringData', () => {
         reportDeliveryDate: '2026-01-01',
         monitoringFindingStatusName: 'Active',
       },
+    ]);
+
+    // citation_review_count / citation_grant_count / citation_days_review_1_to_2 /
+    // citation_days_review_2_to_3 / delivered_review_citation_no_window.
+    await Citation.bulkCreate([
+      {
+        id: citationIdTimeline,
+        mfid: mfidTimeline,
+        finding_uuid: uuidv4(),
+        active: true,
+        calculated_status: 'Active',
+      },
+      {
+        id: citationIdNoWindow,
+        mfid: mfidNoWindow,
+        finding_uuid: uuidv4(),
+        active: true,
+        calculated_status: 'Active',
+      },
+    ]);
+    await DeliveredReview.bulkCreate([
+      {
+        id: deliveredReviewIdTimeline1,
+        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        complete: true,
+      },
+      {
+        id: deliveredReviewIdTimeline2,
+        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        complete: true,
+      },
+      {
+        id: deliveredReviewIdNoWindowWinner,
+        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        complete: true,
+      },
+      {
+        id: deliveredReviewIdNoWindowLoser,
+        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        complete: true,
+      },
+    ]);
+    await DeliveredReviewCitation.bulkCreate([
+      {
+        deliveredReviewId: deliveredReviewIdTimeline1,
+        citationId: citationIdTimeline,
+        raw_history_status: 'Deficiency',
+        latest_review_start: timelineReview1Start,
+        latest_review_end: timelineReview1End,
+      },
+      {
+        deliveredReviewId: deliveredReviewIdTimeline2,
+        citationId: citationIdTimeline,
+        raw_history_status: 'Active',
+        latest_review_start: timelineReview2Start,
+        latest_review_end: timelineOpenPlaceholderEnd,
+      },
+      {
+        deliveredReviewId: deliveredReviewIdNoWindowWinner,
+        citationId: citationIdNoWindow,
+        raw_history_status: 'Active',
+        latest_review_start: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        latest_review_end: timelineOpenPlaceholderEnd,
+      },
+      {
+        deliveredReviewId: deliveredReviewIdNoWindowLoser,
+        citationId: citationIdNoWindow,
+        raw_history_status: null,
+        latest_review_start: null,
+        latest_review_end: null,
+      },
+    ]);
+    await GrantCitation.bulkCreate([
+      { grantId, citationId: citationIdTimeline },
+      { grantId: grantId2, citationId: citationIdTimeline },
     ]);
   });
 
@@ -1230,6 +1347,11 @@ describe('validateMonitoringData', () => {
       force: true,
     });
     await User.destroy({ where: { id: factTableUser.id }, force: true });
+    await DeliveredReviewCitation.destroy({
+      where: { citationId: [citationIdTimeline, citationIdNoWindow] },
+      force: true,
+    });
+    await GrantCitation.destroy({ where: { citationId: citationIdTimeline }, force: true });
     await Citation.destroy({
       where: {
         id: [
@@ -1238,12 +1360,23 @@ describe('validateMonitoringData', () => {
           citationIdStale,
           citationIdOrphanedApproved,
           citationIdOrphanedEditable,
+          citationIdTimeline,
+          citationIdNoWindow,
         ],
       },
       force: true,
     });
     await DeliveredReview.destroy({
-      where: { id: [deliveredReviewIdFresh, deliveredReviewIdStale] },
+      where: {
+        id: [
+          deliveredReviewIdFresh,
+          deliveredReviewIdStale,
+          deliveredReviewIdTimeline1,
+          deliveredReviewIdTimeline2,
+          deliveredReviewIdNoWindowWinner,
+          deliveredReviewIdNoWindowLoser,
+        ],
+      },
       force: true,
     });
     // ZALCitations/ZALDeliveredReviews rows are append-only audit history and
@@ -1919,11 +2052,11 @@ describe('validateMonitoringData', () => {
     });
 
     const [linkedRecord, unlinkedRecord, staleRecord] = await Promise.all(
-      [citationIdFreshLinked, citationIdFreshUnlinked, citationIdStale].map((entity_id) =>
+      [mfidFreshLinked, mfidFreshUnlinked, mfidStale].map((entity_id) =>
         ValidationRecord.findOne({
           where: {
             run_id: run.id,
-            entity_type: 'Citations',
+            entity_type: 'MonitoringFindings',
             entity_id,
             observation_name: 'citation_reopened',
           },
@@ -1939,17 +2072,17 @@ describe('validateMonitoringData', () => {
     const alerts = await ValidationAlert.findAll({ where: { run_id: run.id }, raw: true });
     const onAr = alerts.find((a) => a.check_name === 'citation_reopened_on_activity_report');
     expect(onAr.severity).toBe(VALIDATION_ALERT_SEVERITY.ALERT);
-    expect(onAr.context.sample_entity_ids).toContain(citationIdFreshLinked);
-    expect(onAr.context.sample_entity_ids).not.toContain(citationIdFreshUnlinked);
+    expect(onAr.context.sample_entity_ids).toContain(mfidFreshLinked);
+    expect(onAr.context.sample_entity_ids).not.toContain(mfidFreshUnlinked);
 
     const notOnAr = alerts.find((a) => a.check_name === 'citation_reopened');
     expect(notOnAr.severity).toBe(VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION);
-    expect(notOnAr.context.sample_entity_ids).toContain(citationIdFreshUnlinked);
-    expect(notOnAr.context.sample_entity_ids).not.toContain(citationIdFreshLinked);
+    expect(notOnAr.context.sample_entity_ids).toContain(mfidFreshUnlinked);
+    expect(notOnAr.context.sample_entity_ids).not.toContain(mfidFreshLinked);
 
     // The stale reopening is recorded but too old to be in either alert.
-    expect(onAr.context.sample_entity_ids).not.toContain(citationIdStale);
-    expect(notOnAr.context.sample_entity_ids).not.toContain(citationIdStale);
+    expect(onAr.context.sample_entity_ids).not.toContain(mfidStale);
+    expect(notOnAr.context.sample_entity_ids).not.toContain(mfidStale);
   });
 
   it('flags a DeliveredReview that is no longer complete', async () => {
@@ -1962,11 +2095,11 @@ describe('validateMonitoringData', () => {
     });
 
     const [freshRecord, staleRecord] = await Promise.all(
-      [deliveredReviewIdFresh, deliveredReviewIdStale].map((entity_id) =>
+      [mridFresh, mridStale].map((entity_id) =>
         ValidationRecord.findOne({
           where: {
             run_id: run.id,
-            entity_type: 'DeliveredReviews',
+            entity_type: 'MonitoringReviews',
             entity_id,
             observation_name: 'delivered_review_completion_state',
           },
@@ -1983,8 +2116,8 @@ describe('validateMonitoringData', () => {
     });
     expect(alerts).toHaveLength(1);
     expect(alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION);
-    expect(alerts[0].context.sample_entity_ids).toContain(deliveredReviewIdFresh);
-    expect(alerts[0].context.sample_entity_ids).not.toContain(deliveredReviewIdStale);
+    expect(alerts[0].context.sample_entity_ids).toContain(mridFresh);
+    expect(alerts[0].context.sample_entity_ids).not.toContain(mridStale);
   });
 
   it('flags approved and editable reports that cite a since-deleted Citation, split by severity', async () => {
@@ -1996,21 +2129,12 @@ describe('validateMonitoringData', () => {
       order: [['id', 'DESC']],
     });
 
-    const [approvedAroc, editableAroc] = await Promise.all([
-      ActivityReportObjectiveCitation.findOne({
-        where: { citationId: citationIdOrphanedApproved },
-      }),
-      ActivityReportObjectiveCitation.findOne({
-        where: { citationId: citationIdOrphanedEditable },
-      }),
-    ]);
-
     const [approvedRecord, editableRecord] = await Promise.all(
-      [approvedAroc, editableAroc].map(({ id: entity_id }) =>
+      [mfidOrphanedApproved, mfidOrphanedEditable].map((entity_id) =>
         ValidationRecord.findOne({
           where: {
             run_id: run.id,
-            entity_type: 'ActivityReportObjectiveCitations',
+            entity_type: 'MonitoringFindings',
             entity_id,
             observation_name: 'activity_report_citation_source_deleted',
           },
@@ -2044,6 +2168,76 @@ describe('validateMonitoringData', () => {
     expect(editableAlert.context.count).toBeGreaterThanOrEqual(1);
     expect(editableAlert.context.first_activity_report_id).not.toBeNull();
     expect(editableAlert.context.first_recipient_name).not.toBeNull();
+  });
+
+  it('records review/grant counts and the review-gap timeline for a citation with two reviews', async () => {
+    const run = await ValidationRun.findOne({
+      where: {
+        process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+        import_id: DEFAULT_CYCLE.import_id,
+      },
+      order: [['id', 'DESC']],
+    });
+
+    const [reviewCount, grantCount, period1to2, period2to3] = await Promise.all(
+      [
+        'citation_review_count',
+        'citation_grant_count',
+        'citation_days_review_1_to_2',
+        'citation_days_review_2_to_3',
+      ].map((observation_name) =>
+        ValidationRecord.findOne({
+          where: {
+            run_id: run.id,
+            entity_type: 'MonitoringFindings',
+            entity_id: mfidTimeline,
+            observation_name,
+          },
+          raw: true,
+        })
+      )
+    );
+
+    expect(Number(reviewCount.scalar)).toBe(2);
+    expect(Number(grantCount.scalar)).toBe(2);
+    // Period 1 (review 1 -> review 2) is closed: exactly 60 days, tagged with
+    // the history status that applied during it.
+    expect(period1to2.category).toBe('Deficiency');
+    expect(Number(period1to2.scalar)).toBe(60);
+    // Period 2 (review 2 -> now, no third review) is still open - capped at
+    // today rather than the far-future placeholder end.
+    expect(period2to3.category).toBe('Active');
+    expect(Number(period2to3.scalar)).toBeGreaterThanOrEqual(39);
+    expect(Number(period2to3.scalar)).toBeLessThanOrEqual(41);
+  });
+
+  it('flags a DeliveredReviewCitation that lost a same-day tie-break and was never authoritative', async () => {
+    const run = await ValidationRun.findOne({
+      where: {
+        process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+        import_id: DEFAULT_CYCLE.import_id,
+      },
+      order: [['id', 'DESC']],
+    });
+
+    const record = await ValidationRecord.findOne({
+      where: {
+        run_id: run.id,
+        entity_type: 'MonitoringFindings',
+        entity_id: mfidNoWindow,
+        observation_name: 'delivered_review_citation_no_window',
+      },
+      raw: true,
+    });
+    expect(record.category).toBe('no_authoritative_window');
+
+    const alerts = await ValidationAlert.findAll({
+      where: { run_id: run.id, check_name: 'delivered_review_citation_no_window' },
+      raw: true,
+    });
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION);
+    expect(alerts[0].context.sample_entity_ids).toContain(mfidNoWindow);
   });
 
   it('is idempotent for stats across runs', async () => {

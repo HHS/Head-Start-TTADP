@@ -65,6 +65,26 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     GROUP BY 1
     ;
 
+    -- previously_flagged: (entity_type, entity_id, observation_name, category)
+    -- combinations that were already true as of the previous cycle's run
+    -- (monitoring_validation_cycles, from monitoringValidationStaging.ts).
+    -- Most checks below have no single field whose ZAL history means "when
+    -- this became true" (they're joins/aggregates, not one column changing),
+    -- so instead of a per-check context.learned_at they share this generic
+    -- edge gate: an entity only alerts when its flagged category is new
+    -- since last cycle, not carried forward every night. A real temp table,
+    -- not a CTE, since it's reused across every INSERT below, each its own
+    -- top-level statement.
+    DROP TABLE IF EXISTS pg_temp.previously_flagged;
+    CREATE TEMP TABLE previously_flagged
+    ON COMMIT DROP
+    AS
+    SELECT prev.entity_type, prev.entity_id, prev.observation_name, prev.category
+    FROM "ValidationRecords" prev
+    CROSS JOIN monitoring_validation_cycles cyc
+    WHERE prev.run_id = cyc.prev_cycle_run_id
+    ;
+
     -- reviews_created_region_zero: regions with no reviews created over the
     -- last four complete weeks. Some times of year are naturally slow and a
     -- zero week for one region is not unusual, so this only alerts when the
@@ -152,6 +172,8 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     -- worth the team looking into, not urgent enough for the customer-visible
     -- channel. One aggregate notification; individual entities are inspectable
     -- in ValidationRecords (observation_name = 'category', category IS NULL).
+    -- Gated via previously_flagged (see above) - IS NOT DISTINCT FROM, not =,
+    -- so this check's NULL category compares correctly.
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -168,9 +190,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'category'
       AND vr.category IS NULL
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
@@ -226,9 +254,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'history_determination_recognized'
       AND vr.category <> 'consistent'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
@@ -252,9 +286,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_type_shape'
       AND vr.category <> 'consistent'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -278,9 +318,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_status_vs_delivery'
       AND vr.category = 'delivered_not_complete'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -304,9 +350,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_grantee_duplicated'
       AND vr.category = 'duplicated'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
@@ -331,9 +383,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_grantee_multi_grant'
       AND vr.category = 'grantee_multi_grant'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -357,9 +415,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'finding_grant_on_own_review'
       AND vr.category = 'grant_not_on_own_review'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -383,9 +447,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'finding_review_history_duplicated'
       AND vr.category = 'duplicated_disagreeing'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
@@ -408,9 +478,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'finding_standard_missing'
       AND vr.category = 'no_live_standard'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -434,9 +510,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'history_status_resolvable'
       AND vr.category = 'unresolvable'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -457,9 +539,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'finding_status_resolvable'
       AND vr.category = 'unresolvable'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -480,9 +568,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_status_resolvable'
       AND vr.category = 'unresolvable'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -505,9 +599,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'statuses_table_integrity'
       AND vr.category = 'duplicate_live_status'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -532,9 +632,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'review_grantee_orphaned_grant'
       AND vr.category = 'orphaned_grant_number'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -559,9 +665,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'standard_consistency'
       AND vr.category = 'citation_text_disagrees'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;
@@ -586,9 +698,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       NOW()
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = vr.entity_type
+      AND pf.entity_id = vr.entity_id
+      AND pf.observation_name = vr.observation_name
+      AND pf.category IS NOT DISTINCT FROM vr.category
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'standard_consistency'
       AND vr.category = 'category_disagrees_no_source'
+      AND pf.entity_id IS NULL
     GROUP BY cur.run_id, cur.alert
     HAVING COUNT(*) > 0
     ;

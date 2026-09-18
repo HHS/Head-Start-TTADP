@@ -9,11 +9,15 @@ EXPECTED_TASKS="${3:-8}"
 # GOAL_FILE / ALERTS_FILE are the two halves SUMMARY_FILE is built from (goal
 # creation vs validation+gate). OHS_FILE is what the OHS contractor-customer
 # channel gets: goal creation always, plus the alerts half only when
-# OHS_MONITORING_ALERTS_ENABLED is truthy. See the concatenation at the bottom
-# of this script and docs/monitoring-data-validation.md (Channels).
+# OHS_MONITORING_ALERTS_ENABLED is truthy. TEAM_NOTIFICATIONS_FILE holds
+# team_notification-severity validation alerts, appended to SUMMARY_FILE only
+# (see the bottom of this script) - internal-only, never the OHS channel,
+# regardless of OHS_MONITORING_ALERTS_ENABLED. See
+# docs/monitoring-data-validation.md (Channels).
 GOAL_FILE="${4:-monitoring-goal-updates.txt}"
 ALERTS_FILE="${5:-monitoring-validation-alerts.txt}"
 OHS_FILE="${6:-monitoring-ohs-updates.txt}"
+TEAM_NOTIFICATIONS_FILE="${7:-monitoring-validation-team-notifications.txt}"
 LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
@@ -115,13 +119,18 @@ gate_blocked() {
   [[ "$status" == "success" && "${critical_count:-0}" -gt 0 ]]
 }
 
-# Appends a section for the validation phase's alerts to ALERTS_FILE.
-# The phase prints one "Monitoring Validation Alerts: {...}" JSON line
-# (see src/tools/validateMonitoringData.ts).
+# Appends a section for the validation phase's alerts to ALERTS_FILE, split
+# off from team_notification-severity ones (into TEAM_NOTIFICATIONS_FILE -
+# see the header comment above and docs/monitoring-data-validation.md
+# (Channels)) since only ALERTS_FILE feeds the OHS channel. The phase prints
+# one "Monitoring Validation Alerts: {...}" JSON line (see
+# src/tools/validateMonitoringData.ts). The gate process never uses
+# team_notification, so append_gate_summary below needs no equivalent split.
 append_validation_summary() {
   local results
   local json_data
   local alerts
+  local team_notifications
   local as_of
 
   if [[ -f "$validation_log" ]]; then
@@ -129,7 +138,9 @@ append_validation_summary() {
     if [[ -n "$results" ]]; then
       json_data=${results#*: }
       as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
-      alerts=$(echo "$json_data" | jq -jr '.alerts[]? | .message, "\n"' 2>/dev/null || true)
+      alerts=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity != "team_notification") | .message, "\n"' 2>/dev/null || true)
+      team_notifications=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "team_notification") | .message, "\n"' 2>/dev/null || true)
+
       if [[ -n "$alerts" ]]; then
         {
           printf 'Monitoring Validation Alerts (as of %s): ```\n' "${as_of:-unknown}"
@@ -138,6 +149,14 @@ append_validation_summary() {
         } >> "$ALERTS_FILE"
       else
         printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
+      fi
+
+      if [[ -n "$team_notifications" ]]; then
+        {
+          printf 'Monitoring Validation Team Notifications (as of %s): ```\n' "${as_of:-unknown}"
+          printf '%s\n' "$team_notifications"
+          printf '```\n'
+        } >> "$TEAM_NOTIFICATIONS_FILE"
       fi
       return
     fi
@@ -276,6 +295,7 @@ write_failure_summary() {
 
 : > "$GOAL_FILE"
 : > "$ALERTS_FILE"
+: > "$TEAM_NOTIFICATIONS_FILE"
 goal_content_known=false
 write_goal_summary && goal_content_known=true
 if [[ "$overall_status" == "SUCCEEDED" ]]; then
@@ -301,12 +321,22 @@ append_gate_summary
 # OHS_FILE (the acf-ohs-ttahub--contractor-customer-team channel) always gets
 # goal-creation content; it only gets validation/gate alerts mixed in when
 # OHS_MONITORING_ALERTS_ENABLED is truthy - parsed the same way notify_slack
-# parses it. See docs/monitoring-data-validation.md (Channels).
+# parses it. Built from SUMMARY_FILE as it stands right here, before
+# TEAM_NOTIFICATIONS_FILE is appended below - team_notification alerts never
+# reach this channel, regardless of the switch. See
+# docs/monitoring-data-validation.md (Channels).
 ohs_enabled=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
 if [[ "$ohs_enabled" =~ ^(true|1|yes)$ ]]; then
   cp "$SUMMARY_FILE" "$OHS_FILE"
 else
   cp "$GOAL_FILE" "$OHS_FILE"
+fi
+
+# TEAM_NOTIFICATIONS_FILE is appended to SUMMARY_FILE only, after OHS_FILE is
+# already decided above.
+if [[ -s "$TEAM_NOTIFICATIONS_FILE" ]]; then
+  [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
+  cat "$TEAM_NOTIFICATIONS_FILE" >> "$SUMMARY_FILE"
 fi
 
 echo

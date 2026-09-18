@@ -9,20 +9,22 @@ import { sequelize } from '../../models';
 const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promise<void> => {
   await sequelize.query(
     `
-    -- citation_ar_linked: Citations actually cited on a real (non-deleted)
-    -- Activity Report - a real temp table since it's used by both alert
-    -- statements below (a CTE only scopes to one statement).
+    -- citation_ar_linked: findings (via their Citation) actually cited on a
+    -- real (non-deleted) Activity Report - a real temp table since it's used
+    -- by both alert statements below (a CTE only scopes to one statement).
     DROP TABLE IF EXISTS pg_temp.citation_ar_linked;
     CREATE TEMP TABLE citation_ar_linked
     ON COMMIT DROP
     AS
-    SELECT DISTINCT aroc."citationId"
+    SELECT DISTINCT c.mfid
     FROM "ActivityReportObjectiveCitations" aroc
     JOIN "ActivityReportObjectives" aro
       ON aro.id = aroc."activityReportObjectiveId"
     JOIN "ActivityReports" ar
       ON ar.id = aro."activityReportId"
       AND ar."calculatedStatus" <> 'deleted'
+    JOIN "Citations" c
+      ON c.id = aroc."citationId"
     ;
 
     -- citation_reopened_on_activity_report: a reopened Citation that's
@@ -38,7 +40,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       COUNT(*) || ' citation(s) previously considered resolved have reopened and are cited on an activity report',
       cur.alert,
       jsonb_build_object(
-        'entity_type', 'Citations',
+        'entity_type', 'MonitoringFindings',
         'observation_name', 'citation_reopened',
         'count', COUNT(*),
         'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
@@ -48,7 +50,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
     JOIN citation_ar_linked al
-      ON al."citationId" = vr.entity_id
+      ON al.mfid = vr.entity_id
     WHERE vr.run_id = cur.run_id
       AND vr.observation_name = 'citation_reopened'
       AND vr.category = 'reopened'
@@ -66,7 +68,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       COUNT(*) || ' citation(s) previously considered resolved have reopened',
       cur.team_notification,
       jsonb_build_object(
-        'entity_type', 'Citations',
+        'entity_type', 'MonitoringFindings',
         'observation_name', 'citation_reopened',
         'count', COUNT(*),
         'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
@@ -80,15 +82,16 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       AND vr.category = 'reopened'
       AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
       AND NOT EXISTS (
-        SELECT 1 FROM citation_ar_linked al WHERE al."citationId" = vr.entity_id
+        SELECT 1 FROM citation_ar_linked al WHERE al.mfid = vr.entity_id
       )
     GROUP BY cur.run_id, cur.team_notification
     HAVING COUNT(*) > 0
     ;
 
-    -- delivered_review_reopened: team_notification only - ARs cite Citations,
-    -- not DeliveredReviews directly, so this doesn't need the AR-linkage
-    -- severity split citation_reopened above has. Same 7-day freshness gate.
+    -- delivered_review_reopened: team_notification only - ARs cite Citations
+    -- (findings), not DeliveredReviews (reviews) directly, so this doesn't
+    -- need the AR-linkage severity split citation_reopened above has. Same
+    -- 7-day freshness gate.
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -96,7 +99,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       COUNT(*) || ' delivered review(s) previously considered complete are no longer complete',
       cur.team_notification,
       jsonb_build_object(
-        'entity_type', 'DeliveredReviews',
+        'entity_type', 'MonitoringReviews',
         'observation_name', 'delivered_review_completion_state',
         'count', COUNT(*),
         'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
@@ -135,8 +138,10 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       rec.name recipient_name
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
+    JOIN "Citations" c
+      ON c.mfid = vr.entity_id
     JOIN "ActivityReportObjectiveCitations" aroc
-      ON aroc.id = vr.entity_id
+      ON aroc."citationId" = c.id
     JOIN "ActivityReportObjectives" aro
       ON aro.id = aroc."activityReportObjectiveId"
     JOIN "ActivityReports" ar
@@ -170,7 +175,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       summary.report_count || ' approved AR(s) reference citation(s) no longer present in the Monitoring data',
       cur.alert,
       jsonb_build_object(
-        'entity_type', 'ActivityReports',
+        'entity_type', 'MonitoringFindings',
         'observation_name', 'activity_report_citation_source_deleted',
         'count', summary.report_count,
         'first_activity_report_id', first_report.report_id,
@@ -203,7 +208,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       summary.report_count || ' draft/submitted AR(s) reference citation(s) no longer present in the Monitoring data',
       cur.alert,
       jsonb_build_object(
-        'entity_type', 'ActivityReports',
+        'entity_type', 'MonitoringFindings',
         'observation_name', 'activity_report_citation_source_deleted',
         'count', summary.report_count,
         'first_activity_report_id', first_report.report_id,
@@ -215,6 +220,34 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     JOIN first_report ON true
     CROSS JOIN validation_run cur
     WHERE summary.report_count > 0
+    ;
+
+    -- delivered_review_citation_no_window: team_notification - a review that
+    -- lost a same-day tie-break and so was never the authoritative review
+    -- for any of a citation's periods (see monitoringFactTableObservations.ts).
+    -- Freshness-gated on context.learned_at (the row's own createdAt).
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'delivered_review_citation_no_window',
+      COUNT(*) || ' finding(s) have a delivered review that lost a same-day tie-break and was never authoritative for any period',
+      cur.team_notification,
+      jsonb_build_object(
+        'entity_type', 'MonitoringFindings',
+        'observation_name', 'delivered_review_citation_no_window',
+        'count', COUNT(*),
+        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+      ),
+      NOW(),
+      NOW()
+    FROM "ValidationRecords" vr
+    CROSS JOIN validation_run cur
+    WHERE vr.run_id = cur.run_id
+      AND vr.observation_name = 'delivered_review_citation_no_window'
+      AND vr.category = 'no_authoritative_window'
+      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    GROUP BY cur.run_id, cur.team_notification
+    HAVING COUNT(*) > 0
     ;
     `,
     { raw: true, transaction }

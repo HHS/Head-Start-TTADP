@@ -194,7 +194,7 @@ workflows:
     jobs:
     - run_validation_watchdog:
         target_env: "prod"
-        slack_channel: acf-head-start-alerts
+        slack_channel_failure: acf-head-start-alerts
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
@@ -1714,7 +1714,8 @@ jobs:
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
           ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
-            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt
+            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt \
+            monitoring-validation-team-notifications.txt
     - notify_slack:
         step_when: always
         message_text_file: monitoring-updates.txt
@@ -1746,6 +1747,9 @@ jobs:
     - store_artifacts:
         when: always
         path: monitoring-ohs-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-validation-team-notifications.txt
     - run:
         when: always
         name: Fail if any import phase failed
@@ -1775,8 +1779,13 @@ jobs:
       target_env:
         type: string
       slack_channel:
+        description: "Channel that always gets the watchdog result, success or failure."
         type: string
         default: acf-head-start-alerts-lower
+      slack_channel_failure:
+        description: "Extra channel that gets the result only on failure (ok:false, or no result at all) - so it isn't cluttered with routine 'everything's fine' confirmations. Empty = skip, same as notify_slack's ohs_channel."
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1838,14 +1847,32 @@ jobs:
           result=$(grep -o "Monitoring Validation Watchdog: .*" "${LOG_FILE}" 2>/dev/null | tail -n 1 || true)
           if [[ -n "${result}" ]]; then
             echo "${result}" > "${SUMMARY_FILE}"
+            ok=$(echo "${result#*: }" | jq -r '.ok // false' 2>/dev/null || echo false)
           else
             echo "Monitoring Validation Watchdog: no result (task failed to run)" > "${SUMMARY_FILE}"
+            ok=false
           fi
           cat "${SUMMARY_FILE}"
+
+          # slack_channel_failure only gets posted to on a real failure - resolved
+          # here, not as a step-level `when`, since notify_slack's slack_channel
+          # parameter is substituted at config-compile time, not from this job's
+          # runtime output. Empty channel = notify_slack's own no-op skip (same
+          # idiom as ohs_channel).
+          if [[ "${ok}" == "true" ]]; then
+            echo "export WATCHDOG_FAILURE_CHANNEL=" >> "$BASH_ENV"
+          else
+            echo "export WATCHDOG_FAILURE_CHANNEL=<< parameters.slack_channel_failure >>" >> "$BASH_ENV"
+          fi
     - notify_slack:
         step_when: always
         message_text_file: watchdog-summary.txt
         slack_channel: << parameters.slack_channel >>
+    - notify_slack:
+        step_when: always
+        message_text_file: watchdog-summary.txt
+        slack_channel: "${WATCHDOG_FAILURE_CHANNEL}"
+        best_effort: true
     - store_artifacts:
         when: always
         path: watchdog-artifacts
