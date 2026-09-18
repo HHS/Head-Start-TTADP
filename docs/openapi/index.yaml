@@ -9,7 +9,6 @@ info:
 servers:
   - url: http://localhost:8080
   - url: http://backend:8080
-  - url: https://tta-smarthub-sandbox.app.cloud.gov
   - url: https://tta-smarthub-dev.app.cloud.gov
   - url: https://tta-smarthub-staging.app.cloud.gov
 paths:
