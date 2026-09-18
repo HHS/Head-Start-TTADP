@@ -162,7 +162,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     FROM "MonitoringFindingStatuses"
     WHERE "sourceDeletedAt" IS NULL
       AND "deletedAt" IS NULL
-    ORDER BY "statusId", id
+    ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
@@ -272,6 +272,14 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     -- (delivery_report_lag_days, finding_latest_delivered): reviews with no
     -- reportDeliveryDate, or one older than the window, produce no
     -- observation, so an old already-known mismatch can't alert forever.
+    -- DISTINCT ON, not a bare join: see closure_state's known_statuses above
+    -- - same fan-out risk if statuses_table_integrity's condition occurs.
+    WITH known_review_statuses AS (
+      SELECT DISTINCT ON ("statusId") "statusId", name
+      FROM "MonitoringReviewStatuses"
+      WHERE "deletedAt" IS NULL
+      ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
+    )
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -289,9 +297,8 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     FROM "MonitoringReviews" mr
     CROSS JOIN validation_run cur
     CROSS JOIN monitoring_validation_window w
-    LEFT JOIN "MonitoringReviewStatuses" rs
+    LEFT JOIN known_review_statuses rs
       ON rs."statusId" = mr."statusId"
-      AND rs."deletedAt" IS NULL
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
       AND mr."reportDeliveryDate" IS NOT NULL
@@ -446,7 +453,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         "findingId",
         "reviewId",
         COUNT(*) cnt,
-        COUNT(DISTINCT "statusId") status_variants,
+        COUNT(DISTINCT COALESCE("statusId"::text, '')) status_variants,
         COUNT(DISTINCT COALESCE(TRIM(determination), '')) determination_variants
       FROM "MonitoringFindingHistories"
       WHERE "sourceDeletedAt" IS NULL
@@ -483,8 +490,11 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- finding_standard_missing: a finding with no live MonitoringFindingStandard
-    -- row at all silently produces no Citation - nothing else in the fact
+    -- finding_standard_missing: a finding with no MonitoringFindingStandard
+    -- link resolving to a live MonitoringStandards row silently produces no
+    -- Citation (the fact-table transform inner-joins to live standards, so an
+    -- orphaned link - one whose standardId itself has no live row - is just
+    -- as invisible to it as having no link at all) - nothing else in the fact
     -- tables would show this finding is missing.
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
@@ -499,10 +509,14 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     FROM "MonitoringFindings" mf
     CROSS JOIN validation_run cur
     LEFT JOIN (
-      SELECT "findingId", COUNT(*) cnt
-      FROM "MonitoringFindingStandards"
-      WHERE "sourceDeletedAt" IS NULL
-        AND "deletedAt" IS NULL
+      SELECT mfst."findingId", COUNT(*) cnt
+      FROM "MonitoringFindingStandards" mfst
+      JOIN "MonitoringStandards" ms
+        ON ms."standardId" = mfst."standardId"
+        AND ms."sourceDeletedAt" IS NULL
+        AND ms."deletedAt" IS NULL
+      WHERE mfst."sourceDeletedAt" IS NULL
+        AND mfst."deletedAt" IS NULL
       GROUP BY 1
     ) live
       ON live."findingId" = mf."findingId"
@@ -774,7 +788,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       SELECT DISTINCT ON ("statusId") "statusId", name
       FROM "MonitoringFindingStatuses"
       WHERE "deletedAt" IS NULL
-      ORDER BY "statusId", id
+      ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
 
     -- history_vs_finding_status: the determination/status MonitoringFindingHistories
@@ -807,7 +821,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       mf.id,
       'history_vs_finding_status',
       CASE
-        WHEN fld.latest_history_status = 'Corrected' AND kfs.name <> 'Corrected'
+        WHEN fld.latest_history_status = 'Corrected' AND COALESCE(kfs.name, '') <> 'Corrected'
           THEN 'history_corrected_finding_disagrees'
         ELSE 'consistent'
       END,

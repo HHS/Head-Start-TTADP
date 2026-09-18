@@ -457,11 +457,15 @@ describe('validateMonitoringData', () => {
     ]);
 
     // A second live MonitoringFindingStatus row sharing FINDING_STATUS_ACTIVE_ID's
-    // statusId -> statuses_table_integrity.
+    // statusId -> statuses_table_integrity. Backdated sourceUpdatedAt (a stale
+    // leftover row), so closure_state's known_statuses still correctly prefers
+    // the real 'Active' row under the sourceUpdatedAt DESC NULLS LAST, id DESC
+    // convention (src/services/monitoringDiagnostics.js) despite the duplicate.
     await MonitoringFindingStatus.create({
       statusId: FINDING_STATUS_ACTIVE_ID,
       name: FINDING_STATUS_DUPLICATE_NAME,
       ...timestamps,
+      sourceUpdatedAt: new Date(timestamps.sourceUpdatedAt.getTime() - 60 * 60 * 1000),
     });
 
     // Named history statuses for history_vs_finding_status / history_vs_outcome.

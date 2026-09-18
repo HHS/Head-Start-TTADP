@@ -100,6 +100,7 @@ const refreshMonitoringValidationStaging = async (transaction: Transaction): Pro
       WHERE r.process_name = :processName
         AND r.id <> cur.run_id
         AND r.import_id IS DISTINCT FROM cur.import_id
+        AND r.status = 'success'
       ORDER BY r.id DESC
       LIMIT 1
     )

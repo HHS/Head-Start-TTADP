@@ -146,6 +146,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       ON aro.id = aroc."activityReportObjectiveId"
     JOIN "ActivityReports" ar
       ON ar.id = aro."activityReportId"
+      AND ar."calculatedStatus" <> 'deleted'
     LEFT JOIN "Grants" g
       ON g.id = aroc."grantId"
     LEFT JOIN "Recipients" rec
