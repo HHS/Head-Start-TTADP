@@ -6,7 +6,7 @@ import {
 } from '../../../components/filter/activityReportFilters';
 import {
   createDateFilter,
-  goalNameFilter,
+  goalCategoryFilter,
   grantNumberFilter,
   reasonsFilter,
   statusFilter,
@@ -17,7 +17,7 @@ import {
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) =>
   [
     createDateFilter,
-    goalNameFilter,
+    goalCategoryFilter,
     grantNumberFilter(grantNumberParams),
     reasonsFilter,
     statusFilter,
@@ -39,6 +39,8 @@ export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) =>
   `goals-objectives-filters-${recipientId}`;
 
 export const TTA_TIMELINE_FEATURE_FLAG = 'tta_timeline';
+
+export const RECIPIENT_TTA_REQUEST_FEATURE_FLAG = 'recipient_tta_request';
 
 export const getIdParamArray = (search) => {
   const searchParams = new URLSearchParams(search);

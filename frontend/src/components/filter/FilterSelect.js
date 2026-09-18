@@ -19,6 +19,14 @@ export default function FilterSelect({
     .flat()
     .map((selection) => options.find((option) => option[key] === selection));
 
+  // Resolve each selected value to its display label. When mapByValue is set the
+  // selectedValues are the valueProp (e.g. user ids), so we need to look up the
+  // labelProp to avoid showing raw ids in the truncated "+ X more tags" display.
+  const selectedLabels = [selectedValues].flat().map((selection) => {
+    const match = options.find((option) => option[key] === selection);
+    return match ? match[labelProp] : String(selection);
+  });
+
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
@@ -87,7 +95,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = [selectedValues].flat().map((selection, index) => {
+      const truncated = selectedLabels.map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;

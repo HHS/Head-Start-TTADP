@@ -69,8 +69,8 @@ describe('ViewRegionalCommunicationLog', () => {
             completeDate: '11/16/2023',
           },
         ],
-        otherStaff: [{ label: 'Me', value: 1 }],
       },
+      otherStaff: [{ label: 'Me', value: 1 }],
       files: [
         {
           id: 1,

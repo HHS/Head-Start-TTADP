@@ -81,8 +81,7 @@ export default function ViewRegionalCommunicationLog({ match }) {
             </Link>
           )}
           <ReadOnlyField label="Other TTA staff">
-            {log.data.otherStaff &&
-              log.data.otherStaff.map((u) => <div key={u.value}>{u.label}</div>)}
+            {log.otherStaff && log.otherStaff.map((u) => <div key={u.value}>{u.label}</div>)}
           </ReadOnlyField>
           <ReadOnlyField label="Recipients">
             {log.recipients && log.recipients.map((r) => <div key={r.id}>{r.name}</div>)}

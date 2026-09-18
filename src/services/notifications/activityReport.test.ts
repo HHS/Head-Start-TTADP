@@ -8,6 +8,8 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForCollaborators,
+  createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
 } from './activityReport';
 
@@ -221,6 +223,69 @@ describe('activityReport notification helpers', () => {
         'Approver Name'
       );
 
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createReportApprovedNotificationForCollaborators', () => {
+    it('calls createNotification once per collaborator with the ACTIVITY_REPORT_APPROVED type', async () => {
+      const collaborators = [{ userId: 10 }, { userId: 11 }];
+      await createReportApprovedNotificationForCollaborators(
+        collaborators,
+        reportBase,
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        10,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        11,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createReportApprovedNotificationForCollaborators(
+        [{ userId: 10 }],
+        { ...reportBase, activityRecipients: [] },
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns an empty array and makes no calls when passed no collaborators', async () => {
+      const result = await createReportApprovedNotificationForCollaborators(
+        [],
+        reportBase,
+        'Approver Name'
+      );
+      expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
     });
   });
@@ -460,15 +525,89 @@ describe('activityReport notification helpers', () => {
     });
   });
 
+  describe('createResubmittedNotificationForApprovers', () => {
+    it('calls createNotification once per approver with the ACTIVITY_REPORT_RESUBMITTED_APPROVER type', async () => {
+      const approvers = [{ userId: 1 }, { userId: 2 }];
+      await createResubmittedNotificationForApprovers(approvers, reportBase);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        1,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        2,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createResubmittedNotificationForApprovers([{ userId: 1 }], {
+        ...reportBase,
+        activityRecipients: [],
+      });
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it("archives each approver's standard submitted notification", async () => {
+      const approvers = [{ userId: 1 }, { userId: 2 }];
+      await createResubmittedNotificationForApprovers(approvers, reportBase);
+
+      expect(mockArchiveByUser).toHaveBeenCalledTimes(2);
+      expect(mockArchiveByUser).toHaveBeenNthCalledWith(
+        1,
+        reportBase.id,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED
+      );
+      expect(mockArchiveByUser).toHaveBeenNthCalledWith(
+        2,
+        reportBase.id,
+        2,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED
+      );
+    });
+
+    it('does not archive when there is no recipient name', async () => {
+      await createResubmittedNotificationForApprovers([{ userId: 1 }], {
+        ...reportBase,
+        activityRecipients: [],
+      });
+
+      expect(mockArchiveByUser).not.toHaveBeenCalled();
+    });
+  });
+
   describe('archiveResubmittedNotifications', () => {
-    it('archives the resubmitted notification type for the report', async () => {
+    it('archives the resubmitted notification types (collaborator and approver) for the report', async () => {
       await archiveResubmittedNotifications(42);
 
       expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
-      expect(mockArchiveNotifications).toHaveBeenCalledWith(
-        42,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED
-      );
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
     });
   });
 });
