@@ -556,7 +556,7 @@ describe('Activity Report handlers', () => {
             id: 999999,
             displayId: 'R01-AR-999999',
             recipientName: 'Recipient A',
-            approver: 'Approver McApproverface',
+            approver: 'Approver Name',
             hasApproved: true,
           },
           skipExisting: 'archived',
@@ -572,7 +572,7 @@ describe('Activity Report handlers', () => {
             id: 999999,
             displayId: 'R01-AR-999999',
             recipientName: 'Recipient A',
-            approver: 'Approver McApproverface',
+            approver: 'Approver Name',
             hasApproved: false,
           },
           skipExisting: 'archived',
@@ -587,14 +587,15 @@ describe('Activity Report handlers', () => {
       );
       // the acting approver's own approver-approved notification is archived instead
       expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
-        999999,
+        Number(approvedReportRequest.params.activityReportId),
         1,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
       );
       // partial approval must not archive the whole report's approver-approved notifications
-      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalledWith(999999, [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
-      ]);
+      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalledWith(
+        Number(approvedReportRequest.params.activityReportId),
+        [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER]
+      );
     });
     it('does not archive resubmission notifications until the report is fully approved', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
