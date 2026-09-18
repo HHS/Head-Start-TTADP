@@ -167,43 +167,40 @@ describe('goal status change timeline integration', () => {
   it.each([
     ['desc', [5, 0, 4, 3, 2, 1, 6]],
     ['asc', [6, 1, 2, 3, 0, 4, 5]],
-  ] as const)(
-    'orders the registered source by event time in %s order',
-    async (direction, order) => {
-      const result = await getRecipientTimeline({ ...params, direction });
+  ] as const)('orders the registered source by event time in %s order', async (direction, order) => {
+    const result = await getRecipientTimeline({ ...params, direction });
 
-      expect(result.count).toBe(7);
-      expect(result.events.map(({ sourceId }) => sourceId)).toEqual(
-        order.map((index) => changes[index].id)
-      );
-      expect(result.events.every(({ source }) => source === 'goalStatusChange')).toBe(true);
-      expect(result.events.find(({ sourceId }) => sourceId === changes[0].id)).toEqual({
-        source: 'goalStatusChange',
-        sourceId: changes[0].id,
-        date: '2026-08-22',
-        eventType: 'Goal closed',
-        durationHours: null,
-        title: 'Goal closed',
-        subtitle: 'Improve program services',
-        byline: { label: 'Author', values: ['Historical author, GS, PS'] },
-        indicators: [],
-        tags: [{ label: standards[0], flagged: false }],
-        details: [
-          { label: 'Previous status', items: [{ text: 'In Progress' }] },
-          { label: 'New status', items: [{ text: 'Closed' }] },
-          { label: 'Reason', items: [{ text: 'All objectives achieved' }] },
-          { label: 'Context', items: [{ text: 'Recipient completed the work.' }] },
-          { label: 'Grant number', items: [{ text: `Timeline-${grantIds[0]}` }] },
-        ],
-        links: [
-          {
-            label: 'View goal',
-            to: `/recipient-tta-records/${params.recipientId}/region/${params.regionId}/goals/standard?goalId=${goals[0].id}`,
-          },
-        ],
-      });
-    }
-  );
+    expect(result.count).toBe(7);
+    expect(result.events.map(({ sourceId }) => sourceId)).toEqual(
+      order.map((index) => changes[index].id)
+    );
+    expect(result.events.every(({ source }) => source === 'goalStatusChange')).toBe(true);
+    expect(result.events.find(({ sourceId }) => sourceId === changes[0].id)).toEqual({
+      source: 'goalStatusChange',
+      sourceId: changes[0].id,
+      date: '2026-08-22',
+      eventType: 'Goal closed',
+      durationHours: null,
+      title: 'Goal closed',
+      subtitle: 'Improve program services',
+      byline: { label: 'Author', values: ['Historical author, GS, PS'] },
+      indicators: [],
+      tags: [{ label: standards[0], flagged: false }],
+      details: [
+        { label: 'Previous status', items: [{ text: 'In Progress' }] },
+        { label: 'New status', items: [{ text: 'Closed' }] },
+        { label: 'Reason', items: [{ text: 'All objectives achieved' }] },
+        { label: 'Context', items: [{ text: 'Recipient completed the work.' }] },
+        { label: 'Grant number', items: [{ text: `Timeline-${grantIds[0]}` }] },
+      ],
+      links: [
+        {
+          label: 'View goal',
+          to: `/recipient-tta-records/${params.recipientId}/region/${params.regionId}/goals/standard?goalId=${goals[0].id}`,
+        },
+      ],
+    });
+  });
 
   it('keeps distinct same-day changes across page boundaries, including exact timestamp ties', async () => {
     const pages = await Promise.all(
@@ -385,40 +382,41 @@ describe('goal status change detail loading', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it.each([null, undefined, '   '])(
-    'omits blank optional fields (%s) and batches exact page IDs',
-    async (missing) => {
-      const findAll = jest.fn().mockResolvedValue([
-        {
-          id: 1,
-          get: () => false,
-          oldStatus: null,
-          newStatus: 'Not Started',
-          userName: missing,
-          userRoles: [null, '', '  '],
-          reason: missing,
-          context: missing,
-          goal: { id: 20, name: missing, goalTemplate: { standard: missing } },
-        },
-      ]);
-      jest.spyOn(GoalStatusChange, 'unscoped').mockReturnValue({ findAll } as never);
-      const result = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([1, 1], params);
-      expect(result.get(1)).toMatchObject({
-        title: 'Goal added',
-        subtitle: null,
-        byline: null,
-        tags: [],
-        details: [{ label: 'New status', items: [{ text: 'Not Started' }] }],
-      });
-      expect(findAll).toHaveBeenCalledTimes(1);
-      expect(findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: { [Op.in]: [1] } },
-          include: expect.arrayContaining([
-            expect.objectContaining({ as: 'goal', required: false, paranoid: false }),
-          ]),
-        })
-      );
-    }
-  );
+  it.each([
+    null,
+    undefined,
+    '   ',
+  ])('omits blank optional fields (%s) and batches exact page IDs', async (missing) => {
+    const findAll = jest.fn().mockResolvedValue([
+      {
+        id: 1,
+        get: () => false,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        userName: missing,
+        userRoles: [null, '', '  '],
+        reason: missing,
+        context: missing,
+        goal: { id: 20, name: missing, goalTemplate: { standard: missing } },
+      },
+    ]);
+    jest.spyOn(GoalStatusChange, 'unscoped').mockReturnValue({ findAll } as never);
+    const result = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([1, 1], params);
+    expect(result.get(1)).toMatchObject({
+      title: 'Goal added',
+      subtitle: null,
+      byline: null,
+      tags: [],
+      details: [{ label: 'New status', items: [{ text: 'Not Started' }] }],
+    });
+    expect(findAll).toHaveBeenCalledTimes(1);
+    expect(findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: { [Op.in]: [1] } },
+        include: expect.arrayContaining([
+          expect.objectContaining({ as: 'goal', required: false, paranoid: false }),
+        ]),
+      })
+    );
+  });
 });
