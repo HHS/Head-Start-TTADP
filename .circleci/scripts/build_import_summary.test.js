@@ -9,15 +9,28 @@ function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6', env = {
   const goalFile = path.join(artifactDir, 'monitoring-goal-updates.txt');
   const alertsFile = path.join(artifactDir, 'monitoring-validation-alerts.txt');
   const ohsFile = path.join(artifactDir, 'monitoring-ohs-updates.txt');
+  const teamNotificationsFile = path.join(
+    artifactDir,
+    'monitoring-validation-team-notifications.txt'
+  );
   execFileSync(
     'bash',
-    [SCRIPT_PATH, artifactDir, summaryFile, expectedTasks, goalFile, alertsFile, ohsFile],
+    [
+      SCRIPT_PATH,
+      artifactDir,
+      summaryFile,
+      expectedTasks,
+      goalFile,
+      alertsFile,
+      ohsFile,
+      teamNotificationsFile,
+    ],
     {
       encoding: 'utf-8',
       env: { ...process.env, ...env },
     }
   );
-  return { goalFile, alertsFile, ohsFile };
+  return { goalFile, alertsFile, ohsFile, teamNotificationsFile };
 }
 
 describe('build_import_summary.sh', () => {
@@ -230,6 +243,60 @@ describe('build_import_summary.sh', () => {
     expect(fs.readFileSync(ohsFile, 'utf-8')).toBe(fs.readFileSync(summaryFile, 'utf-8'));
     expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Updates: ```');
     expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Validation Alerts');
+  });
+
+  it('keeps team_notification alerts in the base summary but excludes them from the OHS file, even when OHS_MONITORING_ALERTS_ENABLED is true', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-team-notif-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-download-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-download.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+        '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
+        '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
+        ']}\n'
+    );
+
+    const { ohsFile, teamNotificationsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
+      OHS_MONITORING_ALERTS_ENABLED: 'true',
+    });
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    const ohs = fs.readFileSync(ohsFile, 'utf-8');
+    const teamNotifications = fs.readFileSync(teamNotificationsFile, 'utf-8');
+
+    expect(summary).toContain(
+      '16 finding(s) are attached to a grant not on any of their own reviews'
+    );
+    expect(summary).toContain('Monitoring Validation Team Notifications');
+    expect(summary).toContain('4 finding(s) on delivered reviews have no category');
+
+    // Even with the switch on, the OHS channel never sees team_notification content.
+    expect(ohs).toContain('16 finding(s) are attached to a grant not on any of their own reviews');
+    expect(ohs).not.toContain('Team Notifications');
+    expect(ohs).not.toContain('4 finding(s) on delivered reviews have no category');
+
+    expect(teamNotifications).toContain('4 finding(s) on delivered reviews have no category');
   });
 
   it('writes a concise failure message from the failed phase log', () => {

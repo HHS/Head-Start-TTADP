@@ -426,7 +426,13 @@ const VALIDATION_PROCESS = {
 };
 
 const VALIDATION_ALERT_SEVERITY = {
+  // Worth the team looking into when there's time; posted to a team-only Slack
+  // channel, never the customer-facing mirror or the urgent-alerts channel.
+  TEAM_NOTIFICATION: 'team_notification',
+  // Drives immediate action; posted to the urgent-alerts channel (and its
+  // customer-facing mirror, when enabled).
   ALERT: 'alert',
+  // Can block the pre-refresh gate.
   CRITICAL: 'critical',
 };
 
