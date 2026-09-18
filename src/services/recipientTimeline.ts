@@ -498,7 +498,11 @@ export async function populateTimelineEventIndex(
   return { count: index.count, events };
 }
 
-/** Query the code-owned registry, then populate each represented source in a bounded batch. */
+/**
+ * Query the code-owned registry, then populate each represented source in a bounded batch.
+ * Callers must provide a REPEATABLE READ transaction spanning both phases. The Timeline route's
+ * transactionWrapper supplies it through Sequelize CLS, including all source population queries.
+ */
 export async function getRecipientTimeline(
   params: RecipientTimelineRequestParams
 ): Promise<RecipientTimelineResponse> {
