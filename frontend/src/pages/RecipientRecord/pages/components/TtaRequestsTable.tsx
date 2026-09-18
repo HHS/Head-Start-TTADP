@@ -10,6 +10,14 @@ export const PER_PAGE = 10;
 // these tables have no row checkboxes, so there is never a subset to export
 const NO_CHECKBOXES = {};
 
+/*
+  FOR FRONTEND TESTING ONLY - the rows the table falls back to while the empty
+  state toggle is on. Declared at module scope so the reference stays stable
+  between renders. Remove it (with the toggle below) once the tables are wired
+  up to a fetcher and the placeholder data is gone.
+*/
+const NO_ROWS: TtaRequestsSortableRow[] = [];
+
 export type TtaRequestsSortConfig = {
   sortBy: string;
   direction: string;
@@ -97,6 +105,8 @@ interface TtaRequestsTableProps {
   defaultSortConfig: TtaRequestsSortConfig;
   rows: TtaRequestsSortableRow[];
   toTableData: (rows: TtaRequestsSortableRow[]) => TtaRequestsTableRow[];
+  /** shown in place of the table when there is nothing to list */
+  emptyState: React.ReactElement;
   /** freezes the final column against the right edge as the table scrolls */
   stickyLastDataColumn?: boolean;
 }
@@ -116,10 +126,15 @@ export default function TtaRequestsTable({
   defaultSortConfig,
   rows,
   toTableData,
+  emptyState,
   stickyLastDataColumn = false,
 }: TtaRequestsTableProps): React.ReactElement {
   const [sortableRows, setSortableRows] = useState<TtaRequestsSortableRow[]>(rows);
   const [pageSize, setPageSize] = useState<number | 'all'>(PER_PAGE);
+  // FOR FRONTEND TESTING ONLY - see the toggle rendered in the title below
+  const [showEmptyState, setShowEmptyState] = useState(false);
+
+  const displayedRows = showEmptyState ? NO_ROWS : rows;
 
   const {
     requestSort,
@@ -138,11 +153,12 @@ export default function TtaRequestsTable({
   const sortConfig = storedSortConfig as unknown as TtaRequestsSortConfig;
 
   useEffect(() => {
-    setSortableRows(sortRows(rows, sortConfig, stringSortColumns, dateSortColumns));
-  }, [rows, sortConfig, stringSortColumns, dateSortColumns]);
+    setSortableRows(sortRows(displayedRows, sortConfig, stringSortColumns, dateSortColumns));
+  }, [displayedRows, sortConfig, stringSortColumns, dateSortColumns]);
 
   const tableData = useMemo(() => toTableData(sortableRows), [sortableRows, toTableData]);
 
+  const isEmpty = tableData.length === 0;
   const currentPage = sortConfig.activePage || 1;
   const currentOffset = sortConfig.offset || 0;
   const effectivePerPage = pageSize === 'all' ? Math.max(tableData.length, 1) : pageSize;
@@ -172,6 +188,28 @@ export default function TtaRequestsTable({
     }));
   };
 
+  /*
+    FOR FRONTEND TESTING ONLY - there is no backend yet, so the link above the
+    table is the only way to see how it renders with nothing in it. Remove it
+    along with the placeholder data once the tables use a fetcher.
+  */
+  const toggleEmptyState = () => {
+    setShowEmptyState((current) => !current);
+    setSortConfig((prev: TtaRequestsSortConfig) => ({ ...prev, activePage: 1, offset: 0 }));
+  };
+
+  const emptyStateToggle = (
+    <div className="margin-bottom-1">
+      <button
+        type="button"
+        className="usa-button usa-button--unstyled font-sans-3xs"
+        onClick={toggleEmptyState}
+      >
+        {showEmptyState ? 'Show placeholder data' : 'Show empty state'}
+      </button>
+    </div>
+  );
+
   // the whole table is exported, not just the page being displayed
   const { exportRows } = useWidgetExport(
     tableData,
@@ -181,48 +219,61 @@ export default function TtaRequestsTable({
     exportFileName
   );
 
+  /*
+    The per page select sits below the title, so when it goes away with the table
+    the title group needs to supply that bottom padding itself.
+  */
+  const titleGroupClassNames = `padding-x-3 padding-top-3 position-relative ${isEmpty ? 'padding-bottom-3' : ''}`;
+
   const menuItems = useMemo(
-    () => (tableData.length ? [{ label: 'Export table', onClick: () => exportRows('all') }] : []),
-    [exportRows, tableData.length]
+    () => (isEmpty ? [] : [{ label: 'Export table', onClick: () => exportRows('all') }]),
+    [exportRows, isEmpty]
   );
 
   return (
-    <WidgetContainer
-      title={title}
-      className="ttahub-tta-requests-table maxw-widescreen"
-      loading={false}
-      showPagingTop={tableData.length > 0}
-      showPagingBottom={tableData.length > 0}
-      currentPage={currentPage}
-      totalCount={tableData.length}
-      offset={currentOffset}
-      perPage={effectivePerPage}
-      handlePageChange={handlePageChange}
-      paginationCardTopProps={{
-        perPageChange: handlePerPageChange,
-        noXofX: true,
-        perPageSelectValue: pageSize,
-        allOptionValue: 'all',
-        hidePagination: true,
-        className: 'margin-bottom-2',
-      }}
-      menuItems={menuItems}
-      titleMargin={{ bottom: 1 }}
-      titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
-    >
-      <HorizontalTableWidget
-        headers={headers}
-        data={paginatedTableData}
-        firstHeading={firstHeading}
-        caption={title}
-        enableSorting
-        sortConfig={sortConfig}
-        requestSort={requestSort}
-        showTotalColumn={false}
-        stickyLastColumn={false}
-        stickyLastDataColumn={stickyLastDataColumn}
-        showDashForNullValue
-      />
-    </WidgetContainer>
+    <>
+      {emptyStateToggle}
+      <WidgetContainer
+        title={title}
+        className="ttahub-tta-requests-table maxw-widescreen"
+        loading={false}
+        showPagingTop={!isEmpty}
+        showPagingBottom={!isEmpty}
+        currentPage={currentPage}
+        totalCount={tableData.length}
+        offset={currentOffset}
+        perPage={effectivePerPage}
+        handlePageChange={handlePageChange}
+        paginationCardTopProps={{
+          perPageChange: handlePerPageChange,
+          noXofX: true,
+          perPageSelectValue: pageSize,
+          allOptionValue: 'all',
+          hidePagination: true,
+          className: 'margin-bottom-2',
+        }}
+        menuItems={menuItems}
+        titleMargin={{ bottom: 1 }}
+        titleGroupClassNames={titleGroupClassNames}
+      >
+        {isEmpty ? (
+          emptyState
+        ) : (
+          <HorizontalTableWidget
+            headers={headers}
+            data={paginatedTableData}
+            firstHeading={firstHeading}
+            caption={title}
+            enableSorting
+            sortConfig={sortConfig}
+            requestSort={requestSort}
+            showTotalColumn={false}
+            stickyLastColumn={false}
+            stickyLastDataColumn={stickyLastDataColumn}
+            showDashForNullValue
+          />
+        )}
+      </WidgetContainer>
+    </>
   );
 }

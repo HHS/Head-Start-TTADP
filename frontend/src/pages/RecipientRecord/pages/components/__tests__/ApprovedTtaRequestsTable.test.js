@@ -138,4 +138,38 @@ describe('ApprovedTtaRequestsTable', () => {
       'R14-REQ-13221,06/18/2026,"Rachel Green, ECS","Amy Bloom, ECM",Monitoring'
     );
   });
+
+  // FOR FRONTEND TESTING ONLY - remove with the placeholder data
+  it('toggles the empty state from the link beside the title', async () => {
+    renderTable();
+
+    expect(rowRequestIds()).toHaveLength(10);
+
+    await userEvent.click(screen.getByRole('button', { name: /show empty state/i }));
+
+    // the empty state replaces the table outright, headers and all
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.queryByTestId('pagination-card-count-header')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: /show placeholder data/i }));
+
+    expect(rowRequestIds()).toHaveLength(10);
+  });
+
+  it('says there are no approved requests when there are none', async () => {
+    renderTable();
+
+    await userEvent.click(screen.getByRole('button', { name: /show empty state/i }));
+
+    expect(screen.getByRole('heading', { name: 'Approved TTA requests', level: 2 })).toBeVisible();
+    expect(screen.getByText('You have no approved TTA requests.')).toBeVisible();
+
+    expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
+    expect(
+      screen.queryByRole('button', { name: /open actions for approved tta requests/i })
+    ).toBeNull();
+
+    // this table only states the fact, it has no call to action
+    expect(screen.queryByRole('button', { name: /new tta request/i })).toBeNull();
+  });
 });

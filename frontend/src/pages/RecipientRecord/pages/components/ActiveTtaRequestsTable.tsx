@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import AddTtaRequestButton from '../../components/AddTtaRequestButton';
 import TtaRequestsTable, {
   type TtaRequestsSortableRow,
   type TtaRequestsTableRow,
@@ -10,6 +11,19 @@ import {
 } from './ttaRequestsPlaceholderData';
 
 const EXPORT_FILE_NAME = 'active-tta-requests.csv';
+
+// the widget title is an h2, so the empty state picks up at h3
+const EMPTY_STATE = (
+  <div className="text-center padding-10">
+    <h3 className="font-serif-md text-bold margin-top-0 margin-bottom-1">
+      You&apos;re all caught up!
+    </h3>
+    <p className="usa-prose text-center margin-top-0 margin-bottom-2">
+      Would you like to begin a new TTA request?
+    </p>
+    <AddTtaRequestButton label="New TTA request" />
+  </div>
+);
 
 export const COLUMNS = {
   REQUEST_ID: 'Request ID',
@@ -128,6 +142,7 @@ export default function ActiveTtaRequestsTable({
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
       toTableData={buildTableData}
+      emptyState={EMPTY_STATE}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn
     />

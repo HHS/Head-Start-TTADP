@@ -10,6 +10,12 @@ import {
 
 const EXPORT_FILE_NAME = 'approved-tta-requests.csv';
 
+const EMPTY_STATE = (
+  <p className="font-serif-md margin-0 padding-10 text-bold text-center">
+    You have no approved TTA requests.
+  </p>
+);
+
 export const COLUMNS = {
   REQUEST_ID: 'Request ID',
   APPROVED_DATE: 'Approved date',
@@ -104,6 +110,7 @@ export default function ApprovedTtaRequestsTable({
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
       toTableData={buildTableData}
+      emptyState={EMPTY_STATE}
     />
   );
 }
