@@ -49,7 +49,6 @@ export interface NotificationMetadata {
   displayId?: string;
   author?: string;
   approver?: string;
-  hasApproved?: boolean;
 }
 
 export type EmailFrequencyValue =

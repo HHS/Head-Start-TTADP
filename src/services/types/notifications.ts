@@ -14,7 +14,7 @@ interface NotificationModel extends Model, Notification {
   isGlobal?: boolean;
 }
 
-interface NotificationUserStateAttributes {
+interface NotificationUserStateModel extends Model {
   id: number;
   notificationId: number;
   userId: number;
@@ -22,10 +22,8 @@ interface NotificationUserStateAttributes {
   archivedAt: string | null;
 }
 
-interface NotificationUserStateModel extends Model, NotificationUserStateAttributes {}
-
 interface NotificationWithState extends NotificationModel {
-  userState?: NotificationUserStateAttributes | null;
+  userState?: NotificationUserStateModel | null;
   viewedAt?: string | null;
   archivedAt?: string | null;
 }
@@ -36,7 +34,6 @@ export type {
   NotificationModel,
   NotificationScope,
   NotificationType,
-  NotificationUserStateAttributes,
   NotificationUserStateModel,
   NotificationWithState,
 };
