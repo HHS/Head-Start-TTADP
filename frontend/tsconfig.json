@@ -12,7 +12,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "strict": false,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "types": ["node", "jest"]
   },
   "include": ["src"],
