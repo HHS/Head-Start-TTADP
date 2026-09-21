@@ -580,18 +580,32 @@ export async function reviewReport(req, res) {
     }
 
     if (status === REPORT_STATUSES.APPROVED) {
-      await createReportApprovedNotification(
-        reviewedReport.author.id,
-        {
-          ...reviewedReport.toJSON(),
-          activityRecipients,
-        },
-        approverName
-      );
-
       const approverIds = new Set(
         (reviewedReport.approvers || []).map((approver) => approver.user?.id ?? approver.userId)
       );
+
+      // An author who is also one of the report's other approvers gets the approver-specific
+      // notification below instead — both types render identical text but competing CTAs, and the
+      // service dedup keys on type, so sending both leaves two identical rows. Mirrors the
+      // collaborator rule below. On the final approval the approver-approved notifications are
+      // archived immediately (see archiveApproverApprovedNotifications), so the author notification
+      // must still be sent in that case.
+      const authorIsOtherApprover =
+        reviewedReport.author.id !== userId && approverIds.has(reviewedReport.author.id);
+      const suppressAuthorApprovedNotification =
+        authorIsOtherApprover && reviewedReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+
+      if (!suppressAuthorApprovedNotification) {
+        await createReportApprovedNotification(
+          reviewedReport.author.id,
+          {
+            ...reviewedReport.toJSON(),
+            activityRecipients,
+          },
+          approverName
+        );
+      }
+
       // Approvers receive their role-specific notification, even when collaborating.
       // The author is already notified above.
       const collaboratorsToNotify = (reviewedReport.activityReportCollaborators || [])
