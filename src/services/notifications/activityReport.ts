@@ -227,6 +227,49 @@ async function createReportApprovedNotificationForCollaborators(
 }
 
 /**
+ * Creates the "report approved" in-app notification for each other approver on an activity
+ * report. Fired when an approver approves the report, naming the approver who just acted.
+ * Mirrors {@link createReportApprovedNotificationForCollaborators} (which notifies
+ * collaborators) so that the other approvers also receive the approval notification.
+ * @param currentApprovers The report's other approvers to notify.
+ * @param savedReport The saved activity report.
+ * @param approverName The name of the approver who approved the report.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+async function createReportApprovedNotificationForApprovers(
+  currentApprovers: { userId: number }[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+  },
+  approverName: string
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return Promise.all(
+    currentApprovers.map((approver) =>
+      createNotification(
+        approver.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+            approver: approverName,
+          },
+          skipExisting: 'archived',
+        }
+      )
+    )
+  );
+}
+
+/**
  * Creates the "revised report resubmitted for approval" in-app notification for each
  * collaborator on an activity report. Fired when a report is resubmitted for approval
  * (i.e. submitted while it was in "needs action" status). Replaces the standard
@@ -405,6 +448,7 @@ export {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,

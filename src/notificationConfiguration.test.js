@@ -215,6 +215,38 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER];
+
+    it('textFn interpolates approver and recipientName', () => {
+      expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
+        'Alice has approved an Activity Report for Head Start Program.'
+      );
+    });
+
+    it('renders the exact ticket copy for an approver being notified another approver approved (TTAHUB-5689)', () => {
+      expect(config.textFn({ approver: 'Jane Manager', recipientName: 'Test Recipient' })).toBe(
+        'Jane Manager has approved an Activity Report for Test Recipient.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED];
 
