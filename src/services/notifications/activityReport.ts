@@ -328,6 +328,45 @@ async function createResubmittedNotificationForApprovers(
 }
 
 /**
+ * Creates the "revised report resubmitted for approval" in-app notification for the creator
+ * of an activity report. Fired when a collaborator (not the creator) resubmits a report for
+ * approval (i.e. submitted while it was in "needs action" status). Replaces the standard
+ * creator-submitted notification on resubmission so the creator sees the "revised" wording
+ * (spec AR-4b / TTAHUB-5677).
+ * @param creatorUserId The report creator's user id to notify.
+ * @param savedReport The saved activity report.
+ * @param submitterName The name of the collaborator who resubmitted the report.
+ * @returns {Promise<void>} Resolves once the notification is created.
+ */
+async function createResubmittedNotificationForCreator(
+  creatorUserId: number,
+  savedReport: {
+    id: number;
+    displayId: string;
+  },
+  submitterName: string
+) {
+  await createNotification(
+    creatorUserId,
+    savedReport.id,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+    {
+      metadata: {
+        id: savedReport.id,
+        displayId: savedReport.displayId,
+        author: submitterName,
+      },
+      skipExisting: 'archived',
+    }
+  );
+  return archiveNotificationsByUserEntityAndType(
+    savedReport.id,
+    creatorUserId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR
+  );
+}
+
+/**
  * Archives the "needs action" in-app notifications for an activity report.
  * Called when a report is (re)submitted for approval so that any pending needs-action
  * notifications for that report are moved to the archived list.
@@ -353,6 +392,7 @@ async function archiveResubmittedNotifications(reportId: number): Promise<void> 
   return archiveNotificationsByEntityAndType(reportId, [
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
   ]);
 }
 
@@ -368,4 +408,5 @@ export {
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
+  createResubmittedNotificationForCreator,
 };
