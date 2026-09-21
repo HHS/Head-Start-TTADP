@@ -473,7 +473,7 @@ describe('mailer tests', () => {
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const email = await notifyReportApproved(
+      const [email] = await notifyReportApproved(
         {
           data: {
             report: mockReport,
@@ -499,7 +499,7 @@ describe('mailer tests', () => {
     });
     it('Tests that the body omits the approver name when it is absent', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const email = await notifyReportApproved(
+      const [email] = await notifyReportApproved(
         {
           data: {
             report: mockReport,
@@ -515,7 +515,7 @@ describe('mailer tests', () => {
     });
     it('Tests that an email is not sent if no recipients', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const email = await notifyReportApproved(
+      const [authorCollabEmail, approverEmail] = await notifyReportApproved(
         {
           data: {
             report: mockReport,
@@ -525,7 +525,8 @@ describe('mailer tests', () => {
         },
         jsonTransport
       );
-      expect(email).toBe(null);
+      expect(authorCollabEmail).toBe(null);
+      expect(approverEmail).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
@@ -536,6 +537,89 @@ describe('mailer tests', () => {
         jsonTransport
       );
       expect(email).toBeNull();
+    });
+    it('Tests that a separate email is sent to opted-in approvers with the approver name in the subject', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [authorCollabEmail, approverEmail] = await notifyReportApproved(
+        {
+          data: {
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+            approverName: 'Approver McApproverface',
+            approversWithSettings: [mockApprover],
+          },
+        },
+        jsonTransport
+      );
+
+      // Author/collaborator subject is unchanged by the addition of the approver send.
+      const authorCollabMessage = JSON.parse(authorCollabEmail.message);
+      expect(authorCollabMessage.subject).toBe(`Activity Report ${mockReport.displayId}: Approved`);
+
+      expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
+      const approverMessage = JSON.parse(approverEmail.message);
+      expect(approverMessage.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Approved by Approver McApproverface`
+      );
+    });
+    it('Tests that the approver email body matches the required copy', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [, approverEmail] = await notifyReportApproved(
+        {
+          data: {
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+            approverName: 'Approver McApproverface',
+            approversWithSettings: [mockApprover],
+          },
+        },
+        jsonTransport
+      );
+      const approverMessage = JSON.parse(approverEmail.message);
+      expect(approverMessage.text).toContain('Hello,');
+      expect(approverMessage.text).toContain(
+        `Activity Report ${mockReport.displayId} has been approved by Approver McApproverface.`
+      );
+      expect(approverMessage.text).toContain('Access this report in the TTA Hub.');
+      expect(approverMessage.text).toContain(reportPath);
+      expect(approverMessage.text).toContain('Best wishes,');
+      expect(approverMessage.text).toContain('The TTA Hub team');
+    });
+    it('Tests that no approver email is sent when no approver has opted in', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [authorCollabEmail, approverEmail] = await notifyReportApproved(
+        {
+          data: {
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1],
+            approverName: 'Approver McApproverface',
+            approversWithSettings: [],
+          },
+        },
+        jsonTransport
+      );
+      expect(authorCollabEmail).not.toBe(null);
+      expect(approverEmail).toBe(null);
+    });
+    it('Tests that an approver-only email is sent when there is no opted-in author/collaborator', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [authorCollabEmail, approverEmail] = await notifyReportApproved(
+        {
+          data: {
+            report: mockReport,
+            authorWithSetting: null,
+            collabsWithSettings: [],
+            approverName: 'Approver McApproverface',
+            approversWithSettings: [mockApprover],
+          },
+        },
+        jsonTransport
+      );
+      expect(authorCollabEmail).toBe(null);
+      expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
     });
   });
 
@@ -1679,7 +1763,7 @@ describe('mailer tests', () => {
         process.env.SEND_NOTIFICATIONS = 'true';
         const sendSpy = jest.spyOn(Email.prototype, 'send');
 
-        const email = await notifyReportApproved(
+        const [email, approverEmail] = await notifyReportApproved(
           {
             data: {
               report: mockReport,
@@ -1691,6 +1775,7 @@ describe('mailer tests', () => {
         );
 
         expect(email).toBeNull();
+        expect(approverEmail).toBeNull();
         expect(sendSpy).not.toHaveBeenCalled();
         sendSpy.mockRestore();
       });
@@ -1699,7 +1784,7 @@ describe('mailer tests', () => {
         process.env.SEND_NOTIFICATIONS = 'true';
         const sendSpy = jest.spyOn(Email.prototype, 'send');
 
-        const email = await notifyReportApproved(
+        const [email] = await notifyReportApproved(
           {
             data: {
               report: mockReport,
@@ -1764,6 +1849,34 @@ describe('mailer tests', () => {
             report: mockReport,
             authorWithSetting: mockReport.author,
             collabsWithSettings: [mockCollaborator1],
+          })
+        );
+      });
+
+      it('includes approversWithSettings on the queued payload', () => {
+        reportApprovedNotification(mockReport, mockReport.author, [mockCollaborator1], 'Approver', [
+          mockApprover,
+        ]);
+
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.APPROVED,
+          expect.objectContaining({
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1],
+            approverName: 'Approver',
+            approversWithSettings: [mockApprover],
+          })
+        );
+      });
+
+      it('defaults approversWithSettings to an empty array on a 4-arg call', () => {
+        reportApprovedNotification(mockReport, mockReport.author, [mockCollaborator1], 'Approver');
+
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.APPROVED,
+          expect.objectContaining({
+            approversWithSettings: [],
           })
         );
       });

@@ -545,7 +545,8 @@ describe('Activity Report handlers', () => {
         reviewedReport,
         reviewedReport.author,
         [],
-        'Approver McApproverface'
+        'Approver McApproverface',
+        []
       );
     });
     it('creates an in-app ACTIVITY_REPORT_APPROVED notification for the creator when a second approver approves while the report is still pending overall', async () => {
@@ -716,7 +717,114 @@ describe('Activity Report handlers', () => {
         reviewedReport,
         reviewedReport.author,
         [keptCollaborator],
-        'Approver McApproverface'
+        'Approver McApproverface',
+        []
+      );
+    });
+    it('notifies opted-in approvers, excluding the acting approver', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const otherApprover = { user: { id: 2, email: 'other-approver@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        approvers: [
+          // the acting approver is also on the approvers list and must be excluded
+          { user: { id: 1, email: 'self@test.gov' } },
+          otherApprover,
+        ],
+        id: 999999,
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [],
+        'Approver McApproverface',
+        [otherApprover]
+      );
+    });
+    it('excludes approvers who have not opted in', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const optedInApprover = { user: { id: 2, email: 'opted-in@test.gov' } };
+      const optedOutApprover = { user: { id: 3, email: 'opted-out@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        approvers: [optedInApprover, optedOutApprover],
+        id: 999999,
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockImplementation((userId, key) => {
+        if (key === USER_SETTINGS.EMAIL.KEYS.APPROVAL && userId === optedOutApprover.user.id) {
+          return Promise.resolve({
+            key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+            value: USER_SETTINGS.EMAIL.VALUES.NEVER,
+          });
+        }
+        return Promise.resolve({
+          key,
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [],
+        'Approver McApproverface',
+        [optedInApprover]
       );
     });
     it('returns the new needs action status', async () => {
