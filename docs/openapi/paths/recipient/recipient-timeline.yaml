@@ -257,8 +257,40 @@ get:
                           external:
                             type: boolean
           example:
-            count: 2
+            count: 3
             events:
+              - source: sessionReport
+                sourceId: 789
+                date: 2026-05-21
+                eventType: Training session
+                durationHours: 1
+                title: Training session
+                subtitle: Mental Health and Disabilities Manager
+                byline:
+                  label: Trainers
+                  values:
+                    - Sarah Ortiz, ECS
+                indicators: []
+                tags:
+                  - label: Mental Health
+                    flagged: false
+                details:
+                  - label: Session objective
+                    items:
+                      - text: Increase understanding of the foundation of Head Start.
+                  - label: Topics
+                    items:
+                      - text: Mental Health, Teaching Practices
+                  - label: Support type
+                    items:
+                      - text: Introducing
+                  - label: Participating grants
+                    items:
+                      - text: 14CH013042 - EHS
+                      - text: 14HP013045 - HS
+                links:
+                  - label: View training report
+                    to: /training-report/R01-PD-1234/session/789
               - source: activityReport
                 sourceId: 123
                 date: 2026-05-09

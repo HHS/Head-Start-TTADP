@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import type {
   RecipientTimelineEventPresentation,
   RecipientTimelineEventType,
@@ -21,6 +22,7 @@ const {
   CommunicationLog,
   CommunicationLogFile,
   CommunicationLogRecipient,
+  EventReportPilot,
   File,
   Goal,
   GoalStatusChange,
@@ -29,6 +31,7 @@ const {
   Objective,
   Program,
   Role,
+  SessionReportPilot,
   Topic,
   User,
 } = db;
@@ -790,9 +793,206 @@ export const COMMUNICATION_LOG_TIMELINE_SOURCE: TimelineEventSource = Object.fre
   populate: populateCommunicationLogs,
 });
 
+const sessionReportStandardPredicate = (replacement: string, negate: boolean) => `
+  ${negate ? 'NOT ' : ''}EXISTS (
+    SELECT 1
+    FROM "SessionReportPilotGoalTemplates" AS "filteredSessionGoalTemplate"
+    INNER JOIN "GoalTemplates" AS "filteredGoalTemplate"
+      ON "filteredGoalTemplate"."id" = "filteredSessionGoalTemplate"."goalTemplateId"
+      AND "filteredGoalTemplate"."deletedAt" IS NULL
+    WHERE "filteredSessionGoalTemplate"."sessionReportPilotId" = "session"."id"
+      AND "filteredGoalTemplate"."standard" IN (${replacement})
+  )`;
+
+// The recipients captured on a session are only ever stored in this JSONB array; the
+// SessionReportPilotGrant join table is never written to and cannot be trusted for eligibility.
+// Guard the type before casting so malformed or oversized values remain harmless nonmatches,
+// mirroring recipientGrantFilter in sessionReports.ts.
+const buildSessionReportIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const status = bindings.add('status', TRAINING_REPORT_STATUSES.COMPLETE);
+  const standardPredicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      if (!Array.isArray(filter.query) || filter.query.length === 0) {
+        throw new Error('Timeline standard filters require at least one value');
+      }
+
+      const replacement = bindings.add(`standard_${index}`, filter.query);
+      return sessionReportStandardPredicate(replacement, filter.condition === 'is not');
+    });
+
+  return `
+    SELECT
+      "session"."id" AS "sourceId",
+      "session"."startDate" AS "date",
+      'Training session' AS "eventType",
+      "grant"."recipientId",
+      "grant"."regionId"
+    FROM "SessionReportPilots" AS "session"
+    INNER JOIN jsonb_array_elements(CASE
+      WHEN jsonb_typeof("session"."data"->'recipients') = 'array' THEN "session"."data"->'recipients'
+      ELSE '[]'::jsonb
+    END) AS "recipient" ON TRUE
+    INNER JOIN "Grants" AS "grant"
+      ON (
+        (jsonb_typeof("recipient"->'value') = 'number'
+          OR jsonb_typeof("recipient"->'value') = 'string')
+        -- Digits only: excludes decimals (e.g. 4.5) and negatives before any numeric comparison.
+        AND "recipient"->>'value' ~ '^[0-9]+$'
+        -- Compare as numeric, not integer: an arbitrarily long digit string cannot overflow
+        -- numeric the way ::integer would, so a huge id is just a harmless nonmatch, not a crash.
+        AND "grant"."id"::numeric = ("recipient"->>'value')::numeric
+      )
+    WHERE "session"."data"->>'status' = ${status}
+      ${standardPredicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+const parseSessionGrantIds = (data: { recipients?: unknown }): number[] => {
+  if (!Array.isArray(data?.recipients)) return [];
+  return data.recipients
+    .map((recipient) => {
+      const value = (recipient as { value?: unknown })?.value;
+      if (typeof value === 'number') return Number.isInteger(value) ? value : null;
+      if (typeof value === 'string' && /^\d+$/.test(value)) return Number.parseInt(value, 10);
+      return null;
+    })
+    .filter((grantId): grantId is number => grantId !== null);
+};
+
+async function populateSessionReports(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+
+  const sessionIds = [...new Set(sourceIds)];
+  const sessions = await SessionReportPilot.findAll({
+    attributes: ['id', 'data'],
+    where: { id: { [Op.in]: sessionIds } },
+    include: [
+      { model: EventReportPilot, as: 'event', attributes: ['eventId'], required: false },
+      {
+        model: User,
+        as: 'trainers',
+        attributes: ['name'],
+        required: false,
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+            through: { attributes: [] },
+            where: { deletedAt: null },
+            required: false,
+          },
+        ],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplates',
+        attributes: ['standard'],
+        through: { attributes: [] },
+        required: false,
+      },
+    ],
+  });
+
+  const referencedGrantIds = [
+    ...new Set(sessions.flatMap((session) => parseSessionGrantIds(session.data ?? {}))),
+  ];
+  const recipientGrants = referencedGrantIds.length
+    ? await Grant.unscoped().findAll({
+        attributes: ['id', 'number'],
+        where: {
+          id: { [Op.in]: referencedGrantIds },
+          recipientId: context.recipientId,
+          regionId: context.regionId,
+        },
+        include: [{ model: Program, as: 'programs', attributes: ['programType'], required: false }],
+      })
+    : [];
+  const grantById = new Map<number, any>(recipientGrants.map((grant) => [grant.id, grant]));
+
+  const presentations = new Map<number, RecipientTimelineEventPresentation>();
+  sessions.forEach((session) => {
+    const data = session.data ?? {};
+    const trainers = (session.trainers ?? [])
+      .map((trainer) =>
+        nameWithRoles(
+          trainer.name,
+          (trainer.roles ?? []).map(({ name }) => name)
+        )
+      )
+      .filter((name): name is string => !!name)
+      .sort((left, right) => left.localeCompare(right));
+    const otherTrainers = communicationText(data.otherTrainers);
+    const trainerNames = trainers.length ? trainers : otherTrainers ? [otherTrainers] : [];
+
+    const standards = uniqueSorted(
+      (session.goalTemplates ?? []).map((goalTemplate) => goalTemplate.standard)
+    );
+    const topics = uniqueSorted(
+      Array.isArray(data.objectiveTopics)
+        ? data.objectiveTopics.map((topic) => communicationText(topic))
+        : []
+    );
+    const objective = convert(communicationText(data.objective) ?? '', { wordwrap: false }).trim();
+    const supportType = communicationText(data.objectiveSupportType);
+    const grantNumbers = uniqueSorted(
+      parseSessionGrantIds(data)
+        .map((grantId) => grantById.get(grantId))
+        .filter((grant): grant is any => !!grant)
+        .map((grant) => grant.numberWithProgramTypes)
+    );
+    const rawDuration =
+      typeof data.duration === 'number' ? data.duration : communicationText(data.duration);
+    const duration = rawDuration === null ? null : Number(rawDuration);
+
+    const presentation: RecipientTimelineEventPresentation = {
+      durationHours:
+        duration !== null && Number.isFinite(duration) && duration >= 0 ? duration : null,
+      title: 'Training session',
+      subtitle: communicationText(data.sessionName),
+      byline: trainerNames.length ? { label: 'Trainers', values: trainerNames } : null,
+      indicators: [],
+      tags: standards.map((label) => ({ label, flagged: label === 'Monitoring' })),
+      details: [
+        ...(objective ? [{ label: 'Session objective', items: [{ text: objective }] }] : []),
+        ...(topics.length ? [{ label: 'Topics', items: [{ text: topics.join(', ') }] }] : []),
+        ...(supportType ? [{ label: 'Support type', items: [{ text: supportType }] }] : []),
+        ...(grantNumbers.length
+          ? [{ label: 'Participating grants', items: grantNumbers.map((text) => ({ text })) }]
+          : []),
+      ],
+      links: session.event?.eventId
+        ? [
+            {
+              label: 'View training report',
+              to: `/training-report/${session.event.eventId}/session/${session.id}`,
+            },
+          ]
+        : [],
+    };
+    presentations.set(session.id, presentation);
+  });
+
+  return presentations;
+}
+
+export const SESSION_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'sessionReport',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildSessionReportIndexQuery,
+  populate: populateSessionReports,
+});
+
 /** Code-owned source registry; request data cannot select or inject source SQL. */
 export const RECIPIENT_TIMELINE_SOURCES: readonly TimelineEventSource[] = Object.freeze([
   ACTIVITY_REPORT_TIMELINE_SOURCE,
   GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
   COMMUNICATION_LOG_TIMELINE_SOURCE,
+  SESSION_REPORT_TIMELINE_SOURCE,
 ]);
