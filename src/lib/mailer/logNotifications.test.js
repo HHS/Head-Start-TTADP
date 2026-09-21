@@ -310,6 +310,30 @@ describe('Email Notifications', () => {
       expect(mailerLog.result).toEqual(result);
     });
 
+    it('includes opted-in approvers in emailTo for an approved report', async () => {
+      mockJob.name = EMAIL_ACTIONS.APPROVED;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJob.id,
+        emailTo: [
+          mockJob.data.report.author.email,
+          mockJob.data.report.activityReportCollaborators[0].user.email,
+          mockJob.data.approversWithSettings[0].user.email,
+        ],
+        action: mockJob.name,
+        subject: 'Activity Report AR-04-1235: Approved',
+        activityReports: [mockJob.data.report.id],
+        success,
+        result,
+      });
+      const mailerLog = await logEmailNotification(mockJob, success, result);
+      expect(mailerLog).not.toBeNull();
+      expect(createMailerLogMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emailTo: ['mockAuthor@test.gov', 'mockCollaborator@test.gov', 'mockApprover@test.gov'],
+        })
+      );
+    });
+
     it('handles missing author for an approved report', async () => {
       mockJob.name = EMAIL_ACTIONS.APPROVED;
       const auth = mockJob.data.report.author;
