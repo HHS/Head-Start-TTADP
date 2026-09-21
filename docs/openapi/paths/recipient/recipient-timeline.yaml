@@ -4,7 +4,9 @@ get:
   summary: Retrieve timeline events for a recipient in a region
   description: |
     Includes approved TTA activities, goal status history, and communication logs for the recipient
-    and region.
+    and region. Communication logs are included only when the user passes the communication-log
+    read policy. Otherwise, logs are excluded before counting and pagination, while other
+    timeline sources remain available.
     Each request indexes and populates all sources within one repeatable-read database snapshot.
     Concurrent edits appear on subsequent requests; they cannot change the current page's
     presentation or multi-recipient indicators independently of its filters, count, and ordering.
