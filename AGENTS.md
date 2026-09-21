@@ -88,7 +88,7 @@ can sit for hours at near-zero CPU, and the nonzero exit code makes it look like
 
 - Pass `--forceExit` so the process exits as soon as the run finishes and the exit code is meaningful.
 - Judge a run by its pass/fail counts, not by its exit status, if you did not pass `--forceExit`.
-- If a run has been going for more than 10-15 minutes, it is stalled or already finished — kill it
+- If a run has been going for more than 3 minutes, it is stalled or already finished — kill it
   and check the captured output rather than waiting.
 
 ### Sequelize enum arrays
