@@ -57,6 +57,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -605,11 +606,26 @@ export async function reviewReport(req, res) {
         },
         user.name
       );
-    }
 
-    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // A resubmission notification is obsolete once the report is fully approved.
-      await archiveResubmittedNotifications(Number(activityReportId));
+      // Notify the other approvers (excluding the acting approver and the author, who is
+      // already notified above) that an approver has approved the report.
+      const approversToNotify = (reviewedReport.approvers || [])
+        .map((approver) => ({ userId: approver.user?.id ?? approver.userId }))
+        .filter(
+          ({ userId: approverUserId }) =>
+            typeof approverUserId === 'number' &&
+            approverUserId !== userId &&
+            approverUserId !== reviewedReport.author.id
+        );
+
+      await createReportApprovedNotificationForApprovers(
+        approversToNotify,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
+      );
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {

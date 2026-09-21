@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
   archiveNeedsActionNotifications,
+  archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
@@ -8,6 +9,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -282,6 +284,65 @@ describe('activityReport notification helpers', () => {
 
     it('returns an empty array and makes no calls when passed no collaborators', async () => {
       const result = await createReportApprovedNotificationForCollaborators(
+        [],
+        reportBase,
+        'Approver Name'
+      );
+      expect(result).toEqual([]);
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createReportApprovedNotificationForApprovers', () => {
+    it('calls createNotification once per approver with the ACTIVITY_REPORT_APPROVED_APPROVER type', async () => {
+      const approvers = [{ userId: 10 }, { userId: 11 }];
+      await createReportApprovedNotificationForApprovers(approvers, reportBase, 'Approver Name');
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        10,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        11,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createReportApprovedNotificationForApprovers(
+        [{ userId: 10 }],
+        { ...reportBase, activityRecipients: [] },
+        'Approver Name'
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns an empty array and makes no calls when passed no approvers', async () => {
+      const result = await createReportApprovedNotificationForApprovers(
         [],
         reportBase,
         'Approver Name'
@@ -597,6 +658,32 @@ describe('activityReport notification helpers', () => {
       });
 
       expect(mockArchiveByUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveNotificationsOnActivityReportApproved', () => {
+    it('archives exactly the eight notification types made obsolete by full approval', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
+    });
+
+    it('does not include ACTIVITY_REPORT_APPROVED or ACTIVITY_REPORT_APPROVED_APPROVER', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      const [, types] = mockArchiveNotifications.mock.calls[0];
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED);
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER);
     });
   });
 
