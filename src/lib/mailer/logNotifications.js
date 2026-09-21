@@ -48,7 +48,8 @@ export default async function logEmailNotification(job, success, result) {
         break;
       case EMAIL_ACTIONS.APPROVED:
         collaboratorEmailAddresses = activityReportCollaborators.map((c) => c.user.email);
-        emailTo = [author ? author.email : '', ...collaboratorEmailAddresses];
+        approverArray = approvers.map((a) => a.user.email);
+        emailTo = [author ? author.email : '', ...collaboratorEmailAddresses, ...approverArray];
         template = path.resolve(emailTemplatePath, 'report_approved', 'subject.pug');
         break;
       case EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED:

@@ -237,10 +237,17 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
   const addresses = [];
-  const { report, authorWithSetting, collabsWithSettings = [], approverName } = job.data;
+  const {
+    report,
+    authorWithSetting,
+    collabsWithSettings = [],
+    approverName,
+    approversWithSettings = [],
+  } = job.data;
   const { id, displayId } = report;
   logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
   const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
+  const approverEmailAddresses = approversWithSettings.map((a) => a.user.email);
   const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
   if (authorWithSetting) {
     addresses.push(authorWithSetting.email);
@@ -249,19 +256,32 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     addresses.push(collaboratorEmailAddresses);
   }
 
-  return sendIfEnabled(addresses, (toEmails) =>
-    createEmailSender(transport).send({
-      template: path.resolve(emailTemplatePath, 'report_approved'),
-      message: {
-        to: toEmails,
-      },
-      locals: {
-        reportPath,
-        displayId,
-        approverName,
-      },
-    })
-  );
+  const locals = {
+    reportPath,
+    displayId,
+    approverName,
+  };
+
+  return Promise.all([
+    sendIfEnabled(addresses, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'report_approved'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(approverEmailAddresses, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'report_approved_approver'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+  ]);
 };
 
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
@@ -458,13 +478,15 @@ export const reportApprovedNotification = (
   report,
   authorWithSetting,
   collabsWithSettings,
-  approverName
+  approverName,
+  approversWithSettings = []
 ) => {
   enqueueNotification(EMAIL_ACTIONS.APPROVED, {
     report,
     authorWithSetting,
     collabsWithSettings,
     approverName,
+    approversWithSettings,
   });
 };
 
