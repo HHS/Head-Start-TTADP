@@ -365,11 +365,6 @@ describe('Activity Report handlers', () => {
           skipExisting: 'archived',
         }
       );
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
-      ]);
     });
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
@@ -552,47 +547,6 @@ describe('Activity Report handlers', () => {
         [],
         'Approver McApproverface'
       );
-    });
-    it('does not archive resubmission notifications until the report is fully approved', async () => {
-      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
-      const mockApproverRecord = {
-        id: 1,
-        userId: 1,
-        activityReportId: approvedReportRequest.params.activityReportId,
-        status: REPORT_STATUSES.APPROVED,
-        note: 'notes',
-        user: { name: 'Approver McApproverface' },
-      };
-      const reviewedReport = {
-        // acting approver approved, but the aggregate status is still SUBMITTED
-        // because a second approver is pending
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        activityRecipientType: 'recipient',
-        author: { id: 777 },
-        activityReportCollaborators: [],
-        id: 999999,
-        toJSON: () => ({ id: 999999 }),
-      };
-      activityReportAndRecipientsById.mockResolvedValue([
-        reviewedReport,
-        [{ activityRecipientId: 10 }],
-      ]);
-      ActivityReport.mockImplementationOnce(() => ({
-        canReview: () => true,
-      }));
-      upsertApprover.mockResolvedValue(mockApproverRecord);
-      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
-      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
-
-      userSettingOverridesById.mockResolvedValue({
-        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
-        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
-      });
-
-      await reviewReport(approvedReportRequest, mockResponse);
-
-      // resubmission notifications must survive until the aggregate status is APPROVED
-      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
     });
     it('creates an in-app ACTIVITY_REPORT_APPROVED notification for the creator when a second approver approves while the report is still pending overall', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id

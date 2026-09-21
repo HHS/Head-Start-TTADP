@@ -628,11 +628,6 @@ export async function reviewReport(req, res) {
       );
     }
 
-    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // A resubmission notification is obsolete once the report is fully approved.
-      await archiveResubmittedNotifications(Number(activityReportId));
-    }
-
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       const { author, activityReportCollaborators, approvers } = reviewedReport;
 
