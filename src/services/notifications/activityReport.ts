@@ -439,8 +439,32 @@ async function archiveResubmittedNotifications(reportId: number): Promise<void> 
   ]);
 }
 
+/**
+ * Archives the in-app notifications that become obsolete once an activity report reaches
+ * the APPROVED status. Called when the report transitions to APPROVED so that stale
+ * submitted/collaborator-added/needs-action/resubmitted notifications for that report are
+ * moved to the archived list. Deliberately excludes ACTIVITY_REPORT_APPROVED and
+ * ACTIVITY_REPORT_APPROVED_APPROVER, since those are the notifications created by this same
+ * event.
+ * @param {number} reportId The activity report ID whose notifications to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+async function archiveNotificationsOnActivityReportApproved(reportId: number): Promise<void> {
+  return archiveNotificationsByEntityAndType(reportId, [
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+  ]);
+}
+
 export {
   archiveNeedsActionNotifications,
+  archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,

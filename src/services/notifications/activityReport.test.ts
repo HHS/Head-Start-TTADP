@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
   archiveNeedsActionNotifications,
+  archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
@@ -657,6 +658,32 @@ describe('activityReport notification helpers', () => {
       });
 
       expect(mockArchiveByUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveNotificationsOnActivityReportApproved', () => {
+    it('archives exactly the eight notification types made obsolete by full approval', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
+    });
+
+    it('does not include ACTIVITY_REPORT_APPROVED or ACTIVITY_REPORT_APPROVED_APPROVER', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      const [, types] = mockArchiveNotifications.mock.calls[0];
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED);
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER);
     });
   });
 
