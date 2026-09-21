@@ -806,8 +806,11 @@ const sessionReportStandardPredicate = (replacement: string, negate: boolean) =>
 
 // The recipients captured on a session are only ever stored in this JSONB array; the
 // SessionReportPilotGrant join table is never written to and cannot be trusted for eligibility.
-// Guard the type before casting so malformed or oversized values remain harmless nonmatches,
-// mirroring recipientGrantFilter in sessionReports.ts.
+// This intentionally diverges from recipientGrantFilter in sessionReports.ts, which casts the
+// JSONB value straight to ::integer and can overflow on an oversized digit string. Here the
+// digit-only guard rules out negatives/decimals, and grant.id is widened to ::numeric (which
+// cannot overflow) instead of narrowing the untrusted value to ::integer, so an oversized or
+// malformed value is always a harmless nonmatch rather than a runtime error.
 const buildSessionReportIndexQuery = (
   context: RecipientTimelineRequestParams,
   bindings: TimelineSourceBindings
@@ -850,13 +853,23 @@ const buildSessionReportIndexQuery = (
       ${standardPredicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
 };
 
+// Grant.id is a Postgres int4 column. An out-of-range value here would otherwise reach
+// Grant.findAll's `id: { [Op.in]: [...] }` and error binding an out-of-range integer parameter,
+// the same failure class the index query's numeric comparison guards against.
+const MAX_INT4 = 2147483647;
+
 const parseSessionGrantIds = (data: { recipients?: unknown }): number[] => {
   if (!Array.isArray(data?.recipients)) return [];
   return data.recipients
     .map((recipient) => {
       const value = (recipient as { value?: unknown })?.value;
-      if (typeof value === 'number') return Number.isInteger(value) ? value : null;
-      if (typeof value === 'string' && /^\d+$/.test(value)) return Number.parseInt(value, 10);
+      if (typeof value === 'number') {
+        return Number.isInteger(value) && value > 0 && value <= MAX_INT4 ? value : null;
+      }
+      if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number.parseInt(value, 10);
+        return parsed > 0 && parsed <= MAX_INT4 ? parsed : null;
+      }
       return null;
     })
     .filter((grantId): grantId is number => grantId !== null);

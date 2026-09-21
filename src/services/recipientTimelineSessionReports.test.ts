@@ -1,4 +1,5 @@
 import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
+import { Op } from 'sequelize';
 import db from '../models';
 import { getUniqueId } from '../testUtils';
 import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
@@ -402,5 +403,27 @@ describe('session report detail loading', () => {
 
     const result = await SESSION_REPORT_TIMELINE_SOURCE.populate([1], params);
     expect(result.get(1)?.details).toEqual([]);
+  });
+
+  it('excludes an out-of-int4-range grant id instead of passing it to Grant.findAll', async () => {
+    jest.spyOn(SessionReportPilot, 'findAll').mockResolvedValue([
+      {
+        id: 1,
+        data: { recipients: [{ value: 10 }, { value: '99999999999999999999' }] },
+      },
+    ] as never);
+    // numberWithProgramTypes is a Sequelize virtual getter; the plain mock below stands in for it.
+    const grantFindAll = jest
+      .fn()
+      .mockResolvedValue([{ id: 10, numberWithProgramTypes: 'Timeline-10' }]);
+    jest.spyOn(Grant, 'unscoped').mockReturnValue({ findAll: grantFindAll } as never);
+
+    const result = await SESSION_REPORT_TIMELINE_SOURCE.populate([1], params);
+    expect(grantFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: { [Op.in]: [10] } }) })
+    );
+    expect(result.get(1)?.details).toEqual([
+      { label: 'Participating grants', items: [{ text: 'Timeline-10' }] },
+    ]);
   });
 });
