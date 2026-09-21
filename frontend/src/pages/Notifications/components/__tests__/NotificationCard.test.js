@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import * as notificationsFetcher from '../../../../fetchers/notifications';
@@ -137,6 +138,51 @@ describe('NotificationCard', () => {
       fireEvent.click(screen.getByRole('link', { name: 'Open notification' }));
 
       expect(notificationsFetcher.viewNotification).toHaveBeenCalledWith('1');
+    });
+  });
+
+  describe('approval notification (TTAHUB-5685)', () => {
+    const approvalNotification = {
+      id: 1,
+      type: 'activityReportApproved',
+      text: 'Approver 2 Name has approved your Activity Report for Test Recipient.',
+      link: '/activity-reports/1',
+      label: 'View AR',
+      displayId: 'R01-AR-1',
+      viewedAt: null,
+      archivedAt: null,
+      actionable: false,
+    };
+
+    it('renders the unread View AR CTA and dismiss control together when unread', async () => {
+      renderCard(approvalNotification);
+
+      // CTA renders and points at the activity report
+      const link = screen.getByRole('link', { name: 'View AR' });
+      expect(link).toHaveAttribute('href', '/activity-reports/1');
+
+      // dismiss (X) control renders, since actionable is false
+      const dismissButtons = screen.getAllByRole('button', { name: /Dismiss/i });
+      expect(dismissButtons.length).toBeGreaterThanOrEqual(1);
+
+      // unread indicator (green dot) and bolded text render while unviewed
+      expect(screen.getByText('Unread notification')).toBeInTheDocument();
+      expect(document.querySelector('.notification-card__text')).toHaveClass('text-semibold');
+      expect(document.querySelector('.notification-card__display-id')).toHaveClass('text-semibold');
+
+      // clicking the CTA marks the notification viewed
+      await userEvent.click(link);
+      expect(notificationsFetcher.viewNotification).toHaveBeenCalledWith('1');
+    });
+
+    it('clears the unread dot and bold text once the notification has been viewed', () => {
+      renderCard({ ...approvalNotification, viewedAt: '2026-06-10T00:00:00.000Z' });
+
+      expect(screen.queryByText('Unread notification')).toBeNull();
+      expect(document.querySelector('.notification-card__text')).not.toHaveClass('text-semibold');
+      expect(document.querySelector('.notification-card__display-id')).not.toHaveClass(
+        'text-semibold'
+      );
     });
   });
 });
