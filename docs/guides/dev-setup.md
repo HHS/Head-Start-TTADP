@@ -61,6 +61,21 @@ Configuration is in [`biome.json`](../../biome.json)
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
 
+## AI Coding Agents
+
+Project instructions for coding agents live in [`AGENTS.md`](../../AGENTS.md). Reusable workflows live in [`.github/skills/`](../../.github/skills/), with a `SKILL.md` file describing when and how to use each skill.
+
+### Codex skill discovery
+
+Codex automatically discovers repository skills in `.agents/skills` and supports symlinked skill folders. To make the existing `.github/skills` workflows discoverable without copying them, run these commands once from the repository root, provided `.agents/skills` does not already exist:
+
+```sh
+mkdir -p .agents
+ln -s ../.github/skills .agents/skills
+```
+
+Keep editing skills in `.github/skills`; the symlink exposes the same files to Codex. If the skills do not appear, restart Codex. In Codex CLI or the IDE extension, use `/skills` or type `$` to select a skill. See the [official Codex skills documentation](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills).
+
 ## Dependency Security
 
 CI runs `yarn deps:audit` against backend and frontend production dependencies.
