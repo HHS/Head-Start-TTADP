@@ -1,6 +1,3 @@
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useContext, useState } from 'react';
@@ -10,6 +7,7 @@ import { Link } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getRecipient } from '../../fetchers/recipient';
+import AddTtaRequestButton from './components/AddTtaRequestButton';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -196,14 +194,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientNameWithRegion={recipientNameWithRegion}
                 slug="tta-request"
                 hasAlerts={hasAlerts}
-                inlineHeadingChildren={
-                  <Button type="button" className="display-flex flex-align-center">
-                    <FontAwesomeIcon color="white" icon={faPlus} />
-                    <span className="margin-x-1">Add request</span>
-                  </Button>
-                }
+                inlineHeadingChildren={<AddTtaRequestButton label="Add request" />}
               >
-                <TtaRequest />
+                <TtaRequest recipientId={recipientId} regionId={regionId} />
               </PageWithHeading>
             </FeatureFlag>
           )}
