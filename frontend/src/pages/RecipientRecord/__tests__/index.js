@@ -245,6 +245,36 @@ describe('recipient record page', () => {
     await waitFor(() => expect(remove).not.toBeInTheDocument());
   });
 
+  it('navigates to the feature-flagged TTA request page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request');
+
+    act(() => renderRecipientRecord());
+
+    expect(
+      await screen.findByRole('heading', { name: 'the Mighty Recipient - Region 45' })
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Add request' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
+  });
+
+  it('redirects an unflagged user away from the TTA request page', async () => {
+    const unflaggedUser = {
+      ...user,
+      flags: [],
+      permissions: user.permissions.filter(({ scopeId }) => scopeId !== ADMIN),
+    };
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request');
+
+    act(() => renderRecipientRecord(unflaggedUser));
+
+    await waitFor(() => {
+      expect(memoryHistory.location.pathname).toBe('/something-went-wrong/404');
+    });
+    expect(screen.queryByRole('button', { name: 'Add request' })).not.toBeInTheDocument();
+  });
+
   it('navigates to the feature-flagged TTA timeline page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('begin:/api/recipient/1/region/45/timeline', { count: 0, events: [] });
