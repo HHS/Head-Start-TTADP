@@ -1394,6 +1394,7 @@ enum enum_Users_flags {
  compliant_follow_up_reviews_tta_support
  monitoring-regional-dashboard
  quality_assurance_dashboard
+ recipient_tta_request
  tta_timeline
 }
 

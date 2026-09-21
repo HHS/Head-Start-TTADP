@@ -186,6 +186,14 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenReportSubmittedForReview',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR]: {
+    textFn: ({ author }) => `${author} has submitted a revised Activity Report for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -212,6 +220,7 @@ const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
 ];
 
 const EMAIL_ACTIONS = {
@@ -389,6 +398,7 @@ const FEATURE_FLAGS = [
   'actionable_notifications',
   'compliant_follow_up_reviews_tta_support',
   'tta_timeline',
+  'recipient_tta_request',
 ];
 
 const MAINTENANCE_CATEGORY = {
