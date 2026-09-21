@@ -14,7 +14,9 @@
     "test": "cross-env TZ=America/New_York jest --watch",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "biome lint --diagnostic-level=error --no-errors-on-unmatched",
-    "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched"
+    "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched",
+    "figma:parse": "figma connect parse",
+    "figma:publish": "figma connect publish"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.7",
@@ -87,6 +89,7 @@
     "@babel/preset-react": "^7.29.7",
     "@babel/preset-typescript": "^7.29.7",
     "@biomejs/biome": "^2.5.13",
+    "@figma/code-connect": "^2",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",
