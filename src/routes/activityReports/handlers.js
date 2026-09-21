@@ -57,6 +57,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -599,6 +600,26 @@ export async function reviewReport(req, res) {
 
       await createReportApprovedNotificationForCollaborators(
         collaboratorsToNotify,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        user.name
+      );
+
+      // Notify the other approvers (excluding the acting approver and the author, who is
+      // already notified above) that an approver has approved the report.
+      const approversToNotify = (reviewedReport.approvers || [])
+        .map((approver) => ({ userId: approver.user?.id ?? approver.userId }))
+        .filter(
+          ({ userId: approverUserId }) =>
+            typeof approverUserId === 'number' &&
+            approverUserId !== userId &&
+            approverUserId !== reviewedReport.author.id
+        );
+
+      await createReportApprovedNotificationForApprovers(
+        approversToNotify,
         {
           ...reviewedReport.toJSON(),
           activityRecipients,

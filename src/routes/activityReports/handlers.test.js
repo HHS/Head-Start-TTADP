@@ -434,6 +434,78 @@ describe('Activity Report handlers', () => {
         expect.anything()
       );
     });
+    it('creates an in-app approved notification for other approvers, excluding the acting approver', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: approvedReportRequest.body.status,
+        note: approvedReportRequest.body.note,
+        user: { name: 'Approver Name' },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: { id: 777 },
+          activityReportCollaborators: [],
+          // one other approver to notify, plus the acting approver (id 1) and the author (777)
+          approvers: [{ user: { id: 1 } }, { user: { id: 890 } }, { user: { id: 777 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the other approver (890) receives the approved-approver in-app notification
+      expect(createNotification).toHaveBeenCalledWith(
+        890,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // the acting approver (id 1) is never notified
+      expect(createNotification).not.toHaveBeenCalledWith(
+        1,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.anything()
+      );
+      // the author (777), already notified via ACTIVITY_REPORT_APPROVED, is not also
+      // notified as an approver
+      expect(createNotification).not.toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.anything()
+      );
+    });
     it('notifies author and collaborators on each approver approval, naming the approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
