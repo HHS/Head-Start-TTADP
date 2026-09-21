@@ -1,8 +1,37 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useCallback } from 'react';
-import useSessionSort from './useSessionSort';
+import { type Dispatch, type SetStateAction, useCallback } from 'react';
+import useSessionSort, { type SessionSortConfig, type SortDirection } from './useSessionSort';
 
-export const parseValue = (value) => {
+export type { SessionSortConfig, SortDirection };
+
+/** The sort state these widgets keep, in session storage and in the table headers. */
+export type WidgetSortConfig = SessionSortConfig;
+
+/** A cell in a row shaped the way `HorizontalTableWidget` expects. */
+export interface WidgetSortableCell {
+  title: string;
+  sortKey?: string;
+  value: string | number;
+}
+
+/**
+ * Rows come in two shapes: flat objects keyed by column name, or rows carrying a
+ * `data` array of cells. Both are sorted by the column display name.
+ */
+export interface WidgetSortableRow {
+  data?: WidgetSortableCell[];
+  sortKey?: string | number;
+  // rows are keyed by whatever their columns are called
+  [key: string]: any;
+}
+
+export interface UseWidgetSorting {
+  requestSort: (sortBy: string, passedDirection?: SortDirection | null) => void;
+  sortConfig: WidgetSortConfig;
+  setSortConfig: Dispatch<SetStateAction<WidgetSortConfig>>;
+}
+
+export const parseValue = <T>(value: T): T | number => {
   const noCommasValue = String(value).replaceAll(',', '');
   const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
   if (Number.isNaN(parsedValue)) {
@@ -11,21 +40,24 @@ export const parseValue = (value) => {
   return parsedValue;
 };
 
-export default function useWidgetSorting(
-  localStorageKey,
-  defaultSortConfig,
-  dataToUse,
-  setDataToUse,
-  stringColumns = [],
-  dateColumns = [],
-  keyColumns = []
-) {
-  const [sortConfig, setSortConfig] = useSessionSort(defaultSortConfig, localStorageKey);
+export default function useWidgetSorting<R extends WidgetSortableRow>(
+  localStorageKey: string,
+  defaultSortConfig: WidgetSortConfig,
+  dataToUse: R[],
+  setDataToUse: (data: R[]) => void,
+  stringColumns: string[] = [],
+  dateColumns: string[] = [],
+  keyColumns: string[] = []
+): UseWidgetSorting {
+  const [sortConfig, setSortConfig] = useSessionSort<WidgetSortConfig>(
+    defaultSortConfig,
+    localStorageKey
+  );
 
   const requestSort = useCallback(
-    (sortBy, passedDirection = null) => {
+    (sortBy: string, passedDirection: SortDirection | null = null) => {
       // Get sort direction.
-      let direction = 'asc';
+      let direction: SortDirection = 'asc';
       // If we have a passed direction this means that we are sorting via a dropdown and not arrow.
       if (passedDirection) {
         // If the direction is passed, use it.
@@ -35,7 +67,7 @@ export default function useWidgetSorting(
       }
 
       // make a lookup object with our columns and their types.
-      const sorts = {
+      const sorts: Record<string, 'string' | 'date' | 'key'> = {
         ...stringColumns.reduce((acc, sc) => ({ ...acc, [sc]: 'string' }), {}),
         ...dateColumns.reduce((acc, dc) => ({ ...acc, [dc]: 'date' }), {}),
         ...keyColumns.reduce((acc, kc) => ({ ...acc, [kc]: 'key' }), {}),
@@ -43,7 +75,7 @@ export default function useWidgetSorting(
 
       // default is "value", otherwise use the key from the lookup
       const sortingBy = sorts[sortBy] || 'value';
-      let valuesToSort;
+      let valuesToSort: (R & { sortBy: string | number | Date })[];
       switch (sortingBy) {
         case 'string':
           valuesToSort = dataToUse.map((t) => {
