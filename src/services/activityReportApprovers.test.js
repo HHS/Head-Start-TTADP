@@ -1,8 +1,11 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { NOTIFICATION_TYPES } from '../constants';
 import db, {
   ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
+  Notification,
+  NotificationUserState,
   sequelize,
   User,
 } from '../models';
@@ -80,6 +83,14 @@ describe('activityReportApprovers services', () => {
       },
     });
     const reportIds = reports.map((report) => report.id);
+    if (reportIds.length) {
+      const notifications = await Notification.findAll({ where: { entityId: reportIds } });
+      const notificationIds = notifications.map((notification) => notification.id);
+      if (notificationIds.length) {
+        await NotificationUserState.destroy({ where: { notificationId: notificationIds } });
+        await Notification.destroy({ where: { id: notificationIds } });
+      }
+    }
     await ActivityReportApprover.destroy({
       where: { activityReportId: reportIds },
       force: true,
@@ -239,6 +250,241 @@ describe('activityReportApprovers services', () => {
       expect(approverIds).toContain(mockManager.id);
       const mgrWithStatus = afterRestore.find((manager) => manager.userId === secondMockManager.id);
       expect(mgrWithStatus.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+    });
+  });
+
+  describe('archives notifications on the SUBMITTED -> APPROVED transition', () => {
+    const TYPES_ARCHIVED_ON_APPROVAL = [
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+      NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+    ];
+
+    it.each(TYPES_ARCHIVED_ON_APPROVAL)(
+      'archives %s notifications when the report transitions to APPROVED',
+      async (type) => {
+        const report = await ActivityReport.create({ ...submittedReport });
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockManager.id,
+        });
+
+        const notification = await Notification.create({ entityId: report.id, type });
+        const userState = await NotificationUserState.create({
+          notificationId: notification.id,
+          userId: mockManager.id,
+          archivedAt: null,
+        });
+
+        await upsertApprover({
+          activityReportId: report.id,
+          userId: mockManager.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [updatedReport] = await activityReportAndRecipientsById(report.id);
+        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        const updatedUserState = await NotificationUserState.findByPk(userState.id);
+        expect(updatedUserState.archivedAt).not.toBeNull();
+      }
+    );
+
+    it('creates a NotificationUserState row when none exists for the notification', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+      });
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        userId: mockManager.id,
+      });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      const createdUserState = await NotificationUserState.findOne({
+        where: { notificationId: notification.id, userId: mockManager.id },
+      });
+      expect(createdUserState).not.toBeNull();
+      expect(createdUserState.archivedAt).not.toBeNull();
+    });
+
+    it('preserves an existing archivedAt timestamp rather than overwriting it', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+      });
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+      const originalArchivedAt = '2020-01-01';
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockManager.id,
+        archivedAt: originalArchivedAt,
+      });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      const updatedUserState = await NotificationUserState.findByPk(userState.id);
+      expect(updatedUserState.archivedAt).toEqual(originalArchivedAt);
+    });
+
+    it('does not archive notifications when the report does not transition to APPROVED', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      // Two approvers, only one approves -- the report stays SUBMITTED overall.
+      await ActivityReportApprover.create({ activityReportId: report.id, userId: mockManager.id });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: secondMockManager.id,
+      });
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockManager.id,
+        archivedAt: null,
+      });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      const [updatedReport] = await activityReportAndRecipientsById(report.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+
+      const updatedUserState = await NotificationUserState.findByPk(userState.id);
+      expect(updatedUserState.archivedAt).toBeNull();
+    });
+
+    it('does not re-archive when an already-approved report is updated again', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+      });
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockManager.id,
+        archivedAt: null,
+      });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      const [approvedReport] = await activityReportAndRecipientsById(report.id);
+      expect(approvedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      // Simulate the notification having since been unarchived by some other flow. If the
+      // service incorrectly re-ran archival on an APPROVED -> APPROVED no-op transition,
+      // this would flip back to non-null.
+      await NotificationUserState.update({ archivedAt: null }, { where: { id: userState.id } });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'still approved',
+      });
+
+      const finalUserState = await NotificationUserState.findByPk(userState.id);
+      expect(finalUserState.archivedAt).toBeNull();
+    });
+
+    it('archives notifications when a destroy via syncApprovers completes the approval', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      // mockManager has already approved; secondMockManager is still pending.
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: secondMockManager.id,
+      });
+
+      const [pendingReport] = await activityReportAndRecipientsById(report.id);
+      expect(pendingReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockManager.id,
+        archivedAt: null,
+      });
+
+      // Removing the pending approver leaves only the already-approved approver, which
+      // completes the report's approval as a side effect of the destroy.
+      await syncApprovers(report.id, [mockManager.id]);
+
+      const [updatedReport] = await activityReportAndRecipientsById(report.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      const updatedUserState = await NotificationUserState.findByPk(userState.id);
+      expect(updatedUserState.archivedAt).not.toBeNull();
+    });
+
+    it('leaves ACTIVITY_REPORT_APPROVED notifications untouched on approval', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+      });
+
+      const notification = await Notification.create({
+        entityId: report.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+      });
+      const userState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockUser.id,
+        archivedAt: null,
+      });
+
+      await upsertApprover({
+        activityReportId: report.id,
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
+
+      const untouchedUserState = await NotificationUserState.findByPk(userState.id);
+      expect(untouchedUserState.archivedAt).toBeNull();
     });
   });
 });
