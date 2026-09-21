@@ -89,19 +89,19 @@ summary {
   margin-left: 8rem;
 }
 
-@media all and (min-width: 30em){
+@media all and (min-width: 30em) {
   .tablet\:smart-hub-offset-nav {
     margin-left: 7.5rem;
   }
 }
 
-@media all and (min-width: 40em){
+@media all and (min-width: 40em) {
   .tablet\:smart-hub-offset-nav {
     margin-left: 10rem;
   }
 }
 
-@media all and (min-width: 64em){
+@media all and (min-width: 64em) {
   .desktop\:smart-hub-offset-nav {
     margin-left: 15rem;
   }
@@ -111,14 +111,15 @@ summary {
   background-color: $ttahub-blue;
 }
 
-header > div {
+header>div {
   height: 3em;
 }
 
-@media all and (min-width: 64em){
-  header > div {
+@media all and (min-width: 64em) {
+  header>div {
     height: 4.5em;
   }
+
   .smart-hub-title {
     font-size: 1.25rem;
   }
@@ -181,9 +182,10 @@ body {
 .flex-gap-1 {
   gap: 0.5em;
 }
+
 /* ========== a new breakpoint for display-flex reset ========== */
 
-@media all and (min-width: 80em){
+@media all and (min-width: 80em) {
   .desktop-lg\:display-flex {
     display: flex;
   }
@@ -200,18 +202,25 @@ body {
 }
 
 .flex-gap-3 {
-  gap: 1.5em; /* 24px */
+  gap: 1.5em;
+  /* 24px */
+}
+
+/* ========== reset alert styles post USWDS update ========== */
+
+@media(min-width:64em) {
+  .usa-alert--warning .usa-alert__body {
+    margin-left: 0;
+  }
 }
 
 /* ========== some form resets ========== */
 
-.usa-button:not(
-  .usa-button--outline,
+.usa-button:not(.usa-button--outline,
   .usa-button--unstyled,
   .usa-button--secondary,
   :disabled,
-  .usa-modal__close
-) {
+  .usa-modal__close) {
   background-color: $ttahub-medium-blue;
 }
 
@@ -241,12 +250,12 @@ button:not([disabled]):focus {
   outline: .25rem solid $blue-vivid-focus;
 }
 
-.usa-checkbox__input:checked + .usa-checkbox__label::before {
+.usa-checkbox__input:checked+.usa-checkbox__label::before {
   background-color: $ttahub-medium-blue;
   box-shadow: 0 0 0 2px $ttahub-medium-blue;
 }
 
-.usa-radio__input:checked + .usa-radio__label::before {
+.usa-radio__input:checked+.usa-radio__label::before {
   background-color: $ttahub-medium-blue;
 }
 
@@ -275,7 +284,8 @@ button:not([disabled]):focus {
 
 
 /* ========== Table stripe overrride ========== */
-.usa-table--striped tbody tr:nth-child(2n+1) td, .usa-table--striped tbody tr:nth-child(2n+1) th {
+.usa-table--striped tbody tr:nth-child(2n+1) td,
+.usa-table--striped tbody tr:nth-child(2n+1) th {
   background-color: $gray-two;
 }
 
@@ -292,11 +302,11 @@ button:not([disabled]):focus {
     position: relative;
   }
 
- * {
+  * {
     color: #000 !important;
     box-shadow: none !important;
     font-size: 12pt;
- }
+  }
 
   body {
     background: #fff !important;
@@ -341,8 +351,7 @@ button:not([disabled]):focus {
   .usa-menu-btn,
   .no-print,
   input:empty,
-  button[type="submit"]
-  {
+  button[type="submit"] {
     display: none !important;
   }
 
@@ -350,6 +359,7 @@ button:not([disabled]):focus {
     background: none;
     border: 1px solid #adadad;
   }
+
   /* .usa-alert uses a :before to create the left border, which we want to remove */
   .usa-alert::before {
     display: none;
@@ -365,8 +375,7 @@ button:not([disabled]):focus {
   }
 
   .usa-section,
-  .usa-section > div
-  {
+  .usa-section>div {
     margin: 0;
     padding: 0;
   }
@@ -387,7 +396,7 @@ button:not([disabled]):focus {
     padding-right: 0;
   }
 
-  .smart-hub-review > div {
+  .smart-hub-review>div {
     padding: 0 !important;
   }
 
@@ -427,8 +436,8 @@ button:not([disabled]):focus {
   border: 1px solid #C4C4C4;
 }
 
-.DayPickerNavigation_button svg  {
-fill: #1B1B1B;
+.DayPickerNavigation_button svg {
+  fill: #1B1B1B;
 }
 
 /* ========== plotly overrrides ========== */
@@ -489,7 +498,7 @@ fill: #1B1B1B;
   text-decoration: underline;
 }
 
-@media all and (min-width: 64em){
+@media all and (min-width: 64em) {
   .desktop\:maxw-6 {
     max-width: 3rem;
   }
@@ -506,7 +515,7 @@ fill: #1B1B1B;
   text-overflow: ellipsis;
 }
 
-.space-y-2 > * + * {
+.space-y-2>*+* {
   margin-top: 2rem;
 }
 
@@ -517,7 +526,7 @@ fill: #1B1B1B;
 }
 
 @media (min-width: 20em) {
-  .mobile-tablet-space-y-2 > * + * {
+  .mobile-tablet-space-y-2>*+* {
     margin-top: 2rem;
   }
 }
@@ -536,7 +545,7 @@ fill: #1B1B1B;
     max-width: 25%;
   }
 
-  .mobile-lg\:space-y-0 > * + * {
+  .mobile-lg\:space-y-0>*+* {
     margin-top: 0;
   }
 }
@@ -555,19 +564,19 @@ fill: #1B1B1B;
     max-width: 25%;
   }
 
-  .mobile-lg\:space-y-0 > * + * {
+  .mobile-lg\:space-y-0>*+* {
     margin-top: 0;
   }
 
-  .mobile-tablet-space-y-2 > * + * {
+  .mobile-tablet-space-y-2>*+* {
     margin-top: 0;
   }
 
-  .desktop\:space-x-1 > * + * {
+  .desktop\:space-x-1>*+* {
     margin-left: 1rem;
   }
 
-  .desktop\:space-x-2 > * + * {
+  .desktop\:space-x-2>*+* {
     margin-left: 2rem;
   }
 }
@@ -577,7 +586,7 @@ fill: #1B1B1B;
 }
 
 .resource-link-wrapper {
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-word;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
