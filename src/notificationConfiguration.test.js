@@ -192,6 +192,12 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       );
     });
 
+    it('renders the exact ticket copy for a second-approver approval (TTAHUB-5685)', () => {
+      expect(config.textFn({ approver: 'Jane Manager', recipientName: 'Test Recipient' })).toBe(
+        'Jane Manager has approved your Activity Report for Test Recipient.'
+      );
+    });
+
     it('actionable is false', () => {
       expect(config.actionable).toBe(false);
     });

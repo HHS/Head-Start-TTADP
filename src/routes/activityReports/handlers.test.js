@@ -522,6 +522,128 @@ describe('Activity Report handlers', () => {
       // resubmission notifications must survive until the aggregate status is APPROVED
       expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
     });
+    it('creates an in-app ACTIVITY_REPORT_APPROVED notification for the creator when a second approver approves while the report is still pending overall', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver Record Name' },
+      };
+      const reviewedReport = {
+        // acting approver approved, but the aggregate status is still SUBMITTED
+        // because a second approver is pending -- the in-app notification must
+        // not wait for full approval
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      userById.mockResolvedValueOnce({ name: 'Approver 2 Name' });
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the creator receives the in-app approved notification even though the
+      // report is not yet fully approved (a second approver is still pending)
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver 2 Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // full-approval-only side effects must not have fired
+      expect(updateTimezone).not.toHaveBeenCalled();
+    });
+    it("uses the acting approver's name, not the approver record's name, for the creator's in-app approved notification", async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        // deliberately different from the acting approver's own name (below) --
+        // the email path uses this name, but the in-app path must use the
+        // acting approver's name fetched via userById, not this one
+        user: { name: 'Wrong Name From Approver Record' },
+      };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      userById.mockResolvedValueOnce({ name: 'Correct Acting Approver' });
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Correct Acting Approver',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).not.toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.objectContaining({
+          metadata: expect.objectContaining({ approver: 'Wrong Name From Approver Record' }),
+        })
+      );
+    });
     it('excludes the acting approver from the approved email collaborator recipients', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
