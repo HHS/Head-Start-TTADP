@@ -3,12 +3,12 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { blobToCsvDownload } from '../../../../../utils';
+import { blobToCsvDownload } from '../../../utils';
 import ActiveTtaRequestsTable from '../ActiveTtaRequestsTable';
-import { ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA } from '../ttaRequestsPlaceholderData';
+import { ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA } from '../placeholderData';
 
-jest.mock('../../../../../utils', () => ({
-  ...jest.requireActual('../../../../../utils'),
+jest.mock('../../../utils', () => ({
+  ...jest.requireActual('../../../utils'),
   blobToCsvDownload: jest.fn(),
 }));
 
@@ -217,5 +217,135 @@ describe('ActiveTtaRequestsTable', () => {
     expect(
       screen.queryByRole('button', { name: /open actions for active tta requests/i })
     ).toBeNull();
+  });
+  describe('with the recipient columns', () => {
+    const renderAllRegionsTable = () =>
+      render(
+        <MemoryRouter>
+          <ActiveTtaRequestsTable showRecipientColumns />
+        </MemoryRouter>
+      );
+
+    it('renders the recipient, region and creator columns alongside the rest', () => {
+      renderAllRegionsTable();
+
+      [
+        'Request ID',
+        'Recipient',
+        'Region',
+        'Created date',
+        'Creator',
+        'Goal',
+        'State',
+        'Reviewer',
+        'Approver',
+        'Assigned staff',
+        'Status',
+      ].forEach((column) => {
+        expect(screen.getByRole('columnheader', { name: new RegExp(column, 'i') })).toBeVisible();
+      });
+    });
+
+    it('fills the recipient, region, creator and state cells from the request', () => {
+      renderAllRegionsTable();
+
+      const firstRow = screen.getAllByRole('row')[1];
+      const request = ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA[0];
+      const cells = within(firstRow).getAllByRole('cell');
+
+      expect(cells[1]).toHaveTextContent(request.recipient);
+      expect(cells[2]).toHaveTextContent(String(request.regionId));
+      expect(cells[4]).toHaveTextContent(request.creator);
+      // the state the recipient's grant is in, not the state of the request
+      expect(cells[6]).toHaveTextContent(request.stateCode);
+    });
+
+    it("links the recipient to that recipient's record", () => {
+      renderAllRegionsTable();
+
+      const firstRow = screen.getAllByRole('row')[1];
+      const request = ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA[0];
+
+      expect(within(firstRow).getByRole('link', { name: request.recipient })).toHaveAttribute(
+        'href',
+        `/recipient-tta-records/${request.recipientId}/region/${request.regionId}/profile`
+      );
+
+      // the request itself has nowhere of its own to go yet
+      expect(within(firstRow).getByRole('link', { name: request.requestId })).toHaveAttribute(
+        'href',
+        '/tta-requests'
+      );
+    });
+
+    it('sorts by recipient', async () => {
+      renderAllRegionsTable();
+
+      await userEvent.click(screen.getByRole('button', { name: /^recipient/i }));
+
+      expect(screen.getByRole('columnheader', { name: /recipient/i })).toHaveAttribute(
+        'aria-sort',
+        'ascending'
+      );
+
+      const recipients = screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => within(row).getAllByRole('cell')[1].textContent);
+
+      expect(recipients).toEqual([...recipients].sort((a, b) => a.localeCompare(b)));
+    });
+
+    it('sorts by state', async () => {
+      renderAllRegionsTable();
+
+      // the status column's header starts with the same word, so match the whole label
+      await userEvent.click(screen.getByRole('button', { name: /^state\. activate/i }));
+
+      const states = screen
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => within(row).getAllByRole('cell')[6].textContent);
+
+      expect(states).toEqual([...states].sort((a, b) => a.localeCompare(b)));
+    });
+
+    it('sorts by region', async () => {
+      renderAllRegionsTable();
+
+      await userEvent.click(screen.getByRole('button', { name: /^region/i }));
+
+      expect(screen.getByRole('columnheader', { name: /region/i })).toHaveAttribute(
+        'aria-sort',
+        'ascending'
+      );
+      // every placeholder request is in region 14, so the order is unchanged
+      expect(rowRequestIds()).toHaveLength(10);
+    });
+
+    it('keeps the status column frozen to the right', () => {
+      renderAllRegionsTable();
+
+      expect(screen.getByRole('columnheader', { name: /status/i })).toHaveClass(
+        'smarthub-horizontal-table-sticky-last-data-column'
+      );
+    });
+
+    it('exports the recipient columns too', async () => {
+      renderAllRegionsTable();
+
+      await openActionsMenu();
+      await userEvent.click(screen.getByRole('button', { name: /export table/i }));
+
+      const [blob] = blobToCsvDownload.mock.calls[0];
+      const rows = (await readBlob(blob)).split('\n');
+
+      expect(rows[0]).toBe(
+        'Request ID,Recipient,Region,Created date,Creator,Goal,State,Reviewer,Approver,Assigned staff,Status'
+      );
+      expect(rows[1]).toBe(
+        'R14-REQ-14322,Children and Families First,14,06/23/2026,"Rachel Green, ECS",Monitoring,DE,"Ross Geller, TTAC","Phoebe Buffay, COR","Rachel Green, ECS",Draft'
+      );
+    });
   });
 });
