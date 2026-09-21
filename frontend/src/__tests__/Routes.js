@@ -14,6 +14,7 @@ const defaultFlags = [
   'resources_dashboard',
   'view_courses',
   'communication_log',
+  'recipient_tta_request',
 ];
 
 // mock child components lightly to ensure they render *something* identifiable
@@ -33,6 +34,7 @@ jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
+jest.mock('../pages/TtaRequests', () => () => <div>TTA Requests Page</div>);
 jest.mock('../pages/TrainingReportForm', () => () => <div>Training Report Form Page</div>);
 jest.mock('../pages/ViewTrainingReport', () => () => <div>View Training Report Page</div>);
 jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
@@ -267,6 +269,11 @@ describe('Routes', () => {
   it('renders the Training Reports page for "/training-reports/not-started"', async () => {
     await RenderRoutes('/training-reports/not-started');
     expect(await screen.findByText('Training Reports Page')).toBeInTheDocument();
+  });
+
+  it('renders the TTA Requests page for "/tta-requests"', async () => {
+    await RenderRoutes('/tta-requests');
+    expect(await screen.findByText('TTA Requests Page')).toBeInTheDocument();
   });
 
   it('renders the Training Report Form page for "/training-report/:id/event-summary"', async () => {
