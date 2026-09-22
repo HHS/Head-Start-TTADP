@@ -124,6 +124,15 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
               aria-label="main navigation"
             >
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
+                <FeatureFlag flag="actionable_notifications">
+                  <ul className="add-list-reset">
+                    <li>
+                      <NavLink exact to="/">
+                        Home
+                      </NavLink>
+                    </li>
+                  </ul>
+                </FeatureFlag>
                 <SiteNavDisclosureGroup title="TTA Reporting">
                   <li>
                     <NavLink withinDisclosure to="/activity-reports">

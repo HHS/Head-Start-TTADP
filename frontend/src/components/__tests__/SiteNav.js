@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
@@ -12,6 +13,11 @@ import SiteNav from '../SiteNav';
 const history = createMemoryHistory();
 
 describe('SiteNav', () => {
+  const nonAdminPermission = {
+    scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+    regionId: 1,
+  };
+
   describe('when authenticated & pathname = "activity-reports', () => {
     afterEach(() => fetchMock.restore());
 
@@ -111,6 +117,96 @@ describe('SiteNav', () => {
 
     test('nav items are not visible', () => {
       expect(screen.queryAllByRole('link').length).toBe(1);
+    });
+  });
+
+  describe('Home navigation', () => {
+    const renderWithUserAndPath = (user, path = '/') => {
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>
+      );
+    };
+
+    test('shows Home first and navigates to the root for a flagged non-admin', async () => {
+      const user = {
+        name: 'Flagged user',
+        flags: ['actionable_notifications'],
+        permissions: [nonAdminPermission],
+      };
+      const navigationHistory = createMemoryHistory({ initialEntries: ['/activity-reports'] });
+      render(
+        <Router history={navigationHistory}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </Router>
+      );
+
+      const mainNavigation = screen.getByRole('navigation', { name: 'main navigation' });
+      const home = screen.getByRole('link', { name: 'Home' });
+      const activityReports = screen.getByRole('link', { name: 'Activity Reports' });
+      const reportingDisclosure = screen.getByText('TTA Reporting').closest('summary');
+
+      expect(home).toHaveAttribute('href', '/');
+      expect(within(mainNavigation).getAllByRole('link')[0]).toBe(home);
+      expect(
+        home.compareDocumentPosition(reportingDisclosure) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(home.compareDocumentPosition(activityReports) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING
+      );
+
+      await userEvent.click(home);
+      expect(navigationHistory.location.pathname).toBe('/');
+    });
+
+    test('hides Home for an unflagged non-admin', () => {
+      renderWithUserAndPath({
+        name: 'Unflagged user',
+        flags: [],
+        permissions: [nonAdminPermission],
+      });
+      expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+    });
+
+    test('hides Home for a non-admin without a flags array', () => {
+      renderWithUserAndPath({ name: 'No flags user', permissions: [nonAdminPermission] });
+      expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+    });
+
+    test('shows Home for an admin without the flag', () => {
+      renderWithUserAndPath({
+        name: 'Admin user',
+        flags: [],
+        permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 1 }],
+      });
+      expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    });
+
+    test('marks Home active only on the exact root path', () => {
+      const user = {
+        name: 'Flagged user',
+        flags: ['actionable_notifications'],
+        permissions: [nonAdminPermission],
+      };
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/']}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>
+      );
+      expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('text-bold');
+      expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+
+      unmount();
+      renderWithUserAndPath(user, '/activity-reports');
+      expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('text-bold');
+      expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
     });
   });
 
