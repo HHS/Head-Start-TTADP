@@ -119,6 +119,13 @@ export default (sequelize, DataTypes) => {
       },
       sequelize,
       modelName: 'Resource',
+      indexes: [
+        {
+          unique: true,
+          fields: ['url'],
+          name: 'Resources_url_unique_idx',
+        },
+      ],
     }
   );
   return Resource;
