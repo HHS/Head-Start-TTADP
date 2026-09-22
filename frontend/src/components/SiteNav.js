@@ -145,6 +145,13 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
                       Training Reports
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="recipient_tta_request">
+                    <li>
+                      <NavLink withinDisclosure to="/tta-requests">
+                        TTA Request
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                 </SiteNavDisclosureGroup>
                 <SiteNavDisclosureGroup title="Dashboards">
                   <li>
