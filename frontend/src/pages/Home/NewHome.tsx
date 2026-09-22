@@ -1,7 +1,8 @@
-import { faCirclePlus, faCircleQuestion, faClock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion, faClock, faUser } from '@fortawesome/free-solid-svg-icons';
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import { SUPPORT_LINK } from '../../Constants';
+import CirclePlusRegular from '../../components/icon/CirclePlusRegular';
 import UserContext from '../../UserContext';
 import HomePageLink, { type HomePageLinkProps } from './components/HomePageLink';
 
@@ -27,7 +28,7 @@ const HOME_PAGE_LINKS: HomePageLinkProps[] = [
     description: 'Stay up to date with new TTA Hub features.',
     linkLabel: 'View updates',
     destination: '/whats-new',
-    icon: faCirclePlus,
+    icon: CirclePlusRegular,
   },
   {
     title: 'User guide',

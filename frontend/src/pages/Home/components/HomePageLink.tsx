@@ -1,5 +1,5 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon, type FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Link as UswdsLink } from '@trussworks/react-uswds';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -11,7 +11,7 @@ export interface HomePageLinkProps {
   description: string;
   linkLabel: string;
   destination: string;
-  icon: IconDefinition;
+  icon: IconDefinition | React.ComponentType<Pick<FontAwesomeIconProps, 'color' | 'size'>>;
   external?: boolean;
 }
 
@@ -34,7 +34,11 @@ export default function HomePageLink({
           className="width-6 height-6 flex-shrink-0 display-flex flex-align-center flex-justify-center radius-pill margin-bottom-2 tablet:margin-bottom-0"
           style={{ backgroundColor: colors.ttahubBlueLight }}
         >
-          <FontAwesomeIcon icon={icon} color={colors.ttahubMediumBlue} size="lg" />
+          {typeof icon === 'function' ? (
+            React.createElement(icon, { color: colors.ttahubMediumBlue, size: 'lg' })
+          ) : (
+            <FontAwesomeIcon icon={icon} color={colors.ttahubMediumBlue} size="lg" />
+          )}
         </div>
         <div
           className="display-flex flex-column flex-align-start flex-1 minw-0 maxw-full"
