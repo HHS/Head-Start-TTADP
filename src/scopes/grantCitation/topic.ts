@@ -15,7 +15,7 @@ function topicSubQuery(topics: string[]): string {
     JOIN "ActivityReports" ar
       ON ar.id = aro."activityReportId"
       AND ar."calculatedStatus" = 'approved'
-    WHERE t.name IN (${escapedTopics})
+    WHERE t.name IN (${escapedTopics}) AND aroc."grantId" = "GrantCitation"."grantId"
   )`;
 }
 
