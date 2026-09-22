@@ -10,6 +10,11 @@ function topicSubQuery(topics: string[]): string {
       ON arot."activityReportObjectiveId" = aroc."activityReportObjectiveId"
     JOIN "Topics" t
       ON t.id = arot."topicId"
+    JOIN "ActivityReportObjectives" aro
+      ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar
+      ON ar.id = aro."activityReportId"
+      AND ar."calculatedStatus" = 'approved'
     WHERE t.name IN (${escapedTopics})
   )`;
 }
