@@ -19,6 +19,7 @@ const defaultFlags = [
 // mock child components lightly to ensure they render *something* identifiable
 // this avoids needing to mock deeply nested dependencies of each page
 jest.mock('../pages/Home', () => () => <div>Home Page Welcome</div>);
+jest.mock('../pages/Home/NewHome', () => () => <div>New Home Page Welcome</div>);
 jest.mock('../pages/Landing', () => () => <div>Activity Reports Landing</div>);
 jest.mock('../pages/ActivityReport', () => () => <div>Activity Report Form</div>);
 jest.mock('../pages/ApprovedActivityReport', () => () => <div>Approved Activity Report View</div>);
@@ -127,8 +128,10 @@ const RenderRoutes = async (
 
   const user = { ...defaultUser, ...userOverrides };
 
-  window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
-  window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
+  window.test_quality_assurance_dashboard_flag = user.flags?.includes(
+    'quality_assurance_dashboard'
+  );
+  window.test_actionable_notifications_flag = user.flags?.includes('actionable_notifications');
 
   const defaultProps = {
     alert: null,
@@ -199,9 +202,43 @@ describe('Routes', () => {
 
   // --- authenticated routes ---
 
-  it('renders the Home page for "/"', async () => {
-    await RenderRoutes('/');
+  it('renders the legacy Home page for an unflagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
     expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the legacy Home page for a non-admin without a flags array', async () => {
+    await RenderRoutes('/', true, {
+      flags: undefined,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for a flagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for an admin without the flag', async () => {
+    await RenderRoutes('/', true, {
+      flags: defaultFlags,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
+      roles: [{ name: 'Admin' }],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders the Landing page for "/activity-reports"', async () => {
@@ -404,9 +441,11 @@ describe('Routes', () => {
 
   // --- unauthenticated scenarios ---
 
-  it('renders Unauthenticated component when not authenticated on "/"', async () => {
+  it('does not render either Home page when unauthenticated on "/"', async () => {
     await RenderRoutes('/', false);
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders Unauthenticated component when not authenticated on "/activity-reports"', async () => {
@@ -414,8 +453,10 @@ describe('Routes', () => {
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
   });
 
-  it('renders Request Permissions component when authError is 403', async () => {
+  it('renders Request Permissions instead of either Home page for a 403', async () => {
     await RenderRoutes('/', false, {}, {}, 403);
     expect(await screen.findByText('Request Permissions Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 });
