@@ -4,14 +4,17 @@ import httpContext from 'express-http-context';
 import { Op, QueryTypes } from 'sequelize';
 import request from 'supertest';
 import * as s3 from '../lib/s3';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import recipientRouter from '../routes/recipient';
 import { getUniqueId } from '../testUtils';
-import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
+import * as currentUser from './currentUser';
+import { getRecipientTimeline as getTimeline, queryTimelineEventIndex } from './recipientTimeline';
 import { COMMUNICATION_LOG_TIMELINE_SOURCE } from './recipientTimelineSources';
+import * as users from './users';
 
-// Exercise the real route, transaction wrapper, index, and population queries. Authorization is
-// covered by recipient route tests; these fixtures only need permission to read their region.
+// Exercise the real route, transaction wrapper, index, and population queries.
+// Recipient access is covered by route tests; provide an authorized communication log reader.
 jest.mock('../routes/utils', () => ({
   checkRecipientAccessAndExistence: jest.fn().mockResolvedValue(true),
 }));
@@ -43,6 +46,9 @@ const params: RecipientTimelineRequestParams = {
   excludeMultiRecipientCommunications: false,
 };
 
+const getRecipientTimeline = (requestParams: RecipientTimelineRequestParams) =>
+  getTimeline(requestParams, { canReadCommunicationLogs: true });
+
 beforeEach(() => {
   jest.spyOn(s3, 'getSignedDownloadUrl').mockImplementation((key) => ({
     url: `https://attachments.example/${key}`,
@@ -60,6 +66,14 @@ describe('communication log timeline integration', () => {
   let files;
   let user;
   let role;
+
+  beforeEach(() => {
+    jest.spyOn(currentUser, 'currentUserId').mockResolvedValue(user.id);
+    jest.spyOn(users, 'userById').mockResolvedValue({
+      id: user.id,
+      permissions: [{ regionId: params.regionId, scopeId: SCOPES.READ_REPORTS }],
+    });
+  });
 
   beforeAll(async () => {
     await sequelize.transaction(async (transaction) => {
@@ -191,6 +205,21 @@ describe('communication log timeline integration', () => {
         Region.destroy({ where: { id: regionIds }, transaction }),
       ]);
     });
+  });
+
+  it('omits communication logs and attachment signing for an approval-only reader', async () => {
+    jest.mocked(users.userById).mockResolvedValue({
+      id: user.id,
+      permissions: [{ regionId: params.regionId, scopeId: SCOPES.APPROVE_REPORTS }],
+    });
+
+    const response = await request(app)
+      .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
+      .query({ limit: 1 });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ count: 0, events: [] });
+    expect(s3.getSignedDownloadUrl).not.toHaveBeenCalled();
   });
 
   it.each([
