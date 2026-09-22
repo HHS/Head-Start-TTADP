@@ -4,7 +4,7 @@ _Technical design/specification for review and implementation._
 
 | | |
 |---|---|
-| Status | implemented — approved and implemented on 2026-09-21; PR review pending |
+| Status | implemented — approved on 2026-09-21; implementation completed on 2026-09-22; PR review pending |
 | Jira | [TTAHUB-5799](https://jira.acf.gov/browse/TTAHUB-5799) |
 | Figma | [Landing page — 1275:68189](https://www.figma.com/design/LNF1ux5pEABIOD10T2oBUP/Actionable-Notifications?node-id=1275-68189&m=dev) |
 | Design read on | 2026-09-21, via Figma MCP; version not returned |
@@ -372,4 +372,4 @@ The new local mapping reads the known Widget source `720:57116` and exposes its 
 
 The self-improve review checked git changes/history, AGENTS.md, best_practices.md, CONTRIBUTING.md, the testing/dev-setup guides, and the Code Connect guide. The frontend architecture guidance remains accurate; no ADR or API documentation change is needed. Existing guidance already documents Playwright browser installation. The supplied dev-setup addition's unmatched fence/orphaned sentence was corrected as part of the authorized documentation work.
 
-One optional docs-freshness proposal was raised: CONTRIBUTING.md recommends nonexistent `yarn lint:all`; replace it with the supported root and frontend lint commands. Approval was requested separately, without blocking implementation. The correction is deferred pending that approval; CONTRIBUTING.md is unchanged. No broader documentation refactor is proposed.
+One optional docs-freshness proposal was raised: CONTRIBUTING.md recommends nonexistent `yarn lint:all`; replace it with the supported root and frontend lint commands. Approval was requested separately, without blocking implementation. The user approved the correction on 2026-09-22, and CONTRIBUTING.md now lists the supported commands. No broader documentation refactor is proposed.
