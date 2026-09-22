@@ -245,24 +245,37 @@ describe('resource', () => {
         ]);
         expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
       });
-      it('releases the resource semaphore when resource lookup fails', async () => {
+      it('creates exactly one resource when two concurrent requests race on a new url', async () => {
+        const newUrl = 'http://concurrent-new-resource.test';
+        try {
+          const [resource1, resource2] = await Promise.all([
+            findOrCreateResource(newUrl),
+            findOrCreateResource(newUrl),
+          ]);
+
+          expect(resource1.id).toBe(resource2.id);
+          const matchingResources = await Resource.findAll({ where: { url: newUrl } });
+          expect(matchingResources.length).toBe(1);
+        } finally {
+          await Resource.destroy({
+            where: { url: newUrl },
+            individualHooks: false,
+            force: true,
+          });
+        }
+      });
+      it('recovers on subsequent calls when a resource lookup fails', async () => {
         const error = new Error('resource lookup failed');
-        const recoverUrl = 'http://semaphore-release.test';
+        const recoverUrl = 'http://lookup-failure-recovery.test';
         const findAllSpy = jest.spyOn(Resource, 'findAll').mockRejectedValueOnce(error);
 
-        await expect(findOrCreateResources(['http://semaphore-failure.test'])).rejects.toThrow(
+        await expect(findOrCreateResources(['http://lookup-failure.test'])).rejects.toThrow(
           error
         );
         findAllSpy.mockRestore();
 
         try {
-          const resources = await Promise.race([
-            findOrCreateResources([recoverUrl]),
-            new Promise((_resolve, reject) =>
-              setTimeout(() => reject(new Error('timed out waiting for semaphore')), 1000)
-            ),
-          ]);
-
+          const resources = await findOrCreateResources([recoverUrl]);
           expect(resources).toEqual([expect.objectContaining({ url: recoverUrl })]);
         } finally {
           await Resource.destroy({
@@ -1128,7 +1141,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReport', () => {
       let resources;
-      beforeAll(async () => {});
+      beforeAll(async () => { });
       beforeEach(async () => {
         const urls = [
           'http://google.com',
