@@ -84,6 +84,20 @@ unmapped — resolve as `[NEEDS DECISION]` with design before mapping:
   passed as `children`.
 - `Type=Dismissable` — trussworks `Alert` has no native dismiss control.
 
+## Homepage mapping
+
+`HomePageLink.figma.ts` maps the Actionable Notifications file's Widget
+(`720:57116`) to the reusable homepage card. It reads the title, description,
+and action label from text descendants. Navigation targets, icon definitions,
+and same-tab external-link behavior are application-owned inputs; the example
+accepts those typed values rather than assigning every widget the same URL.
+
+On 2026-09-21, Figma suggested an additional Widget (`1275:67878`), Icons
+(`1:11`), and Button (`38:3571`), but its context API could not resolve those
+source IDs. Their mappings remain a follow-up requiring valid source component
+links. Local parsing validates template packaging, not execution against live
+Figma instances. No mappings are published by `yarn figma:parse`.
+
 ## Publishing (not enabled yet)
 
 Publishing writes the mappings to the Figma file and requires a Figma access

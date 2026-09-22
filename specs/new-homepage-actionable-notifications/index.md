@@ -4,7 +4,7 @@ _Technical design/specification for review and implementation._
 
 | | |
 |---|---|
-| Status | approved — user approved on 2026-09-21; implementation in progress |
+| Status | implemented — approved and implemented on 2026-09-21; PR review pending |
 | Jira | [TTAHUB-5799](https://jira.acf.gov/browse/TTAHUB-5799) |
 | Figma | [Landing page — 1275:68189](https://www.figma.com/design/LNF1ux5pEABIOD10T2oBUP/Actionable-Notifications?node-id=1275-68189&m=dev) |
 | Design read on | 2026-09-21, via Figma MCP; version not returned |
@@ -279,7 +279,7 @@ For each row, **Given** a qualifying authenticated user on Home, **When** the us
 - E2E: extend an existing authenticated navigation smoke flow if available for the new user-facing Home → destination flow; mock external destinations and avoid live Confluence/Smartsheet requests. Do not introduce a new E2E framework.
 - Manual: verify equal desktop columns and existing USWDS conventions, using the recorded frame for overall arrangement. Check the 1024px breakpoint, narrow widths, zoom, long names, keyboard navigation, screen-reader output, hover/focus, and same-tab external navigation.
 - Run frontend focused tests with `TZ=America/New_York` and watch disabled, frontend Biome lint, and `yarn figma:parse` for new mappings before opening a PR. No backend behavior tests are expected for this frontend-only change.
-- Draft-only validation: no implementation tests are appropriate until code exists; validate spec references and requirement coverage now.
+- Implementation validation and requirement-to-test traceability are recorded below. Test names use plain descriptions per the user’s instruction; stable requirement IDs remain in this spec and commit bodies.
 
 ## Out of scope
 
@@ -319,9 +319,10 @@ No architecture decision has been introduced. Q1–Q7 are resolved. The user app
 ## Documentation to update when this ships
 
 - [x] This spec: record Q1–Q7 answers and review date.
-- [ ] This spec: record final approval, then change status from draft → approved → implemented.
-- [ ] Add local Code Connect templates for the unmapped homepage components and validate with `yarn figma:parse`; identify source component node IDs before writing mappings.
-- [ ] Run the `self-improve` skill after implementation; apply agreed repository guidance improvements.
+- [x] This spec: record final approval and implementation status.
+- [x] Add and parse the local `HomePageLink` Code Connect template for readable Widget source `720:57116`.
+- [ ] Follow up on the additional Widget/Icon/Button source IDs that Figma reports but cannot resolve; see implementation notes below.
+- [x] Run the `self-improve` documentation review; record the optional lint-command correction below.
 - [ ] Update a relevant guide if review identifies a user-facing documentation need.
 - [ ] OpenAPI only if scope changes to alter an API; no change currently expected.
 - [ ] ADR only if an architectural decision emerges; none currently expected.
@@ -331,3 +332,44 @@ No architecture decision has been introduced. Q1–Q7 are resolved. The user app
 The frame’s visible content and tokens were readable, but its version, mobile layouts, and interactive variants were unavailable. Code Connect returned no mappings. The user resolved design differences by preferring existing USWDS conventions and Jira copy, so exact Figma shadow matching is not required. Verify responsive behavior and accessibility during implementation. Live Jira comments were not reviewed; this spec uses the supplied ticket text and recorded user decisions. Issue structure is confirmed as one story, with no estimate required.
 
 The handoff has a populated “Boundaries” section rather than a separately named “Out of scope” section and identifies the relevant frame by node ID rather than name. Those supplied details were usable: Figma confirmed the frame name as “Landing page.” The handoff’s blank epic choice is superseded by the user’s Q3 confirmation of a single story. Gate 2 ended with human approval on 2026-09-21; implementation follows the approved decisions.
+
+
+## Implementation validation
+
+Implemented `NewHome.tsx` and `HomePageLink.tsx`, with route selection and the shared Home navigation item using the existing feature flag behavior. Legacy Home is preserved. Internal links use React Router; external links use the USWDS Link in the current tab. Existing card styling, icon library, and tokens are reused.
+
+The bundled USWDS CSS does not include `tablet:flex-row`, so the card uses supported `display-block tablet:display-flex` utilities. A small `overflowWrap: 'anywhere'` rule on the dynamic heading and card text prevents long words from overflowing narrow cards; the bundled utilities do not expose that rule. Browser tests caught and now guard both details.
+
+### Requirement and acceptance coverage
+
+| Requirement / acceptance scenario | Unit-test evidence |
+|---|---|
+| REQ-1, REQ-3, REQ-12 — New homepage and reusable cards | `Home/__tests__/NewHome.test.tsx`: “renders the Home title, personalized H1, and five reusable cards” |
+| REQ-2 — Home navigation and exact root selection | `components/__tests__/SiteNav.js`: “shows Home first and navigates to the root for a flagged non-admin”; “marks Home active only on the exact root path” |
+| REQ-3, SEC-2 — Dynamic name, edge cases, and safe text | `NewHome.test.tsx`: blank/missing-name cases, unavailable context, and “wraps a long name and renders name markup as ordinary text” |
+| REQ-4–REQ-8 — Each shortcut's copy and destination | `NewHome.test.tsx`: five “renders exact copy and destination” cases; internal keyboard activation; same-tab external-link assertions |
+| REQ-9, REQ-11 — Desktop/narrow layouts and unclipped content | `NewHome.test.tsx`: “uses one column below desktop and two equal columns at desktop” verifies the shared utility contract and wrapping rules; rendered geometry is separately verified by browser tests |
+| REQ-10 — Flag and administrator behavior | `__tests__/Routes.js` and `SiteNav.js`: explicit flag, absent flag, absent flags array, and administrator bypass |
+| SEC-1 — Authentication and authorization failure | `__tests__/Routes.js`: unauthenticated and 403 cases render neither homepage; existing notification-route denial coverage remains in the suite |
+| REQ-1, REQ-4–REQ-8 — No content data and network failure | `NewHome.test.tsx`: “keeps all static shortcuts available without requesting content or adding request states” uses a rejecting fetch mock and verifies it is never called |
+| A11Y-1–A11Y-3 — Keyboard and assistive technology | `NewHome.test.tsx`: heading/link semantics, keyboard activation, document order, decorative icons, and no new status/live content; `SiteNav.js` verifies active-link semantics |
+| A11Y-4 — Visual accessibility | Unit assertions verify use of existing USWDS button/card/wrapping contracts. Real-browser axe scanning, keyboard checks, and geometry checks cover the rendered result; JSDOM cannot measure contrast or layout. Human UI/QA review remains required. |
+
+### Checks
+
+- Focused frontend suite: 80 passing tests across the new homepage, legacy homepage, Routes, and SiteNav.
+- Both new components have 100% statement, branch, function, and line coverage in the focused run.
+- `tests/e2e/home.spec.ts`: five browser tests with mocked APIs; no seeded data or live external services. Checks cover Home → updates → Home, equal columns at 1440/1024px, one column at 1023/375/320px, horizontal/stacked icon placement, card overflow, axe, keyboard order, and same-tab external navigation.
+- Browser validation used installed Chrome through a temporary local Playwright config because the current Playwright Chromium binary was not installed. The committed test uses the repository's normal configuration in CI.
+- Frontend TypeScript checking, production build, root/frontend lint, and local Code Connect parsing all passed. No backend behavior changes require database tests.
+- The browser accessibility scan is scoped to the homepage main content. Existing sidebar behavior at narrow widths is outside this ticket; human screen-reader, zoom, UI, and QA sign-off remain separate review tasks.
+
+### Code Connect limitations
+
+The new local mapping reads the known Widget source `720:57116` and exposes its three text values through the real `HomePageLink` props. Destination, icon, and external-link mode are typed application inputs rather than guessed Figma properties. The context API rejected its suggested source IDs `1275:67878` (additional Widget), `1:11` (Icons), and `38:3571` (Button). Those mappings need valid source component links; their absence does not affect the running homepage. No mapping was published, and successful parsing does not prove live template execution.
+
+### Session reflection
+
+The self-improve review checked git changes/history, AGENTS.md, best_practices.md, CONTRIBUTING.md, the testing/dev-setup guides, and the Code Connect guide. The frontend architecture guidance remains accurate; no ADR or API documentation change is needed. Existing guidance already documents Playwright browser installation. The supplied dev-setup addition's unmatched fence/orphaned sentence was corrected as part of the authorized documentation work.
+
+One optional docs-freshness proposal was raised: CONTRIBUTING.md recommends nonexistent `yarn lint:all`; replace it with the supported root and frontend lint commands. Approval was requested separately, without blocking implementation. The correction is deferred pending that approval; CONTRIBUTING.md is unchanged. No broader documentation refactor is proposed.
