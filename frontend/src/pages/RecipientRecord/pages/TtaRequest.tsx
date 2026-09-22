@@ -30,7 +30,7 @@ export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): 
   return (
     <>
       <Helmet>
-        <title>TTA Request</title>
+        <title>TTA Requests</title>
       </Helmet>
       <div className="maxw-widescreen">
         <div
