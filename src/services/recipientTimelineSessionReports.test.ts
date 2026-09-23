@@ -86,18 +86,21 @@ describe('session report timeline integration', () => {
         ],
         { transaction }
       );
-      templates = await Promise.all(
-        standards.map((standard) =>
-          GoalTemplate.create(
-            {
-              templateName: `(${standard}) Timeline session goal ${getUniqueId()}`,
-              creationMethod: 'Curated',
-              standard,
-            },
-            { transaction }
-          )
-        )
+      // `standard` is a generated column (derived from the templateName prefix) with a unique
+      // index, so it can't be set directly, and 'Monitoring' already exists as seeded data —
+      // create a fresh template for the custom standard, and reuse the real Monitoring template.
+      const customTemplate = await GoalTemplate.create(
+        {
+          templateName: `(${standards[0]}) Timeline session goal ${getUniqueId()}`,
+          creationMethod: 'Curated',
+        },
+        { transaction }
       );
+      const monitoringTemplate = await GoalTemplate.findOne({
+        where: { standard: 'Monitoring' },
+        transaction,
+      });
+      templates = [customTemplate, monitoringTemplate];
 
       event = await EventReportPilot.create(
         {
@@ -209,11 +212,8 @@ describe('session report timeline integration', () => {
       });
       await SessionReportPilot.destroy({ where: { id: sessionIds }, transaction, force: true });
       await EventReportPilot.destroy({ where: { id: event.id }, transaction });
-      await GoalTemplate.destroy({
-        where: { id: templates.map(({ id }) => id) },
-        force: true,
-        transaction,
-      });
+      // templates[1] is the real, seeded Monitoring template — never created or destroyed here.
+      await GoalTemplate.destroy({ where: { id: templates[0].id }, force: true, transaction });
       await Program.destroy({ where: { grantId: grantIds }, transaction });
       await User.destroy({ where: { id: trainers.map(({ id }) => id) }, transaction });
       await Grant.destroy({ where: { id: grantIds }, transaction });

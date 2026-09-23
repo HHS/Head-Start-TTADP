@@ -845,8 +845,11 @@ const buildSessionReportIndexQuery = (
           OR jsonb_typeof("recipient"->'value') = 'string')
         -- Digits only: excludes decimals (e.g. 4.5) and negatives before any numeric comparison.
         AND "recipient"->>'value' ~ '^[0-9]+$'
-        -- Compare as numeric, not integer: an arbitrarily long digit string cannot overflow
-        -- numeric the way ::integer would, so a huge id is just a harmless nonmatch, not a crash.
+        -- Bound the digit count (int4 max, 2147483647, is 10 digits) before ever casting.
+        -- ::numeric doesn't overflow the way ::integer would, but it is still bounded (up to
+        -- ~131,072 digits), so this keeps the check airtight regardless, and matches the MAX_INT4
+        -- bound parseSessionGrantIds applies on the population side.
+        AND length("recipient"->>'value') <= 10
         AND "grant"."id"::numeric = ("recipient"->>'value')::numeric
       )
     WHERE "session"."data"->>'status' = ${status}
