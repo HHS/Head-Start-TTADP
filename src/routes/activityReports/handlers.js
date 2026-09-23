@@ -610,6 +610,9 @@ export async function reviewReport(req, res) {
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       // A resubmission notification is obsolete once the report is fully approved.
       await archiveResubmittedNotifications(Number(activityReportId));
+      // Needs-action notifications (creator/collaborator/approver) are obsolete once the
+      // report is fully approved (TTAHUB-5683 archival: AR approved).
+      await archiveNeedsActionNotifications(Number(activityReportId));
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
@@ -627,15 +630,25 @@ export async function reviewReport(req, res) {
       });
 
       await Promise.all(
-        uniq([
-          // - for approvers, excluding the one who just reviewed
-          ...approvers.map((approver) => approver.user.id),
-          // - for collaborators
-          ...activityReportCollaborators.map((collab) => collab.user.id),
-        ])
+        // - for approvers, excluding the one who just reviewed (TTAHUB-5683)
+        uniq(approvers.map((approver) => approver.user.id))
           .filter((id) => id !== userId)
           .map((id) =>
             createChangesRequestedNotification({ userId: id }, 'approver', {
+              ...reviewedReport.toJSON(),
+              activityRecipients,
+              approver: savedApprover,
+            })
+          )
+      );
+
+      await Promise.all(
+        // - for collaborators, excluding the acting approver and anyone already
+        //   notified as an approver above
+        uniq(activityReportCollaborators.map((collab) => collab?.user?.id))
+          .filter((id) => id !== userId && !approvers.some((a) => a.user.id === id))
+          .map((id) =>
+            createChangesRequestedNotification({ userId: id }, 'collaborator', {
               ...reviewedReport.toJSON(),
               activityRecipients,
               approver: savedApprover,
