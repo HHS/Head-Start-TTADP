@@ -2,19 +2,23 @@ import { Op } from 'sequelize';
 import { CREATION_METHOD } from '../../constants';
 import { sequelize } from '../../models';
 
-const recipientIdsForStandards = (standards) =>
-  sequelize.literal(`(
-    SELECT DISTINCT "Grants"."recipientId"
-    FROM "Grants"
+// Correlated to the outer "Grant" row (Sequelize's default alias for the model) so
+// matches don't leak across regions for the same recipient.
+const matchingGrantExistsForStandards = (standards) =>
+  sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM "Grants" AS "MatchingGrants"
     INNER JOIN "Goals"
-      ON "Goals"."grantId" = "Grants"."id"
+      ON "Goals"."grantId" = "MatchingGrants"."id"
     INNER JOIN "GoalTemplates"
       ON "Goals"."goalTemplateId" = "GoalTemplates"."id"
     WHERE "Goals"."deletedAt" IS NULL
       AND "GoalTemplates"."deletedAt" IS NULL
+      AND "MatchingGrants"."recipientId" = "Grant"."recipientId"
+      AND "MatchingGrants"."regionId" = "Grant"."regionId"
       AND "GoalTemplates"."standard" IN (${standards
-      .map((standard) => sequelize.escape(standard))
-      .join(',')})
+        .map((standard) => sequelize.escape(standard))
+        .join(',')})
   )`);
 
 const allStandardsSelected = (standards) =>
@@ -39,10 +43,7 @@ export function withStandard(standards) {
 
   return {
     where: {
-      [Op.or]: [
-        { recipientId: { [Op.in]: recipientIdsForStandards(standards) } },
-        allStandardsSelected(standards),
-      ],
+      [Op.or]: [matchingGrantExistsForStandards(standards), allStandardsSelected(standards)],
     },
   };
 }
@@ -57,7 +58,7 @@ export function withoutStandard(standards) {
   return {
     where: {
       [Op.and]: [
-        { recipientId: { [Op.notIn]: recipientIdsForStandards(standards) } },
+        sequelize.literal(`NOT ${matchingGrantExistsForStandards(standards).val}`),
         sequelize.literal(`NOT ${allStandardsSelected(standards).val}`),
       ],
     },
