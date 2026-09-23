@@ -21,7 +21,7 @@ const renderTtaRequest = () =>
     </UserContext.Provider>
   );
 
-describe('Recipient Record - TTA Request', () => {
+describe('Recipient Record - TTA Requests', () => {
   beforeEach(() => {
     useFilters.mockReturnValue({
       filters: [],

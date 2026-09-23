@@ -148,7 +148,7 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
                   <FeatureFlag flag="recipient_tta_request">
                     <li>
                       <NavLink withinDisclosure to="/tta-requests">
-                        TTA Request
+                        TTA Requests
                       </NavLink>
                     </li>
                   </FeatureFlag>

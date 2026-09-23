@@ -1,10 +1,11 @@
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, Grid } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
+import AddTtaRequestButton from '../../components/AddTtaRequestButton';
 import FilterPanel from '../../components/filter/FilterPanel';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import ActiveTtaRequestsTable from '../../components/TtaRequestsTable/ActiveTtaRequestsTable';
+import ApprovedTtaRequestsTable from '../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
 import { showFilterWithMyRegions } from '../regionHelpers';
@@ -62,25 +63,29 @@ export default function TtaRequests(): React.ReactElement {
             <h1 className="landing margin-top-0 margin-bottom-0">
               {`TTA requests - ${regionLabel()}`}
             </h1>
-            <Button type="button" className="display-flex flex-align-center margin-top-0">
-              <FontAwesomeIcon color="white" icon={faPlus} />
-              <span className="margin-x-1">Add request</span>
-            </Button>
+            <AddTtaRequestButton label="Add request" />
           </div>
         </Grid>
         <Grid col={12}>
-          <div
-            className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
-            data-testid="tta-requests-filter-panel"
-          >
-            <FilterPanel
-              applyButtonAria="apply filters for TTA requests"
-              filters={filters}
-              onApplyFilters={onApplyFilters}
-              onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
-              allUserRegions={regions}
-            />
+          <div className="maxw-widescreen">
+            <div
+              className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+              data-testid="tta-requests-filter-panel"
+            >
+              <FilterPanel
+                applyButtonAria="apply filters for TTA requests"
+                filters={filters}
+                onApplyFilters={onApplyFilters}
+                onRemoveFilter={onRemoveFilter}
+                filterConfig={filterConfig}
+                allUserRegions={regions}
+              />
+            </div>
+            {/* these tables span every recipient the user can see, so they name each one */}
+            <ActiveTtaRequestsTable showRecipientColumns />
+            <div className="margin-top-3">
+              <ApprovedTtaRequestsTable showRecipientColumns />
+            </div>
           </div>
         </Grid>
       </Grid>
