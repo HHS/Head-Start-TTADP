@@ -93,4 +93,18 @@ describe('TTA Requests', () => {
 
     expect(useFilters).toHaveBeenCalledWith(user, 'tta-requests-filters', true, [], []);
   });
+  it('renders both request tables', () => {
+    renderTtaRequests();
+
+    expect(screen.getByRole('heading', { name: 'Active TTA requests', level: 2 })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Approved TTA requests', level: 2 })).toBeVisible();
+  });
+
+  it('names the recipient and region on both tables', () => {
+    renderTtaRequests();
+
+    // the page spans every region the user can see, so the rows have to say which
+    expect(screen.getAllByRole('columnheader', { name: /recipient/i })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: /region/i })).toHaveLength(2);
+  });
 });

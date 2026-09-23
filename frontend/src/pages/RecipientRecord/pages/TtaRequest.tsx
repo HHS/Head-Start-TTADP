@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import FilterPanel from '../../../components/filter/FilterPanel';
+import ActiveTtaRequestsTable from '../../../components/TtaRequestsTable/ActiveTtaRequestsTable';
+import ApprovedTtaRequestsTable from '../../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../../hooks/useFilters';
 import UserContext from '../../../UserContext';
-import ActiveTtaRequestsTable from './components/ActiveTtaRequestsTable';
-import ApprovedTtaRequestsTable from './components/ApprovedTtaRequestsTable';
 
 const FILTER_KEY = 'tta-request-filters';
 
@@ -30,7 +30,7 @@ export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): 
   return (
     <>
       <Helmet>
-        <title>TTA Request</title>
+        <title>TTA Requests</title>
       </Helmet>
       <div className="maxw-widescreen">
         <div

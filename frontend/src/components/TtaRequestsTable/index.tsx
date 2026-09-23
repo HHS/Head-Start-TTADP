@@ -1,11 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import WidgetContainer from '../../../../components/WidgetContainer';
-import useWidgetPaging from '../../../../hooks/useWidgetPaging';
-import type { WidgetSortConfig } from '../../../../hooks/useWidgetSorting';
-import HorizontalTableWidget from '../../../../widgets/HorizontalTableWidget';
+import useWidgetPaging from '../../hooks/useWidgetPaging';
+import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
+import HorizontalTableWidget from '../../widgets/HorizontalTableWidget';
+import WidgetContainer from '../WidgetContainer';
 import './TtaRequestsTable.css';
 
 export const PER_PAGE = 10;
+
+/** the recipient record a request's recipient column links to - profile is its first tab */
+export const recipientRecordUrl = (recipientId: number, regionId: number) =>
+  `/recipient-tta-records/${recipientId}/region/${regionId}/profile`;
 
 // these tables have no row checkboxes, so there is never a subset to export
 const NO_CHECKBOXES = {};
