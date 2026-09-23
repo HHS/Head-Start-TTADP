@@ -10,7 +10,9 @@ const recipientIdsForStandards = (standards) =>
       ON "Goals"."grantId" = "Grants"."id"
     INNER JOIN "GoalTemplates"
       ON "Goals"."goalTemplateId" = "GoalTemplates"."id"
-    WHERE "GoalTemplates"."standard" IN (${standards
+    WHERE "Goals"."deletedAt" IS NULL
+      AND "GoalTemplates"."deletedAt" IS NULL
+      AND "GoalTemplates"."standard" IN (${standards
       .map((standard) => sequelize.escape(standard))
       .join(',')})
   )`);
