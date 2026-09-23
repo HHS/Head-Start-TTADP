@@ -109,6 +109,7 @@ WidgetContainer.propTypes = {
   handlePageChange: PropTypes.func,
   paginationCardTopProps: PropTypes.shape({
     handlePageChange: PropTypes.func,
+    perPageChange: PropTypes.func,
     noXofX: PropTypes.bool,
     spaceBetweenSelectPerPageAndContext: PropTypes.number,
     perPageSelectValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
