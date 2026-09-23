@@ -63,7 +63,11 @@ const stringArray = Joi.array().items(Joi.string().allow(''));
 const eventDataSchema = Joi.object({
   eventName: looseString,
   eventOrganizer: Joi.string()
-    .valid(REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS)
+    .valid(
+      REGIONAL_PD_WITH_NATIONAL_CENTERS,
+      REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      'IST TTA/Visit'
+    )
     .allow('', null),
   eventIntendedAudience: looseString,
   startDate: displayDate,
