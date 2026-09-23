@@ -13,6 +13,7 @@ import { serviceError } from '../lib/serviceError';
 import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 import {
+  COMMUNICATION_LOG_TIMELINE_SOURCE,
   RECIPIENT_TIMELINE_SOURCES,
   type TimelineEventSource,
   type TimelineSourceBindings,
@@ -498,10 +499,21 @@ export async function populateTimelineEventIndex(
   return { count: index.count, events };
 }
 
-/** Query the code-owned registry, then populate each represented source in a bounded batch. */
+/**
+ * Query the code-owned registry, then populate each represented source in a bounded batch.
+ * Callers must provide a REPEATABLE READ transaction spanning both phases. The Timeline route's
+ * transactionWrapper supplies it through Sequelize CLS, including all source population queries.
+ */
 export async function getRecipientTimeline(
-  params: RecipientTimelineRequestParams
+  params: RecipientTimelineRequestParams,
+  { canReadCommunicationLogs = false }: { canReadCommunicationLogs?: boolean } = {}
 ): Promise<RecipientTimelineResponse> {
-  const index = await queryTimelineEventIndex({ ...params, sources: RECIPIENT_TIMELINE_SOURCES });
-  return populateTimelineEventIndex(index, params, RECIPIENT_TIMELINE_SOURCES);
+  // Authorize sources before indexing so counts, pagination, and attachments cannot leak logs.
+  const sources = canReadCommunicationLogs
+    ? RECIPIENT_TIMELINE_SOURCES
+    : RECIPIENT_TIMELINE_SOURCES.filter(
+        ({ name }) => name !== COMMUNICATION_LOG_TIMELINE_SOURCE.name
+      );
+  const index = await queryTimelineEventIndex({ ...params, sources });
+  return populateTimelineEventIndex(index, params, sources);
 }
