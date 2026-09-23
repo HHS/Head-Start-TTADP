@@ -1,4 +1,4 @@
-# 24. Switch ESLint to Biome for Linting
+# 31. Switch ESLint to Biome for Linting
 
 Date: 2026-02-13
 

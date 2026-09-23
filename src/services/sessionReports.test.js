@@ -196,6 +196,27 @@ describe('session reports service', () => {
 
       await destroySession(created.id);
     });
+
+    // Schema validation lives in the route middleware
+    // (src/routes/sessionReports/middleware.ts), not here. A legacy key already
+    // stored on a session must survive a partial save that does not mention it,
+    // because the form only ever sends one role's subset of the fields.
+    it('keeps a stored legacy key when merging a partial update', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: { sessionName: 'original', someLegacyKeyNoLongerInTheForm: 'still here' },
+      });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: { sessionName: 'renamed' },
+      });
+
+      expect(updated.data.sessionName).toBe('renamed');
+      expect(updated.data.someLegacyKeyNoLongerInTheForm).toBe('still here');
+
+      await destroySession(created.id);
+    });
   });
 
   describe('destroySession', () => {

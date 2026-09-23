@@ -25,6 +25,7 @@ import {
   getSessionReportsHandler,
   updateHandler,
 } from './handlers';
+import { checkUpdateSessionBody } from './middleware';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -737,6 +738,50 @@ describe('session report handlers', () => {
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
       expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
+    });
+  });
+
+  // The tests above call handlers directly, which bypasses the router's
+  // middleware. This proves the middleware hands its stripped body to the
+  // handler, and therefore to the service.
+  describe('schema validation middleware handoff', () => {
+    it('passes the stripped body through to updateSession', async () => {
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue(mockSession);
+      updateSession.mockResolvedValue(mockSession);
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+
+      const req = {
+        params: { id: 99_999 },
+        session: { userId: 1 },
+        body: {
+          eventId: 99_998,
+          trainingReportId: 99_998,
+          data: {
+            sessionName: 'A session',
+            approverId: 5,
+            event: { id: 99_998 },
+            approver: { id: 5 },
+            aKeyNobodyDeclared: true,
+          },
+        },
+      };
+
+      await new Promise((resolve) => {
+        checkUpdateSessionBody(req, mockResponse, resolve);
+      });
+      await updateHandler(req, mockResponse);
+
+      expect(updateSession).toHaveBeenCalled();
+      const [, payload] = updateSession.mock.calls[0];
+      expect(payload.data).not.toHaveProperty('event');
+      expect(payload.data).not.toHaveProperty('approver');
+      expect(payload.data).not.toHaveProperty('aKeyNobodyDeclared');
+      expect(payload.data.sessionName).toBe('A session');
+      // still needed by updateSession for the approver column
+      expect(payload.data.approverId).toBe(5);
     });
   });
 });

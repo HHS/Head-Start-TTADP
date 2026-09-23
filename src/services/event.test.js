@@ -141,6 +141,22 @@ describe('event service', () => {
         })
       ).rejects.toThrow(/eventId cannot be null/);
     });
+
+    // Schema validation lives in the route middleware
+    // (src/routes/events/middleware.ts), not here. The service is still reachable
+    // from the CSV import and CLI tools, so it must keep accepting a blob that
+    // carries keys the current allowlist does not declare.
+    it('persists a data blob containing legacy keys', async () => {
+      const created = await createAnEventWithData(98_989, {
+        status: 'active',
+        someLegacyKeyNoLongerInTheForm: 'still here',
+      });
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.data.someLegacyKeyNoLongerInTheForm).toEqual('still here');
+
+      await destroyEvent(created.id);
+    });
   });
 
   describe('updateEvent', () => {
