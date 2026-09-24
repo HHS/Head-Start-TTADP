@@ -76,10 +76,7 @@ const ORIGINAL_ENV = process.env;
 jest.mock('../../lib/s3');
 jest.mock('../../lib/queue');
 jest.mock('../../services/s3Queue');
-// The manual mock at src/__mocks__/file-type.js exports a plain async function (not a
-// jest.fn()), so it doesn't support mockImplementation/mockResolvedValue. Wrap it in a jest.fn()
-// here via a factory instead, defaulting to that same extension-based behavior in beforeEach.
-jest.mock('file-type', () => ({ fileTypeFromFile: jest.fn() }));
+jest.mock('file-type');
 
 const mockUser = {
   id: 2046,
@@ -201,12 +198,9 @@ describe('File Upload', () => {
   });
   beforeEach(() => {
     jest.clearAllMocks();
-    // Restore the repo's manual extension-based mock (src/__mocks__/file-type.js) as the
-    // default so existing tests work; jest.requireActual would instead pull in the real
-    // npm package, bypassing that manual mock entirely.
+    // Restore default file-type implementation so existing tests work
     const { fileTypeFromFile } = require('file-type');
-    const manualMock = require('../../__mocks__/file-type');
-    fileTypeFromFile.mockImplementation(manualMock.fileTypeFromFile);
+    fileTypeFromFile.mockImplementation(jest.requireActual('file-type').fileTypeFromFile);
   });
 
   describe('File Upload Handlers error handling', () => {
