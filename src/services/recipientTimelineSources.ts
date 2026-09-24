@@ -843,14 +843,22 @@ const buildSessionReportIndexQuery = (
       ON (
         (jsonb_typeof("recipient"->'value') = 'number'
           OR jsonb_typeof("recipient"->'value') = 'string')
-        -- Digits only: excludes decimals (e.g. 4.5) and negatives before any numeric comparison.
-        AND "recipient"->>'value' ~ '^[0-9]+$'
-        -- Bound the digit count (int4 max, 2147483647, is 10 digits) before ever casting.
-        -- ::numeric doesn't overflow the way ::integer would, but it is still bounded (up to
-        -- ~131,072 digits), so this keeps the check airtight regardless, and matches the MAX_INT4
-        -- bound parseSessionGrantIds applies on the population side.
-        AND length("recipient"->>'value') <= 10
-        AND "grant"."id"::numeric = ("recipient"->>'value')::numeric
+        -- Postgres doesn't guarantee AND operands are evaluated left-to-right, so a bare
+        -- AND ... ::numeric cast alongside the digit/length guards can still be reached on
+        -- malformed text and abort the whole query. A CASE expression is evaluated in order,
+        -- so the cast is only ever reached once the guards have confirmed it is safe.
+        AND CASE
+          WHEN
+            -- Digits only: excludes decimals (e.g. 4.5) and negatives before any numeric comparison.
+            "recipient"->>'value' ~ '^[0-9]+$'
+            -- Bound the digit count (int4 max, 2147483647, is 10 digits) before ever casting.
+            -- ::numeric doesn't overflow the way ::integer would, but it is still bounded (up to
+            -- ~131,072 digits), so this keeps the check airtight regardless, and matches the
+            -- MAX_INT4 bound parseSessionGrantIds applies on the population side.
+            AND length("recipient"->>'value') <= 10
+          THEN "grant"."id"::numeric = ("recipient"->>'value')::numeric
+          ELSE FALSE
+        END
       )
     WHERE "session"."data"->>'status' = ${status}
       ${standardPredicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
