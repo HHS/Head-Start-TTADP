@@ -2,21 +2,22 @@ import { Op } from 'sequelize';
 import { CREATION_METHOD } from '../../constants';
 import { sequelize } from '../../models';
 
-// Correlated to the outer "Grant" row (Sequelize's default alias for the model) so
-// matches don't leak across regions for the same recipient.
-const matchingGrantExistsForStandards = (standards) =>
-  sequelize.literal(`EXISTS (
-    SELECT 1
+// The (recipientId, regionId) pair is written unqualified so Sequelize resolves it
+// against whichever alias the caller uses for the Grant model (e.g. "Grant" for
+// direct grant queries, "grants" when included from Recipient). The pairing (rather
+// than separate recipientId/regionId checks) keeps matches from leaking across a
+// recipient's other regions.
+const matchingRecipientRegionPairsForStandards = (standards) =>
+  sequelize.literal(`("recipientId", "regionId") IN (
+    SELECT DISTINCT "MatchingGrants"."recipientId", "MatchingGrants"."regionId"
     FROM "Grants" AS "MatchingGrants"
-    INNER JOIN "Goals"
-      ON "Goals"."grantId" = "MatchingGrants"."id"
-    INNER JOIN "GoalTemplates"
-      ON "Goals"."goalTemplateId" = "GoalTemplates"."id"
-    WHERE "Goals"."deletedAt" IS NULL
-      AND "GoalTemplates"."deletedAt" IS NULL
-      AND "MatchingGrants"."recipientId" = "Grant"."recipientId"
-      AND "MatchingGrants"."regionId" = "Grant"."regionId"
-      AND "GoalTemplates"."standard" IN (${standards
+    INNER JOIN "Goals" AS "MatchingGoals"
+      ON "MatchingGoals"."grantId" = "MatchingGrants"."id"
+    INNER JOIN "GoalTemplates" AS "MatchingGoalTemplates"
+      ON "MatchingGoals"."goalTemplateId" = "MatchingGoalTemplates"."id"
+    WHERE "MatchingGoals"."deletedAt" IS NULL
+      AND "MatchingGoalTemplates"."deletedAt" IS NULL
+      AND "MatchingGoalTemplates"."standard" IN (${standards
         .map((standard) => sequelize.escape(standard))
         .join(',')})
   )`);
@@ -43,7 +44,10 @@ export function withStandard(standards) {
 
   return {
     where: {
-      [Op.or]: [matchingGrantExistsForStandards(standards), allStandardsSelected(standards)],
+      [Op.or]: [
+        matchingRecipientRegionPairsForStandards(standards),
+        allStandardsSelected(standards),
+      ],
     },
   };
 }
@@ -58,7 +62,7 @@ export function withoutStandard(standards) {
   return {
     where: {
       [Op.and]: [
-        sequelize.literal(`NOT ${matchingGrantExistsForStandards(standards).val}`),
+        sequelize.literal(`NOT ${matchingRecipientRegionPairsForStandards(standards).val}`),
         sequelize.literal(`NOT ${allStandardsSelected(standards).val}`),
       ],
     },
