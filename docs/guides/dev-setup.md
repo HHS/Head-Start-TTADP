@@ -112,7 +112,7 @@ You will need to have Chromium installed (you probably do not). The recommended 
 To `~/.zshrc` (or your particular shell config) you'll need to add:
 
 ```sh
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_SKIP_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
 
