@@ -162,6 +162,28 @@ describe('cron', () => {
       expect(updateGrantsRecipients).toHaveBeenCalled();
     });
 
+    it('catches rejected HSES imports and logs the error without rejecting the scheduled job', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+      const error = new Error("Invalid value { '$': { 'xsi:nil': 'true' } }");
+      updateGrantsRecipients.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runUpdateJob');
+
+      // Await the callback directly so a regression fails this assertion instead of
+      // emitting an unhandled rejection that could terminate the Jest process.
+      await expect(Promise.resolve().then(() => jobFunction())).resolves.not.toThrow();
+
+      expect(updateGrantsRecipients).toHaveBeenCalledTimes(1);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `Error processing HSES file: ${error.message}`
+      );
+      expect(logger.error).toHaveBeenCalledWith(`HSES file Error: ${error.message}`);
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
+    });
+
     it('runs the daily email job on schedule', async () => {
       process.env.CF_INSTANCE_INDEX = '0';
       process.env.NODE_ENV = 'production';

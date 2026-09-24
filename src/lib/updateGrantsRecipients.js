@@ -47,6 +47,61 @@ function valueFromXML(value) {
   return isObject || isUndefined ? null : value;
 }
 
+const validRecipientName = (value) =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
+export async function resolveRecipientNames(recipients, grants, transaction) {
+  const missingNames = recipients.filter((recipient) => !validRecipientName(recipient.name));
+  const existingRecipients = missingNames.length
+    ? await Recipient.unscoped().findAll({
+        attributes: ['id', 'name'],
+        where: { id: missingNames.map((recipient) => recipient.id) },
+        transaction,
+      })
+    : [];
+  const existingNames = new Map(
+    existingRecipients.map((recipient) => [recipient.id, recipient.name])
+  );
+  const grantNames = new Map();
+  for (const grant of grants) {
+    const recipientId = Number(grant.agency_id);
+    if (!grantNames.has(recipientId)) {
+      grantNames.set(recipientId, new Set());
+    }
+    // A missing grant name also prevents an unambiguous fallback.
+    grantNames.get(recipientId).add(validRecipientName(grant.grantee_name));
+  }
+
+  const recipientsForDb = [];
+  const skippedRecipientIds = new Set();
+  for (const recipient of recipients) {
+    let name = validRecipientName(recipient.name);
+    if (!name) {
+      name = validRecipientName(existingNames.get(recipient.id));
+      const names = grantNames.get(recipient.id);
+      if (!name && names?.size === 1) {
+        [name] = names;
+      }
+      if (!name) {
+        skippedRecipientIds.add(recipient.id);
+        auditLogger.error(
+          `HSES import: agency ${recipient.id} has no valid agency name or unambiguous fallback; skipping recipient and dependent records`
+        );
+        continue;
+      }
+      logger.warn(
+        `HSES import: agency ${recipient.id} has no valid agency name; using ${
+          validRecipientName(existingNames.get(recipient.id))
+            ? 'existing recipient name'
+            : 'grant name'
+        }`
+      );
+    }
+    recipientsForDb.push({ ...recipient, name });
+  }
+  return { recipientsForDb, skippedRecipientIds };
+}
+
 /**
  * Retrieves the correct state code for a given grant.
  *
@@ -385,10 +440,13 @@ export async function processFiles(hashSumHex) {
       // This issue is pending with HSES as of 12/22/22.
       // HSES is investigating whether they can rename it on their end.
       // In the meantime, we need to rename in the Hub to eliminate confusion for the users.
-      const recipientsForDb = recipientsForDbTmp.map((r) => {
+      const recipientsWithOverrides = recipientsForDbTmp.map((r) => {
         if (r.id === 628) {
           const grantAward = grant.grant_awards.grant_award.find(
-            (g) => g.agency_id === '628' && g.grantee_name !== r.name
+            (g) =>
+              g.agency_id === '628' &&
+              validRecipientName(g.grantee_name) &&
+              g.grantee_name !== r.name
           );
           return {
             id: r.id,
@@ -401,6 +459,12 @@ export async function processFiles(hashSumHex) {
         return r;
       });
 
+      const { recipientsForDb, skippedRecipientIds } = await resolveRecipientNames(
+        recipientsWithOverrides,
+        grant.grant_awards.grant_award,
+        transaction
+      );
+
       logger.debug(
         `updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`
       );
@@ -412,60 +476,62 @@ export async function processFiles(hashSumHex) {
       const programData = await fs.readFile('./temp/grant_program.xml');
       const programs = await parser.parseStringPromise(programData);
 
-      const grantsForDb = grant.grant_awards.grant_award.map((g) => {
-        let {
-          grant_start_date: startDate,
-          grant_end_date: endDate,
-          inactivation_date: inactivationDate,
-        } = g;
-        if (typeof startDate === 'object') {
-          startDate = null;
-        }
-        if (typeof endDate === 'object') {
-          endDate = null;
-        }
-        if (typeof inactivationDate === 'object') {
-          inactivationDate = null;
-        }
+      const grantsForDb = grant.grant_awards.grant_award
+        .filter((g) => !skippedRecipientIds.has(g.agency_id === '5' ? 7782 : Number(g.agency_id)))
+        .map((g) => {
+          let {
+            grant_start_date: startDate,
+            grant_end_date: endDate,
+            inactivation_date: inactivationDate,
+          } = g;
+          if (typeof startDate === 'object') {
+            startDate = null;
+          }
+          if (typeof endDate === 'object') {
+            endDate = null;
+          }
+          if (typeof inactivationDate === 'object') {
+            inactivationDate = null;
+          }
 
-        const programSpecialistName = combineNames(
-          g.program_specialist_first_name,
-          g.program_specialist_last_name
-        );
-        const grantSpecialistName = combineNames(
-          g.grants_specialist_first_name,
-          g.grants_specialist_last_name
-        );
+          const programSpecialistName = combineNames(
+            g.program_specialist_first_name,
+            g.program_specialist_last_name
+          );
+          const grantSpecialistName = combineNames(
+            g.grants_specialist_first_name,
+            g.grants_specialist_last_name
+          );
 
-        const regionId = parseInt(g.numeric_region_id, 10);
-        const cdi = regionId === 13;
-        const id = parseInt(g.grant_award_id, 10);
-        // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
-        return {
-          id,
-          number: g.grant_number,
-          recipientId: g.agency_id === '5' ? 7782 : parseInt(g.agency_id, 10),
-          status: g.grant_status,
-          // stateCode: patches.grants[id][stateCode] || valueFromXML(g.grantee_state),
-          stateCode: getStateCode(id, g.grantee_state),
-          startDate,
-          endDate,
-          inactivationDate,
-          regionId,
-          cdi,
-          granteeName: g.grantee_name,
-          programSpecialistName,
-          programSpecialistEmail: valueFromXML(g.program_specialist_email),
-          grantSpecialistName,
-          grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
-          annualFundingMonth: valueFromXML(g.annual_funding_month),
-          inactivationReason: valueFromXML(g.inactivation_reason),
-          geographicRegion: valueFromXML(g.geographic_region),
-          geographicRegionId: parseInt(g.geographic_region_id, 10) || null,
-          feiHsStatus: valueFromXML(g.fei_hs_status),
-          feiEhsStatus: valueFromXML(g.fei_ehs_status),
-        };
-      });
+          const regionId = parseInt(g.numeric_region_id, 10);
+          const cdi = regionId === 13;
+          const id = parseInt(g.grant_award_id, 10);
+          // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
+          return {
+            id,
+            number: g.grant_number,
+            recipientId: g.agency_id === '5' ? 7782 : parseInt(g.agency_id, 10),
+            status: g.grant_status,
+            // stateCode: patches.grants[id][stateCode] || valueFromXML(g.grantee_state),
+            stateCode: getStateCode(id, g.grantee_state),
+            startDate,
+            endDate,
+            inactivationDate,
+            regionId,
+            cdi,
+            granteeName: valueFromXML(g.grantee_name),
+            programSpecialistName,
+            programSpecialistEmail: valueFromXML(g.program_specialist_email),
+            grantSpecialistName,
+            grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
+            annualFundingMonth: valueFromXML(g.annual_funding_month),
+            inactivationReason: valueFromXML(g.inactivation_reason),
+            geographicRegion: valueFromXML(g.geographic_region),
+            geographicRegionId: parseInt(g.geographic_region_id, 10) || null,
+            feiHsStatus: valueFromXML(g.fei_hs_status),
+            feiEhsStatus: valueFromXML(g.fei_ehs_status),
+          };
+        });
 
       const grantIds = grantsForDb.map((g) => g.id);
       const grantPrograms = grantRecipients.filter((ga) =>
