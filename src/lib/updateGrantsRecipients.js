@@ -50,7 +50,7 @@ function valueFromXML(value) {
 const validRecipientName = (value) =>
   typeof value === 'string' && value.trim() ? value.trim() : null;
 
-export async function resolveRecipientNames(recipients, grants, transaction) {
+export async function resolveRecipientNames(recipients, transaction) {
   const missingNames = recipients.filter((recipient) => !validRecipientName(recipient.name));
   const existingRecipients = missingNames.length
     ? await Recipient.unscoped().findAll({
@@ -62,39 +62,21 @@ export async function resolveRecipientNames(recipients, grants, transaction) {
   const existingNames = new Map(
     existingRecipients.map((recipient) => [recipient.id, recipient.name])
   );
-  const grantNames = new Map();
-  for (const grant of grants) {
-    const recipientId = Number(grant.agency_id);
-    if (!grantNames.has(recipientId)) {
-      grantNames.set(recipientId, new Set());
-    }
-    // A missing grant name also prevents an unambiguous fallback.
-    grantNames.get(recipientId).add(validRecipientName(grant.grantee_name));
-  }
-
   const recipientsForDb = [];
   const skippedRecipientIds = new Set();
   for (const recipient of recipients) {
     let name = validRecipientName(recipient.name);
     if (!name) {
       name = validRecipientName(existingNames.get(recipient.id));
-      const names = grantNames.get(recipient.id);
-      if (!name && names?.size === 1) {
-        [name] = names;
-      }
       if (!name) {
         skippedRecipientIds.add(recipient.id);
         auditLogger.error(
-          `HSES import: agency ${recipient.id} has no valid agency name or unambiguous fallback; skipping recipient and dependent records`
+          `HSES import: agency ${recipient.id} has no valid agency name or existing recipient name; skipping recipient and dependent records`
         );
         continue;
       }
       logger.warn(
-        `HSES import: agency ${recipient.id} has no valid agency name; using ${
-          validRecipientName(existingNames.get(recipient.id))
-            ? 'existing recipient name'
-            : 'grant name'
-        }`
+        `HSES import: agency ${recipient.id} has no valid agency name; using existing recipient name`
       );
     }
     recipientsForDb.push({ ...recipient, name });
@@ -441,7 +423,7 @@ export async function processFiles(hashSumHex) {
       // HSES is investigating whether they can rename it on their end.
       // In the meantime, we need to rename in the Hub to eliminate confusion for the users.
       const recipientsWithOverrides = recipientsForDbTmp.map((r) => {
-        if (r.id === 628) {
+        if (r.id === 628 && validRecipientName(r.name)) {
           const grantAward = grant.grant_awards.grant_award.find(
             (g) =>
               g.agency_id === '628' &&
@@ -461,7 +443,6 @@ export async function processFiles(hashSumHex) {
 
       const { recipientsForDb, skippedRecipientIds } = await resolveRecipientNames(
         recipientsWithOverrides,
-        grant.grant_awards.grant_award,
         transaction
       );
 

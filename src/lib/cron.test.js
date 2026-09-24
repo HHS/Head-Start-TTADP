@@ -174,7 +174,7 @@ describe('cron', () => {
 
       // Await the callback directly so a regression fails this assertion instead of
       // emitting an unhandled rejection that could terminate the Jest process.
-      await expect(Promise.resolve().then(() => jobFunction())).resolves.not.toThrow();
+      await expect(jobFunction()).resolves.toBe(false);
 
       expect(updateGrantsRecipients).toHaveBeenCalledTimes(1);
       expect(auditLogger.error).toHaveBeenCalledWith(

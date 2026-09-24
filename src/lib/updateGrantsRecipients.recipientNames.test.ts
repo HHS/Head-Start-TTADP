@@ -61,7 +61,6 @@ describe('HSES recipient name resolution', () => {
           { id: 1, name },
           { id: 2, name: 'Updated agency name' },
         ],
-        [grant(1, 'Different grant name')],
         transaction
       );
 
@@ -80,102 +79,101 @@ describe('HSES recipient name resolution', () => {
     }
   );
 
-  it('uses an agreed grant name for a new unnamed recipient', async () => {
-    const result = await resolveRecipientNames(
-      [{ id: 1, name: nil }],
-      [grant(1, 'Grant name'), grant(1, ' Grant name '), grant(2, 'Other name')],
-      {}
-    );
-    expect(result.recipientsForDb).toEqual([{ id: 1, name: 'Grant name' }]);
-    expect(result.skippedRecipientIds.size).toBe(0);
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('using grant name'));
-  });
+  it.each([nil, '', '  ', undefined])(
+    'skips new recipients with invalid names: %p',
+    async (name) => {
+      const result = await resolveRecipientNames(
+        [
+          { id: 1, name },
+          { id: 2, name: 'Valid name' },
+        ],
+        {}
+      );
+      expect(result.recipientsForDb).toEqual([{ id: 2, name: 'Valid name' }]);
+      expect(result.skippedRecipientIds).toEqual(new Set([1]));
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('agency 1'));
+    }
+  );
 
-  it.each([
-    [],
-    [grant(1, nil)],
-    [grant(1, 'One name'), grant(1, 'Different name')],
-    [grant(1, 'One name'), grant(1, nil)],
-  ])('skips a new unnamed recipient without an agreed fallback: %p', async (...grants) => {
-    const result = await resolveRecipientNames(
-      [
-        { id: 1, name: nil },
-        { id: 2, name: 'Valid name' },
-      ],
-      grants,
-      {}
-    );
-    expect(result.recipientsForDb).toEqual([{ id: 2, name: 'Valid name' }]);
+  it('skips a recipient whose saved name is also blank', async () => {
+    Recipient.findAll.mockResolvedValue([{ id: 1, name: '  ' }]);
+    const result = await resolveRecipientNames([{ id: 1, name: nil }], {});
+    expect(result.recipientsForDb).toEqual([]);
     expect(result.skippedRecipientIds).toEqual(new Set([1]));
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('agency 1'));
   });
 
   it('does not query existing recipients when all agency names are valid', async () => {
-    const result = await resolveRecipientNames([{ id: 1, name: 'Updated name' }], [], {});
+    const result = await resolveRecipientNames([{ id: 1, name: 'Updated name' }], {});
     expect(result.recipientsForDb).toEqual([{ id: 1, name: 'Updated name' }]);
     expect(Recipient.findAll).not.toHaveBeenCalled();
   });
 
-  it('excludes an unresolved recipient and its grants, programs, and replacements from the import', async () => {
-    const xml = (root: string, rows: object) =>
-      new xml2js.Builder().buildObject({
-        [root]: { $: { 'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance' }, ...rows },
+  it.each([1, 628, 7782])(
+    'skips unnamed agency %i and dependent records even with a grant name',
+    async (agencyId) => {
+      const xml = (root: string, rows: object) =>
+        new xml2js.Builder().buildObject({
+          [root]: { $: { 'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance' }, ...rows },
+        });
+      const files = {
+        './temp/agency.xml': xml('agencies', {
+          agency: [
+            { agency_id: agencyId, agency_name: nil },
+            { agency_id: 2, agency_name: 'Updated name' },
+          ],
+        }),
+        './temp/grant_agency.xml': xml('grant_agencies', {
+          grant_agency: [1, 2].map((id) => ({
+            grant_agency_id: id,
+            agency_id: id === 1 ? agencyId : id,
+            grant_award_id: id,
+            grant_agency_number: 0,
+          })),
+        }),
+        './temp/grant_award.xml': xml('grant_awards', {
+          grant_award: [1, 2].map((id) => ({
+            ...grant(
+              id === 1 ? (agencyId === 7782 ? 5 : agencyId) : id,
+              id === 1 ? 'Unverified grant name' : nil
+            ),
+            grant_award_id: id,
+            grant_number: `TEST${id}`,
+            numeric_region_id: 1,
+          })),
+        }),
+        './temp/grant_program.xml': xml('grant_programs', {
+          grant_program: [1, 2].map((id) => ({
+            grant_program_id: id,
+            grant_agency_id: id,
+            program_name: `Program ${id}`,
+          })),
+        }),
+        './temp/grant_award_replacement.xml': xml('grant_award_replacements', {
+          grant_award_replacement: [
+            { replaced_grant_award_id: 1, replacement_grant_award_id: 2 },
+            { replaced_grant_award_id: 2, replacement_grant_award_id: 1 },
+          ],
+        }),
+      };
+      jest.mocked(fs.readFile).mockImplementation(async (file) => {
+        if (!(String(file) in files)) throw new Error(`Unexpected fixture: ${file}`);
+        return Buffer.from(files[String(file)]);
       });
-    const files = {
-      './temp/agency.xml': xml('agencies', {
-        agency: [
-          { agency_id: 1, agency_name: nil },
-          { agency_id: 2, agency_name: 'Updated name' },
-        ],
-      }),
-      './temp/grant_agency.xml': xml('grant_agencies', {
-        grant_agency: [1, 2].map((id) => ({
-          grant_agency_id: id,
-          agency_id: id,
-          grant_award_id: id,
-          grant_agency_number: 0,
-        })),
-      }),
-      './temp/grant_award.xml': xml('grant_awards', {
-        grant_award: [1, 2].map((id) => ({
-          ...grant(id, nil),
-          grant_award_id: id,
-          grant_number: `TEST${id}`,
-          numeric_region_id: 1,
-        })),
-      }),
-      './temp/grant_program.xml': xml('grant_programs', {
-        grant_program: [1, 2].map((id) => ({
-          grant_program_id: id,
-          grant_agency_id: id,
-          program_name: `Program ${id}`,
-        })),
-      }),
-      './temp/grant_award_replacement.xml': xml('grant_award_replacements', {
-        grant_award_replacement: [
-          { replaced_grant_award_id: 1, replacement_grant_award_id: 2 },
-          { replaced_grant_award_id: 2, replacement_grant_award_id: 1 },
-        ],
-      }),
-    };
-    jest.mocked(fs.readFile).mockImplementation(async (file) => {
-      if (!(String(file) in files)) throw new Error(`Unexpected fixture: ${file}`);
-      return Buffer.from(files[String(file)]);
-    });
 
-    await processFiles('synthetic-fixture');
+      await processFiles('synthetic-fixture');
 
-    expect(Recipient.bulkCreate.mock.calls[0][0]).toEqual([
-      expect.objectContaining({ id: 2, name: 'Updated name' }),
-    ]);
-    expect(Grant.bulkCreate.mock.calls.flatMap(([rows]) => rows)).toEqual([
-      expect.objectContaining({ id: 2, recipientId: 2, granteeName: null }),
-    ]);
-    expect(Program.bulkCreate.mock.calls[0][0]).toEqual([
-      expect.objectContaining({ id: 2, grantId: 2 }),
-    ]);
-    expect(GrantReplacementTypes.findOne).not.toHaveBeenCalled();
-    expect(sequelize.transaction).toHaveBeenCalledTimes(1);
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('agency 1'));
-  });
+      expect(Recipient.bulkCreate.mock.calls[0][0]).toEqual([
+        expect.objectContaining({ id: 2, name: 'Updated name' }),
+      ]);
+      expect(Grant.bulkCreate.mock.calls.flatMap(([rows]) => rows)).toEqual([
+        expect.objectContaining({ id: 2, recipientId: 2, granteeName: null }),
+      ]);
+      expect(Program.bulkCreate.mock.calls[0][0]).toEqual([
+        expect.objectContaining({ id: 2, grantId: 2 }),
+      ]);
+      expect(GrantReplacementTypes.findOne).not.toHaveBeenCalled();
+      expect(sequelize.transaction).toHaveBeenCalledTimes(1);
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(`agency ${agencyId}`));
+    }
+  );
 });
