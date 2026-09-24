@@ -15,9 +15,20 @@ export default function FilterSelect({
 }) {
   const key = mapByValue ? valueProp : labelProp;
 
-  const value = [selectedValues]
-    .flat()
-    .map((selection) => options.find((option) => option[key] === selection));
+  // Compare as strings so numeric vs string ids (e.g. ids restored from session
+  // storage) still resolve to their matching option.
+  const findOption = (selection) =>
+    options.find((option) => String(option[key]) === String(selection));
+
+  const value = [selectedValues].flat().map(findOption);
+
+  // Resolve each selected value to its display label. When mapByValue is set the
+  // selectedValues are the valueProp (e.g. user ids), so we need to look up the
+  // labelProp to avoid showing raw ids in the truncated "+ X more tags" display.
+  const selectedLabels = [selectedValues].flat().map((selection) => {
+    const match = findOption(selection);
+    return match ? match[labelProp] : String(selection);
+  });
 
   const styles = {
     container: (provided, state) => {
@@ -87,7 +98,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = [selectedValues].flat().map((selection, index) => {
+      const truncated = selectedLabels.map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;

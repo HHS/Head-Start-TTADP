@@ -1051,6 +1051,32 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       ]);
     });
 
+    it('skips empty lines between data rows', async () => {
+      const reportId = 'R01-TR-9876';
+      const d = `${headings.join(',')}\n\n${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}\n\n`;
+      const result = await csvImport(Buffer.from(d));
+      expect(result.count).toBe(1);
+      expect(result.errors).toEqual([]);
+
+      await db.EventReportPilot.destroy({ where: { eventId: reportId } });
+    });
+
+    it('returns a parse error gracefully when a row has more fields than the header', async () => {
+      const d = `${headings.join(',')}\n${email},R01-TR-7771,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name},EXTRA_FIELD\n`;
+      const result = await csvImport(Buffer.from(d));
+      expect(result.count).toBe(0);
+      expect(result.errors.length).toBe(1);
+      expect(result.errors[0]).toMatch(/CSV parse error/i);
+    });
+
+    it('returns a parse error gracefully when a row has fewer fields than the header', async () => {
+      const d = `${headings.join(',')}\n${email},R01-TR-7772\n`;
+      const result = await csvImport(Buffer.from(d));
+      expect(result.count).toBe(0);
+      expect(result.errors.length).toBe(1);
+      expect(result.errors[0]).toMatch(/CSV parse error/i);
+    });
+
     it('defaults to `Creator` heading when `Event Creator` is not found, but errors when Creator fallback is not found', async () => {
       const reportId = 'R01-TR-5725';
       const newHeadings = headings.filter((h) => h !== 'Event Creator');

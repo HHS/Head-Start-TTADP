@@ -1,9 +1,19 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useContext, useMemo } from 'react';
+import { type Dispatch, type SetStateAction, useContext, useMemo } from 'react';
 import FilterContext from '../FilterContext';
 import useSessionStorage from './useSessionStorage';
 
 const { sessionStorage } = window;
+
+export type SortDirection = 'asc' | 'desc';
+
+/** The sort state a table or widget stashes in session storage. */
+export interface SessionSortConfig {
+  sortBy: string;
+  direction: SortDirection;
+  activePage?: number;
+  offset?: number;
+}
 
 /**
  * useSessionSort takes in an object containing a sort configuration
@@ -14,12 +24,11 @@ const { sessionStorage } = window;
   }
  * and a component name
  * and returns a useState like array of a getter and a setter
- *
- * @param {Object[]} defaultSortConfig
- * @param {String} component
- * @returns {[ Object[], Function ]}
  */
-export default function useSessionSort(defaultSortConfig, key) {
+export default function useSessionSort<T extends SessionSortConfig>(
+  defaultSortConfig: T,
+  key: string
+): [T, Dispatch<SetStateAction<T>>] {
   const { filterKey } = useContext(FilterContext);
   const sessionSchema = `${filterKey}-${key}-sorting`;
 
@@ -37,7 +46,7 @@ export default function useSessionSort(defaultSortConfig, key) {
             direction,
             offset: parseInt(offset, DECIMAL_BASE),
             activePage: parseInt(activePage, DECIMAL_BASE),
-          };
+          } as T;
         }
       } catch (_error) {
         return false;
@@ -48,7 +57,7 @@ export default function useSessionSort(defaultSortConfig, key) {
   }, [filterKey, sessionSchema]);
 
   // put it in state
-  const [sortConfig, setSortConfig] = useSessionStorage(
+  const [sortConfig, setSortConfig] = useSessionStorage<T>(
     sessionSchema,
     existingSort || defaultSortConfig
   );

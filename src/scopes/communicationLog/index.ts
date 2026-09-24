@@ -11,6 +11,7 @@ import { withGroup, withoutGroup } from './group';
 import { withIds, withoutIds } from './id';
 import { withMethod, withoutMethod } from './method';
 import { withMyReports, withoutMyReports } from './myReports';
+import { withOtherTtaStaff, withoutOtherTtaStaff } from './otherTtaStaff';
 import { withoutPurpose, withPurpose } from './purpose';
 import { withoutRegion, withRegion } from './region';
 import { withoutResult, withResult } from './result';
@@ -42,6 +43,10 @@ export const topicToQuery = {
   myReports: {
     in: (query: string[], _: unknown, userId: number) => withMyReports(query, _, userId),
     nin: (query: string[], _: unknown, userId: number) => withoutMyReports(query, _, userId),
+  },
+  otherTtaStaff: {
+    in: (query: string[]) => withOtherTtaStaff(query),
+    nin: (query: string[]) => withoutOtherTtaStaff(query),
   },
   result: {
     in: (query: string[]) => withResult(query),

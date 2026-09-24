@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.23.2`).
+2. Install Node using the version in `.nvmrc` (`24.19.0`).
 3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
 4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
@@ -18,7 +18,7 @@
 - Install frontend and backend dependencies: `yarn deps`
 - Build frontend/backend code: `yarn build`
 - On first startup, when switching branches, or after significant changes: `yarn docker:refresh`
-    - This will rebuild code and images, run migrations/reseed the DB 
+  - This will rebuild code and images, run migrations/reseed the DB
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
 - Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
 - Tail logs: `yarn docker:logs`
@@ -52,6 +52,16 @@ Configuration is in [`biome.json`](../../biome.json)
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
 
+## Dependency Security
+
+CI runs `yarn deps:audit` against backend and frontend production dependencies.
+
+Dependabot checks the root and frontend packages each Monday. Production and development minor or patch updates are combined into one grouped pull request per package location when updates are available. Scheduled major version updates are ignored to limit pull request volume. Major security findings remain visible through GitHub alerts and the Slack digest and are handled as planned engineering work with broader regression testing.
+
+When a vulnerability can be resolved with a minor or patch update, review the Dependabot pull request and verify the normal CI suite. If remediation requires a major update, create planned engineering work, review the migration guidance, and run tests for the affected behavior before merging. Continue tracking the finding through the GitHub alert and Slack digest until it is resolved.
+
+If a production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file. Do not baseline a finding solely to make CI pass; remove the exception after remediation.
+
 ## Precommit hooks
 
 Our CI will fail if code is committed that does not pass Biome linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
@@ -69,27 +79,13 @@ On macOS:
 
 1. Install cloud foundry cli: `brew install cloudfoundry/tap/cf-cli@8`
 2. `cf login -a api.fr.cloud.gov --sso`
-2. `bash ./bin/latest_backup.sh`
-3. Ensure `psql` is installed.
-4. Start the Docker stack: `yarn docker:start`
-5. Create `bounce.sql` in repo root:
+3. `bash ./bin/latest_backup.sh`
+4. Ensure `psql` is installed.
+5. Start the Docker stack: `yarn docker:start`
+6. Load the downloaded backup and run migrations: `./bin/load-prod-db -m db.sql`
+7. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
 
-```sql
-select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
-drop database ttasmarthub;
-create database ttasmarthub;
-```
-
-6. Load backup data (replace credentials from `.env`):
-
-```bash
-psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql
-psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql
-```
-
-7. Run migrations: `yarn docker:db:migrate`
-8. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
-
+To reset the local database to seed data instead, run `./bin/load-test-db`.
 ## Puppeteer & Playwright
 
 If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.

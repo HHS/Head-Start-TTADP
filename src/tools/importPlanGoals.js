@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import parse from 'csv-parse/lib/sync';
+import { parse } from 'csv-parse/sync';
 import { GOAL_STATUS } from '../constants';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { downloadFile } from '../lib/s3';

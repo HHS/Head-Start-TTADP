@@ -6,6 +6,7 @@ import { Route, Switch, useHistory, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import AddTtaRequestButton from '../../components/AddTtaRequestButton';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
@@ -20,7 +21,11 @@ import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
-import { GOALS_OBJECTIVES_FILTER_KEY, TTA_TIMELINE_FEATURE_FLAG } from './pages/constants';
+import {
+  GOALS_OBJECTIVES_FILTER_KEY,
+  RECIPIENT_TTA_REQUEST_FEATURE_FLAG,
+  TTA_TIMELINE_FEATURE_FLAG,
+} from './pages/constants';
 import GoalsObjectives from './pages/GoalsObjectives';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import Monitoring from './pages/Monitoring';
@@ -28,6 +33,7 @@ import PrintGoals from './pages/PrintGoals';
 import Profile from './pages/Profile';
 import Timeline from './pages/Timeline';
 import TTAHistory from './pages/TTAHistory';
+import TtaRequest from './pages/TtaRequest';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import ViewGoalDetails from './pages/ViewStandardGoals';
 
@@ -53,13 +59,13 @@ export function PageWithHeading({
         </div>
       ) : (
         <>
-          <div className="display-flex">
+          <div className="display-flex flex-align-center flex-gap-2">
             <h1
               className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}
             >
               {recipientNameWithRegion}
             </h1>
-            <div>{inlineHeadingChildren}</div>
+            <div className="margin-bottom-3">{inlineHeadingChildren}</div>
           </div>
           {children}
         </>
@@ -178,6 +184,23 @@ export default function RecipientRecord({ match, hasAlerts }) {
       />
 
       <Switch>
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request"
+          render={() => (
+            <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
+              <PageWithHeading
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+                slug="tta-request"
+                hasAlerts={hasAlerts}
+                inlineHeadingChildren={<AddTtaRequestButton label="Add request" />}
+              >
+                <TtaRequest recipientId={recipientId} regionId={regionId} />
+              </PageWithHeading>
+            </FeatureFlag>
+          )}
+        />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/timeline"
           render={() => (

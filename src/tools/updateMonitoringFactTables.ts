@@ -313,8 +313,8 @@ const updateMonitoringFactTables = async () => {
     ;
 
     -- Connect findings to their most recent DELIVERED review and also
-    -- mark it with the finding type based on that finding history as
-    -- well as pull in the latest Monitoring Goal closure, which we
+    -- mark it with the finding type and raw history status from that finding
+    -- history as well as pull in the latest Monitoring Goal closure, which we
     -- use to decide whether Findings are considered to have been
     -- addressed by TTA staff.
     DROP TABLE IF EXISTS latest_citation_reviews;
@@ -342,6 +342,7 @@ const updateMonitoringFactTables = async () => {
       review_uuid latest_review_uuid,
       mfh.narrative latest_narrative,
       mfh.determination latest_determination,
+      mfhs.name latest_raw_history_status,
       rdd latest_report_delivery_date,
       latest_goal_closure
     FROM denormed_findings df
@@ -351,6 +352,9 @@ const updateMonitoringFactTables = async () => {
     JOIN all_grant_reviews
       ON mfh."reviewId" = review_uuid
       AND rdd IS NOT NULL
+    LEFT JOIN "MonitoringFindingHistoryStatuses" mfhs
+      ON mfh."statusId" = mfhs."statusId"
+      AND mfhs."deletedAt" IS NULL
     LEFT JOIN monitoring_goals
       ON grid = goal_grid
     ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid, ms_id DESC
@@ -368,9 +372,9 @@ const updateMonitoringFactTables = async () => {
       raw_status,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND latest_goal_closure > latest_report_delivery_date THEN 'Closed'
-        WHEN raw_status = 'Elevated Deficiency' AND rdd IS NOT NULL AND outcome = 'Compliant' THEN 'Corrected'
-        WHEN rdd IS NOT NULL AND review_status = 'Complete' THEN raw_status
-        ELSE 'Active'
+        WHEN NOT (rdd IS NOT NULL AND review_status = 'Complete') THEN 'Active'
+        WHEN latest_raw_history_status IN ('New', 'Not Corrected', 'Not Reviewed') THEN 'Active'
+        ELSE latest_raw_history_status
       END calculated_status,
       rdd IS NOT NULL last_review_delivered,
       raw_finding_type,
@@ -387,6 +391,7 @@ const updateMonitoringFactTables = async () => {
       latest_review_uuid,
       latest_narrative,
       latest_determination,
+      latest_raw_history_status,
       latest_report_delivery_date,
       latest_goal_closure
     FROM latest_citation_reviews lcr
@@ -395,7 +400,7 @@ const updateMonitoringFactTables = async () => {
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
-    ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid
+    ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid, mfh.id
     ;
 
     -- Connect the Finding with the initial delivered review that made
@@ -433,6 +438,7 @@ const updateMonitoringFactTables = async () => {
       latest_narrative,
       latest_determination,
       latest_report_delivery_date,
+      latest_raw_history_status,
       latest_goal_closure,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND calculated_status = 'Closed' THEN latest_goal_closure
@@ -486,6 +492,16 @@ const updateMonitoringFactTables = async () => {
     GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ;
 
+    -- FUTURE mid-refresh gate (see docs/monitoring-data-validation.md, "In-refresh
+    -- gate" under Future work): this is the point
+    -- where the staged temp tables (delivered_reviews, full_citations, ...) exist
+    -- but the live DeliveredReviews / Citations have not yet been overwritten, so
+    -- their pre-refresh contents are still available to diff against. Because the
+    -- whole refresh is one transaction, an outage-level diff gets true rollback
+    -- for free - either RAISE EXCEPTION here, or split this query so
+    -- validateMonitoringGate's runner can be invoked between staging and upsert
+    -- and throw on criticalCount > 0 (logging the reason so it survives the
+    -- rollback). Not built yet; the pre-refresh gate phase covers today's needs.
     ----------------------------------
     -- Primary Entity Table Upserts --
     ----------------------------------
@@ -640,6 +656,7 @@ const updateMonitoringFactTables = async () => {
       latest_narrative,
       latest_determination,
       latest_report_delivery_date,
+      latest_raw_history_status,
       latest_goal_closure,
       active_through,
       "createdAt"
@@ -671,6 +688,7 @@ const updateMonitoringFactTables = async () => {
       fc.latest_narrative,
       fc.latest_determination,
       fc.latest_report_delivery_date,
+      fc.latest_raw_history_status,
       fc.latest_goal_closure,
       fc.active_through,
       NOW()
@@ -705,6 +723,7 @@ const updateMonitoringFactTables = async () => {
       latest_narrative = EXCLUDED.latest_narrative,
       latest_determination = EXCLUDED.latest_determination,
       latest_report_delivery_date = EXCLUDED.latest_report_delivery_date,
+      latest_raw_history_status = EXCLUDED.latest_raw_history_status,
       latest_goal_closure = EXCLUDED.latest_goal_closure,
       active_through = EXCLUDED.active_through,
       "updatedAt" = NOW(),
@@ -735,6 +754,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".latest_narrative IS DISTINCT FROM EXCLUDED.latest_narrative
       OR "Citations".latest_determination IS DISTINCT FROM EXCLUDED.latest_determination
       OR "Citations".latest_report_delivery_date IS DISTINCT FROM EXCLUDED.latest_report_delivery_date
+      OR "Citations".latest_raw_history_status IS DISTINCT FROM EXCLUDED.latest_raw_history_status
       OR "Citations".latest_goal_closure IS DISTINCT FROM EXCLUDED.latest_goal_closure
       OR "Citations".active_through IS DISTINCT FROM EXCLUDED.active_through
       OR "Citations"."deletedAt" IS NOT NULL
@@ -813,12 +833,16 @@ const updateMonitoringFactTables = async () => {
       mrid,
       mfh.id mfhid,
       mfh.determination,
+      mfhs.name raw_history_status,
       rdd,
       active_through
     FROM full_citations
     JOIN "MonitoringFindingHistories" mfh
       ON mfh."findingId" = finding_uuid
       AND mfh."sourceDeletedAt" IS NULL
+    LEFT JOIN "MonitoringFindingHistoryStatuses" mfhs
+      ON mfh."statusId" = mfhs."statusId"
+      AND mfhs."deletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
     ORDER BY mfid, mrid, mfh.id DESC
@@ -850,6 +874,7 @@ const updateMonitoringFactTables = async () => {
       mfid,
       mrid,
       determination,
+      raw_history_status,
       cd_latest_review_start latest_review_start,
       next_review_minus_1,
       cd_active_through active_through
@@ -864,6 +889,7 @@ const updateMonitoringFactTables = async () => {
       "deliveredReviewId",
       "citationId",
       determination,
+      raw_history_status,
       latest_review_start,
       latest_review_end,
       calculated_review_finding_type,
@@ -873,6 +899,7 @@ const updateMonitoringFactTables = async () => {
       dr.id,
       c.id,
       drc.determination,
+      drc.raw_history_status,
       drc.latest_review_start,
       COALESCE(drc.next_review_minus_1, drc.active_through),
       regexp_replace(
@@ -889,11 +916,13 @@ const updateMonitoringFactTables = async () => {
     ON CONFLICT ("deliveredReviewId", "citationId")
     DO UPDATE SET
       determination                  = EXCLUDED.determination,
+      raw_history_status             = EXCLUDED.raw_history_status,
       latest_review_start            = EXCLUDED.latest_review_start,
       latest_review_end              = EXCLUDED.latest_review_end,
       calculated_review_finding_type = EXCLUDED.calculated_review_finding_type
     WHERE
       "DeliveredReviewCitations".determination                  IS DISTINCT FROM EXCLUDED.determination
+      OR "DeliveredReviewCitations".raw_history_status          IS DISTINCT FROM EXCLUDED.raw_history_status
       OR "DeliveredReviewCitations".latest_review_start         IS DISTINCT FROM EXCLUDED.latest_review_start
       OR "DeliveredReviewCitations".latest_review_end           IS DISTINCT FROM EXCLUDED.latest_review_end
       OR "DeliveredReviewCitations".calculated_review_finding_type IS DISTINCT FROM EXCLUDED.calculated_review_finding_type

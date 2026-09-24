@@ -2,6 +2,53 @@ get:
   tags:
     - recipient
   summary: Retrieve timeline events for a recipient in a region
+  description: |
+    Includes approved TTA activities, goal status history, and communication logs for the recipient
+    and region. Communication logs are included only when the user passes the communication-log
+    read policy. Otherwise, logs are excluded before counting and pagination, while other
+    timeline sources remain available.
+    Each request indexes and populates all sources within one repeatable-read database snapshot.
+    Concurrent edits appear on subsequent requests; they cannot change the current page's
+    presentation or multi-recipient indicators independently of its filters, count, and ordering.
+    Communication events use source `communicationLog` and the log ID as `sourceId`. Both the
+    returned date and ordering use communicationDate (stored as MM/DD/YYYY), not the creation date
+    shown in the original design annotation. Missing, null, empty, or whitespace-only dates are
+    excluded without a createdAt fallback. Email, Phone, In person, and Virtual map to their
+    respective communication event types; blank and unsupported methods are excluded.
+    Recipient membership comes from CommunicationLogRecipients, and region from the log's data.
+    Numeric and zero-padded string region IDs are equivalent; malformed region values are excluded.
+    Logs associated with multiple distinct recipients have indicators: [multiRecipient]. The
+    exclusion checkbox removes those communication events before counts and pagination and does
+    not affect other event sources. Standard filters match the log's selected supporting-goal
+    labels; absent or malformed goal arrays have no labels. An unmatched positive standard filter
+    returns no communications.
+    Communication presentations include purpose as subtitle, numeric durationHours (null when
+    blank or invalid), and the creator's name and current role abbreviations as the By byline.
+    Retired roles are omitted. Missing roles leave the creator's name; a missing creator produces
+    a null byline. Supporting goals appear as tags, with Monitoring flagged. Details contain
+    nonempty Notes and Result, followed by Supporting attachments when approved files exist.
+    Notes are plain text with entities decoded and paragraph/list line breaks preserved; clients
+    should preserve those line breaks when rendering. Attachment items contain the filename and a signed download link;
+    if URL signing fails, the filename remains without a link. Other TTA staff and next-step
+    arrays are not card sections. A View communication log link opens the recipient's log view.
+    Goal events use source `goalStatusChange` and the status-change row ID as `sourceId`.
+    Initial non-draft statuses and transitions out of Draft are Goal added events;
+    transitions to Suspended or Closed are Goal suspended or Goal closed events;
+    transitions from Suspended or Closed to Not Started or In Progress are Goal reopened events.
+    An initial Not Started or In Progress event (including transitions out of Draft) also counts
+    as Goal reopened when an earlier closed goal exists for the same grant, template, and
+    pre-standard classification. Deleted and merged child goals do not count as earlier goals.
+    Draft, deleted, and merged child goals are excluded, as are no-op changes and transitions
+    without a supported timeline event type.
+    Events are ordered by their full timestamp (performedAt, falling back to createdAt for
+    goal history), then source and sourceId ascending for ties. Date-only sources sort at UTC
+    midnight; timestamps without a timezone are interpreted as UTC. Date filters include the
+    entire UTC calendar day, and response dates remain YYYY-MM-DD, independent of session timezone.
+    Goal presentations include the event title, goal name as subtitle, recorded author and roles
+    as byline (falling back to the associated user's name), and available previous/new status,
+    reason, context, and grant number details. Missing optional values are omitted from details;
+    missing subtitle/byline values are null. Standard tags and a View goal link are included
+    when available.
   operationId: getRecipientTimeline
   parameters:
     - in: path
@@ -65,7 +112,9 @@ get:
       schema:
         type: boolean
         default: false
-      description: Exclude communications associated with more than one recipient.
+      description: |
+        Exclude communications associated with more than one distinct recipient before counting
+        and pagination. Other event sources are unaffected.
   responses:
     200:
       description: Timeline events for the recipient
@@ -89,6 +138,14 @@ get:
                     - sourceId
                     - date
                     - eventType
+                    - durationHours
+                    - title
+                    - subtitle
+                    - byline
+                    - indicators
+                    - tags
+                    - details
+                    - links
                   properties:
                     source:
                       type: string
@@ -101,7 +158,7 @@ get:
                     date:
                       type: string
                       format: date
-                      description: Event date used for timeline ordering.
+                      description: Calendar date of the event; ordering preserves the underlying event time.
                     eventType:
                       type: string
                       enum:
@@ -118,9 +175,147 @@ get:
                         - TTA request
                         - Monitoring report received
                       minLength: 1
+                    durationHours:
+                      type: number
+                      nullable: true
+                      minimum: 0
+                    title:
+                      type: string
+                      minLength: 1
+                    subtitle:
+                      type: string
+                      nullable: true
+                    byline:
+                      type: object
+                      nullable: true
+                      required:
+                        - label
+                        - values
+                      properties:
+                        label:
+                          type: string
+                          minLength: 1
+                        values:
+                          type: array
+                          items:
+                            type: string
+                            minLength: 1
+                    indicators:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - multiRecipient
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - flagged
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          flagged:
+                            type: boolean
+                    details:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - items
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              required:
+                                - text
+                              properties:
+                                text:
+                                  type: string
+                                  minLength: 1
+                                link:
+                                  type: string
+                    links:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - label
+                          - to
+                        properties:
+                          label:
+                            type: string
+                            minLength: 1
+                          to:
+                            type: string
+                            minLength: 1
+                          external:
+                            type: boolean
           example:
-            count: 0
-            events: []
+            count: 2
+            events:
+              - source: activityReport
+                sourceId: 123
+                date: 2026-05-09
+                eventType: TTA activity
+                durationHours: 5
+                title: TTA activity
+                subtitle: null
+                byline:
+                  label: Specialists
+                  values:
+                    - Isabella Baker, GS
+                indicators: []
+                tags:
+                  - label: New Leaders
+                    flagged: false
+                details:
+                  - label: Delivery method
+                    items:
+                      - text: Virtual
+                  - label: Grant numbers
+                    items:
+                      - text: 14CH012057 - HS
+                links:
+                  - label: View activity report
+                    to: /activity-reports/view/123
+              - source: communicationLog
+                sourceId: 456
+                date: 2026-05-08
+                eventType: Email communication
+                durationHours: 0.25
+                title: Email communication
+                subtitle: General check-in
+                byline:
+                  label: By
+                  values:
+                    - Jane Hooper, ECS
+                indicators:
+                  - multiRecipient
+                tags:
+                  - label: Monitoring
+                    flagged: true
+                details:
+                  - label: Notes
+                    items:
+                      - text: Shared the approved TTA report with the recipients.
+                  - label: Result
+                    items:
+                      - text: Next Steps identified
+                  - label: Supporting attachments
+                    items:
+                      - text: Summary.pdf
+                        link: https://attachments.example/summary.pdf
+                links:
+                  - label: View communication log
+                    to: /recipient-tta-records/100/region/14/communication/456/view
     400:
       description: Invalid path or query parameters
     401:
