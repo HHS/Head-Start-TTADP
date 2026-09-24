@@ -1482,6 +1482,97 @@ describe('session reports service', () => {
         );
       });
     });
+
+    describe('participant counts with non-numeric data', () => {
+      // The session form writes '' into whichever participant fields don't apply to the
+      // selected delivery method, so these values are routine. Casting them to ::integer in
+      // SQL raised "invalid input syntax for type integer" and failed the whole table.
+      const participantEventLongId = 'R01-PD-99803';
+      let participantEvent;
+      let participantSessions = [];
+
+      beforeAll(async () => {
+        participantEvent = await createEvent({
+          ownerId: 99_803,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: participantEventLongId,
+            eventName: 'Participant Count Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        participantSessions = await Promise.all([
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'In Person Session',
+              deliveryMethod: 'in-person',
+              numberOfParticipants: 12,
+              // blanked by the form because they don't apply to this delivery method
+              numberOfParticipantsInPerson: '',
+              numberOfParticipantsVirtually: '',
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Empty Count Session',
+              deliveryMethod: 'virtual',
+              numberOfParticipants: '', // the row that was breaking the whole query
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Missing Count Session',
+              deliveryMethod: 'virtual',
+              // numberOfParticipants absent — stored as null in JSONB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Hybrid Session',
+              deliveryMethod: 'hybrid',
+              numberOfParticipants: '',
+              numberOfParticipantsInPerson: 3,
+              numberOfParticipantsVirtually: 4,
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(participantSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(participantEvent.id);
+      });
+
+      it('should not throw and should derive participantCount the same way other pages do', async () => {
+        const result = await getSessionReports({
+          limit: 100,
+          'eventId.ctn': [participantEventLongId],
+        });
+
+        expect(result.rows.length).toBe(4);
+
+        const counts = result.rows.reduce(
+          (acc, row) => ({ ...acc, [row.sessionName]: row.participantCount }),
+          {}
+        );
+
+        expect(counts['In Person Session']).toBe(12);
+        expect(counts['Empty Count Session']).toBe(0);
+        expect(counts['Missing Count Session']).toBe(0);
+        expect(counts['Hybrid Session']).toBe(7);
+      });
+    });
   });
 
   describe('getSessionReportsByRecipient', () => {

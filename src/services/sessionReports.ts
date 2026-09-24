@@ -2,6 +2,7 @@ import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from 
 import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
@@ -516,14 +517,21 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  // Selected raw so participantCount can be derived with getActivityReportParticipantCount,
+  // the same helper the dashboards and overview widget use. Casting these to ::integer in SQL
+  // fails on the empty strings the session form writes into the fields that don't apply to the
+  // selected delivery method.
   [
-    sequelize.literal(`CASE
-      WHEN "SessionReportPilot"."data"->>'deliveryMethod' = 'hybrid' THEN
-        COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsInPerson')::integer, 0)
-        + COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsVirtually')::integer, 0)
-      ELSE ("SessionReportPilot"."data"->>'numberOfParticipants')::integer
-    END`),
-    'participantCount',
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipants\''),
+    'numberOfParticipants',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsInPerson\''),
+    'numberOfParticipantsInPerson',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsVirtually\''),
+    'numberOfParticipantsVirtually',
   ],
 ];
 
@@ -648,7 +656,7 @@ async function fetchSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
-      participantCount: plain.participantCount,
+      participantCount: getActivityReportParticipantCount(plain),
       deliveryMethod: plain.deliveryMethod,
     };
   });
