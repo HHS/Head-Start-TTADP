@@ -8,7 +8,10 @@ set -e  # Exit on error
 # run the load-test-db.sh script to ensure the database is ready
 sh ./bin/load-test-db
 
-export $(grep POSTGRES_PASSWORD   ./.env)
+set -a
+# shellcheck disable=SC1091
+source ./.env
+set +a
 export PGPASSWORD=${POSTGRES_PASSWORD}
 
 # Get database connection info from environment or use defaults

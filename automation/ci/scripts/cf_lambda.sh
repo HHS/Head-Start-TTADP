@@ -302,8 +302,8 @@ function check_app_running {
         instances_line=$(echo "$output" | awk -F": *" '/instances:/ {print $2}' | xargs)
 
         # Extract the number of running instances
-        local running_instances=$(echo "$instances_line" | cut -d'/' -f1)
-        local total_instances=$(echo "$instances_line" | cut -d'/' -f2)
+        local running_instances
+        running_instances=$(echo "$instances_line" | cut -d'/' -f1)
 
         if [[ "$requested_state" == "started" && "$running_instances" -ge 1 ]]; then
             log "INFO" "Application '$app_name' is running."
@@ -368,12 +368,15 @@ function ensure_app_stopped {
     local timeout=${1:-300}  # Default timeout is 300 seconds (5 minutes)
 
     log "INFO" "Ensuring application '$app_name' is stopped..."
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     local current_time
 
     # Initialize previous values for logs and tasks
-    local previous_logs=$(cf logs --recent "$app_name" 2>&1)
-    local previous_tasks=$(cf tasks "$app_name" 2>&1)
+    local previous_logs
+    previous_logs=$(cf logs --recent "$app_name" 2>&1)
+    local previous_tasks
+    previous_tasks=$(cf tasks "$app_name" 2>&1)
 
     while true; do
         current_time=$(date +%s)
@@ -432,7 +435,8 @@ function unbind_all_services() {
 # Push the app using a manifest from a specific directory
 function push_app {
     local app_name="tta-automation"
-    local original_dir=$(pwd)  # Save the original directory
+    local original_dir
+    original_dir=$(pwd)  # Save the original directory
     local directory=$1
     local config=$2
 
@@ -441,7 +445,8 @@ function push_app {
 
     # Change to the specified directory and find the manifest file
     cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
-    local manifest_file=$(find . -type f -name "dynamic-manifest.yml" | head -n 1)
+    local manifest_file
+    manifest_file=$(find . -type f -name "dynamic-manifest.yml" | head -n 1)
 
     if [ -z "$manifest_file" ]; then
         log "ERROR" "Manifest file dynamic-manifest.yml not found in directory $directory or its subdirectories"
@@ -450,7 +455,8 @@ function push_app {
     fi
 
     # Load the environment from the config file relative to the manifest directory
-    local config_file="$(dirname "$manifest_file")/configs/${config}.yml"
+    local config_file
+    config_file="$(dirname "$manifest_file")/configs/${config}.yml"
 
     if [ ! -f "$config_file" ]; then
         log "ERROR" "Config file $config_file not found"
@@ -587,7 +593,8 @@ function run_task {
     memory=$(echo "$memory" | sed 's/GB/G/')
 
     # Convert JSON array to space-separated list of arguments
-    local args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
+    local args
+    args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
 
     log "INFO" "Running task: $task_name with args: $args and memory: $memory"
     local full_command="$command $args"
@@ -612,9 +619,10 @@ function monitor_task {
     start_time=$(date +%s)
     log "INFO" "Monitoring task status. Waiting for task to complete..."
     while true; do
-        local task_info=$(cf tasks "$app_name" | grep "$task_name" | head -n 1)
-        local task_id=$(echo "$task_info" | awk '{print $1}')
-        local task_state=$(echo "$task_info" | awk '{print $3}')
+        local task_info
+        task_info=$(cf tasks "$app_name" | grep "$task_name" | head -n 1)
+        task_id=$(echo "$task_info" | awk '{print $1}')
+        task_state=$(echo "$task_info" | awk '{print $3}')
         log "INFO" "Task $task_id is currently $task_state."
         if [[ "$task_state" == "SUCCEEDED" ]]; then
             log "INFO" "Task completed successfully."
@@ -623,7 +631,8 @@ function monitor_task {
             log "ERROR" "Task failed."
             return 1
         fi
-        local currentTime=$(date +%s)
+        local currentTime
+        currentTime=$(date +%s)
         if (( currentTime - start_time >= timeout )); then
             log "ERROR" "Timeout reached while monitoring task $task_id."
             return 1
@@ -638,7 +647,8 @@ function check_active_tasks() {
     local timeout=${1:-300}  # Default timeout is 300 seconds (5 minutes)
 
     log "INFO" "Checking for active tasks in application '$app_name'..."
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     local current_time
     local active_tasks
 

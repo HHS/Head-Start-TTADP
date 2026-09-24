@@ -30,8 +30,8 @@ fi
 primary_prefix="tta-smarthub"
 secondary_prefixes=()
 
-# Convert the comma-separated list into an array using substitution
-apps=(${env_list//,/ })
+# Convert the comma-separated list into an array.
+IFS=',' read -ra apps <<< "$env_list"
 
 for env in "${apps[@]}"; do
   echo "Processing environment group: $env"

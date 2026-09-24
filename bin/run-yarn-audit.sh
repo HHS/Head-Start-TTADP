@@ -43,9 +43,9 @@ if [ -f yarn-audit-known-issues ]; then
 	cat yarn-audit-known-issues | jq -s 'map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique'
 	echo
 fi
-echo Check to see if these vulnerabilities apply to production
-echo and/or if they have fixes available. If they do not have
-echo fixes and they do not apply to production, you may ignore them
+echo "Check to see if these vulnerabilities apply to production"
+echo "and/or if they have fixes available. If they do not have"
+echo "fixes and they do not apply to production, you may ignore them"
 echo
 echo To ignore these vulnerabilities, run:
 echo
