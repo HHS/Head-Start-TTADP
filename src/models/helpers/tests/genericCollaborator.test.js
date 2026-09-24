@@ -1,3 +1,4 @@
+const { UniqueConstraintError } = require('sequelize');
 const {
   createCollaborator,
   getCollaboratorRecord,
@@ -89,33 +90,31 @@ describe('GenericCollaborator', () => {
       await getCollaboratorRecord('goal', sequelize, transaction, goalId, userId, typeName);
 
       // Verify that the findOne method is called with the correct arguments
-      expect(sequelize.models.GoalCollaborator.findOne).toHaveBeenCalledWith(
-        {
-          where: {
-            goalId,
-            userId,
-          },
-          include: [
-            {
-              model: sequelize.models.CollaboratorType,
-              as: 'collaboratorType',
-              required: true,
-              where: { name: typeName },
-              attributes: ['name'],
-              include: [
-                {
-                  model: sequelize.models.ValidFor,
-                  as: 'validFor',
-                  required: true,
-                  attributes: [],
-                  where: { name: 'Goals' },
-                },
-              ],
-            },
-          ],
+      expect(sequelize.models.GoalCollaborator.findOne).toHaveBeenCalledWith({
+        where: {
+          goalId,
+          userId,
         },
-        { transaction }
-      );
+        include: [
+          {
+            model: sequelize.models.CollaboratorType,
+            as: 'collaboratorType',
+            required: true,
+            where: { name: typeName },
+            attributes: ['name'],
+            include: [
+              {
+                model: sequelize.models.ValidFor,
+                as: 'validFor',
+                required: true,
+                attributes: [],
+                where: { name: 'Goals' },
+              },
+            ],
+          },
+        ],
+        transaction,
+      });
     });
   });
 
@@ -166,7 +165,7 @@ describe('GenericCollaborator', () => {
       );
     });
 
-    it('releases the semaphore when collaborator lookup fails', async () => {
+    it('propagates errors from the initial collaborator lookup, and recovers on retry', async () => {
       const error = new Error('collaborator lookup failed');
       const sequelize = {
         models: {
@@ -184,14 +183,49 @@ describe('GenericCollaborator', () => {
       const args = ['goal', sequelize, transaction, 1, 2, 'Creator', null];
 
       await expect(findOrCreateCollaborator(...args)).rejects.toThrow(error);
-      await expect(
-        Promise.race([
-          findOrCreateCollaborator(...args),
-          new Promise((_resolve, reject) =>
-            setTimeout(() => reject(new Error('timed out waiting for semaphore')), 1000)
-          ),
-        ])
-      ).resolves.toBeDefined();
+      await expect(findOrCreateCollaborator(...args)).resolves.toBeDefined();
+    });
+
+    it('falls back to the winning row when create loses a unique constraint race', async () => {
+      const uniquenessError = new UniqueConstraintError({ message: 'duplicate key value' });
+      const winningRecord = { dataValues: { id: 1, linkBack: null } };
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(winningRecord),
+            create: jest.fn().mockRejectedValueOnce(uniquenessError),
+            update: jest.fn().mockResolvedValue({}),
+          },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
+          },
+        },
+      };
+      // The create attempt runs inside a SAVEPOINT (see findOrCreateCollaborator), so simulate
+      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
+      sequelize.transaction = jest.fn((options, callback) => callback(options.transaction));
+      const transaction = {};
+
+      const result = await findOrCreateCollaborator(
+        'goal',
+        sequelize,
+        transaction,
+        1,
+        2,
+        'Creator',
+        null
+      );
+
+      expect(sequelize.models.GoalCollaborator.update).toHaveBeenCalledWith(
+        { linkBack: null },
+        {
+          where: { id: winningRecord.dataValues.id },
+          transaction,
+          individualHooks: true,
+          returning: true,
+        }
+      );
+      expect(result).toBeDefined();
     });
   });
 

@@ -1,4 +1,4 @@
-import Semaphore from '../../lib/semaphore';
+import { UniqueConstraintError } from 'sequelize';
 
 import { syncGrantNumberLink, syncLink } from './genericLink';
 
@@ -13,51 +13,9 @@ describe('syncLink', () => {
 
   const entityId = 'entityId';
   const onCreateCallbackWhileHoldingLock = jest.fn().mockResolvedValue(true);
-  const acquireMock = jest.spyOn(Semaphore.prototype, 'acquire');
-  const releaseMock = jest.spyOn(Semaphore.prototype, 'release');
-  acquireMock.mockImplementation(() => {});
-  releaseMock.mockImplementation(() => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should acquire and release a semaphore lock', async () => {
-    model.findAll = jest.fn().mockResolvedValueOnce([{}]);
-
-    await syncLink(
-      sequelize,
-      instance,
-      options,
-      model,
-      sourceEntityName,
-      targetEntityName,
-      entityId,
-      onCreateCallbackWhileHoldingLock
-    );
-
-    expect(acquireMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
-    expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
-  });
-
-  it('should release a semaphore lock when lookup fails', async () => {
-    const error = new Error('lookup failed');
-    model.findAll = jest.fn().mockRejectedValueOnce(error);
-
-    await expect(
-      syncLink(
-        sequelize,
-        instance,
-        options,
-        model,
-        sourceEntityName,
-        targetEntityName,
-        entityId,
-        onCreateCallbackWhileHoldingLock
-      )
-    ).rejects.toThrow(error);
-
-    expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
   });
 
   it('should create a new record if one does not exist', async () => {
@@ -122,6 +80,47 @@ describe('syncLink', () => {
     );
 
     expect(model.create).not.toHaveBeenCalled();
+  });
+
+  it('propagates non-uniqueness errors from create', async () => {
+    const error = new Error('some other database error');
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(error);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).rejects.toThrow(error);
+  });
+
+  it('treats a unique constraint violation on create as a lost race, not a failure', async () => {
+    const error = new UniqueConstraintError({ message: 'duplicate key value' });
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(error);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).resolves.not.toThrow();
+
+    // Only the caller that actually wins the create race should trigger side effects.
+    expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
   });
 
   // Add more tests to cover error handling, different scenarios, etc.

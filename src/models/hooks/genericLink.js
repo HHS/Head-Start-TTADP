@@ -1,10 +1,13 @@
-import Semaphore from '../../lib/semaphore';
-
-const semaphore = new Semaphore(1);
+import { UniqueConstraintError } from 'sequelize';
 
 /**
  * Synchronizes a link between an instance and a model entity within a transaction, ensuring that
  * a new record is created if one does not already exist for the given entity ID.
+ *
+ * The target column of every "*Link" model is a primary key or otherwise unique, so this relies
+ * on the database to enforce "one link row per target entity" instead of an in-process lock:
+ * concurrent creates for the same entityId race safely because at most one insert can succeed,
+ * and the loser(s) simply treat the resulting unique-constraint violation as "already linked".
  *
  * @param {Sequelize} sequelize - The Sequelize instance to be used for the transaction.
  * @param {Object} instance - The instance that is being linked.
@@ -13,13 +16,12 @@ const semaphore = new Semaphore(1);
  * @param {string} sourceEntityName - The name of the entity field in the model.
  * @param {string} targetEntityName - The name of the entity field in the model.
  * @param {number|string} entityId - The ID of the entity to link to.
- * @param {Function} onCreateCallbackWhileHoldingLock - A callback function to be called after
- * creating a new record, while still holding the semaphore lock.
+ * @param {Function} onCreateCallbackWhileHoldingLock - A callback function invoked only when this
+ * call is the one that actually inserts the new record (never when it loses a create race).
  *
  * @returns {Promise<void>} A promise that resolves when the operation is complete.
  *
- * @throws {Error} Throws an error if acquiring the semaphore lock fails or if any database
- * operation fails.
+ * @throws {Error} Throws an error if any database operation fails.
  */
 const syncLink = async (
   sequelize,
@@ -38,42 +40,42 @@ const syncLink = async (
 
     if (!changed.includes(sourceEntityName)) return;
   }
-  // Generate a unique semaphore key based on the model name and entity ID
-  const semaphoreKey = `${model.tableName}_${entityId}`;
-  // Acquire a lock to ensure only one operation is performed on this entity at a time
-  await semaphore.acquire(semaphoreKey);
-  try {
-    // Check if there's an existing record for the given entity ID
-    const [currentRecord] = await model.findAll({
-      attributes: [targetEntityName],
-      where: { [targetEntityName]: entityId },
-      transaction: options.transaction,
-    });
 
-    // If no current record exists, create a new one
-    if (!currentRecord) {
-      await model.create(
-        {
-          [targetEntityName]: entityId,
-        },
-        {
-          transaction: options.transaction,
-        }
-      );
-      // If a callback is provided, call it while the lock is still held
-      if (onCreateCallbackWhileHoldingLock) {
-        await onCreateCallbackWhileHoldingLock(
-          sequelize,
-          instance,
-          options,
-          model,
-          targetEntityName,
-          entityId
-        );
+  // Check if there's an existing record for the given entity ID
+  const [currentRecord] = await model.findAll({
+    attributes: [targetEntityName],
+    where: { [targetEntityName]: entityId },
+    transaction: options.transaction,
+  });
+
+  if (currentRecord) return;
+
+  let created = false;
+  try {
+    await model.create(
+      {
+        [targetEntityName]: entityId,
+      },
+      {
+        transaction: options.transaction,
       }
-    }
-  } finally {
-    semaphore.release(semaphoreKey);
+    );
+    created = true;
+  } catch (error) {
+    // Another concurrent transaction/process already created the link row for this entityId.
+    if (!(error instanceof UniqueConstraintError)) throw error;
+  }
+
+  // Only the request that actually won the create race should trigger side effects.
+  if (created && onCreateCallbackWhileHoldingLock) {
+    await onCreateCallbackWhileHoldingLock(
+      sequelize,
+      instance,
+      options,
+      model,
+      targetEntityName,
+      entityId
+    );
   }
 };
 
