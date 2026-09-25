@@ -88,7 +88,7 @@ export default function StandardGoalCard({
   sortedObjectives.sort((a, b) => {
     const aTime = parseObjectiveEndDate(a.endDate)?.valueOf() ?? -Infinity;
     const bTime = parseObjectiveEndDate(b.endDate)?.valueOf() ?? -Infinity;
-    return aTime < bTime ? 1 : -1;
+    return aTime === bTime ? 0 : aTime < bTime ? 1 : -1;
   });
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const { atLeastOneObjectiveIsNotCompleted, dispatchStatusChange } =
