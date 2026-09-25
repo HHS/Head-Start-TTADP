@@ -458,6 +458,7 @@ describe('Activity Report handlers', () => {
         author: { id: 777 },
         activityReportCollaborators: [],
         id: 999999,
+        toJSON: () => ({ id: 999999 }),
       };
       activityReportAndRecipientsById.mockResolvedValue([
         reviewedReport,
@@ -487,6 +488,81 @@ describe('Activity Report handlers', () => {
         [],
         'Approver McApproverface'
       );
+      expect(handleErrors).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+    });
+    it('emails other approvers opted into immediate approval emails, excluding the acting approver (TTAHUB-5583)', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // still awaiting other approvals
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        approvers: [
+          // acting approver (id 1) must be excluded
+          { user: { id: 1 }, status: REPORT_STATUSES.APPROVED },
+          // other approvers receive email regardless of their approval status
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          { user: { id: 333 }, status: null },
+          // approvers without immediate approval emails must be excluded
+          { user: { id: 444 }, status: null },
+          { user: { id: 555 }, status: null },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+      const approverEmail = jest
+        .spyOn(mailer, 'approverReportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockImplementation(async (id) => ({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value:
+          {
+            444: USER_SETTINGS.EMAIL.VALUES.NEVER,
+            555: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+          }[id] ?? USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      }));
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approverEmail).toHaveBeenCalledTimes(1);
+      expect(approverEmail).toHaveBeenCalledWith(
+        reviewedReport,
+        [
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          { user: { id: 333 }, status: null },
+        ],
+        'Approver McApproverface'
+      );
+      for (const id of [1, 222, 333, 444, 555]) {
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          id,
+          USER_SETTINGS.EMAIL.KEYS.APPROVAL
+        );
+      }
+      expect(handleErrors).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
     });
     it('does not archive resubmission notifications until the report is fully approved', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id

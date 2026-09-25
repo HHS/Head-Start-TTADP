@@ -310,6 +310,46 @@ describe('Email Notifications', () => {
       expect(mailerLog.result).toEqual(result);
     });
 
+    it.each([true, false])(
+      'logs an approver-approved notification with success=%s',
+      async (notificationSuccess) => {
+        const approverJob = {
+          ...mockJob,
+          name: EMAIL_ACTIONS.APPROVER_APPROVED,
+          data: {
+            ...mockJob.data,
+            approverName: 'Approving Manager',
+            approversWithSettings: [
+              ...mockJob.data.approversWithSettings,
+              { user: { email: 'mockApprover2@test.gov' } },
+            ],
+          },
+        };
+        const notificationResult = notificationSuccess ? { messageId: 'approved-email' } : result;
+        const expectedLog = {
+          jobId: approverJob.id,
+          emailTo: ['mockApprover@test.gov', 'mockApprover2@test.gov'],
+          action: EMAIL_ACTIONS.APPROVER_APPROVED,
+          subject: 'Activity Report AR-04-1235: Approved by Approving Manager',
+          activityReports: [approverJob.data.report.id],
+          success: notificationSuccess,
+          result: notificationResult,
+        };
+        createMailerLogMock.mockResolvedValueOnce(expectedLog);
+        logger.error.mockClear();
+
+        const mailerLog = await logEmailNotification(
+          approverJob,
+          notificationSuccess,
+          notificationResult
+        );
+
+        expect(createMailerLogMock).toHaveBeenLastCalledWith(expectedLog);
+        expect(mailerLog).toEqual(expectedLog);
+        expect(logger.error).not.toHaveBeenCalled();
+      }
+    );
+
     it('handles missing author for an approved report', async () => {
       mockJob.name = EMAIL_ACTIONS.APPROVED;
       const auth = mockJob.data.report.author;
