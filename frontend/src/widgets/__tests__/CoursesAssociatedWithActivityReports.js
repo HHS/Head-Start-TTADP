@@ -333,14 +333,14 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
   });
 
-  it('clears all selected check boxes when sorting', async () => {
+  it('keeps selected check boxes when sorting', async () => {
     renderCoursesAssociatedWithActivityReports(mockSortData);
 
     // get the check box with the id check-all-checkboxes
     const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
 
     // check the check box
-    fireEvent.click(checkAllCheckBox);
+    userEvent.click(checkAllCheckBox);
 
     // assert all check boxes are selected
     let checkBoxes = screen.getAllByRole('checkbox');
@@ -348,15 +348,17 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(checkBox).toBeChecked();
     });
 
-    // Sort.
+    // Sort. Sorting reorders the same rows rather than changing the result set, so the
+    // selection survives it — "Export selected rows" filters the full course list by the
+    // selected ids, so the export stays correct either way.
     const sortColBtn = screen.getByRole('button', { name: /feb-22\. activate to sort ascending/i });
-    fireEvent.click(sortColBtn);
+    userEvent.click(sortColBtn);
 
-    // assert all check boxes are not selected
-    checkBoxes = screen.getAllByRole('checkbox');
-
-    checkBoxes.forEach((checkBox) => {
-      expect(checkBox).not.toBeChecked();
+    await waitFor(() => {
+      checkBoxes = screen.getAllByRole('checkbox');
+      checkBoxes.forEach((checkBox) => {
+        expect(checkBox).toBeChecked();
+      });
     });
   });
 
