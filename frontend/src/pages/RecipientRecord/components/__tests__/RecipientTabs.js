@@ -43,6 +43,29 @@ describe('RecipientTabs', () => {
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
   });
 
+  it('hides the TTA Requests tab without the feature flag', () => {
+    renderRecipientTabs();
+
+    expect(screen.queryByRole('link', { name: 'TTA Requests' })).not.toBeInTheDocument();
+  });
+
+  it('shows the TTA Requests tab second with the feature flag', () => {
+    renderRecipientTabs(null, { ...DEFAULT_USER, flags: ['recipient_tta_request'] });
+
+    const ttaRequest = screen.getByRole('link', { name: 'TTA Requests' });
+    expect(ttaRequest).toHaveAttribute('href', '/recipient-tta-records/1/region/1/tta-request');
+
+    const tabLabels = screen.getAllByRole('link').map((link) => link.textContent);
+    expect(tabLabels).toEqual([
+      'Profile',
+      'TTA Requests',
+      'RTTAPA',
+      'Communication',
+      'TTA History',
+      'Monitoring',
+    ]);
+  });
+
   it('hides the TTA Timeline tab without the feature flag', () => {
     renderRecipientTabs();
 

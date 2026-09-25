@@ -368,6 +368,14 @@ describe('Activity Report handlers', () => {
       expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+      ]);
+      // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
+      // archived once the report is fully approved.
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
       ]);
     });
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
@@ -682,7 +690,7 @@ describe('Activity Report handlers', () => {
         2,
         secondMockManager.id,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -802,7 +810,7 @@ describe('Activity Report handlers', () => {
       expect(createNotification).toHaveBeenCalledWith(
         888,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -989,7 +997,7 @@ describe('Activity Report handlers', () => {
         2,
         890,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -1046,6 +1054,7 @@ describe('Activity Report handlers', () => {
       expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
       ]);
     });
     it('sends collaborator-type in-app needs-action notifications to collaborators', async () => {
@@ -1144,7 +1153,7 @@ describe('Activity Report handlers', () => {
         }
       );
     });
-    it('sends collaborator-type in-app needs-action notifications to non-reviewing approvers', async () => {
+    it('sends approver-type in-app needs-action notifications to non-reviewing approvers', async () => {
       const mockApproverRecord = {
         id: 1,
         userId: needsActionReportRequest.session.userId,
@@ -1183,7 +1192,7 @@ describe('Activity Report handlers', () => {
       expect(createNotification).toHaveBeenCalledWith(
         890,
         999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         {
           metadata: {
             id: 999999,
@@ -1612,6 +1621,7 @@ describe('Activity Report handlers', () => {
         expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(1, [
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         ]);
       });
     });
@@ -1998,6 +2008,45 @@ describe('Activity Report handlers', () => {
 
         await submitReport(request, mockResponse);
 
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.any(Number),
+          expect.any(Number),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+          expect.any(Object)
+        );
+      });
+
+      it('notifies the creator with the revised (resubmitted) type when a collaborator resubmits', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User' },
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          99,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              author: 'Collaborator Submitter',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        // On resubmission the creator must NOT also receive the standard submitted type
         expect(createNotification).not.toHaveBeenCalledWith(
           expect.any(Number),
           expect.any(Number),

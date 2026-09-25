@@ -1,6 +1,6 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import Container from '../../../components/Container';
@@ -24,6 +24,13 @@ const CollabReportsTable = ({
   filters,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState({});
+
+  // Selections survive paging and sorting, but a filter change swaps out the dataset underneath
+  // them. "Export selected rows" posts ids without the active filters, so a selection left over
+  // from a previous filter would put a report the user can no longer see into the CSV.
+  useEffect(() => {
+    setReportCheckboxes({});
+  }, [filters]);
 
   const selectedReports = useMemo(() => {
     const ids = [];

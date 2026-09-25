@@ -1,9 +1,13 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useCallback, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
 import useWidgetExport from './useWidgetExport';
-import useWidgetSorting from './useWidgetSorting';
+import useWidgetSorting, {
+  type SortDirection,
+  type WidgetSortableRow,
+  type WidgetSortConfig,
+} from './useWidgetSorting';
 
-export const parseValue = (value) => {
+export const parseValue = (value: string): string | number => {
   const noCommasValue = value.replaceAll(',', '');
   const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
   if (Number.isNaN(parsedValue)) {
@@ -12,25 +16,35 @@ export const parseValue = (value) => {
   return parsedValue;
 };
 
-export default function useWidgetPaging(
-  headers,
-  localStorageKey,
-  defaultSortConfig,
-  perPageNumber,
-  dataToUse,
-  setDataToUse,
-  resetPagination,
-  setResetPagination,
-  loading,
-  checkBoxes,
-  exportHeading,
-  setDataPerPage,
-  stringColumns = [],
-  dateColumns = [],
-  exportName,
-  exportDataName = null,
-  keyColumns = []
-) {
+export interface UseWidgetPaging {
+  offset: number;
+  activePage: number;
+  handlePageChange: (pageNumber: number) => void;
+  requestSort: (sortBy: string, direction?: SortDirection) => void;
+  exportRows: (exportType?: 'selected' | 'all') => void;
+  sortConfig: WidgetSortConfig;
+  setSortConfig: Dispatch<SetStateAction<WidgetSortConfig>>;
+}
+
+export default function useWidgetPaging<R extends WidgetSortableRow>(
+  headers: string[],
+  localStorageKey: string,
+  defaultSortConfig: WidgetSortConfig,
+  perPageNumber: number,
+  dataToUse: R[],
+  setDataToUse: (data: R[]) => void,
+  resetPagination: boolean,
+  setResetPagination: (resetPagination: boolean) => void,
+  loading: boolean,
+  checkBoxes: Record<string | number, boolean>,
+  exportHeading: string,
+  setDataPerPage: (data: R[]) => void,
+  stringColumns: string[] = [],
+  dateColumns: string[] = [],
+  exportName?: string,
+  exportDataName: string | null = null,
+  keyColumns: string[] = []
+): UseWidgetPaging {
   const { sortConfig, setSortConfig, requestSort } = useWidgetSorting(
     localStorageKey,
     defaultSortConfig,
@@ -67,7 +81,7 @@ export default function useWidgetPaging(
   }, [offset, perPageNumber, dataToUse, setDataPerPage]);
 
   const handlePageChange = useCallback(
-    (pageNumber) => {
+    (pageNumber: number) => {
       if (!loading) {
         // copy state
         const sort = { ...sortConfig };
@@ -84,7 +98,7 @@ export default function useWidgetPaging(
   );
 
   const sort = useCallback(
-    (sortBy, direction) => {
+    (sortBy: string, direction?: SortDirection) => {
       requestSort(sortBy, direction);
       setOffset(0);
     },

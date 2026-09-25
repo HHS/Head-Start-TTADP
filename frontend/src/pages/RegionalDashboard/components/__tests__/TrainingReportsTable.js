@@ -19,6 +19,13 @@ const baseRow = {
   goalTemplates: [{ id: 1, standard: 'FEI' }],
 };
 
+const secondRow = {
+  ...baseRow,
+  id: 2,
+  eventId: 'R01-TR-1002',
+  sessionName: 'Session B',
+};
+
 const defaultSortConfig = {
   sortBy: 'Event_ID',
   direction: 'desc',
@@ -31,7 +38,7 @@ const renderTable = (overrideProps = {}) => {
   const setSortConfig = jest.fn();
   const requestSort = jest.fn();
 
-  render(
+  const table = (props) => (
     <Router history={history}>
       <TrainingReportsTable
         data={{ rows: [baseRow], count: 1 }}
@@ -39,12 +46,19 @@ const renderTable = (overrideProps = {}) => {
         requestSort={requestSort}
         sortConfig={defaultSortConfig}
         setSortConfig={setSortConfig}
-        {...overrideProps}
+        {...props}
       />
     </Router>
   );
 
-  return { history, setSortConfig, requestSort };
+  const { rerender } = render(table(overrideProps));
+
+  return {
+    history,
+    setSortConfig,
+    requestSort,
+    rerender: (props = {}) => rerender(table(props)),
+  };
 };
 
 describe('TrainingReportsTable', () => {
@@ -107,6 +121,50 @@ describe('TrainingReportsTable', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Actions for Training Reports' }));
     fireEvent.click(screen.getByRole('button', { name: 'Export selected rows' }));
     expect(getSessionReportsCSVById).toHaveBeenCalledWith(['1'], defaultSortConfig, [], '42');
+  });
+
+  it('keeps selected rows when paging through the table', () => {
+    const filters = [{ topic: 'region', condition: 'is', query: 1 }];
+    const { rerender } = renderTable({ filters, data: { rows: [baseRow], count: 2 } });
+
+    fireEvent.click(screen.getByLabelText('Select R01-TR-1001'));
+
+    // same filters, next page of the same result set
+    rerender({ filters, data: { rows: [secondRow], count: 2 } });
+    fireEvent.click(screen.getByLabelText('Select R01-TR-1002'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Actions for Training Reports' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export selected rows' }));
+
+    expect(getSessionReportsCSVById).toHaveBeenCalledWith(
+      ['1', '2'],
+      defaultSortConfig,
+      filters,
+      null
+    );
+  });
+
+  it('clears selected rows when the filters change', () => {
+    const filters = [{ topic: 'region', condition: 'is', query: 1 }];
+    const narrowedFilters = [{ topic: 'startDate', condition: 'is within', query: '2026' }];
+    const { rerender } = renderTable({ filters, data: { rows: [baseRow, secondRow], count: 2 } });
+
+    fireEvent.click(screen.getByLabelText('Select R01-TR-1001'));
+
+    // a filter that excludes the selected session swaps the dataset out from under it
+    rerender({ filters: narrowedFilters, data: { rows: [secondRow], count: 1 } });
+    expect(screen.queryByLabelText('Select R01-TR-1001')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Select R01-TR-1002'));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Actions for Training Reports' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export selected rows' }));
+
+    expect(getSessionReportsCSVById).toHaveBeenCalledWith(
+      ['2'],
+      defaultSortConfig,
+      narrowedFilters,
+      null
+    );
   });
 
   it('does not show the export menu when there are no rows', () => {

@@ -60,6 +60,7 @@ import {
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
+  createResubmittedNotificationForCreator,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -609,6 +610,9 @@ export async function reviewReport(req, res) {
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       // A resubmission notification is obsolete once the report is fully approved.
       await archiveResubmittedNotifications(Number(activityReportId));
+      // Needs-action notifications (creator/collaborator/approver) are obsolete once the
+      // report is fully approved (TTAHUB-5683 archival: AR approved).
+      await archiveNeedsActionNotifications(Number(activityReportId));
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
@@ -626,15 +630,25 @@ export async function reviewReport(req, res) {
       });
 
       await Promise.all(
-        uniq([
-          // - for approvers, excluding the one who just reviewed
-          ...approvers.map((approver) => approver.user.id),
-          // - for collaborators
-          ...activityReportCollaborators.map((collab) => collab.user.id),
-        ])
+        // - for approvers, excluding the one who just reviewed (TTAHUB-5683)
+        uniq(approvers.map((approver) => approver.user.id))
           .filter((id) => id !== userId)
           .map((id) =>
             createChangesRequestedNotification({ userId: id }, 'approver', {
+              ...reviewedReport.toJSON(),
+              activityRecipients,
+              approver: savedApprover,
+            })
+          )
+      );
+
+      await Promise.all(
+        // - for collaborators, excluding the acting approver and anyone already
+        //   notified as an approver above
+        uniq(activityReportCollaborators.map((collab) => collab?.user?.id))
+          .filter((id) => id !== userId && !approvers.some((a) => a.user.id === id))
+          .map((id) =>
+            createChangesRequestedNotification({ userId: id }, 'collaborator', {
               ...reviewedReport.toJSON(),
               activityRecipients,
               approver: savedApprover,
@@ -837,7 +851,13 @@ export async function submitReport(req, res) {
 
     // Notify creator when a collaborator (not the creator) submits the report
     if (report.author && report.author.id !== userId) {
-      await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+      // On resubmission, the creator receives the "revised report" notification instead of
+      // the standard collaborator-submitted one (TTAHUB-5677).
+      if (isResubmission) {
+        await createResubmittedNotificationForCreator(report.author.id, savedReport, user.name);
+      } else {
+        await createCreatorSubmittedNotification(report.author.id, savedReport, user.name);
+      }
 
       const creatorSetting = await userSettingOverridesById(
         report.author.id,
