@@ -34,19 +34,16 @@ describe('Node deployment configuration', () => {
     ['dev', 512, 1, 192],
     ['staging', 512, 1, 192],
     ['prod', 1024, 2, 256],
-  ])(
-    'keeps %s aggregate worker old-space within 75 percent of its container',
-    (environment, memoryMb, concurrency, maxOldSpaceMb) => {
-      const expectedMemory = memoryMb === 1024 ? '1GB' : `${memoryMb}M`;
+  ])('keeps %s aggregate worker old-space within 75 percent of its container', (environment, memoryMb, concurrency, maxOldSpaceMb) => {
+    const expectedMemory = memoryMb === 1024 ? '1GB' : `${memoryMb}M`;
 
-      expect(deploymentValue(environment, 'worker_memory')).toBe(expectedMemory);
-      expect(Number(deploymentValue(environment, 'worker_concurrency'))).toBe(concurrency);
-      expect(Number(deploymentValue(environment, 'worker_max_old_space_size'))).toBe(maxOldSpaceMb);
+    expect(deploymentValue(environment, 'worker_memory')).toBe(expectedMemory);
+    expect(Number(deploymentValue(environment, 'worker_concurrency'))).toBe(concurrency);
+    expect(Number(deploymentValue(environment, 'worker_max_old_space_size'))).toBe(maxOldSpaceMb);
 
-      const nodeProcesses = concurrency + 1;
-      expect(nodeProcesses * maxOldSpaceMb).toBeLessThanOrEqual(memoryMb * 0.75);
-    }
-  );
+    const nodeProcesses = concurrency + 1;
+    expect(nodeProcesses * maxOldSpaceMb).toBeLessThanOrEqual(memoryMb * 0.75);
+  });
 
   it('applies heap and concurrency settings only to the worker process', () => {
     const manifest = repositoryFile('manifest.yml');
