@@ -56,6 +56,7 @@ export default (sequelize, DataTypes) => {
       mfid: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: true,
       },
       finding_uuid: {
         type: DataTypes.TEXT,

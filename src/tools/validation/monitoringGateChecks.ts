@@ -16,7 +16,7 @@ const OPEN_REPORT_STATUSES = [
  * Pre-refresh gate checks over the raw Monitoring* tables and the wider Hub, run
  * before update_fact_tables. Each check self-inserts a ValidationAlert; it only
  * sets a severity ('alert' or 'critical') and is not responsible for behavior -
- * the caller acts on the result. See docs/monitoring-data-validation.md.
+ * the caller acts on the result. See docs/monitoring-validation-checks.md.
  */
 const monitoringGateChecks = async (transaction: Transaction): Promise<void> => {
   // Keep only the latest gate run's alerts (scoped through
@@ -38,22 +38,16 @@ const monitoringGateChecks = async (transaction: Transaction): Promise<void> => 
 
   await sequelize.query(
     `
-    -- findings_mass_source_deletion: over distinct findings from the rolling
-    -- last year (a window wide enough to average across seasonal / fiscal-year
-    -- swings), the fraction that are fully gone from the source - no live row
-    -- remains. alert > 25%, critical > 50%; one alert row only at/above the alert
-    -- threshold.
-    --
-    -- A findingId can span several rows (~2 per findingId on prod): jitter in the
-    -- source data sometimes makes the import treat an updated finding as a new
-    -- record, source-deleting the old row and inserting a fresh one under the same
-    -- findingId. Counting source-deleted ROWS therefore measures that import
-    -- churn, not lost findings - on healthy prod data it reads ~30-50% and spikes
-    -- in months with heavy re-import churn. So aggregate to findingId and count
-    -- only findings with NO live row left, the actual "the source dropped this
-    -- finding" signal (~1% on healthy data). This is the same finding-level
-    -- liveness test check B applies to open-AR citations. Checks sourceDeletedAt
-    -- only - this gate runs pre-refresh, before deletedAt is updated.
+    -- findings_mass_source_deletion. A findingId can span several rows:
+    -- jitter in the source data sometimes makes the import treat an updated
+    -- finding as a new record, source-deleting the old row and inserting a
+    -- fresh one under the same findingId. Counting source-deleted ROWS would
+    -- therefore measure that import churn, not lost findings - aggregating to
+    -- findingId and counting only findings with NO live row left is the
+    -- actual "the source dropped this finding" signal. Same finding-level
+    -- liveness test open_ar_findings_gone applies below. Checks
+    -- sourceDeletedAt only - this gate runs pre-refresh, before deletedAt is
+    -- updated.
     WITH finding_rows AS (
     SELECT
       mf."findingId",
