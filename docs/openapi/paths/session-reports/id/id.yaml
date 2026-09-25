@@ -20,6 +20,10 @@ put:
   tags:
     - session report
   summary: Update a session report by its ID
+  description: >-
+    Updates session data for an authorized event owner, collaborator, POC, admin,
+    or submitted-session approver. The Session summary UI exposes facilitation
+    editing to admins; this endpoint uses the general session edit authorization.
   parameters:
     - name: id
       in: path
@@ -38,6 +42,22 @@ put:
               type: integer
             data:
               type: object
+              properties:
+                facilitation:
+                  type: string
+                  description: >-
+                    Training facilitation. The form offers national_center,
+                    regional_tta_staff, and both. Legacy sessions may contain
+                    an empty string.
+  responses:
+    '201':
+      description: Updated session report
+      content:
+        application/json:
+          schema:
+            $ref: '../../../index.yaml#/components/schemas/sessionReport'
+    '403':
+      description: Not authorized to edit the session
 delete:
   tags:
     - session report

@@ -164,6 +164,9 @@ describe('SessionReportForm', () => {
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
+    fetchMock.get('/api/events/id/1?readOnly=true', {
+      data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+    });
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -196,6 +199,49 @@ describe('SessionReportForm', () => {
       },
       { timeout: 3000 }
     );
+  });
+
+  it.each([
+    ['owner', { ownerId: 1, collaboratorIds: [], pocIds: [] }],
+    ['collaborator', { ownerId: 2, collaboratorIds: [1], pocIds: [] }],
+    ['POC', { ownerId: 2, collaboratorIds: [], pocIds: [1] }],
+    ['admin', { ownerId: 2, collaboratorIds: [], pocIds: [] }],
+  ])(
+    'routes a %s through facilitation before creating an NC event session',
+    async (role, eventRoles) => {
+      history.replace('/training-report/1/session/new/');
+      fetchMock.get(
+        '/api/events/id/1?readOnly=true',
+        {
+          ...eventRoles,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        },
+        { overwriteRoutes: true }
+      );
+      const user = {
+        user: {
+          id: 1,
+          roles: [],
+          permissions: role === 'admin' ? [{ scopeId: SCOPE_IDS.ADMIN }] : [],
+        },
+      };
+
+      renderSessionForm('1', undefined, 'new', user);
+
+      await waitFor(() =>
+        expect(history.location.pathname).toBe('/training-report/1/session/new/choose-facilitation')
+      );
+      expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
+    }
+  );
+
+  it('does not create a session when the event lookup fails', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', 500, { overwriteRoutes: true });
+    await act(async () => {
+      renderSessionForm('1', undefined, 'new');
+    });
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
   });
 
   it('handles an error creating a new report', async () => {
@@ -329,6 +375,56 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
     expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
   });
+
+  it.each([
+    ['', 'national_center'],
+    ['national_center', 'both'],
+    ['both', 'regional_tta_staff'],
+  ])(
+    'admin saves facilitation from "%s" to "%s" and restores approver options',
+    async (initial, next) => {
+      const url = join(sessionsUrl, 'id', '1');
+      let session = {
+        id: 1,
+        eventId: '1',
+        regionId: 1,
+        data: { ...istAndPocFields, facilitation: initial },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventId: '1',
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        },
+      };
+      fetchMock.get(url, () => session);
+      fetchMock.put(url, (_url, options) => {
+        const { data } = JSON.parse(options.body);
+        session = { ...session, data, updatedAt: new Date().toISOString() };
+        return session;
+      });
+      const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+      const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue(initial);
+      userEvent.selectOptions(field, next);
+      userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+      expect(session.data.facilitation).toBe(next);
+      expect(session.data.sessionName).toBe(istAndPocFields.sessionName);
+      expect(session.data.collabComplete).toBe(istAndPocFields.collabComplete);
+
+      unmount();
+      renderSessionForm('1', 'review', '1', adminUser);
+      await screen.findByRole('option', { name: 'Approver Name' });
+      expect(screen.getByRole('combobox', { name: /approving manager/i })).toBeInTheDocument();
+    }
+  );
 
   it('saves on save and continue', async () => {
     const url = join(sessionsUrl, 'id', '1');

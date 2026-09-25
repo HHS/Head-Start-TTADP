@@ -1,6 +1,6 @@
 # Training Report Session Permissions
 
-This document describes the permission model for editing and deleting sessions within Training Reports.
+This document describes session editing, deletion, facilitation correction, and approver selection within Training Reports. Frontend workflow restrictions and backend authorization are described separately below.
 
 ## Overview
 
@@ -11,8 +11,8 @@ Training Report sessions have a complex permission model based on user roles, se
 ### Owner (Creator)
 - The user who created the training event (`event.ownerId`)
 - Can create sessions
-- Can submit sessions (sets `collabComplete`)
-- **For EDIT permissions**: Treated identically to collaborators (same blocking rules apply)
+- Can submit sessions (sets `collabComplete` in the standard flow; Regional owners use `ownerComplete` in the National Center facilitation flow)
+- **For EDIT permissions**: Shares facilitation restrictions with collaborators, but uses a separate completion flag in the National Center facilitation flow
 - **For DELETE permissions**: More permissive than collaborators - NOT blocked by regional facilitation rules
   - Owners can delete sessions with `regional_tta_staff` or `both` facilitation
   - Collaborators cannot delete those same sessions in Regional PD with National Centers events
@@ -33,7 +33,7 @@ Training Report sessions have a complex permission model based on user roles, se
 
 ### Approver
 - User assigned to approve the session (`session.approverId`)
-- Can only edit after session is submitted (when `pocComplete && collabComplete && approverId`)
+- Can edit as approver after the session is submitted (see completion flags below)
 - Cannot edit when status is `NEEDS_ACTION` (returned for corrections)
 - Cannot delete sessions (unless also owner/POC/collaborator)
 
@@ -41,7 +41,8 @@ Training Report sessions have a complex permission model based on user roles, se
 - Users with admin scope (`scopeId: 2`)
 - Can edit any session until the event is complete
 - Can delete any session until the event is complete
-- Overrides all other permission rules
+- Overrides role-based edit and approver-selection restrictions
+- Can correct training facilitation on Session summary, immediately after Session name
 
 ## Permission Matrix
 
@@ -55,7 +56,7 @@ Training Report sessions have a complex permission model based on user roles, se
 | POC | Yes** | Approver only | No | No |
 | Approver | No | Yes | No | No |
 
-\* Subject to `collabComplete` status and facilitation rules
+\* Subject to the applicable `ownerComplete` / `collabComplete` flag and facilitation rules
 \** Subject to `pocComplete` status and event organizer rules
 
 ### Delete Permissions
@@ -84,6 +85,10 @@ Training Report sessions have a complex permission model based on user roles, se
 | Approver Only | No |
 
 **Note:** POCs can create sessions in addition to Admins, Owners, and Collaborators.
+
+For Regional PD events with National Centers, every creation entry point must collect a valid facilitation choice before creating the session. The event card links directly to `SessionReportFacilitation`. The generic `/training-report/:trainingReportId/session/new/` route (used by alerts and direct links) first reads the event and redirects to `choose-facilitation` without creating a session. This applies to owners, collaborators, POCs, and admins. Regional-only events continue through the generic creation route without the facilitation step.
+
+`POST /api/session-reports` rejects missing, blank, or unrecognized facilitation with HTTP 400 for Regional PD events with National Centers. Accepted values are `national_center`, `regional_tta_staff`, and `both`.
 
 ## Event Organizer Types
 
@@ -142,19 +147,19 @@ The event organizer **Regional PD Event (with National Centers)** combined with 
 
 To keep these two submissions independent, the Regional owner's submit is tracked via the dedicated `ownerComplete` flag (mirroring `collabComplete`'s shape: `ownerComplete`, `ownerCompleteId`, `ownerCompleteDate`). This prevents the owner's submit from setting `collabComplete = true`, which would otherwise block the NC collaborator from editing the Session summary they still own.
 
-- **Submission semantics** (for new-flow sessions): `submitted = approverId && ownerComplete && collabComplete`. POC is not involved. Outside the flow, the existing `pocComplete && collabComplete` semantics are unchanged.
+- **Submission semantics**: `submitted = approverId && collabComplete && (ownerComplete || pocComplete)` in the National Center facilitation flow. Owner-created sessions use `ownerComplete`; POC-created sessions can use `pocComplete`. Outside this flow, the frontend and backend policy require `approverId && collabComplete && pocComplete`.
 - **Edit lockout**: the Regional owner is locked out by `ownerComplete && !needsAction` (independently from the NC collaborator's `collabComplete` gate), the same way `collabComplete` locks editors today.
 - **Admin submits**: a non-POC admin submit in the flow sets both `ownerComplete = true` and `collabComplete = true` so the session can transition to `submitted`.
 
 Backend pieces that participate in this semantics:
 
 - `src/models/sessionReportPilot.js` — `submitted` virtual accepts either `pocComplete` or `ownerComplete` alongside `collabComplete`.
-- `src/policies/event.js` — `isSubmitted()` mirrors the model virtual.
+- `src/policies/event.js` — `isSubmitted()` delegates to `src/services/eventFlow.ts`, which accepts `ownerComplete` only in the National Center facilitation flow. The model virtual accepts either completion flag without checking the event organizer/facilitation, so stale flags can produce different results after changing workflows.
 - `src/services/event.ts` — alert checker picks `ownerComplete` for the owner side in the flow and skips the POC-side check there.
 
 ## Owner vs Collaborator: Key Differences
 
-While owners use the `collabComplete` flag (like collaborators) and share edit restrictions, there is an important difference in **delete permissions**:
+Owners and collaborators share facilitation-based edit restrictions, with separate completion flags in the National Center facilitation flow. There is also a difference in **delete permissions**:
 
 | Scenario | Owner Can Delete? | Collaborator Can Delete? |
 |----------|------------------|-------------------------|
@@ -168,7 +173,7 @@ While owners use the `collabComplete` flag (like collaborators) and share edit r
 The owner is the event creator and has ultimate responsibility for the training event. While they follow the same edit workflow as collaborators (blocked from editing sessions when it's not their turn), they retain the ability to delete sessions regardless of who is currently facilitating.
 
 This means:
-- An owner can always clean up or remove sessions they created
+- An owner can remove sessions while neither the session nor event is complete
 - Collaborators can only delete sessions they are responsible for facilitating
 
 ## Status-Based Rules
@@ -181,40 +186,71 @@ This means:
 ### Completion Flags
 - `pocComplete` - POC has finished their section
 - `collabComplete` - Collaborator/Owner has finished their section (standard flow); the **NC collaborator** in the flow
-- `ownerComplete` - The Regional **owner** has finished their section in the  flow (Regional PD w/ NC + Trainer = National Centers). See [`ownerComplete`](#ownercomplete-regional-pd-w-nc--trainer--national-centers-only) above for full semantics.
-- `submitted` - Standard flow: `pocComplete && collabComplete` are true. National center facilitator flow with regional event owner: `ownerComplete && collabComplete` are true. Both require an approver to be assigned.
+- `ownerComplete` - The Regional **owner** has finished their section in the National Center facilitation flow (Regional PD w/ NC + Trainer = National Centers). See [`ownerComplete`](#ownercomplete-regional-pd-w-nc--trainer--national-centers-only) above for full semantics.
+- `submitted` - Standard flow: `pocComplete && collabComplete` are true. National Center facilitation flow: `(ownerComplete || pocComplete) && collabComplete` is true. Both require an approver to be assigned; see the model/policy distinction above.
+
+## Editing Training Facilitation
+
+`SessionReportFacilitation` collects facilitation when creating a session for a Regional PD event with National Centers. That page creates a new session; it does not edit an existing one.
+
+On an existing session's **Session summary** page, admins (`scopeId: 2`) see a **Training facilitation** dropdown immediately after **Session name**, with the same choices:
+
+- National Center (`national_center`)
+- Regional TTA staff (`regional_tta_staff`)
+- Both (National Center and Regional TTA staff) (`both`)
+
+Use **Save draft** or **Save and continue** to persist a correction. Non-admin users retain a hidden field and cannot change facilitation through the form. The update API uses the general session edit authorization and does not separately restrict changes to facilitation. Choosing facilitation during initial creation remains available to all authorized creators.
+
+The field uses existing session access and save rules: completed events cannot be opened for editing, and the normal save handlers do not save completed sessions. A facilitation correction changes trainer/approver options and which roles can access the session. It does not automatically clear existing trainers, the assigned approver, or completion flags. Review those values when correcting facilitation, especially when switching between regional and National Center workflows.
+
+### Empty Approver List
+
+For Regional PD events with National Centers, blank or unrecognized facilitation produces **no staff candidates for trainers or approvers**, even when both trainer API requests return users. The trainer field still offers its separate Other option. Page completion and `collabComplete` do not populate facilitation. An admin can repair it using the dropdown above, save, and review the approving manager options. Do not infer facilitation from the event organizer alone.
+
+Even with valid regional facilitation, the list can be empty after filtering: if the only regional managers are the event owner and the current non-admin user, both are excluded.
+
+Previously, the alert's generic Create a session link bypassed facilitation selection, and the API accepted a session without that field. This was a possible source of missing values; it does not establish the history of any particular session. Creation now checks the event organizer before posting, with API validation as a backstop. Existing blank sessions still need an admin correction.
 
 ## Approver Selection Rules
 
-When selecting an approving manager for a session:
+### Who Can Select an Approver?
 
-1. **Current user filter**: The person filling out the session form cannot select themselves as an approver (unless they are an admin)
-2. **Event owner filter**: The event owner cannot be selected as an approver by anyone (prevents conflict of interest)
-3. **Role requirements**: Approvers must have ECM, GSM, or TTAC role for Regional TTA events
+`useCanSelectApprover` controls visibility of the Approving manager field on the submission form:
 
-### Implementation
+| User context | Dropdown allowed? |
+|--------------|-------------------|
+| Admin | Yes, overrides the restrictions below |
+| Regional/non-NC owner | No for `national_center`; otherwise subject to the POC rule if also a POC |
+| NC owner | Yes, unless also a POC and blocked by the POC rule |
+| POC | Only for `regional_tta_staff` or `both` |
+| Collaborator who is neither owner nor POC | Yes |
 
-The approver filtering logic is in `frontend/src/pages/SessionForm/components/Submit.js`:
+These checks do not grant session edit access. For example, in Regional PD events with National Centers and regional/both facilitation, owner-only and collaborator-only users cannot normally edit the session; the POC selects the approver. The Needs action and approval views also use different components from the initial submission form.
 
-```javascript
-// filter current user out of approver list
-if (!isAdmin) {
-  approverOptions = approverOptions.filter((a) => a.id !== user.id);
-}
+### Who Can Be Selected?
 
-// filter out event owner from approver list
-const eventOwnerId = event?.ownerId;
-if (eventOwnerId) {
-  approverOptions = approverOptions.filter((a) => a.id !== eventOwnerId);
-}
-```
+`useSessionApprovers` derives candidates from `useEventAndSessionStaff`:
+
+- Regional TTA events without National Centers: regional trainers with ECM, GSM, or TTAC roles.
+- Regional PD events with National Centers, facilitated by regional staff or both: regional trainers with ECM, GSM, or TTAC roles.
+- Regional PD events with National Centers, facilitated only by National Centers: National Center users; no additional ECM/GSM/TTAC role requirement.
+- Regional PD events with blank or unrecognized facilitation: no candidates.
+
+The current user is excluded unless they are an admin. The event owner (`event.ownerId`) is always excluded, including for admins. Being allowed to choose an approver does not make a user eligible to approve their own session.
+
+See [User roles and selection criteria](user-selection-criteria.md) for candidate sources and filters.
 
 ## Key Implementation Files
 
 - `frontend/src/hooks/useSessionCardPermissions.js` - Determines edit/delete button visibility
 - `frontend/src/hooks/useSessionFormRoleAndPages.js` - Determines which session form pages are accessible based on role, event organizer, facilitation, and submission state
 - `frontend/src/pages/SessionForm/index.js` - Form field access and submission logic
-- `frontend/src/pages/SessionForm/components/Submit.js` - Approver selection and filtering
+- `frontend/src/pages/SessionForm/pages/sessionSummary.js` - Admin facilitation correction field
+- `frontend/src/pages/SessionForm/components/Submit.js` - Approver selection UI
+- `frontend/src/hooks/useCanSelectApprover.js` - Approver dropdown visibility
+- `frontend/src/hooks/useSessionApprovers.ts` - Approver candidate filtering
+- `frontend/src/hooks/useEventAndSessionStaff.js` - Trainer candidates by event organizer and facilitation
+- `src/routes/sessionReports/handlers.ts` - Required facilitation at creation for Regional PD with National Centers
 - `src/policies/event.js` - Backend authorization (includes `canEditSession()`)
 
 ## Backend Authorization
@@ -227,16 +263,24 @@ canEditSession() {
 }
 ```
 
-Where `isAuthor()` checks if the user is the event owner (`event.ownerId`).
+Where `isAuthor()` checks if the user is the event owner (`event.ownerId`). This is broader than the frontend edit workflow: the approver dropdown visibility, candidate filters, and admin-only facilitation field are not enforced by this policy.
 
 ## Testing
 
-Tests are located in:
-- `frontend/src/hooks/__tests__/useSessionCardPermissions.js`
-- `frontend/src/pages/TrainingReports/components/__tests__/SessionCard.js`
+Relevant tests:
 
-Run tests with:
+- `frontend/src/hooks/__tests__/useSessionCardPermissions.js`
+- `frontend/src/hooks/__tests__/useCanSelectApprover.js`
+- `frontend/src/hooks/__tests__/useSessionApprovers.tsx`
+- `frontend/src/hooks/__tests__/useEventAndSessionStaff.js`
+- `frontend/src/pages/SessionForm/pages/__tests__/sessionSummary.js`
+- `frontend/src/pages/SessionForm/__tests__/index.js`
+- `frontend/src/pages/SessionReportFacilitation/__tests__/index.js`
+- `src/routes/sessionReports/handlers.test.js`
+
+Run focused tests with:
+
 ```bash
-yarn --cwd frontend test -- useSessionCardPermissions
-yarn --cwd frontend test -- SessionCard
+yarn --cwd frontend test --watch=false --watchAll=false --runInBand --runTestsByPath src/pages/SessionForm/pages/__tests__/sessionSummary.js src/pages/SessionForm/__tests__/index.js
+node node_modules/jest/bin/jest.js src/routes/sessionReports/handlers.test.js --runInBand
 ```
