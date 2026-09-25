@@ -51,7 +51,24 @@ const displayDate = Joi.string()
   .custom(validateDisplayDate, `${DATE_FORMAT} date validation`)
   .messages({ 'any.invalid': `"{{#label}}" must be a ${DATE_FORMAT} date` });
 const looseString = Joi.string().allow('', null);
-const stringArray = Joi.array().items(Joi.string().allow(''));
+
+/**
+ * Array-valued fields accept '' and null as "nothing selected", the same way
+ * `looseString` accepts them for text.
+ *
+ * The TR form registers its multi-selects through react-hook-form `Controller`s
+ * with `defaultValue=""` (frontend/src/pages/TrainingReportForm/pages/
+ * eventSummary.js), so a field the user never touched round-trips the empty
+ * string rather than [], and rows saved that way before this schema existed
+ * carry '' or null in the blob. Declared once and applied to every array field
+ * rather than field by field, so a multi-select nobody has exercised yet cannot
+ * 400 the way `additionalStates` did in tests/e2e/training-report.spec.ts.
+ */
+const looseArray = (items: Joi.Schema) => Joi.array().items(items).allow('', null);
+
+const stringArray = looseArray(Joi.string().allow(''));
+const regionArray = looseArray(Joi.alternatives().try(Joi.string(), Joi.number()));
+const idArray = looseArray(Joi.number().integer().positive());
 
 /**
  * Enum values are asserted only for `status` and `eventOrganizer`, which are
@@ -63,11 +80,7 @@ const stringArray = Joi.array().items(Joi.string().allow(''));
 const eventDataSchema = Joi.object({
   eventName: looseString,
   eventOrganizer: Joi.string()
-    .valid(
-      REGIONAL_PD_WITH_NATIONAL_CENTERS,
-      REGIONAL_TTA_NO_NATIONAL_CENTERS,
-      'IST TTA/Visit'
-    )
+    .valid(REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS, 'IST TTA/Visit')
     .allow('', null),
   eventIntendedAudience: looseString,
   startDate: displayDate,
@@ -82,7 +95,7 @@ const eventDataSchema = Joi.object({
     .allow('', null),
   eventSubmitted: Joi.boolean(),
   additionalStates: stringArray,
-  additionalRegions: Joi.array().items(Joi.alternatives().try(Joi.string(), Joi.number())),
+  additionalRegions: regionArray,
 
   // Free-form subtrees. Joi.any() rather than Joi.object() because stripUnknown
   // recurses into object subschemas and would hollow these out.
@@ -113,8 +126,8 @@ const eventDataSchema = Joi.object({
 // the extras are declared and stripped rather than left to unknown-key handling.
 const eventBodyBase = {
   ownerId: Joi.number().integer().positive().required(),
-  pocIds: Joi.array().items(Joi.number().integer().positive()).allow(null),
-  collaboratorIds: Joi.array().items(Joi.number().integer().positive()),
+  pocIds: idArray,
+  collaboratorIds: idArray,
   regionId: Joi.number().integer().positive().required(),
 
   id: Joi.any().strip(),

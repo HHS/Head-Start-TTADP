@@ -157,6 +157,76 @@ describe('events schema validation middleware', () => {
     expect(req.body.data.additionalRegions).toEqual(['2', 3]);
   });
 
+  /**
+   * TTAHUB regression, caught by tests/e2e/training-report.spec.ts: the TR form's
+   * multi-selects use `defaultValue=""`, so a field the user never touched
+   * round-trips '' and every save 400'd. Asserted over every array field rather
+   * than the one the e2e run happened to exercise.
+   */
+  it.each(['reasons', 'targetPopulations', 'additionalStates', 'additionalRegions'])(
+    'accepts an empty string for an untouched %s',
+    (field) => {
+      const req = { body: validBody({ ...validData, [field]: '' }) };
+      const { res } = buildRes();
+      const next = jest.fn();
+
+      checkUpdateEventBody(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(req.body.data[field]).toBe('');
+    }
+  );
+
+  it.each(['reasons', 'targetPopulations', 'additionalStates', 'additionalRegions'])(
+    'accepts null for a %s a legacy row never set',
+    (field) => {
+      const req = { body: validBody({ ...validData, [field]: null }) };
+      const { res } = buildRes();
+      const next = jest.fn();
+
+      checkUpdateEventBody(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    }
+  );
+
+  // The same allowance covers the top-level id arrays, which the TR form sends
+  // as `pocIds || null` from frontend/src/pages/TrainingReportForm/index.js.
+  it.each(['pocIds', 'collaboratorIds'])('accepts an empty string or null for %s', (field) => {
+    const req = { body: { ...validBody(), [field]: null } };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateEventBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('still rejects a non-empty string for an array field', () => {
+    const req = { body: validBody({ ...validData, additionalStates: 'Rhode Island' }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateEventBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('still rejects a wrongly typed item inside an array field', () => {
+    const req = { body: validBody({ ...validData, reasons: [1] }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateEventBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   it('rejects an unrecognized status with a 400', () => {
     const req = { body: validBody({ ...validData, status: 'Bogus' }) };
     const { res, send } = buildRes();

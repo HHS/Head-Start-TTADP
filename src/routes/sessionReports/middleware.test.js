@@ -1,4 +1,4 @@
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
 import {
   checkCreateSessionBody,
@@ -195,6 +195,67 @@ describe('sessionReports schema validation middleware', () => {
 
     expect(req.body.data.duration).toBe('1.5');
     expect(req.body.data.numberOfParticipants).toBe('10');
+  });
+
+  // Sessions inherit additionalStates from the event, so they carry the same
+  // empty string the TR form sends for an untouched multi-select. Asserted over
+  // one field of each array helper (stringArray, optionList, nextSteps,
+  // regionArray) rather than only the ones an e2e run happened to exercise.
+  it.each([
+    'objectiveTopics',
+    'objectiveTrainers',
+    'ttaType',
+    'language',
+    'additionalStates',
+    'additionalRegions',
+    'objectiveResources',
+    'courses',
+    'files',
+    'recipients',
+    'participants',
+    'supportingAttachments',
+    'trainers',
+    'goalTemplates',
+    'recipientNextSteps',
+    'specialistNextSteps',
+  ])('accepts an empty string or null for %s', (field) => {
+    const empty = { body: body({ ...istData, [field]: '' }) };
+    const nulled = { body: body({ ...istData, [field]: null }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(empty, res, next);
+    checkUpdateSessionBody(nulled, res, next);
+
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(empty.body.data[field]).toBe('');
+    expect(nulled.body.data[field]).toBeNull();
+  });
+
+  it('still rejects a non-empty string for an array field', () => {
+    const req = { body: body({ ...istData, objectiveTopics: 'Coaching' }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  // The approver's "request changes" path writes REPORT_STATUSES.NEEDS_ACTION
+  // into data.status, and sessions in the database carry it.
+  it('accepts the needs_action status a returned session carries', () => {
+    const req = { body: body({ ...istData, status: REPORT_STATUSES.NEEDS_ACTION }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.body.data.status).toBe(REPORT_STATUSES.NEEDS_ACTION);
   });
 
   it('rejects an unrecognized delivery method with a 400', () => {

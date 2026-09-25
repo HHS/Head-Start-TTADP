@@ -1,4 +1,4 @@
-import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
@@ -32,11 +32,20 @@ const displayDate = Joi.string()
   .custom(validateDisplayDate, `${DATE_FORMAT} date validation`)
   .messages({ 'any.invalid': `"{{#label}}" must be a ${DATE_FORMAT} date` });
 const looseString = Joi.string().allow('', null);
-const stringArray = Joi.array().items(Joi.string().allow(''));
+
+// Every array-valued field accepts '' and null as "nothing selected" — see the
+// looseArray note in src/routes/events/middleware.ts. Session blobs inherit
+// values such as `additionalStates` from the event, so they carry the same
+// empty strings, and the session form registers its own multi-selects the same
+// way the TR form does.
+const looseArray = (items: Joi.Schema) => Joi.array().items(items).allow('', null);
+
+const stringArray = looseArray(Joi.string().allow(''));
+const regionArray = looseArray(Joi.alternatives().try(Joi.string(), Joi.number()));
 // Form number inputs submit strings. convert is off, so accept both rather than
 // silently coercing a stored value to a different JSON type.
 const numberish = Joi.alternatives().try(Joi.number(), Joi.string().allow('')).allow(null);
-const nextSteps = Joi.array().items(
+const nextSteps = looseArray(
   Joi.object({
     note: Joi.string().allow(''),
     completeDate: Joi.string().allow(''),
@@ -44,7 +53,7 @@ const nextSteps = Joi.array().items(
 );
 // Option-shaped values ({ value, label }) and richer association payloads vary
 // enough that asserting their inner shape would reject valid saves.
-const optionList = Joi.array().items(Joi.any());
+const optionList = looseArray(Joi.any());
 
 /**
  * The allowlist is the union of `defaultKeys`, `istKeys` and `pocKeys` in
@@ -64,8 +73,15 @@ export const sessionDataSchema = Joi.object({
   eventDisplayId: looseString,
   eventName: looseString,
   eventOwner: numberish,
+  /**
+   * Sessions store REPORT_STATUSES.NEEDS_ACTION here alongside the training
+   * report statuses: the approver's "request changes" path in
+   * frontend/src/pages/SessionForm/index.js (onReview) writes it, the fetch
+   * path reads it back, and rows in the database carry it. Leaving it out
+   * would 400 every later save of a session that was sent back for changes.
+   */
   status: Joi.string()
-    .valid(...Object.values(TRAINING_REPORT_STATUSES))
+    .valid(...Object.values(TRAINING_REPORT_STATUSES), REPORT_STATUSES.NEEDS_ACTION)
     .allow('', null),
   pageState: Joi.any(),
 
@@ -128,7 +144,7 @@ export const sessionDataSchema = Joi.object({
   reviewStatus: looseString,
   approvalStatus: looseString,
   additionalStates: stringArray,
-  additionalRegions: Joi.array().items(Joi.alternatives().try(Joi.string(), Joi.number())),
+  additionalRegions: regionArray,
 
   // Destructured out of `data` by updateSession and written to columns and join
   // tables. Stripping these would silently stop the approver, trainer and
