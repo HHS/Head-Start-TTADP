@@ -99,7 +99,7 @@ test('can fill out and complete a training and session report', async ({ page })
     .nth(2)
     .fill('TTA');
 
-  await page.locator('select.usa-select').selectOption('Introducing');
+  await page.getByLabel('Support type *').selectOption('Introducing');
   await blur(page);
   await page.waitForLoadState('networkidle'); // wait for autosave to complete
   // Click Save and continue.
