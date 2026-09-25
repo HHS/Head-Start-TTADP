@@ -115,11 +115,12 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } }
+    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } },
+    setIsAppLoading = jest.fn()
   ) =>
     render(
       <Router history={history}>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
           <UserContext.Provider value={user}>
             <SessionForm
               match={{
@@ -167,6 +168,10 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/events/id/1?readOnly=true', {
       data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
     });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -225,13 +230,26 @@ describe('SessionReportForm', () => {
           permissions: role === 'admin' ? [{ scopeId: SCOPE_IDS.ADMIN }] : [],
         },
       };
+      const setIsAppLoading = jest.fn();
+      const redirect = jest.spyOn(history, 'replace');
 
-      renderSessionForm('1', undefined, 'new', user);
+      renderSessionForm('1', undefined, 'new', user, setIsAppLoading);
 
       await waitFor(() =>
         expect(history.location.pathname).toBe('/training-report/1/session/new/choose-facilitation')
       );
       expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
+      const clearLoaderCall = setIsAppLoading.mock.calls.findIndex(
+        ([loading]) => loading === false
+      );
+      const facilitationRedirectCall = redirect.mock.calls.findIndex(
+        ([path]) => path === '/training-report/1/session/new/choose-facilitation'
+      );
+      expect(clearLoaderCall).not.toBe(-1);
+      expect(facilitationRedirectCall).not.toBe(-1);
+      expect(setIsAppLoading.mock.invocationCallOrder[clearLoaderCall]).toBeLessThan(
+        redirect.mock.invocationCallOrder[facilitationRedirectCall]
+      );
     }
   );
 

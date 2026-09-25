@@ -275,6 +275,8 @@ export default function SessionForm({ match }) {
         if (
           event.data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
         ) {
+          // This form unmounts on redirect, so its loading effect cannot clear the app loader.
+          setIsAppLoading(false);
           history.replace(`/training-report/${trainingReportId}/session/new/choose-facilitation`);
           return;
         }
@@ -328,6 +330,7 @@ export default function SessionForm({ match }) {
     isAdminUser,
     user.id,
     isNcUser,
+    setIsAppLoading,
   ]);
 
   useEffect(() => {
