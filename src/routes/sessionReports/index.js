@@ -1,6 +1,7 @@
 import express from 'express';
 import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
+import { checkCreateSessionBody, checkUpdateSessionBody } from './middleware';
 import {
   createHandler,
   deleteHandler,
@@ -22,8 +23,8 @@ router.get(
   transactionWrapper(getParticipants)
 );
 router.get('/eventId/:eventId', transactionWrapper(getHandler, `${context} /eventId/:eventId`));
-router.post('/', transactionWrapper(createHandler, context));
-router.put('/id/:id', transactionWrapper(updateHandler, context));
+router.post('/', checkCreateSessionBody, transactionWrapper(createHandler, context));
+router.put('/id/:id', checkUpdateSessionBody, transactionWrapper(updateHandler, context));
 router.delete('/id/:id', transactionWrapper(deleteHandler, context));
 router.get('/groups', transactionWrapper(getGroups));
 

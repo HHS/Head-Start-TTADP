@@ -26,6 +26,8 @@ We will adopt Joi as the standard library for backend schema validation across t
 - **Existing routes**: Will be retrofitted with Joi schemas incrementally, prioritized by risk and usage frequency.
 - **Validation failure behavior**: Requests that fail schema validation will be rejected with a `400 Bad Request` response containing a descriptive error message. The request will not reach the route handler.
 - **Schema location**: Schemas should be colocated with the route, service, or model they validate, following the existing pattern in `src/models/schemas/`.
+- **Unknown keys**: For routes that accept a free-form JSONB payload (currently the Training Report event and session forms), unknown keys are **stripped** (`stripUnknown: true`) rather than rejected. Rejecting would break clients that round-trip a whole API response back to the server (`completeEvent` / `suspendEvent` / `resumeEvent` in `frontend/src/fetchers/event.js`) and would block users on legacy rows carrying keys that predate the allowlist. Type and enum violations on *known* keys are still rejected with a 400.
+- **Coercion**: Validation for these routes runs with `convert: false`. Because the validated value is written back to `req.body` and then persisted into JSONB, Joi's default coercion would silently change the stored type of a field.
 
 No alternatives were formally evaluated. Joi was the clear choice given its existing footprint in the codebase, its maturity, and the team's existing familiarity with it.
 
