@@ -3,6 +3,7 @@
 import axios from 'axios';
 import fs from 'mz/fs';
 import { Op, QueryTypes } from 'sequelize';
+import xml2js from 'xml2js';
 import { logger } from '../logger';
 import db, {
   ActivityRecipient,
@@ -923,6 +924,50 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(recipient.updatedAt).not.toEqual(dbRecipient.updatedAt);
     expect(recipient.name).toBe('Multi ID Agency');
   });
+
+  it.each([
+    ['XML nil', { $: { 'xsi:nil': 'true' } }],
+    ['empty', ''],
+    ['missing', undefined],
+  ])(
+    'preserves an existing name when the agency name is %s and imports other name changes',
+    async (_label, name) => {
+      await Recipient.bulkCreate([
+        { id: 1335, name: 'Existing recipient name' },
+        { id: 1119, name: 'Previous organization name' },
+      ]);
+
+      const readFile = fs.readFile.bind(fs);
+      const parser = new xml2js.Parser({ explicitArray: false });
+      const agencies = await parser.parseStringPromise(await readFile('./temp/agency.xml'));
+      const agency = agencies.agencies.agency.find((record) => record.agency_id === '1335');
+      if (name === undefined) {
+        delete agency.agency_name;
+      } else {
+        agency.agency_name = name;
+      }
+      const agencyXml = new xml2js.Builder().buildObject(agencies);
+      const readFileSpy = jest
+        .spyOn(fs, 'readFile')
+        .mockImplementation((file, ...args) =>
+          file === './temp/agency.xml'
+            ? Promise.resolve(Buffer.from(agencyXml))
+            : readFile(file, ...args)
+        );
+
+      try {
+        await processFiles();
+
+        const preservedRecipient = await Recipient.findByPk(1335);
+        const renamedRecipient = await Recipient.findByPk(1119);
+        expect(preservedRecipient.name).toBe('Existing recipient name');
+        expect(renamedRecipient.name).toBe('Multi ID Agency');
+        expect(await Recipient.count({ where: { id: [1335, 1119] } })).toBe(2);
+      } finally {
+        readFileSpy.mockRestore();
+      }
+    }
+  );
 
   it('should update an existing grant if it exists in smarthub', async () => {
     await Recipient.findOrCreate({

@@ -327,13 +327,13 @@ describe('activityReport notification helpers', () => {
       );
     });
 
-    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for approvers', async () => {
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_APPROVER for approvers', async () => {
       await createChangesRequestedNotification({ userId: 12 }, 'approver', reportWithApprover);
 
       expect(mockCreateNotification).toHaveBeenCalledWith(
         12,
         reportWithApprover.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
       );
     });
@@ -353,7 +353,7 @@ describe('activityReport notification helpers', () => {
         {
           userId: 12,
           creatorOrCollaborator: 'approver' as const,
-          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         },
       ];
 
@@ -441,13 +441,14 @@ describe('activityReport notification helpers', () => {
   });
 
   describe('archiveNeedsActionNotifications', () => {
-    it('archives both needs-action notification types for the report', async () => {
+    it('archives all needs-action notification types for the report', async () => {
       await archiveNeedsActionNotifications(42);
 
       expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
       expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
       ]);
     });
   });
