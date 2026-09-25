@@ -395,6 +395,26 @@ describe('session report detail loading', () => {
     expect(result.get(1)?.durationHours).toBe(2.5);
   });
 
+  it.each([
+    [' Guest presenter ', ['Guest presenter', 'Hub Trainer, ECS']],
+    [' Hub Trainer, ECS ', ['Hub Trainer, ECS']],
+    ['   ', ['Hub Trainer, ECS']],
+  ])(
+    'includes and deduplicates other trainers (%j) alongside linked trainers',
+    async (otherTrainers, values) => {
+      jest.spyOn(SessionReportPilot, 'findAll').mockResolvedValue([
+        {
+          id: 1,
+          data: { otherTrainers },
+          trainers: [{ name: 'Hub Trainer', roles: [{ name: 'ECS' }] }],
+        },
+      ] as never);
+
+      const result = await SESSION_REPORT_TIMELINE_SOURCE.populate([1], params);
+      expect(result.get(1)?.byline).toEqual({ label: 'Trainers', values });
+    }
+  );
+
   it('omits the Participating grants detail when no grant resolves for the recipient', async () => {
     jest
       .spyOn(SessionReportPilot, 'findAll')

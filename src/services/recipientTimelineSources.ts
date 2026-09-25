@@ -953,7 +953,7 @@ async function populateSessionReports(
       .filter((name): name is string => !!name)
       .sort((left, right) => left.localeCompare(right));
     const otherTrainers = communicationText(data.otherTrainers);
-    const trainerNames = trainers.length ? trainers : otherTrainers ? [otherTrainers] : [];
+    const trainerNames = uniqueSorted([...trainers, otherTrainers]);
 
     const standards = uniqueSorted(
       (session.goalTemplates ?? []).map((goalTemplate) => goalTemplate.standard)
