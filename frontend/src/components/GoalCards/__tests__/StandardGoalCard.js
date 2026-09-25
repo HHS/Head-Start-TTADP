@@ -93,15 +93,15 @@ describe('StandardGoalCard', () => {
   ) => {
     render(
       <Router history={history}>
-        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: () => { } }}>
           <UserContext.Provider value={{ user }}>
             <StandardGoalCard
               goal={defaultGoal}
               recipientId="1"
               regionId="1"
-              showCloseSuspendGoalModal={() => {}}
-              performGoalStatusUpdate={() => {}}
-              handleGoalCheckboxSelect={() => {}}
+              showCloseSuspendGoalModal={() => { }}
+              performGoalStatusUpdate={() => { }}
+              handleGoalCheckboxSelect={() => { }}
               isChecked={false}
               // eslint-disable-next-line react/jsx-props-no-spreading
               {...props}
@@ -584,6 +584,87 @@ describe('StandardGoalCard', () => {
     renderStandardGoalCard({ ...DEFAULT_PROPS }, goalsWithMultipleObjectives);
     expect(screen.getByText(/last tta/i)).toBeInTheDocument();
     expect(screen.getByText(/2023-01-01/i)).toBeInTheDocument();
+  });
+
+  it('parses MM/DD/YYYY objective end dates without a moment deprecation warning', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const goalWithSlashDate = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: '04/14/2026',
+          reasons: ['Reason 1'],
+          status: OBJECTIVE_STATUS.COMPLETE,
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+        {
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: '01/01/2020',
+          reasons: ['Reason 2'],
+          status: OBJECTIVE_STATUS.COMPLETE,
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({ ...DEFAULT_PROPS }, goalWithSlashDate);
+    const lastTtaValue = screen.getByText(/last tta/i).nextElementSibling;
+    expect(lastTtaValue).toHaveTextContent('04/14/2026');
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('handles missing or invalid objective end dates without throwing or displaying an incorrect date', () => {
+    const goalWithInvalidDates = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: 'not-a-date',
+          reasons: ['Reason 1'],
+          status: OBJECTIVE_STATUS.COMPLETE,
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+        {
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: null,
+          reasons: ['Reason 2'],
+          status: OBJECTIVE_STATUS.COMPLETE,
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    expect(() =>
+      renderStandardGoalCard({ ...DEFAULT_PROPS }, goalWithInvalidDates)
+    ).not.toThrow();
+    const lastTtaValue = screen.getByText(/last tta/i).nextElementSibling;
+    expect(lastTtaValue).toHaveTextContent('');
   });
 
   it('properly shows objectives', async () => {
