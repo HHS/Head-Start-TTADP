@@ -13,6 +13,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import BackLink from '../../components/BackLink';
 import Navigator from '../../components/Navigator';
+import { eventById } from '../../fetchers/event';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
@@ -268,6 +269,18 @@ export default function SessionForm({ match }) {
       }
 
       try {
+        // Alert links and direct URLs can reach this route without the event card.
+        // Resolve the organizer before creating anything so NC events cannot skip facilitation.
+        const event = await eventById(trainingReportId, true);
+        if (
+          event.data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+        ) {
+          // This form unmounts on redirect, so its loading effect cannot clear the app loader.
+          setIsAppLoading(false);
+          history.replace(`/training-report/${trainingReportId}/session/new/choose-facilitation`);
+          return;
+        }
+
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
@@ -317,6 +330,7 @@ export default function SessionForm({ match }) {
     isAdminUser,
     user.id,
     isNcUser,
+    setIsAppLoading,
   ]);
 
   useEffect(() => {

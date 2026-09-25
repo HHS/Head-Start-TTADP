@@ -4,7 +4,7 @@
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SUPPORT_TYPES } from '@ttahub/common';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import NetworkContext from '../../../../NetworkContext';
 import { mockRSSData } from '../../../../testHelpers';
+import UserContext from '../../../../UserContext';
 import sessionSummary, { isPageComplete } from '../sessionSummary';
 
 const mockData = (files) => ({
@@ -209,6 +210,7 @@ describe('sessionSummary', () => {
     const RenderSessionSummary = ({
       formValues = defaultFormValues,
       additionalData = defaultAdditionalData,
+      user = { id: 1, permissions: [] },
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
@@ -222,27 +224,29 @@ describe('sessionSummary', () => {
             setAppLoadingText: jest.fn(),
           }}
         >
-          <MemoryRouter>
-            <FormProvider {...hookForm}>
-              <NetworkContext.Provider value={{ connectionActive: true }}>
-                {sessionSummary.render(
-                  { ...defaultAdditionalData, ...additionalData },
-                  defaultFormValues,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveDraft,
-                  jest.fn(),
-                  false,
-                  'key',
-                  jest.fn(),
-                  () => (
-                    <></>
-                  )
-                )}
-              </NetworkContext.Provider>
-            </FormProvider>
-          </MemoryRouter>
+          <UserContext.Provider value={{ user }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.render(
+                    { ...defaultAdditionalData, ...additionalData },
+                    defaultFormValues,
+                    1,
+                    false,
+                    jest.fn(),
+                    onSaveDraft,
+                    jest.fn(),
+                    false,
+                    'key',
+                    jest.fn(),
+                    () => (
+                      <></>
+                    )
+                  )}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       );
     };
@@ -290,6 +294,35 @@ describe('sessionSummary', () => {
 
     afterEach(async () => {
       fetchMock.restore();
+    });
+
+    it('lets admins change facilitation immediately after session name', async () => {
+      render(
+        <RenderSessionSummary user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }} />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue('regional_tta_staff');
+      screen.getByRole('textbox', { name: /session name/i }).focus();
+      userEvent.tab();
+      expect(field).toHaveFocus();
+
+      userEvent.selectOptions(field, 'national_center');
+      expect(field).toHaveValue('national_center');
+      userEvent.selectOptions(field, 'both');
+      expect(field).toHaveValue('both');
+    });
+
+    it('preserves facilitation without an editable field for non-admin users', async () => {
+      render(<RenderSessionSummary />);
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
+      expect(document.querySelector('input[name="facilitation"]')).toHaveValue(
+        'regional_tta_staff'
+      );
     });
 
     it('renders session summary', async () => {

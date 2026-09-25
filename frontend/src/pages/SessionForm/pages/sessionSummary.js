@@ -35,6 +35,8 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
 import { isEmptyRichText, sanitizeRichText } from '../../../utils';
 import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
 import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
@@ -54,6 +56,8 @@ const DEFAULT_RESOURCE = {
 
 const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
+  const isAdminUser = isAdmin(user);
 
   const goalTemplates = useGoalTemplates([]);
 
@@ -260,6 +264,26 @@ const SessionSummary = ({ datePickerKey, event }) => {
           />
         </FormItem>
       </div>
+
+      {isAdminUser ? (
+        <FormItem label="Training facilitation" name="facilitation" htmlFor="facilitation" required>
+          <Dropdown
+            id="facilitation"
+            name="facilitation"
+            required
+            inputRef={register({ required: 'Select who is providing the training' })}
+          >
+            <option value="" disabled>
+              Select who is providing the training
+            </option>
+            <option value="national_center">National Center</option>
+            <option value="regional_tta_staff">Regional TTA staff</option>
+            <option value="both">Both (National Center and Regional TTA staff)</option>
+          </Dropdown>
+        </FormItem>
+      ) : (
+        <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
+      )}
 
       <div className="maxw-mobile">
         <FormItem
@@ -626,7 +650,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
           ))}
         </Dropdown>
       </div>
-      <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
     </>
   );
 };
