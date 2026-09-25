@@ -26,6 +26,7 @@ This guide is the source of truth for local command usage. For common operations
 | Run Playwright utils tests | `yarn test:e2e:utils` |
 | Run Cucumber BDD tests | `yarn test:bdd` |
 | Run lint (pass path or default to all files) | `yarn lint` |
+| Run ShellCheck on tracked Bash scripts | `yarn lint:shell` |
 | Auto-fix lint and formatting | `yarn lint:fix` |
 | Build backend TypeScript | `yarn build` |
 | Build frontend production bundle | `yarn --cwd frontend build` |

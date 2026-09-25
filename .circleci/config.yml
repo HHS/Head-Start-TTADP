@@ -494,7 +494,10 @@ jobs:
     - run:
         name: Run lint
         command: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
           yarn lint:ci
+          yarn lint:shell
           cat reports/lint.json
     - run:
         name: Audit frontend packages
