@@ -22,6 +22,16 @@ import { goalPropTypes } from './constants';
 import FlagStatus from './FlagStatus';
 import ObjectiveCard from './ObjectiveCard';
 
+// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
+const parseObjectiveEndDate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = moment(value, [moment.ISO_8601, 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+  return parsed.isValid() ? parsed : null;
+};
+
 export default function StandardGoalCard({
   goal,
   recipientId,
@@ -75,7 +85,11 @@ export default function StandardGoalCard({
     fromApi: false,
   });
   const sortedObjectives = [...localObjectives];
-  sortedObjectives.sort((a, b) => (new Date(a.endDate) < new Date(b.endDate) ? 1 : -1));
+  sortedObjectives.sort((a, b) => {
+    const aTime = parseObjectiveEndDate(a.endDate)?.valueOf() ?? -Infinity;
+    const bTime = parseObjectiveEndDate(b.endDate)?.valueOf() ?? -Infinity;
+    return aTime < bTime ? 1 : -1;
+  });
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const { atLeastOneObjectiveIsNotCompleted, dispatchStatusChange } =
     useObjectiveStatusMonitor(objectives);
@@ -109,11 +123,14 @@ export default function StandardGoalCard({
   const [deleteError, setDeleteError] = useState(false);
 
   const lastTTA = useMemo(() => {
-    const latestDate = objectives.reduce(
-      (prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate),
-      ''
-    );
-    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : '';
+    const latestDate = objectives.reduce((prev, curr) => {
+      const currDate = parseObjectiveEndDate(curr.endDate);
+      if (!currDate) {
+        return prev;
+      }
+      return !prev || currDate.isAfter(prev) ? currDate : prev;
+    }, null);
+    return latestDate ? latestDate.format(DATE_DISPLAY_FORMAT) : '';
   }, [objectives]);
   const history = useHistory();
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
