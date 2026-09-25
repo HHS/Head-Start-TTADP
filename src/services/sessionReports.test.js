@@ -1575,6 +1575,128 @@ describe('session reports service', () => {
     });
   });
 
+  describe('getSessionReports pagination stability', () => {
+    // Every session under an event shares that event's eventId, so sorting by Event ID -- the
+    // default for the training reports table -- is nothing but ties. Dates, topics and goals tie
+    // just as freely. Without a unique tiebreaker Postgres may order those ties differently for
+    // each LIMIT/OFFSET query, which served the same session on more than one page and hid
+    // others entirely.
+    let tiedEvent;
+    let tiedSessions = [];
+    const tiedEventLongId = 'R01-PD-99801';
+
+    beforeAll(async () => {
+      tiedEvent = await createEvent({
+        ownerId: 99_801,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: tiedEventLongId,
+          eventName: 'Tied Sort Values Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      // enough rows that each page is a differently sized sort
+      tiedSessions = await Promise.all(
+        ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) =>
+          createSession({
+            eventId: tiedEvent.id,
+            data: {
+              sessionName: `Tied Session ${letter}`,
+              startDate: '02/01/2024',
+              endDate: '02/02/2024',
+              objectiveTopics: ['Shared Topic'],
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          })
+        )
+      );
+    });
+
+    afterAll(async () => {
+      await Promise.all(tiedSessions.map((session) => destroySession(session.id)));
+      await destroyEvent(tiedEvent.id);
+    });
+
+    const pageThrough = async (sortBy, sortDir, limit) => {
+      const offsets = tiedSessions
+        .map((_session, index) => index * limit)
+        .filter((offset) => offset < tiedSessions.length);
+
+      const pages = await Promise.all(
+        offsets.map((offset) =>
+          getSessionReports({
+            sortBy,
+            sortDir,
+            limit,
+            offset,
+            'eventId.ctn': [tiedEventLongId],
+          })
+        )
+      );
+
+      return pages.map((page) => page.rows.map((row) => row.id));
+    };
+
+    it('breaks ties on session id', async () => {
+      const ascending = await getSessionReports({
+        sortBy: 'Event_ID',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      });
+      const ascendingIds = ascending.rows.map((row) => row.id);
+
+      expect(ascendingIds.length).toBe(tiedSessions.length);
+      expect(ascendingIds).toEqual([...ascendingIds].sort((a, b) => a - b));
+
+      const descending = await getSessionReports({
+        sortBy: 'Event_ID',
+        sortDir: 'DESC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      });
+
+      expect(descending.rows.map((row) => row.id)).toEqual([...ascendingIds].reverse());
+    });
+
+    it('returns the same order for identical queries', async () => {
+      const query = {
+        sortBy: 'Session_start_date',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      };
+
+      const [first, second] = await Promise.all([
+        getSessionReports(query),
+        getSessionReports(query),
+      ]);
+
+      expect(first.rows.map((row) => row.id)).toEqual(second.rows.map((row) => row.id));
+    });
+
+    it('returns each session exactly once when paging through tied event ids', async () => {
+      const ids = (await pageThrough('Event_ID', 'DESC', 2)).flat();
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect([...ids].sort((a, b) => a - b)).toEqual(
+        tiedSessions.map((session) => session.id).sort((a, b) => a - b)
+      );
+    });
+
+    it('returns each session exactly once when paging through tied start dates', async () => {
+      const ids = (await pageThrough('Session_start_date', 'ASC', 3)).flat();
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect([...ids].sort((a, b) => a - b)).toEqual(
+        tiedSessions.map((session) => session.id).sort((a, b) => a - b)
+      );
+    });
+  });
+
   describe('getSessionReportsByRecipient', () => {
     let recipient;
     let otherRecipient;

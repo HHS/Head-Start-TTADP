@@ -502,7 +502,19 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
   // Use the requested sort column or default to id descending
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
-  return [[...sortEntry, sortDir]];
+
+  if (sortEntry === sortMap.id) {
+    return [[...sortEntry, sortDir]];
+  }
+
+  // Every session under an event shares that event's eventId, and dates, topics and goals tie
+  // just as freely. A single-column ORDER BY leaves Postgres free to order tied rows differently
+  // between the LIMIT/OFFSET queries backing each page, so one session can land on two pages
+  // while another never shows at all. The primary key pins the order.
+  return [
+    [...sortEntry, sortDir],
+    [sequelize.literal('"SessionReportPilot"."id"'), sortDir],
+  ];
 }
 
 const sessionReportAttributes = [
