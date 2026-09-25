@@ -58,8 +58,9 @@ export default function HorizontalTableWidget({
     }
   }, [menuWidthOffset]);
 
-  // State for select all check box.
-  const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
+  // Select all reflects only the rows on the current page, so it stays accurate as the
+  // user pages through a selection that spans more than one page.
+  const allCheckBoxesChecked = data.length > 0 && data.every((d) => checkboxes[d.id]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
   const { hiddenSortIndicators } = sortConfig;
@@ -107,34 +108,28 @@ export default function HorizontalTableWidget({
     );
   };
 
-  // When reports are updated, make sure all checkboxes are unchecked
+  // Seed rows we haven't seen yet as unchecked, but keep selections made on other pages.
+  // Replacing the map here dropped them the moment the page changed, which broke exporting
+  // a selection that spans pages. Same cross-page semantics as useCheckboxSelection.
   useEffect(() => {
-    setAllCheckBoxesChecked(false);
-    setCheckboxes(makeCheckboxes(data, false));
+    setCheckboxes((previous) => {
+      const unseen = data.filter((d) => previous[d.id] === undefined);
+      if (!unseen.length) {
+        return previous;
+      }
+      return { ...previous, ...makeCheckboxes(unseen, false) };
+    });
   }, [data, setCheckboxes]);
 
   const toggleSelectAll = (event) => {
     const { checked } = parseCheckboxEvent(event);
-
-    if (checked === true) {
-      setCheckboxes(makeCheckboxes(data, true));
-      setAllCheckBoxesChecked(true);
-    } else {
-      setCheckboxes(makeCheckboxes(data, false));
-      setAllCheckBoxesChecked(false);
-    }
+    // Only touch the current page's rows so selections on other pages survive.
+    setCheckboxes({ ...checkboxes, ...makeCheckboxes(data, checked === true) });
   };
 
   const handleReportSelect = (event) => {
     const { checked, value } = parseCheckboxEvent(event);
-    if (checked === true) {
-      setCheckboxes({ ...checkboxes, [value]: true });
-    } else {
-      if (allCheckBoxesChecked) {
-        setAllCheckBoxesChecked(false);
-      }
-      setCheckboxes({ ...checkboxes, [value]: false });
-    }
+    setCheckboxes({ ...checkboxes, [value]: checked === true });
   };
 
   const hasActionsColumn = data.some((r) => r.actions);
