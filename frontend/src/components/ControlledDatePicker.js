@@ -84,7 +84,7 @@ export default function ControlledDatePicker({
     }
 
     // Call any additional validation logic.
-    const customValidationMsg = additionalValidation();
+    const customValidationMsg = additionalValidation(newValue);
     if (customValidationMsg) {
       return customValidationMsg;
     }

@@ -1,6 +1,7 @@
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, ErrorMessage, FormGroup, Label, Textarea } from '@trussworks/react-uswds';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
@@ -13,7 +14,7 @@ import { isValidDate } from '../../../../utils';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
-export default function NextStepsRepeater({ name, ariaName, recipientType, required }) {
+export default function NextStepsRepeater({ name, ariaName, recipientType, required, afterDate }) {
   const [heights, setHeights] = useState([]);
 
   const { register, control, getValues, errors, setError } = useFormContext();
@@ -149,7 +150,7 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                 {required && <Req announce />}
               </Label>
               {showCompleteDateError(errors, name, index) ? (
-                <ErrorMessage>Enter a valid date</ErrorMessage>
+                <ErrorMessage>{errors[name][index].completeDate.message}</ErrorMessage>
               ) : null}
               <div
                 className={
@@ -165,6 +166,16 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                   value={item.completeDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
                   required={required}
+                  additionalValidation={(completeDate) => {
+                    if (!afterDate) {
+                      return '';
+                    }
+
+                    return (
+                      completeDate.isAfter(moment(afterDate, 'MM/DD/YYYY')) ||
+                      'Next step date must be after the session start date'
+                    );
+                  }}
                 />
               </div>
             </FormGroup>
@@ -187,9 +198,11 @@ NextStepsRepeater.propTypes = {
   ariaName: PropTypes.string.isRequired,
   recipientType: PropTypes.string,
   required: PropTypes.bool,
+  afterDate: PropTypes.string,
 };
 
 NextStepsRepeater.defaultProps = {
   recipientType: '',
   required: true,
+  afterDate: '',
 };

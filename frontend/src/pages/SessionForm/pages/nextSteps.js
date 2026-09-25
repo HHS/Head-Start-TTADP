@@ -10,37 +10,44 @@ import { getNextStepsSections } from '../../ActivityReport/Pages/nextSteps';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { nextStepsFields } from '../constants';
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next Steps</title>
-    </Helmet>
-    <IndicatesRequiredField />
-    <Fieldset
-      id="specialist-field-set"
-      className="smart-hub--report-legend margin-top-4"
-      legend="Specialist&apos;s next steps"
-    >
-      <NextStepsRepeater
-        id="specialist-next-steps-repeater-id"
-        name="specialistNextSteps"
-        ariaName="Specialist Next Steps"
-      />
-    </Fieldset>
-    <Fieldset
-      id="recipient-field-set"
-      className="smart-hub--report-legend margin-top-3"
-      legend={"Recipient's next steps"}
-    >
-      <NextStepsRepeater
-        id="recipient-next-steps-repeater-id"
-        name="recipientNextSteps"
-        ariaName={"Recipient's next steps"}
-        recipientType="recipient"
-      />
-    </Fieldset>
-  </>
-);
+const NextSteps = () => {
+  const { watch } = useFormContext();
+  const sessionStartDate = watch('startDate');
+
+  return (
+    <>
+      <Helmet>
+        <title>Next Steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <Fieldset
+        id="specialist-field-set"
+        className="smart-hub--report-legend margin-top-4"
+        legend="Specialist&apos;s next steps"
+      >
+        <NextStepsRepeater
+          id="specialist-next-steps-repeater-id"
+          name="specialistNextSteps"
+          ariaName="Specialist Next Steps"
+          afterDate={sessionStartDate}
+        />
+      </Fieldset>
+      <Fieldset
+        id="recipient-field-set"
+        className="smart-hub--report-legend margin-top-3"
+        legend={"Recipient's next steps"}
+      >
+        <NextStepsRepeater
+          id="recipient-next-steps-repeater-id"
+          name="recipientNextSteps"
+          ariaName={"Recipient's next steps"}
+          recipientType="recipient"
+          afterDate={sessionStartDate}
+        />
+      </Fieldset>
+    </>
+  );
+};
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
@@ -61,7 +68,8 @@ const ReviewSection = () => {
 export const isPageComplete = (hookForm) => {
   const formData = hookForm.getValues();
 
-  const { specialistNextSteps, recipientNextSteps } = formData;
+  const { specialistNextSteps, recipientNextSteps, startDate } = formData;
+  const sessionStartDate = moment(startDate, 'MM/DD/YYYY');
 
   if (!specialistNextSteps || !recipientNextSteps) {
     return false;
@@ -71,10 +79,15 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
+  if (!sessionStartDate.isValid()) {
+    return false;
+  }
+
   if (
-    ![...specialistNextSteps, ...recipientNextSteps].every(
-      (step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid()
-    )
+    ![...specialistNextSteps, ...recipientNextSteps].every((step) => {
+      const completeDate = moment(step.completeDate, 'MM/DD/YYYY');
+      return step.note && completeDate.isValid() && completeDate.isAfter(sessionStartDate);
+    })
   ) {
     return false;
   }

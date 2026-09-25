@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -51,5 +52,28 @@ describe('NextStepsRepeater', () => {
   it('shows required asterisk when required is true', () => {
     renderRepeater({ required: true });
     expect(screen.getByLabelText('Step 1 *')).toBeInTheDocument();
+  });
+
+  it('requires next-step dates to be after the session start date', async () => {
+    renderRepeater({ afterDate: '01/01/2024' });
+
+    const dateInput = screen.getByRole('textbox', {
+      name: /when do you anticipate completing step 1/i,
+    });
+
+    userEvent.type(dateInput, '01/01/2024');
+    fireEvent.blur(dateInput);
+    expect(
+      await screen.findByText('Next step date must be after the session start date')
+    ).toBeVisible();
+
+    act(() => userEvent.clear(dateInput));
+    userEvent.type(dateInput, '01/02/2024');
+    fireEvent.blur(dateInput);
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Next step date must be after the session start date')
+      ).not.toBeInTheDocument();
+    });
   });
 });
