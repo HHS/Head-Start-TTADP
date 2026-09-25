@@ -15,7 +15,6 @@ This guide is the source of truth for local command usage. For common operations
 | Run frontend tests | `yarn --cwd frontend test` |
 | Run frontend tests (CI coverage) | `yarn --cwd frontend test:ci` |
 | Run frontend lint | `yarn --cwd frontend lint` |
-| Start backend + frontend + worker locally | `yarn start:stack:local` |
 | Start backend from build output | `yarn start:be` |
 | Start backend with debugger | `yarn start:debug` |
 | Run backend tests | `yarn test` |
