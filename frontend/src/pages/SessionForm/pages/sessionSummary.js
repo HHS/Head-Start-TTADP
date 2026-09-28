@@ -17,7 +17,7 @@ import { Helmet } from 'react-helmet';
 import { Controller, useController, useFieldArray, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import AppLoadingContext from '../../../AppLoadingContext';
-import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Drawer from '../../../components/Drawer';
@@ -57,7 +57,10 @@ const DEFAULT_RESOURCE = {
 const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
-  const isAdminUser = isAdmin(user);
+  // Facilitation only drives the workflow on Regional PD events with National Centers.
+  const canEditFacilitation =
+    isAdmin(user) &&
+    event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
 
   const goalTemplates = useGoalTemplates([]);
 
@@ -274,7 +277,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      {isAdminUser ? (
+      {canEditFacilitation ? (
         <FormItem label="Training facilitation" name="facilitation" htmlFor="facilitation" required>
           <Dropdown
             id="facilitation"

@@ -271,9 +271,11 @@ export default function SessionForm({ match }) {
       try {
         // Alert links and direct URLs can reach this route without the event card.
         // Resolve the organizer before creating anything so NC events cannot skip facilitation.
-        const event = await eventById(trainingReportId, true);
+        // Users who can create sessions but not read the event fall through; the create API
+        // still requires facilitation on NC events.
+        const event = await eventById(trainingReportId, true).catch(() => null);
         if (
-          event.data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+          event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
         ) {
           // This form unmounts on redirect, so its loading effect cannot clear the app loader.
           setIsAppLoading(false);

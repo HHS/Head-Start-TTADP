@@ -207,6 +207,16 @@ describe('sessionSummary', () => {
       },
     };
 
+    const ncAdditionalData = {
+      event: {
+        regionId: 1,
+        data: {
+          regionId: 1,
+          eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        },
+      },
+    };
+
     const RenderSessionSummary = ({
       formValues = defaultFormValues,
       additionalData = defaultAdditionalData,
@@ -301,7 +311,10 @@ describe('sessionSummary', () => {
 
     it('lets admins change facilitation immediately after session name', async () => {
       render(
-        <RenderSessionSummary user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }} />
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
+        />
       );
 
       const field = await screen.findByRole('combobox', { name: /training facilitation/i });
@@ -321,6 +334,7 @@ describe('sessionSummary', () => {
       render(
         <RenderSessionSummary
           user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
           formValues={{
             ...defaultFormValues,
             approverId: 7,
@@ -344,6 +358,17 @@ describe('sessionSummary', () => {
       expect(hookForm.getValues('ownerComplete')).toBe(false);
       expect(hookForm.getValues('collabComplete')).toBe(false);
       expect(hookForm.getValues('pocComplete')).toBe(false);
+    });
+
+    it('hides the facilitation dropdown from admins on events without National Centers', async () => {
+      render(
+        <RenderSessionSummary user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }} />
+      );
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
     });
 
     it('preserves facilitation without an editable field for non-admin users', async () => {

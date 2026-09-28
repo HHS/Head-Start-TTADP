@@ -86,7 +86,7 @@ Training Report sessions have a complex permission model based on user roles, se
 
 **Note:** POCs can create sessions in addition to Admins, Owners, and Collaborators.
 
-For Regional PD events with National Centers, every creation entry point must collect a valid facilitation choice before creating the session. The event card links directly to `SessionReportFacilitation`. The generic `/training-report/:trainingReportId/session/new/` route (used by alerts and direct links) first reads the event and redirects to `choose-facilitation` without creating a session. This applies to owners, collaborators, POCs, and admins. Regional-only events continue through the generic creation route without the facilitation step.
+For Regional PD events with National Centers, every creation entry point must collect a valid facilitation choice before creating the session. The event card links directly to `SessionReportFacilitation`. The generic `/training-report/:trainingReportId/session/new/` route (used by alerts and direct links) first reads the event and redirects to `choose-facilitation` without creating a session. If the user cannot read the event, the route falls through to the create API, which still rejects NC sessions without facilitation. This applies to owners, collaborators, POCs, and admins. Regional-only events continue through the generic creation route without the facilitation step.
 
 `POST /api/session-reports` rejects missing, blank, or unrecognized facilitation with HTTP 400 for Regional PD events with National Centers. Accepted values are `national_center`, `regional_tta_staff`, and `both`.
 
@@ -193,7 +193,7 @@ This means:
 
 `SessionReportFacilitation` collects facilitation when creating a session for a Regional PD event with National Centers. That page creates a new session; it does not edit an existing one.
 
-On an existing session's **Session summary** page, admins (`scopeId: 2`) see a **Training facilitation** dropdown immediately after **Session name**, with the same choices:
+On an existing session's **Session summary** page for a Regional PD event with National Centers, admins (`scopeId: 2`) see a **Training facilitation** dropdown immediately after **Session name**, with the same choices:
 
 - National Center (`national_center`)
 - Regional TTA staff (`regional_tta_staff`)

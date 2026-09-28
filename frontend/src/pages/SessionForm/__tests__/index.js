@@ -253,13 +253,29 @@ describe('SessionReportForm', () => {
     }
   );
 
-  it('does not create a session when the event lookup fails', async () => {
-    fetchMock.get('/api/events/id/1?readOnly=true', 500, { overwriteRoutes: true });
+  it('still creates a session when the user cannot read the event', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', 403, { overwriteRoutes: true });
+    fetchMock.post(sessionsUrl, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: '1',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
     await act(async () => {
       renderSessionForm('1', undefined, 'new');
     });
     expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
-    expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
   });
 
   it('handles an error creating a new report', async () => {
