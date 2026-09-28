@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment';
-import { DATE_FORMAT } from '../../constants';
+import { DATE_FORMAT, DISPLAY_DATE_FORMATS } from '../../constants';
 import { auditLogger } from '../../logger';
 import { FACILITATION_NATIONAL_CENTER } from '../../services/eventFlow';
 
@@ -20,7 +20,7 @@ const validationOptions = {
 
 // See the validateDisplayDate note in src/routes/events/middleware.ts.
 const validateDisplayDate = (value: string, helpers: Joi.CustomHelpers) => {
-  if (!moment(value, DATE_FORMAT, true).isValid()) {
+  if (!moment(value, DISPLAY_DATE_FORMATS, true).isValid()) {
     return helpers.error('any.invalid');
   }
 

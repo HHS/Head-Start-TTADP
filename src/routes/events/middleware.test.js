@@ -262,6 +262,37 @@ describe('events schema validation middleware', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  /**
+   * TTAHUB-2763: ControlledDatePicker submits the entered text unchanged, and
+   * frontend validation (frontend/src/utils.js isValidDate) accepts these
+   * shorter forms, so a user who types them passes the form and got a 400 here.
+   */
+  it.each(['1/2/2026', '01/2/2026', '1/02/2026', '01/02/26'])(
+    'accepts the typed date format %s',
+    (startDate) => {
+      const req = { body: validBody({ ...validData, startDate }) };
+      const { res } = buildRes();
+      const next = jest.fn();
+
+      checkUpdateEventBody(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(req.body.data.startDate).toBe(startDate);
+    }
+  );
+
+  it('still rejects an impossible date in a shorter accepted format', () => {
+    const req = { body: validBody({ ...validData, startDate: '13/45/26' }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateEventBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   it('rejects a missing data blob with a 400 rather than letting it 500', () => {
     const req = { body: { ownerId: 1, regionId: 1, collaboratorIds: [] } };
     const { res } = buildRes();

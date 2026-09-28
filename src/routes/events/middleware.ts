@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment';
-import { DATE_FORMAT } from '../../constants';
+import { DATE_FORMAT, DISPLAY_DATE_FORMATS } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -34,12 +34,15 @@ const validationOptions = {
 /**
  * The TR forms store dates inside the blob in DATE_FORMAT (MM/DD/YYYY); the
  * authoritative values live in dedicated columns and this is the display mirror.
- * Validated with moment rather than a pattern so an impossible date such as
- * 13/45/2026 is rejected. Mirrors the validateTimezone custom validator in
- * src/routes/activityReports/middleware.ts.
+ * ControlledDatePicker submits whatever the user typed unchanged, and frontend
+ * validation (frontend/src/utils.js isValidDate) accepts single-digit month/day
+ * and two-digit years too, so this checks the same DISPLAY_DATE_FORMATS list
+ * rather than only DATE_FORMAT. Validated with moment rather than a pattern so
+ * an impossible date such as 13/45/2026 is still rejected. Mirrors the
+ * validateTimezone custom validator in src/routes/activityReports/middleware.ts.
  */
 const validateDisplayDate = (value: string, helpers: Joi.CustomHelpers) => {
-  if (!moment(value, DATE_FORMAT, true).isValid()) {
+  if (!moment(value, DISPLAY_DATE_FORMATS, true).isValid()) {
     return helpers.error('any.invalid');
   }
 

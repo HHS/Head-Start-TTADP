@@ -256,6 +256,37 @@ describe('sessionReports schema validation middleware', () => {
     expect(req.body.data.status).toBe(REPORT_STATUSES.NEEDS_ACTION);
   });
 
+  /**
+   * TTAHUB-2763: ControlledDatePicker submits the entered text unchanged, and
+   * frontend validation (frontend/src/utils.js isValidDate) accepts these
+   * shorter forms, so a user who types them passes the form and got a 400 here.
+   */
+  it.each(['1/2/2026', '01/2/2026', '1/02/2026', '01/02/26'])(
+    'accepts the typed date format %s',
+    (startDate) => {
+      const req = { body: body({ ...istData, startDate }) };
+      const { res } = buildRes();
+      const next = jest.fn();
+
+      checkUpdateSessionBody(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(req.body.data.startDate).toBe(startDate);
+    }
+  );
+
+  it('still rejects an impossible date in a shorter accepted format', () => {
+    const req = { body: body({ ...istData, startDate: '13/45/26' }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   it('rejects an unrecognized delivery method with a 400', () => {
     const req = { body: body({ ...pocData, deliveryMethod: 'telepathy' }) };
     const { res, send } = buildRes();

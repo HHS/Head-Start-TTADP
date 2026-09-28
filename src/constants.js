@@ -32,6 +32,26 @@ const IMPORT_DATA_STATUSES = {
 
 const DATE_FORMAT = 'MM/DD/YYYY';
 
+/**
+ * Every MM/DD/YYYY-shaped variant a user can type into a form date picker
+ * (frontend/src/utils.js SUPPORTED_DATE_FORMATS) and that
+ * src/scopes/trainingReports/dateUtils.js already knows how to sort, via the
+ * '^\d{1,2}/\d{1,2}/\d{2}$' / '^\d{1,2}/\d{1,2}/\d{4}$' regexes there. Kept in
+ * sync with both: a format added to one list without the other either 400s a
+ * value the date picker will happily submit, or lets through a value that
+ * downstream date sorting silently treats as NULL.
+ */
+const DISPLAY_DATE_FORMATS = [
+  'MM/DD/YYYY',
+  'M/D/YYYY',
+  'M/DD/YYYY',
+  'MM/D/YYYY',
+  'MM/DD/YY',
+  'M/D/YY',
+  'M/DD/YY',
+  'MM/D/YY',
+];
+
 const REPORTS_PER_PAGE = 10;
 const RECIPIENTS_PER_PAGE = 12;
 const GOALS_PER_PAGE = 5;
@@ -456,6 +476,7 @@ module.exports = {
   IMPORT_STATUSES,
   IMPORT_DATA_STATUSES,
   DATE_FORMAT,
+  DISPLAY_DATE_FORMATS,
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
