@@ -150,6 +150,7 @@ export const istKeys = [
 
 export const pocKeys = [
   ...defaultKeys,
+  'startDate',
   'isIstVisit',
   'regionalOfficeTta',
   'recipients',
