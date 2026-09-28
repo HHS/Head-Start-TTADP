@@ -435,7 +435,8 @@ describe('SessionReportForm', () => {
       await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
       expect(session.data.facilitation).toBe(next);
       expect(session.data.sessionName).toBe(istAndPocFields.sessionName);
-      expect(session.data.collabComplete).toBe(istAndPocFields.collabComplete);
+      expect(session.data.collabComplete).toBe(false);
+      expect(session.data.approverId).toBe('');
 
       unmount();
       renderSessionForm('1', 'review', '1', adminUser);
@@ -443,6 +444,75 @@ describe('SessionReportForm', () => {
       expect(screen.getByRole('combobox', { name: /approving manager/i })).toBeInTheDocument();
     }
   );
+
+  it('clears a regional approver and completion flags when an admin switches to NC facilitation', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    fetchMock.get(
+      '/api/users/trainers/regional/region/1',
+      [{ id: 4, fullName: 'Regional Manager', roles: [{ name: 'ECM' }] }],
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      '/api/users/trainers/national-center/region/1',
+      [{ id: 5, fullName: 'NC Approver', roles: [{ name: 'NC' }] }],
+      { overwriteRoutes: true }
+    );
+    let session = {
+      id: 1,
+      eventId: '1',
+      regionId: 1,
+      approverId: 4,
+      data: {
+        ...istAndPocFields,
+        facilitation: 'regional_tta_staff',
+        approverId: 4,
+        collabComplete: true,
+        pocComplete: true,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [],
+        data: { eventId: '1', eventOrganizer: 'Regional PD Event (with National Centers)' },
+      },
+    };
+    let putBody;
+    fetchMock.get(url, () => session);
+    fetchMock.put(url, (_url, options) => {
+      putBody = JSON.parse(options.body).data;
+      session = {
+        ...session,
+        approverId: null,
+        data: putBody,
+        updatedAt: new Date().toISOString(),
+      };
+      return session;
+    });
+    const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+    const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+    const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+    userEvent.selectOptions(field, 'national_center');
+    userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+    await waitFor(() => expect(putBody).toBeDefined());
+    expect(putBody).toEqual(
+      expect.objectContaining({
+        facilitation: 'national_center',
+        approverId: '',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      })
+    );
+
+    unmount();
+    renderSessionForm('1', 'review', '1', adminUser);
+    await screen.findByRole('option', { name: 'NC Approver' });
+    expect(screen.queryByRole('option', { name: 'Regional Manager' })).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /approving manager/i })).toHaveValue('');
+  });
 
   it('saves on save and continue', async () => {
     const url = join(sessionsUrl, 'id', '1');

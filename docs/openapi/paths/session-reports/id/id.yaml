@@ -48,7 +48,13 @@ put:
                   description: >-
                     Training facilitation. The form offers national_center,
                     regional_tta_staff, and both. Legacy sessions may contain
-                    an empty string.
+                    an empty string. Changing it clears the approver and resets
+                    ownerComplete, collabComplete, and pocComplete (and their
+                    Id/Date fields), sending the session back to draft.
+                approverId:
+                  type: integer
+                  nullable: true
+                  description: ID of the assigned approver.
   responses:
     '201':
       description: Updated session report

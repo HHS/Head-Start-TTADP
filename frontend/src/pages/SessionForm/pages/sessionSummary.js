@@ -70,6 +70,15 @@ const SessionSummary = ({ datePickerKey, event }) => {
     setError,
   } = useFormContext();
 
+  // Facilitation picks the completion workflow and approver candidates, so a
+  // correction restarts the session in the new workflow (mirrors updateSession).
+  const resetWorkflowForFacilitation = () => {
+    setValue('approverId', '', { shouldDirty: true });
+    ['ownerComplete', 'collabComplete', 'pocComplete'].forEach((key) => {
+      setValue(key, false, { shouldDirty: true });
+    });
+  };
+
   const id = watch('id');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -272,6 +281,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
             name="facilitation"
             required
             inputRef={register({ required: 'Select who is providing the training' })}
+            onChange={resetWorkflowForFacilitation}
           >
             <option value="" disabled>
               Select who is providing the training

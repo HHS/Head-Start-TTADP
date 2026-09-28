@@ -211,11 +211,14 @@ describe('sessionSummary', () => {
       formValues = defaultFormValues,
       additionalData = defaultAdditionalData,
       user = { id: 1, permissions: [] },
+      onForm = () => {},
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
+        shouldUnregister: false,
       });
+      onForm(hookForm);
 
       return (
         <AppLoadingContext.Provider
@@ -311,6 +314,36 @@ describe('sessionSummary', () => {
       expect(field).toHaveValue('national_center');
       userEvent.selectOptions(field, 'both');
       expect(field).toHaveValue('both');
+    });
+
+    it('resets the approver and completion flags when an admin changes facilitation', async () => {
+      let hookForm;
+      render(
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          formValues={{
+            ...defaultFormValues,
+            approverId: 7,
+            ownerComplete: true,
+            collabComplete: true,
+            pocComplete: true,
+          }}
+          onForm={(form) => {
+            hookForm = form;
+          }}
+        />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(hookForm.getValues('approverId')).toBe(7);
+
+      userEvent.selectOptions(field, 'national_center');
+
+      await waitFor(() => expect(hookForm.getValues('approverId')).toBe(''));
+      expect(hookForm.getValues('facilitation')).toBe('national_center');
+      expect(hookForm.getValues('ownerComplete')).toBe(false);
+      expect(hookForm.getValues('collabComplete')).toBe(false);
+      expect(hookForm.getValues('pocComplete')).toBe(false);
     });
 
     it('preserves facilitation without an editable field for non-admin users', async () => {

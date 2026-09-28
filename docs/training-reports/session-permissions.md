@@ -153,8 +153,8 @@ To keep these two submissions independent, the Regional owner's submit is tracke
 
 Backend pieces that participate in this semantics:
 
-- `src/models/sessionReportPilot.js` — `submitted` virtual accepts either `pocComplete` or `ownerComplete` alongside `collabComplete`.
-- `src/policies/event.js` — `isSubmitted()` delegates to `src/services/eventFlow.ts`, which accepts `ownerComplete` only in the National Center facilitation flow. The model virtual accepts either completion flag without checking the event organizer/facilitation, so stale flags can produce different results after changing workflows.
+- `src/models/sessionReportPilot.js` — `submitted` virtual requires `collabComplete` and an approver, plus `pocComplete`, or `ownerComplete` when facilitation is `national_center`.
+- `src/policies/event.js` — `isSubmitted()` delegates to `src/services/eventFlow.ts`, which accepts `ownerComplete` only in the National Center facilitation flow. `findSessionHelper` (the session API response) and the approval alerts use the same helper. The model's `submitted` virtual can't see the event organizer, so it only approximates the rule by accepting `ownerComplete` when facilitation is `national_center`.
 - `src/services/event.ts` — alert checker picks `ownerComplete` for the owner side in the flow and skips the POC-side check there.
 
 ## Owner vs Collaborator: Key Differences
@@ -201,7 +201,7 @@ On an existing session's **Session summary** page, admins (`scopeId: 2`) see a *
 
 Use **Save draft** or **Save and continue** to persist a correction. Non-admin users retain a hidden field and cannot change facilitation through the form. The update API uses the general session edit authorization and does not separately restrict changes to facilitation. Choosing facilitation during initial creation remains available to all authorized creators.
 
-The field uses existing session access and save rules: completed events cannot be opened for editing, and the normal save handlers do not save completed sessions. A facilitation correction changes trainer/approver options and which roles can access the session. It does not automatically clear existing trainers, the assigned approver, or completion flags. Review those values when correcting facilitation, especially when switching between regional and National Center workflows.
+The field uses existing session access and save rules: completed events cannot be opened for editing, and the normal save handlers do not save completed sessions. A facilitation correction changes trainer/approver options and which roles can access the session. Any facilitation change restarts the session's workflow: `updateSession` clears the assigned approver and resets `ownerComplete`, `collabComplete`, and `pocComplete` (and their `*Id`/`*Date` fields), and the form clears the same values as soon as the dropdown changes. A submitted session goes back to draft and must be completed and submitted again, with an approver chosen from the new candidate list. Existing trainers are not cleared; review them after the correction. Saves that do not change facilitation leave the approver and completion flags as they are.
 
 ### Empty Approver List
 
