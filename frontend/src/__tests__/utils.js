@@ -257,4 +257,9 @@ describe('parseDateStrict', () => {
     expect(warnSpy).not.toHaveBeenCalled();
     warnSpy.mockRestore();
   });
+
+  it('does not shift the calendar day when formatting a UTC ISO 8601 date in a timezone behind UTC', () => {
+    const parsed = parseDateStrict('2026-04-14T00:00:00.000Z');
+    expect(parsed.format('MM/DD/YYYY')).toBe('04/14/2026');
+  });
 });
