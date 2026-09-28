@@ -132,7 +132,7 @@ Triggered synchronously by an application event, processed once per job.
 
 | `EMAIL_ACTIONS` key | Trigger helper | Handler | Template |
 |---------------------|----------------|---------|----------|
-| `NEEDS_ACTION` | `changesRequestedNotification` | `notifyChangesRequested` | `changes_requested_by_manager` (author/collaborators), `changes_requested_by_manager_approver` (other approvers) |
+| `NEEDS_ACTION` | `changesRequestedNotification` | `notifyChangesRequested` | `changes_requested_by_manager` (author), `changes_requested_by_manager_collaborator` (collaborators — "on which you are a collaborator" wording), `changes_requested_by_manager_approver` (other approvers) |
 | `SUBMITTED` | `approverAssignedNotification` | `notifyApproverAssigned` | `manager_approval_requested` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
 | `APPROVED` | `reportApprovedNotification` | `notifyReportApproved` | `report_approved` (names the approving approver; sent on each individual approver approval, excluding the approver who just acted) |
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
@@ -264,6 +264,7 @@ Templates are Pug files located in `email_templates/` (repo root). Each template
 email_templates/
 ├── changes_requested_by_manager/
 ├── changes_requested_by_manager_approver/
+├── changes_requested_by_manager_collaborator/
 ├── collaborator_added/
 ├── digest/
 ├── digest_empty/
