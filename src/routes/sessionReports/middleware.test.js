@@ -1,4 +1,6 @@
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import fs from 'fs';
+import path from 'path';
 import { auditLogger } from '../../logger';
 import { checkCreateSessionBody, checkUpdateSessionBody, sessionDataSchema } from './middleware';
 
@@ -298,74 +300,37 @@ describe('sessionReports schema validation middleware', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  // Drift guard: the frontend narrows each save to one role's keys, so the server
-  // allowlist must stay a superset of all of them. If a key is added to
-  // istKeys/pocKeys/defaultKeys in frontend/src/pages/SessionForm/constants.js
-  // without being added here, that field would be silently dropped on save.
+  /**
+   * Drift guard: the frontend narrows each save to one role's keys, so the
+   * server allowlist must stay a superset of all of them. A key stripped here
+   * is silently discarded on save, and because updateSession merges over the
+   * stored blob the loss is invisible until the user reloads the form.
+   *
+   * The lists are read out of the frontend's sessionKeys.json rather than
+   * copied, so adding a key there without declaring it in sessionDataSchema
+   * fails this test. Resolved from process.cwd() (the repo root under both
+   * `yarn test` and bin/test-backend-ci) because `yarn test` runs the compiled
+   * copy of this file out of build/server/src, where a relative path to the
+   * frontend tree would not resolve.
+   */
   it('declares every key the session form can send', () => {
-    // Union of defaultKeys, istKeys and pocKeys, plus the keys onFormSubmit adds
-    // after reduceDataToMatchKeys.
+    const sessionKeys = JSON.parse(
+      fs.readFileSync(
+        path.resolve(process.cwd(), 'frontend/src/pages/SessionForm/sessionKeys.json'),
+        'utf8'
+      )
+    );
+
     const frontendKeys = [
-      'id',
-      'regionId',
-      'ownerId',
-      'eventId',
-      'eventDisplayId',
-      'eventName',
-      'status',
-      'pageState',
-      'pocComplete',
-      'collabComplete',
-      'ownerComplete',
-      'facilitation',
-      'additionalNotes',
-      'approverId',
-      'managerNotes',
-      'dateSubmitted',
-      'submitted',
-      'submitter',
-      'additionalStates',
-      'reviewStatus',
-      'approvalStatus',
-      'trainers',
-      'otherTrainers',
-      'sessionName',
-      'startDate',
-      'endDate',
-      'duration',
-      'context',
-      'objective',
-      'objectiveTopics',
-      'goalTemplates',
-      'useIpdCourses',
-      'courses',
-      'objectiveResources',
-      'addObjectiveFilesYes',
-      'files',
-      'ttaProvided',
-      'objectiveSupportType',
-      'isIstVisit',
-      'regionalOfficeTta',
-      'recipients',
-      'participants',
-      'ttaType',
-      'numberOfParticipants',
-      'numberOfParticipantsInPerson',
-      'numberOfParticipantsVirtually',
-      'deliveryMethod',
-      'language',
-      'supportingAttachments',
-      'recipientNextSteps',
-      'specialistNextSteps',
-      'istSelectionComplete',
-      'pageVisited-supporting-attachments',
-      'pocCompleteId',
-      'pocCompleteDate',
-      'collabCompleteId',
-      'collabCompleteDate',
-      'ownerCompleteId',
-      'ownerCompleteDate',
-      'submitterId',
+      ...new Set([
+        ...sessionKeys.defaultKeys,
+        ...sessionKeys.istOnlyKeys,
+        ...sessionKeys.pocOnlyKeys,
+        // Added by onFormSubmit in frontend/src/pages/SessionForm/index.js
+        // after reduceDataToMatchKeys has already narrowed the payload, so they
+        // are not in any of the role lists.
+        ...sessionKeys.submitTimeKeys,
+      ]),
     ];
 
     const declared = Object.keys(sessionDataSchema.describe().keys);
