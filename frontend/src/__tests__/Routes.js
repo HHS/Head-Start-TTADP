@@ -283,7 +283,9 @@ describe('Routes', () => {
   });
 
   it('redirects "/tta-requests" to 404 when the recipient_tta_request flag is off', async () => {
-    const flagsWithoutRecipientTtaRequest = defaultFlags.filter((f) => f !== 'recipient_tta_request');
+    const flagsWithoutRecipientTtaRequest = defaultFlags.filter(
+      (f) => f !== 'recipient_tta_request'
+    );
     await RenderRoutes('/tta-requests', true, { flags: flagsWithoutRecipientTtaRequest });
     expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
     expect(screen.queryByText('TTA Requests Page')).toBe(null);

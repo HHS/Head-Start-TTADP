@@ -436,17 +436,20 @@ describe('getRecipientTimeline', () => {
     [SCOPES.READ_REPORTS, 1, true],
     [SCOPES.READ_WRITE_REPORTS, 1, true],
     [SCOPES.ADMIN, 14, true],
-  ])('applies communication log policy for scope %s in region %s', async (scopeId, regionId, allowed) => {
-    userById.mockResolvedValue({ id: 1000, permissions: [{ scopeId, regionId }] });
+  ])(
+    'applies communication log policy for scope %s in region %s',
+    async (scopeId, regionId, allowed) => {
+      userById.mockResolvedValue({ id: 1000, permissions: [{ scopeId, regionId }] });
 
-    await getRecipientTimeline(req, mockResponse);
+      await getRecipientTimeline(req, mockResponse);
 
-    expect(getRecipientTimelineService).toHaveBeenCalledWith(
-      { recipientId: 100000, regionId: 1, ...timelineQuery },
-      { canReadCommunicationLogs: allowed }
-    );
-    expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
-  });
+      expect(getRecipientTimelineService).toHaveBeenCalledWith(
+        { recipientId: 100000, regionId: 1, ...timelineQuery },
+        { canReadCommunicationLogs: allowed }
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
+    }
+  );
 
   it('rejects users without access to the requested region', async () => {
     getUserReadRegions.mockResolvedValue([2]);
