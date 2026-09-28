@@ -69,7 +69,7 @@ module.exports = {
         /* sql */ `
           CREATE UNIQUE INDEX "Resources_url_unique_idx" ON "Resources" (url);
           ALTER TABLE "Resources"
-          ADD CONSTRAINT "Resources_url_unique" UNIQUE USING INDEX "Resources_url_unique_idx";
+          ADD CONSTRAINT "Resources_url_unique_idx" UNIQUE USING INDEX "Resources_url_unique_idx";
         `,
                 { transaction }
             );
@@ -81,7 +81,7 @@ module.exports = {
 
             await queryInterface.sequelize.query(
         /* sql */ `
-          ALTER TABLE "Resources" DROP CONSTRAINT IF EXISTS "Resources_url_unique";
+          ALTER TABLE "Resources" DROP CONSTRAINT IF EXISTS "Resources_url_unique_idx";
           DROP INDEX IF EXISTS "Resources_url_unique_idx";
         `,
                 { transaction }

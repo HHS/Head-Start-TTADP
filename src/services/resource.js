@@ -35,21 +35,39 @@ const isDuplicateUrlError = (error) =>
   error instanceof UniqueConstraintError &&
   (error.fields?.url !== undefined || error.errors?.some?.((e) => e.path === 'url'));
 
-const handleEclkcMapping = async (url) => {
+// `sequelize.transaction(callback)` only nests as a SAVEPOINT of the request's ambient
+// (CLS-bound) transaction when an explicit `{ transaction }` parent is passed in — unlike a
+// plain `.create()`/`.query()` call, it does NOT consult the CLS namespace on its own. That
+// ambient transaction must be captured ONCE, up front (see `genericProcessEntityForResources`),
+// and threaded through explicitly as `transaction` below: re-deriving it from CLS separately at
+// each concurrent call (e.g. once per URL, once per objective) is unsafe — while one call's
+// SAVEPOINT is open, CLS's "current transaction" is transiently rebound to it, so a sibling
+// call racing in via the same Promise.all can read that inner savepoint back as if it were the
+// outer ambient transaction.
+const handleEclkcMapping = async (url, transaction) => {
   if (!url.includes('eclkc.ohs.acf.hhs.gov')) return null;
 
   const headStartUrl = url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov');
-  const existing = await Resource.findOne({ where: { url: headStartUrl } });
+  const existing = await Resource.findOne({ where: { url: headStartUrl }, transaction });
   if (existing) return existing;
 
   try {
-    return await Resource.create({
-      url: headStartUrl,
-      domain: 'headstart.gov',
-    });
+    // Postgres aborts the entire enclosing transaction after a unique-constraint
+    // violation, so the create attempt runs inside its own SAVEPOINT: a
+    // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
+    // (the recovery read below, and everything else in the request) usable.
+    return await Resource.sequelize.transaction({ transaction }, (savepoint) =>
+      Resource.create(
+        {
+          url: headStartUrl,
+          domain: 'headstart.gov',
+        },
+        { transaction: savepoint }
+      )
+    );
   } catch (error) {
     if (isDuplicateUrlError(error)) {
-      return Resource.findOne({ where: { url: headStartUrl } });
+      return Resource.findOne({ where: { url: headStartUrl }, transaction });
     }
     throw error;
   }
@@ -59,28 +77,37 @@ const handleEclkcMapping = async (url) => {
 // Resource Table
 // -----------------------------------------------------------------------------
 // Find or create a single resource
-const findOrCreateResource = async (url) => {
+const findOrCreateResource = async (url, transaction) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
-  let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
+  let resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
   if (resource) return resource;
 
-  const matchingHeadStart = await handleEclkcMapping(url);
+  const matchingHeadStart = await handleEclkcMapping(url, transaction);
   try {
-    const newResource = await Resource.create({
-      url,
-      mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-    });
+    // Postgres aborts the entire enclosing transaction after a unique-constraint
+    // violation, so the create attempt runs inside its own SAVEPOINT: a
+    // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
+    // (the recovery read below, and everything else in the request) usable.
+    const newResource = await Resource.sequelize.transaction({ transaction }, (savepoint) =>
+      Resource.create(
+        {
+          url,
+          mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+        },
+        { transaction: savepoint }
+      )
+    );
     resource = await newResource.get({ plain: true });
   } catch (error) {
     if (!isDuplicateUrlError(error)) throw error;
     // Lost the race to another concurrent request/process; use the row it created.
-    resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
+    resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
   }
   return resource;
 };
 
 // Find or create all resource for the list of urls passed.
-const findOrCreateResources = async (urls) => {
+const findOrCreateResources = async (urls, transaction) => {
   if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
   const filteredUrls = [
     ...new Set(urls.filter((url) => typeof url === 'string').filter((url) => url)),
@@ -93,6 +120,7 @@ const findOrCreateResources = async (urls) => {
             [Op.in]: filteredUrls,
           },
         },
+        transaction,
         raw: true,
       })) || []
       : [];
@@ -102,7 +130,7 @@ const findOrCreateResources = async (urls) => {
   const newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
 
   const resources = [
-    ...(await Promise.all(newURLs.map((url) => findOrCreateResource(url)))),
+    ...(await Promise.all(newURLs.map((url) => findOrCreateResource(url, transaction)))),
     ...(currentResources || []),
   ].sort((a, b) => b.id - a.id);
   return resources;
@@ -623,6 +651,12 @@ const genericProcessEntityForResources = async (
   resourceIds,
   ignoreDestroy = false
 ) => {
+  // Captured synchronously, before any `await` in this function: when several sibling
+  // entities are processed concurrently via `Promise.all`, every sibling's call reaches this
+  // line in the same synchronous burst (before any of them can open a SAVEPOINT below), so each
+  // one reliably captures the true outer transaction rather than a sibling's transient inner one.
+  const transaction = Resource.sequelize.constructor._cls?.get('transaction');
+
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
@@ -634,6 +668,7 @@ const genericProcessEntityForResources = async (
           as: 'resource',
         },
       ],
+      transaction,
       raw: true,
     });
 
@@ -674,7 +709,7 @@ const genericProcessEntityForResources = async (
       resourcesFromField(entity.id, urlsFrom[key], key)
     );
   });
-  const resourcesWithId = await findOrCreateResources([...new Set(urlsFromFlat)]);
+  const resourcesWithId = await findOrCreateResources([...new Set(urlsFromFlat)], transaction);
 
   // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.
