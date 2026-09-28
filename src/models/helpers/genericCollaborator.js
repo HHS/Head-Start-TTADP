@@ -1,6 +1,7 @@
 import httpContext from 'express-http-context';
 import { Op, UniqueConstraintError } from 'sequelize';
 import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import withTransactionLock from '../../lib/transactionLock';
 
 const collaboratorDetails = {
   goal: {
@@ -270,7 +271,11 @@ const findOrCreateCollaborator = async (
     );
   };
 
-  if (transaction) return findOrCreateWithinTransaction(transaction);
+  // Sibling calls sharing a transaction share its connection, so their SAVEPOINTs must not
+  // interleave (see withTransactionLock).
+  if (transaction) {
+    return withTransactionLock(transaction, () => findOrCreateWithinTransaction(transaction));
+  }
   return sequelize.transaction(findOrCreateWithinTransaction);
 };
 

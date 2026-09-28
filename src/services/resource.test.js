@@ -264,6 +264,38 @@ describe('resource', () => {
           });
         }
       });
+      it('keeps a shared transaction usable when sibling calls race on a new url', async () => {
+        const newUrl = 'http://concurrent-same-transaction.test';
+        const eclkcUrl = 'https://eclkc.ohs.acf.hhs.gov/concurrent-same-transaction';
+        const headStartUrl = 'https://headstart.gov/concurrent-same-transaction';
+        try {
+          // Mirrors saving one objective for two grants: both siblings share the request's
+          // transaction (and connection) and create the same urls at the same time.
+          const [resources1, resources2, count] = await db.sequelize.transaction(
+            async (transaction) => {
+              const results = await Promise.all([
+                findOrCreateResources([newUrl, eclkcUrl], transaction),
+                findOrCreateResources([newUrl, eclkcUrl], transaction),
+              ]);
+              // Fails with "current transaction is aborted" if a savepoint rollback leaked.
+              const total = await Resource.count({
+                where: { url: [newUrl, eclkcUrl, headStartUrl] },
+                transaction,
+              });
+              return [...results, total];
+            }
+          );
+
+          expect(resources1.map((r) => r.id).sort()).toEqual(resources2.map((r) => r.id).sort());
+          expect(count).toBe(3);
+        } finally {
+          await Resource.destroy({
+            where: { url: [newUrl, eclkcUrl, headStartUrl] },
+            individualHooks: false,
+            force: true,
+          });
+        }
+      });
       it('recovers on subsequent calls when a resource lookup fails', async () => {
         const error = new Error('resource lookup failed');
         const recoverUrl = 'http://lookup-failure-recovery.test';

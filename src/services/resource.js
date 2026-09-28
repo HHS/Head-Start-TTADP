@@ -15,6 +15,7 @@ import {
   NextStepResource,
   Resource,
 } from '../models';
+import withTransactionLock from '../lib/transactionLock';
 
 const REPORT_AUTODETECTED_FIELDS = [];
 
@@ -39,38 +40,38 @@ const isDuplicateUrlError = (error) =>
 // (CLS-bound) transaction when an explicit `{ transaction }` parent is passed in — unlike a
 // plain `.create()`/`.query()` call, it does NOT consult the CLS namespace on its own. That
 // ambient transaction must be captured ONCE, up front (see `genericProcessEntityForResources`),
-// and threaded through explicitly as `transaction` below: re-deriving it from CLS separately at
-// each concurrent call (e.g. once per URL, once per objective) is unsafe — while one call's
-// SAVEPOINT is open, CLS's "current transaction" is transiently rebound to it, so a sibling
-// call racing in via the same Promise.all can read that inner savepoint back as if it were the
-// outer ambient transaction.
+// and threaded through explicitly as `transaction` below.
+//
+// Sibling callers in the same request (e.g. one per objective via Promise.all) share that
+// transaction's single connection, so their SAVEPOINTs would interleave and a rollback for one
+// would corrupt the others. `withTransactionLock` serializes the find-then-create per
+// transaction; re-reading inside the lock means a sibling's row is seen rather than
+// conflicted with, so the SAVEPOINT only ever rolls back for a race with another transaction.
+const findOrCreateResourceByUrl = (url, values, transaction) =>
+  withTransactionLock(transaction, async () => {
+    const existing = await Resource.findOne({ where: { url }, transaction });
+    if (existing) return existing;
+
+    try {
+      // Postgres aborts the entire enclosing transaction after a unique-constraint
+      // violation, so the create attempt runs inside its own SAVEPOINT: a
+      // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
+      // (the recovery read below, and everything else in the request) usable.
+      return await Resource.sequelize.transaction({ transaction }, (savepoint) =>
+        Resource.create({ url, ...values }, { transaction: savepoint })
+      );
+    } catch (error) {
+      if (!isDuplicateUrlError(error)) throw error;
+      // Lost the race to another concurrent request/process; use the row it created.
+      return Resource.findOne({ where: { url }, transaction });
+    }
+  });
+
 const handleEclkcMapping = async (url, transaction) => {
   if (!url.includes('eclkc.ohs.acf.hhs.gov')) return null;
 
   const headStartUrl = url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov');
-  const existing = await Resource.findOne({ where: { url: headStartUrl }, transaction });
-  if (existing) return existing;
-
-  try {
-    // Postgres aborts the entire enclosing transaction after a unique-constraint
-    // violation, so the create attempt runs inside its own SAVEPOINT: a
-    // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
-    // (the recovery read below, and everything else in the request) usable.
-    return await Resource.sequelize.transaction({ transaction }, (savepoint) =>
-      Resource.create(
-        {
-          url: headStartUrl,
-          domain: 'headstart.gov',
-        },
-        { transaction: savepoint }
-      )
-    );
-  } catch (error) {
-    if (isDuplicateUrlError(error)) {
-      return Resource.findOne({ where: { url: headStartUrl }, transaction });
-    }
-    throw error;
-  }
+  return findOrCreateResourceByUrl(headStartUrl, { domain: 'headstart.gov' }, transaction);
 };
 
 // -----------------------------------------------------------------------------
@@ -79,31 +80,16 @@ const handleEclkcMapping = async (url, transaction) => {
 // Find or create a single resource
 const findOrCreateResource = async (url, transaction) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
-  let resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
+  const resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
   if (resource) return resource;
 
   const matchingHeadStart = await handleEclkcMapping(url, transaction);
-  try {
-    // Postgres aborts the entire enclosing transaction after a unique-constraint
-    // violation, so the create attempt runs inside its own SAVEPOINT: a
-    // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
-    // (the recovery read below, and everything else in the request) usable.
-    const newResource = await Resource.sequelize.transaction({ transaction }, (savepoint) =>
-      Resource.create(
-        {
-          url,
-          mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-        },
-        { transaction: savepoint }
-      )
-    );
-    resource = await newResource.get({ plain: true });
-  } catch (error) {
-    if (!isDuplicateUrlError(error)) throw error;
-    // Lost the race to another concurrent request/process; use the row it created.
-    resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
-  }
-  return resource;
+  const created = await findOrCreateResourceByUrl(
+    url,
+    { mapsTo: matchingHeadStart ? matchingHeadStart.id : null },
+    transaction
+  );
+  return created ? created.get({ plain: true }) : created;
 };
 
 // Find or create all resource for the list of urls passed.
