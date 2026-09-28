@@ -43,22 +43,22 @@ describe('RecipientTabs', () => {
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
   });
 
-  it('hides the TTA Request tab without the feature flag', () => {
+  it('hides the TTA Requests tab without the feature flag', () => {
     renderRecipientTabs();
 
-    expect(screen.queryByRole('link', { name: 'TTA Request' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'TTA Requests' })).not.toBeInTheDocument();
   });
 
-  it('shows the TTA Request tab second with the feature flag', () => {
+  it('shows the TTA Requests tab second with the feature flag', () => {
     renderRecipientTabs(null, { ...DEFAULT_USER, flags: ['recipient_tta_request'] });
 
-    const ttaRequest = screen.getByRole('link', { name: 'TTA Request' });
+    const ttaRequest = screen.getByRole('link', { name: 'TTA Requests' });
     expect(ttaRequest).toHaveAttribute('href', '/recipient-tta-records/1/region/1/tta-request');
 
     const tabLabels = screen.getAllByRole('link').map((link) => link.textContent);
     expect(tabLabels).toEqual([
       'Profile',
-      'TTA Request',
+      'TTA Requests',
       'RTTAPA',
       'Communication',
       'TTA History',

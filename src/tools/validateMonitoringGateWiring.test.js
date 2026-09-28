@@ -20,12 +20,11 @@ describe('monitoring gate enforcement wiring', () => {
 
   // Text check rather than yaml.load: the vars files carry envsubst placeholders
   // and (pre-existing) duplicate keys that a strict YAML parse rejects.
-  it.each([
-    'prod',
-    'dev',
-    'staging',
-  ])('provides MONITORING_GATE_HALT_CHECKS in deployment_config/%s_vars.yml', (envName) => {
-    const contents = readFile(`deployment_config/${envName}_vars.yml`);
-    expect(contents).toMatch(/^MONITORING_GATE_HALT_CHECKS:\s*\S/m);
-  });
+  it.each(['prod', 'dev', 'staging'])(
+    'provides MONITORING_GATE_HALT_CHECKS in deployment_config/%s_vars.yml',
+    (envName) => {
+      const contents = readFile(`deployment_config/${envName}_vars.yml`);
+      expect(contents).toMatch(/^MONITORING_GATE_HALT_CHECKS:\s*\S/m);
+    }
+  );
 });

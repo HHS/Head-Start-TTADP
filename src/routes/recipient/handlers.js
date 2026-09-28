@@ -3,6 +3,7 @@ import goalsByIdAndRecipient, {
   goalRegionIdsByIdAndRecipient,
 } from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
+import CommunicationLogPolicy from '../../policies/communicationLog';
 import Recipient from '../../policies/recipient';
 import Users from '../../policies/user';
 import filtersToScopes from '../../scopes';
@@ -182,10 +183,17 @@ export async function getRecipientTimeline(req, res) {
       return;
     }
 
-    const timeline = await getRecipientTimelineService({
-      ...res.locals.validatedParams,
-      ...res.locals.recipientTimelineQuery,
-    });
+    const user = await userById(await currentUserId(req, res));
+    const { regionId } = res.locals.validatedParams;
+    const canReadCommunicationLogs = new CommunicationLogPolicy(user, regionId).canReadLog();
+
+    const timeline = await getRecipientTimelineService(
+      {
+        ...res.locals.validatedParams,
+        ...res.locals.recipientTimelineQuery,
+      },
+      { canReadCommunicationLogs }
+    );
 
     res.json(timeline);
   } catch (error) {

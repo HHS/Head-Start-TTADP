@@ -78,6 +78,11 @@ describe('RegionalDashboard constants', () => {
       expect(filterIds).toContain('stateCode');
     });
 
+    it('includes topics filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('topic');
+    });
+
     it('restricts monitoring date filters to January 21, 2025', () => {
       const startDateFilter = MONITORING_FILTER_CONFIG.find((filter) => filter.id === 'startDate');
       expect(startDateFilter.minDate).toBe('2025-01-21');

@@ -1,6 +1,6 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
@@ -24,6 +24,13 @@ const TrainingReportsTable = ({
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const perPage = sortConfig.perPage || PER_PAGE;
+
+  // Selections survive paging and sorting, but a filter change swaps out the dataset underneath
+  // them. The by-id export does pass the active filters along, so a stale selection can't reach
+  // the CSV here, but it would still be counted as selected in a table that no longer shows it.
+  useEffect(() => {
+    setReportCheckboxes({});
+  }, [filters]);
 
   const selectedReports = useMemo(() => {
     const ids = [];

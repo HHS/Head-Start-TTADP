@@ -377,7 +377,7 @@ describe('Activity Report handlers', () => {
       ]);
       // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
       // archived once the report is fully approved.
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
@@ -872,6 +872,56 @@ describe('Activity Report handlers', () => {
         reviewedReport.author,
         [keptCollaborator],
         'Approver McApproverface'
+      );
+    });
+    it('excludes the acting approver from the needs-action email collaborator recipients', async () => {
+      // currentUserId is mocked to resolve to 1, the acting approver's id.
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.NEEDS_ACTION,
+        note: 'notes',
+        user: { id: 1, name: 'Approver Name' },
+      };
+      const keptCollaborator = { userId: 555, user: { id: 555, email: 'kept@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [
+          keptCollaborator,
+          { userId: 1, user: { id: 1, email: 'self@test.gov' } },
+        ],
+        approvers: [mockApproverRecord],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(changesRequestedNotification).toHaveBeenCalledTimes(1);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        mockApproverRecord,
+        reviewedReport.author,
+        [keptCollaborator],
+        []
       );
     });
     it('returns the new needs action status', async () => {

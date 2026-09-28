@@ -98,6 +98,41 @@ describe('SiteNav', () => {
     });
   });
 
+  describe('the TTA Requests nav item', () => {
+    afterEach(() => fetchMock.restore());
+
+    const userUrl = join('api', 'user');
+
+    const renderWithFlags = (flags) => {
+      const user = { name: 'name', flags, permissions: [] };
+      fetchMock.get(userUrl, { ...user });
+
+      render(
+        <MemoryRouter>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>
+      );
+    };
+
+    test('is hidden without the feature flag', () => {
+      renderWithFlags([]);
+      expect(screen.queryByRole('link', { name: 'TTA Requests' })).toBeNull();
+    });
+
+    test('renders below Training Reports with the feature flag', () => {
+      renderWithFlags(['recipient_tta_request']);
+
+      const ttaRequest = screen.getByRole('link', { name: 'TTA Requests' });
+      expect(ttaRequest).toBeVisible();
+      expect(ttaRequest).toHaveAttribute('href', '/tta-requests');
+
+      const linkNames = screen.getAllByRole('link').map((link) => link.textContent.trim());
+      expect(linkNames.indexOf('TTA Requests')).toBe(linkNames.indexOf('Training Reports') + 1);
+    });
+  });
+
   describe('when unauthenticated', () => {
     beforeEach(() => {
       render(
