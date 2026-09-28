@@ -13,12 +13,12 @@ import {
 const errorMessage = 'Received malformed request body';
 
 /**
- * Unknown keys in the JSONB `data` blob are stripped rather than rejected
- * (docs/adr/0024-schema-validation-with-joi.md). Clients round-trip whole API
- * responses back to us — completeEvent / suspendEvent / resumeEvent in
- * frontend/src/fetchers/event.js spread an entire event into the body — and
- * legacy rows carry keys that predate the allowlist, so rejecting would block
- * users on data they cannot fix. Malformed *known* keys still get a 400.
+ * Unknown keys in the JSONB `data` blob are stripped rather than rejected.
+ * Clients round-trip whole API responses back to us — completeEvent /
+ * suspendEvent / resumeEvent in frontend/src/fetchers/event.js spread an entire
+ * event into the body — and legacy rows carry keys that predate the allowlist,
+ * so rejecting would block users on data they cannot fix. Malformed *known*
+ * keys still get a 400.
  *
  * convert:false because the validated value is written back to req.body and
  * persisted into JSONB; Joi's default coercion ("5" -> 5) would silently change
