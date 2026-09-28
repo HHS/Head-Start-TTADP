@@ -29,7 +29,7 @@ const REPORTGOAL_AUTODETECTED_FIELDS = [];
 const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [];
 
 // "Resources.url" has a database-level unique constraint (see the
-// 20260916120000-add-resources-url-unique-constraint migration), so concurrent creates for the
+// add-resources-url-unique-constraint migration), so concurrent creates for the
 // same url are safe: exactly one insert wins, and the other(s) fall back to re-reading the row.
 const isDuplicateUrlError = (error) =>
   error instanceof UniqueConstraintError &&
