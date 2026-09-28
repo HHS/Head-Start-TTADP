@@ -596,6 +596,13 @@ export function isValidDate(value) {
   return parsed ? moment(value, parsed, true) : null;
 }
 
+// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
+export function parseDateStrict(value) {
+  if (!value) return null;
+  const parsed = moment(value, [moment.ISO_8601, 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
+  return parsed.isValid() ? parsed : null;
+}
+
 /**
  *
  * @param {number} userId

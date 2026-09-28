@@ -12,6 +12,7 @@ import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 import isAdmin, { canEditOrCreateGoals, hasApproveActivityReportInRegion } from '../../permissions';
 import UserContext from '../../UserContext';
+import { parseDateStrict } from '../../utils';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import ContextMenu from '../ContextMenu';
 import DataCard from '../DataCard';
@@ -21,16 +22,6 @@ import GoalStatusDropdown from './components/GoalStatusDropdown';
 import { goalPropTypes } from './constants';
 import FlagStatus from './FlagStatus';
 import ObjectiveCard from './ObjectiveCard';
-
-// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
-const parseObjectiveEndDate = (value) => {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = moment(value, [moment.ISO_8601, 'YYYY-MM-DD', 'MM/DD/YYYY'], true);
-  return parsed.isValid() ? parsed : null;
-};
 
 export default function StandardGoalCard({
   goal,
@@ -86,8 +77,8 @@ export default function StandardGoalCard({
   });
   const sortedObjectives = [...localObjectives];
   sortedObjectives.sort((a, b) => {
-    const aTime = parseObjectiveEndDate(a.endDate)?.valueOf() ?? -Infinity;
-    const bTime = parseObjectiveEndDate(b.endDate)?.valueOf() ?? -Infinity;
+    const aTime = parseDateStrict(a.endDate)?.valueOf() ?? -Infinity;
+    const bTime = parseDateStrict(b.endDate)?.valueOf() ?? -Infinity;
     return aTime === bTime ? 0 : aTime < bTime ? 1 : -1;
   });
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -124,7 +115,7 @@ export default function StandardGoalCard({
 
   const lastTTA = useMemo(() => {
     const latestDate = objectives.reduce((prev, curr) => {
-      const currDate = parseObjectiveEndDate(curr.endDate);
+      const currDate = parseDateStrict(curr.endDate);
       if (!currDate) {
         return prev;
       }
