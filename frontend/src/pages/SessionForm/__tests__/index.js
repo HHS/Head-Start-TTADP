@@ -103,8 +103,8 @@ const completeFormData = {
   deliveryMethod: 'In-person',
   numberOfParticipants: 1,
   ttaProvided: 'oH YEAH',
-  specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
-  recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+  specialistNextSteps: [{ note: 'A', completeDate: '01/02/2024' }],
+  recipientNextSteps: [{ note: 'B', completeDate: '01/02/2024' }],
 };
 
 describe('SessionReportForm', () => {
@@ -699,8 +699,8 @@ describe('SessionReportForm', () => {
         ttaProvided: 'test tta provided',
         objectiveSupportType: 'Planning',
         regionId: 1,
-        specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-        recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
         startDate: '01/01/2024',
         endDate: '01/01/2024',
         'pageVisited-supporting-attachments': true,
@@ -749,6 +749,7 @@ describe('SessionReportForm', () => {
     expect(approverDropdown).toBeNull();
 
     const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    expect(screen.queryByText('Incomplete report')).not.toBeInTheDocument();
     act(() => {
       userEvent.click(submit);
     });
