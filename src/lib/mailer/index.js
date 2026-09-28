@@ -197,20 +197,27 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     comments: approverNote,
   };
 
-  // The author and collaborators need to make changes and resubmit, while the
-  // remaining approvers need to review/approve, so each group gets its own template.
-  const authorCollabAddresses = [];
+  // The author, collaborators, and remaining approvers each get their own template:
+  // the author and collaborators need to make changes and resubmit (with distinct copy so
+  // collaborators are told they are a collaborator), while the approvers review/approve.
+  const authorAddresses = [];
   if (authorWithSetting) {
-    authorCollabAddresses.push(authorWithSetting.email);
-  }
-  if (collabArray && collabArray.length > 0) {
-    authorCollabAddresses.push(collabArray);
+    authorAddresses.push(authorWithSetting.email);
   }
 
   return Promise.all([
-    sendIfEnabled(authorCollabAddresses, (toEmails) =>
+    sendIfEnabled(authorAddresses, (toEmails) =>
       createEmailSender(transport).send({
         template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(collabArray, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager_collaborator'),
         message: {
           to: toEmails,
         },
