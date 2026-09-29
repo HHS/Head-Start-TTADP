@@ -5,6 +5,7 @@ title "TTA Hub Training Reports"
 actor CREATOR as CR
 actor COLLABORATOR as CL
 actor REGIONALPOC as RPOC
+actor ADMIN as AD
 participant "TTA Hub\n frontend" as FRONTEND
 participant "TTA Hub\n backend" as BACKEND
 
@@ -56,12 +57,36 @@ group CREATE: Create Session
     CR --> FRONTEND : Choose Event State
     FRONTEND <- BACKEND : Display Training Reports
     CR -> FRONTEND : Choose Create session under the ellipsis of an event
+    note over FRONTEND
+        Alert links and direct /session/new/ URLs first fetch the event.
+        Regional PD with National Centers redirects to choose-facilitation
+        before creating any session, for every authorized creator role.
+    end note
+    opt Regional PD event with National Centers
+        FRONTEND -> CR : Ask who is providing the training
+        CR -> FRONTEND : Choose National Center, Regional TTA staff, or Both
+        FRONTEND -> BACKEND : Create session with facilitation
+        BACKEND -> BACKEND : Require national_center, regional_tta_staff, or both (400 if invalid)
+    end
     FRONTEND <- BACKEND : Display Training Report - Session page
     CR -> FRONTEND: Make changes to Session By Section
     CR --> FRONTEND: Save As Draft
     CR --> FRONTEND: Save And Continue
-    CR -> FRONTEND: Submit Event
+    CR -> FRONTEND: Submit Session
     FRONTEND <- BACKEND: Return to Event List
+end
+
+group EDIT: Correct Session Facilitation (Admin)
+    autonumber 1
+    AD -> FRONTEND : Edit an existing session on an incomplete event
+    FRONTEND <- BACKEND : Load session and saved facilitation
+    FRONTEND -> AD : Show Training facilitation after Session name on Session summary
+    AD -> FRONTEND : Select the correct facilitation
+    FRONTEND -> FRONTEND : Recompute trainer and approver options
+    AD -> FRONTEND : Save draft or Save and continue (session not complete)
+    FRONTEND -> BACKEND : Update session data.facilitation
+    BACKEND -> BACKEND : Check general session edit authorization
+    FRONTEND <- BACKEND : Return updated session
 end
 
 group COMPLETE: Complete Event

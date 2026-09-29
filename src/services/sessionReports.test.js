@@ -7,7 +7,7 @@ import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
-import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
+import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -18,6 +18,8 @@ import {
   getPossibleSessionParticipants,
   getSessionReports,
   getSessionReportsByRecipient,
+  isFacilitationChange,
+  resetSessionCompletion,
   updateSession,
   validateFields,
 } from './sessionReports';
@@ -195,6 +197,132 @@ describe('session reports service', () => {
       expect(updated.data.approver).toBeUndefined();
 
       await destroySession(created.id);
+    });
+  });
+
+  describe('updateSession facilitation changes', () => {
+    let ncEvent;
+    let approver;
+    const ncEventId = `R01-PD-${faker.number.int({ min: 900_000, max: 999_999 })}`;
+    const completeData = {
+      ownerComplete: true,
+      ownerCompleteId: 1,
+      ownerCompleteDate: '2026-01-01',
+      collabComplete: true,
+      collabCompleteId: 2,
+      collabCompleteDate: '2026-01-01',
+    };
+
+    beforeAll(async () => {
+      [ncEvent, approver] = await Promise.all([
+        createEvent({
+          ownerId: faker.number.int({ min: 0, max: 99999 }),
+          regionId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: { eventId: ncEventId, eventOrganizer: 'Regional PD Event (with National Centers)' },
+        }),
+        createUser({}),
+      ]);
+    });
+
+    afterAll(async () => {
+      await destroyEvent(ncEvent.id);
+      await db.User.destroy({ where: { id: approver.id } });
+    });
+
+    const createSubmittedNcSession = async () => {
+      const created = await createSession({
+        eventId: ncEvent.id,
+        data: { facilitation: 'national_center', ...completeData },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+      return created;
+    };
+
+    it('resets completion flags and the approver when facilitation changes', async () => {
+      const created = await createSubmittedNcSession();
+      expect((await findSessionById(created.id)).submitted).toBe(true);
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        // Stale flags from the client must not survive the workflow change
+        data: { facilitation: 'regional_tta_staff', collabComplete: true, approverId: approver.id },
+      });
+
+      expect(updated.approverId).toBeNull();
+      expect(updated.submitted).toBe(false);
+      expect(updated.data).toMatchObject({
+        facilitation: 'regional_tta_staff',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      });
+      expect(updated.data.ownerCompleteId).toBeUndefined();
+      expect(updated.data.collabCompleteDate).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+
+    it('keeps flags and the approver when facilitation is unchanged', async () => {
+      const created = await createSubmittedNcSession();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { facilitation: 'national_center', sessionName: 'Renamed', approverId: '' },
+      });
+
+      expect(updated.approverId).toBe(approver.id);
+      expect(updated.submitted).toBe(true);
+      expect(updated.data).toMatchObject(completeData);
+
+      await destroySession(created.id);
+    });
+
+    it('ignores a null approverId when facilitation is unchanged', async () => {
+      const created = await createSubmittedNcSession();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: null },
+      });
+
+      expect(updated.approverId).toBe(approver.id);
+
+      await destroySession(created.id);
+    });
+
+    it('does not treat stale ownerComplete as submitted outside the NC facilitation flow', async () => {
+      // Legacy state written before facilitation changes reset the workflow
+      const created = await createSession({
+        eventId: ncEvent.id,
+        data: { facilitation: 'regional_tta_staff', ...completeData },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+
+      expect((await findSessionById(created.id)).submitted).toBe(false);
+      const [listed] = await findSessionsByEventId(ncEvent.id);
+      expect(listed.submitted).toBe(false);
+
+      await destroySession(created.id);
+    });
+
+    it('detects facilitation changes, treating missing and blank as equal', () => {
+      expect(isFacilitationChange({ facilitation: 'both' }, { facilitation: 'both' })).toBe(false);
+      expect(isFacilitationChange({ facilitation: 'both' }, {})).toBe(false);
+      expect(isFacilitationChange({}, { facilitation: '' })).toBe(false);
+      expect(isFacilitationChange({ facilitation: '' }, { facilitation: 'both' })).toBe(true);
+    });
+
+    it('resets every completion flag and audit field', () => {
+      expect(
+        resetSessionCompletion({ sessionName: 'a', pocComplete: true, pocCompleteId: 3 })
+      ).toEqual({
+        sessionName: 'a',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      });
     });
   });
 
