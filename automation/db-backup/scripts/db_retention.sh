@@ -453,7 +453,7 @@ backup_retention() {
                 processed_dates[$DATE]=true
             fi
         elif [ $AGE -le 90 ]; then
-            if [ $(date -d "$LAST_MODIFIED" +%u) -eq 1 ] || [ $(date -d "$LAST_MODIFIED" +%d) -eq 1 ] || [ $(date -d "$LAST_MODIFIED" +%d) -eq 15 ]; then
+            if [ "$(date -d "$LAST_MODIFIED" +%u)" -eq 1 ] || [ "$(date -d "$LAST_MODIFIED" +%d)" -eq 1 ] || [ "$(date -d "$LAST_MODIFIED" +%d)" -eq 15 ]; then
                 continue
             else
                 delete_backup_set "$BASE_NAME" || {
@@ -464,7 +464,7 @@ backup_retention() {
                 ((deleted_count++))
             fi
         elif [ $AGE -le 730 ]; then
-            if [ $(date -d "$LAST_MODIFIED" +%d) -eq 1 ]; then
+            if [ "$(date -d "$LAST_MODIFIED" +%d)" -eq 1 ]; then
                 continue
             else
                 delete_backup_set "$BASE_NAME" || {

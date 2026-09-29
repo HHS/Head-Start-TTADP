@@ -2,11 +2,11 @@ style
   include ../email.css
 p Hello,
 p 
-p #{managerName} requested changes to report #{displayId}. 
+p #{managerName} requested changes to report #{displayId}, on which you are a collaborator. 
 if comments
   p #{managerName} provided the following comments:
   blockquote !{comments} 
-a(href=reportPath) Access this report in the TTA Hub.
+a(href=reportPath) Make changes and resubmit this report in the TTA Hub.
 p Best wishes,
   br
   | The TTA Hub team

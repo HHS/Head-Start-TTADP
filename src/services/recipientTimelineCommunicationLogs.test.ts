@@ -225,28 +225,31 @@ describe('communication log timeline integration', () => {
   it.each([
     ['desc', [1, 3, 2, 0]],
     ['asc', [0, 2, 1, 3]],
-  ] as const)('sorts the registered source by communication date in %s order', async (direction, order) => {
-    const result = await getRecipientTimeline({ ...params, direction });
-    expect(result.count).toBe(4);
-    expect(result.events.map(({ sourceId }) => sourceId)).toEqual(
-      order.map((index) => logs[index].id)
-    );
-    const expected = [
-      ['2025-12-31', 'Email communication'],
-      ['2026-01-02', 'Phone communication'],
-      ['2026-01-01', 'In person communication'],
-      ['2026-01-02', 'Virtual communication'],
-    ];
-    result.events.forEach((event, index) => {
-      const [date, eventType] = expected[order[index]];
-      expect(event).toMatchObject({
-        source: 'communicationLog',
-        date,
-        eventType,
-        title: eventType,
+  ] as const)(
+    'sorts the registered source by communication date in %s order',
+    async (direction, order) => {
+      const result = await getRecipientTimeline({ ...params, direction });
+      expect(result.count).toBe(4);
+      expect(result.events.map(({ sourceId }) => sourceId)).toEqual(
+        order.map((index) => logs[index].id)
+      );
+      const expected = [
+        ['2025-12-31', 'Email communication'],
+        ['2026-01-02', 'Phone communication'],
+        ['2026-01-01', 'In person communication'],
+        ['2026-01-02', 'Virtual communication'],
+      ];
+      result.events.forEach((event, index) => {
+        const [date, eventType] = expected[order[index]];
+        expect(event).toMatchObject({
+          source: 'communicationLog',
+          date,
+          eventType,
+          title: eventType,
+        });
       });
-    });
-  });
+    }
+  );
 
   it('populates the Figma fields, creator roles, readable notes, and approved attachments', async () => {
     const result = await getRecipientTimeline(params);
@@ -461,117 +464,120 @@ describe('communication log timeline integration', () => {
     { goals: {} },
     { goals: 'Monitoring' },
     { goals: [null, 'Monitoring', { label: null }, { label: 123 }] },
-  ])('treats missing or malformed goals ($goals) as no labels in both filters and presentation', async ({
-    goals,
-  }) => {
-    const log = await CommunicationLog.create({
-      userId: user.id,
-      data: {
-        regionId: params.regionId,
-        communicationDate: '03/01/2026',
-        method: 'Email',
-        goals,
-      },
-    });
-    try {
-      await CommunicationLogRecipient.create({
-        communicationLogId: log.id,
-        recipientId: params.recipientId,
+  ])(
+    'treats missing or malformed goals ($goals) as no labels in both filters and presentation',
+    async ({ goals }) => {
+      const log = await CommunicationLog.create({
+        userId: user.id,
+        data: {
+          regionId: params.regionId,
+          communicationDate: '03/01/2026',
+          method: 'Email',
+          goals,
+        },
       });
-      const recent: RecipientTimelineRequestParams['filters'] = [
-        { topic: 'date', condition: 'is on or after', query: '2026/03/01' },
-      ];
-      const included = await getRecipientTimeline({
-        ...params,
-        filters: [...recent, { topic: 'standard', condition: 'is', query: ['Monitoring'] }],
-      });
-      expect(included).toEqual({ count: 0, events: [] });
-      const excluded = await getRecipientTimeline({
-        ...params,
-        filters: [...recent, { topic: 'standard', condition: 'is not', query: ['Monitoring'] }],
-      });
-      expect(excluded.count).toBe(1);
-      expect(excluded.events[0]).toMatchObject({ sourceId: log.id, tags: [] });
-    } finally {
-      await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
-      await log.destroy();
+      try {
+        await CommunicationLogRecipient.create({
+          communicationLogId: log.id,
+          recipientId: params.recipientId,
+        });
+        const recent: RecipientTimelineRequestParams['filters'] = [
+          { topic: 'date', condition: 'is on or after', query: '2026/03/01' },
+        ];
+        const included = await getRecipientTimeline({
+          ...params,
+          filters: [...recent, { topic: 'standard', condition: 'is', query: ['Monitoring'] }],
+        });
+        expect(included).toEqual({ count: 0, events: [] });
+        const excluded = await getRecipientTimeline({
+          ...params,
+          filters: [...recent, { topic: 'standard', condition: 'is not', query: ['Monitoring'] }],
+        });
+        expect(excluded.count).toBe(1);
+        expect(excluded.events[0]).toMatchObject({ sourceId: log.id, tags: [] });
+      } finally {
+        await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
+        await log.destroy();
+      }
     }
-  });
+  );
 
   it.each([
     '13/45/2026', // Month and day both out of any calendar's range.
     '02/30/2026', // Shaped like a valid date, but February never has 30 days.
     '2026-01-01', // Wrong separator/order entirely.
-  ])('excludes a calendar-invalid communicationDate (%s) instead of crashing the query', async (communicationDate) => {
-    const log = await CommunicationLog.create({
-      userId: user.id,
-      data: {
-        regionId: params.regionId,
-        communicationDate,
-        method: 'Email',
-      },
-    });
-    try {
-      await CommunicationLogRecipient.create({
-        communicationLogId: log.id,
-        recipientId: params.recipientId,
-      });
-      const result = await getRecipientTimeline(params);
-      expect(result.count).toBe(4);
-      expect(result.events.map(({ sourceId }) => sourceId)).not.toContain(log.id);
-    } finally {
-      await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
-      await log.destroy();
-    }
-  });
-
-  it.each([
-    'UTC',
-    'America/Los_Angeles',
-    'Asia/Tokyo',
-  ])('keeps mixed-source ordering and checkbox pagination correct in %s', async (timeZone) => {
-    await sequelize.transaction(async (transaction) => {
-      await sequelize.query("SELECT set_config('TimeZone', :timeZone, true)", {
-        replacements: { timeZone },
-        transaction,
-      });
-      const sources = [
-        COMMUNICATION_LOG_TIMELINE_SOURCE,
-        {
-          name: 'testGoal',
-          supportedFilterTopics: [],
-          populate: async () => new Map(),
-          buildIndexQuery:
-            () => `SELECT 1 AS "sourceId", TIMESTAMPTZ '2026-01-02T12:00:00Z' AS "date",
-            'Goal added' AS "eventType", :recipientId AS "recipientId", :regionId AS "regionId"`,
+  ])(
+    'excludes a calendar-invalid communicationDate (%s) instead of crashing the query',
+    async (communicationDate) => {
+      const log = await CommunicationLog.create({
+        userId: user.id,
+        data: {
+          regionId: params.regionId,
+          communicationDate,
+          method: 'Email',
         },
-      ];
-      const full = await queryTimelineEventIndex({ ...params, sources });
-      expect(full.count).toBe(5);
-      expect(full.events.map(({ sourceId }) => sourceId)).toEqual([
-        1,
-        logs[1].id,
-        logs[3].id,
-        logs[2].id,
-        logs[0].id,
-      ]);
-      const filtered = await queryTimelineEventIndex({
-        ...params,
-        sources,
-        excludeMultiRecipientCommunications: true,
       });
-      expect(filtered.count).toBe(3);
-      expect(filtered.events).toEqual([full.events[0], full.events[1], full.events[4]]);
-      const page = await queryTimelineEventIndex({
-        ...params,
-        sources,
-        limit: 2,
-        offset: 1,
-        excludeMultiRecipientCommunications: true,
+      try {
+        await CommunicationLogRecipient.create({
+          communicationLogId: log.id,
+          recipientId: params.recipientId,
+        });
+        const result = await getRecipientTimeline(params);
+        expect(result.count).toBe(4);
+        expect(result.events.map(({ sourceId }) => sourceId)).not.toContain(log.id);
+      } finally {
+        await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
+        await log.destroy();
+      }
+    }
+  );
+
+  it.each(['UTC', 'America/Los_Angeles', 'Asia/Tokyo'])(
+    'keeps mixed-source ordering and checkbox pagination correct in %s',
+    async (timeZone) => {
+      await sequelize.transaction(async (transaction) => {
+        await sequelize.query("SELECT set_config('TimeZone', :timeZone, true)", {
+          replacements: { timeZone },
+          transaction,
+        });
+        const sources = [
+          COMMUNICATION_LOG_TIMELINE_SOURCE,
+          {
+            name: 'testGoal',
+            supportedFilterTopics: [],
+            populate: async () => new Map(),
+            buildIndexQuery:
+              () => `SELECT 1 AS "sourceId", TIMESTAMPTZ '2026-01-02T12:00:00Z' AS "date",
+            'Goal added' AS "eventType", :recipientId AS "recipientId", :regionId AS "regionId"`,
+          },
+        ];
+        const full = await queryTimelineEventIndex({ ...params, sources });
+        expect(full.count).toBe(5);
+        expect(full.events.map(({ sourceId }) => sourceId)).toEqual([
+          1,
+          logs[1].id,
+          logs[3].id,
+          logs[2].id,
+          logs[0].id,
+        ]);
+        const filtered = await queryTimelineEventIndex({
+          ...params,
+          sources,
+          excludeMultiRecipientCommunications: true,
+        });
+        expect(filtered.count).toBe(3);
+        expect(filtered.events).toEqual([full.events[0], full.events[1], full.events[4]]);
+        const page = await queryTimelineEventIndex({
+          ...params,
+          sources,
+          limit: 2,
+          offset: 1,
+          excludeMultiRecipientCommunications: true,
+        });
+        expect(page).toEqual({ count: 3, events: filtered.events.slice(1) });
       });
-      expect(page).toEqual({ count: 3, events: filtered.events.slice(1) });
-    });
-  });
+    }
+  );
 
   it('retains attachment names when URL signing fails', async () => {
     jest
@@ -588,112 +594,112 @@ describe('communication log timeline integration', () => {
     { edit: 'changes the method', method: 'Phone', addRecipient: false },
     { edit: 'clears the method', method: '', addRecipient: false },
     { edit: 'adds a recipient', method: 'Email', addRecipient: true },
-  ])('keeps a consistent response when another connection $edit after indexing', async ({
-    method,
-    addRecipient,
-  }) => {
-    const originalData = {
-      regionId: params.regionId,
-      communicationDate: '03/01/2026',
-      method: 'Email',
-      purpose: 'Original purpose',
-    };
-    const log = await CommunicationLog.create({ userId: user.id, data: originalData });
-    const timelinePath = `/recipient/${params.recipientId}/region/${params.regionId}/timeline`;
-    const hookName = `timeline-concurrent-edit-${log.id}`;
-    let editCommitted = false;
-    let readerPid;
-    let writerPid;
-    try {
-      await CommunicationLogRecipient.create({
-        communicationLogId: log.id,
-        recipientId: params.recipientId,
-      });
-      // Wait for the actual index query to finish, then commit on another connection before any
-      // population query can run. No timers or mocked query results are involved.
-      sequelize.addHook('afterQuery', hookName, async (options, query) => {
-        if (editCommitted || !query.sql?.includes('WITH "timelineSourceEvents"')) return;
-        const [reader] = await sequelize.query('SELECT pg_backend_pid() AS pid', {
-          type: QueryTypes.SELECT,
-          transaction: options.transaction,
+  ])(
+    'keeps a consistent response when another connection $edit after indexing',
+    async ({ method, addRecipient }) => {
+      const originalData = {
+        regionId: params.regionId,
+        communicationDate: '03/01/2026',
+        method: 'Email',
+        purpose: 'Original purpose',
+      };
+      const log = await CommunicationLog.create({ userId: user.id, data: originalData });
+      const timelinePath = `/recipient/${params.recipientId}/region/${params.regionId}/timeline`;
+      const hookName = `timeline-concurrent-edit-${log.id}`;
+      let editCommitted = false;
+      let readerPid;
+      let writerPid;
+      try {
+        await CommunicationLogRecipient.create({
+          communicationLogId: log.id,
+          recipientId: params.recipientId,
         });
-        readerPid = reader.pid;
-        await sequelize.transaction({ transaction: null }, async (writer) => {
-          const [connection] = await sequelize.query('SELECT pg_backend_pid() AS pid', {
+        // Wait for the actual index query to finish, then commit on another connection before any
+        // population query can run. No timers or mocked query results are involved.
+        sequelize.addHook('afterQuery', hookName, async (options, query) => {
+          if (editCommitted || !query.sql?.includes('WITH "timelineSourceEvents"')) return;
+          const [reader] = await sequelize.query('SELECT pg_backend_pid() AS pid', {
             type: QueryTypes.SELECT,
-            transaction: writer,
+            transaction: options.transaction,
           });
-          writerPid = connection.pid;
-          await CommunicationLog.update(
-            {
-              data: {
-                ...originalData,
-                method,
-                purpose: 'Edited purpose',
-                communicationDate: '04/01/2026',
+          readerPid = reader.pid;
+          await sequelize.transaction({ transaction: null }, async (writer) => {
+            const [connection] = await sequelize.query('SELECT pg_backend_pid() AS pid', {
+              type: QueryTypes.SELECT,
+              transaction: writer,
+            });
+            writerPid = connection.pid;
+            await CommunicationLog.update(
+              {
+                data: {
+                  ...originalData,
+                  method,
+                  purpose: 'Edited purpose',
+                  communicationDate: '04/01/2026',
+                },
               },
-            },
-            { where: { id: log.id }, transaction: writer }
-          );
-          if (addRecipient) {
-            await CommunicationLogRecipient.create(
-              { communicationLogId: log.id, recipientId: recipientIds[1] },
-              { transaction: writer }
+              { where: { id: log.id }, transaction: writer }
             );
-          }
+            if (addRecipient) {
+              await CommunicationLogRecipient.create(
+                { communicationLogId: log.id, recipientId: recipientIds[1] },
+                { transaction: writer }
+              );
+            }
+          });
+          editCommitted = true;
+          // An independent read must already see the committed edit before population proceeds.
+          const committedLog = await CommunicationLog.findByPk(log.id, { transaction: null });
+          expect(committedLog.data.purpose).toBe('Edited purpose');
         });
-        editCommitted = true;
-        // An independent read must already see the committed edit before population proceeds.
-        const committedLog = await CommunicationLog.findByPk(log.id, { transaction: null });
-        expect(committedLog.data.purpose).toBe('Edited purpose');
-      });
 
-      const response = await request(app)
-        .get(timelinePath)
-        .query({ excludeMultiRecipientCommunications: true, limit: 1 });
-      expect(editCommitted).toBe(true);
-      expect(readerPid).toEqual(expect.any(Number));
-      expect(writerPid).toEqual(expect.any(Number));
-      expect(writerPid).not.toBe(readerPid);
-      expect(response.status).toBe(200);
-      expect(response.body.count).toBe(3);
-      expect(response.body.events).toEqual([
-        expect.objectContaining({
-          sourceId: log.id,
-          date: '2026-03-01',
-          eventType: 'Email communication',
-          title: 'Email communication',
-          subtitle: 'Original purpose',
-          indicators: [],
-        }),
-      ]);
+        const response = await request(app)
+          .get(timelinePath)
+          .query({ excludeMultiRecipientCommunications: true, limit: 1 });
+        expect(editCommitted).toBe(true);
+        expect(readerPid).toEqual(expect.any(Number));
+        expect(writerPid).toEqual(expect.any(Number));
+        expect(writerPid).not.toBe(readerPid);
+        expect(response.status).toBe(200);
+        expect(response.body.count).toBe(3);
+        expect(response.body.events).toEqual([
+          expect.objectContaining({
+            sourceId: log.id,
+            date: '2026-03-01',
+            eventType: 'Email communication',
+            title: 'Email communication',
+            subtitle: 'Original purpose',
+            indicators: [],
+          }),
+        ]);
 
-      sequelize.removeHook('afterQuery', hookName);
-      const nextResponse = await request(app)
-        .get(timelinePath)
-        .query({ excludeMultiRecipientCommunications: true, limit: 1 });
-      expect(nextResponse.status).toBe(200);
-      if (method && !addRecipient) {
-        expect(nextResponse.body.count).toBe(3);
-        expect(nextResponse.body.events[0]).toMatchObject({
-          sourceId: log.id,
-          date: '2026-04-01',
-          eventType: 'Phone communication',
-          title: 'Phone communication',
-          subtitle: 'Edited purpose',
-        });
-      } else {
-        expect(nextResponse.body.count).toBe(2);
-        expect(nextResponse.body.events[0].sourceId).toBe(logs[1].id);
+        sequelize.removeHook('afterQuery', hookName);
+        const nextResponse = await request(app)
+          .get(timelinePath)
+          .query({ excludeMultiRecipientCommunications: true, limit: 1 });
+        expect(nextResponse.status).toBe(200);
+        if (method && !addRecipient) {
+          expect(nextResponse.body.count).toBe(3);
+          expect(nextResponse.body.events[0]).toMatchObject({
+            sourceId: log.id,
+            date: '2026-04-01',
+            eventType: 'Phone communication',
+            title: 'Phone communication',
+            subtitle: 'Edited purpose',
+          });
+        } else {
+          expect(nextResponse.body.count).toBe(2);
+          expect(nextResponse.body.events[0].sourceId).toBe(logs[1].id);
+        }
+      } finally {
+        sequelize.removeHook('afterQuery', hookName);
+        // A regression can produce a real 500; remove only errors from this fixture's endpoint.
+        await RequestErrors.destroy({ where: { uri: { [Op.like]: `${timelinePath}?%` } } });
+        await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
+        await log.destroy();
       }
-    } finally {
-      sequelize.removeHook('afterQuery', hookName);
-      // A regression can produce a real 500; remove only errors from this fixture's endpoint.
-      await RequestErrors.destroy({ where: { uri: { [Op.like]: `${timelinePath}?%` } } });
-      await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
-      await log.destroy();
     }
-  });
+  );
 });
 
 describe('communication log presentation edge cases', () => {
@@ -705,54 +711,47 @@ describe('communication log presentation edge cases', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it.each([
-    undefined,
-    null,
-    '',
-    '   ',
-    'invalid',
-    -1,
-    Infinity,
-    false,
-    {},
-  ])('omits blank/invalid duration (%j) and optional fields without dropping an indexed event', async (duration) => {
-    const query = jest.spyOn(CommunicationLog, 'findAll').mockResolvedValue([
-      {
-        id: 1,
-        data: {
-          method: 'Email',
-          duration,
-          purpose: ' ',
-          result: null,
-          notes: '<p>&nbsp;</p>',
-          goals: null,
+  it.each([undefined, null, '', '   ', 'invalid', -1, Infinity, false, {}])(
+    'omits blank/invalid duration (%j) and optional fields without dropping an indexed event',
+    async (duration) => {
+      const query = jest.spyOn(CommunicationLog, 'findAll').mockResolvedValue([
+        {
+          id: 1,
+          data: {
+            method: 'Email',
+            duration,
+            purpose: ' ',
+            result: null,
+            notes: '<p>&nbsp;</p>',
+            goals: null,
+          },
+          author: null,
         },
-        author: null,
-      },
-    ] as never);
-    jest.spyOn(CommunicationLogRecipient, 'findAll').mockResolvedValue([
-      { communicationLogId: 1, recipientId: 2 },
-      { communicationLogId: 1, recipientId: 2 },
-    ] as never);
-    jest.spyOn(CommunicationLogFile, 'findAll').mockResolvedValue([]);
-    const result = await COMMUNICATION_LOG_TIMELINE_SOURCE.populate([1, 1], {
-      ...params,
-      excludeMultiRecipientCommunications: true,
-    });
-    expect(result.get(1)).toMatchObject({
-      title: 'Email communication',
-      subtitle: null,
-      durationHours: null,
-      byline: null,
-      indicators: [],
-      tags: [],
-      details: [],
-    });
-    expect(query).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: { [Op.in]: [1] } } })
-    );
-  });
+      ] as never);
+      jest.spyOn(CommunicationLogRecipient, 'findAll').mockResolvedValue([
+        { communicationLogId: 1, recipientId: 2 },
+        { communicationLogId: 1, recipientId: 2 },
+      ] as never);
+      jest.spyOn(CommunicationLogFile, 'findAll').mockResolvedValue([]);
+      const result = await COMMUNICATION_LOG_TIMELINE_SOURCE.populate([1, 1], {
+        ...params,
+        excludeMultiRecipientCommunications: true,
+      });
+      expect(result.get(1)).toMatchObject({
+        title: 'Email communication',
+        subtitle: null,
+        durationHours: null,
+        byline: null,
+        indicators: [],
+        tags: [],
+        details: [],
+      });
+      expect(query).toHaveBeenCalledTimes(1);
+      expect(query).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { [Op.in]: [1] } } })
+      );
+    }
+  );
 
   it('deduplicates creator roles, handles missing roles, and never reapplies eligibility during population', async () => {
     jest.spyOn(CommunicationLog, 'findAll').mockResolvedValue([
