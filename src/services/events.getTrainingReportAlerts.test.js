@@ -337,6 +337,7 @@ describe('getTrainingReportAlerts', () => {
     let approver;
     let event;
     let sessionWaitingForApproval;
+    let sessionWithStaleOwnerComplete;
     let sessionChangesNeeded;
 
     beforeAll(async () => {
@@ -401,6 +402,21 @@ describe('getTrainingReportAlerts', () => {
         },
       });
 
+      // Owner completion left over from national center facilitation after a switch
+      // to regional facilitation; the policy does not treat this as submitted.
+      sessionWithStaleOwnerComplete = await SessionReportPilot.create({
+        eventId: event.id,
+        approverId: approver.id,
+        submitterId: submitter.id,
+        data: {
+          sessionName: 'Session With Stale Owner Complete',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          facilitation: 'regional_tta_staff',
+          ownerComplete: true,
+          collabComplete: true,
+        },
+      });
+
       // Session with changes needed - sent back by approver
       sessionChangesNeeded = await SessionReportPilot.create({
         eventId: event.id,
@@ -451,6 +467,16 @@ describe('getTrainingReportAlerts', () => {
       expect(waitingAlert.submitterId).toBe(submitter.id);
       expect(waitingAlert.approverId).toBe(approver.id);
       expect(waitingAlert.approverName).toBe('Test Approver');
+    });
+
+    it('does not show waitingForApproval for stale completion flags from another workflow', async () => {
+      const alerts = await getTrainingReportAlertsForUser(approver.id, [1]);
+
+      expect(
+        alerts.find(
+          (a) => a.alertType === 'waitingForApproval' && a.id === sessionWithStaleOwnerComplete.id
+        )
+      ).toBeUndefined();
     });
 
     it('should show waitingForApproval alert to approver', async () => {
