@@ -11,6 +11,8 @@ updates:
   - dependency-name: "*"
     update-types:
     - "version-update:semver-major"
+  - dependency-name: "@ttahub/common"
+  - dependency-name: "@uswds/uswds"
   groups:
     backend-minor-patch:
       update-types:
@@ -29,6 +31,7 @@ updates:
   - dependency-name: "*"
     update-types:
     - "version-update:semver-major"
+  - dependency-name: "@ttahub/common"
   groups:
     frontend-minor-patch:
       update-types:

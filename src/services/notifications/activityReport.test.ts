@@ -11,6 +11,7 @@ import {
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
+  createResubmittedNotificationForCreator,
 } from './activityReport';
 
 jest.mock('./index', () => ({
@@ -326,13 +327,13 @@ describe('activityReport notification helpers', () => {
       );
     });
 
-    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for approvers', async () => {
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_APPROVER for approvers', async () => {
       await createChangesRequestedNotification({ userId: 12 }, 'approver', reportWithApprover);
 
       expect(mockCreateNotification).toHaveBeenCalledWith(
         12,
         reportWithApprover.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
       );
     });
@@ -352,7 +353,7 @@ describe('activityReport notification helpers', () => {
         {
           userId: 12,
           creatorOrCollaborator: 'approver' as const,
-          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
         },
       ];
 
@@ -440,13 +441,14 @@ describe('activityReport notification helpers', () => {
   });
 
   describe('archiveNeedsActionNotifications', () => {
-    it('archives both needs-action notification types for the report', async () => {
+    it('archives all needs-action notification types for the report', async () => {
       await archiveNeedsActionNotifications(42);
 
       expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
       expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
       ]);
     });
   });
@@ -600,14 +602,56 @@ describe('activityReport notification helpers', () => {
   });
 
   describe('archiveResubmittedNotifications', () => {
-    it('archives the resubmitted notification types (collaborator and approver) for the report', async () => {
+    it('archives the resubmitted notification types (collaborator, approver and creator) for the report', async () => {
       await archiveResubmittedNotifications(42);
 
       expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
       expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
       ]);
+    });
+  });
+
+  describe('createResubmittedNotificationForCreator', () => {
+    const reportBase = {
+      id: 1,
+      displayId: 'AR-123',
+    };
+
+    it('calls createNotification once with the ACTIVITY_REPORT_RESUBMITTED_CREATOR type', async () => {
+      const creatorUserId = 42;
+      const submitterName = 'Bob Smith';
+      await createResubmittedNotificationForCreator(creatorUserId, reportBase, submitterName);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        creatorUserId,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+        expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
+      );
+    });
+
+    it('passes id, displayId and author (submitterName) in metadata', async () => {
+      const creatorUserId = 42;
+      const submitterName = 'Bob Smith';
+      await createResubmittedNotificationForCreator(creatorUserId, reportBase, submitterName);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        creatorUserId,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            author: submitterName,
+          },
+          skipExisting: 'archived',
+        }
+      );
     });
   });
 });
