@@ -140,12 +140,10 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  // Keep startDate available in the POC form for validation, but omit it from
-  // users who cannot edit Session summary. Apply this to Save draft, Submit,
-  // and Review payloads.
+  // Keep startDate available for Session summary and POC-side date validation.
   const roleData = reduceDataToMatchKeys(keyArray, data);
-  const canEditSessionSummary = keyArray.includes('sessionName');
-  if (!canEditSessionSummary) {
+  const keepsStartDate = keyArray.includes('sessionName') || keyArray.includes('participants');
+  if (!keepsStartDate) {
     delete roleData.startDate;
   }
 
