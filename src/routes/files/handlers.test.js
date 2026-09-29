@@ -76,6 +76,7 @@ const ORIGINAL_ENV = process.env;
 jest.mock('../../lib/s3');
 jest.mock('../../lib/queue');
 jest.mock('../../services/s3Queue');
+jest.mock('file-type');
 
 const mockUser = {
   id: 2046,
@@ -197,6 +198,9 @@ describe('File Upload', () => {
   });
   beforeEach(() => {
     jest.clearAllMocks();
+    // Restore default file-type implementation so existing tests work
+    const { fileTypeFromFile } = require('file-type');
+    fileTypeFromFile.mockImplementation(jest.requireActual('file-type').fileTypeFromFile);
   });
 
   describe('File Upload Handlers error handling', () => {
@@ -306,6 +310,96 @@ describe('File Upload', () => {
             expect.any(Number),
             FILE_STATUSES.UPLOAD_FAILED
           );
+        });
+    });
+  });
+
+  describe('File extension handling in S3 key generation', () => {
+    it('should generate filenames with proper dot separator for file-type library extensions (without dot)', async () => {
+      const { fileTypeFromFile } = require('file-type');
+      // Mock fileTypeFromFile to return extension without dot (as the real library does)
+      fileTypeFromFile.mockResolvedValue({ ext: 'pdf', mime: 'application/pdf' });
+
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+        reportHasEditableStatus: () => true,
+      }));
+
+      uploadFile.mockResolvedValue({
+        Key: expect.stringMatching(/^[a-f0-9-]{36}\.(pdf|txt|csv)$/),
+      });
+
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200)
+        .then((res) => {
+          const uploadedFile = JSON.parse(res.text)[0];
+          // Verify the key has proper dot separator (uuid.ext format)
+          // This tests that extensions without dots from file-type library get the dot added
+          const keyMatch = uploadedFile.key.match(/^[a-f0-9-]{36}\.pdf$/);
+          expect(keyMatch).not.toBeNull();
+        });
+    });
+
+    it('should generate filenames with proper dot separator for altFileTypes extensions (with dot)', async () => {
+      const { fileTypeFromFile } = require('file-type');
+      // Mock fileTypeFromFile to return undefined so altFileTypes fallback is used
+      fileTypeFromFile.mockResolvedValue(undefined);
+
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+        reportHasEditableStatus: () => true,
+      }));
+
+      uploadFile.mockResolvedValue({
+        Key: expect.stringMatching(/^[a-f0-9-]{36}\.(txt|csv)$/),
+      });
+
+      // Test with a .txt file which is in altFileTypes
+      // fileTypeFromFile returns undefined, so determineFileTypeFromPath falls back to altFileTypes
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/test.txt`)
+        .expect(200)
+        .then((res) => {
+          const uploadedFile = JSON.parse(res.text)[0];
+          // Verify the key has proper dot separator, not double dots
+          const keyMatch = uploadedFile.key.match(/^[a-f0-9-]{36}\.txt$/);
+          expect(keyMatch).not.toBeNull();
+          expect(uploadedFile.key).not.toContain('..');
+        });
+    });
+
+    it('should not create malformed S3 keys without dot separator', async () => {
+      const { fileTypeFromFile } = require('file-type');
+      // This mimics the real file-type library behavior: extension without dot
+      fileTypeFromFile.mockResolvedValue({ ext: 'pdf', mime: 'application/pdf' });
+
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+        reportHasEditableStatus: () => true,
+      }));
+
+      uploadFile.mockResolvedValue({
+        Key: expect.not.stringMatching(/[a-f0-9-]{36}[a-z]+$/),
+      });
+
+      await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200)
+        .then((res) => {
+          const uploadedFile = JSON.parse(res.text)[0];
+          // Regression test: Verify key does NOT match pattern without dot (the original bug)
+          // Before the fix, this would be "uuid pdf" (missing dot)
+          const malformedMatch = uploadedFile.key.match(/[a-f0-9-]{36}pdf$/);
+          expect(malformedMatch).toBeNull();
+          // Verify correct format is used
+          expect(uploadedFile.key).toMatch(/[a-f0-9-]{36}\.pdf$/);
         });
     });
   });
