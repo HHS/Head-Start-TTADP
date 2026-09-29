@@ -238,6 +238,7 @@ const EMAIL_ACTIONS = {
   NEEDS_ACTION: 'changesRequested',
   SUBMITTED: 'approverAssigned',
   APPROVED: 'reportApproved',
+  APPROVER_APPROVED: 'approverReportApproved',
   COLLABORATOR_DIGEST: 'collaboratorDigest',
   NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
   SUBMITTED_DIGEST: 'approverAssignedDigest',
