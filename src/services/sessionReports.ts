@@ -7,6 +7,8 @@ import parseDate from '../lib/date';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
+import { isSessionSubmitted } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
   GetSessionReportsParams,
@@ -24,6 +26,41 @@ const {
   SessionReportPilotTrainer,
   Grant,
 } = db;
+
+// Completion flags (and their audit fields) for every workflow side. Facilitation
+// determines which of these apply, so they are all cleared when it changes.
+export const SESSION_COMPLETION_KEYS = ['ownerComplete', 'collabComplete', 'pocComplete'] as const;
+
+const SESSION_COMPLETION_AUDIT_KEYS = SESSION_COMPLETION_KEYS.flatMap((key) => [
+  `${key}Id`,
+  `${key}Date`,
+]);
+
+/**
+ * True when an update changes the session's facilitation. Facilitation picks both
+ * the completion workflow and the approver candidates, so a change invalidates them.
+ */
+export const isFacilitationChange = (
+  existingData: Record<string, unknown>,
+  incomingData: Record<string, unknown>
+): boolean =>
+  Object.hasOwn(incomingData, 'facilitation') &&
+  (incomingData.facilitation ?? '') !== (existingData.facilitation ?? '');
+
+/**
+ * Returns a copy of session data with every completion flag reset, used when
+ * facilitation changes so the session restarts in the new workflow.
+ */
+export const resetSessionCompletion = (data: Record<string, unknown>): Record<string, unknown> => {
+  const reset = { ...data };
+  SESSION_COMPLETION_KEYS.forEach((key) => {
+    reset[key] = false;
+  });
+  SESSION_COMPLETION_AUDIT_KEYS.forEach((key) => {
+    delete reset[key];
+  });
+  return reset;
+};
 
 type WhereOptions = {
   id?: number;
@@ -202,8 +239,10 @@ export async function findSessionHelper(
     return (session as Model[]).map((s) => {
       const sd = s.get('startDate') as string | null;
       const ed = s.get('endDate') as string | null;
+      const plain = s.get({ plain: true }) as SessionShape & { event: EventShape };
       return {
-        ...s.get({ plain: true }),
+        ...plain,
+        submitted: isSessionSubmitted(plain.event, plain),
         data: {
           ...((s.get('data') as Record<string, unknown>) ?? {}),
           startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
@@ -237,7 +276,10 @@ export async function findSessionHelper(
     event: session?.event,
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
-    submitted: session?.submitted ?? false,
+    submitted: isSessionSubmitted(
+      session?.event as unknown as EventShape,
+      session as unknown as SessionShape
+    ),
     submitterId: session?.submitterId ?? null,
     submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
@@ -308,7 +350,11 @@ export async function updateSession(id: number, request) {
     endDate: incomingEndDate,
     ...restIncomingData
   } = cleanIncomingData;
-  const newData = { ...restExistingData, ...restIncomingData };
+  const facilitationChanged = isFacilitationChange(restExistingData, restIncomingData);
+  const mergedData = { ...restExistingData, ...restIncomingData };
+  // Changing facilitation switches workflows, so stale completion flags and an
+  // approver chosen from the old candidate list must not carry over.
+  const newData = facilitationChanged ? resetSessionCompletion(mergedData) : mergedData;
 
   const event = await findEventBySmartsheetId(eventId);
 
@@ -326,14 +372,16 @@ export async function updateSession(id: number, request) {
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
-    approverId?: number;
+    approverId?: number | null;
     submitterId?: number;
     startDate?: Date | null;
     endDate?: Date | null;
     data: Cast;
   };
 
-  if (approverId) {
+  if (facilitationChanged) {
+    update.approverId = null;
+  } else if (approverId) {
     update.approverId = Number(approverId);
   }
 

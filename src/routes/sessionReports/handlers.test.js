@@ -292,12 +292,16 @@ describe('session report handlers', () => {
       }));
       createSession.mockResolvedValue(createdSession);
 
-      await createHandler(mockRequest, mockResponse);
+      const request = {
+        ...mockRequest,
+        body: { ...mockRequest.body, data: { facilitation: 'national_center' } },
+      };
+      await createHandler(request, mockResponse);
 
       expect(createSession).toHaveBeenCalledWith({
         eventId: pocEvent.id,
         data: {
-          ...mockRequest.body.data,
+          ...request.body.data,
           eventName: pocEvent.data.eventName,
           eventDisplayId: pocEvent.eventId,
           regionId: pocEvent.regionId,
@@ -305,6 +309,72 @@ describe('session report handlers', () => {
         },
       });
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it.each([undefined, null, '', 'national_centers', 'invalid', 1, ['national_center']])(
+      'rejects NC event session creation with invalid facilitation %p',
+      async (facilitation) => {
+        findEventBySmartsheetId.mockResolvedValue({
+          ...mockEvent,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        });
+        EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+
+        await createHandler(
+          {
+            ...mockRequest,
+            body: { ...mockRequest.body, data: { facilitation } },
+          },
+          mockResponse
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(400);
+        expect(mockStatusSend).toHaveBeenCalledWith({
+          message: expect.stringContaining('Select who is providing the training'),
+        });
+        expect(createSession).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each(['national_center', 'regional_tta_staff', 'both'])(
+      'creates an NC event session with facilitation %s',
+      async (facilitation) => {
+        findEventBySmartsheetId.mockResolvedValue({
+          ...mockEvent,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        });
+        EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+        createSession.mockResolvedValue(mockSession);
+
+        await createHandler(
+          {
+            ...mockRequest,
+            body: { ...mockRequest.body, data: { facilitation } },
+          },
+          mockResponse
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+        expect(createSession).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ facilitation }),
+          })
+        );
+      }
+    );
+
+    it('allows regional-only session creation without facilitation', async () => {
+      findEventBySmartsheetId.mockResolvedValue({
+        ...mockEvent,
+        data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+      });
+      EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+      createSession.mockResolvedValue(mockSession);
+
+      await createHandler(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(createSession).toHaveBeenCalled();
     });
 
     it('returns 400 when there is no body', async () => {

@@ -4,7 +4,7 @@
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SUPPORT_TYPES } from '@ttahub/common';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import NetworkContext from '../../../../NetworkContext';
 import { mockRSSData } from '../../../../testHelpers';
+import UserContext from '../../../../UserContext';
 import sessionSummary, { isPageComplete } from '../sessionSummary';
 
 const mockData = (files) => ({
@@ -206,14 +207,28 @@ describe('sessionSummary', () => {
       },
     };
 
+    const ncAdditionalData = {
+      event: {
+        regionId: 1,
+        data: {
+          regionId: 1,
+          eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        },
+      },
+    };
+
     const RenderSessionSummary = ({
       formValues = defaultFormValues,
       additionalData = defaultAdditionalData,
+      user = { id: 1, permissions: [] },
+      onForm = () => {},
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
+        shouldUnregister: false,
       });
+      onForm(hookForm);
 
       return (
         <AppLoadingContext.Provider
@@ -222,27 +237,29 @@ describe('sessionSummary', () => {
             setAppLoadingText: jest.fn(),
           }}
         >
-          <MemoryRouter>
-            <FormProvider {...hookForm}>
-              <NetworkContext.Provider value={{ connectionActive: true }}>
-                {sessionSummary.render(
-                  { ...defaultAdditionalData, ...additionalData },
-                  defaultFormValues,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveDraft,
-                  jest.fn(),
-                  false,
-                  'key',
-                  jest.fn(),
-                  () => (
-                    <></>
-                  )
-                )}
-              </NetworkContext.Provider>
-            </FormProvider>
-          </MemoryRouter>
+          <UserContext.Provider value={{ user }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.render(
+                    { ...defaultAdditionalData, ...additionalData },
+                    defaultFormValues,
+                    1,
+                    false,
+                    jest.fn(),
+                    onSaveDraft,
+                    jest.fn(),
+                    false,
+                    'key',
+                    jest.fn(),
+                    () => (
+                      <></>
+                    )
+                  )}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       );
     };
@@ -290,6 +307,80 @@ describe('sessionSummary', () => {
 
     afterEach(async () => {
       fetchMock.restore();
+    });
+
+    it('lets admins change facilitation immediately after session name', async () => {
+      render(
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
+        />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue('regional_tta_staff');
+      screen.getByRole('textbox', { name: /session name/i }).focus();
+      userEvent.tab();
+      expect(field).toHaveFocus();
+
+      userEvent.selectOptions(field, 'national_center');
+      expect(field).toHaveValue('national_center');
+      userEvent.selectOptions(field, 'both');
+      expect(field).toHaveValue('both');
+    });
+
+    it('resets the approver and completion flags when an admin changes facilitation', async () => {
+      let hookForm;
+      render(
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
+          formValues={{
+            ...defaultFormValues,
+            approverId: 7,
+            ownerComplete: true,
+            collabComplete: true,
+            pocComplete: true,
+          }}
+          onForm={(form) => {
+            hookForm = form;
+          }}
+        />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(hookForm.getValues('approverId')).toBe(7);
+
+      userEvent.selectOptions(field, 'national_center');
+
+      await waitFor(() => expect(hookForm.getValues('approverId')).toBe(''));
+      expect(hookForm.getValues('facilitation')).toBe('national_center');
+      expect(hookForm.getValues('ownerComplete')).toBe(false);
+      expect(hookForm.getValues('collabComplete')).toBe(false);
+      expect(hookForm.getValues('pocComplete')).toBe(false);
+    });
+
+    it('hides the facilitation dropdown from admins on events without National Centers', async () => {
+      render(
+        <RenderSessionSummary user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }} />
+      );
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('preserves facilitation without an editable field for non-admin users', async () => {
+      render(<RenderSessionSummary />);
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
+      expect(document.querySelector('input[name="facilitation"]')).toHaveValue(
+        'regional_tta_staff'
+      );
     });
 
     it('renders session summary', async () => {
