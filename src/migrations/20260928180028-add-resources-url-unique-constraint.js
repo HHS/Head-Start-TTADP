@@ -43,7 +43,8 @@ module.exports = {
             // pair -- these tables key on a surrogate "id", so simply repointing the FK would
             // leave both rows in place. Merge every such colliding group onto its lowest-id row,
             // unioning "sourceFields" (and, for GoalResources, OR-ing the onAR/onApprovedAR
-            // flags) before discarding the extra rows.
+            // flags) before discarding the extra rows. Only groups containing a repointed row are
+            // touched; every other row is left exactly as it is.
             // eslint-disable-next-line no-restricted-syntax
             for (const { table, idColumn, hasArFlags } of RESOURCE_REFERENCING_TABLES) {
                 // eslint-disable-next-line no-await-in-loop
@@ -51,22 +52,27 @@ module.exports = {
           /* sql */ `
             DROP TABLE IF EXISTS tmp_join_merge;
             CREATE TEMP TABLE tmp_join_merge AS
-            SELECT
-              t.id,
-              t."${idColumn}" AS parent_id,
-              COALESCE(d.canonical_id, t."resourceId") AS target_resource_id
-            FROM "${table}" t
-            LEFT JOIN tmp_resource_dedup d ON d.id = t."resourceId";
-
-            ALTER TABLE tmp_join_merge ADD COLUMN canonical_row_id INTEGER;
-            UPDATE tmp_join_merge m
-            SET canonical_row_id = c.min_id
-            FROM (
-              SELECT parent_id, target_resource_id, MIN(id) AS min_id
-              FROM tmp_join_merge
-              GROUP BY parent_id, target_resource_id
-            ) c
-            WHERE m.parent_id = c.parent_id AND m.target_resource_id = c.target_resource_id;
+            WITH mapped AS (
+              SELECT
+                t.id,
+                t."${idColumn}" AS parent_id,
+                COALESCE(d.canonical_id, t."resourceId") AS target_resource_id,
+                d.id IS NOT NULL AS repointed
+              FROM "${table}" t
+              LEFT JOIN tmp_resource_dedup d ON d.id = t."resourceId"
+            ),
+            windowed AS (
+              SELECT
+                *,
+                MIN(id) OVER w AS canonical_row_id,
+                COUNT(*) OVER w AS group_size,
+                BOOL_OR(repointed) OVER w AS group_repointed
+              FROM mapped
+              WINDOW w AS (PARTITION BY parent_id, target_resource_id)
+            )
+            SELECT id, target_resource_id, canonical_row_id, group_size
+            FROM windowed
+            WHERE group_repointed;
 
             WITH grouped AS (
               SELECT
@@ -76,6 +82,7 @@ module.exports = {
               FROM tmp_join_merge m
               JOIN "${table}" t ON t.id = m.id
               LEFT JOIN LATERAL unnest(t."sourceFields") AS elem ON true
+              WHERE m.group_size > 1
               GROUP BY m.canonical_row_id
             )
             UPDATE "${table}" t
@@ -87,7 +94,7 @@ module.exports = {
             UPDATE "${table}" t
             SET "resourceId" = m.target_resource_id
             FROM tmp_join_merge m
-            WHERE t.id = m.canonical_row_id;
+            WHERE t.id = m.canonical_row_id AND t."resourceId" <> m.target_resource_id;
 
             DELETE FROM "${table}" t
             USING tmp_join_merge m

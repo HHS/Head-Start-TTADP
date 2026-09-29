@@ -25,11 +25,21 @@ module.exports = {
                 // eslint-disable-next-line no-await-in-loop
                 await queryInterface.sequelize.query(
           /* sql */ `
+            -- Only rows that belong to an actual duplicate group are merged; rows with no
+            -- duplicate are left exactly as they are.
             DROP TABLE IF EXISTS tmp_collaborator_dedup;
             CREATE TEMP TABLE tmp_collaborator_dedup AS
-            SELECT id, MIN(id) OVER (PARTITION BY "${idColumn}", "userId", "collaboratorTypeId") AS canonical_id
-            FROM "${table}"
-            WHERE "deletedAt" IS NULL;
+            SELECT id, canonical_id
+            FROM (
+              SELECT
+                id,
+                MIN(id) OVER w AS canonical_id,
+                COUNT(*) OVER w AS group_size
+              FROM "${table}"
+              WHERE "deletedAt" IS NULL
+              WINDOW w AS (PARTITION BY "${idColumn}", "userId", "collaboratorTypeId")
+            ) x
+            WHERE group_size > 1;
 
             -- Merge every row in a duplicate group onto the canonical row's linkBack, covering
             -- both array-valued keys (unioned, deduped -- use jsonb_array_elements, not the _text
