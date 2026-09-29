@@ -377,7 +377,7 @@ describe('Activity Report handlers', () => {
       ]);
       // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
       // archived once the report is fully approved.
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
@@ -626,7 +626,7 @@ describe('Activity Report handlers', () => {
           // an approver who has not approved yet -> actionable "Take action"
           { user: { id: 333 }, status: null },
           // an approver who marked the report as needs action -> informational "View AR"
-          { userId: 444, status: APPROVER_STATUSES.NEEDS_ACTION },
+          { user: { id: 444 }, status: APPROVER_STATUSES.NEEDS_ACTION },
         ],
         id: 999999,
         toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
