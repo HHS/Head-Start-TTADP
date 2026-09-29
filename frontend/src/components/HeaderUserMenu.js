@@ -14,6 +14,7 @@ import { storageAvailable } from '../hooks/helpers';
 import isAdmin, { canSeeBehindFeatureFlag } from '../permissions';
 import UserContext from '../UserContext';
 import NavLink from './NavLink';
+import NotificationBell from './NotificationBell';
 import Pill from './Pill';
 
 function UserMenuNav({ items }) {
@@ -263,26 +264,29 @@ function HeaderUserMenu({
   };
 
   return (
-    <DropdownMenu
-      Trigger={Av}
-      onApply={() => {}}
-      buttonText={user.name}
-      showApplyButton={false}
-      direction="left"
-      className="no-print"
-    >
-      <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
-        <AvatarGroup userName={user.name} />
-        {isImpersonating && (
-          <div className="display-flex flex-justify-center margin-top-2">
-            <Button type="button" onClick={stopImpersonating}>
-              Stop impersonating
-            </Button>
-          </div>
-        )}
-        <UserMenuNav items={menuItems} />
-      </div>
-    </DropdownMenu>
+    <div className="display-flex flex-gap-2">
+      <NotificationBell />
+      <DropdownMenu
+        Trigger={Av}
+        onApply={() => {}}
+        buttonText={user.name}
+        showApplyButton={false}
+        direction="left"
+        className="no-print"
+      >
+        <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
+          <AvatarGroup userName={user.name} />
+          {isImpersonating && (
+            <div className="display-flex flex-justify-center margin-top-2">
+              <Button type="button" onClick={stopImpersonating}>
+                Stop impersonating
+              </Button>
+            </div>
+          )}
+          <UserMenuNav items={menuItems} />
+        </div>
+      </DropdownMenu>
+    </div>
   );
 }
 

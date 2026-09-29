@@ -1,5 +1,5 @@
 import { Dropdown } from '@trussworks/react-uswds';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -10,6 +10,7 @@ import {
   fetchArchivedNotifications,
   fetchNotifications,
 } from '../../fetchers/notifications';
+import useDataUpdates from '../../hooks/useDataUpdates';
 import useFetch from '../../hooks/useFetch';
 import useSessionSort from '../../hooks/useSessionSort';
 import NotificationList from './components/NotificationList';
@@ -56,13 +57,14 @@ const DEFAULT_SORT_KEY = 'action_needed-asc';
 
 export default function Notifications() {
   const location = useLocation();
+  // Refetch after successful notification state changes from any mounted component.
+  const revision = useDataUpdates('notifications');
   const isArchive = useMemo(
     () => location.pathname === '/notifications/archive',
     [location.pathname]
   );
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
-  const [triggerFetch, setTriggerFetch] = useState(false);
 
   const [sortConfig, setSortConfig] = useSessionSort(
     {
@@ -78,16 +80,10 @@ export default function Notifications() {
     ? async () => fetchArchivedNotifications({ sortConfig })
     : async () => fetchNotifications({ sortConfig });
 
-  useEffect(() => {
-    if (triggerFetch) {
-      setTriggerFetch(false);
-    }
-  }, [triggerFetch]);
-
   const { data, error } = useFetch({ count: 0, rows: [] }, fetcher, [
     isArchive,
     sortConfig,
-    triggerFetch,
+    revision,
   ]);
 
   const { count, rows: notifications } = data;
@@ -118,7 +114,6 @@ export default function Notifications() {
     try {
       setIsAppLoading(true);
       await archiveNotification(String(notificationId));
-      setTriggerFetch(true);
     } catch (error) {
       console.error('Error archiving notification:', error);
     } finally {
