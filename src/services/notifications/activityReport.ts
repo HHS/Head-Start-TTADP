@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
@@ -22,11 +23,15 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  const notificationType =
-    creatorOrCollaborator === 'creator'
-      ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
-      : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
-  // collaborator type == approver type notification, functionally
+  let notificationType: NotificationType;
+  if (creatorOrCollaborator === 'creator') {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
+  } else if (creatorOrCollaborator === 'approver') {
+    // Approver 1 is told a second+ approver requested changes (TTAHUB-5683).
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER;
+  } else {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+  }
 
   if (!checkRecipientName(savedReport.activityRecipients)) {
     return Promise.resolve();
@@ -328,9 +333,49 @@ async function createResubmittedNotificationForApprovers(
 }
 
 /**
+ * Creates the "revised report resubmitted for approval" in-app notification for the creator
+ * of an activity report. Fired when a collaborator (not the creator) resubmits a report for
+ * approval (i.e. submitted while it was in "needs action" status). Replaces the standard
+ * creator-submitted notification on resubmission so the creator sees the "revised" wording
+ * (spec AR-4b / TTAHUB-5677).
+ * @param creatorUserId The report creator's user id to notify.
+ * @param savedReport The saved activity report.
+ * @param submitterName The name of the collaborator who resubmitted the report.
+ * @returns {Promise<void>} Resolves once the notification is created.
+ */
+async function createResubmittedNotificationForCreator(
+  creatorUserId: number,
+  savedReport: {
+    id: number;
+    displayId: string;
+  },
+  submitterName: string
+) {
+  await createNotification(
+    creatorUserId,
+    savedReport.id,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+    {
+      metadata: {
+        id: savedReport.id,
+        displayId: savedReport.displayId,
+        author: submitterName,
+      },
+      skipExisting: 'archived',
+    }
+  );
+  return archiveNotificationsByUserEntityAndType(
+    savedReport.id,
+    creatorUserId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR
+  );
+}
+
+/**
  * Archives the "needs action" in-app notifications for an activity report.
- * Called when a report is (re)submitted for approval so that any pending needs-action
- * notifications for that report are moved to the archived list.
+ * Called when a report is (re)submitted for approval or fully approved so that any pending
+ * needs-action notifications (creator-, collaborator-, and approver-facing) for that report
+ * are moved to the archived list.
  * @param {number} reportId The activity report ID whose needs-action notifications to archive.
  * @returns {Promise<void>} Resolves once archiving is complete.
  */
@@ -338,6 +383,7 @@ async function archiveNeedsActionNotifications(reportId: number): Promise<void> 
   return archiveNotificationsByEntityAndType(reportId, [
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
   ]);
 }
 
@@ -353,6 +399,7 @@ async function archiveResubmittedNotifications(reportId: number): Promise<void> 
   return archiveNotificationsByEntityAndType(reportId, [
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
   ]);
 }
 
@@ -368,4 +415,5 @@ export {
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
+  createResubmittedNotificationForCreator,
 };

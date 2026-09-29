@@ -3,7 +3,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Redirect } from 'react-router-dom';
 import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
 import Routes from '../Routes';
@@ -14,6 +14,7 @@ const defaultFlags = [
   'resources_dashboard',
   'view_courses',
   'communication_log',
+  'recipient_tta_request',
 ];
 
 // mock child components lightly to ensure they render *something* identifiable
@@ -33,6 +34,7 @@ jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
+jest.mock('../pages/TtaRequests', () => () => <div>TTA Requests Page</div>);
 jest.mock('../pages/TrainingReportForm', () => () => <div>Training Report Form Page</div>);
 jest.mock('../pages/ViewTrainingReport', () => () => <div>View Training Report Page</div>);
 jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
@@ -87,6 +89,10 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
     return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
   }
 
+  if (flag === 'recipient_tta_request' && !window.test_recipient_tta_request_flag) {
+    return renderNotFound ? <Redirect to="/something-went-wrong/404" /> : null;
+  }
+
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -129,6 +135,7 @@ const RenderRoutes = async (
 
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
   window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
+  window.test_recipient_tta_request_flag = user.flags.includes('recipient_tta_request');
 
   const defaultProps = {
     alert: null,
@@ -195,6 +202,7 @@ describe('Routes', () => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
     delete window.test_actionable_notifications_flag;
+    delete window.test_recipient_tta_request_flag;
   });
 
   // --- authenticated routes ---
@@ -267,6 +275,20 @@ describe('Routes', () => {
   it('renders the Training Reports page for "/training-reports/not-started"', async () => {
     await RenderRoutes('/training-reports/not-started');
     expect(await screen.findByText('Training Reports Page')).toBeInTheDocument();
+  });
+
+  it('renders the TTA Requests page for "/tta-requests"', async () => {
+    await RenderRoutes('/tta-requests');
+    expect(await screen.findByText('TTA Requests Page')).toBeInTheDocument();
+  });
+
+  it('redirects "/tta-requests" to 404 when the recipient_tta_request flag is off', async () => {
+    const flagsWithoutRecipientTtaRequest = defaultFlags.filter(
+      (f) => f !== 'recipient_tta_request'
+    );
+    await RenderRoutes('/tta-requests', true, { flags: flagsWithoutRecipientTtaRequest });
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
+    expect(screen.queryByText('TTA Requests Page')).toBe(null);
   });
 
   it('renders the Training Report Form page for "/training-report/:id/event-summary"', async () => {
