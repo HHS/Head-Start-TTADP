@@ -122,8 +122,8 @@ export default (sequelize, DataTypes) => {
       indexes: [
         {
           unique: true,
-          fields: ['url'],
-          name: 'Resources_url_unique_idx',
+          fields: [sequelize.fn('md5', sequelize.col('url'))],
+          name: 'Resources_url_md5_unique_idx',
         },
       ],
     }

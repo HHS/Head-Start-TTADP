@@ -1,6 +1,6 @@
 import { VALID_URL_REGEX } from '@ttahub/common';
-import cls from 'cls-hooked';
-import { Op, UniqueConstraintError } from 'sequelize';
+import { Op } from 'sequelize';
+import createOrFindExisting from '../lib/createOrFindExisting';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -16,7 +16,6 @@ import {
   NextStepResource,
   Resource,
 } from '../models';
-import withTransactionLock from '../lib/transactionLock';
 
 const REPORT_AUTODETECTED_FIELDS = [];
 
@@ -30,43 +29,22 @@ const REPORTGOAL_AUTODETECTED_FIELDS = [];
 
 const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [];
 
-// "Resources.url" has a database-level unique constraint (see the
-// add-resources-url-unique-constraint migration), so concurrent creates for the
-// same url are safe: exactly one insert wins, and the other(s) fall back to re-reading the row.
-const isDuplicateUrlError = (error) =>
-  error instanceof UniqueConstraintError &&
-  (error.fields?.url !== undefined || error.errors?.some?.((e) => e.path === 'url'));
+// Resources are unique by url (see the add-resources-url-unique-constraint migration), so a
+// concurrent create for the same url by another request, process, or sibling resolves to the
+// winner's row.
+const findOrCreateResourceByUrl = async (url, values, transaction) => {
+  const findExisting = () => Resource.findOne({ where: { url }, transaction });
+  const existing = await findExisting();
+  if (existing) return existing;
 
-// `sequelize.transaction(callback)` only nests as a SAVEPOINT of the request's ambient
-// (CLS-bound) transaction when an explicit `{ transaction }` parent is passed in — unlike a
-// plain `.create()`/`.query()` call, it does NOT consult the CLS namespace on its own. That
-// ambient transaction must be captured ONCE, up front (see `genericProcessEntityForResources`),
-// and threaded through explicitly as `transaction` below.
-//
-// Sibling callers in the same request (e.g. one per objective via Promise.all) share that
-// transaction's single connection, so their SAVEPOINTs would interleave and a rollback for one
-// would corrupt the others. `withTransactionLock` serializes the find-then-create per
-// transaction; re-reading inside the lock means a sibling's row is seen rather than
-// conflicted with, so the SAVEPOINT only ever rolls back for a race with another transaction.
-const findOrCreateResourceByUrl = (url, values, transaction) =>
-  withTransactionLock(transaction, async () => {
-    const existing = await Resource.findOne({ where: { url }, transaction });
-    if (existing) return existing;
-
-    try {
-      // Postgres aborts the entire enclosing transaction after a unique-constraint
-      // violation, so the create attempt runs inside its own SAVEPOINT: a
-      // `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of the outer transaction
-      // (the recovery read below, and everything else in the request) usable.
-      return await Resource.sequelize.transaction({ transaction }, (savepoint) =>
-        Resource.create({ url, ...values }, { transaction: savepoint })
-      );
-    } catch (error) {
-      if (!isDuplicateUrlError(error)) throw error;
-      // Lost the race to another concurrent request/process; use the row it created.
-      return Resource.findOne({ where: { url }, transaction });
-    }
-  });
+  const { record } = await createOrFindExisting(
+    Resource,
+    { url, ...values },
+    findExisting,
+    transaction
+  );
+  return record;
+};
 
 const handleEclkcMapping = async (url, transaction) => {
   if (!url.includes('eclkc.ohs.acf.hhs.gov')) return null;
@@ -638,14 +616,6 @@ const genericProcessEntityForResources = async (
   resourceIds,
   ignoreDestroy = false
 ) => {
-  // Read via cls-hooked's public API (the same 'transaction' namespace Sequelize itself is
-  // bound to in src/models/index.js) rather than Sequelize's private `_cls` field. CLS tracks
-  // this per async continuation, so sibling entities processed concurrently via `Promise.all`
-  // each correctly see the outer transaction here, even though they reach this line at
-  // different times and a sibling may have since opened its own nested SAVEPOINT below --
-  // that nested transaction only overrides the CLS value within the sibling's own continuation.
-  const transaction = cls.getNamespace('transaction')?.get('transaction');
-
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
@@ -657,7 +627,6 @@ const genericProcessEntityForResources = async (
           as: 'resource',
         },
       ],
-      transaction,
       raw: true,
     });
 
@@ -698,7 +667,7 @@ const genericProcessEntityForResources = async (
       resourcesFromField(entity.id, urlsFrom[key], key)
     );
   });
-  const resourcesWithId = await findOrCreateResources([...new Set(urlsFromFlat)], transaction);
+  const resourcesWithId = await findOrCreateResources([...new Set(urlsFromFlat)]);
 
   // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.

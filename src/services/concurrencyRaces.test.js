@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { GOAL_COLLABORATORS } from '../constants';
 import {
   findOrCreateCollaborator,
@@ -172,6 +173,17 @@ describe('concurrency races (real database)', () => {
       const rows = await Resource.findAll({ where: { url } });
       expect(rows).toHaveLength(1);
       expect(rows[0].id).toBe(row.id);
+    });
+
+    it('accepts urls too long for a plain btree index, including concurrent creates', async () => {
+      // Incompressible, so it can't squeeze under the ~2.7KB btree entry limit via TOAST.
+      const url = `https://race-long.test/?q=${crypto.randomBytes(3000).toString('hex')}`;
+      urlsToCleanup.push(url);
+
+      const results = await Promise.all(Array.from({ length: 5 }, () => findOrCreateResource(url)));
+
+      expect(new Set(results.map((r) => r.id)).size).toBe(1);
+      expect(await Resource.count({ where: { url } })).toBe(1);
     });
 
     it('opposite-order creates deadlock: Postgres aborts one side, no duplicate rows', async () => {
@@ -350,6 +362,35 @@ describe('concurrency races (real database)', () => {
   });
 
   describe('Mixed siblings in one transaction', () => {
+    it('a lost race does not discard an unrelated sibling write made just before the insert', async () => {
+      const url = uniqueUrl('sibling-write');
+      const reviewId = `race-sibling-write-${getUniqueId()}`;
+      urlsToCleanup.push(url);
+      reviewIdsToCleanup.push(reviewId);
+      const originalCreate = Resource.create.bind(Resource);
+      let outer;
+
+      // Right before the helper's INSERT: another request commits the same url (so the helper
+      // loses the race), and unrelated code on the shared transaction writes a row.
+      const spy = jest.spyOn(Resource, 'create').mockImplementationOnce(async (values, options) => {
+        await sequelize.transaction((other) => originalCreate({ url }, { transaction: other }));
+        await MonitoringReviewLink.create({ reviewId }, { transaction: outer });
+        return originalCreate(values, options);
+      });
+
+      try {
+        await sequelize.transaction(async (t) => {
+          outer = t;
+          await findOrCreateResource(url, t);
+        });
+      } finally {
+        spy.mockRestore();
+      }
+
+      expect(await MonitoringReviewLink.count({ where: { reviewId } })).toBe(1);
+      expect(await Resource.count({ where: { url } })).toBe(1);
+    });
+
     it('resource, collaborator and link siblings stay usable while one of them loses a race', async () => {
       const contestedUrl = uniqueUrl('mixed-contested');
       const freshUrl = uniqueUrl('mixed-fresh');

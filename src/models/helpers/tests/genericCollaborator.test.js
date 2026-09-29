@@ -1,4 +1,4 @@
-const { UniqueConstraintError } = require('sequelize');
+const { EmptyResultError } = require('sequelize');
 const {
   createCollaborator,
   getCollaboratorRecord,
@@ -218,16 +218,13 @@ describe('GenericCollaborator', () => {
     });
 
     it('falls back to the winning row when create loses a unique constraint race', async () => {
-      const uniquenessError = new UniqueConstraintError({
-        message: 'duplicate key value',
-        fields: { goalId: 1 },
-      });
       const winningRecord = { dataValues: { id: 1, linkBack: { activityReportIds: [1] } } };
       const sequelize = {
         models: {
           GoalCollaborator: {
             findOne: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(winningRecord),
-            create: jest.fn().mockRejectedValueOnce(uniquenessError),
+            // ON CONFLICT DO NOTHING skipped the insert.
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError()),
             update: jest.fn().mockResolvedValue({}),
           },
           CollaboratorType: {
@@ -235,9 +232,6 @@ describe('GenericCollaborator', () => {
           },
         },
       };
-      // The create attempt runs inside a SAVEPOINT (see findOrCreateCollaborator), so simulate
-      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
-      sequelize.transaction = jest.fn((options, callback) => callback(options.transaction));
       const transaction = {};
 
       const result = await findOrCreateCollaborator(
@@ -262,28 +256,25 @@ describe('GenericCollaborator', () => {
       expect(result).toBeDefined();
     });
 
-    it('propagates a unique constraint violation on an unrelated column instead of masking it', async () => {
-      const uniquenessError = new UniqueConstraintError({
-        message: 'duplicate key value',
-        fields: { someOtherColumn: 'x' },
-      });
+    it('surfaces an insert skipped by a conflict on some other constraint instead of masking it', async () => {
       const sequelize = {
         models: {
           GoalCollaborator: {
-            findOne: jest.fn().mockResolvedValueOnce(null),
-            create: jest.fn().mockRejectedValueOnce(uniquenessError),
+            findOne: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError()),
+            update: jest.fn(),
           },
           CollaboratorType: {
             findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
           },
         },
       };
-      sequelize.transaction = jest.fn((options, callback) => callback(options.transaction));
       const transaction = {};
 
       await expect(
         findOrCreateCollaborator('goal', sequelize, transaction, 1, 2, 'Creator', null)
-      ).rejects.toThrow(uniquenessError);
+      ).rejects.toThrow('no matching row was found');
+      expect(sequelize.models.GoalCollaborator.update).not.toHaveBeenCalled();
     });
   });
 

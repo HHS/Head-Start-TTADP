@@ -1,4 +1,4 @@
-import { UniqueConstraintError } from 'sequelize';
+import { EmptyResultError } from 'sequelize';
 
 import { syncGrantNumberLink, syncLink } from './genericLink';
 
@@ -35,7 +35,7 @@ describe('syncLink', () => {
 
     expect(model.create).toHaveBeenCalledWith(
       { [targetEntityName]: entityId },
-      { transaction: options.transaction }
+      { transaction: options.transaction, ignoreDuplicates: true }
     );
   });
 
@@ -101,13 +101,10 @@ describe('syncLink', () => {
     ).rejects.toThrow(error);
   });
 
-  it('treats a unique constraint violation on the target column as a lost race, not a failure', async () => {
-    const error = new UniqueConstraintError({
-      message: 'duplicate key value',
-      fields: { [targetEntityName]: entityId },
-    });
+  it('treats an insert skipped by a conflict on the target column as a lost race, not a failure', async () => {
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
-    model.create = jest.fn().mockRejectedValueOnce(error);
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError());
+    model.findOne = jest.fn().mockResolvedValueOnce({ [targetEntityName]: entityId });
 
     await expect(
       syncLink(
@@ -126,13 +123,10 @@ describe('syncLink', () => {
     expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
   });
 
-  it('propagates a unique constraint violation on an unrelated column instead of masking it', async () => {
-    const error = new UniqueConstraintError({
-      message: 'duplicate key value',
-      fields: { someOtherColumn: 'x' },
-    });
+  it('surfaces an insert skipped by a conflict on some other constraint instead of masking it', async () => {
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
-    model.create = jest.fn().mockRejectedValueOnce(error);
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError());
+    model.findOne = jest.fn().mockResolvedValueOnce(null);
 
     await expect(
       syncLink(
@@ -145,7 +139,8 @@ describe('syncLink', () => {
         entityId,
         onCreateCallbackWhileHoldingLock
       )
-    ).rejects.toThrow(error);
+    ).rejects.toThrow('no matching row was found');
+    expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
   });
 
   // Add more tests to cover error handling, different scenarios, etc.
@@ -165,8 +160,6 @@ describe('syncGrantNumberLink', () => {
           findOne: jest.fn().mockResolvedValue({ grantId: 1 }),
         },
       },
-      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
-      transaction: jest.fn((opts, callback) => callback(opts.transaction)),
     };
     const instance = {
       isNewRecord: false,
@@ -213,8 +206,6 @@ describe('syncGrantNumberLink', () => {
           findOne: jest.fn().mockResolvedValue({ id: 1 }),
         },
       },
-      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
-      transaction: jest.fn((opts, callback) => callback(opts.transaction)),
     };
     const instance = {
       isNewRecord: true,

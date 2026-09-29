@@ -114,11 +114,12 @@ module.exports = {
                 { transaction }
             );
 
+            // Index a digest rather than the raw url: a btree entry is capped at ~2.7KB, so
+            // indexing unbounded TEXT directly would reject long urls (e.g. with large query
+            // strings) at insert time, and fail this migration outright if any already exist.
             await queryInterface.sequelize.query(
         /* sql */ `
-          CREATE UNIQUE INDEX "Resources_url_unique_idx" ON "Resources" (url);
-          ALTER TABLE "Resources"
-          ADD CONSTRAINT "Resources_url_unique_idx" UNIQUE USING INDEX "Resources_url_unique_idx";
+          CREATE UNIQUE INDEX "Resources_url_md5_unique_idx" ON "Resources" (md5(url));
         `,
                 { transaction }
             );
@@ -134,8 +135,7 @@ module.exports = {
 
             await queryInterface.sequelize.query(
         /* sql */ `
-          ALTER TABLE "Resources" DROP CONSTRAINT IF EXISTS "Resources_url_unique_idx";
-          DROP INDEX IF EXISTS "Resources_url_unique_idx";
+          DROP INDEX IF EXISTS "Resources_url_md5_unique_idx";
         `,
                 { transaction }
             );

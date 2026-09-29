@@ -1,16 +1,9 @@
 import httpContext from 'express-http-context';
 import { isEqual } from 'lodash';
-import { Op, UniqueConstraintError } from 'sequelize';
+import { Op } from 'sequelize';
 import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import createOrFindExisting from '../../lib/createOrFindExisting';
 import withTransactionLock from '../../lib/transactionLock';
-
-// The (idName, userId, collaboratorTypeId) tuple has a database-level partial unique constraint
-// (see the fix-collaborator-active-unique-indexes migration), so this check narrows a caught
-// error down to specifically that constraint -- rather than treating any UniqueConstraintError as
-// "lost the create race" -- so a real violation of some other constraint isn't silently swallowed.
-const isDuplicateCollaboratorError = (error, idName) =>
-  error instanceof UniqueConstraintError &&
-  (error.fields?.[idName] !== undefined || error.errors?.some?.((e) => e.path === idName));
 
 const collaboratorDetails = {
   goal: {
@@ -69,6 +62,36 @@ const getIdForCollaboratorType = async (
     ...(transaction && { transaction }),
   });
 
+const buildCollaboratorValues = async (
+  genericCollaboratorType,
+  sequelize,
+  transaction,
+  entityId,
+  userId,
+  typeName,
+  linkBack
+) => {
+  const collaboratorType = await getIdForCollaboratorType(
+    genericCollaboratorType,
+    sequelize,
+    transaction,
+    typeName
+  );
+
+  if (!collaboratorType) {
+    throw new Error(
+      `No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`
+    );
+  }
+
+  return {
+    [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+    userId,
+    collaboratorTypeId: collaboratorType.id,
+    linkBack,
+  };
+};
+
 /**
  * Creates a new entity collaborator in the database.
  *
@@ -90,28 +113,17 @@ const createCollaborator = async (
   typeName,
   linkBack = null
 ) => {
-  const collaboratorType = await getIdForCollaboratorType(
+  const values = await buildCollaboratorValues(
     genericCollaboratorType,
     sequelize,
     transaction,
-    typeName
+    entityId,
+    userId,
+    typeName,
+    linkBack
   );
-
-  if (!collaboratorType) {
-    throw new Error(
-      `No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`
-    );
-  }
-
-  const { id: collaboratorTypeId } = collaboratorType;
-
   return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].create(
-    {
-      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-      userId,
-      collaboratorTypeId,
-      linkBack,
-    },
+    values,
     {
       ...(transaction && { transaction }),
     }
@@ -206,6 +218,8 @@ const mergeObjects = (obj1, obj2) => {
  * both read the same starting value and one would clobber the other's write. To prevent that,
  * the read-merge-write always runs inside a transaction with the row locked via `FOR UPDATE`,
  * joining the caller's transaction when one is provided, or opening a short-lived one otherwise.
+ * A row lock doesn't serialize callers that share one transaction, so those are serialized with
+ * `withTransactionLock` instead.
  *
  * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
@@ -237,35 +251,22 @@ const findOrCreateCollaborator = async (
     );
 
     if (!collaborator) {
-      try {
-        // Postgres aborts the entire enclosing transaction after a unique-constraint violation,
-        // so the create attempt runs inside its own SAVEPOINT: a `ROLLBACK TO SAVEPOINT` on
-        // conflict leaves the rest of transaction `t` (the retry read/update below) usable.
-        return await sequelize.transaction({ transaction: t }, (savepoint) =>
-          createCollaborator(
-            genericCollaboratorType,
-            sequelize,
-            savepoint,
-            entityId,
-            userId,
-            typeName,
-            linkBack
-          )
-        );
-      } catch (error) {
-        const { idName } = collaboratorDetails[genericCollaboratorType];
-        if (!isDuplicateCollaboratorError(error, idName)) throw error;
-        collaborator = await getCollaboratorRecord(
+      const { record, created } = await createOrFindExisting(
+        sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+        await buildCollaboratorValues(
           genericCollaboratorType,
           sequelize,
           t,
           entityId,
           userId,
           typeName,
-          true
-        );
-        if (!collaborator) throw error;
-      }
+          linkBack
+        ),
+        () => getCollaboratorRecord(genericCollaboratorType, sequelize, t, entityId, userId, typeName, true),
+        t
+      );
+      if (created) return record;
+      collaborator = record;
     }
 
     const nextLinkBack = mergeObjects(collaborator.dataValues.linkBack, linkBack);
@@ -287,8 +288,6 @@ const findOrCreateCollaborator = async (
     );
   };
 
-  // Sibling calls sharing a transaction share its connection, so their SAVEPOINTs must not
-  // interleave (see withTransactionLock).
   if (transaction) {
     return withTransactionLock(transaction, () => findOrCreateWithinTransaction(transaction));
   }

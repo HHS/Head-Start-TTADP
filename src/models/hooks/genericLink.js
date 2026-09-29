@@ -1,14 +1,4 @@
-import { UniqueConstraintError } from 'sequelize';
-import withTransactionLock from '../../lib/transactionLock';
-
-// The target column of every "*Link" model has a database-level unique constraint (it's a
-// primary key or otherwise unique), so this check narrows a caught error down to specifically
-// that constraint -- rather than treating any UniqueConstraintError as "lost the create race" --
-// so a real violation of some other constraint isn't silently swallowed.
-const isDuplicateTargetError = (error, targetEntityName) =>
-  error instanceof UniqueConstraintError &&
-  (error.fields?.[targetEntityName] !== undefined ||
-    error.errors?.some?.((e) => e.path === targetEntityName));
+import createOrFindExisting from '../../lib/createOrFindExisting';
 
 /**
  * Synchronizes a link between an instance and a model entity within a transaction, ensuring that
@@ -17,14 +7,7 @@ const isDuplicateTargetError = (error, targetEntityName) =>
  * The target column of every "*Link" model is a primary key or otherwise unique, so this relies
  * on the database to enforce "one link row per target entity" instead of an in-process lock:
  * concurrent creates for the same entityId race safely because at most one insert can succeed,
- * and the loser(s) simply treat the resulting unique-constraint violation as "already linked".
- *
- * Postgres aborts the entire enclosing transaction after a unique-constraint violation, so when
- * `options.transaction` is set the create attempt runs inside its own SAVEPOINT: a
- * `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of that transaction usable. Sibling
- * `syncLink` calls sharing the same transaction (the monitoring hooks invoke several via
- * `Promise.all`) share its connection, so their SAVEPOINTs must also be serialized rather than
- * interleaved (see `withTransactionLock`).
+ * and the loser(s) treat the skipped insert as "already linked".
  *
  * @param {Sequelize} sequelize - The Sequelize instance to be used for the transaction.
  * @param {Object} instance - The instance that is being linked.
@@ -59,46 +42,35 @@ const syncLink = async (
   }
 
   const { transaction } = options;
+  const where = { [targetEntityName]: entityId };
 
-  const attemptSync = async () => {
-    // Check if there's an existing record for the given entity ID
-    const [currentRecord] = await model.findAll({
-      attributes: [targetEntityName],
-      where: { [targetEntityName]: entityId },
-      transaction,
-    });
+  // Check if there's an existing record for the given entity ID
+  const [currentRecord] = await model.findAll({
+    attributes: [targetEntityName],
+    where,
+    transaction,
+  });
 
-    if (currentRecord) return;
+  if (currentRecord) return;
 
-    let created = false;
-    try {
-      if (transaction) {
-        await sequelize.transaction({ transaction }, (savepoint) =>
-          model.create({ [targetEntityName]: entityId }, { transaction: savepoint })
-        );
-      } else {
-        await model.create({ [targetEntityName]: entityId }, { transaction });
-      }
-      created = true;
-    } catch (error) {
-      // Another concurrent transaction/process already created the link row for this entityId.
-      if (!isDuplicateTargetError(error, targetEntityName)) throw error;
-    }
+  const { created } = await createOrFindExisting(
+    model,
+    where,
+    () => model.findOne({ attributes: [targetEntityName], where, transaction }),
+    transaction
+  );
 
-    // Only the request that actually won the create race should trigger side effects.
-    if (created && onCreateCallbackWhileHoldingLock) {
-      await onCreateCallbackWhileHoldingLock(
-        sequelize,
-        instance,
-        options,
-        model,
-        targetEntityName,
-        entityId
-      );
-    }
-  };
-
-  return withTransactionLock(transaction, attemptSync);
+  // Only the request that actually won the create race should trigger side effects.
+  if (created && onCreateCallbackWhileHoldingLock) {
+    await onCreateCallbackWhileHoldingLock(
+      sequelize,
+      instance,
+      options,
+      model,
+      targetEntityName,
+      entityId
+    );
+  }
 };
 
 /**
