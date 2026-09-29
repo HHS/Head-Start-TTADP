@@ -144,7 +144,7 @@ const resetFormData = ({
   // users who cannot edit Session summary. Apply this to Save draft, Submit,
   // and Review payloads.
   const roleData = reduceDataToMatchKeys(keyArray, data);
-  const canEditSessionSummary = applicationPages.some((page) => page.path === 'session-summary');
+  const canEditSessionSummary = keyArray.includes('sessionName');
   if (!canEditSessionSummary) {
     delete roleData.startDate;
   }
