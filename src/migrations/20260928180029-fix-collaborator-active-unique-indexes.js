@@ -32,8 +32,12 @@ module.exports = {
             WHERE "deletedAt" IS NULL;
 
             -- Union array-valued linkBack keys across each duplicate group onto the canonical row.
+            -- Use jsonb_array_elements (not the _text variant) so numeric elements (e.g.
+            -- activity report IDs) stay numeric rather than becoming JSON strings -- callers
+            -- like removeCollaboratorsForType match linkBack via JSONB containment with numeric
+            -- IDs, which would silently stop matching against stringified values.
             WITH expanded AS (
-              SELECT d.canonical_id, kv.key, jsonb_array_elements_text(kv.value) AS elem
+              SELECT d.canonical_id, kv.key, jsonb_array_elements(kv.value) AS elem
               FROM "${table}" t
               JOIN tmp_collaborator_dedup d ON d.id = t.id
               CROSS JOIN LATERAL jsonb_each(COALESCE(t."linkBack", '{}'::jsonb)) AS kv

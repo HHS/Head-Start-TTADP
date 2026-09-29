@@ -140,6 +140,8 @@ describe('syncGrantNumberLink', () => {
           findOne: jest.fn().mockResolvedValue({ grantId: 1 }),
         },
       },
+      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
+      transaction: jest.fn((opts, callback) => callback(opts.transaction)),
     };
     const instance = {
       isNewRecord: false,
@@ -186,6 +188,8 @@ describe('syncGrantNumberLink', () => {
           findOne: jest.fn().mockResolvedValue({ id: 1 }),
         },
       },
+      // sequelize.transaction() as a passthrough that just invokes the callback with the parent.
+      transaction: jest.fn((opts, callback) => callback(opts.transaction)),
     };
     const instance = {
       isNewRecord: true,

@@ -1,4 +1,5 @@
 import { UniqueConstraintError } from 'sequelize';
+import withTransactionLock from '../../lib/transactionLock';
 
 /**
  * Synchronizes a link between an instance and a model entity within a transaction, ensuring that
@@ -8,6 +9,13 @@ import { UniqueConstraintError } from 'sequelize';
  * on the database to enforce "one link row per target entity" instead of an in-process lock:
  * concurrent creates for the same entityId race safely because at most one insert can succeed,
  * and the loser(s) simply treat the resulting unique-constraint violation as "already linked".
+ *
+ * Postgres aborts the entire enclosing transaction after a unique-constraint violation, so when
+ * `options.transaction` is set the create attempt runs inside its own SAVEPOINT: a
+ * `ROLLBACK TO SAVEPOINT` on conflict leaves the rest of that transaction usable. Sibling
+ * `syncLink` calls sharing the same transaction (the monitoring hooks invoke several via
+ * `Promise.all`) share its connection, so their SAVEPOINTs must also be serialized rather than
+ * interleaved (see `withTransactionLock`).
  *
  * @param {Sequelize} sequelize - The Sequelize instance to be used for the transaction.
  * @param {Object} instance - The instance that is being linked.
@@ -41,42 +49,47 @@ const syncLink = async (
     if (!changed.includes(sourceEntityName)) return;
   }
 
-  // Check if there's an existing record for the given entity ID
-  const [currentRecord] = await model.findAll({
-    attributes: [targetEntityName],
-    where: { [targetEntityName]: entityId },
-    transaction: options.transaction,
-  });
+  const { transaction } = options;
 
-  if (currentRecord) return;
+  const attemptSync = async () => {
+    // Check if there's an existing record for the given entity ID
+    const [currentRecord] = await model.findAll({
+      attributes: [targetEntityName],
+      where: { [targetEntityName]: entityId },
+      transaction,
+    });
 
-  let created = false;
-  try {
-    await model.create(
-      {
-        [targetEntityName]: entityId,
-      },
-      {
-        transaction: options.transaction,
+    if (currentRecord) return;
+
+    let created = false;
+    try {
+      if (transaction) {
+        await sequelize.transaction({ transaction }, (savepoint) =>
+          model.create({ [targetEntityName]: entityId }, { transaction: savepoint })
+        );
+      } else {
+        await model.create({ [targetEntityName]: entityId }, { transaction });
       }
-    );
-    created = true;
-  } catch (error) {
-    // Another concurrent transaction/process already created the link row for this entityId.
-    if (!(error instanceof UniqueConstraintError)) throw error;
-  }
+      created = true;
+    } catch (error) {
+      // Another concurrent transaction/process already created the link row for this entityId.
+      if (!(error instanceof UniqueConstraintError)) throw error;
+    }
 
-  // Only the request that actually won the create race should trigger side effects.
-  if (created && onCreateCallbackWhileHoldingLock) {
-    await onCreateCallbackWhileHoldingLock(
-      sequelize,
-      instance,
-      options,
-      model,
-      targetEntityName,
-      entityId
-    );
-  }
+    // Only the request that actually won the create race should trigger side effects.
+    if (created && onCreateCallbackWhileHoldingLock) {
+      await onCreateCallbackWhileHoldingLock(
+        sequelize,
+        instance,
+        options,
+        model,
+        targetEntityName,
+        entityId
+      );
+    }
+  };
+
+  return withTransactionLock(transaction, attemptSync);
 };
 
 /**

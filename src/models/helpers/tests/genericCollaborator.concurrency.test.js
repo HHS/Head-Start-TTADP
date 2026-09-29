@@ -3,15 +3,19 @@ import db from '../../../models';
 import { createGrant, createRecipient, createUser, getUniqueId } from '../../../testUtils';
 import { findOrCreateCollaborator } from '../genericCollaborator';
 
-const { sequelize, Goal, GoalCollaborator } = db;
+const {
+    sequelize, Goal, GoalCollaborator, Grant, Recipient, User,
+} = db;
 
 describe('findOrCreateCollaborator concurrency', () => {
+    let recipient;
+    let grant;
     let goal;
     let user;
 
     beforeAll(async () => {
-        const recipient = await createRecipient();
-        const grant = await createGrant({ recipientId: recipient.id });
+        recipient = await createRecipient();
+        grant = await createGrant({ recipientId: recipient.id });
         goal = await Goal.create({ grantId: grant.id, name: 'concurrency test goal' });
         user = await createUser();
     });
@@ -23,6 +27,9 @@ describe('findOrCreateCollaborator concurrency', () => {
             force: true,
         });
         await Goal.destroy({ where: { id: goal.id }, individualHooks: false, force: true });
+        await User.destroy({ where: { id: user.id } });
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
         await sequelize.close();
     });
 
