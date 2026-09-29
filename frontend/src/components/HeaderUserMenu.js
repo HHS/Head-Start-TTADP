@@ -71,7 +71,6 @@ function HeaderUserMenu({
           key: 2,
           label: 'Notifications',
           to: `/notifications`,
-          featureFlag: 'actionable_notifications',
         },
         {
           key: 3,

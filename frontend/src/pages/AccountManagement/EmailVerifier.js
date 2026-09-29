@@ -48,8 +48,7 @@ export default function EmailVerifier({ token, updateUser }) {
 
       {verified === false && (
         <Alert type="error" className="margin-bottom-3">
-          Your email could not be verified. Please return to account management to request a new
-          verification email.
+          Your email could not be verified. Please request a new verification email.
         </Alert>
       )}
 

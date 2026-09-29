@@ -41,9 +41,16 @@ jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
 jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page</div>);
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
-jest.mock('../pages/AccountManagement/ManageNotifications', () => () => (
-  <div>Manage Notifications Page</div>
-));
+jest.mock('../pages/AccountManagement/ManageNotifications', () => () => {
+  const { useParams } = jest.requireActual('react-router-dom');
+  const { token } = useParams();
+  return (
+    <div>
+      Manage Notifications Page
+      <span data-testid="manage-notifications-token">{token || ''}</span>
+    </div>
+  );
+});
 jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
@@ -83,10 +90,6 @@ jest.mock('../components/RequestPermissions', () => () => <div>Request Permissio
 function MockFeatureFlag({ flag, children, renderNotFound }) {
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
-  }
-
-  if (flag === 'actionable_notifications' && !window.test_actionable_notifications_flag) {
-    return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
   }
 
   if (flag === 'recipient_tta_request' && !window.test_recipient_tta_request_flag) {
@@ -134,7 +137,6 @@ const RenderRoutes = async (
   const user = { ...defaultUser, ...userOverrides };
 
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
-  window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
   window.test_recipient_tta_request_flag = user.flags.includes('recipient_tta_request');
 
   const defaultProps = {
@@ -201,7 +203,6 @@ describe('Routes', () => {
   afterEach(() => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
-    delete window.test_actionable_notifications_flag;
     delete window.test_recipient_tta_request_flag;
   });
 
@@ -393,35 +394,37 @@ describe('Routes', () => {
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
   });
 
-  it('renders the Notifications page for "/notifications" when the actionable_notifications flag is on', async () => {
-    await RenderRoutes('/notifications', true, {
-      flags: [...defaultFlags, 'actionable_notifications'],
-    });
+  it('renders the Notifications page for "/notifications" without the actionable_notifications flag', async () => {
+    await RenderRoutes('/notifications');
     expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
   });
 
-  it('does not render the Notifications page for "/notifications" when the actionable_notifications flag is off', async () => {
-    await RenderRoutes('/notifications');
-    expect(await screen.findByText('Actionable Notifications Flag Not Found')).toBeInTheDocument();
-    expect(screen.queryByText('Notifications Page')).toBe(null);
+  it('renders the Notifications page for "/notifications/archive" without the actionable_notifications flag', async () => {
+    await RenderRoutes('/notifications/archive');
+    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
   });
 
-  it('routes "/notifications/verify-email/:token" to the notifications management page for flagged users', async () => {
-    await RenderRoutes('/notifications/verify-email/tok-123', true, {
-      flags: [...defaultFlags, 'actionable_notifications'],
-      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
-      roles: [],
-    });
+  it('renders the Manage Notifications page for "/account/notifications" without the actionable_notifications flag', async () => {
+    await RenderRoutes('/account/notifications');
     expect(await screen.findByText('Manage Notifications Page')).toBeInTheDocument();
   });
 
-  it('routes "/notifications/verify-email/:token" to the legacy account page for unflagged users', async () => {
-    await RenderRoutes('/notifications/verify-email/tok-123', true, {
-      flags: defaultFlags,
-      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
-      roles: [],
-    });
-    expect(await screen.findByText('Account Management Page')).toBeInTheDocument();
+  it('renders the Manage Notifications page for "/account/notifications/:token"', async () => {
+    await RenderRoutes('/account/notifications/tok-123');
+    expect(await screen.findByText('Manage Notifications Page')).toBeInTheDocument();
+  });
+
+  it('no longer serves the legacy "/account/verify-email/:token" route', async () => {
+    await RenderRoutes('/account/verify-email/tok-123');
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
+    expect(screen.queryByText('Account Management Page')).toBe(null);
+    expect(screen.queryByText('Manage Notifications Page')).toBe(null);
+  });
+
+  it('redirects previously sent "/notifications/verify-email/:token" links to Manage Notifications', async () => {
+    await RenderRoutes('/notifications/verify-email/tok-123');
+    expect(await screen.findByText('Manage Notifications Page')).toBeInTheDocument();
+    expect(screen.getByTestId('manage-notifications-token')).toHaveTextContent('tok-123');
   });
 
   // --- unauthenticated scenarios ---
