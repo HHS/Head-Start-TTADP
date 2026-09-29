@@ -135,6 +135,7 @@ Triggered synchronously by an application event, processed once per job.
 | `NEEDS_ACTION` | `changesRequestedNotification` | `notifyChangesRequested` | `changes_requested_by_manager` (author), `changes_requested_by_manager_collaborator` (collaborators — "on which you are a collaborator" wording), `changes_requested_by_manager_approver` (other approvers) |
 | `SUBMITTED` | `approverAssignedNotification` | `notifyApproverAssigned` | `manager_approval_requested` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
 | `APPROVED` | `reportApprovedNotification` | `notifyReportApproved` | `report_approved` (names the approving approver; sent on each individual approver approval, excluding the approver who just acted) |
+| `APPROVER_APPROVED` | `approverReportApprovedNotification` | `notifyApproverReportApproved` | `report_approved_approver` (subject "… : Approved by [approver]"; sent to the report's other approvers on each individual approval, excluding the approver who just acted) |
 | `COLLABORATOR_ADDED` | `collaboratorAssignedNotification` | `notifyCollaboratorAssigned` | `collaborator_added` |
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
@@ -272,6 +273,7 @@ email_templates/
 ├── manager_approval_requested/
 ├── recipient_report_approved/
 ├── report_approved/
+├── report_approved_approver/
 ├── tr_collaborator_added/
 ├── tr_event_complete/
 ├── tr_event_imported/
