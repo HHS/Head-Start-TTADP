@@ -22,6 +22,7 @@ app_dir=""
 lock_file=""
 max_install_attempts="${DEPS_INSTALL_MAX_ATTEMPTS:-3}"
 retry_backoff_seconds="${DEPS_INSTALL_RETRY_BACKOFF_SECONDS:-2}"
+export PUPPETEER_SKIP_DOWNLOAD="${PUPPETEER_SKIP_DOWNLOAD:-true}"
 
 case "$mode" in
   backend)

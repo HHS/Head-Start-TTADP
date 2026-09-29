@@ -42,15 +42,6 @@ The Docker stack uses bind mounts for source code and named volumes for dependen
 
 If you need internals, Yarn `docker:*` scripts are wrappers around Taskfile commands.
 
-## Running Natively
-
-You can also run locally without Docker.
-
-1. Install dependencies: `yarn deps`
-2. Start backend + frontend + worker watchers: `yarn start:stack:local`
-3. The frontend dev server is Vite on `http://localhost:3000`; it proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
-4. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
-
 ### Biome
 
 This repo uses [Biome](https://biomejs.dev/) for linting.
@@ -58,6 +49,13 @@ Configuration is in [`biome.json`](../../biome.json)
 
 - Run lint on all files: `yarn lint`
 - Apply auto-fixes and auto-formatting: `yarn lint:fix`
+
+### ShellCheck
+
+This repo uses [ShellCheck](https://www.shellcheck.net/) for tracked Bash scripts, including `.sh` files and extensionless files with a Bash shebang. Generated, vendor, and dependency paths are excluded. The project command fails on ShellCheck warnings and errors.
+
+- Install ShellCheck locally: `brew install shellcheck` on macOS, or use your package manager's `shellcheck` package.
+- Run Bash lint: `yarn lint:shell`
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
 
@@ -110,6 +108,7 @@ On macOS:
 7. Set `CURRENT_USER_ID` in `.env` to a valid production user ID.
 
 To reset the local database to seed data instead, run `./bin/load-test-db`.
+
 ## Puppeteer & Playwright
 
 If you are using a newer Mac with the Apple Silicon chipset, Puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
@@ -119,7 +118,7 @@ You will need to have Chromium installed (you probably do not). The recommended 
 To `~/.zshrc` (or your particular shell config) you'll need to add:
 
 ```sh
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_SKIP_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
 

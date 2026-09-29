@@ -2,12 +2,14 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
+import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
 import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
+import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from '../../services/eventFlow';
 import { groupsByRegion } from '../../services/groups';
 import { recipientById } from '../../services/recipient';
 import {
@@ -30,6 +32,10 @@ import { getEventAuthorization } from '../events/handlers';
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
+
+const facilitationSchema = Joi.string()
+  .valid('national_center', 'regional_tta_staff', 'both')
+  .required();
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -188,6 +194,16 @@ export const createHandler = async (req: Request, res: Response) => {
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canCreateSession()) {
       return res.sendStatus(httpCodes.FORBIDDEN);
+    }
+
+    if (event.data.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+      const { error } = facilitationSchema.validate(data?.facilitation);
+      if (error) {
+        return res.status(httpCodes.BAD_REQUEST).send({
+          message:
+            'Select who is providing the training: national_center, regional_tta_staff, or both',
+        });
+      }
     }
 
     const session = await createSession({

@@ -10,20 +10,23 @@ export default function FilterSelect({
   options,
   selectedValues,
   mapByValue,
-  labelProp,
-  valueProp,
+  labelProp = 'label',
+  valueProp = 'value',
 }) {
   const key = mapByValue ? valueProp : labelProp;
 
-  const value = [selectedValues]
-    .flat()
-    .map((selection) => options.find((option) => option[key] === selection));
+  // Compare as strings so numeric vs string ids (e.g. ids restored from session
+  // storage) still resolve to their matching option.
+  const findOption = (selection) =>
+    options.find((option) => String(option[key]) === String(selection));
+
+  const value = [selectedValues].flat().map(findOption);
 
   // Resolve each selected value to its display label. When mapByValue is set the
   // selectedValues are the valueProp (e.g. user ids), so we need to look up the
   // labelProp to avoid showing raw ids in the truncated "+ X more tags" display.
   const selectedLabels = [selectedValues].flat().map((selection) => {
-    const match = options.find((option) => option[key] === selection);
+    const match = findOption(selection);
     return match ? match[labelProp] : String(selection);
   });
 
