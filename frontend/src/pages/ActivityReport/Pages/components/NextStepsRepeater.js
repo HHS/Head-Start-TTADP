@@ -157,7 +157,9 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                   {required && <Req announce />}
                 </Label>
                 {hasDateError && (
-                  <ErrorMessage>{errors[name][index].completeDate.message}</ErrorMessage>
+                  <ErrorMessage id={dateErrorId}>
+                    {errors[name][index].completeDate.message}
+                  </ErrorMessage>
                 )}
                 <div
                   className={

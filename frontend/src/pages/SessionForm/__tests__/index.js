@@ -1373,6 +1373,8 @@ describe('SessionReportForm', () => {
     istOnlyKeys.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
     });
+    // POC loads startDate for validation but must not overwrite a newer IST value.
+    expect(Object.hasOwn(putBodyJson.data, 'startDate')).toBe(false);
   });
 
   it('sets reportId.current when session is created', async () => {

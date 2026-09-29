@@ -66,6 +66,10 @@ describe('NextStepsRepeater', () => {
     expect(
       await screen.findByText('Next step date must be after the session start date')
     ).toBeVisible();
+    expect(dateInput).toHaveAttribute('aria-invalid', 'true');
+    expect(dateInput).toHaveAccessibleDescription(
+      'Next step date must be after the session start date'
+    );
 
     act(() => userEvent.clear(dateInput));
     userEvent.type(dateInput, '01/02/2024');
@@ -75,5 +79,7 @@ describe('NextStepsRepeater', () => {
         screen.queryByText('Next step date must be after the session start date')
       ).not.toBeInTheDocument();
     });
+    expect(dateInput).toHaveAttribute('aria-invalid', 'false');
+    expect(dateInput).not.toHaveAttribute('aria-describedby');
   });
 });

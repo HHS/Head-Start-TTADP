@@ -140,12 +140,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  // Keep startDate available for Session summary and POC-side date validation.
-  const roleData = reduceDataToMatchKeys(keyArray, data);
-  const keepsStartDate = keyArray.includes('sessionName') || keyArray.includes('participants');
-  if (!keepsStartDate) {
-    delete roleData.startDate;
-  }
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,

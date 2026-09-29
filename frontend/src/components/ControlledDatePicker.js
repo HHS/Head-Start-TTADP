@@ -22,6 +22,8 @@ export default function ControlledDatePicker({
   customValidationMessages,
   required,
   additionalValidation,
+  ariaDescribedBy,
+  ariaInvalid,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -138,6 +140,8 @@ export default function ControlledDatePicker({
       maxDate={max.datePicker}
       onBlur={(e) => handleOnBlur(e)}
       required={required}
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid}
     />
   );
 }
@@ -163,6 +167,8 @@ ControlledDatePicker.propTypes = {
     invalidMessage: PropTypes.string,
   }),
   additionalValidation: PropTypes.func,
+  ariaDescribedBy: PropTypes.string,
+  ariaInvalid: PropTypes.bool,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -179,4 +185,6 @@ ControlledDatePicker.defaultProps = {
     invalidMessage: '',
   },
   additionalValidation: () => {},
+  ariaDescribedBy: undefined,
+  ariaInvalid: false,
 };
