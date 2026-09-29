@@ -93,6 +93,10 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
       : hasCompleteDateError && errorsObj[fieldName][idx].completeDate?.ref?.value !== '';
   };
 
+  const dateInputId = `${stepType}-next-step-date-${index + 1}`;
+  const dateErrorId = `${dateInputId}-error`;
+  const hasDateError = Boolean(showCompleteDateError(errors, name, index));
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -149,9 +153,9 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                 {dateLabel(index)}
                 {required && <Req announce />}
               </Label>
-              {showCompleteDateError(errors, name, index) ? (
+              {hasDateError && (
                 <ErrorMessage>{errors[name][index].completeDate.message}</ErrorMessage>
-              ) : null}
+              )}
               <div
                 className={
                   showCompleteDateError(errors, name, index)
@@ -160,10 +164,12 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                 }
               >
                 <ControlledDatePicker
-                  inputId={`${stepType}-next-step-date-${index + 1}`}
+                  inputId={dateInputId}
                   control={control}
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
+                  ariaDescribedBy={hasDateError ? dateErrorId : undefined}
+                  ariaInvalid={hasDateError}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
                   required={required}
                   additionalValidation={(completeDate) => {
