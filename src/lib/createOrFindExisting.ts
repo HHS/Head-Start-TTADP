@@ -1,4 +1,10 @@
-import { EmptyResultError, type Model, type ModelStatic, type Transaction } from 'sequelize';
+import {
+  type CreateOptions,
+  EmptyResultError,
+  type Model,
+  type ModelStatic,
+  type Transaction,
+} from 'sequelize';
 
 /**
  * Inserts `values` with `ON CONFLICT DO NOTHING`, falling back to `findExisting` when a unique
@@ -18,11 +24,11 @@ export default async function createOrFindExisting<M extends Model>(
   findExisting: () => Promise<M | null>,
   transaction?: Transaction | null
 ): Promise<{ record: M; created: boolean }> {
+  // Typed as plain CreateOptions: Sequelize's typings claim a literal `ignoreDuplicates: true`
+  // resolves to void, but on Postgres it resolves to the inserted row.
+  const options: CreateOptions = { transaction, ignoreDuplicates: true };
   try {
-    const record = await model.create(values as M['_creationAttributes'], {
-      transaction,
-      ignoreDuplicates: true,
-    });
+    const record = await model.create(values as M['_creationAttributes'], options);
     return { record, created: true };
   } catch (error) {
     if (!(error instanceof EmptyResultError)) throw error;

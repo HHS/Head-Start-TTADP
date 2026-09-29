@@ -224,7 +224,7 @@ describe('GenericCollaborator', () => {
           GoalCollaborator: {
             findOne: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(winningRecord),
             // ON CONFLICT DO NOTHING skipped the insert.
-            create: jest.fn().mockRejectedValueOnce(new EmptyResultError()),
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped')),
             update: jest.fn().mockResolvedValue({}),
           },
           CollaboratorType: {
@@ -261,7 +261,7 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             findOne: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockRejectedValueOnce(new EmptyResultError()),
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped')),
             update: jest.fn(),
           },
           CollaboratorType: {

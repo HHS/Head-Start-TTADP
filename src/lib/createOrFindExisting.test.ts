@@ -21,7 +21,7 @@ describe('createOrFindExisting', () => {
 
   it('returns the existing row when the insert was skipped by a conflict', async () => {
     const existing = { id: 2 };
-    const create = jest.fn().mockRejectedValue(new EmptyResultError());
+    const create = jest.fn().mockRejectedValue(new EmptyResultError('insert skipped'));
     const findExisting = jest.fn().mockResolvedValue(existing);
 
     await expect(
@@ -30,7 +30,7 @@ describe('createOrFindExisting', () => {
   });
 
   it('throws when the insert was skipped but no matching row exists', async () => {
-    const create = jest.fn().mockRejectedValue(new EmptyResultError());
+    const create = jest.fn().mockRejectedValue(new EmptyResultError('insert skipped'));
     const findExisting = jest.fn().mockResolvedValue(null);
 
     await expect(

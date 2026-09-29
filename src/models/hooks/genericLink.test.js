@@ -103,7 +103,7 @@ describe('syncLink', () => {
 
   it('treats an insert skipped by a conflict on the target column as a lost race, not a failure', async () => {
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
-    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError());
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped'));
     model.findOne = jest.fn().mockResolvedValueOnce({ [targetEntityName]: entityId });
 
     await expect(
@@ -125,7 +125,7 @@ describe('syncLink', () => {
 
   it('surfaces an insert skipped by a conflict on some other constraint instead of masking it', async () => {
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
-    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError());
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped'));
     model.findOne = jest.fn().mockResolvedValueOnce(null);
 
     await expect(
