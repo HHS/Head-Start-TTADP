@@ -1,7 +1,16 @@
 import httpContext from 'express-http-context';
+import { isEqual } from 'lodash';
 import { Op, UniqueConstraintError } from 'sequelize';
 import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import withTransactionLock from '../../lib/transactionLock';
+
+// The (idName, userId, collaboratorTypeId) tuple has a database-level partial unique constraint
+// (see the fix-collaborator-active-unique-indexes migration), so this check narrows a caught
+// error down to specifically that constraint -- rather than treating any UniqueConstraintError as
+// "lost the create race" -- so a real violation of some other constraint isn't silently swallowed.
+const isDuplicateCollaboratorError = (error, idName) =>
+  error instanceof UniqueConstraintError &&
+  (error.fields?.[idName] !== undefined || error.errors?.some?.((e) => e.path === idName));
 
 const collaboratorDetails = {
   goal: {
@@ -244,7 +253,8 @@ const findOrCreateCollaborator = async (
           )
         );
       } catch (error) {
-        if (!(error instanceof UniqueConstraintError)) throw error;
+        const { idName } = collaboratorDetails[genericCollaboratorType];
+        if (!isDuplicateCollaboratorError(error, idName)) throw error;
         collaborator = await getCollaboratorRecord(
           genericCollaboratorType,
           sequelize,
@@ -258,9 +268,15 @@ const findOrCreateCollaborator = async (
       }
     }
 
+    const nextLinkBack = mergeObjects(collaborator.dataValues.linkBack, linkBack);
+    // Skip the write (and its individualHooks chain) when the merge doesn't actually change
+    // anything -- the common case for call sites that always pass the same static linkBack
+    // (or null) on every save of an already-collaborated-on entity.
+    if (isEqual(nextLinkBack, collaborator.dataValues.linkBack)) return collaborator;
+
     return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
       {
-        linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
+        linkBack: nextLinkBack,
       },
       {
         where: { id: collaborator.dataValues.id },
@@ -353,7 +369,9 @@ const removeCollaboratorsForType = async (
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
 
-  // Find all entity CollaboratorType records that meet the specified criteria
+  // Find all entity CollaboratorType records that meet the specified criteria. Locked with
+  // `FOR UPDATE` (when a transaction is active) so this read-modify-write can't race the
+  // read-modify-write in findOrCreateCollaborator's linkBack merge above.
   const currentCollaboratorsForType = await sequelize.models[
     collaboratorDetails[genericCollaboratorType].collaborators
   ].findAll({
@@ -382,6 +400,15 @@ const removeCollaboratorsForType = async (
       },
     ],
     ...(transaction && { transaction }),
+    ...(transaction?.LOCK && {
+      lock: {
+        level: transaction.LOCK.UPDATE,
+        // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
+        // locking a query with joined lookup tables ("cannot be applied to the nullable
+        // side of an outer join").
+        of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+      },
+    }),
   });
 
   if (currentCollaboratorsForType) {

@@ -5,12 +5,24 @@ import { syncLink } from './genericLink';
 const { sequelize, MonitoringReviewLink } = db;
 
 describe('syncLink concurrency', () => {
+    let reviewId;
+
+    afterEach(async () => {
+        if (!reviewId) return;
+        await MonitoringReviewLink.destroy({
+            where: { reviewId },
+            individualHooks: false,
+            force: true,
+        });
+        reviewId = undefined;
+    });
+
     afterAll(async () => {
         await sequelize.close();
     });
 
     it('creates exactly one link row when two instances race on the same entityId', async () => {
-        const reviewId = `concurrency-test-${getUniqueId()}`;
+        reviewId = `concurrency-test-${getUniqueId()}`;
         const callback = jest.fn().mockResolvedValue();
 
         const makeInstance = () => ({
@@ -45,11 +57,5 @@ describe('syncLink concurrency', () => {
         expect(rows.length).toBe(1);
         // Only the caller that actually inserts the row should trigger the callback.
         expect(callback).toHaveBeenCalledTimes(1);
-
-        await MonitoringReviewLink.destroy({
-            where: { reviewId },
-            individualHooks: false,
-            force: true,
-        });
     });
 });

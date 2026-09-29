@@ -101,8 +101,11 @@ describe('syncLink', () => {
     ).rejects.toThrow(error);
   });
 
-  it('treats a unique constraint violation on create as a lost race, not a failure', async () => {
-    const error = new UniqueConstraintError({ message: 'duplicate key value' });
+  it('treats a unique constraint violation on the target column as a lost race, not a failure', async () => {
+    const error = new UniqueConstraintError({
+      message: 'duplicate key value',
+      fields: { [targetEntityName]: entityId },
+    });
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
     model.create = jest.fn().mockRejectedValueOnce(error);
 
@@ -121,6 +124,28 @@ describe('syncLink', () => {
 
     // Only the caller that actually wins the create race should trigger side effects.
     expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
+  });
+
+  it('propagates a unique constraint violation on an unrelated column instead of masking it', async () => {
+    const error = new UniqueConstraintError({
+      message: 'duplicate key value',
+      fields: { someOtherColumn: 'x' },
+    });
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(error);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).rejects.toThrow(error);
   });
 
   // Add more tests to cover error handling, different scenarios, etc.

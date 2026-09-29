@@ -124,6 +124,10 @@ module.exports = {
             );
         }),
 
+    // NOTE: this only reverts the constraint/index -- it cannot undo the dedup above (merged
+    // duplicate Resources rows and their re-pointed join-table references are gone for good).
+    // There's no canonical way to un-merge deleted duplicates, so this down() is a one-way
+    // trip for the data even though the schema change itself is fully reverted.
     down: async (queryInterface) =>
         queryInterface.sequelize.transaction(async (transaction) => {
             await prepMigration(queryInterface, transaction, __filename);

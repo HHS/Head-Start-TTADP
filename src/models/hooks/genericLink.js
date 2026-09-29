@@ -1,6 +1,15 @@
 import { UniqueConstraintError } from 'sequelize';
 import withTransactionLock from '../../lib/transactionLock';
 
+// The target column of every "*Link" model has a database-level unique constraint (it's a
+// primary key or otherwise unique), so this check narrows a caught error down to specifically
+// that constraint -- rather than treating any UniqueConstraintError as "lost the create race" --
+// so a real violation of some other constraint isn't silently swallowed.
+const isDuplicateTargetError = (error, targetEntityName) =>
+  error instanceof UniqueConstraintError &&
+  (error.fields?.[targetEntityName] !== undefined ||
+    error.errors?.some?.((e) => e.path === targetEntityName));
+
 /**
  * Synchronizes a link between an instance and a model entity within a transaction, ensuring that
  * a new record is created if one does not already exist for the given entity ID.
@@ -73,7 +82,7 @@ const syncLink = async (
       created = true;
     } catch (error) {
       // Another concurrent transaction/process already created the link row for this entityId.
-      if (!(error instanceof UniqueConstraintError)) throw error;
+      if (!isDuplicateTargetError(error, targetEntityName)) throw error;
     }
 
     // Only the request that actually won the create race should trigger side effects.

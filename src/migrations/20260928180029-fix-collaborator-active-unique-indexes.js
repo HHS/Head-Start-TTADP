@@ -31,25 +31,43 @@ module.exports = {
             FROM "${table}"
             WHERE "deletedAt" IS NULL;
 
-            -- Union array-valued linkBack keys across each duplicate group onto the canonical row.
-            -- Use jsonb_array_elements (not the _text variant) so numeric elements (e.g.
-            -- activity report IDs) stay numeric rather than becoming JSON strings -- callers
-            -- like removeCollaboratorsForType match linkBack via JSONB containment with numeric
-            -- IDs, which would silently stop matching against stringified values.
-            WITH expanded AS (
+            -- Merge every row in a duplicate group onto the canonical row's linkBack, covering
+            -- both array-valued keys (unioned, deduped -- use jsonb_array_elements, not the _text
+            -- variant, so numeric elements like activity report IDs stay numeric rather than
+            -- becoming JSON strings, since callers like removeCollaboratorsForType match linkBack
+            -- via JSONB containment with numeric IDs) and non-array-valued keys (kept from the
+            -- lowest-id row that has them, mirroring genericCollaborator.js's mergeObjects, which
+            -- keeps the first object's value for a non-array key present in both).
+            WITH array_elements AS (
               SELECT d.canonical_id, kv.key, jsonb_array_elements(kv.value) AS elem
               FROM "${table}" t
               JOIN tmp_collaborator_dedup d ON d.id = t.id
               CROSS JOIN LATERAL jsonb_each(COALESCE(t."linkBack", '{}'::jsonb)) AS kv
               WHERE jsonb_typeof(kv.value) = 'array'
             ),
+            merged_arrays AS (
+              SELECT canonical_id, key, jsonb_agg(DISTINCT elem) AS value
+              FROM array_elements
+              GROUP BY canonical_id, key
+            ),
+            scalar_candidates AS (
+              SELECT
+                d.canonical_id,
+                kv.key,
+                kv.value,
+                ROW_NUMBER() OVER (PARTITION BY d.canonical_id, kv.key ORDER BY t.id) AS rn
+              FROM "${table}" t
+              JOIN tmp_collaborator_dedup d ON d.id = t.id
+              CROSS JOIN LATERAL jsonb_each(COALESCE(t."linkBack", '{}'::jsonb)) AS kv
+              WHERE jsonb_typeof(kv.value) <> 'array'
+            ),
             merged AS (
-              SELECT canonical_id, jsonb_object_agg(key, arr) AS "linkBack"
+              SELECT canonical_id, jsonb_object_agg(key, value) AS "linkBack"
               FROM (
-                SELECT canonical_id, key, jsonb_agg(DISTINCT elem) AS arr
-                FROM expanded
-                GROUP BY canonical_id, key
-              ) grouped
+                SELECT canonical_id, key, value FROM merged_arrays
+                UNION ALL
+                SELECT canonical_id, key, value FROM scalar_candidates WHERE rn = 1
+              ) all_kv
               GROUP BY canonical_id
             )
             UPDATE "${table}" t
@@ -76,7 +94,7 @@ module.exports = {
 
           ALTER TABLE "ObjectiveCollaborators" DROP CONSTRAINT IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
           DROP INDEX IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
-          CREATE UNIQUE INDEX "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_act"
+          CREATE UNIQUE INDEX "ObjectiveCollaborators_objectiveId_userId_collabTypeId_active"
           ON "ObjectiveCollaborators" ("objectiveId", "userId", "collaboratorTypeId")
           WHERE "deletedAt" IS NULL;
 
@@ -90,6 +108,10 @@ module.exports = {
             );
         }),
 
+    // NOTE: this only reverts the index/constraint change -- it cannot undo the dedup above
+    // (merged duplicate collaborator rows and their combined linkBack are gone for good). There's
+    // no canonical way to un-merge deleted duplicates, so this down() is a one-way trip for the
+    // data even though the schema change itself is fully reverted.
     down: async (queryInterface) =>
         queryInterface.sequelize.transaction(async (transaction) => {
             await prepMigration(queryInterface, transaction, __filename);
@@ -102,7 +124,7 @@ module.exports = {
           ALTER TABLE "GoalCollaborators" ADD CONSTRAINT "GoalCollaborators_goalId_userId_collaboratorTypeId_unique"
           UNIQUE USING INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
 
-          DROP INDEX IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_act";
+          DROP INDEX IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collabTypeId_active";
           CREATE UNIQUE INDEX "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un"
           ON "ObjectiveCollaborators" ("objectiveId", "userId", "collaboratorTypeId", "deletedAt");
           ALTER TABLE "ObjectiveCollaborators" ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un"

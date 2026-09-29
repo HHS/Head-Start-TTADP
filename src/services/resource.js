@@ -1,4 +1,5 @@
 import { VALID_URL_REGEX } from '@ttahub/common';
+import cls from 'cls-hooked';
 import { Op, UniqueConstraintError } from 'sequelize';
 import {
   ActivityReport,
@@ -637,11 +638,13 @@ const genericProcessEntityForResources = async (
   resourceIds,
   ignoreDestroy = false
 ) => {
-  // Captured synchronously, before any `await` in this function: when several sibling
-  // entities are processed concurrently via `Promise.all`, every sibling's call reaches this
-  // line in the same synchronous burst (before any of them can open a SAVEPOINT below), so each
-  // one reliably captures the true outer transaction rather than a sibling's transient inner one.
-  const transaction = Resource.sequelize.constructor._cls?.get('transaction');
+  // Read via cls-hooked's public API (the same 'transaction' namespace Sequelize itself is
+  // bound to in src/models/index.js) rather than Sequelize's private `_cls` field. CLS tracks
+  // this per async continuation, so sibling entities processed concurrently via `Promise.all`
+  // each correctly see the outer transaction here, even though they reach this line at
+  // different times and a sibling may have since opened its own nested SAVEPOINT below --
+  // that nested transaction only overrides the CLS value within the sibling's own continuation.
+  const transaction = cls.getNamespace('transaction')?.get('transaction');
 
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
