@@ -108,3 +108,6 @@
   $ref: './session-reports/id/id.yaml'
 '/session-reports/eventId/${eventId}':
   $ref: './session-reports/eventId/eventId.yaml'
+
+'/notifications/count':
+  $ref: './notifications-count.yaml'
