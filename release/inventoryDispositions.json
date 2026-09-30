@@ -41,6 +41,7 @@
       "recommendation": "Route deleted from the production space. docs/boundary_diagram.md already states that no routes are configured for the automation application, so no documentation or inventory change was needed.",
       "approval": {
         "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3989",
         "approverRole": "TTA Hub Tech Lead",
         "approver": "Krys Wisnaskas",
         "approvalDate": "2026-09-30",
