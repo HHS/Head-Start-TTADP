@@ -33,13 +33,19 @@
       "componentName": "tta-automation.app.cloud.gov",
       "componentClass": "route",
       "finding": "A route exists for the automation application, which contradicts docs/boundary_diagram.md. The route is currently mapped to no application.",
-      "status": "deferred",
-      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. An existing route contradicts the approved boundary description even though it is currently unattached. Either the route should be deleted or the boundary documentation is inaccurate.",
+      "status": "resolved",
+      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. The route contradicted the approved boundary description even though it was unattached. It was not required, so it was deleted from the production space and docs/boundary_diagram.md remains accurate as written.",
       "owner": "TTA Hub Tech Lead",
       "trackingTicket": "TTAHUB-5245",
       "closureTarget": "2026-11-05",
-      "recommendation": "Delete the route. If it is required, correct docs/boundary_diagram.md and declare it in the inventory.",
-      "approval": null
+      "recommendation": "Route deleted from the production space. docs/boundary_diagram.md already states that no routes are configured for the automation application, so no documentation or inventory change was needed.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-09-30",
+        "decision": "Approved. Route confirmed deleted from the production space."
+      }
     },
     {
       "id": "INV-2026-0004",
