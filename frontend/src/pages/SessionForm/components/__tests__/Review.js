@@ -94,7 +94,7 @@ describe('Review', () => {
 
   it('allows an approver to edit a returned session section', () => {
     const defaultValues = {
-      status: 'Needs Action',
+      status: 'needs_action',
       approver: { fullName: 'Session approver' },
     };
     const pages = [{ label: 'Session summary', onNavigation: jest.fn() }];
