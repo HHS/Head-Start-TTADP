@@ -93,7 +93,7 @@
       "recommendation": "Closed. The credential was confirmed to be no longer required and the service instance was deleted. No further action is needed for this disposition. Individual deployer credentials are not an intentional practice and are not declared in the inventory.",
       "approval": {
         "sourceSystem": "GitHub",
-        "record": "PENDING_PR_URL",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3982",
         "approverRole": "TTA Hub Tech Lead",
         "approver": "Krys Wisnaskas",
         "approvalDate": "2026-09-30",
