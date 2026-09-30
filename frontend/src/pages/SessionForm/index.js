@@ -206,16 +206,8 @@ export default function SessionForm({ match }) {
 
   const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
 
-  const {
-    isPoc,
-    isAdminUser,
-    isCollaborator,
-    isOwner,
-    isApprover,
-    isNcUser,
-    applicationPages,
-    isSessionNavigationDead,
-  } = useSessionFormRoleAndPages(hookForm);
+  const { isPoc, isAdminUser, isCollaborator, isOwner, isApprover, isNcUser, applicationPages } =
+    useSessionFormRoleAndPages(hookForm);
 
   const canSelectApprover = useCanSelectApprover({
     isPoc,
@@ -414,12 +406,6 @@ export default function SessionForm({ match }) {
           isNcUser,
         });
 
-        // we push approvers to the review page
-        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
-          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-          return;
-        }
-
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -434,7 +420,6 @@ export default function SessionForm({ match }) {
     reportFetched,
     sessionId,
     history,
-    currentPage,
     isNcUser,
     trainingReportId,
     user.id,
@@ -781,7 +766,7 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={isSessionNavigationDead}
+            deadNavigation={false}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}

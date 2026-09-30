@@ -1,4 +1,4 @@
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import EventReport from './event';
 
@@ -519,6 +519,66 @@ describe('Event Report policies', () => {
         regionId: 1,
       });
       const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canEditSession()).toBe(false);
+    });
+
+    it('allows the assigned approver to edit a submitted session', () => {
+      const approver = createUser({ read: true });
+      const event = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const session = {
+        approverId: approver.id,
+        data: { collabComplete: true, pocComplete: true },
+      };
+
+      const policy = new EventReport(approver, event, session);
+
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('does not allow an assigned approver to edit before submission', () => {
+      const approver = createUser({ read: true });
+      const event = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const session = {
+        approverId: approver.id,
+        data: { collabComplete: true, pocComplete: false },
+      };
+
+      const policy = new EventReport(approver, event, session);
+
+      expect(policy.canEditSession()).toBe(false);
+    });
+
+    it('allows an assigned approver to edit a session returned for corrections', () => {
+      const approver = createUser({ read: true });
+      const event = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const session = {
+        approverId: approver.id,
+        data: {
+          collabComplete: true,
+          pocComplete: true,
+          status: REPORT_STATUSES.NEEDS_ACTION,
+        },
+      };
+
+      const policy = new EventReport(approver, event, session);
+
+      expect(policy.canEditSession()).toBe(true);
+    });
+
+    it('does not allow an assigned approver to edit a completed session', () => {
+      const approver = createUser({ read: true });
+      const event = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const session = {
+        approverId: approver.id,
+        data: {
+          collabComplete: true,
+          pocComplete: true,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      };
+
+      const policy = new EventReport(approver, event, session);
+
       expect(policy.canEditSession()).toBe(false);
     });
   });

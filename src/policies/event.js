@@ -180,7 +180,12 @@ export default class EventReport {
   }
 
   canEditAsSessionApprover() {
-    return !!(this.session && this.session.data && this.isSubmitted() && this.isSessionApprover());
+    return !!(
+      this.session?.data &&
+      this.isSubmitted() &&
+      this.session.data.status !== TRAINING_REPORT_STATUSES.COMPLETE &&
+      this.isSessionApprover()
+    );
   }
 
   canEditSession() {
