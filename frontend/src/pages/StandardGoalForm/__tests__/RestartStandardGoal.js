@@ -145,6 +145,27 @@ describe('RestartStandardGoal', () => {
     });
   });
 
+  it('submits the restarted goal with a status of Not Started', async () => {
+    fetchMock.post('/api/goal-templates/standard/1/grant/1', { everything: 'ok' });
+    renderRestartStandardGoal();
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
+    });
+
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
+    await act(async () => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', 'POST')).toBe(true);
+    });
+
+    const { body } = fetchMock.lastOptions('/api/goal-templates/standard/1/grant/1', 'POST');
+    expect(JSON.parse(body).status).toBe(GOAL_STATUS.NOT_STARTED);
+  });
+
   it('uses the goal dashboard back link when provided in location state', async () => {
     const locationState = {
       backLinkTo: '/dashboards/goal-dashboard',
