@@ -1,0 +1,52 @@
+.ttahub-timeline-event {
+  line-height: 1.5rem;
+}
+
+.ttahub-timeline-event__rail {
+  flex: 0 0 20px;
+}
+
+.ttahub-timeline-event__rail > img {
+  max-width: none;
+}
+
+.ttahub-timeline-event__content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ttahub-timeline-event__title {
+  line-height: inherit;
+}
+
+.ttahub-timeline-event__title img {
+  vertical-align: middle;
+}
+
+.ttahub-timeline-event__tag-group {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ttahub-timeline-event__tag.usa-tag {
+  min-width: 0;
+  white-space: normal;
+  text-align: left;
+  text-transform: none;
+  font-size: 14px;
+  line-height: 24px;
+  padding: 0 8px;
+  border-radius: 2px;
+}
+
+.ttahub-timeline-event__toggle.usa-button {
+  line-height: inherit;
+}
+
+.ttahub-timeline-event__chevron--expanded {
+  transform: rotate(180deg);
+}
+
+.ttahub-timeline-event__detail {
+  white-space: pre-wrap;
+}
