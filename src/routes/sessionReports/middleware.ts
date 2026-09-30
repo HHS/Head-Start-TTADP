@@ -18,13 +18,19 @@ const validationOptions = {
   convert: false,
 };
 
-// See the validateDisplayDate note in src/routes/events/middleware.ts.
+// See the validateDisplayDate note in src/routes/events/middleware.ts for why
+// the whole format list is accepted and then normalized. Sessions do have
+// dedicated startDate/endDate columns, and findSessionHelper re-derives the blob
+// values from them on read, so normalizing here mainly keeps the two routes
+// behaving identically.
 const validateDisplayDate = (value: string, helpers: Joi.CustomHelpers) => {
-  if (!moment(value, DISPLAY_DATE_FORMATS, true).isValid()) {
+  const parsed = moment(value, DISPLAY_DATE_FORMATS, true);
+
+  if (!parsed.isValid()) {
     return helpers.error('any.invalid');
   }
 
-  return value;
+  return parsed.format(DATE_FORMAT);
 };
 
 const displayDate = Joi.string()

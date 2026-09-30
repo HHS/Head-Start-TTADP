@@ -258,11 +258,35 @@ describe('sessionReports schema validation middleware', () => {
 
   /**
    * TTAHUB-2763: ControlledDatePicker submits the entered text unchanged, and
-   * frontend validation (frontend/src/utils.js isValidDate) accepts these
-   * shorter forms, so a user who types them passes the form and got a 400 here.
+   * frontend validation (frontend/src/utils.js isValidDate) accepts every one of
+   * these, so a user who types them passes the form and got a 400 here. See the
+   * validateDisplayDate note in src/routes/events/middleware.ts for why the
+   * accepted value is then normalized to DATE_FORMAT.
    */
-  it.each(['1/2/2026', '01/2/2026', '1/02/2026', '01/02/26'])(
-    'accepts the typed date format %s',
+  it.each([
+    '1/2/2026',
+    '01/2/2026',
+    '1/02/2026',
+    '01/02/26',
+    '2026-01-02',
+    '2026-1-2',
+    '1.2.2026',
+    '01.02.2026',
+    '01.02.26',
+  ])('accepts the typed date format %s and normalizes it', (startDate) => {
+    const req = { body: body({ ...istData, startDate }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.body.data.startDate).toBe('01/02/2026');
+  });
+
+  it.each(['13/45/26', '2026/01/02', '1-2-2026'])(
+    'still rejects %s, which no supported format matches',
     (startDate) => {
       const req = { body: body({ ...istData, startDate }) };
       const { res } = buildRes();
@@ -270,21 +294,23 @@ describe('sessionReports schema validation middleware', () => {
 
       checkUpdateSessionBody(req, res, next);
 
-      expect(next).toHaveBeenCalled();
-      expect(res.status).not.toHaveBeenCalled();
-      expect(req.body.data.startDate).toBe(startDate);
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(400);
     }
   );
 
-  it('still rejects an impossible date in a shorter accepted format', () => {
-    const req = { body: body({ ...istData, startDate: '13/45/26' }) };
+  // Joi's .allow() short-circuits before the custom validator, so normalization
+  // must not turn "no date entered" into a date.
+  it.each(['', null])('leaves the empty date value %p untouched', (startDate) => {
+    const req = { body: body({ ...istData, startDate }) };
     const { res } = buildRes();
     const next = jest.fn();
 
     checkUpdateSessionBody(req, res, next);
 
-    expect(next).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.body.data.startDate).toBe(startDate);
   });
 
   it('rejects an unrecognized delivery method with a 400', () => {

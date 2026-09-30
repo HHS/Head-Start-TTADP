@@ -5,7 +5,9 @@ import {
   filtersToQueryString,
   formatDateRange,
   isInternalGovernmentLink,
+  isValidDate,
   queryStringToFilters,
+  SUPPORTED_DATE_FORMATS,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -219,5 +221,45 @@ describe('formatDateRange', () => {
   it('returns a blank string if nothing is passed in', () => {
     const str = formatDateRange();
     expect(str).toBe('');
+  });
+});
+
+describe('isValidDate', () => {
+  /**
+   * ControlledDatePicker submits the typed text verbatim, so anything accepted
+   * here reaches the API. The backend accepts the same set via
+   * DISPLAY_DATE_FORMATS in src/constants.js — see the parity test in
+   * src/constants.test.js.
+   */
+  it('parses every supported format', () => {
+    SUPPORTED_DATE_FORMATS.forEach((format) => {
+      const value = moment('2026-01-02').format(format);
+      const parsed = isValidDate(value);
+
+      expect(parsed).not.toBeNull();
+      expect(parsed.format('MM/DD/YYYY')).toBe('01/02/2026');
+    });
+  });
+
+  // moment's strict M/D tokens reject a leading zero, so the zero-padded dotted
+  // form needs its own 'MM.DD.YYYY' entry in the list.
+  it.each(['01.02.2026', '01.02.26', '1.2.2026', '2026-01-02', '1/2/26'])(
+    'accepts %s',
+    (value) => {
+      expect(isValidDate(value)).not.toBeNull();
+    }
+  );
+
+  it.each(['2026/01/02', '1-2-2026', '13/45/2026', '02/29/2025', 'not-a-date'])(
+    'rejects %s',
+    (value) => {
+      expect(isValidDate(value)).toBeNull();
+    }
+  );
+
+  it('returns null for empty values', () => {
+    expect(isValidDate('')).toBeNull();
+    expect(isValidDate(null)).toBeNull();
+    expect(isValidDate(undefined)).toBeNull();
   });
 });

@@ -32,21 +32,32 @@ const validationOptions = {
 };
 
 /**
- * The TR forms store dates inside the blob in DATE_FORMAT (MM/DD/YYYY); the
- * authoritative values live in dedicated columns and this is the display mirror.
+ * TR dates live only in this JSONB blob — EventReportPilot has no startDate or
+ * endDate column — so whatever gets past here is the stored value.
+ *
  * ControlledDatePicker submits whatever the user typed unchanged, and frontend
- * validation (frontend/src/utils.js isValidDate) accepts single-digit month/day
- * and two-digit years too, so this checks the same DISPLAY_DATE_FORMATS list
- * rather than only DATE_FORMAT. Validated with moment rather than a pattern so
- * an impossible date such as 13/45/2026 is still rejected. Mirrors the
+ * validation (frontend/src/utils.js isValidDate) accepts single-digit month/day,
+ * two-digit years, ISO and dotted dates, so this accepts the whole
+ * DISPLAY_DATE_FORMATS list rather than only DATE_FORMAT; anything narrower 400s
+ * a value the form itself called valid. Validated with moment rather than a
+ * pattern so an impossible date such as 13/45/2026 is still rejected. Mirrors the
  * validateTimezone custom validator in src/routes/activityReports/middleware.ts.
+ *
+ * Accepted values are then normalized to DATE_FORMAT, which is not cosmetic:
+ * src/scopes/trainingReports/dateUtils.js sorts an unrecognized shape as NULL,
+ * the `data.startDate` ordering in src/services/event.ts is a lexicographic
+ * string sort, and the 19-day alert math there parses the blob value directly.
+ * Returning a value from a Joi `custom` rewrites it even with convert:false —
+ * that option is off to prevent *type* coercion, and this stays string to string.
  */
 const validateDisplayDate = (value: string, helpers: Joi.CustomHelpers) => {
-  if (!moment(value, DISPLAY_DATE_FORMATS, true).isValid()) {
+  const parsed = moment(value, DISPLAY_DATE_FORMATS, true);
+
+  if (!parsed.isValid()) {
     return helpers.error('any.invalid');
   }
 
-  return value;
+  return parsed.format(DATE_FORMAT);
 };
 
 const displayDate = Joi.string()
