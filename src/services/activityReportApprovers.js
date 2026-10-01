@@ -1,4 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
+import cls from 'cls-hooked';
 import { ActivityReport, ActivityReportApprover, sequelize, User } from '../models';
 import { archiveNotificationsOnActivityReportApproved } from './notifications/activityReport';
 
@@ -8,15 +9,16 @@ import { archiveNotificationsOnActivityReportApproved } from './notifications/ac
  * become obsolete on approval when the mutation causes the report to transition into
  * APPROVED status.
  *
- * `syncApprovers` runs on every report save, including drafts, so this only takes a
- * `FOR UPDATE` row lock -- and only checks for a transition at all -- when the report is
- * actually SUBMITTED. Otherwise it short-circuits and just runs `fn`, mirroring the bail-out
- * condition the model hook itself already used.
+ * `syncApprovers` runs on every report save, including drafts, so this only checks for a
+ * transition when the report is actually SUBMITTED. Otherwise it short-circuits and just runs
+ * `fn`, mirroring the bail-out condition the model hook itself already used.
  *
- * This runs under Sequelize's CLS (see `src/models/index.js`), so calling this from inside an
- * existing transaction opens a SAVEPOINT rather than a new top-level transaction, and any
- * queries `fn` issues without an explicit `transaction` option still participate in it. The
- * row lock serializes concurrent approvers reviewing the same report so each transition is
+ * `sequelize.transaction()` does not pick up the ambient CLS transaction on its own, so the
+ * caller's transaction (e.g. from `transactionWrapper`) is passed explicitly as the parent.
+ * That makes this a SAVEPOINT on the same connection rather than a new top-level transaction.
+ * Without it, the `FOR UPDATE` below runs on a second connection and blocks forever on the
+ * row lock the caller already holds from updating the report, hanging the request. The row
+ * lock serializes concurrent approvers reviewing the same report so each transition is
  * observed by exactly one caller.
  *
  * @param {number|string} activityReportId
@@ -24,7 +26,8 @@ import { archiveNotificationsOnActivityReportApproved } from './notifications/ac
  * @returns {Promise<*>}
  */
 async function withApprovalTransition(activityReportId, fn) {
-  return sequelize.transaction(async (transaction) => {
+  const parent = cls.getNamespace('transaction')?.get('transaction');
+  return sequelize.transaction({ transaction: parent }, async (transaction) => {
     const report = await ActivityReport.findByPk(activityReportId, {
       attributes: ['id', 'submissionStatus', 'calculatedStatus'],
       transaction,
