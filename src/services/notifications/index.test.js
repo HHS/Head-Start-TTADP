@@ -207,7 +207,7 @@ describe('Notification service', () => {
       );
 
       expect(notification.text).toBe(
-        `${metadata.userName} has approved your Activity Report for ${metadata.recipientName}.`
+        `${metadata.userName} has approved an Activity Report for ${metadata.recipientName}.`
       );
       expect(notification.label).toBe('View AR');
       expect(notification.actionable).toBe(false);

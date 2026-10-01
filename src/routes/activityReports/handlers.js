@@ -594,14 +594,10 @@ export async function reviewReport(req, res) {
 
       // An author who is also one of the report's other approvers gets the approver-specific
       // notification below instead — both types render identical text but competing CTAs, and the
-      // service dedup keys on type, so sending both leaves two identical rows. Mirrors the
-      // collaborator rule below. On the final approval the approver-approved notifications are
-      // archived immediately (see archiveApproverApprovedNotifications), so the author notification
-      // must still be sent in that case.
-      const authorIsOtherApprover =
-        reviewedReport.author.id !== userId && approverIds.has(reviewedReport.author.id);
+      // service dedup keys on type, so sending both leaves two rows for the same event. Mirrors
+      // the collaborator rule below.
       const suppressAuthorApprovedNotification =
-        authorIsOtherApprover && reviewedReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+        reviewedReport.author.id !== userId && approverIds.has(reviewedReport.author.id);
 
       if (!suppressAuthorApprovedNotification) {
         await createReportApprovedNotification(
@@ -640,6 +636,12 @@ export async function reviewReport(req, res) {
       // archived rather than re-created.
       await archiveApproverApprovedNotificationForUser(reviewedReport.id, userId);
 
+      if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+        // Clear earlier approver-approved notifications before creating the final-approval ones,
+        // so the final-approval notifications stay active until the recipient dismisses them.
+        await archiveApproverApprovedNotifications(reviewedReport.id);
+      }
+
       // Notify other approvers on every approval, including the final one. The CTA is
       // informational once the recipient has approved or requested changes.
       const otherApproversToNotify = (reviewedReport.approvers || [])
@@ -662,11 +664,6 @@ export async function reviewReport(req, res) {
         },
         approverName
       );
-
-      if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-        // Preserve the final approval event in history while clearing the active list.
-        await archiveApproverApprovedNotifications(reviewedReport.id);
-      }
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {

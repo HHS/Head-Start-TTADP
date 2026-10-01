@@ -219,12 +219,6 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       );
     });
 
-    it('renders the exact ticket copy for a second-approver approval (TTAHUB-5685)', () => {
-      expect(config.textFn({ approver: 'Jane Manager', recipientName: 'Test Recipient' })).toBe(
-        'Jane Manager has approved your Activity Report for Test Recipient.'
-      );
-    });
-
     it('actionable is false', () => {
       expect(config.actionable).toBe(false);
     });
@@ -247,7 +241,13 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('textFn interpolates approver and recipientName', () => {
       expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
-        'Alice has approved your Activity Report for Head Start Program.'
+        'Alice has approved an Activity Report for Head Start Program.'
+      );
+    });
+
+    it('renders the exact ticket copy for approver 1 when approver 2 approves (TTAHUB-5689)', () => {
+      expect(config.textFn({ approver: 'Jane Manager', recipientName: 'Test Recipient' })).toBe(
+        'Jane Manager has approved an Activity Report for Test Recipient.'
       );
     });
 
