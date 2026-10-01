@@ -251,6 +251,15 @@ describe('activityReportApprovers services', () => {
       const mgrWithStatus = afterRestore.find((manager) => manager.userId === secondMockManager.id);
       expect(mgrWithStatus.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
     });
+    it('does not deadlock when the caller transaction already holds a lock on the report', async () => {
+      const report = await ActivityReport.create({ ...draftReport, userId: mockUserTwo.id });
+      // Mirrors a report save: the report row is updated (and locked) before syncing approvers
+      const result = await sequelize.transaction(async () => {
+        await ActivityReport.update({ additionalNotes: 'updated' }, { where: { id: report.id } });
+        return syncApprovers(report.id, [mockManager.id]);
+      });
+      expect(result.length).toBe(1);
+    }, 10000);
   });
 
   describe('archives notifications on the SUBMITTED -> APPROVED transition', () => {
