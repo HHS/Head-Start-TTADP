@@ -463,6 +463,38 @@ describe('authMiddleware', () => {
     expect(req.session).toEqual({ id_token: 'fake-id', userId: 99 });
   });
 
+  it('logoutOidc: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const warnSpy = jest.spyOn(auditLogger, 'warn');
+    const oc = require('openid-client');
+
+    class FakeWWWAuthError extends Error {
+      constructor() {
+        super('invalid_token');
+        this.name = 'WWWAuthenticateChallengeError';
+        this.cause = [{ scheme: 'bearer', parameters: { error: 'invalid_token' } }];
+        this.response = { status: 401 };
+      }
+    }
+    oc.buildEndSessionUrl.mockImplementationOnce(() => {
+      throw new FakeWWWAuthError();
+    });
+
+    const req = { session: { id_token: 'fake-id', userId: 99 } };
+    const res = { redirect: jest.fn(), clearCookie: jest.fn(), headersSent: false };
+
+    await logoutOidc(req, res);
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'WWWAuthenticateChallengeError',
+      message: 'invalid_token',
+      stack: expect.any(String),
+    });
+    const loggedValues = warnSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/"cause"|"response"/);
+
+    warnSpy.mockRestore();
+  });
+
   it('logoutOidc: if headers already sent, clears session and sends 204', async () => {
     const oc = require('openid-client');
     oc.buildEndSessionUrl.mockImplementationOnce(() => {
@@ -512,6 +544,45 @@ describe('authMiddleware', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith('Failed to start login');
     expect(req.session.pkce?.codeVerifier).toBeDefined();
+  });
+
+  it('login: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const errorSpy = jest.spyOn(auditLogger, 'error');
+    const oc = require('openid-client');
+
+    class FakeResponseBodyError extends Error {
+      constructor() {
+        super('discovery_failed');
+        this.name = 'ResponseBodyError';
+        this.cause = { error: 'server_error', error_description: 'leaked-secret-detail' };
+        this.response = { status: 500 };
+      }
+    }
+    oc.calculatePKCECodeChallenge.mockRejectedValueOnce(new FakeResponseBodyError());
+
+    const req = {
+      path: '/api/login',
+      headers: { referer: 'http://localhost:3000/some/page' },
+      session: {},
+    };
+    const res = {
+      redirect: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+
+    await login(req, res);
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'ResponseBodyError',
+      message: 'discovery_failed',
+      stack: expect.any(String),
+    });
+    const loggedValues = errorSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/leaked-secret-detail|"cause"|"response"/);
+
+    errorSpy.mockRestore();
   });
 
   it('calls handleErrors when validateUserAuthForAccess throws (catch path)', async () => {

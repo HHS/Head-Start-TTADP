@@ -11,16 +11,18 @@ import { isTrue } from './envParser';
  *
  * Keyed with SESSION_SECRET rather than a bare hash: emails are predictable/directory-sourced,
  * so an unkeyed hash would let anyone with log access hash guessed candidates and match them
- * against logged values, defeating the point of not logging the identifier.
+ * against logged values, defeating the point of not logging the identifier. If no secret is
+ * configured, we skip the hash entirely rather than falling back to a known/empty key, which
+ * would be just as guessable as an unkeyed hash.
  * @param {unknown} value
  * @returns {string | undefined}
  */
 const hashForLogging = (value) => {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === '' || !process.env.SESSION_SECRET) {
     return undefined;
   }
   return crypto
-    .createHmac('sha256', process.env.SESSION_SECRET || '')
+    .createHmac('sha256', process.env.SESSION_SECRET)
     .update(String(value))
     .digest('hex')
     .slice(0, 16);

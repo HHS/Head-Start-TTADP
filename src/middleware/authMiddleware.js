@@ -134,7 +134,7 @@ export async function login(req, res) {
 
     res.redirect(redirectTo.href);
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to start login`, err);
+    auditLogger.error(`${namespace} Failed to start login`, safeErrorForLogging(err));
     res.status(500).send('Failed to start login');
   }
 }
@@ -342,7 +342,10 @@ export async function logoutOidc(req, res) {
     res.redirect(redirectTo.href);
   } catch (err) {
     // If end-session is unavailable, fall back to local logout
-    auditLogger.warn(`${namespace} RP-initiated logout unavailable, falling back`, err);
+    auditLogger.warn(
+      `${namespace} RP-initiated logout unavailable, falling back`,
+      safeErrorForLogging(err)
+    );
     await destroyLocalSession(req, res);
     if (!res.headersSent) {
       res.redirect('/logout');
