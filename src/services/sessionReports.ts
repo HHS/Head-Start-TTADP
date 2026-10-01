@@ -2,10 +2,13 @@ import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from 
 import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
+import { isSessionSubmitted } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
   GetSessionReportsParams,
@@ -23,6 +26,41 @@ const {
   SessionReportPilotTrainer,
   Grant,
 } = db;
+
+// Completion flags (and their audit fields) for every workflow side. Facilitation
+// determines which of these apply, so they are all cleared when it changes.
+export const SESSION_COMPLETION_KEYS = ['ownerComplete', 'collabComplete', 'pocComplete'] as const;
+
+const SESSION_COMPLETION_AUDIT_KEYS = SESSION_COMPLETION_KEYS.flatMap((key) => [
+  `${key}Id`,
+  `${key}Date`,
+]);
+
+/**
+ * True when an update changes the session's facilitation. Facilitation picks both
+ * the completion workflow and the approver candidates, so a change invalidates them.
+ */
+export const isFacilitationChange = (
+  existingData: Record<string, unknown>,
+  incomingData: Record<string, unknown>
+): boolean =>
+  Object.hasOwn(incomingData, 'facilitation') &&
+  (incomingData.facilitation ?? '') !== (existingData.facilitation ?? '');
+
+/**
+ * Returns a copy of session data with every completion flag reset, used when
+ * facilitation changes so the session restarts in the new workflow.
+ */
+export const resetSessionCompletion = (data: Record<string, unknown>): Record<string, unknown> => {
+  const reset = { ...data };
+  SESSION_COMPLETION_KEYS.forEach((key) => {
+    reset[key] = false;
+  });
+  SESSION_COMPLETION_AUDIT_KEYS.forEach((key) => {
+    delete reset[key];
+  });
+  return reset;
+};
 
 type WhereOptions = {
   id?: number;
@@ -201,8 +239,10 @@ export async function findSessionHelper(
     return (session as Model[]).map((s) => {
       const sd = s.get('startDate') as string | null;
       const ed = s.get('endDate') as string | null;
+      const plain = s.get({ plain: true }) as SessionShape & { event: EventShape };
       return {
-        ...s.get({ plain: true }),
+        ...plain,
+        submitted: isSessionSubmitted(plain.event, plain),
         data: {
           ...((s.get('data') as Record<string, unknown>) ?? {}),
           startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
@@ -236,7 +276,10 @@ export async function findSessionHelper(
     event: session?.event,
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
-    submitted: session?.submitted ?? false,
+    submitted: isSessionSubmitted(
+      session?.event as unknown as EventShape,
+      session as unknown as SessionShape
+    ),
     submitterId: session?.submitterId ?? null,
     submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
@@ -307,7 +350,11 @@ export async function updateSession(id: number, request) {
     endDate: incomingEndDate,
     ...restIncomingData
   } = cleanIncomingData;
-  const newData = { ...restExistingData, ...restIncomingData };
+  const facilitationChanged = isFacilitationChange(restExistingData, restIncomingData);
+  const mergedData = { ...restExistingData, ...restIncomingData };
+  // Changing facilitation switches workflows, so stale completion flags and an
+  // approver chosen from the old candidate list must not carry over.
+  const newData = facilitationChanged ? resetSessionCompletion(mergedData) : mergedData;
 
   const event = await findEventBySmartsheetId(eventId);
 
@@ -325,14 +372,16 @@ export async function updateSession(id: number, request) {
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
-    approverId?: number;
+    approverId?: number | null;
     submitterId?: number;
     startDate?: Date | null;
     endDate?: Date | null;
     data: Cast;
   };
 
-  if (approverId) {
+  if (facilitationChanged) {
+    update.approverId = null;
+  } else if (approverId) {
     update.approverId = Number(approverId);
   }
 
@@ -501,7 +550,19 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
   // Use the requested sort column or default to id descending
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
-  return [[...sortEntry, sortDir]];
+
+  if (sortEntry === sortMap.id) {
+    return [[...sortEntry, sortDir]];
+  }
+
+  // Every session under an event shares that event's eventId, and dates, topics and goals tie
+  // just as freely. A single-column ORDER BY leaves Postgres free to order tied rows differently
+  // between the LIMIT/OFFSET queries backing each page, so one session can land on two pages
+  // while another never shows at all. The primary key pins the order.
+  return [
+    [...sortEntry, sortDir],
+    [sequelize.literal('"SessionReportPilot"."id"'), sortDir],
+  ];
 }
 
 const sessionReportAttributes = [
@@ -516,14 +577,21 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  // Selected raw so participantCount can be derived with getActivityReportParticipantCount,
+  // the same helper the dashboards and overview widget use. Casting these to ::integer in SQL
+  // fails on the empty strings the session form writes into the fields that don't apply to the
+  // selected delivery method.
   [
-    sequelize.literal(`CASE
-      WHEN "SessionReportPilot"."data"->>'deliveryMethod' = 'hybrid' THEN
-        COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsInPerson')::integer, 0)
-        + COALESCE(("SessionReportPilot"."data"->>'numberOfParticipantsVirtually')::integer, 0)
-      ELSE ("SessionReportPilot"."data"->>'numberOfParticipants')::integer
-    END`),
-    'participantCount',
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipants\''),
+    'numberOfParticipants',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsInPerson\''),
+    'numberOfParticipantsInPerson',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsVirtually\''),
+    'numberOfParticipantsVirtually',
   ],
 ];
 
@@ -648,7 +716,7 @@ async function fetchSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
-      participantCount: plain.participantCount,
+      participantCount: getActivityReportParticipantCount(plain),
       deliveryMethod: plain.deliveryMethod,
     };
   });

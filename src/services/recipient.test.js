@@ -1149,6 +1149,61 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
+
+    describe('with a goal category (standard) filter applied', () => {
+      let templateFEI;
+      let feiGoal;
+
+      async function standardToScope(condition, standards) {
+        const query = { [`standard.${condition}`]: standards };
+        const { grant } = await filtersToScopes(query);
+        return grant;
+      }
+
+      beforeAll(async () => {
+        templateFEI = await GoalTemplate.findOne({ where: { standard: 'FEI' } });
+        feiGoal = await Goal.create({
+          name: 'FEI goal for recipient search standard filter',
+          status: 'Not Started',
+          timeframe: '12 months',
+          grantId: 50,
+          goalTemplateId: templateFEI.id,
+          createdVia: 'rtr',
+        });
+      });
+
+      afterAll(async () => {
+        await Goal.destroy({
+          where: { id: feiGoal.id },
+          force: true,
+          individualHooks: true,
+        });
+      });
+
+      it('does not error and includes matching recipients with "is"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('in', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
+      });
+
+      it('does not error and excludes matching recipients with "is not"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('nin', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).not.toContain(63);
+      });
+    });
   });
 
   describe('recipientsByUserId', () => {

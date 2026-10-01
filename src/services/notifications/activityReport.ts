@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
   archiveNotificationsByUserEntityAndType,
@@ -22,11 +23,15 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
-  const notificationType =
-    creatorOrCollaborator === 'creator'
-      ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
-      : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
-  // collaborator type == approver type notification, functionally
+  let notificationType: NotificationType;
+  if (creatorOrCollaborator === 'creator') {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION;
+  } else if (creatorOrCollaborator === 'approver') {
+    // Approver 1 is told a second+ approver requested changes (TTAHUB-5683).
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER;
+  } else {
+    notificationType = NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+  }
 
   if (!checkRecipientName(savedReport.activityRecipients)) {
     return Promise.resolve();
@@ -227,17 +232,20 @@ async function createReportApprovedNotificationForCollaborators(
 }
 
 /**
- * Creates the "report approved" in-app notification for each other approver on an activity
- * report. Fired when an approver approves the report, naming the approver who just acted.
- * Mirrors {@link createReportApprovedNotificationForCollaborators} (which notifies
- * collaborators) so that the other approvers also receive the approval notification.
- * @param currentApprovers The report's other approvers to notify.
+ * Creates the "another approver approved this report" in-app notification for each of the
+ * report's other approvers. Fired on every approval, including the final approval,
+ * naming the approver who just acted. The acting approver
+ * is excluded by the caller. The CTA is conditional on whether the recipient has already
+ * approved or marked the report as needs action: "Take action" (actionable) when they have
+ * done neither, "View AR" once they have done either. (TTAHUB-5581)
+ * @param otherApprovers The report's other approvers to notify, each flagged with whether
+ * they have already approved or marked the report as needs action (`hasApproved`).
  * @param savedReport The saved activity report.
- * @param approverName The name of the approver who approved the report.
+ * @param approverName The name of the approver who just approved the report.
  * @returns {Promise<void>} Resolves once notifications are created.
  */
 async function createReportApprovedNotificationForApprovers(
-  currentApprovers: { userId: number }[],
+  otherApprovers: { userId: number; hasApproved: boolean }[],
   savedReport: {
     id: number;
     displayId: string;
@@ -250,7 +258,7 @@ async function createReportApprovedNotificationForApprovers(
   }
 
   return Promise.all(
-    currentApprovers.map((approver) =>
+    otherApprovers.map((approver) =>
       createNotification(
         approver.userId,
         savedReport.id,
@@ -261,11 +269,45 @@ async function createReportApprovedNotificationForApprovers(
             displayId: savedReport.displayId,
             recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
             approver: approverName,
+            hasApproved: approver.hasApproved,
           },
           skipExisting: 'archived',
         }
       )
     )
+  );
+}
+
+/**
+ * Archives the "another approver approved this report" in-app notifications for an activity
+ * report. Called when the report is fully approved, changes are requested, or the report
+ * is resubmitted so earlier approval notifications no longer remain active or get reused.
+ * (TTAHUB-5581)
+ * @param {number} reportId The activity report ID whose approver-approved notifications to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+async function archiveApproverApprovedNotifications(reportId: number): Promise<void> {
+  return archiveNotificationsByEntityAndType(reportId, [
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+  ]);
+}
+
+/**
+ * Archives a single approver's "another approver approved this report" in-app notification
+ * for an activity report. Called when that approver themselves approves the report, so the
+ * notification nudging them to act is moved to their archived list. (TTAHUB-5581)
+ * @param {number} reportId The activity report ID.
+ * @param {number} userId The approver whose approver-approved notification to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+async function archiveApproverApprovedNotificationForUser(
+  reportId: number,
+  userId: number
+): Promise<void> {
+  return archiveNotificationsByUserEntityAndType(
+    reportId,
+    userId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
   );
 }
 
@@ -411,8 +453,9 @@ async function createResubmittedNotificationForCreator(
 
 /**
  * Archives the "needs action" in-app notifications for an activity report.
- * Called when a report is (re)submitted for approval so that any pending needs-action
- * notifications for that report are moved to the archived list.
+ * Called when a report is (re)submitted for approval or fully approved so that any pending
+ * needs-action notifications (creator-, collaborator-, and approver-facing) for that report
+ * are moved to the archived list.
  * @param {number} reportId The activity report ID whose needs-action notifications to archive.
  * @returns {Promise<void>} Resolves once archiving is complete.
  */
@@ -420,6 +463,7 @@ async function archiveNeedsActionNotifications(reportId: number): Promise<void> 
   return archiveNotificationsByEntityAndType(reportId, [
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
   ]);
 }
 
@@ -457,12 +501,16 @@ async function archiveNotificationsOnActivityReportApproved(reportId: number): P
     NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
     NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
   ]);
 }
 
 export {
+  archiveApproverApprovedNotificationForUser,
+  archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
