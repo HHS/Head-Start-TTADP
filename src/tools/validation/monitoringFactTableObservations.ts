@@ -218,14 +218,13 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
 
     -- delivered_review_citation_no_window. Rolled up per finding the same way
     -- as activity_report_citation_source_deleted above. context.learned_at
-    -- uses the row's own createdAt: this table is fully rebuilt each refresh
-    -- with an IS DISTINCT FROM upsert guard, so createdAt only moves when the
-    -- row is genuinely (re)created, not on every no-op refresh.
+    -- uses updatedAt, which the upsert in updateMonitoringFactTables.ts bumps
+    -- on any real column change to the row.
     WITH finding_no_window AS (
       SELECT
         c.mfid,
         BOOL_OR(drc.latest_review_start IS NULL) any_no_window,
-        MIN(drc."createdAt") FILTER (WHERE drc.latest_review_start IS NULL) learned_at
+        MAX(drc."updatedAt") FILTER (WHERE drc.latest_review_start IS NULL) learned_at
       FROM "DeliveredReviewCitations" drc
       JOIN "Citations" c
         ON c.id = drc."citationId"

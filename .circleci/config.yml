@@ -170,6 +170,7 @@ workflows:
         target_env: "prod"
         slack_channel: acf-head-start-alerts
         ohs_channel: acf-ohs-ttahub--contractor-customer-team
+        team_notification_channel: acf-head-start-alerts-lower
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -1608,6 +1609,9 @@ jobs:
       ohs_channel:
         type: string
         default: ""
+      team_notification_channel:
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1731,6 +1735,16 @@ jobs:
         # successful import job. See docs/monitoring-data-validation.md (Channels).
         message_text_file: monitoring-ohs-updates.txt
         slack_channel: << parameters.ohs_channel >>
+        best_effort: true
+    - notify_slack:
+        step_when: always
+        # team_notification-severity content, kept out of monitoring-updates.txt
+        # entirely - its own channel, its own message. Empty
+        # team_notification_channel on non-prod invocations makes this a no-op
+        # (same idiom as ohs_channel above). best_effort: same reasoning as the
+        # OHS post. See docs/monitoring-data-validation.md (Channels).
+        message_text_file: monitoring-validation-team-notifications.txt
+        slack_channel: << parameters.team_notification_channel >>
         best_effort: true
     - store_artifacts:
         when: always

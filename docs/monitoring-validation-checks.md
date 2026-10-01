@@ -185,4 +185,4 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`activity_report_citation_source_deleted_editable`** (alert) — a draft/submitted/needs_action report cites a since-deleted citation. Still-editable, so this can cause real broken behavior and OHS staff can act on it. Window: 7 days from when the citation was soft-deleted.
 
-**`delivered_review_citation_no_window`** (team_notification) — a delivered review that lost a same-day tie-break and was never authoritative for any period. Window: 7 days from when the row was (re)created.
+**`delivered_review_citation_no_window`** (team_notification) — a delivered review that lost a same-day tie-break and was never authoritative for any period. Window: 7 days from when the row was last created or updated, whichever is most recent across a finding's rows.

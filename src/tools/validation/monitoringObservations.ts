@@ -81,14 +81,16 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     ;
 
     -- delivery_report_lag_days: no observation when no ZALMonitoringReviews
-    -- audit row survives for a review.
+    -- audit row survives for a review. set_date is dml_timestamp (our own
+    -- write time), not sourceUpdatedAt - the latter is IT-AMS's own clock,
+    -- which a backlog/catch-up export can backdate well before we actually
+    -- learned about it.
     WITH first_delivery_set AS (
     SELECT DISTINCT ON (zmr.data_id)
       zmr.data_id,
-      (zmr.new_row_data->>'sourceUpdatedAt')::timestamptz::date set_date
+      zmr.dml_timestamp::date set_date
     FROM "ZALMonitoringReviews" zmr
     WHERE zmr.new_row_data->>'reportDeliveryDate' IS NOT NULL
-      AND zmr.new_row_data->>'sourceUpdatedAt' IS NOT NULL
     ORDER BY zmr.data_id, zmr.dml_timestamp
     )
     INSERT INTO "ValidationRecords"
@@ -135,16 +137,13 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     GROUP BY mr.id, cur.run_id
     ;
 
-    -- closure_state. DISTINCT ON, not DISTINCT: statuses_table_integrity can
-    -- find more than one live row for one statusId, and a bare DISTINCT would
-    -- fan out the join below - this deterministically picks the latest one.
+    -- closure_state. DISTINCT ON prevents a duplicate-status fan-out.
     WITH known_statuses AS (
     SELECT DISTINCT ON ("statusId")
       "statusId",
       name
     FROM "MonitoringFindingStatuses"
     WHERE "sourceDeletedAt" IS NULL
-      AND "deletedAt" IS NULL
     ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
     INSERT INTO "ValidationRecords"
@@ -238,12 +237,11 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mr."deletedAt" IS NULL
     ;
 
-    -- review_status_vs_delivery. DISTINCT ON, not a bare join: see
-    -- closure_state's known_statuses above - same fan-out risk.
+    -- review_status_vs_delivery. DISTINCT ON prevents a duplicate-status fan-out.
     WITH known_review_statuses AS (
       SELECT DISTINCT ON ("statusId") "statusId", name
       FROM "MonitoringReviewStatuses"
-      WHERE "deletedAt" IS NULL
+      WHERE "sourceDeletedAt" IS NULL
       ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
     INSERT INTO "ValidationRecords"
@@ -478,7 +476,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       FROM "MonitoringFindingHistories" mfh
       LEFT JOIN "MonitoringFindingHistoryStatuses" s
         ON s."statusId" = mfh."statusId"
-        AND s."deletedAt" IS NULL
+        AND s."sourceDeletedAt" IS NULL
       WHERE mfh."sourceDeletedAt" IS NULL
         AND mfh."deletedAt" IS NULL
       GROUP BY 1
@@ -501,6 +499,13 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
+    -- DISTINCT ON prevents a duplicate-status fan-out.
+    WITH known_finding_statuses_resolvable AS (
+      SELECT DISTINCT ON ("statusId") "statusId"
+      FROM "MonitoringFindingStatuses"
+      WHERE "sourceDeletedAt" IS NULL
+      ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
+    )
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -513,13 +518,18 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       NOW()
     FROM "MonitoringFindings" mf
     CROSS JOIN validation_run cur
-    LEFT JOIN "MonitoringFindingStatuses" s
+    LEFT JOIN known_finding_statuses_resolvable s
       ON s."statusId" = mf."statusId"
-      AND s."deletedAt" IS NULL
     WHERE mf."sourceDeletedAt" IS NULL
       AND mf."deletedAt" IS NULL
     ;
 
+    WITH known_review_statuses_resolvable AS (
+      SELECT DISTINCT ON ("statusId") "statusId"
+      FROM "MonitoringReviewStatuses"
+      WHERE "sourceDeletedAt" IS NULL
+      ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
+    )
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
     SELECT
@@ -532,9 +542,8 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       NOW()
     FROM "MonitoringReviews" mr
     CROSS JOIN validation_run cur
-    LEFT JOIN "MonitoringReviewStatuses" s
+    LEFT JOIN known_review_statuses_resolvable s
       ON s."statusId" = mr."statusId"
-      AND s."deletedAt" IS NULL
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
     ;
@@ -555,11 +564,11 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     JOIN (
       SELECT "statusId", COUNT(*) cnt
       FROM "MonitoringFindingHistoryStatuses"
-      WHERE "deletedAt" IS NULL
+      WHERE "sourceDeletedAt" IS NULL
       GROUP BY 1
     ) dup
       ON dup."statusId" = s."statusId"
-    WHERE s."deletedAt" IS NULL
+    WHERE s."sourceDeletedAt" IS NULL
     ;
 
     INSERT INTO "ValidationRecords"
@@ -577,11 +586,11 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     JOIN (
       SELECT "statusId", COUNT(*) cnt
       FROM "MonitoringFindingStatuses"
-      WHERE "deletedAt" IS NULL
+      WHERE "sourceDeletedAt" IS NULL
       GROUP BY 1
     ) dup
       ON dup."statusId" = s."statusId"
-    WHERE s."deletedAt" IS NULL
+    WHERE s."sourceDeletedAt" IS NULL
     ;
 
     INSERT INTO "ValidationRecords"
@@ -599,11 +608,11 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     JOIN (
       SELECT "statusId", COUNT(*) cnt
       FROM "MonitoringReviewStatuses"
-      WHERE "deletedAt" IS NULL
+      WHERE "sourceDeletedAt" IS NULL
       GROUP BY 1
     ) dup
       ON dup."statusId" = s."statusId"
-    WHERE s."deletedAt" IS NULL
+    WHERE s."sourceDeletedAt" IS NULL
     ;
 
     -- review_grantee_orphaned_grant
@@ -685,6 +694,13 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     CREATE TEMP TABLE finding_latest_delivered
     ON COMMIT DROP
     AS
+      -- Keeps the pick deterministic: no fan-out, no ties.
+      WITH known_finding_history_statuses AS (
+        SELECT DISTINCT ON ("statusId") "statusId", name
+        FROM "MonitoringFindingHistoryStatuses"
+        WHERE "sourceDeletedAt" IS NULL
+        ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
+      )
       SELECT DISTINCT ON (mfh."findingId")
         mfh."findingId",
         mfh.id latest_history_id,
@@ -699,20 +715,18 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         AND mr."sourceDeletedAt" IS NULL
         AND mr."deletedAt" IS NULL
         AND mr."reportDeliveryDate" >= w.start_date
-      LEFT JOIN "MonitoringFindingHistoryStatuses" mhs
+      LEFT JOIN known_finding_history_statuses mhs
         ON mhs."statusId" = mfh."statusId"
-        AND mhs."deletedAt" IS NULL
       WHERE mfh."sourceDeletedAt" IS NULL
         AND mfh."deletedAt" IS NULL
-      ORDER BY mfh."findingId", mr."reportDeliveryDate" DESC, mr."sourceCreatedAt" DESC
+      ORDER BY mfh."findingId", mr."reportDeliveryDate" DESC, mr."sourceCreatedAt" DESC, mfh.id DESC
     ;
 
-    -- DISTINCT ON, not DISTINCT: see closure_state's known_statuses above -
-    -- same fan-out risk.
+    -- DISTINCT ON prevents a duplicate-status fan-out.
     WITH known_finding_statuses AS (
       SELECT DISTINCT ON ("statusId") "statusId", name
       FROM "MonitoringFindingStatuses"
-      WHERE "deletedAt" IS NULL
+      WHERE "sourceDeletedAt" IS NULL
       ORDER BY "statusId", "sourceUpdatedAt" DESC NULLS LAST, id DESC
     )
 
@@ -761,7 +775,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       CASE
         WHEN fld.latest_outcome = 'Compliant'
           AND fld.latest_history_status IN ('New', 'Not Reviewed', 'Not Corrected', 'Elevated Deficiency')
-          AND mf."findingType" NOT ILIKE '%Concern%'
+          AND COALESCE(mf."findingType", '') NOT ILIKE '%Concern%'
           THEN 'open_status_on_compliant_review'
         ELSE 'consistent'
       END,

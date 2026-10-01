@@ -245,7 +245,7 @@ describe('build_import_summary.sh', () => {
     expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Validation Alerts');
   });
 
-  it('keeps team_notification alerts in the base summary but excludes them from the OHS file, even when OHS_MONITORING_ALERTS_ENABLED is true', () => {
+  it('keeps team_notification alerts entirely out of the base summary and the OHS file, even when OHS_MONITORING_ALERTS_ENABLED is true', () => {
     const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-team-notif-'));
     const logDir = path.join(artifactDir, 'logs');
     const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
@@ -288,10 +288,12 @@ describe('build_import_summary.sh', () => {
     expect(summary).toContain(
       '16 finding(s) are attached to a grant not on any of their own reviews'
     );
-    expect(summary).toContain('Monitoring Validation Team Notifications');
-    expect(summary).toContain('4 finding(s) on delivered reviews have no category');
+    // team_notification content gets its own independent file/channel now -
+    // never mixed into the base summary.
+    expect(summary).not.toContain('Team Notifications');
+    expect(summary).not.toContain('4 finding(s) on delivered reviews have no category');
 
-    // Even with the switch on, the OHS channel never sees team_notification content.
+    // Nor into the OHS channel, switch on or off.
     expect(ohs).toContain('16 finding(s) are attached to a grant not on any of their own reviews');
     expect(ohs).not.toContain('Team Notifications');
     expect(ohs).not.toContain('4 finding(s) on delivered reviews have no category');

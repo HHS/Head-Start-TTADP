@@ -10,10 +10,9 @@ EXPECTED_TASKS="${3:-8}"
 # creation vs validation+gate). OHS_FILE is what the OHS contractor-customer
 # channel gets: goal creation always, plus the alerts half only when
 # OHS_MONITORING_ALERTS_ENABLED is truthy. TEAM_NOTIFICATIONS_FILE holds
-# team_notification-severity validation alerts, appended to SUMMARY_FILE only
-# (see the bottom of this script) - internal-only, never the OHS channel,
-# regardless of OHS_MONITORING_ALERTS_ENABLED. See
-# docs/monitoring-data-validation.md (Channels).
+# team_notification-severity validation alerts - entirely separate from
+# SUMMARY_FILE and OHS_FILE, posted to its own channel by .circleci/config.yml.
+# See docs/monitoring-data-validation.md (Channels).
 GOAL_FILE="${4:-monitoring-goal-updates.txt}"
 ALERTS_FILE="${5:-monitoring-validation-alerts.txt}"
 OHS_FILE="${6:-monitoring-ohs-updates.txt}"
@@ -321,9 +320,8 @@ append_gate_summary
 # OHS_FILE (the acf-ohs-ttahub--contractor-customer-team channel) always gets
 # goal-creation content; it only gets validation/gate alerts mixed in when
 # OHS_MONITORING_ALERTS_ENABLED is truthy - parsed the same way notify_slack
-# parses it. Built from SUMMARY_FILE as it stands right here, before
-# TEAM_NOTIFICATIONS_FILE is appended below - team_notification alerts never
-# reach this channel, regardless of the switch. See
+# parses it. team_notification alerts never reach this channel, regardless of
+# the switch - they're not part of SUMMARY_FILE at all. See
 # docs/monitoring-data-validation.md (Channels).
 ohs_enabled=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
 if [[ "$ohs_enabled" =~ ^(true|1|yes)$ ]]; then
@@ -332,12 +330,7 @@ else
   cp "$GOAL_FILE" "$OHS_FILE"
 fi
 
-# TEAM_NOTIFICATIONS_FILE is appended to SUMMARY_FILE only, after OHS_FILE is
-# already decided above.
-if [[ -s "$TEAM_NOTIFICATIONS_FILE" ]]; then
-  [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n' >> "$SUMMARY_FILE"
-  cat "$TEAM_NOTIFICATIONS_FILE" >> "$SUMMARY_FILE"
-fi
-
 echo
 cat "$SUMMARY_FILE"
+echo
+cat "$TEAM_NOTIFICATIONS_FILE"
