@@ -6,6 +6,7 @@ import {
   formatDateRange,
   isInternalGovernmentLink,
   isValidDate,
+  parseDateStrict,
   queryStringToFilters,
   SUPPORTED_DATE_FORMATS,
 } from '../utils';
@@ -261,5 +262,45 @@ describe('isValidDate', () => {
     expect(isValidDate('')).toBeNull();
     expect(isValidDate(null)).toBeNull();
     expect(isValidDate(undefined)).toBeNull();
+  });
+});
+describe('parseDateStrict', () => {
+  it('returns null for a falsy value', () => {
+    expect(parseDateStrict(null)).toBeNull();
+    expect(parseDateStrict('')).toBeNull();
+  });
+
+  it('returns null for an invalid date string', () => {
+    expect(parseDateStrict('not-a-date')).toBeNull();
+  });
+
+  it('parses YYYY-MM-DD dates', () => {
+    const parsed = parseDateStrict('2026-04-14');
+    expect(parsed).not.toBeNull();
+    expect(parsed.format('YYYY-MM-DD')).toBe('2026-04-14');
+  });
+
+  it('parses MM/DD/YYYY dates', () => {
+    const parsed = parseDateStrict('04/14/2026');
+    expect(parsed).not.toBeNull();
+    expect(parsed.format('MM/DD/YYYY')).toBe('04/14/2026');
+  });
+
+  it('parses ISO 8601 dates', () => {
+    const parsed = parseDateStrict('2026-04-14T00:00:00.000Z');
+    expect(parsed).not.toBeNull();
+    expect(parsed.toISOString()).toBe('2026-04-14T00:00:00.000Z');
+  });
+
+  it('does not fall back to Moment\'s deprecated JS Date parsing', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(parseDateStrict('not-a-date')).toBeNull();
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('does not shift the calendar day when formatting a UTC ISO 8601 date in a timezone behind UTC', () => {
+    const parsed = parseDateStrict('2026-04-14T00:00:00.000Z');
+    expect(parsed.format('MM/DD/YYYY')).toBe('04/14/2026');
   });
 });

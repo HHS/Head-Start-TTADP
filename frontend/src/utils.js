@@ -597,6 +597,18 @@ export function isValidDate(value) {
   return parsed ? moment(value, parsed, true) : null;
 }
 
+// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
+// ISO 8601 values are parsed as UTC so a date-only timestamp (e.g. midnight UTC) doesn't
+// shift to the previous calendar day when formatted in timezones behind UTC.
+export function parseDateStrict(value) {
+  if (!value) return null;
+  if (moment(value, moment.ISO_8601, true).isValid()) {
+    return moment.utc(value);
+  }
+  const parsed = moment(value, ['YYYY-MM-DD', 'MM/DD/YYYY'], true);
+  return parsed.isValid() ? parsed : null;
+}
+
 /**
  *
  * @param {number} userId
