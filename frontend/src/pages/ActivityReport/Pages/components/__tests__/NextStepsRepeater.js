@@ -60,7 +60,12 @@ describe('NextStepsRepeater', () => {
     const dateInput = screen.getByRole('textbox', {
       name: /when do you anticipate completing step 1/i,
     });
+    userEvent.type(dateInput, '01/02/2024');
+    userEvent.click(screen.getByRole('button', { name: /calendar/i }));
+    expect(screen.getByRole('button', { name: '1 January 2024 Monday' })).toBeDisabled();
+    userEvent.click(screen.getByRole('button', { name: /calendar/i }));
 
+    act(() => userEvent.clear(dateInput));
     userEvent.type(dateInput, '01/01/2024');
     fireEvent.blur(dateInput);
     expect(

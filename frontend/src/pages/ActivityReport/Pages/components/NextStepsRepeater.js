@@ -173,6 +173,14 @@ export default function NextStepsRepeater({ name, ariaName, recipientType, requi
                     control={control}
                     name={`${name}[${index}].completeDate`}
                     value={item.completeDate}
+                    minDate={
+                      afterDate
+                        ? moment(afterDate, 'MM/DD/YYYY').add(1, 'day').format('MM/DD/YYYY')
+                        : undefined
+                    }
+                    customValidationMessages={{
+                      afterMessage: 'Next step date must be after the session start date',
+                    }}
                     ariaDescribedBy={hasDateError ? dateErrorId : undefined}
                     ariaInvalid={hasDateError}
                     dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
