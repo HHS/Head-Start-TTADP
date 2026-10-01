@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
@@ -8,6 +8,10 @@ import { Router } from 'react-router';
 import { mockDocumentProperty, mockWindowProperty } from '../../testHelpers';
 import UserContext from '../../UserContext';
 import HeaderUserMenu from '../HeaderUserMenu';
+
+jest.mock('../../fetchers/notifications', () => ({
+  fetchNotificationsCount: jest.fn().mockResolvedValue({ count: 0, rows: [] }),
+}));
 
 describe('HeaderUserMenu', () => {
   const adminUser = {
@@ -23,26 +27,28 @@ describe('HeaderUserMenu', () => {
     roles: [],
   };
 
-  const renderHeaderUserMenu = (user = hydratedUser) => {
+  const renderHeaderUserMenu = async (user = hydratedUser) => {
     const history = createMemoryHistory();
 
-    render(
-      <Router history={history}>
-        <UserContext.Provider value={{ user }}>
-          <HeaderUserMenu
-            areThereUnreadWhatsNewNotifications={false}
-            setAreThereUnreadWhatsNewNotifications={jest.fn()}
-          />
-        </UserContext.Provider>
-      </Router>
-    );
+    await act(async () => {
+      render(
+        <Router history={history}>
+          <UserContext.Provider value={{ user }}>
+            <HeaderUserMenu
+              areThereUnreadWhatsNewNotifications={false}
+              setAreThereUnreadWhatsNewNotifications={jest.fn()}
+            />
+          </UserContext.Provider>
+        </Router>
+      );
+    });
 
     return history;
   };
 
   const openMenu = async (user = hydratedUser) => {
-    const history = renderHeaderUserMenu(user);
-    userEvent.click(screen.getByTestId('header-avatar'));
+    const history = await renderHeaderUserMenu(user);
+    await act(async () => userEvent.click(screen.getByTestId('header-avatar')));
     return history;
   };
 
@@ -99,7 +105,7 @@ describe('HeaderUserMenu', () => {
         const history = await openMenu(adminUser);
         const adminLink = screen.getByRole('link', { name: 'Admin' });
         expect(adminLink).toBeVisible();
-        fireEvent.click(adminLink);
+        await act(async () => fireEvent.click(adminLink));
         expect(history.location.pathname).toBe('/admin');
         expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
       });
@@ -137,8 +143,8 @@ describe('HeaderUserMenu', () => {
   });
 
   describe('when unauthenticated', () => {
-    beforeEach(() => {
-      renderHeaderUserMenu(null);
+    beforeEach(async () => {
+      await renderHeaderUserMenu(null);
     });
 
     it("doesn't show the user menu", async () => {
