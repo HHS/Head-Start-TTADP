@@ -189,9 +189,27 @@ auditLogger.alertError = (message, alertType, err = undefined) => {
   auditLogger.error(message, alertMeta);
 };
 
+const REDACTED_VALUE = '[REDACTED]';
+
+// Headers that carry credentials or session identifiers.
+const SENSITIVE_HEADERS = ['cookie', 'authorization'];
+
+const maskHeaders = (headers) =>
+  Object.entries(headers || {}).reduce((acc, [name, value]) => {
+    acc[name] = SENSITIVE_HEADERS.includes(name.toLowerCase()) ? REDACTED_VALUE : value;
+    return acc;
+  }, {});
+
+// express-winston's default filter returns req[propName]; mask sensitive headers before logging.
+const requestFilter = (req, propName) =>
+  propName === 'headers'
+    ? maskHeaders(req.headers)
+    : expressWinston.defaultRequestFilter(req, propName);
+
 const requestLogger = expressWinston.logger({
   transports: [new transports.Console()],
   format: format.combine(format.label({ label: 'REQUEST' }), formatter),
+  requestFilter,
   dynamicMeta: (req, res) => {
     if (req && req.session) {
       return {
@@ -222,6 +240,8 @@ const testingHooks = {
   getCallsiteFromStack,
   formatFunc,
   normalizeErrorForLogging,
+  maskHeaders,
+  requestFilter,
 };
 
 export { auditLogger, errorLogger, logger, requestLogger, testingHooks };
