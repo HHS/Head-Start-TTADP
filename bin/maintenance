@@ -16,7 +16,7 @@ help() {
     echo "  -h, --help              show this help text"
 }
 
-if [[ $# < 4 ]]; then
+if [[ $# -lt 4 ]]; then
     help
     exit 1
 fi

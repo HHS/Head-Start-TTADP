@@ -159,6 +159,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenChangeRequested',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has requested changes to an Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED]: {
     textFn: ({ approver, recipientName }) =>
       `${approver} has approved your Activity Report for ${recipientName}.`,
@@ -170,10 +179,13 @@ const NOTIFICATION_CONFIGURATION = {
   },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER]: {
     textFn: ({ approver, recipientName }) =>
-      `${approver} has approved an Activity Report for ${recipientName}.`,
-    actionable: false,
+      `${approver} has approved your Activity Report for ${recipientName}.`,
+    // Actionable ("Take action") only when the receiving approver has neither approved nor
+    // marked the report as needs action; once they have done either it is informational
+    // ("View AR"). (TTAHUB-5581)
+    actionable: ({ hasApproved }) => !hasApproved,
     linkFn: ({ id }) => `/activity-reports/${id}`,
-    linkText: () => 'View AR',
+    linkText: ({ hasApproved }) => (hasApproved ? 'View AR' : 'Take action'),
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenReportApproval',
   },
@@ -222,6 +234,7 @@ const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
   NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
@@ -238,6 +251,7 @@ const EMAIL_ACTIONS = {
   NEEDS_ACTION: 'changesRequested',
   SUBMITTED: 'approverAssigned',
   APPROVED: 'reportApproved',
+  APPROVER_APPROVED: 'approverReportApproved',
   COLLABORATOR_DIGEST: 'collaboratorDigest',
   NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
   SUBMITTED_DIGEST: 'approverAssignedDigest',

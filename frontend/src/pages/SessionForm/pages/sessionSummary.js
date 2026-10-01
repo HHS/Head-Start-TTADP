@@ -17,7 +17,7 @@ import { Helmet } from 'react-helmet';
 import { Controller, useController, useFieldArray, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import AppLoadingContext from '../../../AppLoadingContext';
-import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Drawer from '../../../components/Drawer';
@@ -35,6 +35,8 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
 import { isEmptyRichText, sanitizeRichText } from '../../../utils';
 import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
 import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
@@ -54,6 +56,11 @@ const DEFAULT_RESOURCE = {
 
 const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
+  // Facilitation only drives the workflow on Regional PD events with National Centers.
+  const canEditFacilitation =
+    isAdmin(user) &&
+    event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
 
   const goalTemplates = useGoalTemplates([]);
 
@@ -65,6 +72,15 @@ const SessionSummary = ({ datePickerKey, event }) => {
     formState: { errors },
     setError,
   } = useFormContext();
+
+  // Facilitation picks the completion workflow and approver candidates, so a
+  // correction restarts the session in the new workflow (mirrors updateSession).
+  const resetWorkflowForFacilitation = () => {
+    setValue('approverId', '', { shouldDirty: true });
+    ['ownerComplete', 'collabComplete', 'pocComplete'].forEach((key) => {
+      setValue(key, false, { shouldDirty: true });
+    });
+  };
 
   const id = watch('id');
   const startDate = watch('startDate');
@@ -260,6 +276,27 @@ const SessionSummary = ({ datePickerKey, event }) => {
           />
         </FormItem>
       </div>
+
+      {canEditFacilitation ? (
+        <FormItem label="Training facilitation" name="facilitation" htmlFor="facilitation" required>
+          <Dropdown
+            id="facilitation"
+            name="facilitation"
+            required
+            inputRef={register({ required: 'Select who is providing the training' })}
+            onChange={resetWorkflowForFacilitation}
+          >
+            <option value="" disabled>
+              Select who is providing the training
+            </option>
+            <option value="national_center">National Center</option>
+            <option value="regional_tta_staff">Regional TTA staff</option>
+            <option value="both">Both (National Center and Regional TTA staff)</option>
+          </Dropdown>
+        </FormItem>
+      ) : (
+        <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
+      )}
 
       <div className="maxw-mobile">
         <FormItem
@@ -626,7 +663,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
           ))}
         </Dropdown>
       </div>
-      <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
     </>
   );
 };

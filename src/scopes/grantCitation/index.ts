@@ -10,6 +10,7 @@ import {
   withinReportDeliveryDates,
 } from './reportDeliveryDate';
 import { withStateCode } from './stateCode';
+import { withoutTopics, withTopics } from './topic';
 
 export const topicToQuery = {
   citationRecipient: {
@@ -33,6 +34,12 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query: string[]) => withStateCode(query),
+  },
+  topic: {
+    in: (query: string[], options, userId, validTopics) =>
+      withTopics(query, options, userId, validTopics),
+    nin: (query: string[], options, userId, validTopics) =>
+      withoutTopics(query, options, userId, validTopics),
   },
   reportDeliveryDate: {
     bef: (query: string[]) => beforeReportDeliveryDate(query),

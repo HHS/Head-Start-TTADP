@@ -1,11 +1,14 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import type {
   RecipientTimelineEventPresentation,
   RecipientTimelineEventType,
   RecipientTimelineFilterTopic,
   RecipientTimelineRequestParams,
 } from '@ttahub/common/src/recipientTimeline';
+import { convert } from 'html-to-text';
 import { literal, Op } from 'sequelize';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { getSignedDownloadUrl } from '../lib/s3';
 import db from '../models';
 
 const {
@@ -16,6 +19,11 @@ const {
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
+  CommunicationLog,
+  CommunicationLogFile,
+  CommunicationLogRecipient,
+  EventReportPilot,
+  File,
   Goal,
   GoalStatusChange,
   GoalTemplate,
@@ -23,6 +31,7 @@ const {
   Objective,
   Program,
   Role,
+  SessionReportPilot,
   Topic,
   User,
 } = db;
@@ -586,8 +595,428 @@ export const GOAL_STATUS_CHANGE_TIMELINE_SOURCE: TimelineEventSource = Object.fr
   populate: populateGoalStatusChanges,
 });
 
+// One mapping drives both index event types and presentation titles.
+const COMMUNICATION_EVENT_TYPES: ReadonlyArray<{
+  method: string;
+  eventType: RecipientTimelineEventType;
+}> = [
+  { method: 'Email', eventType: 'Email communication' },
+  { method: 'Phone', eventType: 'Phone communication' },
+  { method: 'In person', eventType: 'In person communication' },
+  { method: 'Virtual', eventType: 'Virtual communication' },
+];
+
+const communicationText = (value: unknown): string | null =>
+  typeof value === 'string' ? value.trim() || null : null;
+
+const buildCommunicationLogIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const eventTypes = COMMUNICATION_EVENT_TYPES.map(
+    ({ method, eventType }, index) =>
+      `WHEN ${bindings.add(`method_${index}`, method)} THEN ${bindings.add(`eventType_${index}`, eventType)}`
+  );
+  const predicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      if (
+        !Array.isArray(filter.query) ||
+        filter.query.length === 0 ||
+        filter.query.some((value) => typeof value !== 'string' || !value.trim())
+      ) {
+        throw new Error('Timeline standard filters require non-empty strings');
+      }
+      const replacement = bindings.add(
+        `standard_${index}`,
+        filter.query.map((value) => value.trim())
+      );
+      return `${filter.condition === 'is not' ? 'NOT ' : ''}EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(CASE
+          WHEN jsonb_typeof("log"."data"->'goals') = 'array' THEN "log"."data"->'goals'
+          ELSE '[]'::jsonb
+        END) AS "goal"
+        WHERE jsonb_typeof("goal"->'label') = 'string'
+          AND BTRIM("goal"->>'label') IN (${replacement})
+      )`;
+    });
+  if (context.excludeMultiRecipientCommunications) {
+    predicates.push(`NOT EXISTS (
+      SELECT 1 FROM "CommunicationLogRecipients" AS "otherRecipient"
+      WHERE "otherRecipient"."communicationLogId" = "log"."id"
+        AND "otherRecipient"."recipientId" <> :recipientId
+    )`);
+  }
+
+  // Region IDs may be numbers or zero-padded strings from route params. Strip leading zeros
+  // without casting stored JSON so malformed or oversized values remain harmless nonmatches.
+  // Undated logs have no event date; the shared index excludes them without a createdAt fallback.
+  return `
+    SELECT
+      "log"."id" AS "sourceId",
+      safe_to_date(NULLIF(BTRIM("log"."data"->>'communicationDate', E' \\t\\r\\n'), ''), 'MM/DD/YYYY') AS "date",
+      CASE BTRIM("log"."data"->>'method') ${eventTypes.join('\n        ')} END AS "eventType",
+      "recipient"."recipientId",
+      CAST(:regionId AS INTEGER) AS "regionId"
+    FROM "CommunicationLogs" AS "log"
+    INNER JOIN "CommunicationLogRecipients" AS "recipient"
+      ON "recipient"."communicationLogId" = "log"."id"
+      AND "recipient"."recipientId" = :recipientId
+    WHERE LTRIM("log"."data"->>'regionId', '0') = CAST(:regionId AS TEXT)
+      ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+async function populateCommunicationLogs(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+  const logIds = [...new Set(sourceIds)];
+  const [logs, recipients, attachments] = await Promise.all([
+    CommunicationLog.findAll({
+      attributes: ['id', 'data'],
+      where: { id: { [Op.in]: logIds } },
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['name'],
+          required: false,
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+              attributes: ['name'],
+              through: { attributes: [] },
+              where: { deletedAt: null },
+              required: false,
+            },
+          ],
+        },
+      ],
+    }),
+    CommunicationLogRecipient.findAll({
+      attributes: ['communicationLogId', 'recipientId'],
+      // Count all distinct recipients, not just the recipient whose Timeline is being viewed.
+      where: { communicationLogId: { [Op.in]: logIds } },
+    }),
+    CommunicationLogFile.findAll({
+      attributes: ['communicationLogId', 'fileId'],
+      where: { communicationLogId: { [Op.in]: logIds } },
+      include: [
+        {
+          model: File,
+          as: 'file',
+          attributes: ['id', 'originalFileName', 'key'],
+          where: { status: 'APPROVED' },
+          required: true,
+        },
+      ],
+      order: [['fileId', 'ASC']],
+    }),
+  ]);
+
+  const recipientsByLog = new Map<number, Set<number>>();
+  recipients.forEach(({ communicationLogId, recipientId }) => {
+    const ids = recipientsByLog.get(communicationLogId) ?? new Set<number>();
+    ids.add(recipientId);
+    recipientsByLog.set(communicationLogId, ids);
+  });
+  const attachmentsByLog = new Map<number, Map<number, { text: string; link?: string }>>();
+  const itemByFile = new Map<number, { text: string; link?: string }>();
+  attachments.forEach(({ communicationLogId, file }) => {
+    const text = communicationText(file?.originalFileName);
+    if (!text) return;
+    let item = itemByFile.get(file.id);
+    if (!item) {
+      const { url } = getSignedDownloadUrl(file.key);
+      item = { text, ...(url ? { link: url } : {}) };
+      itemByFile.set(file.id, item);
+    }
+    const items = attachmentsByLog.get(communicationLogId) ?? new Map();
+    items.set(file.id, item);
+    attachmentsByLog.set(communicationLogId, items);
+  });
+
+  return new Map(
+    logs.map((log) => {
+      const data = log.data ?? {};
+      const title = COMMUNICATION_EVENT_TYPES.find(
+        ({ method }) => method === communicationText(data.method)
+      )?.eventType;
+      if (!title) throw new Error(`Unsupported timeline communication method for log ${log.id}`);
+      const author = nameWithRoles(
+        log.author?.name ?? null,
+        (log.author?.roles ?? []).map(({ name }) => name)
+      );
+      const rawDuration =
+        typeof data.duration === 'number' ? data.duration : communicationText(data.duration);
+      const duration = rawDuration === null ? null : Number(rawDuration);
+      const notes = convert(communicationText(data.notes) ?? '', { wordwrap: false }).trim();
+      const result = communicationText(data.result);
+      const standards = uniqueSorted(
+        Array.isArray(data.goals) ? data.goals.map((goal) => communicationText(goal?.label)) : []
+      );
+      const files = [...(attachmentsByLog.get(log.id)?.values() ?? [])].sort((left, right) =>
+        left.text.localeCompare(right.text)
+      );
+      const presentation: RecipientTimelineEventPresentation = {
+        title,
+        subtitle: communicationText(data.purpose),
+        durationHours:
+          duration !== null && Number.isFinite(duration) && duration >= 0 ? duration : null,
+        byline: author ? { label: 'By', values: [author] } : null,
+        indicators: (recipientsByLog.get(log.id)?.size ?? 0) > 1 ? ['multiRecipient'] : [],
+        tags: standards.map((label) => ({ label, flagged: label === 'Monitoring' })),
+        details: [
+          ...(notes ? [{ label: 'Notes', items: [{ text: notes }] }] : []),
+          ...(result ? [{ label: 'Result', items: [{ text: result }] }] : []),
+          ...(files.length ? [{ label: 'Supporting attachments', items: files }] : []),
+        ],
+        links: [
+          {
+            label: 'View communication log',
+            to: `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/communication/${log.id}/view`,
+          },
+        ],
+      };
+      return [log.id, presentation];
+    })
+  );
+}
+
+export const COMMUNICATION_LOG_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'communicationLog',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildCommunicationLogIndexQuery,
+  populate: populateCommunicationLogs,
+});
+
+const sessionReportStandardPredicate = (replacement: string, negate: boolean) => `
+  ${negate ? 'NOT ' : ''}EXISTS (
+    SELECT 1
+    FROM "SessionReportPilotGoalTemplates" AS "filteredSessionGoalTemplate"
+    INNER JOIN "GoalTemplates" AS "filteredGoalTemplate"
+      ON "filteredGoalTemplate"."id" = "filteredSessionGoalTemplate"."goalTemplateId"
+      AND "filteredGoalTemplate"."deletedAt" IS NULL
+    WHERE "filteredSessionGoalTemplate"."sessionReportPilotId" = "session"."id"
+      AND "filteredGoalTemplate"."standard" IN (${replacement})
+  )`;
+
+// The recipients captured on a session are only ever stored in this JSONB array; the
+// SessionReportPilotGrant join table is never written to and cannot be trusted for eligibility.
+// This intentionally diverges from recipientGrantFilter in sessionReports.ts, which casts the
+// JSONB value straight to ::integer and can overflow on an oversized digit string. Here the
+// digit-only guard rules out negatives/decimals, and grant.id is widened to ::numeric (which
+// cannot overflow) instead of narrowing the untrusted value to ::integer, so an oversized or
+// malformed value is always a harmless nonmatch rather than a runtime error.
+const buildSessionReportIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const status = bindings.add('status', TRAINING_REPORT_STATUSES.COMPLETE);
+  const standardPredicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      if (!Array.isArray(filter.query) || filter.query.length === 0) {
+        throw new Error('Timeline standard filters require at least one value');
+      }
+
+      const replacement = bindings.add(`standard_${index}`, filter.query);
+      return sessionReportStandardPredicate(replacement, filter.condition === 'is not');
+    });
+
+  return `
+    SELECT
+      "session"."id" AS "sourceId",
+      "session"."startDate" AS "date",
+      'Training session' AS "eventType",
+      "grant"."recipientId",
+      "grant"."regionId"
+    FROM "SessionReportPilots" AS "session"
+    INNER JOIN jsonb_array_elements(CASE
+      WHEN jsonb_typeof("session"."data"->'recipients') = 'array' THEN "session"."data"->'recipients'
+      ELSE '[]'::jsonb
+    END) AS "recipient" ON TRUE
+    INNER JOIN "Grants" AS "grant"
+      ON (
+        (jsonb_typeof("recipient"->'value') = 'number'
+          OR jsonb_typeof("recipient"->'value') = 'string')
+        -- Postgres doesn't guarantee AND operands are evaluated left-to-right, so a bare
+        -- AND ... ::numeric cast alongside the digit/length guards can still be reached on
+        -- malformed text and abort the whole query. A CASE expression is evaluated in order,
+        -- so the cast is only ever reached once the guards have confirmed it is safe.
+        AND CASE
+          WHEN
+            -- Digits only: excludes decimals (e.g. 4.5) and negatives before any numeric comparison.
+            "recipient"->>'value' ~ '^[0-9]+$'
+            -- Bound the digit count (int4 max, 2147483647, is 10 digits) before ever casting.
+            -- ::numeric doesn't overflow the way ::integer would, but it is still bounded (up to
+            -- ~131,072 digits), so this keeps the check airtight regardless, and matches the
+            -- MAX_INT4 bound parseSessionGrantIds applies on the population side.
+            AND length("recipient"->>'value') <= 10
+          THEN "grant"."id"::numeric = ("recipient"->>'value')::numeric
+          ELSE FALSE
+        END
+      )
+    WHERE "session"."data"->>'status' = ${status}
+      ${standardPredicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+// Grant.id is a Postgres int4 column. An out-of-range value here would otherwise reach
+// Grant.findAll's `id: { [Op.in]: [...] }` and error binding an out-of-range integer parameter,
+// the same failure class the index query's numeric comparison guards against.
+const MAX_INT4 = 2147483647;
+
+const parseSessionGrantIds = (data: { recipients?: unknown }): number[] => {
+  if (!Array.isArray(data?.recipients)) return [];
+  return data.recipients
+    .map((recipient) => {
+      const value = (recipient as { value?: unknown })?.value;
+      if (typeof value === 'number') {
+        return Number.isInteger(value) && value > 0 && value <= MAX_INT4 ? value : null;
+      }
+      if (typeof value === 'string' && /^\d+$/.test(value)) {
+        const parsed = Number.parseInt(value, 10);
+        return parsed > 0 && parsed <= MAX_INT4 ? parsed : null;
+      }
+      return null;
+    })
+    .filter((grantId): grantId is number => grantId !== null);
+};
+
+async function populateSessionReports(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+
+  const sessionIds = [...new Set(sourceIds)];
+  const sessions = await SessionReportPilot.findAll({
+    attributes: ['id', 'data'],
+    where: { id: { [Op.in]: sessionIds } },
+    include: [
+      { model: EventReportPilot, as: 'event', attributes: ['eventId'], required: false },
+      {
+        model: User,
+        as: 'trainers',
+        attributes: ['name'],
+        required: false,
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+            through: { attributes: [] },
+            where: { deletedAt: null },
+            required: false,
+          },
+        ],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplates',
+        attributes: ['standard'],
+        through: { attributes: [] },
+        required: false,
+      },
+    ],
+  });
+
+  const referencedGrantIds = [
+    ...new Set(sessions.flatMap((session) => parseSessionGrantIds(session.data ?? {}))),
+  ];
+  const recipientGrants = referencedGrantIds.length
+    ? await Grant.unscoped().findAll({
+        attributes: ['id', 'number'],
+        where: {
+          id: { [Op.in]: referencedGrantIds },
+          recipientId: context.recipientId,
+          regionId: context.regionId,
+        },
+        include: [{ model: Program, as: 'programs', attributes: ['programType'], required: false }],
+      })
+    : [];
+  const grantById = new Map<number, any>(recipientGrants.map((grant) => [grant.id, grant]));
+
+  const presentations = new Map<number, RecipientTimelineEventPresentation>();
+  sessions.forEach((session) => {
+    const data = session.data ?? {};
+    const trainers = (session.trainers ?? [])
+      .map((trainer) =>
+        nameWithRoles(
+          trainer.name,
+          (trainer.roles ?? []).map(({ name }) => name)
+        )
+      )
+      .filter((name): name is string => !!name)
+      .sort((left, right) => left.localeCompare(right));
+    const otherTrainers = communicationText(data.otherTrainers);
+    const trainerNames = uniqueSorted([...trainers, otherTrainers]);
+
+    const standards = uniqueSorted(
+      (session.goalTemplates ?? []).map((goalTemplate) => goalTemplate.standard)
+    );
+    const topics = uniqueSorted(
+      Array.isArray(data.objectiveTopics)
+        ? data.objectiveTopics.map((topic) => communicationText(topic))
+        : []
+    );
+    const objective = convert(communicationText(data.objective) ?? '', { wordwrap: false }).trim();
+    const supportType = communicationText(data.objectiveSupportType);
+    const grantNumbers = uniqueSorted(
+      parseSessionGrantIds(data)
+        .map((grantId) => grantById.get(grantId))
+        .filter((grant): grant is any => !!grant)
+        .map((grant) => grant.numberWithProgramTypes)
+    );
+    const rawDuration =
+      typeof data.duration === 'number' ? data.duration : communicationText(data.duration);
+    const duration = rawDuration === null ? null : Number(rawDuration);
+
+    const presentation: RecipientTimelineEventPresentation = {
+      durationHours:
+        duration !== null && Number.isFinite(duration) && duration >= 0 ? duration : null,
+      title: 'Training session',
+      subtitle: communicationText(data.sessionName),
+      byline: trainerNames.length ? { label: 'Trainers', values: trainerNames } : null,
+      indicators: [],
+      tags: standards.map((label) => ({ label, flagged: label === 'Monitoring' })),
+      details: [
+        ...(objective ? [{ label: 'Session objective', items: [{ text: objective }] }] : []),
+        ...(topics.length ? [{ label: 'Topics', items: [{ text: topics.join(', ') }] }] : []),
+        ...(supportType ? [{ label: 'Support type', items: [{ text: supportType }] }] : []),
+        ...(grantNumbers.length
+          ? [{ label: 'Participating grants', items: grantNumbers.map((text) => ({ text })) }]
+          : []),
+      ],
+      links: session.event?.eventId
+        ? [
+            {
+              label: 'View training report',
+              to: `/training-report/${session.event.eventId}/session/${session.id}`,
+            },
+          ]
+        : [],
+    };
+    presentations.set(session.id, presentation);
+  });
+
+  return presentations;
+}
+
+export const SESSION_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'sessionReport',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildSessionReportIndexQuery,
+  populate: populateSessionReports,
+});
+
 /** Code-owned source registry; request data cannot select or inject source SQL. */
 export const RECIPIENT_TIMELINE_SOURCES: readonly TimelineEventSource[] = Object.freeze([
   ACTIVITY_REPORT_TIMELINE_SOURCE,
   GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
+  COMMUNICATION_LOG_TIMELINE_SOURCE,
+  SESSION_REPORT_TIMELINE_SOURCE,
 ]);

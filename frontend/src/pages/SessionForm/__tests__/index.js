@@ -115,11 +115,12 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } }
+    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } },
+    setIsAppLoading = jest.fn()
   ) =>
     render(
       <Router history={history}>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
           <UserContext.Provider value={user}>
             <SessionForm
               match={{
@@ -164,6 +165,13 @@ describe('SessionReportForm', () => {
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
+    fetchMock.get('/api/events/id/1?readOnly=true', {
+      data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -196,6 +204,78 @@ describe('SessionReportForm', () => {
       },
       { timeout: 3000 }
     );
+  });
+
+  it.each([
+    ['owner', { ownerId: 1, collaboratorIds: [], pocIds: [] }],
+    ['collaborator', { ownerId: 2, collaboratorIds: [1], pocIds: [] }],
+    ['POC', { ownerId: 2, collaboratorIds: [], pocIds: [1] }],
+    ['admin', { ownerId: 2, collaboratorIds: [], pocIds: [] }],
+  ])(
+    'routes a %s through facilitation before creating an NC event session',
+    async (role, eventRoles) => {
+      history.replace('/training-report/1/session/new/');
+      fetchMock.get(
+        '/api/events/id/1?readOnly=true',
+        {
+          ...eventRoles,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        },
+        { overwriteRoutes: true }
+      );
+      const user = {
+        user: {
+          id: 1,
+          roles: [],
+          permissions: role === 'admin' ? [{ scopeId: SCOPE_IDS.ADMIN }] : [],
+        },
+      };
+      const setIsAppLoading = jest.fn();
+      const redirect = jest.spyOn(history, 'replace');
+
+      renderSessionForm('1', undefined, 'new', user, setIsAppLoading);
+
+      await waitFor(() =>
+        expect(history.location.pathname).toBe('/training-report/1/session/new/choose-facilitation')
+      );
+      expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
+      const clearLoaderCall = setIsAppLoading.mock.calls.findIndex(
+        ([loading]) => loading === false
+      );
+      const facilitationRedirectCall = redirect.mock.calls.findIndex(
+        ([path]) => path === '/training-report/1/session/new/choose-facilitation'
+      );
+      expect(clearLoaderCall).not.toBe(-1);
+      expect(facilitationRedirectCall).not.toBe(-1);
+      expect(setIsAppLoading.mock.invocationCallOrder[clearLoaderCall]).toBeLessThan(
+        redirect.mock.invocationCallOrder[facilitationRedirectCall]
+      );
+    }
+  );
+
+  it('still creates a session when the user cannot read the event', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', 403, { overwriteRoutes: true });
+    fetchMock.post(sessionsUrl, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: '1',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+    await act(async () => {
+      renderSessionForm('1', undefined, 'new');
+    });
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
   });
 
   it('handles an error creating a new report', async () => {
@@ -328,6 +408,126 @@ describe('SessionReportForm', () => {
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
     expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['', 'national_center'],
+    ['national_center', 'both'],
+    ['both', 'regional_tta_staff'],
+  ])(
+    'admin saves facilitation from "%s" to "%s" and restores approver options',
+    async (initial, next) => {
+      const url = join(sessionsUrl, 'id', '1');
+      let session = {
+        id: 1,
+        eventId: '1',
+        regionId: 1,
+        data: { ...istAndPocFields, facilitation: initial },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventId: '1',
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        },
+      };
+      fetchMock.get(url, () => session);
+      fetchMock.put(url, (_url, options) => {
+        const { data } = JSON.parse(options.body);
+        session = { ...session, data, updatedAt: new Date().toISOString() };
+        return session;
+      });
+      const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+      const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue(initial);
+      userEvent.selectOptions(field, next);
+      userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+      expect(session.data.facilitation).toBe(next);
+      expect(session.data.sessionName).toBe(istAndPocFields.sessionName);
+      expect(session.data.collabComplete).toBe(false);
+      expect(session.data.approverId).toBe('');
+
+      unmount();
+      renderSessionForm('1', 'review', '1', adminUser);
+      await screen.findByRole('option', { name: 'Approver Name' });
+      expect(screen.getByRole('combobox', { name: /approving manager/i })).toBeInTheDocument();
+    }
+  );
+
+  it('clears a regional approver and completion flags when an admin switches to NC facilitation', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    fetchMock.get(
+      '/api/users/trainers/regional/region/1',
+      [{ id: 4, fullName: 'Regional Manager', roles: [{ name: 'ECM' }] }],
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      '/api/users/trainers/national-center/region/1',
+      [{ id: 5, fullName: 'NC Approver', roles: [{ name: 'NC' }] }],
+      { overwriteRoutes: true }
+    );
+    let session = {
+      id: 1,
+      eventId: '1',
+      regionId: 1,
+      approverId: 4,
+      data: {
+        ...istAndPocFields,
+        facilitation: 'regional_tta_staff',
+        approverId: 4,
+        collabComplete: true,
+        pocComplete: true,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [],
+        data: { eventId: '1', eventOrganizer: 'Regional PD Event (with National Centers)' },
+      },
+    };
+    let putBody;
+    fetchMock.get(url, () => session);
+    fetchMock.put(url, (_url, options) => {
+      putBody = JSON.parse(options.body).data;
+      session = {
+        ...session,
+        approverId: null,
+        data: putBody,
+        updatedAt: new Date().toISOString(),
+      };
+      return session;
+    });
+    const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+    const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+    const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+    userEvent.selectOptions(field, 'national_center');
+    userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+    await waitFor(() => expect(putBody).toBeDefined());
+    expect(putBody).toEqual(
+      expect.objectContaining({
+        facilitation: 'national_center',
+        approverId: '',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      })
+    );
+
+    unmount();
+    renderSessionForm('1', 'review', '1', adminUser);
+    await screen.findByRole('option', { name: 'NC Approver' });
+    expect(screen.queryByRole('option', { name: 'Regional Manager' })).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /approving manager/i })).toHaveValue('');
   });
 
   it('saves on save and continue', async () => {

@@ -12,6 +12,7 @@ import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 import isAdmin, { canEditOrCreateGoals, hasApproveActivityReportInRegion } from '../../permissions';
 import UserContext from '../../UserContext';
+import { parseDateStrict } from '../../utils';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import ContextMenu from '../ContextMenu';
 import DataCard from '../DataCard';
@@ -75,7 +76,11 @@ export default function StandardGoalCard({
     fromApi: false,
   });
   const sortedObjectives = [...localObjectives];
-  sortedObjectives.sort((a, b) => (new Date(a.endDate) < new Date(b.endDate) ? 1 : -1));
+  sortedObjectives.sort((a, b) => {
+    const aTime = parseDateStrict(a.endDate)?.valueOf() ?? -Infinity;
+    const bTime = parseDateStrict(b.endDate)?.valueOf() ?? -Infinity;
+    return aTime === bTime ? 0 : aTime < bTime ? 1 : -1;
+  });
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const { atLeastOneObjectiveIsNotCompleted, dispatchStatusChange } =
     useObjectiveStatusMonitor(objectives);
@@ -109,11 +114,14 @@ export default function StandardGoalCard({
   const [deleteError, setDeleteError] = useState(false);
 
   const lastTTA = useMemo(() => {
-    const latestDate = objectives.reduce(
-      (prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate),
-      ''
-    );
-    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : '';
+    const latestDate = objectives.reduce((prev, curr) => {
+      const currDate = parseDateStrict(curr.endDate);
+      if (!currDate) {
+        return prev;
+      }
+      return !prev || currDate.isAfter(prev) ? currDate : prev;
+    }, null);
+    return latestDate ? latestDate.format(DATE_DISPLAY_FORMAT) : '';
   }, [objectives]);
   const history = useHistory();
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
