@@ -109,7 +109,7 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 
 **`review_status_resolvable`** — a `statusId` that doesn't resolve to any live row in `MonitoringReviewStatuses`.
 
-**`review_grantee_orphaned_grant`** — a review-grantee link whose `grantNumber` has no live `Grants` match (via `GrantNumberLinks`).
+**`review_grantee_orphaned_grant`** — a review-grantee link whose `grantNumber` has no live `Grants.number` match.
 
 **`delivered_review_completion_state`** — same idea as `citation_reopened`, for `DeliveredReviews.complete` flipping true→false, read from `DeliveredReviews`' own ZAL audit history.
 

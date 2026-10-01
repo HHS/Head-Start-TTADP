@@ -168,8 +168,7 @@ describe('validateMonitoringData', () => {
   const findingIdCategoryVariance = uuidv4(); // standard_consistency: category_disagrees_no_source
   const findingIdBadFindingStatus = uuidv4(); // finding_status_resolvable
   const findingIdBadHistoryStatus = uuidv4(); // history_status_resolvable
-  // A grantNumber with a GrantNumberLinks row but no grantId -> never
-  // resolves to a Grant -> review_grantee_orphaned_grant.
+  // A grantNumber with no matching live Grants row -> review_grantee_orphaned_grant.
   const orphanedGrantNumber = `VMD-orphan-${uuidv4().slice(0, 8)}`;
   const orphanedGranteeId = uuidv4();
   // A granteeId with two distinct grantNumbers -> review_grantee_multi_grant.
@@ -639,7 +638,8 @@ describe('validateMonitoringData', () => {
     // review_grantee_duplicated / review_grantee_orphaned_grant. The orphaned
     // grantNumber still needs a GrantNumberLinks row (MonitoringReviewGrantees
     // FKs to it - that table is Sequelize plumbing, not part of the check
-    // under test), just one with no grantId, so it never resolves to a Grant.
+    // under test); the check itself resolves straight to Grants.number, and
+    // orphanedGrantNumber is fabricated so it never matches a live Grant.
     await GrantNumberLink.findOrCreate({
       where: { grantNumber: orphanedGrantNumber },
       defaults: { grantId: null },

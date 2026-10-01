@@ -84,13 +84,16 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     -- audit row survives for a review. set_date is dml_timestamp (our own
     -- write time), not sourceUpdatedAt - the latter is IT-AMS's own clock,
     -- which a backlog/catch-up export can backdate well before we actually
-    -- learned about it.
+    -- learned about it. Matched to the review's current reportDeliveryDate
+    -- so a since-corrected date doesn't get picked instead.
     WITH first_delivery_set AS (
     SELECT DISTINCT ON (zmr.data_id)
       zmr.data_id,
       zmr.dml_timestamp::date set_date
     FROM "ZALMonitoringReviews" zmr
-    WHERE zmr.new_row_data->>'reportDeliveryDate' IS NOT NULL
+    JOIN "MonitoringReviews" mr2
+      ON mr2.id = zmr.data_id
+      AND (zmr.new_row_data->>'reportDeliveryDate')::timestamptz = mr2."reportDeliveryDate"
     ORDER BY zmr.data_id, zmr.dml_timestamp
     )
     INSERT INTO "ValidationRecords"
@@ -615,14 +618,15 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     WHERE s."sourceDeletedAt" IS NULL
     ;
 
-    -- review_grantee_orphaned_grant
+    -- review_grantee_orphaned_grant: joins Grants.number directly rather than
+    -- through GrantNumberLinks, which can get stuck permanently unresolved
+    -- for a grantNumber whose Grant row didn't exist yet at link-creation
+    -- time, with no later retry.
     WITH review_grantee_orphans AS (
       SELECT mrg."reviewId", BOOL_OR(g.id IS NULL) any_orphaned
       FROM "MonitoringReviewGrantees" mrg
-      LEFT JOIN "GrantNumberLinks" gnl
-        ON gnl."grantNumber" = mrg."grantNumber"
       LEFT JOIN "Grants" g
-        ON g.id = gnl."grantId"
+        ON g.number = mrg."grantNumber"
         AND NOT g.deleted
       WHERE mrg."sourceDeletedAt" IS NULL
         AND mrg."deletedAt" IS NULL
