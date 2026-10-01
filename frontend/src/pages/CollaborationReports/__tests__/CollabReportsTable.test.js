@@ -342,5 +342,75 @@ describe('CollabReportsTable', () => {
       fireEvent.click(menuButton);
       expect(screen.getByText('Export selected rows')).toBeInTheDocument();
     });
+
+    it('keeps selections when the page changes', async () => {
+      const filters = [{ topic: 'startDate', condition: 'is within', query: '2024' }];
+      const pageOne = { rows: [mockReportData.rows[0]], count: 2 };
+      const pageTwo = { rows: [mockReportData.rows[1]], count: 2 };
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={pageOne} filters={filters} />
+        </MemoryRouter>
+      );
+
+      userEvent.click(screen.getByDisplayValue('1'));
+
+      // same filters, next page of the same dataset
+      rerender(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={pageTwo} filters={filters} />
+        </MemoryRouter>
+      );
+
+      userEvent.click(screen.getByDisplayValue('2'));
+
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
+      fireEvent.click(menuButton);
+      fireEvent.click(screen.getByText('Export selected rows'));
+
+      await waitFor(() => {
+        expect(getReportsCSVById).toHaveBeenCalledWith(['1', '2'], defaultProps.sortConfig);
+      });
+    });
+
+    it('clears selections when the filters change', async () => {
+      // getReportsCSVById posts ids without the active filters, so a selection carried over from
+      // a previous filter would silently export a report the table no longer shows.
+      const initialFilters = [{ topic: 'startDate', condition: 'is within', query: '2024' }];
+      const narrowedFilters = [{ topic: 'author', condition: 'is', query: 'Bob Johnson' }];
+      const filteredData = { rows: [mockReportData.rows[1]], count: 1 };
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} filters={initialFilters} />
+        </MemoryRouter>
+      );
+
+      // select report 1, then filter it out of the table
+      userEvent.click(screen.getByDisplayValue('1'));
+
+      rerender(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={filteredData} filters={narrowedFilters} />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByDisplayValue('1')).not.toBeInTheDocument();
+
+      userEvent.click(screen.getByDisplayValue('2'));
+
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
+      fireEvent.click(menuButton);
+      fireEvent.click(screen.getByText('Export selected rows'));
+
+      await waitFor(() => {
+        expect(getReportsCSVById).toHaveBeenCalledWith(['2'], defaultProps.sortConfig);
+      });
+    });
   });
 });

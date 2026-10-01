@@ -1,5 +1,9 @@
 import express from 'express';
 import request from 'supertest';
+import SCOPES from '../../middleware/scopeConstants';
+import { currentUserId } from '../../services/currentUser';
+import { getRecipientTimeline } from '../../services/recipientTimeline';
+import { userById } from '../../services/users';
 import { checkRecipientAccessAndExistence } from '../utils';
 import router from './index';
 
@@ -12,6 +16,9 @@ jest.mock('../transactionWrapper', () =>
   )
 );
 jest.mock('../utils');
+jest.mock('../../services/currentUser');
+jest.mock('../../services/recipientTimeline');
+jest.mock('../../services/users');
 
 describe('recipient routes', () => {
   const app = express();
@@ -20,6 +27,12 @@ describe('recipient routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     checkRecipientAccessAndExistence.mockResolvedValue(true);
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue({
+      id: 1000,
+      permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
   });
 
   it('wires the timeline handler behind recipient, region, and query validation', () => {
