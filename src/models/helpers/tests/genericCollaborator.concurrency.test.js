@@ -84,25 +84,33 @@ describe('findOrCreateCollaborator concurrency', () => {
     it('joins the caller-provided transaction instead of opening its own', async () => {
         const reportId = getUniqueId();
 
+        const where = { goalId: goal.id, userId: user.id };
+
         await sequelize.transaction(async (transaction) => {
             const transactionSpy = jest.spyOn(sequelize, 'transaction');
+            try {
+                await findOrCreateCollaborator(
+                    'goal',
+                    sequelize,
+                    transaction,
+                    goal.id,
+                    user.id,
+                    GOAL_COLLABORATORS.LINKER,
+                    { activityReportIds: [reportId] }
+                );
+                expect(transactionSpy).not.toHaveBeenCalled();
+            } finally {
+                transactionSpy.mockRestore();
+            }
 
-            await findOrCreateCollaborator(
-                'goal',
-                sequelize,
-                transaction,
-                goal.id,
-                user.id,
-                GOAL_COLLABORATORS.LINKER,
-                { activityReportIds: [reportId] }
-            );
-
-            // The only sequelize.transaction() call should be the create-attempt SAVEPOINT nested
-            // under the caller's transaction, not a brand new top-level transaction.
-            transactionSpy.mock.calls.forEach((call) => {
-                expect(call[0]).toMatchObject({ transaction });
-            });
-            transactionSpy.mockRestore();
+            // Written on the caller's transaction: visible inside it, not yet to anyone else.
+            expect(await GoalCollaborator.count({ where, transaction })).toBe(1);
+            const outside = await sequelize.transaction((other) => (
+                GoalCollaborator.count({ where, transaction: other })
+            ));
+            expect(outside).toBe(0);
         });
+
+        expect(await GoalCollaborator.count({ where })).toBe(1);
     });
 });

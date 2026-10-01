@@ -262,6 +262,30 @@ describe('concurrency races (real database)', () => {
       expect(sortedIds(rows[0].linkBack)).toEqual([a, b].sort((x, y) => x - y));
     });
 
+    it('sibling add and remove sharing one transaction never lose an update', async () => {
+      const goalId = goals[0].id;
+      const [keep, removeMe, addMe] = [getUniqueId(), getUniqueId(), getUniqueId()];
+      await collab(null, goalId, [keep, removeMe]);
+
+      // A row lock doesn't separate callers on the same transaction, so this relies on both
+      // helpers taking turns via withTransactionLock.
+      await sequelize.transaction((t) => Promise.all([
+        collab(t, goalId, [addMe]),
+        removeCollaboratorsForType(
+          'goal',
+          sequelize,
+          t,
+          goalId,
+          GOAL_COLLABORATORS.LINKER,
+          { activityReportIds: [removeMe] }
+        ),
+      ]));
+
+      const rows = await GoalCollaborator.findAll({ where: { goalId, userId: user.id } });
+      expect(rows).toHaveLength(1);
+      expect(sortedIds(rows[0].linkBack)).toEqual([keep, addMe].sort((x, y) => x - y));
+    });
+
     it.each([
       ['add holds the row lock first', 'add'],
       ['remove holds the row lock first', 'remove'],

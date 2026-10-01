@@ -368,106 +368,110 @@ const removeCollaboratorsForType = async (
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
 
-  // Find all entity CollaboratorType records that meet the specified criteria. Locked with
-  // `FOR UPDATE` (when a transaction is active) so this read-modify-write can't race the
-  // read-modify-write in findOrCreateCollaborator's linkBack merge above.
-  const currentCollaboratorsForType = await sequelize.models[
-    collaboratorDetails[genericCollaboratorType].collaborators
-  ].findAll({
-    where: {
-      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-      linkBack: { [Op.contains]: filteredLinkBack },
-    },
-    include: [
-      {
-        model: sequelize.models.CollaboratorType,
-        as: 'collaboratorType',
-        required: true,
-        attributes: [],
-        where: {
-          name: typeName,
-        },
-        include: [
-          {
-            model: sequelize.models.ValidFor,
-            as: 'validFor',
-            required: true,
-            attributes: [],
-            where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+  // Siblings sharing a transaction must take turns: the FOR UPDATE lock below only guards
+  // against other transactions (see withTransactionLock).
+  await withTransactionLock(transaction, async () => {
+    // Find all entity CollaboratorType records that meet the specified criteria. Locked with
+    // `FOR UPDATE` (when a transaction is active) so this read-modify-write can't race the
+    // read-modify-write in findOrCreateCollaborator's linkBack merge above.
+    const currentCollaboratorsForType = await sequelize.models[
+      collaboratorDetails[genericCollaboratorType].collaborators
+    ].findAll({
+      where: {
+        [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+        linkBack: { [Op.contains]: filteredLinkBack },
+      },
+      include: [
+        {
+          model: sequelize.models.CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          attributes: [],
+          where: {
+            name: typeName,
           },
-        ],
-      },
-    ],
-    ...(transaction && { transaction }),
-    ...(transaction?.LOCK && {
-      lock: {
-        level: transaction.LOCK.UPDATE,
-        // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
-        // locking a query with joined lookup tables ("cannot be applied to the nullable
-        // side of an outer join").
-        of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
-      },
-    }),
-  });
-
-  if (currentCollaboratorsForType) {
-    // Separate the updates and deletes based on the conditions
-    const { updates, deletes } = currentCollaboratorsForType.reduce(
-      (acc, current) => {
-        if (current.dataValues.linkBack[linkBackKey].length > 1) {
-          // Remove the specified linkBack values from the array
-          const newLinkBack = {
-            ...current.dataValues.linkBack,
-            [linkBackKey]: current.dataValues.linkBack[linkBackKey].filter(
-              (value) => !linkBackValues.includes(value)
-            ),
-          };
-          acc.updates.push({
-            id: current.dataValues.id,
-            linkBack: newLinkBack,
-          });
-        } else if (Object.keys(current.dataValues.linkBack).length > 1) {
-          // Remove the specified linkBack key from the object
-          const newLinkBack = current.dataValues.linkBack;
-          delete newLinkBack[linkBackKey];
-          acc.updates.push({
-            id: current.dataValues.id,
-            linkBack: newLinkBack,
-          });
-        } else {
-          // Add the ID to the deletes array
-          acc.deletes.push(current.dataValues.id);
-        }
-        return acc;
-      },
-      { updates: [], deletes: [] }
-    );
-
-    // Update the entity CollaboratorType records and delete the specified records
-    const updatePromises =
-      updates.length > 0
-        ? updates.map(async (update) =>
-          sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
-            { linkBack: update.linkBack },
+          include: [
             {
-              where: { id: update.id },
-              individualHooks: true,
-              ...(transaction && { transaction }),
-            }
-          )
-        )
-        : [Promise.resolve()];
-    const deletePromise =
-      deletes.length > 0
-        ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
-          where: { id: deletes },
-          individualHooks: true,
-          ...(transaction && { transaction }),
-        })
-        : Promise.resolve();
+              model: sequelize.models.ValidFor,
+              as: 'validFor',
+              required: true,
+              attributes: [],
+              where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+            },
+          ],
+        },
+      ],
+      ...(transaction && { transaction }),
+      ...(transaction?.LOCK && {
+        lock: {
+          level: transaction.LOCK.UPDATE,
+          // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
+          // locking a query with joined lookup tables ("cannot be applied to the nullable
+          // side of an outer join").
+          of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+        },
+      }),
+    });
 
-    await Promise.all([...updatePromises, deletePromise]);
-  }
+    if (currentCollaboratorsForType) {
+      // Separate the updates and deletes based on the conditions
+      const { updates, deletes } = currentCollaboratorsForType.reduce(
+        (acc, current) => {
+          if (current.dataValues.linkBack[linkBackKey].length > 1) {
+            // Remove the specified linkBack values from the array
+            const newLinkBack = {
+              ...current.dataValues.linkBack,
+              [linkBackKey]: current.dataValues.linkBack[linkBackKey].filter(
+                (value) => !linkBackValues.includes(value)
+              ),
+            };
+            acc.updates.push({
+              id: current.dataValues.id,
+              linkBack: newLinkBack,
+            });
+          } else if (Object.keys(current.dataValues.linkBack).length > 1) {
+            // Remove the specified linkBack key from the object
+            const newLinkBack = current.dataValues.linkBack;
+            delete newLinkBack[linkBackKey];
+            acc.updates.push({
+              id: current.dataValues.id,
+              linkBack: newLinkBack,
+            });
+          } else {
+            // Add the ID to the deletes array
+            acc.deletes.push(current.dataValues.id);
+          }
+          return acc;
+        },
+        { updates: [], deletes: [] }
+      );
+
+      // Update the entity CollaboratorType records and delete the specified records
+      const updatePromises =
+        updates.length > 0
+          ? updates.map(async (update) =>
+            sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
+              { linkBack: update.linkBack },
+              {
+                where: { id: update.id },
+                individualHooks: true,
+                ...(transaction && { transaction }),
+              }
+            )
+          )
+          : [Promise.resolve()];
+      const deletePromise =
+        deletes.length > 0
+          ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
+            where: { id: deletes },
+            individualHooks: true,
+            ...(transaction && { transaction }),
+          })
+          : Promise.resolve();
+
+      await Promise.all([...updatePromises, deletePromise]);
+    }
+  });
 };
 
 export {
