@@ -35,8 +35,8 @@ export const isNationalCenterUser = (
  * normally not involved (but may create sessions and fill `pocComplete`).
  */
 export const isNationalCenterFacilitator = (event: EventShape, session: SessionShape): boolean =>
-  event.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
-  session.data?.facilitation === FACILITATION_NATIONAL_CENTER;
+  event?.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+  session?.data?.facilitation === FACILITATION_NATIONAL_CENTER;
 
 /**
  * Single source of truth for "this session has been submitted for approval".

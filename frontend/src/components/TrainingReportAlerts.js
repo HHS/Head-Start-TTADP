@@ -131,7 +131,7 @@ export default function TrainingReportAlerts() {
   return (
     <WidgetContainer
       className="ttahub-training-report-alerts-container"
-      title="My training report alerts"
+      title="My training reports"
       subtitle="Events or sessions that require timely action"
       showPagingBottom={false}
       showPagingTop={false}

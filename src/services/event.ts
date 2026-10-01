@@ -505,7 +505,7 @@ export {
   REGIONAL_PD_WITH_NATIONAL_CENTERS,
 } from './eventFlow';
 
-import { isNationalCenterFacilitator } from './eventFlow';
+import { isNationalCenterFacilitator, isSessionSubmitted } from './eventFlow';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -736,8 +736,8 @@ export async function getTrainingReportAlerts(
       if (session.data.status === TRS.COMPLETE) return;
 
       // Check for waitingForApproval - session submitted and awaiting approver review
-      // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
-      const isSubmitted = session.submitted;
+      // Use the policy's submission rule so stale flags from another workflow don't count
+      const isSubmitted = isSessionSubmitted(event, session);
 
       if (isSubmitted && ![REPORT_STATUSES.NEEDS_ACTION].includes(session.data.status)) {
         const isSubmitter = session.submitterId === userId;

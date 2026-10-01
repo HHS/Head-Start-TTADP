@@ -15,6 +15,7 @@ import { withoutRecipientName, withRecipientName } from './recipient';
 import { withoutRecipientId, withRecipientId } from './recipientId';
 import { noActivityWithin } from './recipientsWithoutTTA';
 import { withoutRegion, withRegion } from './region';
+import { withoutStandard, withStandard } from './standard';
 import { withStateCode } from './stateCode';
 
 export const topicToQuery = {
@@ -77,6 +78,10 @@ export const topicToQuery = {
   goalResponse: {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
+  },
+  standard: {
+    in: (query) => withStandard(query),
+    nin: (query) => withoutStandard(query),
   },
 };
 
