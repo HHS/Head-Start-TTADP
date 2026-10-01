@@ -1,7 +1,30 @@
+import crypto from 'node:crypto';
 import expressWinston from 'express-winston';
 import path from 'path';
 import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
+
+/**
+ * One-way, truncated HMAC of an identifier (e.g. an HSES sub/email) for use as a log
+ * correlation key. Lets separate log lines be tied to the same login/user without ever
+ * writing the identifier itself to logs.
+ *
+ * Keyed with SESSION_SECRET rather than a bare hash: emails are predictable/directory-sourced,
+ * so an unkeyed hash would let anyone with log access hash guessed candidates and match them
+ * against logged values, defeating the point of not logging the identifier.
+ * @param {unknown} value
+ * @returns {string | undefined}
+ */
+const hashForLogging = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  return crypto
+    .createHmac('sha256', process.env.SESSION_SECRET || '')
+    .update(String(value))
+    .digest('hex')
+    .slice(0, 16);
+};
 
 /**
  * @typedef {import('winston').Logger & {
@@ -224,4 +247,4 @@ const testingHooks = {
   normalizeErrorForLogging,
 };
 
-export { auditLogger, errorLogger, logger, requestLogger, testingHooks };
+export { auditLogger, errorLogger, hashForLogging, logger, requestLogger, testingHooks };
