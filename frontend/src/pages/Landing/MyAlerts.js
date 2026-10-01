@@ -336,10 +336,10 @@ function MyAlerts(props) {
           paddingX={0}
           paddingY={0}
           loading={loading}
-          loadingLabel="My activity report alerts loading"
+          loadingLabel="My Activity Reports"
         >
           <TableHeader
-            title="My activity report alerts"
+            title="My Activity Reports"
             menuAriaLabel="My alerts report menu"
             forMyAlerts
             onUpdateFilters={updateReportFilters}
@@ -359,7 +359,7 @@ function MyAlerts(props) {
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
               <caption className="smart-hub--table-caption usa-sr-only">
-                My activity report alerts with sorting
+                My Activity Reports with sorting
               </caption>
               <thead>
                 <tr>
