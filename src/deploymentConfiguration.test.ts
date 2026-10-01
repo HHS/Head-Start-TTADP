@@ -22,7 +22,7 @@ describe('Node deployment configuration', () => {
     const packageJson = JSON.parse(repositoryFile('package.json'));
     const frontendPackageJson = JSON.parse(repositoryFile('frontend/package.json'));
 
-    expect(nodeVersion).toBe('24.19.0');
+    expect(nodeVersion).toBe('24.21.0');
     expect(packageJson.engines.node).toBe(nodeVersion);
     expect(frontendPackageJson.engines.node).toBe(nodeVersion);
     expect(repositoryFile('Dockerfile')).toContain(`FROM node:${nodeVersion}`);

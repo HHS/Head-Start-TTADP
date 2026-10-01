@@ -105,7 +105,6 @@ const productionSpaceState = {
       destinations: [{ app: { guid: 'app-3' } }],
     },
     { guid: 'route-6', url: 'tta-smarthub-prod.app.cloud.gov', destinations: [] },
-    { guid: 'route-7', url: 'tta-automation.app.cloud.gov', destinations: [] },
   ],
   droplets: [
     {
@@ -1241,7 +1240,6 @@ describe('the committed inventory against the recorded production space', () => 
 
   it('suppresses only the findings the first reconciliation raised', () => {
     expect(result.suppressed.map((s) => s.dispositionId).sort()).toEqual([
-      'INV-2026-0003',
       'INV-2026-0004',
     ]);
   });
