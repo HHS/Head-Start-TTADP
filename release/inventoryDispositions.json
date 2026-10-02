@@ -67,6 +67,7 @@
       "recommendation": "Pin the buildpack in manifest.yml to a released version, then set pinned to true on the inventory entry and close this disposition.",
       "approval": {
         "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3996",
         "approverRole": "TTA Hub Tech Lead",
         "approver": "Krys Wisnaskas",
         "approvalDate": "2026-10-01",
