@@ -21,6 +21,7 @@
   - This will rebuild code and images, run migrations/reseed the DB
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
 - Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
+  - A `minio-init` job creates the bucket named by `S3_BUCKET` in `.env` automatically; the MinIO console is at http://localhost:9001
 - Tail logs: `yarn docker:logs`
 - Open backend shell: `yarn docker:shell:backend`
 - Open frontend shell: `yarn docker:shell:frontend`
