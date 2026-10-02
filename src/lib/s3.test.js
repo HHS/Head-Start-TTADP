@@ -293,37 +293,88 @@ describe('S3 helpers', () => {
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: '',
+        S3_PUBLIC_ENDPOINT: '',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, recordedCommands, mockAuditLogger } =
-        loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'test.amazonaws.com', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
       expect(mockAuditLogger.info).toHaveBeenCalled();
+      // AWS S3 uses virtual-hosted style, so the bucket is not part of the path
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ path: '/file.txt' }),
+        expect.any(Object)
+      );
     });
 
-    it('uses Minio host when S3_ENDPOINT is set', async () => {
+    it('maps the Docker-internal minio host to localhost when S3_PUBLIC_ENDPOINT is unset', async () => {
       const env = {
         S3_BUCKET: 'env-bucket',
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
         S3_ENDPOINT: 'http://minio:9000',
+        S3_PUBLIC_ENDPOINT: '',
       };
       const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
-      const result = { host: 'minio:9000', path: '/file.txt' };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      expect(res).toEqual({ url: `http://${result.host}${result.path}`, error: null });
       expect(mockAuditLogger.info).toHaveBeenCalled();
-      // Verify that mockGetSignedUrl was called with the Minio host
+      // Verify the host is browser-reachable and the link is path-style (bucket in the path)
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
-          host: 'minio:9000',
+          host: 'localhost:9000',
+          path: '/bucket-one/file.txt',
         }),
+        expect.any(Object)
+      );
+    });
+
+    it('keeps a non-minio S3_ENDPOINT host when S3_PUBLIC_ENDPOINT is unset', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://storage.example.test:9000',
+        S3_PUBLIC_ENDPOINT: '',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      const client = { send: jest.fn() };
+      mockGetSignedUrl.mockImplementation(() => ({
+        host: 'storage.example.test:9000',
+        path: '/bucket-one/file.txt',
+      }));
+      getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ host: 'storage.example.test:9000' }),
+        expect.any(Object)
+      );
+    });
+
+    it('prefers S3_PUBLIC_ENDPOINT over S3_ENDPOINT for the link host', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://minio:9000',
+        S3_PUBLIC_ENDPOINT: 'http://localhost:9000',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      const client = { send: jest.fn() };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
+      mockGetSignedUrl.mockImplementation(() => result);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(res).toEqual({ url: 'http://localhost:9000/bucket-one/file.txt', error: null });
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ host: 'localhost:9000', path: '/bucket-one/file.txt' }),
         expect.any(Object)
       );
     });
@@ -338,14 +389,15 @@ describe('S3 helpers', () => {
       };
       const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
       const client = { send: jest.fn() };
-      const result = { host: 'localhost:9000', path: '/file.txt' };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      expect(res).toEqual({ url: `http://${result.host}${result.path}`, error: null });
       // Verify that mockGetSignedUrl was called with the localhost host
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'localhost:9000',
+          path: '/bucket-one/file.txt',
         }),
         expect.any(Object)
       );
