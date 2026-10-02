@@ -127,12 +127,12 @@ describe('HeaderUserMenu', () => {
     it('shows the Notifications link when the user has the actionable_notifications flag', async () => {
       const flaggedUser = { ...hydratedUser, flags: ['actionable_notifications'] };
       await openMenu(flaggedUser);
-      expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+      expect(screen.getAllByRole('link', { name: /notifications/i })).toHaveLength(2);
     });
 
     it('shows the Notifications link to an admin user', async () => {
       await openMenu(adminUser);
-      expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+      expect(screen.getAllByRole('link', { name: /notifications/i })).toHaveLength(2);
     });
   });
 
