@@ -262,6 +262,22 @@ describe('events schema validation middleware', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  it('rejects an impossible date on create with a readable message', () => {
+    const req = {
+      body: { ownerId: 1, regionId: 1, data: { eventId: 'R01-TR-REPRO', startDate: '13/45/2026' } },
+    };
+    const { res, send } = buildRes();
+    const next = jest.fn();
+
+    checkCreateEventBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalledWith(
+      'Received malformed request body: "data.startDate" must be a valid date (e.g. MM/DD/YYYY)'
+    );
+  });
+
   /**
    * TTAHUB-2763: ControlledDatePicker submits the entered text unchanged, and
    * frontend validation (frontend/src/utils.js isValidDate) accepts every one of

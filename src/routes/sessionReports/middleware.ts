@@ -36,7 +36,7 @@ const validateDisplayDate = (value: string, helpers: Joi.CustomHelpers) => {
 const displayDate = Joi.string()
   .allow('', null)
   .custom(validateDisplayDate, `${DATE_FORMAT} date validation`)
-  .messages({ 'any.invalid': `"{{#label}}" must be a ${DATE_FORMAT} date` });
+  .messages({ 'any.invalid': `{{#label}} must be a valid date (e.g. ${DATE_FORMAT})` });
 const looseString = Joi.string().allow('', null);
 
 // Every array-valued field accepts '' and null as "nothing selected" — see the

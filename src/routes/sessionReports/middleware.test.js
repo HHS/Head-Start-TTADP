@@ -299,6 +299,20 @@ describe('sessionReports schema validation middleware', () => {
     }
   );
 
+  it('rejects an impossible date with a readable message', () => {
+    const req = { body: body({ ...istData, startDate: '13/45/2026' }) };
+    const { res, send } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateSessionBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalledWith(
+      'Received malformed request body: "data.startDate" must be a valid date (e.g. MM/DD/YYYY)'
+    );
+  });
+
   // Joi's .allow() short-circuits before the custom validator, so normalization
   // must not turn "no date entered" into a date.
   it.each(['', null])('leaves the empty date value %p untouched', (startDate) => {
