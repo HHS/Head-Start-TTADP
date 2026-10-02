@@ -39,7 +39,8 @@ const Review = ({
   const { getValues } = useFormContext();
   const { id, eventId, submitter, status } = getValues();
   const history = useHistory();
-  const approverCanEdit = isSubmitted && status !== TRAINING_REPORT_STATUSES.COMPLETE;
+  const approverCanEdit =
+    isSubmitted && !isNeedsAction && status !== TRAINING_REPORT_STATUSES.COMPLETE;
 
   return (
     <>

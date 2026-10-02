@@ -548,7 +548,7 @@ describe('Event Report policies', () => {
       expect(policy.canEditSession()).toBe(false);
     });
 
-    it('allows an assigned approver to edit a session returned for corrections', () => {
+    it('does not allow an assigned approver to edit a session returned for corrections', () => {
       const approver = createUser({ read: true });
       const event = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
       const session = {
@@ -562,7 +562,7 @@ describe('Event Report policies', () => {
 
       const policy = new EventReport(approver, event, session);
 
-      expect(policy.canEditSession()).toBe(true);
+      expect(policy.canEditSession()).toBe(false);
     });
 
     it('does not allow an assigned approver to edit a completed session', () => {

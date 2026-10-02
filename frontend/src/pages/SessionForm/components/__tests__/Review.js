@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import { REPORT_STATUSES } from '@ttahub/common';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MemoryRouter } from 'react-router-dom';
@@ -92,9 +93,9 @@ describe('Review', () => {
     expect(screen.getByRole('button', { name: 'Edit Session summary' })).toBeVisible();
   });
 
-  it('allows an approver to edit a returned session section', () => {
+  it('does not allow an approver to edit a returned session section', () => {
     const defaultValues = {
-      status: 'needs_action',
+      status: REPORT_STATUSES.NEEDS_ACTION,
       approver: { fullName: 'Session approver' },
     };
     const pages = [{ label: 'Session summary', onNavigation: jest.fn() }];
@@ -118,6 +119,6 @@ describe('Review', () => {
       );
     });
 
-    expect(screen.getByRole('button', { name: 'Edit Session summary' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Edit Session summary' })).not.toBeInTheDocument();
   });
 });
