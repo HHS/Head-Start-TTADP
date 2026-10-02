@@ -192,6 +192,35 @@ services:
     volumes:
       - minio-data:/data
 
+  # Creates the S3_BUCKET bucket in minio if it does not exist yet, then idles. It stays running
+  # (instead of exiting) because `docker compose up --wait` treats an exited service as a failure.
+  minio-init:
+    profiles: ["fullstack"]
+    image: amazon/aws-cli
+    depends_on:
+      - minio
+    env_file:
+      - ../../.env
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for i in $$(seq 1 30); do
+          if aws --endpoint-url http://minio:9000 s3api head-bucket --bucket "$$S3_BUCKET" >/dev/null 2>&1 \
+            || aws --endpoint-url http://minio:9000 s3 mb "s3://$$S3_BUCKET" >/dev/null 2>&1; then
+            echo "Bucket $$S3_BUCKET is ready"
+            trap 'exit 0' TERM INT
+            sleep infinity &
+            wait $$!
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Could not create bucket $$S3_BUCKET in minio" >&2
+        exit 1
+
   api-docs:
     profiles: ["fullstack"]
     image: redocly/redoc
