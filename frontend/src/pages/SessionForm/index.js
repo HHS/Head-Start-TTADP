@@ -766,7 +766,6 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={false}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}
