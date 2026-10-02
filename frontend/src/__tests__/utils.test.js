@@ -3,6 +3,7 @@ import {
   getCollabReportStatusDisplayAndClassnames,
   getRichTextAsText,
   isEmptyRichText,
+  isSafeRenderableLink,
   sanitizeRichText,
 } from '../utils';
 
@@ -95,6 +96,28 @@ describe('getRichTextAsText', () => {
   it('collapses list items and whitespace entities', () => {
     expect(getRichTextAsText('<ul><li>One</li><li>Two</li></ul>')).toBe('One Two');
     expect(getRichTextAsText('<p>a&nbsp;&#160;b</p>')).toBe('a b');
+  });
+});
+
+describe('isSafeRenderableLink', () => {
+  it.each([
+    ['a same-app relative path', '/goal/123'],
+    ['a valid http URL', 'http://example.com/path'],
+    ['a valid https URL', 'https://example.com/path'],
+  ])('accepts %s', (_label, to) => {
+    expect(isSafeRenderableLink(to)).toBe(true);
+  });
+
+  it.each([
+    ['a javascript: URI', 'javascript:alert(1)'],
+    ['a data: URI', 'data:text/html,test'],
+    ['a protocol-relative URL', '//evil.example'],
+    ['a relative path with a backslash', '/\\evil.example'],
+    ['a value containing a newline', 'java\nscript:alert(1)'],
+    ['a backslash-obfuscated host', 'http:\\\\evil.example\\path'],
+    ['a URL containing a space', 'https://example.com/foo bar'],
+  ])('rejects %s', (_label, to) => {
+    expect(isSafeRenderableLink(to)).toBe(false);
   });
 });
 

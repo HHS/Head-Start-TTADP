@@ -6,8 +6,9 @@
   flex: 0 0 20px;
 }
 
-.ttahub-timeline-event__rail > img {
-  max-width: none;
+.ttahub-timeline-event__icon {
+  width: 24px;
+  height: 24px;
 }
 
 .ttahub-timeline-event__content {
@@ -19,7 +20,7 @@
   line-height: inherit;
 }
 
-.ttahub-timeline-event__title img {
+.ttahub-timeline-event__title svg {
   vertical-align: middle;
 }
 

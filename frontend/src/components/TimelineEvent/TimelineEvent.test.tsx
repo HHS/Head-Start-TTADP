@@ -154,6 +154,8 @@ describe('TimelineEvent', () => {
     '//evil.example',
     '/\\evil.example',
     'java\nscript:alert(1)',
+    'http:\\\\evil.example\\path',
+    'https://example.com/foo bar',
   ])('does not create unsafe links for %s', (to) => {
     renderEvent(
       {
