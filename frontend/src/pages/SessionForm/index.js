@@ -140,7 +140,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  const roleData = reduceDataToMatchKeys(keyArray, data);
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,
