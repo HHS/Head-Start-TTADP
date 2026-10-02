@@ -1,18 +1,23 @@
+import { Alert, Button } from '@trussworks/react-uswds';
+import useInterval from '@use-it/interval';
 import moment from 'moment';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Redirect, useHistory } from 'react-router-dom';
-import { defaultValues, TTA_REQUEST_FIELDS } from './constants';
-import pages from './pages';
+import { useHistory } from 'react-router-dom';
+import Container from '../../components/Container';
+import IndicatesRequiredField from '../../components/IndicatesRequiredField';
+import {
+  AUTOSAVE_INTERVAL,
+  DATE_DISPLAY_SAVED_FORMAT,
+  defaultValues,
+  TTA_REQUEST_FIELDS,
+} from './constants';
+import GoalAndContext from './GoalAndContext';
+import SubmitForReview from './SubmitForReview';
 import TtaRequestFormHeading from './TtaRequestFormHeading';
-import TtaRequestFormNavigator from './TtaRequestFormNavigator';
-import type { TtaRequestAdditionalData, TtaRequestGrant, TtaRequestRecipient } from './types';
-
-interface TtaRequestFormMatchParams {
-  ttaRequestId: string;
-  currentPage?: string;
-}
+import type { TtaRequestGrant, TtaRequestRecipient } from './types';
+import WhoIsTheRequestFor from './WhoIsTheRequestFor';
 
 interface TtaRequestFormProps {
   /** set when the request was started from a recipient's TTA records */
@@ -21,10 +26,8 @@ interface TtaRequestFormProps {
   recipientOptions?: TtaRequestRecipient[] | null;
   /** the region of the recipient's record, when there is one */
   regionId?: number | null;
-  /** where the back link and a finished request return the user to, and the root every
-   * page's URL is built under */
+  /** where the back link and a finished request return the user to */
   backLinkTo: string;
-  match: { params: TtaRequestFormMatchParams };
 }
 
 /**
@@ -32,28 +35,19 @@ interface TtaRequestFormProps {
  * page - render this, differing only in whether the recipient arrives fixed or is chosen here.
  *
  * TODO: there is no API for TTA requests yet, so submitting and saving a draft validate and
- * navigate but do not persist. Wire both to a fetcher once the backend ticket lands - guard
- * any `hookForm.reset()` added at that point with `shouldUpdateFormData` (see
- * utils/formRichTextEditorHelper.js) so autosave can't interrupt an in-progress edit in the
- * Goal and context page's rich text editor.
+ * navigate but do not persist. Wire both to a fetcher once the backend ticket lands.
  */
 export default function TtaRequestForm({
   recipient = null,
   recipientOptions = null,
   regionId = null,
   backLinkTo,
-  match: {
-    params: { ttaRequestId, currentPage },
-  },
 }: TtaRequestFormProps): React.ReactElement {
   const history = useHistory();
-  const requestId = useRef(ttaRequestId);
   const [lastSaveTime, setLastSaveTime] = useState<moment.Moment | null>(null);
-  const [showSavedDraft, setShowSavedDraft] = useState(false);
 
   const hookForm = useForm({
     mode: 'onBlur',
-    shouldUnregister: false,
     defaultValues: {
       ...defaultValues,
       [TTA_REQUEST_FIELDS.RECIPIENT]: recipient,
@@ -79,46 +73,18 @@ export default function TtaRequestForm({
     setValue(TTA_REQUEST_FIELDS.REVIEWER, null);
   }, [grantKey, setValue]);
 
-  const onSave = async () => {
+  const onSaveDraft = () => {
     // TODO: save hookForm.getValues() once the TTA request API exists. A draft is saved as
     // it stands, so this deliberately sidesteps validation.
     setLastSaveTime(moment());
-    setShowSavedDraft(true);
   };
 
-  const updatePage = (position: number) => {
-    const page = pages.find((p) => p.position === position);
-    if (!page) {
-      return;
-    }
-    history.push(`${backLinkTo}/${requestId.current}/${page.path}`);
-  };
+  useInterval(onSaveDraft, AUTOSAVE_INTERVAL);
 
-  const preFlightForNavigation = async () => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    if (!whereWeAre || whereWeAre.fields.length === 0) {
-      return true;
-    }
-    return hookForm.trigger(whereWeAre.fields);
-  };
-
-  const onFormSubmit = async () => {
-    const allPagesComplete = pages.every((p) => p.isPageComplete(hookForm));
-    if (!allPagesComplete) {
-      return;
-    }
+  const onSubmit = () => {
     // TODO: submit the request once the TTA request API exists
     history.push(backLinkTo);
   };
-
-  const additionalData: TtaRequestAdditionalData = useMemo(
-    () => ({ recipientOptions, recipient, regionId: effectiveRegionId }),
-    [recipientOptions, recipient, effectiveRegionId]
-  );
-
-  if (!currentPage) {
-    return <Redirect to={`${backLinkTo}/${requestId.current}/${pages[0].path}`} />;
-  }
 
   return (
     <div className="maxw-widescreen">
@@ -128,20 +94,38 @@ export default function TtaRequestForm({
       <TtaRequestFormHeading backLinkTo={backLinkTo} />
       {/* eslint-disable-next-line react/jsx-props-no-spreading */}
       <FormProvider {...hookForm}>
-        <TtaRequestFormNavigator
-          pages={pages}
-          currentPage={currentPage}
-          reportId={requestId.current}
-          additionalData={additionalData}
-          updatePage={updatePage}
-          onSave={onSave}
-          onFormSubmit={onFormSubmit}
-          preFlightForNavigation={preFlightForNavigation}
-          lastSaveTime={lastSaveTime}
-          updateLastSaveTime={setLastSaveTime}
-          showSavedDraft={showSavedDraft}
-          updateShowSavedDraft={setShowSavedDraft}
-        />
+        <Container paddingX={4} paddingY={4} className="width-tablet">
+          <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
+          <IndicatesRequiredField />
+          <form onSubmit={hookForm.handleSubmit(onSubmit)}>
+            <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
+            <GoalAndContext regionId={effectiveRegionId} />
+            <SubmitForReview regionId={effectiveRegionId} />
+            {lastSaveTime && (
+              <Alert
+                type="success"
+                headingLevel="h4"
+                slim
+                noIcon
+                aria-live="polite"
+                aria-atomic
+                className="smart-hub--save-alert margin-top-4 maxw-mobile-lg"
+              >
+                Autosaved on:
+                <br />
+                <span>• our network at {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}</span>
+              </Alert>
+            )}
+            <div className="display-flex margin-top-4">
+              <Button type="submit" className="margin-right-1">
+                Submit
+              </Button>
+              <Button type="button" outline onClick={onSaveDraft}>
+                Save draft
+              </Button>
+            </div>
+          </form>
+        </Container>
       </FormProvider>
     </div>
   );

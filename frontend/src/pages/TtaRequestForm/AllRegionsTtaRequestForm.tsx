@@ -6,17 +6,11 @@ import type { TtaRequestRecipient } from './types';
 
 const NO_RECIPIENTS: TtaRequestRecipient[] = [];
 
-interface AllRegionsTtaRequestFormProps {
-  match: { params: { ttaRequestId: string; currentPage?: string } };
-}
-
 /**
  * The TTA request form as it is reached from the TTA requests page, where the recipient
  * still has to be chosen from every recipient the user can see.
  */
-export default function AllRegionsTtaRequestForm({
-  match,
-}: AllRegionsTtaRequestFormProps): React.ReactElement {
+export default function AllRegionsTtaRequestForm(): React.ReactElement {
   const fetcher = useCallback(() => getRecipientAndGrantsByUser(), []);
   const { data: recipients } = useFetch(
     NO_RECIPIENTS,
@@ -27,10 +21,6 @@ export default function AllRegionsTtaRequestForm({
   );
 
   return (
-    <TtaRequestForm
-      recipientOptions={recipients || NO_RECIPIENTS}
-      backLinkTo="/tta-requests"
-      match={match}
-    />
+    <TtaRequestForm recipientOptions={recipients || NO_RECIPIENTS} backLinkTo="/tta-requests" />
   );
 }

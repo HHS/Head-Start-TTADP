@@ -5,19 +5,19 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { SubmitForReviewFields } from '../submitForReview';
+import SubmitForReview from '../SubmitForReview';
 
 function Wrapper({ regionId }) {
   const hookForm = useForm({ mode: 'onBlur', defaultValues: { creatorNotes: '', reviewer: null } });
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
-      <SubmitForReviewFields regionId={regionId} />
+      <SubmitForReview regionId={regionId} />
     </FormProvider>
   );
 }
 
-describe('SubmitForReviewFields', () => {
+describe('SubmitForReview', () => {
   afterEach(() => {
     fetchMock.restore();
   });

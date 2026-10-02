@@ -2,8 +2,8 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { defaultValues } from '../../constants';
-import { WhoIsTheRequestForFields } from '../whoIsTheRequestFor';
+import { defaultValues } from '../constants';
+import WhoIsTheRequestFor from '../WhoIsTheRequestFor';
 
 function Wrapper(props) {
   const hookForm = useForm({ mode: 'onBlur', defaultValues });
@@ -11,15 +11,16 @@ function Wrapper(props) {
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-      <WhoIsTheRequestForFields {...props} />
+      <WhoIsTheRequestFor {...props} />
     </FormProvider>
   );
 }
 
-describe('WhoIsTheRequestForFields', () => {
+describe('WhoIsTheRequestFor', () => {
   it('asks nothing about grants until there is a recipient to ask about', () => {
     render(<Wrapper />);
 
+    expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
     // neither entry point supplied a recipient, so there is nothing to choose between
     expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
     expect(screen.queryByRole('checkbox')).toBeNull();

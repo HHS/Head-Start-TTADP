@@ -1,18 +1,17 @@
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Textarea } from '@trussworks/react-uswds';
 import React, { useCallback, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import FormItem from '../../../components/FormItem';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import { getApprovers } from '../../../fetchers/activityReports';
-import useFetch from '../../../hooks/useFetch';
-import { HookFormLike, pageComplete, SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from '../constants';
-import type { Approver, SelectOption, TtaRequestAdditionalData, TtaRequestPage } from '../types';
+import FormItem from '../../components/FormItem';
+import selectOptionsReset from '../../components/selectOptionsReset';
+import { getApprovers } from '../../fetchers/activityReports';
+import useFetch from '../../hooks/useFetch';
+import { SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from './constants';
+import type { Approver, SelectOption } from './types';
 
 const NO_APPROVERS: Approver[] = [];
 
-interface SubmitForReviewFieldsProps {
+interface SubmitForReviewProps {
   /** the region whose approvers can review this request, or null until a grant is chosen */
   regionId: number | null;
 }
@@ -22,7 +21,7 @@ interface SubmitForReviewFieldsProps {
  * are the region's activity report approvers, so there is nothing to choose from until the
  * grant - and with it the region - is known.
  */
-export function SubmitForReviewFields({ regionId }: SubmitForReviewFieldsProps): React.ReactElement {
+export default function SubmitForReview({ regionId }: SubmitForReviewProps): React.ReactElement {
   const { control, register } = useFormContext();
 
   // there is no region to ask about until a grant has been picked, so ask for nobody
@@ -45,7 +44,7 @@ export function SubmitForReviewFields({ regionId }: SubmitForReviewFieldsProps):
 
   return (
     <>
-      <IndicatesRequiredField />
+      <h3 className="margin-top-4 margin-bottom-2">Submit for review</h3>
       <FormItem
         label="Add creator notes"
         name={TTA_REQUEST_FIELDS.CREATOR_NOTES}
@@ -88,61 +87,3 @@ export function SubmitForReviewFields({ regionId }: SubmitForReviewFieldsProps):
     </>
   );
 }
-
-const path = 'submit-for-review';
-const position = 3;
-const fields = [TTA_REQUEST_FIELDS.REVIEWER];
-
-export const isPageComplete = (hookForm: HookFormLike): boolean => pageComplete(hookForm, fields);
-
-const submitForReview: TtaRequestPage = {
-  position,
-  label: 'Submit for review',
-  path,
-  review: false,
-  fields,
-  isPageComplete,
-  render: (
-    additionalData,
-    _formData,
-    _reportId,
-    isAppLoading,
-    _onContinue,
-    _onSaveDraft,
-    onUpdatePage,
-    _weAreAutoSaving,
-    _datePickerKey,
-    onFormSubmit,
-    BAlert
-  ) => {
-    const { regionId } = additionalData as TtaRequestAdditionalData;
-    return (
-      <div className="padding-x-1">
-        <SubmitForReviewFields regionId={regionId} />
-        <BAlert />
-        <div className="display-flex margin-top-4">
-          <Button
-            id={`${path}-submit`}
-            className="margin-right-1"
-            type="button"
-            disabled={isAppLoading}
-            onClick={onFormSubmit}
-          >
-            Submit
-          </Button>
-          <Button
-            id={`${path}-back`}
-            outline
-            type="button"
-            disabled={isAppLoading}
-            onClick={() => onUpdatePage(position - 1)}
-          >
-            Back
-          </Button>
-        </div>
-      </div>
-    );
-  },
-};
-
-export default submitForReview;

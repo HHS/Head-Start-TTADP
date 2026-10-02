@@ -2,12 +2,10 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
 import AllRegionsTtaRequestForm from '../AllRegionsTtaRequestForm';
-
-const ROUTE_PATH = '/tta-requests/:ttaRequestId(new|[0-9]*)/:currentPage([a-z\\-]*)?';
 
 jest.mock(
   '../../../components/RichEditor',
@@ -35,14 +33,9 @@ const RECIPIENTS = [
 
 const renderForm = () =>
   render(
-    <AppLoadingContext.Provider
-      value={{ isAppLoading: false, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
-    >
-      <MemoryRouter initialEntries={['/tta-requests/new/who-is-the-request-for']}>
-        <Route
-          path={ROUTE_PATH}
-          render={({ match }) => <AllRegionsTtaRequestForm match={match} />}
-        />
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+      <MemoryRouter>
+        <AllRegionsTtaRequestForm />
       </MemoryRouter>
     </AppLoadingContext.Provider>
   );

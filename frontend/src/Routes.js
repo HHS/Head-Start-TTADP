@@ -265,11 +265,11 @@ export default function Routes({
         />
         <Route
           exact
-          path="/tta-requests/:ttaRequestId(new|[0-9]*)/:currentPage([a-z\-]*)?"
-          render={({ match }) => (
+          path="/tta-requests/:ttaRequestId(new|[0-9]*)"
+          render={() => (
             <FeatureFlag renderNotFound flag="recipient_tta_request">
               <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-                <AllRegionsTtaRequestForm match={match} />
+                <AllRegionsTtaRequestForm />
               </AppWrapper>
             </FeatureFlag>
           )}

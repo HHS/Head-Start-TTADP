@@ -1,6 +1,3 @@
-import type { ReactElement } from 'react';
-import type { HookFormLike } from './constants';
-
 export interface TtaRequestGrant {
   id: number;
   regionId: number;
@@ -46,22 +43,4 @@ export interface SelectOption {
 export interface Approver {
   id: number;
   name: string;
-}
-
-/** the reference data every page needs, handed down from the two entry points */
-export interface TtaRequestAdditionalData {
-  recipientOptions: TtaRequestRecipient[] | null;
-  recipient: TtaRequestRecipient | null;
-  regionId: number | null;
-}
-
-/** a page descriptor, the same shape Session form and Communication Log pages use */
-export interface TtaRequestPage {
-  position: number;
-  label: string;
-  path: string;
-  review: boolean;
-  fields: string[];
-  isPageComplete: (hookForm: HookFormLike) => boolean;
-  render: (...args: any[]) => ReactElement; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
