@@ -26,7 +26,7 @@ import {
 jest.mock('bull');
 
 jest.mock('express-http-context', () => ({
-  get: jest.fn().mockReturnValue(1),
+  get: jest.fn().mockReturnValue(undefined),
   set: jest.fn(),
 }));
 
