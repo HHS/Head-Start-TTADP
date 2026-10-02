@@ -55,6 +55,13 @@ export default function TtaRequestForm({
   });
 
   const { setValue, watch } = hookForm;
+
+  useEffect(() => {
+    if (recipient) {
+      setValue(TTA_REQUEST_FIELDS.RECIPIENT, recipient);
+    }
+  }, [recipient, setValue]);
+
   const selectedGrants: TtaRequestGrant[] = watch(TTA_REQUEST_FIELDS.GRANTS);
 
   // the region follows the grants, which is what the goals, citations and approvers hang off
