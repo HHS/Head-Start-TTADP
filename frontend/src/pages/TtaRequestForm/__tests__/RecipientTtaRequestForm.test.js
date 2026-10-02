@@ -2,8 +2,33 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route } from 'react-router-dom';
+import AppLoadingContext from '../../../AppLoadingContext';
 import RecipientTtaRequestForm from '../RecipientTtaRequestForm';
+
+const ROUTE_PATH =
+  '/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)/:currentPage([a-z\\-]*)?';
+
+function renderRouted(recipient, regionId) {
+  return render(
+    <AppLoadingContext.Provider
+      value={{ isAppLoading: false, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+    >
+      <MemoryRouter
+        initialEntries={[
+          `/recipient-tta-records/${recipient.recipientId}/region/${regionId}/tta-request/new/who-is-the-request-for`,
+        ]}
+      >
+        <Route
+          path={ROUTE_PATH}
+          render={({ match }) => (
+            <RecipientTtaRequestForm recipient={recipient} regionId={regionId} match={match} />
+          )}
+        />
+      </MemoryRouter>
+    </AppLoadingContext.Provider>
+  );
+}
 
 jest.mock(
   '../../../components/RichEditor',
@@ -37,21 +62,13 @@ describe('RecipientTtaRequestForm', () => {
   it('falls back to the route recipient id when the record has not loaded one', () => {
     const { id, ...withoutId } = RECIPIENT;
 
-    render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={withoutId} regionId="14" />
-      </MemoryRouter>
-    );
+    renderRouted(withoutId, '14');
 
     expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
   });
 
   it('shows the recipient as fixed text rather than a selector', () => {
-    render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
-      </MemoryRouter>
-    );
+    renderRouted(RECIPIENT, '14');
 
     // there is only ever one recipient on offer here, so there is nothing to choose between
     expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
@@ -60,11 +77,7 @@ describe('RecipientTtaRequestForm', () => {
   });
 
   it('fixes the recipient and returns to their TTA requests', () => {
-    render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
-      </MemoryRouter>
-    );
+    renderRouted(RECIPIENT, '14');
 
     expect(screen.getByRole('link', { name: 'Back to TTA Requests' })).toHaveAttribute(
       'href',

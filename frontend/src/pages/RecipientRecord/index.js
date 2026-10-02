@@ -186,10 +186,10 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
       <Switch>
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)"
-          render={() => (
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
             <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
-              <RecipientTtaRequestForm recipient={recipientData} regionId={regionId} />
+              <RecipientTtaRequestForm recipient={recipientData} regionId={regionId} match={match} />
             </FeatureFlag>
           )}
         />

@@ -13,6 +13,7 @@ interface RecipientTtaRequestFormProps {
     grants?: { id: number; regionId: number; status: string; numberWithProgramTypes: string }[];
   };
   regionId: string;
+  match: { params: { ttaRequestId: string; currentPage?: string } };
 }
 
 /**
@@ -22,6 +23,7 @@ interface RecipientTtaRequestFormProps {
 export default function RecipientTtaRequestForm({
   recipient,
   regionId,
+  match,
 }: RecipientTtaRequestFormProps): React.ReactElement {
   const possibleGrants = usePossibleGrants(recipient);
 
@@ -54,6 +56,7 @@ export default function RecipientTtaRequestForm({
       recipientOptions={recipientOptions}
       regionId={parseInt(regionId, DECIMAL_BASE)}
       backLinkTo={`/recipient-tta-records/${recipient.recipientId}/region/${regionId}/tta-request`}
+      match={match}
     />
   );
 }

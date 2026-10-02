@@ -1,18 +1,25 @@
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import { ErrorMessage, FormGroup, Radio } from '@trussworks/react-uswds';
+import { Button, ErrorMessage, FormGroup, Radio } from '@trussworks/react-uswds';
 import React, { useEffect } from 'react';
 import { Controller, useController, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import FormItem from '../../components/FormItem';
-import FormFieldThatIsSometimesReadOnly from '../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
-import type { GrantCheckboxOption } from '../../components/GrantCheckboxSelect';
-import GrantCheckboxSelect from '../../components/GrantCheckboxSelect';
-import selectOptionsReset from '../../components/selectOptionsReset';
-import usePossibleGrants from '../../hooks/usePossibleGrants';
-import { REQUEST_ORIGINATORS, SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from './constants';
-import type { TtaRequestGrant, TtaRequestRecipient } from './types';
+import FormItem from '../../../components/FormItem';
+import FormFieldThatIsSometimesReadOnly from '../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import type { GrantCheckboxOption } from '../../../components/GrantCheckboxSelect';
+import GrantCheckboxSelect from '../../../components/GrantCheckboxSelect';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import selectOptionsReset from '../../../components/selectOptionsReset';
+import usePossibleGrants from '../../../hooks/usePossibleGrants';
+import {
+  HookFormLike,
+  pageComplete,
+  REQUEST_ORIGINATORS,
+  SELECT_PLACEHOLDER,
+  TTA_REQUEST_FIELDS,
+} from '../constants';
+import type { TtaRequestAdditionalData, TtaRequestGrant, TtaRequestPage, TtaRequestRecipient } from '../types';
 
-interface WhoIsTheRequestForProps {
+interface WhoIsTheRequestForFieldsProps {
   /**
    * every recipient on offer. Started from a recipient's TTA records this is just that
    * recipient, so there is nothing to choose between.
@@ -38,10 +45,10 @@ const grantToOption = (grant: TtaRequestGrant): GrantCheckboxOption => ({
  * shown as read-only text; started from the TTA requests page it is offered as a select. The
  * grants follow from whichever recipient is selected or fixed.
  */
-export default function WhoIsTheRequestFor({
+export function WhoIsTheRequestForFields({
   recipientOptions = null,
   recipient = null,
-}: WhoIsTheRequestForProps): React.ReactElement {
+}: WhoIsTheRequestForFieldsProps): React.ReactElement {
   const {
     control,
     register,
@@ -84,7 +91,7 @@ export default function WhoIsTheRequestFor({
 
   return (
     <>
-      <h3 className="margin-top-4 margin-bottom-2">Who is the request for?</h3>
+      <IndicatesRequiredField />
       {recipientOptions && (
         <Controller
           name={TTA_REQUEST_FIELDS.RECIPIENT}
@@ -193,3 +200,59 @@ export default function WhoIsTheRequestFor({
     </>
   );
 }
+
+const path = 'who-is-the-request-for';
+const position = 1;
+const scalarFields = [
+  TTA_REQUEST_FIELDS.RECIPIENT,
+  TTA_REQUEST_FIELDS.RECIPIENT_AWARE,
+  TTA_REQUEST_FIELDS.ORIGINATOR,
+];
+const fields = [...scalarFields, TTA_REQUEST_FIELDS.GRANTS];
+
+export const isPageComplete = (hookForm: HookFormLike): boolean => {
+  const grants = hookForm.getValues(TTA_REQUEST_FIELDS.GRANTS);
+  return pageComplete(hookForm, scalarFields) && Array.isArray(grants) && grants.length > 0;
+};
+
+const whoIsTheRequestFor: TtaRequestPage = {
+  position,
+  label: 'Who is the request for?',
+  path,
+  review: false,
+  fields,
+  isPageComplete,
+  render: (
+    additionalData,
+    _formData,
+    _reportId,
+    isAppLoading,
+    onContinue,
+    _onSaveDraft,
+    _onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    BAlert
+  ) => {
+    const { recipientOptions, recipient } = additionalData as TtaRequestAdditionalData;
+    return (
+      <div className="padding-x-1">
+        <WhoIsTheRequestForFields recipientOptions={recipientOptions} recipient={recipient} />
+        <BAlert />
+        <div className="display-flex margin-top-4">
+          <Button
+            id={`${path}-save-continue`}
+            type="button"
+            disabled={isAppLoading}
+            onClick={onContinue}
+          >
+            Save and continue
+          </Button>
+        </div>
+      </div>
+    );
+  },
+};
+
+export default whoIsTheRequestFor;

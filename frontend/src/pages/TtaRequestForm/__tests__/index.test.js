@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
-import { AUTOSAVE_INTERVAL } from '../constants';
+import AppLoadingContext from '../../../AppLoadingContext';
 import TtaRequestForm from '../index';
 
 // eslint-disable-next-line react/prop-types
@@ -89,12 +89,25 @@ const mockFetches = () => {
 };
 
 const BACK_LINK = '/recipient-tta-records/10/region/14/tta-request';
+const ROUTE_PATH = `${BACK_LINK}/:ttaRequestId(new|[0-9]*)/:currentPage([a-z\\-]*)?`;
 
-const renderForm = (props = {}, history = createMemoryHistory()) =>
+const renderForm = (props = {}, history = createMemoryHistory({
+  initialEntries: [`${BACK_LINK}/new/who-is-the-request-for`],
+})) =>
   render(
-    <Router history={history}>
-      <TtaRequestForm backLinkTo={BACK_LINK} {...props} />
-    </Router>
+    <AppLoadingContext.Provider
+      value={{ isAppLoading: false, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+    >
+      <Router history={history}>
+        <Route
+          path={ROUTE_PATH}
+          render={({ match }) => (
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            <TtaRequestForm backLinkTo={BACK_LINK} match={match} {...props} />
+          )}
+        />
+      </Router>
+    </AppLoadingContext.Provider>
   );
 
 describe('TtaRequestForm', () => {
@@ -107,7 +120,7 @@ describe('TtaRequestForm', () => {
     mockFetches();
   });
 
-  it('renders the heading, draft tag and required field note', () => {
+  it('renders the heading, draft tag, side nav and the first page', () => {
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     expect(
@@ -118,11 +131,15 @@ describe('TtaRequestForm', () => {
       'href',
       BACK_LINK
     );
-    expect(screen.getByRole('heading', { name: 'TTA Request summary' })).toBeVisible();
+
+    expect(screen.getByRole('button', { name: 'Who is the request for?' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Goal and context' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Submit for review' })).toBeVisible();
+
+    expect(
+      screen.getByRole('heading', { name: 'Who is the request for?' })
+    ).toBeVisible();
     expect(screen.getByText(/indicates required field/i)).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Submit for review' })).toBeVisible();
   });
 
   it('shows the recipient already selected, with its one grant read only', () => {
@@ -173,36 +190,35 @@ describe('TtaRequestForm', () => {
     ).toBeVisible();
   });
 
-  it('takes the region from the chosen grant when it was not given one', async () => {
-    renderForm({ recipientOptions: [RECIPIENT] });
+  it('has the four request originators', async () => {
+    renderForm({ recipient: RECIPIENT, regionId: 14 });
 
-    expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(false);
+    const originator = screen.getByLabelText(/who originated this request/i);
+    selectEvent.openMenu(originator);
 
-    await selectEvent.select(screen.getByLabelText(/recipient/i), 'Children and Families First');
-
-    // the grant is in region 14, so that is whose approvers and goals are offered
-    await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers?region=14')).toBe(true);
-    });
-    expect(fetchMock.called('begin:/api/goal-templates')).toBe(true);
+    expect(await screen.findByText('Central Office')).toBeVisible();
+    expect(screen.getByText('Recipient')).toBeVisible();
+    expect(screen.getByText('Regional Office')).toBeVisible();
+    expect(screen.getByText('TTA Staff')).toBeVisible();
   });
 
-  it('surfaces every required field when an empty form is submitted', async () => {
+  it('blocks moving to the next page until its required fields are filled', async () => {
     renderForm({ recipientOptions: [RECIPIENT] });
 
-    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
 
     expect(await screen.findByText('Select a recipient')).toBeVisible();
     expect(await screen.findByText('Select one')).toBeVisible();
     expect(await screen.findByText('Select who originated this request')).toBeVisible();
-    expect(await screen.findByText('Select a goal')).toBeVisible();
-    expect(await screen.findByText('Select a reviewing TTAC or manager')).toBeVisible();
+
+    // still on the first page - the next page's fields never mounted
+    expect(screen.queryByLabelText(/select goal/i)).toBeNull();
   });
 
   it('asks for a grant when the recipient has several and none are checked', async () => {
     renderForm({ recipient: MULTI_GRANT_RECIPIENT, regionId: 14 });
 
-    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
 
     expect(await screen.findByText('Select a recipient grant')).toBeVisible();
 
@@ -217,20 +233,57 @@ describe('TtaRequestForm', () => {
     });
   });
 
-  it('shows citations only for the monitoring goal', async () => {
-    renderForm({ recipient: RECIPIENT, regionId: 14 });
+  it('saves itself on an interval, without validating', async () => {
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, regionId: 14 });
 
-    expect(screen.queryByText('Citations being addressed')).toBeNull();
+      expect(screen.queryByText(/autosaved on:/i)).toBeNull();
 
-    await selectEvent.select(screen.getByLabelText(/select goal/i), MONITORING_GOAL.name);
+      // dirty the form, then let the navigator's autosave interval fire
+      userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
 
-    expect(await screen.findByText('Citations being addressed')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Get help choosing citations' })).toBeVisible();
+      act(() => {
+        jest.advanceTimersByTime(1000 * 60 * 2);
+      });
 
-    await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
+      expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('walks every page and submits once the whole request is complete', async () => {
+    const history = createMemoryHistory({
+      initialEntries: [`${BACK_LINK}/new/who-is-the-request-for`],
+    });
+    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
+
+    // page 1: who is the request for
+    userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    await selectEvent.select(screen.getByLabelText(/who originated this request/i), 'TTA Staff');
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    // page 2: goal and context
+    await selectEvent.select(await screen.findByLabelText(/select goal/i), OTHER_GOAL.name);
+    userEvent.type(
+      screen.getByLabelText('Provide background or context for this request'),
+      'Some context'
+    );
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    // page 3: submit for review - its approvers are fetched for the chosen grant's region
+    await waitFor(() => {
+      expect(fetchMock.called('begin:/api/activity-reports/approvers?region=14')).toBe(true);
+    });
+    await selectEvent.select(
+      await screen.findByLabelText(/reviewing ttac or manager/i),
+      'Rachel Green'
+    );
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() => {
-      expect(screen.queryByText('Citations being addressed')).toBeNull();
+      expect(history.location.pathname).toBe(BACK_LINK);
     });
   });
 
@@ -242,95 +295,27 @@ describe('TtaRequestForm', () => {
         name: 'Select grant Children and Families First - 14HP1234 - EHS',
       })
     );
-    await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
+    userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    await selectEvent.select(screen.getByLabelText(/who originated this request/i), 'TTA Staff');
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    await selectEvent.select(await screen.findByLabelText(/select goal/i), OTHER_GOAL.name);
     expect(screen.getByText(OTHER_GOAL.name)).toBeVisible();
 
+    // back to the first page, by way of the side nav
+    userEvent.click(screen.getByRole('button', { name: 'Who is the request for?' }));
+
     userEvent.click(
-      screen.getByRole('checkbox', {
+      await screen.findByRole('checkbox', {
         name: 'Select grant Children and Families First - 14CH5678 - HS',
       })
     );
 
+    // forward again, to the goal and context page
+    userEvent.click(screen.getByRole('button', { name: 'Goal and context' }));
+
     await waitFor(() => {
       expect(screen.queryByText(OTHER_GOAL.name)).toBeNull();
     });
-  });
-
-  it('opens the goal help drawer', async () => {
-    renderForm({ recipient: RECIPIENT, regionId: 14 });
-
-    userEvent.click(screen.getByRole('button', { name: 'Get help selecting a goal' }));
-
-    expect(await screen.findByRole('heading', { name: 'Goal guidance' })).toBeVisible();
-  });
-
-  it('records a save time when the draft is saved, without validating', async () => {
-    renderForm({ recipient: RECIPIENT, regionId: 14 });
-
-    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
-
-    expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
-    expect(screen.queryByText('Select a goal')).toBeNull();
-  });
-
-  it('saves itself on an interval', async () => {
-    jest.useFakeTimers();
-    try {
-      renderForm({ recipient: RECIPIENT, regionId: 14 });
-
-      expect(screen.queryByText(/autosaved on:/i)).toBeNull();
-
-      act(() => {
-        jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
-      });
-
-      expect(screen.getByText(/autosaved on:/i)).toBeVisible();
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
-  it('returns to the list once a complete request is submitted', async () => {
-    const history = createMemoryHistory();
-    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
-
-    userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
-    await selectEvent.select(screen.getByLabelText(/who originated this request/i), 'TTA Staff');
-    await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
-    userEvent.type(
-      screen.getByLabelText('Provide background or context for this request'),
-      'Some context'
-    );
-    await selectEvent.select(screen.getByLabelText(/reviewing ttac or manager/i), 'Rachel Green');
-
-    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-
-    await waitFor(() => {
-      expect(history.location.pathname).toBe(BACK_LINK);
-    });
-  });
-
-  it('offers the region approvers as reviewers', async () => {
-    renderForm({ recipient: RECIPIENT, regionId: 14 });
-
-    const reviewer = screen.getByLabelText(/reviewing ttac or manager/i);
-    await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(true);
-    });
-
-    selectEvent.openMenu(reviewer);
-    expect(await screen.findByText('Ross Geller')).toBeVisible();
-  });
-
-  it('has the four request originators', async () => {
-    renderForm({ recipient: RECIPIENT, regionId: 14 });
-
-    const originator = screen.getByLabelText(/who originated this request/i);
-    selectEvent.openMenu(originator);
-
-    expect(await screen.findByText('Central Office')).toBeVisible();
-    expect(screen.getByText('Recipient')).toBeVisible();
-    expect(screen.getByText('Regional Office')).toBeVisible();
-    expect(screen.getByText('TTA Staff')).toBeVisible();
   });
 });
