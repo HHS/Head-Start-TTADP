@@ -19,7 +19,15 @@ const RECIPIENTS = [
   {
     id: 10,
     name: 'Children and Families First',
-    grants: [{ id: 1, regionId: 14, status: 'Active', numberWithProgramTypes: '14HP1234 - EHS' }],
+    grants: [
+      {
+        id: 1,
+        regionId: 14,
+        status: 'Active',
+        numberWithProgramTypes: '14HP1234 - EHS',
+        name: 'Children and Families First - 14HP1234 - EHS',
+      },
+    ],
   },
 ];
 
@@ -58,7 +66,9 @@ describe('AllRegionsTtaRequestForm', () => {
 
     await selectEvent.select(screen.getByLabelText(/recipient/i), 'Children and Families First');
 
-    expect(await screen.findByTestId('read-only-value')).toHaveTextContent('14HP1234 - EHS');
+    expect(await screen.findByTestId('read-only-value')).toHaveTextContent(
+      'Children and Families First - 14HP1234 - EHS'
+    );
   });
 
   it('falls back to an empty list when the response has no body', async () => {

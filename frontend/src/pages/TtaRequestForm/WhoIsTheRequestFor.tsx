@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { Controller, useController, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import FormItem from '../../components/FormItem';
+import FormFieldThatIsSometimesReadOnly from '../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import type { GrantCheckboxOption } from '../../components/GrantCheckboxSelect';
 import GrantCheckboxSelect from '../../components/GrantCheckboxSelect';
 import selectOptionsReset from '../../components/selectOptionsReset';
@@ -14,26 +15,32 @@ import type { TtaRequestGrant, TtaRequestRecipient } from './types';
 interface WhoIsTheRequestForProps {
   /**
    * every recipient on offer. Started from a recipient's TTA records this is just that
-   * recipient, so the select shows who the request is for without letting them swap.
+   * recipient, so there is nothing to choose between.
    */
   recipientOptions?: TtaRequestRecipient[] | null;
+  /**
+   * set when the recipient is already fixed, started from a recipient's TTA records -
+   * shown as read-only text instead of a selector
+   */
+  recipient?: TtaRequestRecipient | null;
 }
 
 const NO_RECIPIENT = { grants: [] as TtaRequestGrant[] };
 
 const grantToOption = (grant: TtaRequestGrant): GrantCheckboxOption => ({
   value: grant.id,
-  label: grant.numberWithProgramTypes,
+  label: grant.name,
 });
 
 /**
  * The first section of the request: who it is for, whether they know about it and who asked
- * for it. Both entry points show the same recipient select - started from a recipient's TTA
- * records it arrives already chosen, and it is the only one on offer - and the grants follow
- * from whichever recipient is selected.
+ * for it. Started from a recipient's TTA records the recipient arrives already fixed and is
+ * shown as read-only text; started from the TTA requests page it is offered as a select. The
+ * grants follow from whichever recipient is selected or fixed.
  */
 export default function WhoIsTheRequestFor({
   recipientOptions = null,
+  recipient = null,
 }: WhoIsTheRequestForProps): React.ReactElement {
   const {
     control,
@@ -85,30 +92,36 @@ export default function WhoIsTheRequestFor({
           rules={{ required: 'Select a recipient' }}
           defaultValue={null}
           render={({ value, onChange, onBlur }) => (
-            <FormItem
+            <FormFieldThatIsSometimesReadOnly
+              permissions={[!recipient]}
               label="Recipient"
-              name={TTA_REQUEST_FIELDS.RECIPIENT}
-              htmlFor={TTA_REQUEST_FIELDS.RECIPIENT}
-              required
+              value={recipient?.name ?? ''}
             >
-              <Select
-                inputId={TTA_REQUEST_FIELDS.RECIPIENT}
+              <FormItem
+                label="Recipient"
                 name={TTA_REQUEST_FIELDS.RECIPIENT}
-                className="usa-select"
-                styles={selectOptionsReset}
-                options={recipientOptions}
-                placeholder={SELECT_PLACEHOLDER}
-                value={value}
-                onChange={(newRecipient) => {
-                  // the grants belong to the old recipient, so they cannot survive the change
-                  setValue(TTA_REQUEST_FIELDS.GRANTS, []);
-                  onChange(newRecipient);
-                }}
-                onBlur={onBlur}
-                getOptionLabel={(option) => option.name}
-                getOptionValue={(option) => String(option.id)}
-              />
-            </FormItem>
+                htmlFor={TTA_REQUEST_FIELDS.RECIPIENT}
+                required
+              >
+                <Select
+                  inputId={TTA_REQUEST_FIELDS.RECIPIENT}
+                  name={TTA_REQUEST_FIELDS.RECIPIENT}
+                  className="usa-select"
+                  styles={selectOptionsReset}
+                  options={recipientOptions}
+                  placeholder={SELECT_PLACEHOLDER}
+                  value={value}
+                  onChange={(newRecipient) => {
+                    // the grants belong to the old recipient, so they cannot survive the change
+                    setValue(TTA_REQUEST_FIELDS.GRANTS, []);
+                    onChange(newRecipient);
+                  }}
+                  onBlur={onBlur}
+                  getOptionLabel={(option) => option.name}
+                  getOptionValue={(option) => String(option.id)}
+                />
+              </FormItem>
+            </FormFieldThatIsSometimesReadOnly>
           )}
         />
       )}

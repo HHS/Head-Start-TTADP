@@ -43,6 +43,7 @@ describe('WhoIsTheRequestFor', () => {
               regionId: 14,
               status: 'Inactive',
               numberWithProgramTypes: '14HP1234 - EHS',
+              name: 'Children and Families First - 14HP1234 - EHS',
             },
           ],
         }}
@@ -51,5 +52,23 @@ describe('WhoIsTheRequestFor', () => {
 
     expect(screen.queryByTestId('read-only-value')).toBeNull();
     expect(screen.queryByRole('checkbox')).toBeNull();
+  });
+
+  it('shows the recipient as fixed text rather than a selector when it is already chosen', () => {
+    const recipient = { id: 10, name: 'Children and Families First', grants: [] };
+
+    render(<Wrapper recipientOptions={[recipient]} recipient={recipient} />);
+
+    // started from the recipient's TTA records, so there is nothing to choose between
+    expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
+    expect(screen.getByText('Children and Families First')).toBeVisible();
+  });
+
+  it('offers a selector when the recipient has not been fixed', () => {
+    const recipient = { id: 10, name: 'Children and Families First', grants: [] };
+
+    render(<Wrapper recipientOptions={[recipient]} />);
+
+    expect(screen.getByLabelText(/recipient/i)).toBeVisible();
   });
 });

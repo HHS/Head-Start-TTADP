@@ -98,7 +98,7 @@ export default function TtaRequestForm({
           <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
           <IndicatesRequiredField />
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
-            <WhoIsTheRequestFor recipientOptions={recipientOptions} />
+            <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
             <SubmitForReview regionId={effectiveRegionId} />
             {lastSaveTime && (

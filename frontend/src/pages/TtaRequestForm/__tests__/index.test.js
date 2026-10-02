@@ -31,6 +31,7 @@ const GRANT_ONE = {
   regionId: 14,
   status: 'Active',
   numberWithProgramTypes: '14HP1234 - EHS',
+  name: 'Children and Families First - 14HP1234 - EHS',
 };
 
 const GRANT_TWO = {
@@ -38,6 +39,7 @@ const GRANT_TWO = {
   regionId: 14,
   status: 'Active',
   numberWithProgramTypes: '14CH5678 - HS',
+  name: 'Children and Families First - 14CH5678 - HS',
 };
 
 const RECIPIENT = {
@@ -126,20 +128,24 @@ describe('TtaRequestForm', () => {
   it('shows the recipient already selected, with its one grant read only', () => {
     renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
 
-    // the recipient came from their TTA records, so it arrives chosen
-    expect(screen.getByLabelText(/recipient/i)).toBeVisible();
+    // the recipient came from their TTA records, so it is shown rather than offered
+    expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
     expect(screen.getByText('Children and Families First')).toBeVisible();
 
     // one grant means nothing to choose between, so it is shown rather than offered
-    expect(screen.getByTestId('read-only-value')).toHaveTextContent('14HP1234 - EHS');
+    expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
 
   it('lets the user check several grants when the recipient has more than one', () => {
     renderForm({ recipient: MULTI_GRANT_RECIPIENT, regionId: 14 });
 
-    const first = screen.getByRole('checkbox', { name: 'Select grant 14HP1234 - EHS' });
-    const second = screen.getByRole('checkbox', { name: 'Select grant 14CH5678 - HS' });
+    const first = screen.getByRole('checkbox', {
+      name: 'Select grant Children and Families First - 14HP1234 - EHS',
+    });
+    const second = screen.getByRole('checkbox', {
+      name: 'Select grant Children and Families First - 14CH5678 - HS',
+    });
 
     userEvent.click(first);
     expect(first).toBeChecked();
@@ -161,7 +167,9 @@ describe('TtaRequestForm', () => {
     await selectEvent.select(screen.getByLabelText(/recipient/i), 'Children and Families First');
 
     expect(
-      await screen.findByRole('checkbox', { name: 'Select grant 14HP1234 - EHS' })
+      await screen.findByRole('checkbox', {
+        name: 'Select grant Children and Families First - 14HP1234 - EHS',
+      })
     ).toBeVisible();
   });
 
@@ -198,7 +206,11 @@ describe('TtaRequestForm', () => {
 
     expect(await screen.findByText('Select a recipient grant')).toBeVisible();
 
-    userEvent.click(screen.getByRole('checkbox', { name: 'Select grant 14HP1234 - EHS' }));
+    userEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Select grant Children and Families First - 14HP1234 - EHS',
+      })
+    );
 
     await waitFor(() => {
       expect(screen.queryByText('Select a recipient grant')).toBeNull();
@@ -225,11 +237,19 @@ describe('TtaRequestForm', () => {
   it('drops a goal chosen for a grant that is no longer selected', async () => {
     renderForm({ recipient: MULTI_GRANT_RECIPIENT, regionId: 14 });
 
-    userEvent.click(screen.getByRole('checkbox', { name: 'Select grant 14HP1234 - EHS' }));
+    userEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Select grant Children and Families First - 14HP1234 - EHS',
+      })
+    );
     await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
     expect(screen.getByText(OTHER_GOAL.name)).toBeVisible();
 
-    userEvent.click(screen.getByRole('checkbox', { name: 'Select grant 14CH5678 - HS' }));
+    userEvent.click(
+      screen.getByRole('checkbox', {
+        name: 'Select grant Children and Families First - 14CH5678 - HS',
+      })
+    );
 
     await waitFor(() => {
       expect(screen.queryByText(OTHER_GOAL.name)).toBeNull();

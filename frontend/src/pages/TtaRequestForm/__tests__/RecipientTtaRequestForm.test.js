@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import selectEvent from 'react-select-event';
 import RecipientTtaRequestForm from '../RecipientTtaRequestForm';
 
 jest.mock(
@@ -44,21 +43,20 @@ describe('RecipientTtaRequestForm', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('read-only-value')).toHaveTextContent('14HP1234 - EHS');
+    expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
   });
 
-  it('offers no recipient but the one whose record the request came from', async () => {
+  it('shows the recipient as fixed text rather than a selector', () => {
     render(
       <MemoryRouter>
         <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
       </MemoryRouter>
     );
 
-    selectEvent.openMenu(screen.getByLabelText(/recipient/i));
-
-    const options = await screen.findAllByRole('option');
-    expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent('Children and Families First');
+    // there is only ever one recipient on offer here, so there is nothing to choose between
+    expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
+    expect(screen.queryByRole('combobox', { name: /recipient/i })).toBeNull();
+    expect(screen.getByText('Children and Families First')).toBeVisible();
   });
 
   it('fixes the recipient and returns to their TTA requests', () => {
@@ -74,8 +72,8 @@ describe('RecipientTtaRequestForm', () => {
     );
     // the recipient arrives already chosen, and is the only one on offer
     expect(screen.getByText('Children and Families First')).toBeVisible();
-    expect(screen.getByTestId('read-only-value')).toHaveTextContent('14HP1234 - EHS');
+    expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
     // the inactive grant cannot be requested against
-    expect(screen.queryByText('14CH5678 - HS')).toBeNull();
+    expect(screen.queryByText('Children and Families First - 14CH5678 - HS')).toBeNull();
   });
 });

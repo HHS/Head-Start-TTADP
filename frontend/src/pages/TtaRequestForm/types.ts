@@ -4,6 +4,8 @@ export interface TtaRequestGrant {
   status?: string;
   /** e.g. "14HP1234 - EHS" */
   numberWithProgramTypes: string;
+  /** the full name, including the recipient, e.g. "Children and Families First - 14HP1234 - EHS" */
+  name: string;
 }
 
 export interface TtaRequestRecipient {
