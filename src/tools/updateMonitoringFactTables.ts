@@ -919,7 +919,8 @@ const updateMonitoringFactTables = async () => {
       raw_history_status             = EXCLUDED.raw_history_status,
       latest_review_start            = EXCLUDED.latest_review_start,
       latest_review_end              = EXCLUDED.latest_review_end,
-      calculated_review_finding_type = EXCLUDED.calculated_review_finding_type
+      calculated_review_finding_type = EXCLUDED.calculated_review_finding_type,
+      "updatedAt"                    = NOW()
     WHERE
       "DeliveredReviewCitations".determination                  IS DISTINCT FROM EXCLUDED.determination
       OR "DeliveredReviewCitations".raw_history_status          IS DISTINCT FROM EXCLUDED.raw_history_status
