@@ -1,141 +1,62 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router';
-import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
-import AccountManagement from '../..';
+import EmailVerifier from '../../EmailVerifier';
 
-describe('AccountManagement', () => {
-  const now = new Date();
+describe('EmailVerifier', () => {
+  const token = '123';
+  const verifyUrl = `/api/users/verify-email/${token}`;
 
-  const validatedUser = {
+  const unvalidatedUser = () => ({
+    id: 1,
     name: 'user1',
-    lastLogin: now,
-    validationStatus: [{ type: 'email', validatedAt: now }],
-    roles: [{ name: 'ECM' }, { name: 'GMS' }],
-  };
+    validationStatus: [{ type: 'email', validatedAt: null }],
+  });
 
-  const unvalidatedUser = {
-    name: 'user1',
-    lastLogin: now,
-    validationStatus: [],
-    roles: [],
-  };
-
-  const token = 123;
-  const verifyUrl = `/account/verify-email/${token}`;
-  const accountUrl = '/account';
-
-  const renderAM = (user, pth) => {
+  const renderVerifier = (props = {}, user = unvalidatedUser()) =>
     render(
-      <MemoryRouter initialEntries={[pth]}>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <Route path="/account/verify-email/:token" exact>
-            <UserContext.Provider value={{ user }}>
-              <AccountManagement updateUser={() => {}} />
-            </UserContext.Provider>
-          </Route>
-          <Route path="/account" exact>
-            <UserContext.Provider value={{ user }}>
-              <AccountManagement updateUser={() => {}} />
-            </UserContext.Provider>
-          </Route>
-        </AppLoadingContext.Provider>
-      </MemoryRouter>
+      <UserContext.Provider value={{ user }}>
+        <EmailVerifier updateUser={jest.fn()} {...props} />
+      </UserContext.Provider>
     );
-  };
 
-  beforeAll(() => {
-    fetchMock.get('/api/settings/email', 200);
+  afterEach(() => fetchMock.restore());
+
+  it('renders nothing and does not call the endpoint without a token', () => {
+    const { container } = renderVerifier();
+    expect(container).toBeEmptyDOMElement();
+    expect(fetchMock.called()).toBe(false);
   });
 
-  afterAll(() => {
-    fetchMock.restore();
+  it('shows a pending message while verifying', () => {
+    fetchMock.post(verifyUrl, new Promise(() => {}));
+    renderVerifier({ token });
+    expect(screen.getByText(/please wait while your email is being verified/i)).toBeVisible();
   });
 
-  describe('email verification', () => {
-    describe('when token is present, endpoint is called', () => {
-      beforeAll(async () => {
-        fetchMock.post(`/api/users/verify-email/${token}`, 200);
-        act(() => renderAM(unvalidatedUser, verifyUrl));
-      });
+  it('verifies the token, shows a success alert, and updates the user', async () => {
+    fetchMock.post(verifyUrl, 200);
+    const updateUser = jest.fn();
+    renderVerifier({ token, updateUser });
 
-      afterAll(() => fetchMock.restore());
+    expect(await screen.findByText(/your email has been verified/i)).toBeVisible();
+    expect(fetchMock.called(verifyUrl)).toBe(true);
+    expect(updateUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        validationStatus: [{ type: 'email', validatedAt: true }],
+      })
+    );
+  });
 
-      it('calls endpoint', async () => {
-        expect(fetchMock.called(`/api/users/verify-email/${token}`)).toBe(true);
-      });
+  it('shows an error alert when the token is invalid', async () => {
+    fetchMock.post(verifyUrl, 400);
+    const updateUser = jest.fn();
+    renderVerifier({ token, updateUser });
 
-      describe('when visiting /account, show verif. button', () => {
-        beforeEach(async () => {
-          act(() => renderAM(unvalidatedUser, accountUrl));
-          await screen.findByText(/account management/i);
-        });
-
-        it('shows verify button', async () => {
-          expect(screen.queryByTestId('send-verification-email-button')).toBeInTheDocument();
-        });
-
-        it('calls the endpoint when clicked', async () => {
-          fetchMock.post('/api/users/send-verification-email', {});
-          expect(screen.queryByTestId('send-verification-email-button')).toBeInTheDocument();
-          await act(async () => {
-            fireEvent.click(screen.getByTestId('send-verification-email-button'));
-          });
-
-          await waitFor(() => {
-            expect(fetchMock.called('/api/users/send-verification-email')).toBe(true);
-          });
-
-          fetchMock.restore();
-        });
-      });
-    });
-
-    describe('success / good token', () => {
-      beforeAll(async () => {
-        fetchMock.post(`/api/users/verify-email/${token}`, 200);
-        act(() => renderAM(validatedUser, verifyUrl));
-      });
-
-      afterAll(() => fetchMock.restore());
-
-      it('should show a success alert', async () => {
-        expect(fetchMock.called(`/api/users/verify-email/${token}`)).toBe(true);
-        await waitFor(() => {
-          expect(screen.queryByText(/your email has been verified/i)).toBeInTheDocument();
-          expect(screen.queryByTestId('email-preferences-form')).toBeInTheDocument();
-        });
-      });
-    });
-
-    describe('failure / bad token', () => {
-      beforeAll(async () => {
-        fetchMock.post(`/api/users/verify-email/${token}`, 400);
-        act(() => renderAM(unvalidatedUser, verifyUrl));
-        await screen.findByText(/account management/i);
-      });
-
-      afterAll(() => fetchMock.restore());
-
-      it('should show an error alert', async () => {
-        expect(fetchMock.called(`/api/users/verify-email/${token}`)).toBe(true);
-        await waitFor(() => {
-          expect(screen.queryByText(/your email could not be verified/i)).toBeInTheDocument();
-        });
-      });
-    });
-
-    describe('already validated user visits /account', () => {
-      beforeAll(async () => {
-        act(() => renderAM(validatedUser, accountUrl));
-        await screen.findByText(/account management/i);
-      });
-
-      it('should not show verify button', async () => {
-        expect(screen.queryByText(/send verification email/i)).not.toBeInTheDocument();
-      });
-    });
+    expect(await screen.findByText(/your email could not be verified/i)).toBeVisible();
+    expect(screen.queryByText(/account management/i)).toBeNull();
+    await waitFor(() => expect(updateUser).not.toHaveBeenCalled());
   });
 });

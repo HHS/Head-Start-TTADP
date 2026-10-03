@@ -998,7 +998,7 @@ describe('mailer tests', () => {
       expect(message.subject).toBe('Please verify your email address');
       expect(message.text).toContain('In order to verify your email address');
       expect(message.text).toContain(
-        `${process.env.TTA_SMART_HUB_URI}/notifications/verify-email/test-token-string`
+        `${process.env.TTA_SMART_HUB_URI}/account/notifications/test-token-string`
       );
     });
   });
