@@ -72,7 +72,7 @@ export default function TimelineEvent({
       >
         <FontAwesomeIcon
           aria-hidden="true"
-          className="ttahub-timeline-event__icon"
+          className="ttahub-timeline-event__icon height-3 width-3"
           color={colors.ttahubMediumBlue}
           icon={icon}
           focusable="false"
@@ -132,7 +132,9 @@ export default function TimelineEvent({
                 className="ttahub-timeline-event__tag-group display-flex flex-align-center flex-gap-1"
                 key={`${label}-${index}`}
               >
-                <Tag className="ttahub-timeline-event__tag margin-right-0">{label}</Tag>
+                <Tag className="ttahub-timeline-event__tag margin-right-0 radius-sm padding-y-0 padding-x-1">
+                  {label}
+                </Tag>
                 {flagged && (
                   <>
                     <FontAwesomeIcon
