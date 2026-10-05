@@ -30,7 +30,11 @@ function Bell() {
   return (
     <Link
       to="/notifications"
-      aria-label={hasNotifications ? 'Notifications, unread notifications' : 'Notifications'}
+      aria-label={
+        hasNotifications
+          ? `Notification center, ${data.count} unread notification${data.count === 1 ? '' : 's'}`
+          : 'Notification center'
+      }
     >
       <FontAwesomeIcon
         icon={faBell}
