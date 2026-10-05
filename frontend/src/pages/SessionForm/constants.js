@@ -1,5 +1,6 @@
 import React from 'react';
 import { NOT_STARTED } from '../../components/Navigator/constants';
+import sessionKeys from './sessionKeys.json';
 
 export const NO_ERROR = <></>;
 
@@ -101,68 +102,19 @@ export const pageComplete = (hookForm, fields) =>
     return !!val;
   });
 
-export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments';
-
-export const defaultKeys = [
-  'id',
-  'regionId',
-  'ownerId',
-  'eventId',
-  'eventDisplayId',
-  'eventName',
-  'status',
-  'pageState',
-  'pocComplete',
-  'collabComplete',
-  'ownerComplete',
-  'facilitation',
-  'additionalNotes',
-  'approverId',
-  'managerNotes',
-  'dateSubmitted',
-  'submitted',
-  'submitter',
-  'additionalStates',
-  'reviewStatus',
-  'approvalStatus',
-  'trainers',
-  'otherTrainers',
-];
-
-export const istKeys = [
-  ...defaultKeys,
-  'sessionName',
-  'startDate',
-  'endDate',
-  'duration',
-  'context',
-  'objective',
-  'objectiveTopics',
-  'goalTemplates',
-  'useIpdCourses',
-  'courses',
-  'objectiveResources',
-  'addObjectiveFilesYes',
-  'files',
-  'ttaProvided',
-  'objectiveSupportType',
-];
-
-export const pocKeys = [
-  ...defaultKeys,
-  'isIstVisit',
-  'regionalOfficeTta',
-  'recipients',
-  'participants',
-  'ttaType',
-  'numberOfParticipants',
-  'numberOfParticipantsInPerson',
-  'numberOfParticipantsVirtually',
-  'deliveryMethod',
-  'language',
-  'supportingAttachments',
-  'recipientNextSteps',
-  'specialistNextSteps',
-  'istSelectionComplete',
+/**
+ * The key lists live in sessionKeys.json rather than here so the backend can
+ * read them too: src/routes/sessionReports/middleware.test.js asserts that the
+ * Joi allowlist is a superset of everything this form can send. A key added
+ * here without being declared there would be stripped on save, and a list
+ * duplicated by hand in the backend test could not catch that.
+ */
+export const {
   supportingAttachmentsVisitedField,
-];
+  defaultKeys,
+  submitTimeKeys,
+} = sessionKeys;
+
+export const istKeys = [...defaultKeys, ...sessionKeys.istOnlyKeys];
+
+export const pocKeys = [...defaultKeys, ...sessionKeys.pocOnlyKeys];

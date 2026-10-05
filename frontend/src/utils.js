@@ -601,6 +601,7 @@ export const SUPPORTED_DATE_FORMATS = [
   'M.D.YYYY',
   'MM.D.YYYY',
   'M.DD.YYYY',
+  'MM.DD.YYYY',
   'M.D.YY',
   'MM.DD.YY',
 ];
