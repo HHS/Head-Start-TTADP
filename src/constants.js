@@ -77,6 +77,9 @@ const DISPLAY_DATE_FORMATS = [
 ];
 
 const REPORTS_PER_PAGE = 10;
+// AR eligibility after project end when an inactive grant has no inactivation date.
+// Proposed value for TTAHUB-5860; Product must confirm before merge.
+const AR_GRANT_END_DATE_GRACE_DAYS = 365;
 const RECIPIENTS_PER_PAGE = 12;
 const GOALS_PER_PAGE = 5;
 
@@ -508,6 +511,7 @@ const VALIDATION_ALERT_SEVERITY = {
 };
 
 module.exports = {
+  AR_GRANT_END_DATE_GRACE_DAYS,
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
