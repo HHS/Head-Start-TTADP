@@ -53,6 +53,36 @@ const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
 const position = 4;
 
+export const getInvalidNextStepDateFields = ({
+  startDate,
+  specialistNextSteps = [],
+  recipientNextSteps = [],
+}) => {
+  const sessionStartDate = moment(startDate, 'MM/DD/YYYY');
+
+  if (!sessionStartDate.isValid()) {
+    return [];
+  }
+
+  return [
+    ['specialistNextSteps', specialistNextSteps],
+    ['recipientNextSteps', recipientNextSteps],
+  ].flatMap(([field, steps]) =>
+    steps.reduce((invalidFields, step, index) => {
+      if (!step.completeDate) {
+        return invalidFields;
+      }
+
+      const completeDate = moment(step.completeDate, 'MM/DD/YYYY');
+      if (completeDate.isValid() && !completeDate.isAfter(sessionStartDate)) {
+        invalidFields.push(`${field}[${index}].completeDate`);
+      }
+
+      return invalidFields;
+    }, [])
+  );
+};
+
 const ReviewSection = () => {
   const { getValues } = useFormContext();
   const { specialistNextSteps, recipientNextSteps } = getValues();

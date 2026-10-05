@@ -21,6 +21,7 @@ import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/us
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
@@ -509,11 +510,22 @@ export default function SessionForm({ match }) {
       try {
         // reset the error message
         setError('');
-        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
         const data = hookForm.getValues();
+        const invalidNextStepDateFields = getInvalidNextStepDateFields(data);
+        if (invalidNextStepDateFields.length) {
+          invalidNextStepDateFields.forEach((field) => {
+            hookForm.setError(field, {
+              type: 'validate',
+              message: 'Next step date must be after the session start date',
+            });
+          });
+          return;
+        }
+
+        setIsAppLoading(true);
 
         const keyArray = determineKeyArray({
           isAdminUser,
