@@ -20,7 +20,6 @@ Fix the dependency vulnerabilities with the smallest compatible changes. Use the
 3. Prefer a targeted direct dependency update when it provides a compatible fix with limited dependency churn. For a transitive vulnerability, use a Yarn `resolutions` entry when it can select a patched release compatible with affected consumers and avoids an unnecessary parent upgrade. Consider the effect on every consumer covered by the resolution.
 4. Prefer a compatible patch release when sufficient. Do not force a version outside a consumer's declared range without investigating API, runtime, and engine compatibility. If the only available fix requires broad changes, explain the tradeoff and obtain scope clarification before expanding the repair.
 
-For example, a parent requesting `@grpc/grpc-js` through `^1.13.2` can accept `1.14.5`. Verify the actual current parent range and advisory before applying that example.
 
 ## Apply and verify
 
