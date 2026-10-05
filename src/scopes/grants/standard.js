@@ -16,6 +16,10 @@ const matchingRecipientRegionPairsForStandards = (standards) =>
     INNER JOIN "GoalTemplates" AS "MatchingGoalTemplates"
       ON "MatchingGoals"."goalTemplateId" = "MatchingGoalTemplates"."id"
     WHERE "MatchingGoals"."deletedAt" IS NULL
+      AND NOT (
+        "MatchingGoals"."createdVia" = 'activityReport'
+        AND "MatchingGoals"."onApprovedAR" = false
+      )
       AND "MatchingGoalTemplates"."deletedAt" IS NULL
       AND "MatchingGoalTemplates"."standard" IN (${standards
         .map((standard) => sequelize.escape(standard))
