@@ -57,6 +57,7 @@ function CoursesAssociatedWithActivityReports({
     if (resetPagination) {
       setSortConfig({ ...sortConfig, activePage: 1 });
       setOffset(0); // 0 times perpage = 0
+      setCheckBoxes({});
       setResetPagination(false);
     }
   }, [resetPagination, setResetPagination, setSortConfig, sortConfig]);

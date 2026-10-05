@@ -543,6 +543,18 @@ describe('iPD Courses Associated with Activity Reports', () => {
     ).not.toBeChecked();
   });
 
+  it('clears selection when filters change even if no new data arrives', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+    const checkbox = await screen.findByRole('checkbox', { name: 'Select Sample Course 2' });
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    await userEvent.click(screen.getByTestId('reset-pagination'));
+    expect(
+      await screen.findByRole('checkbox', { name: 'Select Sample Course 2' })
+    ).not.toBeChecked();
+  });
+
   it('checking and then unchecking the select all checkbox', async () => {
     renderCoursesAssociatedWithActivityReports(mockSortData);
 
