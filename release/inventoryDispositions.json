@@ -33,13 +33,20 @@
       "componentName": "tta-automation.app.cloud.gov",
       "componentClass": "route",
       "finding": "A route exists for the automation application, which contradicts docs/boundary_diagram.md. The route is currently mapped to no application.",
-      "status": "deferred",
-      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. An existing route contradicts the approved boundary description even though it is currently unattached. Either the route should be deleted or the boundary documentation is inaccurate.",
+      "status": "resolved",
+      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. The route contradicted the approved boundary description even though it was unattached. It was not required, so it was deleted from the production space and docs/boundary_diagram.md remains accurate as written.",
       "owner": "TTA Hub Tech Lead",
       "trackingTicket": "TTAHUB-5245",
       "closureTarget": "2026-11-05",
-      "recommendation": "Delete the route. If it is required, correct docs/boundary_diagram.md and declare it in the inventory.",
-      "approval": null
+      "recommendation": "Route deleted from the production space. docs/boundary_diagram.md already states that no routes are configured for the automation application, so no documentation or inventory change was needed.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3989",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-09-30",
+        "decision": "Approved. Route confirmed deleted from the production space."
+      }
     },
     {
       "id": "INV-2026-0004",
@@ -85,13 +92,20 @@
       "componentName": "adam.levin",
       "componentClass": "service",
       "finding": "A cloud.gov service account named after an individual, with the space-deployer plan, exists in the production space and is not declared in the inventory.",
-      "status": "deferred",
-      "justification": "A space-deployer credential grants the ability to push applications and bind services in the production space. This one is named for a person rather than a system, is not referenced by any repository configuration, and is not bound to any application. It is the clearest example in the space of a component that the previous release evidence could not have surfaced.",
+      "status": "resolved",
+      "justification": "The service instance adam.levin (cloud-gov-service-account, space-deployer plan) was created 2022-06-06 following the per-developer Terraform setup steps in docs/guides/infrastructure.md. It was unbound, not shared, and not referenced by any repository configuration or by CI, which uses a separate deployer account. It was deleted on 2026-09-30 (service key space-deployer-key, then the service instance). Afterward the instance no longer appeared in cf services for ttahub-prod and its UAA user no longer held a role in the space.",
       "owner": "TTA Hub Tech Lead",
       "trackingTicket": "TTAHUB-5245",
       "closureTarget": "2026-09-05",
-      "recommendation": "Confirm whether this credential is still required. If it is not, delete the service instance. If individual deployer credentials are an intentional practice, document that practice and declare the accounts in the inventory. This carries a shorter closure target than the other entries because it is a standing production credential.",
-      "approval": null
+      "recommendation": "Closed. The credential was confirmed to be no longer required and the service instance was deleted. No further action is needed for this disposition. Individual deployer credentials are not an intentional practice and are not declared in the inventory.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3982",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-09-30",
+        "decision": "Approved. Service instance confirmed deleted from the production space."
+      }
     }
   ]
 }
