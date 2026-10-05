@@ -4,7 +4,11 @@ import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
+import {
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  AR_GRANT_END_DATE_GRACE_DAYS,
+  REPORTS_PER_PAGE,
+} from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
@@ -1299,6 +1303,15 @@ export async function possibleRecipients(regionId, activityReportId = null) {
           '$grants.inactivationDate$': {
             [Op.gte]: sequelize.literal(
               `date_trunc('day', NOW()) - interval '${inactiveDayDuration} days'`
+            ),
+          },
+        },
+        {
+          '$grants.status$': 'Inactive',
+          '$grants.inactivationDate$': null,
+          '$grants.endDate$': {
+            [Op.gte]: sequelize.literal(
+              `date_trunc('day', NOW()) - interval '${AR_GRANT_END_DATE_GRACE_DAYS} days'`
             ),
           },
         },
