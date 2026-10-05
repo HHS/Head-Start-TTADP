@@ -54,14 +54,14 @@ describe('WhoIsTheRequestFor', () => {
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
 
-  it('shows the recipient as fixed text rather than a selector when it is already chosen', () => {
+  it('leaves the recipient out when it is already chosen', () => {
     const recipient = { id: 10, name: 'Children and Families First', grants: [] };
 
     render(<Wrapper recipientOptions={[recipient]} recipient={recipient} />);
 
-    // started from the recipient's TTA records, so there is nothing to choose between
+    // started from the recipient's TTA records, so the grant already names them
     expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
-    expect(screen.getByText('Children and Families First')).toBeVisible();
+    expect(screen.queryByText('Children and Families First')).toBeNull();
   });
 
   it('offers a selector when the recipient has not been fixed', () => {

@@ -2,6 +2,7 @@ import { Alert } from '@trussworks/react-uswds';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
+import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import Drawer from '../../components/Drawer';
 import FormItem from '../../components/FormItem';
 import FormItemWithDrawerTriggerLabel from '../../components/FormItemWithDrawerTriggerLabel';
@@ -57,8 +58,10 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
       <Alert type="info" headingLevel="h4" slim className="margin-bottom-3 maxw-mobile-lg">
         {RTTAPA_ALERT}
       </Alert>
-      {/* the drawers are empty until their content is written, in a separate ticket */}
-      <Drawer triggerRef={goalDrawerTriggerRef} stickyHeader stickyFooter title="Goal guidance" />
+      <Drawer triggerRef={goalDrawerTriggerRef} stickyHeader stickyFooter title="Goal guidance">
+        <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" />
+      </Drawer>
+      {/* the citation drawer is empty until its content is written, in a separate ticket */}
       <FormItemWithDrawerTriggerLabel
         label="Select goal"
         name={TTA_REQUEST_FIELDS.GOAL}

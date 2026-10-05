@@ -86,6 +86,7 @@ const mockFetches = () => {
   fetchMock.get('begin:/api/goal-templates', [MONITORING_GOAL, OTHER_GOAL]);
   fetchMock.get('begin:/api/citations/region', CITATIONS);
   fetchMock.get('begin:/api/activity-reports/approvers', APPROVERS);
+  fetchMock.get('begin:/api/feeds/item', '');
 };
 
 const BACK_LINK = '/recipient-tta-records/10/region/14/tta-request';
@@ -125,12 +126,12 @@ describe('TtaRequestForm', () => {
     expect(screen.getByRole('heading', { name: 'Submit for review' })).toBeVisible();
   });
 
-  it('shows the recipient already selected, with its one grant read only', () => {
+  it('lists only the one grant when the recipient is already selected', () => {
     renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
 
-    // the recipient came from their TTA records, so it is shown rather than offered
+    // the recipient came from their TTA records, and the grant already names them
     expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
-    expect(screen.getByText('Children and Families First')).toBeVisible();
+    expect(screen.queryByText('Children and Families First')).toBeNull();
 
     // one grant means nothing to choose between, so it is shown rather than offered
     expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
@@ -262,6 +263,8 @@ describe('TtaRequestForm', () => {
     userEvent.click(screen.getByRole('button', { name: 'Get help selecting a goal' }));
 
     expect(await screen.findByRole('heading', { name: 'Goal guidance' })).toBeVisible();
+    // the same goal guidance the other goal drawers in the app show
+    expect(fetchMock.called('/api/feeds/item?tag=ttahub-ohs-standard-goals')).toBe(true);
   });
 
   it('records a save time when the draft is saved, without validating', async () => {

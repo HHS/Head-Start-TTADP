@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { Controller, useController, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import FormItem from '../../components/FormItem';
-import FormFieldThatIsSometimesReadOnly from '../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import type { GrantCheckboxOption } from '../../components/GrantCheckboxSelect';
 import GrantCheckboxSelect from '../../components/GrantCheckboxSelect';
 import selectOptionsReset from '../../components/selectOptionsReset';
@@ -19,8 +18,8 @@ interface WhoIsTheRequestForProps {
    */
   recipientOptions?: TtaRequestRecipient[] | null;
   /**
-   * set when the recipient is already fixed, started from a recipient's TTA records -
-   * shown as read-only text instead of a selector
+   * set when the recipient is already fixed, started from a recipient's TTA records - the
+   * recipient isn't shown, since the grant already names them
    */
   recipient?: TtaRequestRecipient | null;
 }
@@ -34,8 +33,8 @@ const grantToOption = (grant: TtaRequestGrant): GrantCheckboxOption => ({
 
 /**
  * The first section of the request: who it is for, whether they know about it and who asked
- * for it. Started from a recipient's TTA records the recipient arrives already fixed and is
- * shown as read-only text; started from the TTA requests page it is offered as a select. The
+ * for it. Started from a recipient's TTA records the recipient arrives already fixed and only
+ * their grants are listed; started from the TTA requests page it is offered as a select. The
  * grants follow from whichever recipient is selected or fixed.
  */
 export default function WhoIsTheRequestFor({
@@ -91,12 +90,9 @@ export default function WhoIsTheRequestFor({
           control={control}
           rules={{ required: 'Select a recipient' }}
           defaultValue={null}
-          render={({ value, onChange, onBlur }) => (
-            <FormFieldThatIsSometimesReadOnly
-              permissions={[!recipient]}
-              label="Recipient"
-              value={recipient?.name ?? ''}
-            >
+          // a fixed recipient is still a form value, but the grant already names them
+          render={({ value, onChange, onBlur }) =>
+            recipient ? null : (
               <FormItem
                 label="Recipient"
                 name={TTA_REQUEST_FIELDS.RECIPIENT}
@@ -121,8 +117,8 @@ export default function WhoIsTheRequestFor({
                   getOptionValue={(option) => String(option.id)}
                 />
               </FormItem>
-            </FormFieldThatIsSometimesReadOnly>
-          )}
+            )
+          }
         />
       )}
       {selectedRecipient && possibleGrants.length > 0 && (

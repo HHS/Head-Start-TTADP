@@ -28,6 +28,7 @@ describe('RecipientTtaRequestForm', () => {
   beforeEach(() => {
     fetchMock.get('begin:/api/goal-templates', []);
     fetchMock.get('begin:/api/activity-reports/approvers', []);
+    fetchMock.get('begin:/api/feeds/item', '');
   });
 
   afterEach(() => {
@@ -46,17 +47,18 @@ describe('RecipientTtaRequestForm', () => {
     expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
   });
 
-  it('shows the recipient as fixed text rather than a selector', () => {
+  it('lists only the grant rather than repeating the recipient', () => {
     render(
       <MemoryRouter>
         <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
       </MemoryRouter>
     );
 
-    // there is only ever one recipient on offer here, so there is nothing to choose between
+    // there is only ever one recipient on offer here, and the grant already names them
     expect(screen.queryByLabelText(/^recipient$/i)).toBeNull();
     expect(screen.queryByRole('combobox', { name: /recipient/i })).toBeNull();
-    expect(screen.getByText('Children and Families First')).toBeVisible();
+    expect(screen.queryByText('Children and Families First')).toBeNull();
+    expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
   });
 
   it('fixes the recipient and returns to their TTA requests', () => {
@@ -70,8 +72,7 @@ describe('RecipientTtaRequestForm', () => {
       'href',
       '/recipient-tta-records/10/region/14/tta-request'
     );
-    // the recipient arrives already chosen, and is the only one on offer
-    expect(screen.getByText('Children and Families First')).toBeVisible();
+    // the recipient arrives already chosen, so only their grant is listed
     expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
     // the inactive grant cannot be requested against
     expect(screen.queryByText('Children and Families First - 14CH5678 - HS')).toBeNull();
