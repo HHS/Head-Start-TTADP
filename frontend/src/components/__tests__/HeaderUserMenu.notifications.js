@@ -55,7 +55,7 @@ describe('HeaderUserMenu notification indicators', () => {
         { ...user, flags: ['actionable_notifications'] }
       );
       const bell = await screen.findByRole('link', {
-        name: count ? 'Notifications, unread notifications' : 'Notifications',
+        name: count ? 'Notification center, 1 unread notification' : 'Notification center',
       });
       const avatar = screen.getByTestId('header-avatar');
       expect(bell.compareDocumentPosition(avatar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -97,14 +97,25 @@ describe('HeaderUserMenu notification indicators', () => {
     expect(fetchNotificationsCount).not.toHaveBeenCalled();
   });
 
-  it('shows the notifications link when the user has the actionable notifications flag', async () => {
+  it.each([
+    [0, 'Notification center'],
+    [1, 'Notification center, 1 unread notification'],
+    [2, 'Notification center, 2 unread notifications'],
+  ])('gives the bell and dropdown unique accessible names with %s unread', async (count, name) => {
+    fetchNotificationsCount.mockResolvedValue({ count, rows: [] });
     await renderHeaderUserMenu(defaultProps, { ...user, flags: ['actionable_notifications'] });
+    const bell = await screen.findByRole('link', { name });
 
     await act(async () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getAllByRole('link', { name: /^notifications$/i })).toHaveLength(2);
+    expect(screen.getByRole('link', { name })).toBe(bell);
+    const menuLink = screen.getByRole('link', { name: /^notifications/i });
+    expect(menuLink).toBeVisible();
+    expect(menuLink).not.toBe(bell);
+    expect(bell).toHaveAttribute('href', '/notifications');
+    expect(menuLink).toHaveAttribute('href', '/notifications');
   });
 
   it('renders the notification link with a new notification indicator', async () => {

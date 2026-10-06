@@ -6,17 +6,17 @@ import colors from '../colors';
 import FeatureFlag from './FeatureFlag';
 import './NotificationBell.css';
 
-export default function NotificationBell({
-  hasUnreadNotifications,
-}: {
-  hasUnreadNotifications: boolean;
-}) {
+export default function NotificationBell({ unreadCount }: { unreadCount: number }) {
+  const hasUnreadNotifications = unreadCount > 0;
+
   return (
     <FeatureFlag flag="actionable_notifications">
       <Link
         to="/notifications"
         aria-label={
-          hasUnreadNotifications ? 'Notifications, unread notifications' : 'Notifications'
+          hasUnreadNotifications
+            ? `Notification center, ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+            : 'Notification center'
         }
       >
         <FontAwesomeIcon

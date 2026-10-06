@@ -45,7 +45,7 @@ afterEach(() => fetchMock.restore());
 
 it('does not fetch or show a bell without the flag', async () => {
   await setup([]);
-  expect(screen.queryByRole('link', { name: /Notifications/ })).toBeNull();
+  expect(screen.queryByRole('link', { name: /Notification center/ })).toBeNull();
   expect(fetchMock.calls()).toHaveLength(0);
 });
 
@@ -64,20 +64,24 @@ it.each([true, false])('refreshes after a delayed CTA write, actionable=%s', asy
       })
   );
   const history = await setup(undefined, actionable);
-  await screen.findByRole('link', { name: 'Notifications, unread notifications' });
+  await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
   expect(fetchMock.calls(countUrl)).toHaveLength(1);
   userEvent.click(screen.getByTestId('header-avatar'));
   expect(screen.getByRole('link', { name: 'Notifications new' })).toBeVisible();
   userEvent.click(screen.getByRole('link', { name: 'Notifications new' }));
   await waitFor(() => expect(fetchMock.calls(countUrl)).toHaveLength(2));
-  expect(screen.getByRole('link', { name: 'Notifications, unread notifications' })).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
   expect(fetchMock.calls('/api/notifications/8')).toHaveLength(0);
   userEvent.click(screen.getByRole('link', { name: 'Review' }));
   await waitFor(() => expect(complete).toBeDefined());
   act(() => history.push('/notifications'));
-  expect(screen.getByRole('link', { name: 'Notifications, unread notifications' })).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
   await act(async () => complete());
-  await screen.findByRole('link', { name: 'Notifications' });
+  await screen.findByRole('link', { name: 'Notification center' });
   userEvent.click(screen.getByTestId('header-avatar'));
   const dropdown = within(screen.getByTestId('user-menu-dropdown'));
   expect(dropdown.getByRole('link', { name: 'Notifications' })).toBeVisible();
@@ -99,12 +103,14 @@ it('refreshes on navigation and archive, keeping the dot for remaining unread it
   await waitFor(() => expect(fetchMock.called(countUrl)).toBe(true));
   unread = 2;
   act(() => history.push('/another-page'));
-  await screen.findByRole('link', { name: 'Notifications, unread notifications' });
+  await screen.findByRole('link', { name: 'Notification center, 2 unread notifications' });
   await act(async () => {
     await archiveNotification('8');
   });
   await waitFor(() => expect(fetchMock.calls(countUrl).length).toBeGreaterThanOrEqual(3));
-  expect(screen.getByRole('link', { name: 'Notifications, unread notifications' })).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
 });
 
 it('keeps unread state when the CTA write fails and still navigates', async () => {
@@ -112,11 +118,13 @@ it('keeps unread state when the CTA write fails and still navigates', async () =
   fetchMock.get(countUrl, { count: 1, rows: [] });
   fetchMock.put('/api/notifications/8', 500);
   const history = await setup();
-  await screen.findByRole('link', { name: 'Notifications, unread notifications' });
+  await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
   userEvent.click(screen.getByRole('link', { name: 'Review' }));
   await waitFor(() => expect(log).toHaveBeenCalled());
   expect(history.location.pathname).toBe('/report/8');
-  expect(screen.getByRole('link', { name: 'Notifications, unread notifications' })).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
   log.mockRestore();
 });
 
@@ -134,9 +142,11 @@ it('ignores an older count response after navigation', async () => {
   const history = await setup();
   await waitFor(() => expect(completeOld).toBeDefined());
   act(() => history.push('/next'));
-  await screen.findByRole('link', { name: 'Notifications, unread notifications' });
+  await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
   await act(async () => completeOld({ count: 0, rows: [] }));
-  expect(screen.getByRole('link', { name: 'Notifications, unread notifications' })).toBeVisible();
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
 });
 
 it('keeps the bell usable after a count request fails', async () => {
@@ -144,7 +154,7 @@ it('keeps the bell usable after a count request fails', async () => {
   fetchMock.get(countUrl, 500);
   await setup();
   await waitFor(() => expect(log).toHaveBeenCalled());
-  expect(screen.getByRole('link', { name: 'Notifications' })).toHaveAttribute(
+  expect(screen.getByRole('link', { name: 'Notification center' })).toHaveAttribute(
     'href',
     '/notifications'
   );

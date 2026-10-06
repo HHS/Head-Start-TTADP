@@ -292,7 +292,7 @@ function HeaderUserMenu({
 
   return (
     <div className="display-flex flex-gap-2">
-      <NotificationBell hasUnreadNotifications={hasUnreadNotifications} />
+      <NotificationBell unreadCount={hasUnreadNotifications ? notificationCount.count : 0} />
       <DropdownMenu
         Trigger={Av}
         onApply={() => {}}
