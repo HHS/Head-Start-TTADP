@@ -18,6 +18,7 @@ import {
 } from './constants';
 import type { GoalTemplateOption, TtaRequestGrant } from './types';
 import useTtaRequestCitations from './useTtaRequestCitations';
+import './GoalAndContext.scss';
 
 const CONTEXT_LABEL = 'Provide background or context for this request';
 
@@ -78,7 +79,7 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
             <Select
               inputId={TTA_REQUEST_FIELDS.GOAL}
               name={TTA_REQUEST_FIELDS.GOAL}
-              className="usa-select"
+              className="usa-select ttahub-goal-and-context__goal-select"
               styles={selectOptionsReset}
               options={goalTemplates || []}
               placeholder={SELECT_PLACEHOLDER}
@@ -118,7 +119,7 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
         </>
       )}
       <FormItem label={CONTEXT_LABEL} name={TTA_REQUEST_FIELDS.CONTEXT} required>
-        <div className="margin-top-1">
+        <div className="margin-top-1 maxw-mobile-lg">
           <HookFormRichEditor
             name={TTA_REQUEST_FIELDS.CONTEXT}
             id={TTA_REQUEST_FIELDS.CONTEXT}
