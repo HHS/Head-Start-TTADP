@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
@@ -8,7 +8,7 @@ import { Router } from 'react-router-dom';
 import { archiveNotification } from '../../fetchers/notifications';
 import NotificationCard from '../../pages/Notifications/components/NotificationCard';
 import UserContext from '../../UserContext';
-import NotificationBell from '../NotificationBell';
+import HeaderUserMenu from '../HeaderUserMenu';
 
 const countUrl = '/api/notifications/count?viewed.in[]=false&archived.in[]=false';
 const notification = {
@@ -21,26 +21,30 @@ const notification = {
   createdAt: '2026-09-01',
   type: 'changesRequested',
 };
-function setup(flags = ['actionable_notifications'], actionable = true) {
+async function setup(flags = ['actionable_notifications'], actionable = true) {
   const history = createMemoryHistory({ initialEntries: ['/notifications'] });
-  render(
-    <Router history={history}>
-      <UserContext.Provider value={{ user: { id: 1, flags } }}>
-        <NotificationBell />
-        <NotificationCard
-          notification={{ ...notification, actionable } as any}
-          onArchive={() => {}}
-        />
-      </UserContext.Provider>
-    </Router>
-  );
+  await act(async () => {
+    render(
+      <Router history={history}>
+        <UserContext.Provider
+          value={{ user: { id: 1, name: 'Test User', permissions: [], flags } }}
+        >
+          <HeaderUserMenu setAreThereUnreadWhatsNewNotifications={jest.fn()} />
+          <NotificationCard
+            notification={{ ...notification, actionable } as any}
+            onArchive={() => {}}
+          />
+        </UserContext.Provider>
+      </Router>
+    );
+  });
   return history;
 }
 
 afterEach(() => fetchMock.restore());
 
-it('does not fetch or show a bell without the flag', () => {
-  setup([]);
+it('does not fetch or show a bell without the flag', async () => {
+  await setup([]);
   expect(screen.queryByRole('link', { name: /Notification center/ })).toBeNull();
   expect(fetchMock.calls()).toHaveLength(0);
 });
@@ -59,8 +63,16 @@ it.each([true, false])('refreshes after a delayed CTA write, actionable=%s', asy
         };
       })
   );
-  const history = setup(undefined, actionable);
+  const history = await setup(undefined, actionable);
   await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
+  expect(fetchMock.calls(countUrl)).toHaveLength(1);
+  userEvent.click(screen.getByTestId('header-avatar'));
+  expect(screen.getByRole('link', { name: 'Notifications new' })).toBeVisible();
+  userEvent.click(screen.getByRole('link', { name: 'Notifications new' }));
+  await waitFor(() => expect(fetchMock.calls(countUrl)).toHaveLength(2));
+  expect(
+    screen.getByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
   expect(fetchMock.calls('/api/notifications/8')).toHaveLength(0);
   userEvent.click(screen.getByRole('link', { name: 'Review' }));
   await waitFor(() => expect(complete).toBeDefined());
@@ -70,6 +82,10 @@ it.each([true, false])('refreshes after a delayed CTA write, actionable=%s', asy
   ).toBeVisible();
   await act(async () => complete());
   await screen.findByRole('link', { name: 'Notification center' });
+  userEvent.click(screen.getByTestId('header-avatar'));
+  const dropdown = within(screen.getByTestId('user-menu-dropdown'));
+  expect(dropdown.getByRole('link', { name: 'Notifications' })).toBeVisible();
+  expect(dropdown.queryByText('new')).toBeNull();
   expect(screen.getByText('Review report')).toBeVisible();
   const body = JSON.parse(fetchMock.lastCall('/api/notifications/8')[1].body as string);
   expect(body.viewedAt).toBeTruthy();
@@ -83,7 +99,7 @@ it('refreshes on navigation and archive, keeping the dot for remaining unread it
     unread = 1;
     return {};
   });
-  const history = setup();
+  const history = await setup();
   await waitFor(() => expect(fetchMock.called(countUrl)).toBe(true));
   unread = 2;
   act(() => history.push('/another-page'));
@@ -101,7 +117,7 @@ it('keeps unread state when the CTA write fails and still navigates', async () =
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   fetchMock.get(countUrl, { count: 1, rows: [] });
   fetchMock.put('/api/notifications/8', 500);
-  const history = setup();
+  const history = await setup();
   await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
   userEvent.click(screen.getByRole('link', { name: 'Review' }));
   await waitFor(() => expect(log).toHaveBeenCalled());
@@ -123,7 +139,7 @@ it('ignores an older count response after navigation', async () => {
       });
     return { count: 1, rows: [] };
   });
-  const history = setup();
+  const history = await setup();
   await waitFor(() => expect(completeOld).toBeDefined());
   act(() => history.push('/next'));
   await screen.findByRole('link', { name: 'Notification center, 1 unread notification' });
@@ -136,7 +152,7 @@ it('ignores an older count response after navigation', async () => {
 it('keeps the bell usable after a count request fails', async () => {
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   fetchMock.get(countUrl, 500);
-  setup();
+  await setup();
   await waitFor(() => expect(log).toHaveBeenCalled());
   expect(screen.getByRole('link', { name: 'Notification center' })).toHaveAttribute(
     'href',

@@ -109,11 +109,7 @@ export const pageComplete = (hookForm, fields) =>
  * here without being declared there would be stripped on save, and a list
  * duplicated by hand in the backend test could not catch that.
  */
-export const {
-  supportingAttachmentsVisitedField,
-  defaultKeys,
-  submitTimeKeys,
-} = sessionKeys;
+export const { supportingAttachmentsVisitedField, defaultKeys, submitTimeKeys } = sessionKeys;
 
 export const istKeys = [...defaultKeys, ...sessionKeys.istOnlyKeys];
 

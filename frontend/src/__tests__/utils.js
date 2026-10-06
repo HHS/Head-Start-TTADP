@@ -244,12 +244,9 @@ describe('isValidDate', () => {
 
   // moment's strict M/D tokens reject a leading zero, so the zero-padded dotted
   // form needs its own 'MM.DD.YYYY' entry in the list.
-  it.each(['01.02.2026', '01.02.26', '1.2.2026', '2026-01-02', '1/2/26'])(
-    'accepts %s',
-    (value) => {
-      expect(isValidDate(value)).not.toBeNull();
-    }
-  );
+  it.each(['01.02.2026', '01.02.26', '1.2.2026', '2026-01-02', '1/2/26'])('accepts %s', (value) => {
+    expect(isValidDate(value)).not.toBeNull();
+  });
 
   it.each(['2026/01/02', '1-2-2026', '13/45/2026', '02/29/2025', 'not-a-date'])(
     'rejects %s',
