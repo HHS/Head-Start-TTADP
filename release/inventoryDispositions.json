@@ -60,7 +60,7 @@
       "componentClass": "platformRuntime",
       "finding": "manifest.yml references the Node.js buildpack by git URL with no tag or commit, so the staged buildpack version can change without any repository change.",
       "status": "resolved",
-      "justification": "Resolved by TTAHUB-5732 on 2026-10-01. manifest.yml now references the released v1.9.4 tag of the Node.js buildpack, which matches the version cloud.gov reported for the current droplet, and the platform.buildpack inventory entry is set to pinned true. The staged buildpack version can no longer change without a repository change.",
+      "justification": "Resolved by TTAHUB-5732 on 2026-10-01. manifest.yml now references the full commit SHA (48441914fa396d2c0d09c7382c02f5f53198d43f) of the released v1.9.4 tag of the Node.js buildpack, which matches the version cloud.gov reported for the current droplet, and the platform.buildpack inventory entry is set to pinned true. The staged buildpack version can no longer change without a repository change.",
       "owner": "TTA Hub Tech Lead",
       "trackingTicket": "TTAHUB-5732",
       "closureTarget": "2026-10-01",
@@ -71,7 +71,7 @@
         "approverRole": "TTA Hub Tech Lead",
         "approver": "Krys Wisnaskas",
         "approvalDate": "2026-10-01",
-        "decision": "Approved. Node.js buildpack pinned to the released v1.9.4 tag in manifest.yml."
+        "decision": "Approved. Node.js buildpack pinned to the commit SHA of the released v1.9.4 tag in manifest.yml."
       }
     },
     {
