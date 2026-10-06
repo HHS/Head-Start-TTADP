@@ -194,6 +194,8 @@ services:
 
   # Creates the S3_BUCKET bucket in minio if it does not exist yet, then idles. It stays running
   # (instead of exiting) because `docker compose up --wait` treats an exited service as a failure.
+  # The healthcheck only passes once the bucket is ready, so `up --wait` blocks until then; if the
+  # bucket cannot be created the container exits non-zero and `up --wait` fails.
   minio-init:
     profiles: ["fullstack"]
     image: amazon/aws-cli
@@ -204,6 +206,11 @@ services:
     environment:
       AWS_DEFAULT_REGION: us-east-1
     restart: "no"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/bucket-ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 45
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -211,6 +218,7 @@ services:
           if aws --endpoint-url http://minio:9000 s3api head-bucket --bucket "$$S3_BUCKET" >/dev/null 2>&1 \
             || aws --endpoint-url http://minio:9000 s3 mb "s3://$$S3_BUCKET" >/dev/null 2>&1; then
             echo "Bucket $$S3_BUCKET is ready"
+            touch /tmp/bucket-ready
             trap 'exit 0' TERM INT
             sleep infinity &
             wait $$!
