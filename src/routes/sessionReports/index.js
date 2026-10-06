@@ -10,6 +10,7 @@ import {
   getSessionReportsHandler,
   updateHandler,
 } from './handlers';
+import { checkCreateSessionBody, checkUpdateSessionBody } from './middleware';
 
 const router = express.Router();
 const context = 'sessionReports';
@@ -22,8 +23,8 @@ router.get(
   transactionWrapper(getParticipants)
 );
 router.get('/eventId/:eventId', transactionWrapper(getHandler, `${context} /eventId/:eventId`));
-router.post('/', transactionWrapper(createHandler, context));
-router.put('/id/:id', transactionWrapper(updateHandler, context));
+router.post('/', checkCreateSessionBody, transactionWrapper(createHandler, context));
+router.put('/id/:id', checkUpdateSessionBody, transactionWrapper(updateHandler, context));
 router.delete('/id/:id', transactionWrapper(deleteHandler, context));
 router.get('/groups', transactionWrapper(getGroups));
 
