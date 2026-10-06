@@ -292,7 +292,7 @@ describe('parseDateStrict', () => {
     expect(parsed.toISOString()).toBe('2026-04-14T00:00:00.000Z');
   });
 
-  it('does not fall back to Moment\'s deprecated JS Date parsing', () => {
+  it("does not fall back to Moment's deprecated JS Date parsing", () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     expect(parseDateStrict('not-a-date')).toBeNull();
     expect(warnSpy).not.toHaveBeenCalled();
