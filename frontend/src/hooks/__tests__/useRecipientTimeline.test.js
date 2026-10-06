@@ -53,6 +53,29 @@ describe('useRecipientTimeline', () => {
     expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
   });
 
+  it('deduplicates an event whose type changes across slices while preserving other sources', async () => {
+    const communication = {
+      source: 'communicationLog',
+      sourceId: 25,
+      eventType: 'Email communication',
+    };
+    const firstPage = [...events(1, 24), communication];
+    const distinctEvent = events(25, 1)[0];
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 27, events: firstPage })
+      .mockResolvedValueOnce({
+        count: 27,
+        events: [{ ...communication, eventType: 'Phone communication' }, distinctEvent],
+      });
+    const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
+    await waitFor(() => expect(result.current.events).toHaveLength(25));
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.hasMore).toBe(false));
+    expect(result.current.events).toEqual([...firstPage, distinctEvent]);
+  });
+
   it('retries a failed slice at the same offset without losing loaded events', async () => {
     getRecipientTimeline
       .mockResolvedValueOnce({ count: 26, events: events(1, 25) })

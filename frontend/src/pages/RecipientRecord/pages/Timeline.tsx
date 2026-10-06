@@ -177,7 +177,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
             {events.length > 0 && (
               <ol className="usa-list--unstyled" aria-label="Timeline events">
                 {events.map((event, index) => (
-                  <li key={JSON.stringify([event.source, event.sourceId, event.eventType])}>
+                  <li key={JSON.stringify([event.source, event.sourceId])}>
                     <TimelineEvent event={event} isLast={index === events.length - 1} />
                   </li>
                 ))}

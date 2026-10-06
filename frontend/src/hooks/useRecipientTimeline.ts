@@ -73,7 +73,7 @@ export default function useRecipientTimeline(
         if (cancelled) return;
         const slice = Array.isArray(response?.events) ? response.events : [];
         const nextEvents = slice.filter((event) => {
-          const key = JSON.stringify([event.source, event.sourceId, event.eventType]);
+          const key = JSON.stringify([event.source, event.sourceId]);
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
