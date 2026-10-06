@@ -1,8 +1,7 @@
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Checkbox, Dropdown } from '@trussworks/react-uswds';
-import type { RecipientTimelineResponse } from '@ttahub/common/src/recipientTimeline';
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Checkbox, Dropdown } from '@trussworks/react-uswds';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Container from '../../../components/Container';
 import Drawer from '../../../components/Drawer';
@@ -15,9 +14,8 @@ import {
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import TimelineEvent from '../../../components/TimelineEvent';
-import { getRecipientTimeline } from '../../../fetchers/recipient';
-import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
+import useRecipientTimeline from '../../../hooks/useRecipientTimeline';
 import UserContext from '../../../UserContext';
 import './Timeline.css';
 
@@ -55,23 +53,34 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
     [supportedFilters]
   );
 
-  const { data, error, loading } = useFetch(
-    { count: 0, events: [] } as RecipientTimelineResponse,
-    () =>
-      getRecipientTimeline(recipientId, regionId, {
-        direction,
-        filters: serializedFilters,
-        excludeMultiRecipientCommunications: hideMultiRecipientCommunications,
-      }),
-    [recipientId, regionId, direction, serializedFilters, hideMultiRecipientCommunications],
-    'Unable to load the TTA timeline.'
+  const { events, count, error, loading, hasMore, loadMore } = useRecipientTimeline(
+    recipientId,
+    regionId,
+    {
+      direction,
+      filters: serializedFilters,
+      excludeMultiRecipientCommunications: hideMultiRecipientCommunications,
+    }
   );
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
-  const events = Array.isArray(data?.events) ? data.events : [];
-  const count =
-    Number.isInteger(data?.count) && data.count >= 0
-      ? Math.max(data.count, events.length)
-      : events.length;
+  // Rebuilding the observer on every loading flip is intentional. A fresh observe() fires an
+  // initial callback, which chains the next load when a short slice leaves the sentinel in view.
+  // Keeping one long lived observer would stall the timeline until the user scrolls.
+  useEffect(() => {
+    if (loading || error || !hasMore || !sentinelRef.current || !supportsIntersectionObserver) {
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [loading, error, hasMore, loadMore, supportsIntersectionObserver]);
 
   return (
     <>
@@ -109,7 +118,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
           className="width-full position-relative"
           paddingX={0}
           paddingY={0}
-          loading={loading}
+          loading={loading && events.length === 0}
           loadingLabel="Loading TTA timeline"
         >
           <div className="padding-3">
@@ -160,20 +169,32 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
               </Alert>
             )}
             {!loading && !error && events.length === 0 && <NoResultsFound hideFilterHelp />}
-            {!loading && !error && events.length > 0 && (
+            {events.length > 0 && (
               <p className="usa-sr-only" data-testid="timeline-results">
                 {count} timeline {count === 1 ? 'event' : 'events'}
               </p>
             )}
-            {!loading && !error && events.length > 0 && (
+            {events.length > 0 && (
               <ol className="usa-list--unstyled" aria-label="Timeline events">
                 {events.map((event, index) => (
-                  <li key={`${event.source}-${event.sourceId}`}>
+                  <li key={JSON.stringify([event.source, event.sourceId, event.eventType])}>
                     <TimelineEvent event={event} isLast={index === events.length - 1} />
                   </li>
                 ))}
               </ol>
             )}
+            <div ref={sentinelRef}>
+              <p role="status" className="margin-bottom-0">
+                {loading && events.length > 0 && 'Loading more events…'}
+                {!loading && !error && !hasMore && events.length > 0 && 'End of timeline.'}
+              </p>
+              {/* Infinite scroll replaces "Load more" where supported; retry is always offered. */}
+              {!loading && (error || (hasMore && !supportsIntersectionObserver)) && (
+                <Button type="button" onClick={loadMore} className="margin-top-2">
+                  {error ? 'Retry loading events' : 'Load more events'}
+                </Button>
+              )}
+            </div>
           </div>
         </Container>
       </div>

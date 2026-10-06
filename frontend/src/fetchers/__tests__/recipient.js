@@ -49,13 +49,20 @@ describe('recipient fetcher', () => {
 
   it('getRecipientTimeline sends sort direction, serialized filters, and the multi-recipient switch', async () => {
     const filter = JSON.stringify({ topic: 'date', condition: 'is within', query: 'date-range' });
-    const query = new URLSearchParams({ direction: 'asc', filters: filter });
+    const query = new URLSearchParams({
+      direction: 'asc',
+      limit: '25',
+      offset: '25',
+      filters: filter,
+    });
     query.set('excludeMultiRecipientCommunications', 'true');
     const url = `${join(recipientUrl, '1', 'region', '2', 'timeline')}?${query.toString()}`;
     fetchMock.getOnce(url, { count: 0, events: [] });
 
     const result = await getRecipientTimeline('1', '2', {
       direction: 'asc',
+      limit: 25,
+      offset: 25,
       filters: [filter],
       excludeMultiRecipientCommunications: true,
     });
@@ -82,9 +89,23 @@ describe('recipient fetcher', () => {
     ['region', '1', '1abc', 'Region ID'],
     ['region', '1', '1.5', 'Region ID'],
     ['region', '1', '9007199254740992', 'Region ID'],
-  ])('getRecipientTimeline rejects a malformed %s ID', async (_type, recipientId, regionId, error) => {
-    await expect(getRecipientTimeline(recipientId, regionId)).rejects.toThrow(
-      `${error} must be a positive integer`
-    );
+  ])(
+    'getRecipientTimeline rejects a malformed %s ID',
+    async (_type, recipientId, regionId, error) => {
+      await expect(getRecipientTimeline(recipientId, regionId)).rejects.toThrow(
+        `${error} must be a positive integer`
+      );
+    }
+  );
+
+  it.each([
+    [{ limit: 0 }, 'Limit must be a positive integer'],
+    [{ limit: Number.NaN }, 'Limit must be a positive integer'],
+    [{ limit: '25abc' }, 'Limit must be a positive integer'],
+    [{ offset: -1 }, 'Offset must be a non-negative integer'],
+    [{ offset: 1.5 }, 'Offset must be a non-negative integer'],
+    [{ offset: null }, 'Offset must be a non-negative integer'],
+  ])('getRecipientTimeline rejects malformed pagination %j', async (pagination, error) => {
+    await expect(getRecipientTimeline('1', '2', pagination)).rejects.toThrow(error);
   });
 });
