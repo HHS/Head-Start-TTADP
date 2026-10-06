@@ -16,8 +16,8 @@
   max-width: 700px;
 }
 
-.ttahub-timeline-event__title svg {
-  vertical-align: middle;
+.ttahub-timeline-event__title-icon {
+  vertical-align: -0.125em;
 }
 
 .ttahub-timeline-event__tag-group {
