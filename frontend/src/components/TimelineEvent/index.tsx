@@ -102,7 +102,7 @@ export default function TimelineEvent({
             <>
               <FontAwesomeIcon
                 aria-hidden="true"
-                className="ttahub-timeline-event__title-icon margin-right-05"
+                className="ttahub-timeline-event__title-icon height-2 margin-right-05 width-2"
                 color={colors.textInk}
                 icon={faUsersSolid}
                 focusable="false"
