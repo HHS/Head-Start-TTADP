@@ -1,4 +1,5 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faUsers as faUsersSolid } from '@fortawesome/free-solid-svg-icons';
 import {
   faBullseyeArrow,
   faChevronDown,
@@ -8,7 +9,6 @@ import {
   faHand,
   faPersonChalkboard,
   faPhone,
-  faUsers,
   faWebcam,
 } from '@fortawesome/pro-regular-svg-icons';
 import { faFlag } from '@fortawesome/pro-solid-svg-icons';
@@ -58,7 +58,7 @@ export default function TimelineEvent({
   const details = event.details.filter(({ items }) => items.length > 0);
   const hasDetails = details.length > 0 || event.links.length > 0;
   const hasDuration = Number.isFinite(event.durationHours) && event.durationHours >= 0;
-  const icon = eventIcons[event.eventType] ?? faUsers;
+  const icon = eventIcons[event.eventType] ?? faUsersSolid;
 
   return (
     <article
@@ -104,7 +104,7 @@ export default function TimelineEvent({
                 aria-hidden="true"
                 className="ttahub-timeline-event__title-icon margin-right-05"
                 color={colors.textInk}
-                icon={faUsers}
+                icon={faUsersSolid}
                 focusable="false"
               />
               <span className="usa-sr-only">Multi-recipient communication. </span>
