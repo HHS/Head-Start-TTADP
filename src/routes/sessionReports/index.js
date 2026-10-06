@@ -1,7 +1,6 @@
 import express from 'express';
 import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
-import { checkCreateSessionBody, checkUpdateSessionBody } from './middleware';
 import {
   createHandler,
   deleteHandler,
@@ -11,6 +10,7 @@ import {
   getSessionReportsHandler,
   updateHandler,
 } from './handlers';
+import { checkCreateSessionBody, checkUpdateSessionBody } from './middleware';
 
 const router = express.Router();
 const context = 'sessionReports';
