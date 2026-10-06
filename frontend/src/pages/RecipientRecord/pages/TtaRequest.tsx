@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import FilterPanel from '../../../components/filter/FilterPanel';
+import ActiveTtaRequestsTable from '../../../components/TtaRequestsTable/ActiveTtaRequestsTable';
+import ApprovedTtaRequestsTable from '../../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../../hooks/useFilters';
 import UserContext from '../../../UserContext';
 
@@ -10,7 +12,12 @@ const FILTER_KEY = 'tta-request-filters';
 // memoized config inside useFilters keeps a stable reference between renders.
 const TTA_REQUEST_FILTER_CONFIG = [];
 
-export default function TtaRequest(): React.ReactElement {
+interface TtaRequestProps {
+  recipientId: string;
+  regionId: string;
+}
+
+export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): React.ReactElement {
   const { user } = useContext(UserContext);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
     user,
@@ -23,7 +30,7 @@ export default function TtaRequest(): React.ReactElement {
   return (
     <>
       <Helmet>
-        <title>TTA Request</title>
+        <title>TTA Requests</title>
       </Helmet>
       <div className="maxw-widescreen">
         <div
@@ -39,6 +46,10 @@ export default function TtaRequest(): React.ReactElement {
             allUserRegions={[]}
             manageRegions={false}
           />
+        </div>
+        <ActiveTtaRequestsTable recipientId={recipientId} regionId={regionId} />
+        <div className="margin-top-3">
+          <ApprovedTtaRequestsTable recipientId={recipientId} regionId={regionId} />
         </div>
       </div>
     </>

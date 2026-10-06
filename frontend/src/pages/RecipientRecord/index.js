@@ -1,6 +1,3 @@
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useContext, useState } from 'react';
@@ -9,6 +6,7 @@ import { Route, Switch, useHistory, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import AddTtaRequestButton from '../../components/AddTtaRequestButton';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
@@ -21,6 +19,7 @@ import UserContext from '../../UserContext';
 import StandardGoalForm from '../StandardGoalForm';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
+import RecipientTtaRequestForm from '../TtaRequestForm/RecipientTtaRequestForm';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import {
@@ -187,6 +186,15 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
       <Switch>
         <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)"
+          render={() => (
+            <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
+              <RecipientTtaRequestForm recipient={recipientData} regionId={regionId} />
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-request"
           render={() => (
             <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
@@ -197,13 +205,13 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 slug="tta-request"
                 hasAlerts={hasAlerts}
                 inlineHeadingChildren={
-                  <Button type="button" className="display-flex flex-align-center">
-                    <FontAwesomeIcon color="white" icon={faPlus} />
-                    <span className="margin-x-1">Add request</span>
-                  </Button>
+                  <AddTtaRequestButton
+                    label="Add request"
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request/new`}
+                  />
                 }
               >
-                <TtaRequest />
+                <TtaRequest recipientId={recipientId} regionId={regionId} />
               </PageWithHeading>
             </FeatureFlag>
           )}

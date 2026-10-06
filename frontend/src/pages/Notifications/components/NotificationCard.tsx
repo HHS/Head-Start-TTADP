@@ -77,7 +77,11 @@ export default function NotificationCard({
           <Link
             className={linkClass}
             to={notification.link}
-            onClick={() => viewNotification(String(notification.id))}
+            onClick={() => {
+              viewNotification(String(notification.id)).catch((error) => {
+                console.error('Error viewing notification:', error);
+              });
+            }}
           >
             {notification.label}
           </Link>

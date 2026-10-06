@@ -63,6 +63,8 @@ function eventReportDateExpression(fieldName) {
       WHEN ${path} ~ '^\\d{4}-\\d{1,2}-\\d{1,2}$' THEN (${path})::date
       WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${path}, 'MM/DD/YY')
       WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${path}, 'MM/DD/YYYY')
+      WHEN ${path} ~ '^\\d{1,2}\\.\\d{1,2}\\.\\d{2}$' THEN TO_DATE(${path}, 'MM.DD.YY')
+      WHEN ${path} ~ '^\\d{1,2}\\.\\d{1,2}\\.\\d{4}$' THEN TO_DATE(${path}, 'MM.DD.YYYY')
       ELSE NULL
     END
   )`;

@@ -1,6 +1,59 @@
 import { NOTIFICATION_CONFIGURATION, NOTIFICATION_TYPES } from './constants';
 
 describe('NOTIFICATION_CONFIGURATION', () => {
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR];
+    it('textFn interpolates author', () => {
+      expect(config.textFn({ author: 'Alice' })).toBe(
+        'Alice has submitted a revised Activity Report for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR];
+
+    it('textFn interpolates author', () => {
+      expect(config.textFn({ author: 'Alice' })).toBe(
+        'Alice has submitted an Activity Report for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED];
 
@@ -104,6 +157,33 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER];
+
+    it('textFn interpolates approver and recipientName', () => {
+      expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
+        'Alice has requested changes to an Activity Report for Head Start Program.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "View AR"', () => {
+      expect(config.linkText()).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR];
 
@@ -153,6 +233,44 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('displayId returns the displayId param', () => {
       expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER];
+
+    it('textFn interpolates approver and recipientName', () => {
+      expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
+        'Alice has approved your Activity Report for Head Start Program.'
+      );
+    });
+
+    it('actionable is true when the receiving approver has not yet approved', () => {
+      expect(config.actionable({ hasApproved: false })).toBe(true);
+    });
+
+    it('actionable is false once the receiving approver has approved', () => {
+      expect(config.actionable({ hasApproved: true })).toBe(false);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "Take action" when the receiving approver has not yet approved', () => {
+      expect(config.linkText({ hasApproved: false })).toBe('Take action');
+    });
+
+    it('linkText returns "View AR" once the receiving approver has approved', () => {
+      expect(config.linkText({ hasApproved: true })).toBe('View AR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+
+    it('uses the report approval settings key', () => {
+      expect(config.settingsKey).toBe('inAppWhenReportApproval');
     });
   });
 
