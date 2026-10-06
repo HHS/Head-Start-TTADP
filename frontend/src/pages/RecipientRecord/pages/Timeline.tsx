@@ -186,6 +186,11 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
             <div ref={sentinelRef}>
               <p role="status" className="margin-bottom-0">
                 {loading && events.length > 0 && 'Loading more events…'}
+                {!loading &&
+                  !error &&
+                  hasMore &&
+                  events.length > 0 &&
+                  `${events.length} of ${count} events loaded.`}
                 {!loading && !error && !hasMore && events.length > 0 && 'End of timeline.'}
               </p>
               {/* Infinite scroll replaces "Load more" where supported; retry is always offered. */}

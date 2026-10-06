@@ -197,6 +197,28 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(screen.queryByRole('button', { name: 'Load more events' })).not.toBeInTheDocument();
   });
 
+  it.each([
+    [26, 50],
+    [25, 49],
+  ])(
+    'announces %i-based non-final batches with %i distinct events loaded',
+    async (start, loaded) => {
+      getRecipientTimeline
+        .mockResolvedValueOnce({ count: 75, events: batch(1, 25) })
+        .mockResolvedValueOnce({ count: 75, events: batch(start, 25) });
+      renderTimeline();
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('25 of 75 events loaded.')
+      );
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(`${loaded} of 75 events loaded.`);
+      expect(screen.getByRole('status')).not.toHaveTextContent('End of timeline.');
+      expect(screen.getAllByRole('article')).toHaveLength(loaded);
+    }
+  );
+
   it('keeps loaded events visible and retries when a later slice fails', async () => {
     getRecipientTimeline
       .mockResolvedValueOnce({ count: 26, events: batch(1, 25) })
