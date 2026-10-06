@@ -93,15 +93,15 @@ describe('StandardGoalCard', () => {
   ) => {
     render(
       <Router history={history}>
-        <AppLoadingContext.Provider value={{ setIsAppLoading: () => { } }}>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
           <UserContext.Provider value={{ user }}>
             <StandardGoalCard
               goal={defaultGoal}
               recipientId="1"
               regionId="1"
-              showCloseSuspendGoalModal={() => { }}
-              performGoalStatusUpdate={() => { }}
-              handleGoalCheckboxSelect={() => { }}
+              showCloseSuspendGoalModal={() => {}}
+              performGoalStatusUpdate={() => {}}
+              handleGoalCheckboxSelect={() => {}}
               isChecked={false}
               // eslint-disable-next-line react/jsx-props-no-spreading
               {...props}
@@ -587,7 +587,7 @@ describe('StandardGoalCard', () => {
   });
 
   it('parses MM/DD/YYYY objective end dates without a moment deprecation warning', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const goalWithSlashDate = {
       ...goal,
       objectives: [
@@ -660,9 +660,7 @@ describe('StandardGoalCard', () => {
       ],
     };
 
-    expect(() =>
-      renderStandardGoalCard({ ...DEFAULT_PROPS }, goalWithInvalidDates)
-    ).not.toThrow();
+    expect(() => renderStandardGoalCard({ ...DEFAULT_PROPS }, goalWithInvalidDates)).not.toThrow();
     const lastTtaValue = screen.getByText(/last tta/i).nextElementSibling;
     expect(lastTtaValue).toHaveTextContent('');
   });
