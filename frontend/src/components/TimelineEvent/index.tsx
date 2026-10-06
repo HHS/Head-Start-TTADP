@@ -8,7 +8,6 @@ import {
   faHand,
   faPersonChalkboard,
   faPhone,
-  faUserGroup,
   faUsers,
   faWebcam,
 } from '@fortawesome/pro-regular-svg-icons';
@@ -105,7 +104,7 @@ export default function TimelineEvent({
                 aria-hidden="true"
                 className="ttahub-timeline-event__title-icon margin-right-05"
                 color={colors.textInk}
-                icon={faUserGroup}
+                icon={faUsers}
                 focusable="false"
               />
               <span className="usa-sr-only">Multi-recipient communication. </span>

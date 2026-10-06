@@ -42,5 +42,6 @@
 }
 
 .ttahub-timeline-event__detail {
+  max-width: 700px;
   white-space: pre-wrap;
 }
