@@ -36,18 +36,8 @@ describe('HeaderUserMenu whats new notifications', () => {
     expect(screen.queryByText('new')).toBe(null);
   });
 
-  it('hides the notifications link when the user lacks the actionable notifications flag', () => {
+  it('shows the notifications link to a user without the actionable notifications flag', () => {
     renderHeaderUserMenu(defaultProps, { ...user, flags: [] });
-
-    act(() => {
-      userEvent.click(screen.getByTestId('header-avatar'));
-    });
-
-    expect(screen.queryByRole('link', { name: /^notifications$/i })).toBe(null);
-  });
-
-  it('shows the notifications link when the user has the actionable notifications flag', () => {
-    renderHeaderUserMenu(defaultProps, { ...user, flags: ['actionable_notifications'] });
 
     act(() => {
       userEvent.click(screen.getByTestId('header-avatar'));

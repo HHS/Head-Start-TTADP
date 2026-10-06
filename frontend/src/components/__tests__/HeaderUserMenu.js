@@ -118,15 +118,9 @@ describe('HeaderUserMenu', () => {
     });
   });
 
-  describe('feature flag menu items', () => {
-    it('hides the Notifications link when the user does not have the actionable_notifications flag', async () => {
+  describe('notifications menu item', () => {
+    it('shows the Notifications link to a user without the actionable_notifications flag', async () => {
       await openMenu(hydratedUser);
-      expect(screen.queryByRole('link', { name: /notifications/i })).toBeNull();
-    });
-
-    it('shows the Notifications link when the user has the actionable_notifications flag', async () => {
-      const flaggedUser = { ...hydratedUser, flags: ['actionable_notifications'] };
-      await openMenu(flaggedUser);
       expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
     });
 
