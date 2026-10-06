@@ -75,7 +75,7 @@
         "reference": "docs/boundary_diagram.md",
         "note": "Automation boundary. The diagram records that at most one configuration is enabled at a time, connections are unbound when not in use, and no routes are configured."
       },
-      "notes": "The diagram states no routes are configured for this application, but an unattached route exists. See disposition INV-2026-0003."
+      "notes": "The diagram states no routes are configured for this application. A previously unattached route was deleted; see disposition INV-2026-0003."
     },
     {
       "id": "app.maintenancePage",
@@ -537,7 +537,7 @@
         "value": ".nvmrc",
         "pinned": true
       },
-      "sha256": "9c579c4eab1d526e689fe7cda201a0ab2f39070304043bb55c459a3d90954250",
+      "sha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": ".nvmrc"
@@ -555,7 +555,7 @@
         "value": "Dockerfile",
         "pinned": true
       },
-      "sha256": "a506474aa40e4509fc0d7788fc334241658513a94e2a500d0b3bf6a15d099a8d",
+      "sha256": "5e400e2d8369adcc64bdcd7d006d1714f681f761edd1c715626967c728de1e83",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "Dockerfile"
@@ -658,7 +658,7 @@
         "type": "repositoryFile",
         "value": "frontend/yarn.lock"
       },
-      "sha256": "91ad80b5bf83ca14c4cb1f46bc12111be702e032b5539ca5c9480a3b3a2f3677",
+      "sha256": "bb2fffd44a779b0e3623250ed20494b28f80a37b3b151cb1203f3ab61ee1a7fe",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
