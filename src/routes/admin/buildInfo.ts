@@ -1,5 +1,5 @@
 import httpCodes from 'http-codes';
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 import { handleError } from '../../lib/apiErrorHandler';
 
 const namespace = 'ADMIN:BUILDINFO';
