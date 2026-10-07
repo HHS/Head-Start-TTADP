@@ -50,11 +50,22 @@ while [ "$1" != "" ]; do
     shift
 done
 
-# Check the cf-cli v7 or v8 is available
-version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
-if [[ $version != "8" && $version != "7" ]]; then
-    echo "Cloud Foundry CLI v7 or v8 not found. Please install it to continue."
-    echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html"
+# Check that cf-cli v8 or later is available
+if ! command -v cf >/dev/null 2>&1; then
+    echo "Cloud Foundry CLI v8 or later is required. Please install it to continue." >&2
+    echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html" >&2
+    exit 1
+fi
+
+if ! cf_output=$(cf version); then
+    echo "Unable to determine the Cloud Foundry CLI version. Please install v8 or later." >&2
+    exit 1
+fi
+
+version=$(printf '%s\n' "$cf_output" | sed -nE '1s/^cf version ([0-9]+)\..*/\1/p')
+if [[ ! $version =~ ^[0-9]+$ ]] || (( 10#$version < 8 )); then
+    echo "Cloud Foundry CLI v8 or later is required. Please install it to continue." >&2
+    echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html" >&2
     exit 1
 fi
 

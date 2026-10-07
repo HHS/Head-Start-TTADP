@@ -1957,7 +1957,7 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
   run_e2e_test:
     parameters:
@@ -2409,7 +2409,7 @@ commands:
             done
           }
 
-          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
