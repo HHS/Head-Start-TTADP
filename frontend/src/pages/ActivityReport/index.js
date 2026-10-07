@@ -270,6 +270,13 @@ function ActivityReport({ match, location, region }) {
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+        const reportParticipantIds = new Set([
+          report.userId,
+          ...(report.activityReportCollaborators || []).map((collaborator) => collaborator.userId),
+        ]);
+        const eligibleApprovers = (availableApprovers || []).filter(
+          (approver) => !reportParticipantIds.has(approver.id)
+        );
 
         const isCollaborator =
           report.activityReportCollaborators &&
@@ -307,7 +314,7 @@ function ActivityReport({ match, location, region }) {
             otherEntities: [],
           },
           collaborators: filteredCollaborators || [],
-          availableApprovers: availableApprovers || [],
+          availableApprovers: eligibleApprovers,
           groups: groupsWithRecipientIds || [],
         });
 

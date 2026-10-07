@@ -340,6 +340,33 @@ describe('ActivityReport', () => {
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
 
+    it('does not offer the report creator or collaborators as approvers', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityReportCollaborators: [{ userId: 2 }],
+        approvers: [],
+      });
+      fetchMock.get(
+        '/api/activity-reports/approvers?region=1',
+        [
+          { id: 1, name: 'Report Creator' },
+          { id: 2, name: 'Report Collaborator' },
+          { id: 3, name: 'Eligible Approver' },
+        ],
+        { overwriteRoutes: true }
+      );
+
+      renderActivityReport('1', 'review');
+
+      const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+      await userEvent.click(approverSelect);
+
+      expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+      expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Report Collaborator' })).not.toBeInTheDocument();
+    });
+
     it('finds whats changed', () => {
       const old = {
         beans: 'kidney',
