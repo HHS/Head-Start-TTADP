@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
@@ -11,7 +11,7 @@ import {
 const EXPORT_FILE_NAME = 'active-tta-requests.csv';
 
 // the widget title is an h2, so the empty state picks up at h3
-const EMPTY_STATE = (
+const emptyState = (newRequestUrl: string) => (
   <div className="text-center padding-10">
     <h3 className="font-serif-md text-bold margin-top-0 margin-bottom-1">
       You&apos;re all caught up!
@@ -19,7 +19,7 @@ const EMPTY_STATE = (
     <p className="usa-prose text-center margin-top-0 margin-bottom-2">
       Would you like to begin a new TTA request?
     </p>
-    <AddTtaRequestButton label="New TTA request" />
+    <AddTtaRequestButton label="New TTA request" to={newRequestUrl} />
   </div>
 );
 
@@ -95,14 +95,12 @@ const DEFAULT_SORT_CONFIG: WidgetSortConfig = {
   recipients that don't exist, so until the API lands those links go nowhere the user can
   read (a 401) - real rows will carry real ids.
 
-  The request id and the draft status have nowhere of their own to go yet, so they stay on
-  this page rather than pointing at a recipient the user may have no access to.
-
-  TODO: link those to the TTA request view/edit pages once they exist.
+  The request id and the draft status open the request itself. There is no fetcher yet, so
+  for now that form opens empty whatever id it is given.
 */
 const toTableRow = (
   request: ActiveTtaRequest,
-  link: string,
+  requestUrl: (requestId: number) => string,
   showRecipientColumns: boolean
 ): TtaRequestsTableRow => ({
   id: request.id,
@@ -110,7 +108,7 @@ const toTableRow = (
   sortKey: request.requestId,
   isUrl: true,
   isInternalLink: true,
-  link,
+  link: requestUrl(request.id),
   data: [
     ...(showRecipientColumns
       ? [
@@ -139,7 +137,7 @@ const toTableRow = (
           value: DRAFT_STATUS,
           isUrl: true,
           isInternalLink: true,
-          link,
+          link: requestUrl(request.id),
         }
       : { title: COLUMNS.STATUS, value: request.status },
   ],
@@ -158,17 +156,22 @@ export default function ActiveTtaRequestsTable({
   regionId,
   showRecipientColumns = false,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
-  const link = showRecipientColumns
+  // where a request lives depends on whether this table spans regions or one recipient
+  const requestRoot = showRecipientColumns
     ? '/tta-requests'
     : `/recipient-tta-records/${recipientId}/region/${regionId}/tta-request`;
+  const requestUrl = useCallback(
+    (requestId: number) => `${requestRoot}/${requestId}`,
+    [requestRoot]
+  );
 
   // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
   const rows = useMemo(
     () =>
       ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map((request) =>
-        toTableRow(request, link, showRecipientColumns)
+        toTableRow(request, requestUrl, showRecipientColumns)
       ),
-    [link, showRecipientColumns]
+    [requestUrl, showRecipientColumns]
   );
 
   return (
@@ -190,7 +193,7 @@ export default function ActiveTtaRequestsTable({
       dateSortColumns={DATE_SORT_COLUMNS}
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
-      emptyState={EMPTY_STATE}
+      emptyState={emptyState(`${requestRoot}/new`)}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn
     />

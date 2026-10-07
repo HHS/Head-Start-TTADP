@@ -6,7 +6,6 @@ import pages from '../pages/SessionForm/pages';
 import { isNationalCenterUser } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
-import useSessionDeadNavigation from './useSessionDeadNavigation';
 
 const createReviewPage = (applicationPages) => {
   // don't modify original array
@@ -197,15 +196,6 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isRegionalWithNationalCenters,
   ]);
 
-  const { isSessionNavigationDead } = useSessionDeadNavigation({
-    isAdminUser,
-    isPoc,
-    isCollaborator,
-    isOwner,
-    isApprover,
-    isSubmitted: formData.submitted,
-  });
-
   return {
     isPoc,
     isAdminUser,
@@ -214,6 +204,5 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isApprover,
     isNcUser,
     applicationPages,
-    isSessionNavigationDead,
   };
 }
