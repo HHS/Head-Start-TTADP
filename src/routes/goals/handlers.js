@@ -1,6 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import { BAD_REQUEST, CONFLICT, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
-import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import {
   createOrUpdateGoals,
@@ -92,29 +91,6 @@ export async function createGoals(req, res) {
     res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
-  }
-}
-
-export async function reopenGoal(req, res) {
-  try {
-    const { goalId, reason, context } = req.body;
-    const userId = await currentUserId(req, res);
-
-    const updatedGoal = await _changeGoalStatus({
-      goalId,
-      userId,
-      newStatus: 'In Progress',
-      reason,
-      context,
-    });
-
-    if (!updatedGoal) {
-      res.sendStatus(BAD_REQUEST);
-    }
-
-    res.json(updatedGoal);
-  } catch (error) {
-    await handleErrors(req, res, error, `${logContext}:REOPEN_GOAL`);
   }
 }
 

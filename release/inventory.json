@@ -75,7 +75,7 @@
         "reference": "docs/boundary_diagram.md",
         "note": "Automation boundary. The diagram records that at most one configuration is enabled at a time, connections are unbound when not in use, and no routes are configured."
       },
-      "notes": "The diagram states no routes are configured for this application, but an unattached route exists. See disposition INV-2026-0003."
+      "notes": "The diagram states no routes are configured for this application. A previously unattached route was deleted; see disposition INV-2026-0003."
     },
     {
       "id": "app.maintenancePage",

@@ -10,41 +10,78 @@ import { getNextStepsSections } from '../../ActivityReport/Pages/nextSteps';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { nextStepsFields } from '../constants';
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next Steps</title>
-    </Helmet>
-    <IndicatesRequiredField />
-    <Fieldset
-      id="specialist-field-set"
-      className="smart-hub--report-legend margin-top-4"
-      legend="Specialist&apos;s next steps"
-    >
-      <NextStepsRepeater
-        id="specialist-next-steps-repeater-id"
-        name="specialistNextSteps"
-        ariaName="Specialist Next Steps"
-      />
-    </Fieldset>
-    <Fieldset
-      id="recipient-field-set"
-      className="smart-hub--report-legend margin-top-3"
-      legend={"Recipient's next steps"}
-    >
-      <NextStepsRepeater
-        id="recipient-next-steps-repeater-id"
-        name="recipientNextSteps"
-        ariaName={"Recipient's next steps"}
-        recipientType="recipient"
-      />
-    </Fieldset>
-  </>
-);
+const NextSteps = () => {
+  const { watch } = useFormContext();
+  const sessionStartDate = watch('startDate');
+
+  return (
+    <>
+      <Helmet>
+        <title>Next Steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <Fieldset
+        id="specialist-field-set"
+        className="smart-hub--report-legend margin-top-4"
+        legend="Specialist&apos;s next steps"
+      >
+        <NextStepsRepeater
+          id="specialist-next-steps-repeater-id"
+          name="specialistNextSteps"
+          ariaName="Specialist Next Steps"
+          afterDate={sessionStartDate}
+        />
+      </Fieldset>
+      <Fieldset
+        id="recipient-field-set"
+        className="smart-hub--report-legend margin-top-3"
+        legend={"Recipient's next steps"}
+      >
+        <NextStepsRepeater
+          id="recipient-next-steps-repeater-id"
+          name="recipientNextSteps"
+          ariaName={"Recipient's next steps"}
+          recipientType="recipient"
+          afterDate={sessionStartDate}
+        />
+      </Fieldset>
+    </>
+  );
+};
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
 const position = 4;
+
+export const getInvalidNextStepDateFields = ({
+  startDate,
+  specialistNextSteps = [],
+  recipientNextSteps = [],
+}) => {
+  const sessionStartDate = moment(startDate, 'MM/DD/YYYY');
+
+  if (!sessionStartDate.isValid()) {
+    return [];
+  }
+
+  return [
+    ['specialistNextSteps', specialistNextSteps],
+    ['recipientNextSteps', recipientNextSteps],
+  ].flatMap(([field, steps]) =>
+    steps.reduce((invalidFields, step, index) => {
+      if (!step.completeDate) {
+        return invalidFields;
+      }
+
+      const completeDate = moment(step.completeDate, 'MM/DD/YYYY');
+      if (completeDate.isValid() && !completeDate.isAfter(sessionStartDate)) {
+        invalidFields.push(`${field}[${index}].completeDate`);
+      }
+
+      return invalidFields;
+    }, [])
+  );
+};
 
 const ReviewSection = () => {
   const { getValues } = useFormContext();
@@ -61,7 +98,8 @@ const ReviewSection = () => {
 export const isPageComplete = (hookForm) => {
   const formData = hookForm.getValues();
 
-  const { specialistNextSteps, recipientNextSteps } = formData;
+  const { specialistNextSteps, recipientNextSteps, startDate } = formData;
+  const sessionStartDate = moment(startDate, 'MM/DD/YYYY');
 
   if (!specialistNextSteps || !recipientNextSteps) {
     return false;
@@ -71,10 +109,15 @@ export const isPageComplete = (hookForm) => {
     return false;
   }
 
+  if (!sessionStartDate.isValid()) {
+    return false;
+  }
+
   if (
-    ![...specialistNextSteps, ...recipientNextSteps].every(
-      (step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid()
-    )
+    ![...specialistNextSteps, ...recipientNextSteps].every((step) => {
+      const completeDate = moment(step.completeDate, 'MM/DD/YYYY');
+      return step.note && completeDate.isValid() && completeDate.isAfter(sessionStartDate);
+    })
   ) {
     return false;
   }
