@@ -22,6 +22,12 @@ get:
     not affect other event sources. Standard filters match the log's selected supporting-goal
     labels; absent or malformed goal arrays have no labels. An unmatched positive standard filter
     returns no communications.
+    Communication-purpose filters use topic `purpose`, conditions `is` / `is not`, and an array
+    of canonical communication-log purpose options. `is` matches any selected purpose; `is not`
+    matches none and includes missing, null, blank, or malformed stored purposes. Stored string
+    purposes are trimmed before comparison. Both conditions restrict the feed to communications;
+    readers without communication-log access receive an empty result when a purpose filter is
+    active. Multiple purpose filters combine with AND. Unknown requested purposes return 400.
     Communication presentations include purpose as subtitle, numeric durationHours (null when
     blank or invalid), and the creator's name and current role abbreviations as the By byline.
     Retired roles are omitted. Missing roles leave the creator's name; a missing creator produces
@@ -44,6 +50,11 @@ get:
     goal history), then source and sourceId ascending for ties. Date-only sources sort at UTC
     midnight; timestamps without a timezone are interpreted as UTC. Date filters include the
     entire UTC calendar day, and response dates remain YYYY-MM-DD, independent of session timezone.
+    Filters combine with AND, including the multi-recipient exclusion when enabled. Filtering and
+    ordering apply to the full combined event index before counts, limit, and offset. Newest first
+    (desc) is the default; asc returns oldest first. Clients must send the same controls on each
+    page request and reset offset to zero when controls change. Ordering is stable for unchanged
+    data; concurrent changes between requests may shift offset-based pages.
     Goal presentations include the event title, goal name as subtitle, recorded author and roles
     as byline (falling back to the associated user's name), and available previous/new status,
     reason, context, and grant number details. Missing optional values are omitted from details;
@@ -98,6 +109,13 @@ get:
     - in: query
       name: filters
       required: false
+      description: |
+        Each item is a serialized JSON object with topic, condition, and query. Date filters use
+        topic `date` and a string query: `is within` (or `is`) accepts a start-end range such as
+        `10/01/2026-10/07/2026`; `is on or after` and `is on or before` accept a single date.
+        Both range endpoints are inclusive. Invalid dates and reversed ranges return 400.
+        Purpose example: {"topic":"purpose","condition":"is","query":["General Check-In","New TTA request"]}.
+        For `is`, selections within a purpose filter use OR; separate filters use AND.
       schema:
         type: array
         maxItems: 20

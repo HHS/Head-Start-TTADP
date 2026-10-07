@@ -1,3 +1,4 @@
+import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import { auditLogger } from '../../logger';
 import { checkRecipientTimelineQuery } from './middleware';
@@ -79,11 +80,37 @@ describe('checkRecipientTimelineQuery', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['is', 'is not'])('accepts every canonical purpose with %s', (condition) => {
+    const filter = { topic: 'purpose', condition, query: COMMUNICATION_PURPOSES };
+    const req = { query: { filters: JSON.stringify(filter) } };
+    const res = mockResponse();
+    const next = jest.fn();
+
+    checkRecipientTimelineQuery(req, res, next);
+
+    expect(res.locals.recipientTimelineQuery.filters).toEqual([filter]);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     ['non-positive limit', { limit: '0' }],
     ['negative offset', { offset: '-1' }],
     ['unsupported sort field', { sortBy: 'title' }],
     ['unsupported direction', { direction: 'sideways' }],
+    ['invalid checkbox', { excludeMultiRecipientCommunications: 'sometimes' }],
+    ...[
+      [],
+      ['Unknown purpose'],
+      [null],
+      [42],
+      'General Check-In',
+      ["General Check-In') OR TRUE --"],
+    ].map((query) => [
+      'invalid purpose selection',
+      {
+        filters: JSON.stringify({ topic: 'purpose', condition: 'is', query }),
+      },
+    ]),
     ['non-serialized filters', { filters: { key: 'value' } }],
     ['malformed serialized filter', { filters: '{' }],
     [

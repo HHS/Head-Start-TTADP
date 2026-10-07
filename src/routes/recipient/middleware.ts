@@ -1,3 +1,4 @@
+import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import {
   TIMELINE_DATE_FILTER_CONDITIONS,
   TIMELINE_FILTER_TOPICS,
@@ -35,6 +36,13 @@ const timelineFilterSchema = Joi.object({
     if (
       (isDateFilter && typeof filter.query !== 'string') ||
       (!isDateFilter && !Array.isArray(filter.query))
+    ) {
+      return helpers.error('any.invalid');
+    }
+
+    if (
+      filter.topic === 'purpose' &&
+      filter.query.some((purpose: string) => !COMMUNICATION_PURPOSES.includes(purpose))
     ) {
       return helpers.error('any.invalid');
     }

@@ -641,6 +641,21 @@ const buildCommunicationLogIndexQuery = (
           AND BTRIM("goal"->>'label') IN (${replacement})
       )`;
     });
+  context.filters
+    .filter(({ topic }) => topic === 'purpose')
+    .forEach((filter, index) => {
+      // The service validates selections against COMMUNICATION_PURPOSES before building the index.
+      const replacement = bindings.add(
+        `purpose_${index}`,
+        (filter.query as string[]).map((value) => value.trim())
+      );
+      // Match the trimmed subtitle. Missing/blank/malformed purposes match no positive selection,
+      // and are included by "is not", rather than being lost to SQL NULL comparison semantics.
+      predicates.push(`COALESCE(CASE
+      WHEN jsonb_typeof("log"."data"->'purpose') = 'string'
+        THEN BTRIM("log"."data"->>'purpose', E' \\t\\r\\n')
+      END, '') ${filter.condition === 'is not' ? 'NOT ' : ''}IN (${replacement})`);
+    });
   if (context.excludeMultiRecipientCommunications) {
     predicates.push(`NOT EXISTS (
       SELECT 1 FROM "CommunicationLogRecipients" AS "otherRecipient"
@@ -788,7 +803,7 @@ async function populateCommunicationLogs(
 
 export const COMMUNICATION_LOG_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
   name: 'communicationLog',
-  supportedFilterTopics: ['standard'] as const,
+  supportedFilterTopics: ['standard', 'purpose'] as const,
   buildIndexQuery: buildCommunicationLogIndexQuery,
   populate: populateCommunicationLogs,
 });

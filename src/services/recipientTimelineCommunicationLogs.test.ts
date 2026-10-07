@@ -1,3 +1,4 @@
+import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
 import express from 'express';
 import httpContext from 'express-http-context';
@@ -456,6 +457,244 @@ describe('communication log timeline integration', () => {
     await expect(
       query([{ topic: 'standard', condition: 'is', query: ["Monitoring') OR TRUE --"] }])
     ).resolves.toEqual({ count: 0, events: [] });
+  });
+
+  it.each([
+    { direction: 'asc', hide: false, indices: [2, 1, 3] },
+    { direction: 'desc', hide: false, indices: [1, 3, 2] },
+    { direction: 'asc', hide: true, indices: [1] },
+    { direction: 'desc', hide: true, indices: [1] },
+  ] as const)(
+    'combines the date range, hide=$hide, and $direction sorting through the API across pages',
+    async ({ direction, hide, indices }) => {
+      const filter = JSON.stringify({
+        topic: 'date',
+        condition: 'is within',
+        query: '01/01/2026-01/02/2026',
+      });
+      const pages = [];
+      for (let offset = 0; offset <= indices.length; offset += 1) {
+        const response = await request(app)
+          .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
+          .query({
+            filters: filter,
+            direction,
+            excludeMultiRecipientCommunications: hide,
+            limit: 1,
+            offset,
+          });
+        expect(response.status).toBe(200);
+        expect(response.body.count).toBe(indices.length);
+        pages.push(response.body.events);
+      }
+      expect(pages.flat().map(({ sourceId }) => sourceId)).toEqual(
+        indices.map((index) => logs[index].id)
+      );
+      expect(pages.at(-1)).toEqual([]);
+    }
+  );
+
+  describe('communication purpose controls', () => {
+    const [purposeA, purposeC, , purposeB] = COMMUNICATION_PURPOSES;
+    const dateFilter = {
+      topic: 'date',
+      condition: 'is within',
+      query: '03/01/2026-03/03/2026',
+    } as const;
+    let purposeLogs;
+
+    beforeAll(async () => {
+      purposeLogs = await CommunicationLog.bulkCreate(
+        [
+          { purpose: ` \t${purposeA}\r\n `, communicationDate: '03/01/2026' },
+          { purpose: purposeB },
+          { purpose: purposeC },
+          { purpose: purposeA }, // Multiple associated recipients.
+          { purpose: purposeB, communicationDate: '03/03/2026' },
+          { purpose: purposeA, communicationDate: '02/28/2026' },
+          { purpose: purposeB, communicationDate: '03/04/2026' },
+          {},
+          { purpose: null },
+          { purpose: '' },
+          { purpose: ' \t\r\n ' },
+          { purpose: { label: purposeA } },
+          { purpose: 42 },
+          { purpose: purposeB }, // Tie on date and purpose, but a distinct event.
+        ].map((data) => ({
+          userId: user.id,
+          data: {
+            regionId: params.regionId,
+            method: 'Email',
+            communicationDate: '03/02/2026',
+            ...data,
+          },
+        }))
+      );
+      await CommunicationLogRecipient.bulkCreate([
+        ...purposeLogs.map(({ id }) => ({
+          communicationLogId: id,
+          recipientId: params.recipientId,
+        })),
+        { communicationLogId: purposeLogs[3].id, recipientId: recipientIds[1] },
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = purposeLogs?.map(({ id }) => id) ?? [];
+      await CommunicationLogRecipient.destroy({ where: { communicationLogId: ids } });
+      await CommunicationLog.destroy({ where: { id: ids } });
+    });
+
+    it.each([
+      { condition: 'is', direction: 'asc', hide: false, indices: [0, 1, 3, 13, 4] },
+      { condition: 'is', direction: 'desc', hide: false, indices: [4, 1, 3, 13, 0] },
+      { condition: 'is', direction: 'asc', hide: true, indices: [0, 1, 13, 4] },
+      { condition: 'is', direction: 'desc', hide: true, indices: [4, 1, 13, 0] },
+      { condition: 'is not', direction: 'asc', hide: false, indices: [0, 3, 7, 8, 9, 10, 11, 12] },
+      { condition: 'is not', direction: 'desc', hide: false, indices: [3, 7, 8, 9, 10, 11, 12, 0] },
+      { condition: 'is not', direction: 'asc', hide: true, indices: [0, 7, 8, 9, 10, 11, 12] },
+      { condition: 'is not', direction: 'desc', hide: true, indices: [7, 8, 9, 10, 11, 12, 0] },
+    ] as const)(
+      'combines purpose $condition values, inclusive dates, hide=$hide, and $direction ordering across API pages',
+      async ({ condition, direction, hide, indices }) => {
+        const filters = [
+          dateFilter,
+          {
+            topic: 'purpose',
+            condition,
+            query: [condition === 'is' ? purposeA : purposeC, purposeB],
+          },
+        ];
+        const events = [];
+        for (let offset = 0; offset <= indices.length; offset += 1) {
+          const response = await request(app)
+            .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
+            .query({
+              filters: filters.map((filter) => JSON.stringify(filter)),
+              direction,
+              excludeMultiRecipientCommunications: hide,
+              limit: 1,
+              offset,
+            });
+          expect(response.status).toBe(200);
+          expect(response.body.count).toBe(indices.length);
+          events.push(...response.body.events);
+          if (offset === indices.length) expect(response.body.events).toEqual([]);
+        }
+        expect(events.map(({ sourceId }) => sourceId)).toEqual(
+          indices.map((index) => purposeLogs[index].id)
+        );
+      }
+    );
+
+    it('excludes any selected purpose while retaining missing, blank, and malformed purposes', async () => {
+      const result = await getRecipientTimeline({
+        ...params,
+        filters: [
+          dateFilter,
+          { topic: 'purpose', condition: 'is not', query: [purposeA, purposeB] },
+        ],
+      });
+      expect(result.count).toBe(7);
+      expect(result.events.map(({ sourceId }) => sourceId)).toEqual(
+        [2, 7, 8, 9, 10, 11, 12].map((index) => purposeLogs[index].id)
+      );
+    });
+
+    it('combines separate purpose filters with AND and returns zero for contradictory selections', async () => {
+      const filters: RecipientTimelineRequestParams['filters'] = [
+        dateFilter,
+        { topic: 'purpose', condition: 'is', query: [purposeA, purposeB] },
+        { topic: 'purpose', condition: 'is not', query: [purposeB] },
+      ];
+      const result = await getRecipientTimeline({ ...params, filters });
+      expect(result.events.map(({ sourceId }) => sourceId)).toEqual([
+        purposeLogs[3].id,
+        purposeLogs[0].id,
+      ]);
+      await expect(
+        getRecipientTimeline({
+          ...params,
+          filters: [...filters, { topic: 'purpose', condition: 'is not', query: [purposeA] }],
+        })
+      ).resolves.toEqual({ count: 0, events: [] });
+    });
+
+    it.each(['is', 'is not'] as const)(
+      'excludes other event sources for purpose %s',
+      async (condition) => {
+        const sources = [
+          COMMUNICATION_LOG_TIMELINE_SOURCE,
+          ...[
+            ['activityReport', 'TTA activity'],
+            ['goalStatusChange', 'Goal added'],
+            ['sessionReport', 'Training session'],
+          ].map(([name, eventType]) => ({
+            name,
+            supportedFilterTopics: [],
+            populate: async () => new Map(),
+            buildIndexQuery: () => `SELECT 1 AS "sourceId", DATE '2026-03-02' AS "date",
+            '${eventType}' AS "eventType", :recipientId AS "recipientId", :regionId AS "regionId"`,
+          })),
+        ];
+        const unfiltered = await queryTimelineEventIndex({
+          ...params,
+          sources,
+          filters: [dateFilter],
+        });
+        expect(new Set(unfiltered.events.map(({ source }) => source)).size).toBe(4);
+        const hidden = await queryTimelineEventIndex({
+          ...params,
+          sources,
+          filters: [dateFilter],
+          excludeMultiRecipientCommunications: true,
+        });
+        expect(hidden.events).toEqual(
+          unfiltered.events.filter(
+            ({ source, sourceId }) =>
+              source !== 'communicationLog' || sourceId !== purposeLogs[3].id
+          )
+        );
+        const result = await queryTimelineEventIndex({
+          ...params,
+          sources,
+          filters: [dateFilter, { topic: 'purpose', condition, query: [purposeA, purposeB] }],
+        });
+        expect(result.count).toBe(condition === 'is' ? 5 : 7);
+        expect(result.events.every(({ source }) => source === 'communicationLog')).toBe(true);
+      }
+    );
+
+    it.each(['is', 'is not'] as const)(
+      'does not expose communications to an unauthorized reader using %s',
+      async (condition) => {
+        jest.mocked(users.userById).mockResolvedValue({
+          id: user.id,
+          permissions: [{ regionId: params.regionId, scopeId: SCOPES.APPROVE_REPORTS }],
+        });
+        const response = await request(app)
+          .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
+          .query({ filters: JSON.stringify({ topic: 'purpose', condition, query: [purposeA] }) });
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ count: 0, events: [] });
+        expect(s3.getSignedDownloadUrl).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each([
+      { topic: 'purpose', condition: 'is', query: ['Unknown purpose'] },
+      { topic: 'purpose', condition: 'is', query: ["General Check-In') OR TRUE --"] },
+      { topic: 'purpose', condition: 'is', query: [] },
+      { topic: 'purpose', condition: 'contains', query: [purposeA] },
+      { topic: 'date', condition: 'is within', query: '03/03/2026-03/01/2026' },
+      { topic: 'date', condition: 'is on or after', query: '02/30/2026' },
+    ])('rejects invalid filters through the API: %j', async (filter) => {
+      const response = await request(app)
+        .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
+        .query({ filters: JSON.stringify(filter) });
+      expect(response.status).toBe(400);
+      expect(s3.getSignedDownloadUrl).not.toHaveBeenCalled();
+    });
   });
 
   it.each([
