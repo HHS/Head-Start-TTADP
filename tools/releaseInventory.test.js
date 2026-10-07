@@ -1239,9 +1239,7 @@ describe('the committed inventory against the recorded production space', () => 
   });
 
   it('suppresses only the findings the first reconciliation raised', () => {
-    expect(result.suppressed.map((s) => s.dispositionId).sort()).toEqual([
-      'INV-2026-0004',
-    ]);
+    expect(result.suppressed.map((s) => s.dispositionId).sort()).toEqual(['INV-2026-0004']);
   });
 
   /**

@@ -1,0 +1,4 @@
+/* ttahub-form-item caps its children at 500px; match the 30rem of the selects above */
+.usa-form-group.ttahub-form-item .ttahub-goal-and-context__goal-select {
+  max-width: 30rem;
+}
