@@ -1,13 +1,8 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
-import {
-  // act,
-  render,
-  screen,
-  // fireEvent,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
-// import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import moment from 'moment';
@@ -33,6 +28,7 @@ const coursesDefault = {
     headers: ['Oct-22', 'Nov-22', 'Dec-22'],
     courses: [
       {
+        id: 0,
         heading: 'Sample Course 1',
         isUrl: false,
         data: [
@@ -55,6 +51,7 @@ const coursesDefault = {
         ],
       },
       {
+        id: 1,
         heading: 'Sample Course 2',
         isUrl: false,
         data: [
@@ -85,6 +82,10 @@ const allRegions = 'region.in[]=1&region.in[]=2';
 const mockAnnounce = jest.fn();
 
 describe('Resources Dashboard page', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    history.replace('/');
+  });
   afterEach(() => fetchMock.restore());
   const renderResourcesDashboard = (user) => {
     render(
@@ -164,4 +165,83 @@ describe('Resources Dashboard page', () => {
     expect(alert).toBeVisible();
     expect(alert.textContent).toBe('Unable to fetch course data');
   });
+
+  it.each(['apply', 'remove', 'region permissions'])(
+    'resets course pagination when filters change via %s',
+    async (mutation) => {
+      const user = {
+        homeRegionId: 14,
+        permissions: [
+          { regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS },
+          { regionId: 2, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS },
+        ],
+      };
+      const initialRegions =
+        mutation === 'region permissions'
+          ? 'region.in[]=99&region.in[]=1'
+          : mutation === 'remove'
+            ? 'region.in[]=1'
+            : allRegions;
+      history.replace(`/?${initialRegions}`);
+      const filteredRegions = mutation === 'apply' ? 'region.in[]=1' : allRegions;
+      if (mutation === 'region permissions') {
+        window.sessionStorage.setItem('', '[]');
+        window.sessionStorage.setItem(
+          '-activityReportsTable-sorting',
+          JSON.stringify({ sortBy: '1', direction: 'desc', activePage: 2 })
+        );
+      }
+      const initialUrl = `${coursesUrl}?${initialRegions}`;
+      const filteredUrl = `${coursesUrl}?${filteredRegions}`;
+      const course = coursesDefault.coursesAssociatedWithActivityReports.courses[0];
+      fetchMock.get(initialUrl, {
+        coursesAssociatedWithActivityReports: {
+          headers: coursesDefault.coursesAssociatedWithActivityReports.headers,
+          courses: Array.from({ length: 11 }, (_, id) => ({
+            ...course,
+            id,
+            heading: `Initial Course ${id}`,
+          })),
+        },
+      });
+      fetchMock.get(filteredUrl, {
+        coursesAssociatedWithActivityReports: {
+          headers: coursesDefault.coursesAssociatedWithActivityReports.headers,
+          courses: [{ ...course, heading: 'Filtered Course' }],
+        },
+      });
+      renderResourcesDashboard(user);
+
+      if (mutation !== 'region permissions') {
+        await screen.findByText('Initial Course 0');
+        await userEvent.click(screen.getByRole('button', { name: /page 2/i }));
+      }
+      expect(await screen.findByText('Initial Course 10')).toBeVisible();
+
+      if (mutation === 'apply') {
+        await userEvent.click(screen.getByRole('button', { name: /open filters for this page/i }));
+        const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+        await userEvent.selectOptions(topic, 'region');
+        const [condition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+        await userEvent.selectOptions(condition, 'is');
+        await userEvent.selectOptions(
+          screen.getByRole('combobox', { name: 'Select region to filter by' }),
+          'Region 1'
+        );
+        await userEvent.click(
+          screen.getByRole('button', { name: /apply filters for course dashboard/i })
+        );
+      } else if (mutation === 'remove') {
+        await userEvent.click(
+          screen.getByRole('button', { name: /this button removes the filter: region is 1/i })
+        );
+      } else {
+        await userEvent.click(screen.getByRole('button', { name: /show filter with my regions/i }));
+      }
+
+      await waitFor(() => expect(fetchMock.called(filteredUrl)).toBe(true));
+      expect(await screen.findByText('Filtered Course')).toBeVisible();
+      expect(screen.queryByText('Initial Course 10')).not.toBeInTheDocument();
+    }
+  );
 });

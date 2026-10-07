@@ -13,7 +13,7 @@ import { currentUserId } from '../../services/currentUser';
 import { getCourseUrlWidgetData } from '../../services/dashboards/course';
 import { userById } from '../../services/users';
 
-const COURSE_DATA_CACHE_VERSION = 1.5;
+const COURSE_DATA_CACHE_VERSION = 1.6;
 
 const namespace = 'HANDLERS:COURSES';
 const logContext = {
