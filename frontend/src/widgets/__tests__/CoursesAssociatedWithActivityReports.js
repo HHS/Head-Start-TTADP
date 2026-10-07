@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
+import { readBlobAsText } from '../../testHelpers';
 import CoursesAssociatedWithActivityReports, {
   parseValue,
 } from '../CoursesAssociatedWithActivityReports';
@@ -427,6 +428,131 @@ describe('iPD Courses Associated with Activity Reports', () => {
     // Make sure there is a link with the name 'Download'.
     downloadLink = document.querySelector('[download="courses.csv"]');
     expect(downloadLink).not.toBeNull();
+  });
+
+  it('exports only individually selected rows, including row zero, after sorting and paging', async () => {
+    const createObjectURL = jest.fn(() => 'blob:courses');
+    window.URL = { ...window.URL, createObjectURL, revokeObjectURL: jest.fn() };
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const data = {
+      headers: ['Apr-24'],
+      courses: [0, 1, 2].map((id) => ({
+        id,
+        heading: `Course ${id}`,
+        isUrl: false,
+        data: [
+          { title: 'Apr-24', value: id + 1 },
+          { title: 'Total', value: id + 1 },
+        ],
+      })),
+    };
+
+    try {
+      renderCoursesAssociatedWithActivityReports(data, 1);
+      const firstCheckbox = await screen.findByRole('checkbox', { name: 'Select Course 0' });
+      await userEvent.click(firstCheckbox);
+      expect(firstCheckbox).toBeChecked();
+
+      await userEvent.click(screen.getByRole('button', { name: /page 2/i }));
+      const secondCheckbox = await screen.findByRole('checkbox', { name: 'Select Course 1' });
+      expect(secondCheckbox).not.toBeChecked();
+      await userEvent.click(secondCheckbox);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: /course name\. activate to sort ascending/i })
+      );
+      expect(await screen.findByRole('checkbox', { name: 'Select Course 0' })).toBeChecked();
+
+      await userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      await userEvent.click(screen.getByRole('button', { name: /export selected rows/i }));
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+      await expect(readBlobAsText(createObjectURL.mock.calls[0][0])).resolves.toBe(
+        'Course,Apr-24,Total\nCourse 0,1,1\nCourse 1,2,2'
+      );
+
+      await userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      await userEvent.click(screen.getByRole('button', { name: /export table/i }));
+      await expect(readBlobAsText(createObjectURL.mock.calls[1][0])).resolves.toBe(
+        'Course,Apr-24,Total\nCourse 0,1,1\nCourse 1,2,2\nCourse 2,3,3'
+      );
+    } finally {
+      clickSpy.mockRestore();
+      document.querySelectorAll('[download="courses.csv"]').forEach((link) => {
+        link.remove();
+      });
+    }
+  });
+
+  it('exports backend-shaped date headers using their display names', async () => {
+    const createObjectURL = jest.fn(() => 'blob:courses');
+    window.URL = { ...window.URL, createObjectURL, revokeObjectURL: jest.fn() };
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const data = {
+      headers: [
+        { name: 'April 2024', displayName: 'Apr-24' },
+        { name: 'May 2024', displayName: 'May-24' },
+      ],
+      courses: [
+        {
+          id: 0,
+          heading: 'Course 0',
+          isUrl: false,
+          data: [
+            { title: 'April 2024', value: 1 },
+            { title: 'May 2024', value: 2 },
+            { title: 'Total', value: 3 },
+          ],
+        },
+      ],
+    };
+
+    try {
+      renderCoursesAssociatedWithActivityReports(data);
+      await userEvent.click(await screen.findByRole('checkbox', { name: 'Select Course 0' }));
+
+      await userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      await userEvent.click(screen.getByRole('button', { name: /export selected rows/i }));
+      await userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+      await userEvent.click(screen.getByRole('button', { name: /export table/i }));
+
+      const expected = 'Course,Apr-24,May-24,Total\nCourse 0,1,2,3';
+      await expect(readBlobAsText(createObjectURL.mock.calls[0][0])).resolves.toBe(expected);
+      await expect(readBlobAsText(createObjectURL.mock.calls[1][0])).resolves.toBe(expected);
+    } finally {
+      clickSpy.mockRestore();
+      document.querySelectorAll('[download="courses.csv"]').forEach((link) => {
+        link.remove();
+      });
+    }
+  });
+
+  it('clears selection when a new result set reuses row ids', async () => {
+    const { rerender } = render(
+      <CoursesAssociatedWithActivityReports data={mockSortData} loading={false} />
+    );
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Select Sample Course 2' }));
+    expect(screen.getByRole('checkbox', { name: 'Select Sample Course 2' })).toBeChecked();
+
+    const filteredData = {
+      ...mockSortData,
+      courses: [{ ...mockSortData.courses[0], heading: 'Different Course' }],
+    };
+    rerender(<CoursesAssociatedWithActivityReports data={filteredData} loading={false} />);
+    expect(
+      await screen.findByRole('checkbox', { name: 'Select Different Course' })
+    ).not.toBeChecked();
+  });
+
+  it('clears selection when filters change even if no new data arrives', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+    const checkbox = await screen.findByRole('checkbox', { name: 'Select Sample Course 2' });
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    await userEvent.click(screen.getByTestId('reset-pagination'));
+    expect(
+      await screen.findByRole('checkbox', { name: 'Select Sample Course 2' })
+    ).not.toBeChecked();
   });
 
   it('checking and then unchecking the select all checkbox', async () => {
