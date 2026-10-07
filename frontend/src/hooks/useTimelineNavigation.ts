@@ -38,11 +38,18 @@ function savedPosition(state: TimelineLocationState): TimelinePosition | null {
   return position;
 }
 
-/** Restore this browser history entry without adding an entry for each scroll or API slice. */
+/**
+ * Restore this browser history entry without adding an entry for each scroll or API slice.
+ *
+ * `filterQuery` keys the saved position. Pass the canonical URL query string rather than
+ * `filters`: panel filters can change shape on the URL round trip (a date "is" value comes
+ * back as an array), so their serialized form would not match after Back or refresh.
+ */
 export default function useTimelineNavigation(
   recipientId: string,
   regionId: string,
-  filters: string[]
+  filters: string[],
+  filterQuery: string
 ) {
   const history = useHistory<TimelineLocationState>();
   const location = useLocation<TimelineLocationState>();
@@ -62,7 +69,7 @@ export default function useTimelineNavigation(
     regionId,
     direction,
     excludeMultiRecipientCommunications,
-    filters,
+    filterQuery,
   ]);
   const timeline = useRecipientTimeline(recipientId, regionId, {
     direction,

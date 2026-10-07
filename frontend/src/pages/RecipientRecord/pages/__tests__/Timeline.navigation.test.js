@@ -4,7 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Link, Route, Router } from 'react-router-dom';
-import { TIMELINE_FILTER_CONFIG } from '../../../../components/filter/timelineFilters';
+import {
+  serializeTimelineFilter,
+  TIMELINE_FILTER_CONFIG,
+} from '../../../../components/filter/timelineFilters';
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
 import useFilters from '../../../../hooks/useFilters';
 import UserContext from '../../../../UserContext';
@@ -36,7 +39,7 @@ const view = {
   excludeMultiRecipientCommunications: false,
 };
 const position = {
-  queryKey: JSON.stringify(['401', '1', 'desc', false, []]),
+  queryKey: JSON.stringify(['401', '1', 'desc', false, '']),
   loadedPages: 3,
   eventKey: JSON.stringify(['activityReport', 32]),
   top: -20,
@@ -60,6 +63,17 @@ const renderTimeline = (history) =>
   );
 const scrollTo = (top) => {
   Object.defineProperty(window, 'scrollY', { configurable: true, value: top });
+};
+// Swap the mocked useFilters for the real one, which reads and writes the URL.
+const mockRealFilters = () => {
+  const realUseFilters = jest.requireActual('../../../../hooks/useFilters').default;
+  const latest = {};
+  useFilters.mockImplementation((...args) => {
+    const result = realUseFilters(...args);
+    latest.setFilters = result.setFilters;
+    return result;
+  });
+  return latest;
 };
 
 describe('timeline navigation restoration', () => {
@@ -319,13 +333,7 @@ describe('timeline navigation restoration', () => {
     const nextFilters = [
       { id: 'next', topic: 'eventType', condition: 'is', query: ['Email communication'] },
     ];
-    let setFilters;
-    const realUseFilters = jest.requireActual('../../../../hooks/useFilters').default;
-    useFilters.mockImplementation((...args) => {
-      const result = realUseFilters(...args);
-      setFilters = result.setFilters;
-      return result;
-    });
+    const realFilters = mockRealFilters();
     getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
       Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
     );
@@ -340,7 +348,7 @@ describe('timeline navigation restoration', () => {
       scrollTo(3120);
       window.dispatchEvent(new Event('pagehide'));
     });
-    act(() => setFilters(nextFilters));
+    act(() => realFilters.setFilters(nextFilters));
     await waitFor(() => expect(history.location.search).toContain('Email'));
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(25));
     scrollTo(0);
@@ -356,11 +364,63 @@ describe('timeline navigation restoration', () => {
   });
 
   it.each([
+    {
+      name: 'a select filter with two values',
+      filter: {
+        id: 'panel',
+        topic: 'eventType',
+        condition: 'is',
+        query: ['Email communication', 'TTA activity'],
+      },
+    },
+    {
+      name: 'a date filter with "is"',
+      filter: { id: 'panel', topic: 'date', condition: 'is', query: '07/07/2026' },
+    },
+  ])('restores on Back after $name was applied from the panel', async ({ filter }) => {
+    // Back remounts with filters read from the URL. A date "is" value comes back as an array,
+    // and the select case guards the multi-value merge in queryStringToFilters.
+    const realFilters = mockRealFilters();
+    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
+      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    );
+    const urlFilters = [{ id: 'url', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    const history = createMemoryHistory({
+      initialEntries: [`/timeline?${filtersToQueryString(urlFilters)}`],
+    });
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 25' });
+    getRecipientTimeline.mockClear();
+    act(() => realFilters.setFilters([filter]));
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ filters: [serializeTimelineFilter(filter)], offset: 0 })
+      )
+    );
+    await screen.findByRole('heading', { name: 'Event 25' });
+    userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
+    await screen.findByRole('heading', { name: 'Event 50' });
+    act(() => scrollTo(3120));
+    userEvent.click(screen.getByRole('link', { name: 'View details' }));
+    expect(screen.getByText('Detail page')).toBeVisible();
+    scrollTo(0);
+    getRecipientTimeline.mockClear();
+    act(() => history.goBack());
+    await waitFor(() =>
+      expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
+    );
+    expect(history.location.search).toBe(`?${filtersToQueryString([filter])}`);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25]);
+  });
+
+  it.each([
     { loadedPages: -1 },
     { loadedPages: Infinity },
     { scrollY: NaN },
-    { queryKey: JSON.stringify(['402', '1', 'desc', false, []]) },
-    { queryKey: JSON.stringify(['401', '1', 'desc', false, ['different filter']]) },
+    { queryKey: JSON.stringify(['402', '1', 'desc', false, '']) },
+    { queryKey: JSON.stringify(['401', '1', 'desc', false, 'eventType.in[]=Goal%20added']) },
   ])('ignores invalid or mismatched saved positions: %j', async (changes) => {
     getRecipientTimeline.mockResolvedValueOnce({ count: 100, events: batch(1, 25) });
     renderTimeline(

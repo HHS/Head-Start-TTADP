@@ -18,6 +18,7 @@ import TimelineEvent from '../../../components/TimelineEvent';
 import useFilters from '../../../hooks/useFilters';
 import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import './Timeline.css';
 
 const FILTER_KEY = 'timeline-filters';
@@ -63,6 +64,8 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     () => supportedFilters.map(serializeTimelineFilter),
     [supportedFilters]
   );
+  // Matches the URL encoding, so panel filters and filters read back from the URL share a key.
+  const filterQuery = useMemo(() => filtersToQueryString(supportedFilters), [supportedFilters]);
 
   const {
     events,
@@ -76,7 +79,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     setView,
     listRef,
     restoring,
-  } = useTimelineNavigation(recipientId, regionId, serializedFilters);
+  } = useTimelineNavigation(recipientId, regionId, serializedFilters, filterQuery);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
