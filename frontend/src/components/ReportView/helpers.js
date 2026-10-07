@@ -105,7 +105,6 @@ export const reportDataPropTypes = {
     targetPopulations: PropTypes.arrayOf(PropTypes.string),
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
-        status: PropTypes.string,
         user: PropTypes.shape({
           fullName: PropTypes.string,
         }),
