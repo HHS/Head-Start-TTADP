@@ -141,6 +141,22 @@ describe('event service', () => {
         })
       ).rejects.toThrow(/eventId cannot be null/);
     });
+
+    // Schema validation lives in the route middleware
+    // (src/routes/events/middleware.ts), not here. The service is still reachable
+    // from the CSV import and CLI tools, so it must keep accepting a blob that
+    // carries keys the current allowlist does not declare.
+    it('persists a data blob containing legacy keys', async () => {
+      const created = await createAnEventWithData(98_989, {
+        status: 'active',
+        someLegacyKeyNoLongerInTheForm: 'still here',
+      });
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.data.someLegacyKeyNoLongerInTheForm).toEqual('still here');
+
+      await destroyEvent(created.id);
+    });
   });
 
   describe('updateEvent', () => {
@@ -175,6 +191,82 @@ describe('event service', () => {
       // The dedicated eventId column is the single source of truth and is
       // immutable, so it remains stable even when the request omits it.
       expect(updated.eventId).toBe(originalEventId);
+
+      await destroyEvent(created.id);
+    });
+
+    // The route middleware narrows the request to the schema allowlist, and the
+    // TR form round-trips the whole blob back to us, so a save that replaced the
+    // column outright would permanently drop stored keys the allowlist does not
+    // declare. Merge instead, matching updateSession.
+    it('keeps stored data keys the request does not carry', async () => {
+      const created = await createAnEventWithData(98_989, {
+        status: 'active',
+        eventName: 'original name',
+        someLegacyKeyNoLongerInTheForm: 'still here',
+      });
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active', eventName: 'renamed' },
+      });
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.data.eventName).toEqual('renamed');
+      expect(reloaded.data.someLegacyKeyNoLongerInTheForm).toEqual('still here');
+
+      await destroyEvent(created.id);
+    });
+
+    it('keeps stored data keys through a status change', async () => {
+      const created = await createAnEventWithData(98_989, {
+        status: 'active',
+        someLegacyKeyNoLongerInTheForm: 'still here',
+      });
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: TRS.SUSPENDED },
+      });
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.data.status).toEqual(TRS.SUSPENDED);
+      expect(reloaded.data.someLegacyKeyNoLongerInTheForm).toEqual('still here');
+
+      await destroyEvent(created.id);
+    });
+
+    // The middleware strip list keeps these out of new requests, but rows saved
+    // before the schema existed can still carry them; merging must not
+    // resurrect them.
+    it('drops hydrated keys a previous save persisted into the blob', async () => {
+      const created = await createAnEventWithData(98_989, {
+        status: 'active',
+        sessionReports: [{ id: 1 }],
+        version: 2,
+        region: { id: 1 },
+      });
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active' },
+      });
+
+      const reloaded = await db.EventReportPilot.findByPk(created.id);
+      expect(reloaded.data.sessionReports).toBeUndefined();
+      expect(reloaded.data.version).toBeUndefined();
+      expect(reloaded.data.region).toBeUndefined();
+      expect(reloaded.data.eventId).toBeUndefined();
+      expect(reloaded.eventId).toEqual(created.eventId);
 
       await destroyEvent(created.id);
     });

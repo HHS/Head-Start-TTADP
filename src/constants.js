@@ -32,7 +32,54 @@ const IMPORT_DATA_STATUSES = {
 
 const DATE_FORMAT = 'MM/DD/YYYY';
 
+/**
+ * The authoritative backend list of date formats a user can type into a form
+ * date picker. ControlledDatePicker hands react-hook-form whatever was typed —
+ * the USWDS external input passes its raw value straight through, and only a
+ * calendar *click* arrives pre-formatted — so anything the frontend's
+ * isValidDate accepts can reach the API.
+ *
+ * Kept identical to frontend/src/utils.js SUPPORTED_DATE_FORMATS, enforced by
+ * the parity test in src/constants.test.js rather than by this comment. Also
+ * shared with src/lib/safeParse.ts so the parser that writes the dedicated
+ * date columns and the route validators cannot disagree.
+ *
+ * Accepting a format is only half the contract: routes normalize to
+ * DATE_FORMAT before the value is stored (see validateDisplayDate in
+ * src/routes/events/middleware.ts), because src/scopes/trainingReports/dateUtils.js
+ * and src/services/event.ts only understand that one format and silently treat
+ * anything else as NULL.
+ */
+const DISPLAY_DATE_FORMATS = [
+  // Slash formats
+  'MM/DD/YYYY',
+  'M/D/YYYY',
+  'M/DD/YYYY',
+  'MM/D/YYYY',
+  'MM/DD/YY',
+  'M/D/YY',
+  'M/DD/YY',
+  'MM/D/YY',
+
+  // Dash formats
+  'YYYY-MM-DD',
+  'YYYY-M-D',
+  'YYYY-M-DD',
+  'YYYY-MM-D',
+
+  // Dot formats
+  'M.D.YYYY',
+  'MM.D.YYYY',
+  'M.DD.YYYY',
+  'MM.DD.YYYY',
+  'M.D.YY',
+  'MM.DD.YY',
+];
+
 const REPORTS_PER_PAGE = 10;
+// AR eligibility after project end when an inactive grant has no inactivation date.
+// Proposed value for TTAHUB-5860; Product must confirm before merge.
+const AR_GRANT_END_DATE_GRACE_DAYS = 365;
 const RECIPIENTS_PER_PAGE = 12;
 const GOALS_PER_PAGE = 5;
 
@@ -464,12 +511,14 @@ const VALIDATION_ALERT_SEVERITY = {
 };
 
 module.exports = {
+  AR_GRANT_END_DATE_GRACE_DAYS,
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
   IMPORT_STATUSES,
   IMPORT_DATA_STATUSES,
   DATE_FORMAT,
+  DISPLAY_DATE_FORMATS,
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,

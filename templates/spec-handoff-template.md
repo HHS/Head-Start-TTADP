@@ -8,7 +8,6 @@ Copy to specs/<feature-slug>/handoff.md, fill it in, then handoff to an agent:
 # Spec handoff: <feature name>
 
 **Slug:** <kebab-case-name>
-**Filled by:** <name> · **Date:** <YYYY-MM-DD>
 
 ---
 
