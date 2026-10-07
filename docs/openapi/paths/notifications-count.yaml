@@ -1,0 +1,34 @@
+get:
+  summary: Count notifications visible to the authenticated user
+  description: Includes personal and global notifications, using only the current user's state. Defaults to unarchived notifications. Counts are not paginated. Boolean filters also accept the shared client serializer's singleton array form (viewed.in[]=false and archived.in[]=false).
+  parameters:
+    - in: query
+      name: viewed.in
+      schema:
+        type: boolean
+      description: Whether viewedAt is set. Missing user state is unviewed.
+    - in: query
+      name: archived.in
+      schema:
+        type: boolean
+        default: false
+      description: Whether archivedAt is set. Missing user state is unarchived.
+  responses:
+    '200':
+      description: Matching notification count
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [count, rows]
+            properties:
+              count:
+                type: integer
+                minimum: 0
+              rows:
+                type: array
+                maxItems: 0
+                items:
+                  type: object
+    '400':
+      description: State filters must each contain exactly one true or false value.
