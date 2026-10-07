@@ -1543,6 +1543,52 @@ describe('SessionReportForm', () => {
     expect(spy).toHaveBeenCalledWith('/training-report/1/session/1/session-summary');
   });
 
+  it('keeps an assigned approver on the editable session section after submission', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const historySpy = jest.spyOn(history, 'push');
+
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      approverId: 3,
+      submitted: true,
+      collabComplete: true,
+      pocComplete: true,
+      data: {
+        ...istAndPocFields,
+        sessionName: 'Submitted session',
+        approverId: 3,
+        collabComplete: true,
+        pocComplete: true,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [],
+        data: {
+          eventName: 'Submitted event',
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    const approverUser = {
+      user: { id: 3, permissions: [], name: 'Session approver', roles: [] },
+    };
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1', approverUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+    expect(await screen.findByLabelText(/Session name/i)).toBeVisible();
+    expect(historySpy).not.toHaveBeenCalledWith('/training-report/1/session/1/review');
+  });
+
   describe('onReview approval workflow', () => {
     it('successfully approves session when approvalStatus is "approved"', async () => {
       const url = join(sessionsUrl, 'id', '1');

@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -36,8 +37,10 @@ const Review = ({
   }
 
   const { getValues } = useFormContext();
-  const { id, eventId, submitter } = getValues();
+  const { id, eventId, submitter, status } = getValues();
   const history = useHistory();
+  const approverCanEdit =
+    isSubmitted && !isNeedsAction && status !== TRAINING_REPORT_STATUSES.COMPLETE;
 
   return (
     <>
@@ -70,7 +73,7 @@ const Review = ({
               },
             }))}
             multiselectable
-            canEdit={!isApprover}
+            canEdit={!isApprover || approverCanEdit}
             doesStartExpanded={isApprover}
           />
         </div>
