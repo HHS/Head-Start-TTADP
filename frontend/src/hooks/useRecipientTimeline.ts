@@ -32,6 +32,7 @@ export default function useRecipientTimeline(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hasMore, setHasMore] = useState(true);
+  const [loadedPages, setLoadedPages] = useState(0);
   const requestRef = useRef<() => void>(() => {});
   const loadMore = useCallback(() => requestRef.current(), []);
 
@@ -46,6 +47,7 @@ export default function useRecipientTimeline(
     setHasMore(true);
     setLoading(true);
     setError('');
+    setLoadedPages(0);
   }
 
   useDeepCompareEffectNoCheck(() => {
@@ -86,6 +88,7 @@ export default function useRecipientTimeline(
         setEvents((previous) => [...previous, ...nextEvents]);
         setCount(total);
         setHasMore(!exhausted);
+        setLoadedPages((previous) => previous + 1);
       } catch (_err) {
         if (!cancelled) setError('Unable to load the TTA timeline.');
       } finally {
@@ -109,5 +112,6 @@ export default function useRecipientTimeline(
     error,
     hasMore,
     loadMore,
+    loadedPages,
   };
 }

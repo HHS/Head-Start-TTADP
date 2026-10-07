@@ -172,7 +172,9 @@ describe('Recipient Record - TTA Timeline', () => {
     getRecipientTimeline.mockResolvedValueOnce({ count: 'many', events: batch(1, 2) });
     renderTimeline();
     expect(await screen.findByTestId('timeline-results')).toHaveTextContent('2 timeline events');
-    expect(screen.getByRole('status')).toHaveTextContent('End of timeline.');
+    expect(screen.getByRole('status')).toHaveTextContent('2 events loaded.');
+    expect(screen.getByText('2 events loaded.')).toHaveClass('usa-sr-only');
+    expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
     expect(getRecipientTimeline).toHaveBeenCalledTimes(1);
   });
 
@@ -193,7 +195,9 @@ describe('Recipient Record - TTA Timeline', () => {
     );
     expect(screen.getAllByRole('listitem')).toHaveLength(27);
     expect(screen.getByTestId('timeline-results')).toHaveTextContent('27 timeline events');
-    expect(screen.getByRole('status')).toHaveTextContent('End of timeline.');
+    expect(screen.getByRole('status')).toHaveTextContent('27 events loaded.');
+    expect(screen.getByText('27 events loaded.')).toHaveClass('usa-sr-only');
+    expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Load more events' })).not.toBeInTheDocument();
   });
 
@@ -256,7 +260,7 @@ describe('Recipient Record - TTA Timeline', () => {
     );
   });
 
-  it('loads the next slice on scroll, keeps existing events visible, and announces the end', async () => {
+  it('loads the next slice on scroll, keeps existing events visible, and ends without visible wording', async () => {
     let intersect;
     const disconnect = jest.fn();
     const originalObserver = window.IntersectionObserver;
@@ -294,7 +298,9 @@ describe('Recipient Record - TTA Timeline', () => {
       );
       await act(async () => resolveNext({ count: 27, events: batch(25, 2) }));
       expect(screen.getAllByRole('listitem')).toHaveLength(26);
-      expect(screen.getByRole('status')).toHaveTextContent('End of timeline.');
+      expect(screen.getByRole('status')).toHaveTextContent('26 events loaded.');
+      expect(screen.getByText('26 events loaded.')).toHaveClass('usa-sr-only');
+      expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Load more events' })).not.toBeInTheDocument();
       expect(disconnect).toHaveBeenCalled();
     } finally {
