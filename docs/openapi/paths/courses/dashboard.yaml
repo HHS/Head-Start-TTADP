@@ -1,0 +1,72 @@
+get:
+  tags:
+    - courses
+  operationId: courseDashboard
+  description: Gets monthly counts of approved Activity Reports citing EEP courses.
+  responses:
+    200:
+      description: Course dashboard data for the requested Activity Report filters.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              coursesAssociatedWithActivityReports:
+                type: object
+                properties:
+                  headers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: April 2024
+                        displayName:
+                          type: string
+                          example: Apr-24
+                  courses:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                      properties:
+                        id:
+                          type: integer
+                          minimum: 0
+                          description: >
+                            Unique row identifier within this response, used for
+                            checkbox selection and selected-row exports. Remains
+                            attached to the row when sorting or paging, but is
+                            not a persistent Course database ID.
+                        heading:
+                          type: string
+                        course:
+                          type: string
+                        title:
+                          type: string
+                        url:
+                          type: string
+                        sortBy:
+                          type: string
+                        total:
+                          type: string
+                        isUrl:
+                          type: boolean
+                          example: false
+                        data:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              title:
+                                type: string
+                                description: Month label or Total.
+                              value:
+                                type: string
+                                description: Report count or a dash before course collection began.
+                              date:
+                                type: string
+                                format: date
+                                description: Month start date, omitted for the Total cell.
