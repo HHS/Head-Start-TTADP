@@ -117,6 +117,25 @@ describe('timeline navigation restoration', () => {
     expect(screen.queryByText('Restoring timeline position…')).not.toBeInTheDocument();
   });
 
+  it('does not replace location state while at the top, even after several slices', async () => {
+    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
+      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    );
+    const history = historyAt({ unrelated: 'preserved' });
+    const { key } = history.location;
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 25' });
+    for (const end of [50, 75]) {
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
+      await screen.findByRole('heading', { name: `Event ${end}` });
+    }
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+    expect(history.location.key).toBe(key);
+    expect(history.location.state).toEqual({ unrelated: 'preserved' });
+  });
+
   it('flushes pending scroll saves before a link and restores on browser Back', async () => {
     getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
       Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
@@ -152,10 +171,13 @@ describe('timeline navigation restoration', () => {
     userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'asc');
     userEvent.click(screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' }));
     await waitFor(() =>
-      expect(history.location.state.timelinePosition.queryKey).toBe(
-        JSON.stringify(['401', '1', 'asc', true, []])
-      )
+      expect(history.location.state.timelineView).toEqual({
+        ...view,
+        direction: 'asc',
+        excludeMultiRecipientCommunications: true,
+      })
     );
+    await screen.findByRole('heading', { name: 'Event 1' });
     const saved = history.location.state;
     unmount();
     getRecipientTimeline.mockClear();
@@ -263,7 +285,8 @@ describe('timeline navigation restoration', () => {
     await act(async () => resolveOld({ count: 100, events: batch(26, 25) }));
     expect(window.scrollTo).not.toHaveBeenCalled();
     expect(screen.getAllByRole('article')).toHaveLength(1);
-    expect(history.location.state.timelinePosition.loadedPages).toBe(1);
+    expect(history.location.state.timelinePosition).toBeUndefined();
+    expect(history.location.state.timelineView.direction).toBe('asc');
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
       '1',

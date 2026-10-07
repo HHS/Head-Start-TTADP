@@ -136,9 +136,14 @@ export default function useTimelineNavigation(
       scrollY: window.scrollY,
     };
     const state = history.location.state;
+    // The top of the timeline restores itself, however many slices infinite scroll loaded.
+    // Skipping it avoids replacing location state while the recipient record is still loading,
+    // which would refetch the recipient.
+    const nothingToRestore = position.scrollY === 0 && !state?.timelinePosition;
     if (
-      JSON.stringify(state?.timelinePosition) === JSON.stringify(position) &&
-      JSON.stringify(state?.timelineView) === JSON.stringify(view)
+      nothingToRestore ||
+      (JSON.stringify(state?.timelinePosition) === JSON.stringify(position) &&
+        JSON.stringify(state?.timelineView) === JSON.stringify(view))
     )
       return;
     history.replace({
@@ -147,6 +152,7 @@ export default function useTimelineNavigation(
     });
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadedPages and queryKey trigger a save after each slice or query change
   useEffect(() => {
     if (!loading && !error && !restoring) saveRef.current();
   }, [loading, error, restoring, loadedPages, queryKey]);
