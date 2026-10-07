@@ -13,7 +13,10 @@ const mockReport = {
   activityRecipientType: 'recipient',
   activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
   targetPopulations: ['Population 1', 'Population 2'],
-  approvers: [{ user: { fullName: 'Manager 1' } }, { user: { fullName: 'Manager 2' } }],
+  approvers: [
+    { status: 'approved', user: { fullName: 'Manager 1' } },
+    { status: 'submitted', user: { fullName: 'Manager 2' } },
+  ],
   activityReportCollaborators: [{ fullName: 'Collaborator 1' }, { fullName: 'Collaborator 2' }],
   participants: ['Participant 1', 'Participant 2'],
   language: ['English', 'Spanish'],
@@ -68,6 +71,13 @@ describe('SubmittedReport', () => {
     expect(screen.getByText('Author Name')).toBeInTheDocument();
     expect(screen.getByText('Collaborator 1, Collaborator 2')).toBeInTheDocument();
     expect(screen.getByText('Manager 1, Manager 2')).toBeInTheDocument();
+  });
+
+  it('renders each approver status in the submitted report view', () => {
+    render(<SubmittedReport data={mockReport} />);
+
+    expect(screen.getByText('Approved by Manager 1')).toBeInTheDocument();
+    expect(screen.getByText('Pending approval from Manager 2')).toBeInTheDocument();
   });
 
   it('renders hybrid delivery method with virtual participants', () => {

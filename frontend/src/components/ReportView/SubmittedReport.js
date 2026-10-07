@@ -3,6 +3,7 @@ import React from 'react';
 import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../../Constants';
 import Container from '../Container';
 import ReadOnlyContent from '../ReadOnlyContent';
+import ApproverStatusList from '../../pages/ActivityReport/Pages/components/ApproverStatusList';
 import {
   calculateGoalsAndObjectives,
   formatDelivery,
@@ -100,6 +101,9 @@ export default function SubmittedReport({ data }) {
         <p>
           <strong>Managers:</strong> {approvingManagers}
         </p>
+        <div className="no-print">
+          <ApproverStatusList approverStatus={data.approvers} />
+        </div>
         <p className="no-print">
           <strong>Date created:</strong> {createdAt}
         </p>
