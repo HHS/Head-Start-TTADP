@@ -5,6 +5,7 @@ import {
   NOTIFICATION_TYPES,
 } from '../../constants';
 import db from '../../models';
+import { stateFilter } from '../../scopes/notifications/state';
 import {
   archiveApproverApprovedNotifications,
   createReportApprovedNotificationForApprovers,
@@ -1485,6 +1486,45 @@ describe('Notification service', () => {
   });
 
   describe('getNotifications', () => {
+    it('counts only this user’s unread active notifications across all pages and completion states', async () => {
+      const own = await createTrackedNotification();
+      const global = await createTrackedNotification({ userId: null });
+      const other = await createTrackedNotification({ userId: otherUser.id });
+      const viewed = await createTrackedNotification();
+      const archived = await createTrackedNotification();
+      await Promise.all([
+        updateNotificationState(global.id, otherUser.id, {
+          viewedAt: '2026-09-01',
+          archivedAt: '2026-09-01',
+        }),
+        updateNotificationState(viewed.id, user.id, { viewedAt: '2026-09-01' }),
+        updateNotificationState(archived.id, user.id, { archivedAt: '2026-09-01' }),
+      ]);
+      const ids = { id: [own.id, global.id, other.id, viewed.id, archived.id] };
+      const scopes = [
+        ids,
+        stateFilter('viewedAt', ['false']),
+        stateFilter('archivedAt', ['false']),
+      ];
+      const count = () => getNotifications(user.id, scopes, { limit: 1, offset: 100 }, true);
+      expect(await count()).toEqual({ count: 2, rows: [] });
+      await updateNotificationState(own.id, user.id, { viewedAt: '2026-09-02' });
+      expect(await count()).toEqual({ count: 1, rows: [] });
+      expect((await getNotifications(user.id, [ids])).rows.map((row) => row.id)).toContain(own.id);
+      await updateNotificationState(global.id, user.id, { viewedAt: '2026-09-02' });
+      expect(await count()).toEqual({ count: 0, rows: [] });
+      await archiveNotificationsByUserEntityAndType(own.entityId, user.id, own.type);
+      expect((await getNotifications(user.id, [{ id: own.id }])).rows).toEqual([]);
+      expect(
+        await getNotifications(
+          user.id,
+          [ids, stateFilter('archivedAt', ['true'])],
+          { archived: true },
+          true
+        )
+      ).toEqual({ count: 2, rows: [] });
+    });
+
     it('returns user-scoped notifications for the user', async () => {
       const ownNotification = await createTrackedNotification({ triggeredAt: '2026-05-01' });
       const otherNotification = await createTrackedNotification({
