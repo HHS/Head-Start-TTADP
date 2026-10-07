@@ -13,7 +13,6 @@ import IncompletePages from '../../../../../components/IncompletePages';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import NetworkContext from '../../../../../NetworkContext';
 import UserContext from '../../../../../UserContext';
-import ApproverStatusList from '../../components/ApproverStatusList';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import ApproverSelect from './components/ApproverSelect';
@@ -26,7 +25,6 @@ const Draft = ({
   incompletePages,
   reportId,
   displayId,
-  approverStatusList,
   lastSaveTime,
   creatorRole,
   grantsMissingMonitoring,
@@ -193,13 +191,6 @@ const Draft = ({
             onSaveDraft={onSaveForm}
           />
         )}
-        <div
-          className={
-            approverStatusList && approverStatusList.length > 0 ? 'margin-top-3' : 'margin-top-0'
-          }
-        >
-          <ApproverStatusList approverStatus={approverStatusList} />
-        </div>
         <Button
           className="draft-button-margin"
           disabled={!connectionActive}
@@ -262,12 +253,6 @@ Draft.propTypes = {
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
   reportId: PropTypes.number.isRequired,
   displayId: PropTypes.string.isRequired,
-  approverStatusList: PropTypes.arrayOf(
-    PropTypes.shape({
-      approver: PropTypes.string,
-      status: PropTypes.string,
-    })
-  ).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
