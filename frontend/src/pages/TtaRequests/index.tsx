@@ -63,7 +63,7 @@ export default function TtaRequests(): React.ReactElement {
             <h1 className="landing margin-top-0 margin-bottom-0">
               {`TTA requests - ${regionLabel()}`}
             </h1>
-            <AddTtaRequestButton label="Add request" />
+            <AddTtaRequestButton label="Add request" to="/tta-requests/new" />
           </div>
         </Grid>
         <Grid col={12}>
