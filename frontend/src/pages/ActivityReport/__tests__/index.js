@@ -84,6 +84,27 @@ describe('ActivityReport', () => {
   });
 
   describe('allow approvers to edit', () => {
+    it.each([
+      ['creator', { userId: 3 }],
+      ['collaborator', { activityReportCollaborators: [{ userId: 3 }] }],
+    ])(
+      'shows the resubmission form when the %s is also an approver',
+      async (_participant, reportUpdates) => {
+        const data = {
+          ...formData(),
+          ...reportUpdates,
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approvers: [{ status: null, user: { id: 3 } }],
+        };
+        fetchMock.get('/api/activity-reports/1', data);
+
+        renderActivityReport(1, 'review', null, 3);
+
+        expect(await screen.findByRole('button', { name: 'Update report' })).toBeVisible();
+      }
+    );
+
     it('does not allow approvers to navigate and change the report if the report is not submitted', async () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {

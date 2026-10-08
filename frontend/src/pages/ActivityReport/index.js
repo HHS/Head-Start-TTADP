@@ -276,9 +276,12 @@ function ActivityReport({ match, location, region }) {
           report.activityReportCollaborators.find((u) => u.userId === user.id);
 
         const isAuthor = report.userId === user.id;
+        const isParticipant = isCollaborator || isAuthor;
 
         // The report can be edited if its in draft OR needs_action state.
-        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+        const isMatchingApprover = isParticipant
+          ? []
+          : report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         setIsCollaboratorOrCreator(isCollaborator || isAuthor);
 
@@ -356,15 +359,12 @@ function ActivityReport({ match, location, region }) {
         // Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
 
-        if (isMatchingApprover && isMatchingApprover.length > 0) {
-          // This user is an approver on the report.
-          updateIsApprover(true);
-
-          // This user is a approver on the report and has a pending approval.
-          if (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending') {
-            updateIsPendingApprover(true);
-          }
-        }
+        updateIsApprover(isMatchingApprover.length > 0);
+        updateIsPendingApprover(
+          isMatchingApprover.some(
+            (approver) => approver.status === null || approver.status === 'pending'
+          )
+        );
 
         const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
