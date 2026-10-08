@@ -1,10 +1,10 @@
 {
   "semgrepVersion": "1.163.0",
   "configs": ["p/default"],
-  "include": [".circleci", "bin", "frontend/src", "packages/common", "src", "tools"],
+  "include": [".circleci", "frontend/src", "packages/common", "src", "tools"],
   "exclude": [
     ".git",
-    "bin/latest_backup.sh",
+    "bin",
     "build",
     "coverage",
     "frontend/coverage",
