@@ -7,9 +7,6 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      // Move AR 61272's objective from the Child Safety goal (109625) to the
-      // Monitoring goal (109001) and attach citation 1250, the finding that was
-      // open on the report's start date (2026-03-24).
       await queryInterface.sequelize.query(
         `
           INSERT INTO "ActivityReportObjectiveCitations"
