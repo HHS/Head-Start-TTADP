@@ -103,8 +103,8 @@ const completeFormData = {
   deliveryMethod: 'In-person',
   numberOfParticipants: 1,
   ttaProvided: 'oH YEAH',
-  specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
-  recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+  specialistNextSteps: [{ note: 'A', completeDate: '01/02/2024' }],
+  recipientNextSteps: [{ note: 'B', completeDate: '01/02/2024' }],
 };
 
 describe('SessionReportForm', () => {
@@ -373,6 +373,42 @@ describe('SessionReportForm', () => {
     const saveSession = screen.getByText(/Save draft/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+  });
+
+  it('does not save a draft with a next step date on or before the session start date', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {
+        ...istAndPocFields,
+        startDate: '10/24/2026',
+        specialistNextSteps: [{ note: 'Follow up', completeDate: '10/01/2026' }],
+        recipientNextSteps: [{ note: 'Follow up', completeDate: '10/25/2026' }],
+      },
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    renderSessionForm('1', 'next-steps', '1');
+
+    await screen.findByLabelText(/When do you anticipate completing step 1/i);
+    userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+    expect(
+      await screen.findByText('Next step date must be after the session start date')
+    ).toBeInTheDocument();
+    expect(fetchMock.called(url, { method: 'put' })).toBe(false);
   });
 
   it('handles error saving draft', async () => {
@@ -899,8 +935,8 @@ describe('SessionReportForm', () => {
         ttaProvided: 'test tta provided',
         objectiveSupportType: 'Planning',
         regionId: 1,
-        specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-        recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
         startDate: '01/01/2024',
         endDate: '01/01/2024',
         'pageVisited-supporting-attachments': true,
@@ -949,6 +985,7 @@ describe('SessionReportForm', () => {
     expect(approverDropdown).toBeNull();
 
     const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    expect(screen.queryByText('Incomplete report')).not.toBeInTheDocument();
     act(() => {
       userEvent.click(submit);
     });
@@ -1372,6 +1409,8 @@ describe('SessionReportForm', () => {
     istOnlyKeys.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
     });
+    // POC loads startDate for validation but must not overwrite a newer IST value.
+    expect(Object.hasOwn(putBodyJson.data, 'startDate')).toBe(false);
   });
 
   it('sets reportId.current when session is created', async () => {

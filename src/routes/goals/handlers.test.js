@@ -47,8 +47,6 @@ jest.mock('../../goalServices/goals', () => ({
 
 jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
 
-jest.mock('../../goalServices/changeGoalStatus', () => jest.fn());
-
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
 }));
