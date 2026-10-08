@@ -172,24 +172,48 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 }
 
 /**
- * Returns true when none of the submitted (numeric) objective ids still exist,
- * e.g. the objective was deleted in another tab while this form held stale data.
- * Objectives without numeric ids are never considered stale.
+ * Returns true when the submitted objective was deleted elsewhere (e.g. in another tab)
+ * while this form held stale data: none of its numeric ids are live, and the deleted
+ * record belonged to the same goal / other entity now being saved (or no longer exists).
+ * A deleted record on a different goal/entity means the objective is being carried over
+ * (e.g. the report's recipients changed), so it is not considered stale.
  */
-export async function isStaleObjective(ids: unknown[]): Promise<boolean> {
-  const numericIds = (ids || []).map(Number).filter((id) => Number.isInteger(id) && id > 0);
+export async function isStaleObjective(
+  ids: unknown,
+  scope: { goalId: number } | { otherEntityId: number }
+): Promise<boolean> {
+  const numericIds = (Array.isArray(ids) ? ids : [ids])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
   if (!numericIds.length) {
     return false;
   }
 
-  const existingCount = await Objective.count({ where: { id: numericIds } });
-  if (existingCount === 0) {
+  const matches = await Objective.findAll({
+    attributes: ['id', 'goalId', 'otherEntityId', 'deletedAt'],
+    where: { id: numericIds },
+    paranoid: false,
+    raw: true,
+  });
+
+  if (matches.some((objective) => !objective.deletedAt)) {
+    return false;
+  }
+
+  const isStale =
+    !matches.length ||
+    matches.some((objective) =>
+      'goalId' in scope
+        ? objective.goalId === scope.goalId
+        : objective.otherEntityId === scope.otherEntityId
+    );
+
+  if (isStale) {
     auditLogger.info(
       `Skipping stale objective; objective ids no longer exist: ${numericIds.join(', ')}`
     );
-    return true;
   }
-  return false;
+  return isStale;
 }
 
 /** *
@@ -265,7 +289,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
 
           // A stale form (e.g. another tab) can submit an objective that has since been
           // deleted. If none of its ids exist anymore, honor the delete and skip it.
-          if (!savedObjective && (await isStaleObjective(idsToCheck))) {
+          if (!savedObjective && (await isStaleObjective(idsToCheck, { goalId: goal.id }))) {
             return null;
           }
         }

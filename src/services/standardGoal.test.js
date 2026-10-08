@@ -1774,7 +1774,7 @@ describe('standardGoal service', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       // By default the submitted objective ids still exist (not stale).
-      Objective.count = jest.fn().mockResolvedValue(1);
+      Objective.findAll = jest.fn().mockResolvedValue([{ id: 1, goalId: 1, deletedAt: null }]);
     });
 
     it('should return an empty array if no objectives are provided', async () => {
@@ -1782,16 +1782,48 @@ describe('standardGoal service', () => {
       expect(result).toEqual([]);
     });
 
-    it('should skip objectives whose ids were all deleted (stale form data)', async () => {
+    it('should skip objectives deleted from this goal (stale form data)', async () => {
       Objective.findOne = jest.fn().mockResolvedValue(null);
-      Objective.count = jest.fn().mockResolvedValue(0);
+      Objective.findAll = jest
+        .fn()
+        .mockResolvedValue([{ id: 1, goalId: goal.id, deletedAt: new Date() }]);
       Objective.create = jest.fn();
 
       const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
 
-      expect(Objective.count).toHaveBeenCalledWith({ where: { id: [1, 1] } });
+      expect(Objective.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: [1, 1] }, paranoid: false })
+      );
       expect(Objective.create).not.toHaveBeenCalled();
       expect(result).toEqual([]);
+    });
+
+    it('should skip objectives whose ids no longer exist at all', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findAll = jest.fn().mockResolvedValue([]);
+      Objective.create = jest.fn();
+
+      const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
+
+      expect(Objective.create).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should carry over objectives deleted from a different goal (e.g. recipient change)', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findAll = jest
+        .fn()
+        .mockResolvedValue([{ id: 1, goalId: goal.id + 1, deletedAt: new Date() }]);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({ id: 3, title: 'Objective title 1', goalId: goal.id }),
+      });
+
+      const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
+
+      expect(Objective.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Objective title 1', goalId: goal.id })
+      );
+      expect(result).toHaveLength(1);
     });
 
     it('should create new objectives for new items', async () => {
