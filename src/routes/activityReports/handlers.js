@@ -38,6 +38,7 @@ import {
   activityReportByLegacyId,
   activityReports,
   activityReportsForCleanup,
+  assertApproversAreNotParticipants,
   createOrUpdate,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
@@ -850,6 +851,8 @@ export async function submitReport(req, res) {
       res.sendStatus(403);
       return;
     }
+
+    assertApproversAreNotParticipants(approverUserIds, report);
 
     const supportTypeError = await getObjectiveSupportTypeSubmissionError(activityReportId);
     if (supportTypeError) {

@@ -1012,6 +1012,23 @@ describe('Activity report service', () => {
         expect(reportTwo.regionId).toEqual(3);
       });
 
+      it('rejects the report creator and collaborators as approvers', async () => {
+        await expect(
+          createOrUpdate({
+            ...reportObject,
+            approverUserIds: [mockUser.id],
+          })
+        ).rejects.toMatchObject({ statusCode: 400 });
+
+        await expect(
+          createOrUpdate({
+            ...reportObject,
+            activityReportCollaborators: [{ user: { id: mockUserTwo.id } }],
+            approverUserIds: [mockUserTwo.id],
+          })
+        ).rejects.toMatchObject({ statusCode: 400 });
+      });
+
       it('works when no collaborator user roles (branch coverage)', async () => {
         const report = await createOrUpdate({
           ...reportObject,

@@ -1822,6 +1822,46 @@ describe('Activity Report handlers', () => {
       );
       expect(mockResponse.json).toHaveBeenCalledWith(reportAfterSubmit);
     });
+
+    it('rejects report participants as approvers before submitting', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          ...byIdResponse[0],
+          activityReportCollaborators: [
+            { userId: secondMockManager.id, user: { id: secondMockManager.id } },
+          ],
+        },
+        activityRecipients,
+      ]);
+
+      const invalidRequest = {
+        ...request,
+        body: { approverUserIds: [mockUser.id] },
+      };
+      await submitReport(
+        invalidRequest,
+        mockResponse
+      );
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        invalidRequest,
+        mockResponse,
+        expect.objectContaining({
+          statusCode: 400,
+          message: 'The report creator and collaborators cannot be assigned as approvers.',
+          responseBody: {
+            error: 'The report creator and collaborators cannot be assigned as approvers.',
+          },
+        }),
+        expect.anything()
+      );
+      expect(createOrUpdate).not.toHaveBeenCalled();
+      expect(syncApprovers).not.toHaveBeenCalled();
+    });
+
     it('handles unauthorizedRequests', async () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,

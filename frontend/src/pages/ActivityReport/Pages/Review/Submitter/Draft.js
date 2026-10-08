@@ -32,6 +32,7 @@ const Draft = ({
   grantsMissingMonitoring,
   grantsMissingCitations,
   reviewItems,
+  hasIneligibleApprovers,
 }) => {
   const { watch, handleSubmit, register } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
@@ -84,6 +85,7 @@ const Draft = ({
     !hasIncompletePages &&
     !grantsMissingMonitoring.length &&
     !grantsMissingCitations.length &&
+    !hasIneligibleApprovers &&
     hasApprovers;
 
   const onSubmit = (e) => {
@@ -272,6 +274,7 @@ Draft.propTypes = {
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  hasIneligibleApprovers: PropTypes.bool.isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string,

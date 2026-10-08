@@ -26,9 +26,24 @@ const Submitter = ({
   const displayId = watch('displayId');
   const calculatedStatus = watch('calculatedStatus');
   const approvers = watch('approvers');
+  const userId = watch('userId');
+  const collaborators = watch('activityReportCollaborators') || [];
   const creatorRole = watch('creatorRole');
   const goalsAndObjectives = watch('goalsAndObjectives');
   const activityRecipients = watch('activityRecipients');
+
+  const participantIds = new Set(
+    [
+      userId,
+      ...collaborators.map((collaborator) => collaborator?.userId ?? collaborator?.user?.id),
+    ]
+      .map(Number)
+      .filter(Number.isFinite)
+  );
+  const hasIneligibleApprovers = (approvers || []).some((approver) => {
+    const approverId = Number(approver?.user?.id ?? approver?.userId);
+    return Number.isFinite(approverId) && participantIds.has(approverId);
+  });
 
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
@@ -174,6 +189,12 @@ const Submitter = ({
             {error}
           </Alert>
         )}
+        {hasIneligibleApprovers && (
+          <Alert noIcon className="margin-y-4" type="error">
+            The report creator and collaborators cannot be approvers. Remove them and assign a
+            different approving manager before saving or submitting.
+          </Alert>
+        )}
         {draft && (
           <DraftReview
             onSaveForm={onSaveForm}
@@ -188,6 +209,7 @@ const Submitter = ({
             grantsMissingMonitoring={grantsMissingMonitoring()}
             grantsMissingCitations={grantsMissingCitations()}
             reviewItems={reviewItems}
+            hasIneligibleApprovers={hasIneligibleApprovers}
           />
         )}
         {needsAction && (
@@ -203,6 +225,7 @@ const Submitter = ({
             reviewItems={reviewItems}
             grantsMissingMonitoring={grantsMissingMonitoring()}
             grantsMissingCitations={grantsMissingCitations()}
+            hasIneligibleApprovers={hasIneligibleApprovers}
           />
         )}
         {approved && (

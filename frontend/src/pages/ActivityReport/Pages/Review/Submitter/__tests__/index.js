@@ -100,6 +100,7 @@ const renderReview = (
     calculatedStatus,
     displayId: 'R01-AR-23424',
     id: 1,
+    userId: 999,
     creatorRole,
     regionId: 1,
   };
@@ -209,6 +210,24 @@ describe('Submitter review page', () => {
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('requires reassignment when the report creator is selected as an approver', async () => {
+      const mockSubmit = jest.fn();
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        mockSubmit,
+        true,
+        undefined,
+        undefined,
+        [{ status: null, note: '', user: { id: 999, fullName: 'Report Creator' } }]
+      );
+
+      expect(
+        await screen.findByText(/remove them and assign a different approving manager/i)
+      ).toBeVisible();
+      userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
 
     it('displays an error if the report is not complete', async () => {
