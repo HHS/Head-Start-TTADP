@@ -1,7 +1,15 @@
 {
   "semgrepVersion": "1.163.0",
-  "configs": ["p/default"],
-  "include": [".circleci", "frontend/src", "packages/common", "src", "tools"],
+  "configs": [
+    "p/default"
+  ],
+  "include": [
+    ".circleci",
+    "frontend/src",
+    "packages/common",
+    "src",
+    "tools"
+  ],
   "exclude": [
     ".git",
     "bin",
@@ -18,5 +26,7 @@
   ],
   "timeoutSeconds": 10,
   "timeoutThreshold": 5,
-  "blockingSeverities": ["ERROR"]
+  "blockingSeverities": [
+    "ERROR"
+  ]
 }
