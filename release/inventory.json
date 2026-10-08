@@ -521,9 +521,9 @@
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "manifest.yml",
-        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#48441914fa396d2c0d09c7382c02f5f53198d43f, the full commit SHA of the released v1.9.4 tag, so the staged version cannot change without a repository change."
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.4, the released v1.9.4 tag, so the staged version cannot change without a repository change."
       },
-      "notes": "Pinned by TTAHUB-5732 to the full commit SHA of the released v1.9.4 tag, which matches the version cloud.gov reported for the droplet. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
+      "notes": "Pinned by TTAHUB-5732 to the released v1.9.4 tag, which matches the version cloud.gov reported for the droplet. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
     },
     {
       "id": "platform.nodeVersion",
