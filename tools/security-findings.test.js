@@ -507,6 +507,7 @@ describe('security-findings tooling', () => {
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       strict: false,
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
     expect(validation.errors).toEqual([]);
     expect(validation.warnings).toEqual(
@@ -528,6 +529,7 @@ describe('security-findings tooling', () => {
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       strict: false,
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
     expect(invalidTicketValidation.errors).toContain(
       `${scaId}.ticket must be a JIRA key in TTAHUB-1234 format`
@@ -601,6 +603,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual(
@@ -672,6 +675,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual(
@@ -739,6 +743,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual(
@@ -803,6 +808,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual(
@@ -956,6 +962,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.warnings).toEqual(
@@ -1031,6 +1038,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual([]);
@@ -1096,6 +1104,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       cwd: tempDir,
+      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual(
@@ -1492,31 +1501,28 @@ describe('security-findings tooling', () => {
     expect(result.store.items[currentId].escalationState).toBe('escalated');
   });
 
-  it.each([
-    '--format=%H',
-    'HEAD:other-file',
-    'HEAD..main',
-    'HEAD@{1}',
-    'HEAD main',
-  ])('rejects unsafe previous git revision %s', (previousPendingRef) => {
-    const registerPath = path.join(tempDir, 'security/findings/register.json');
-    const pendingPath = path.join(tempDir, 'security/dependencies/pending-observations.json');
+  it.each(['--format=%H', 'HEAD:other-file', 'HEAD..main', 'HEAD@{1}', 'HEAD main'])(
+    'rejects unsafe previous git revision %s',
+    (previousPendingRef) => {
+      const registerPath = path.join(tempDir, 'security/findings/register.json');
+      const pendingPath = path.join(tempDir, 'security/dependencies/pending-observations.json');
 
-    writeJson(registerPath, { items: {} });
-    writeJson(pendingPath, { items: {} });
+      writeJson(registerPath, { items: {} });
+      writeJson(pendingPath, { items: {} });
 
-    const result = updatePendingObservations({
-      registerPath: path.relative(tempDir, registerPath),
-      pendingPath: path.relative(tempDir, pendingPath),
-      previousPendingRef,
-      cwd: tempDir,
-    });
+      const result = updatePendingObservations({
+        registerPath: path.relative(tempDir, registerPath),
+        pendingPath: path.relative(tempDir, pendingPath),
+        previousPendingRef,
+        cwd: tempDir,
+      });
 
-    expect(result.failures).toEqual([
-      `Invalid --previous-pending-ref ${JSON.stringify(previousPendingRef)}`,
-    ]);
-    expect(result.store).toEqual({ items: {} });
-  });
+      expect(result.failures).toEqual([
+        `Invalid --previous-pending-ref ${JSON.stringify(previousPendingRef)}`,
+      ]);
+      expect(result.store).toEqual({ items: {} });
+    }
+  );
 
   it('bootstraps missing previous git refs from the current committed pending store', () => {
     const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
