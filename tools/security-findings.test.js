@@ -206,6 +206,96 @@ function createApprovalEvidenceFixture(overrides = {}) {
   };
 }
 
+function shiftIsoDate(isoDate, days) {
+  const date = new Date(`${isoDate}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// Writes a register with one deferred entry nearing its closure target and one past
+// the grace period, plus the scan inputs validateRegister needs.
+function writeDeadlineRegisterFixtures(dir, { warningTarget, overdueTarget }) {
+  const scanTypesPath = path.join(dir, 'security/findings/scan-types.json');
+  const sastBaselinePath = path.join(dir, 'security/sast/baseline.json');
+  const sastScanConfigPath = path.join(dir, 'security/sast/scan-config.json');
+  const backendBaselinePath = path.join(dir, 'security/dependencies/backend-baseline.json');
+  const frontendBaselinePath = path.join(dir, 'security/dependencies/frontend-baseline.json');
+  const registerPath = path.join(dir, 'security/findings/register.json');
+  const warningId = 'SAST-SEMGRP-abc123';
+  const overdueId = 'SAST-SEMGRP-absent';
+
+  writeJson(scanTypesPath, createScanTypesFixture());
+  writeJson(sastBaselinePath, createSastBaselineFixture());
+  writeJson(sastScanConfigPath, createSastScanConfigFixture());
+  writeJson(backendBaselinePath, {
+    scope: 'backend',
+    scanner: { name: 'yarn-audit' },
+    baselineDate: '2026-06-17',
+    findings: [],
+  });
+  writeJson(frontendBaselinePath, {
+    scope: 'frontend',
+    scanner: { name: 'yarn-audit' },
+    baselineDate: '2026-06-17',
+    findings: [],
+  });
+  writeJson(registerPath, {
+    version: 1,
+    generatedAt: '2026-06-17T12:00:00.000Z',
+    items: {
+      [warningId]: {
+        id: warningId,
+        scanType: 'sast',
+        scanner: 'semgrep',
+        scope: 'application',
+        scannerFindingId: 'javascript.lang.security.test-rule',
+        title: 'Test finding',
+        severity: 'high',
+        sourceSeverity: 'ERROR',
+        firstDetected: '2026-06-10',
+        lastObserved: '2026-06-10',
+        disposition: 'deferred',
+        justification: 'Needs later remediation.',
+        owner: 'TTA Hub AppDev',
+        ticket: 'TTAHUB-5243',
+        closureTarget: warningTarget,
+      },
+      [overdueId]: {
+        id: overdueId,
+        scanType: 'sast',
+        scanner: 'semgrep',
+        scope: 'application',
+        scannerFindingId: 'javascript.lang.security.absent-rule',
+        title: 'Absent finding',
+        severity: 'moderate',
+        sourceSeverity: 'WARNING',
+        firstDetected: '2026-05-01',
+        lastObserved: '2026-05-01',
+        disposition: 'deferred',
+        justification: 'Needs later remediation.',
+        owner: 'TTA Hub AppDev',
+        ticket: 'TTAHUB-5243',
+        closureTarget: overdueTarget,
+      },
+    },
+  });
+
+  return {
+    registerPath,
+    scanTypesPath,
+    sastBaselinePath,
+    sastScanConfigPath,
+    backendBaselinePath,
+    frontendBaselinePath,
+  };
+}
+
+function relativeTo(dir, paths) {
+  return Object.fromEntries(
+    Object.entries(paths).map(([key, value]) => [key, path.relative(dir, value)])
+  );
+}
+
 describe('security-findings tooling', () => {
   let tempDir;
 
@@ -820,78 +910,13 @@ describe('security-findings tooling', () => {
   });
 
   it('warns before due dates and fails after the grace period', () => {
-    const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
-    const sastBaselinePath = path.join(tempDir, 'security/sast/baseline.json');
-    const sastScanConfigPath = path.join(tempDir, 'security/sast/scan-config.json');
-    const backendBaselinePath = path.join(tempDir, 'security/dependencies/backend-baseline.json');
-    const frontendBaselinePath = path.join(tempDir, 'security/dependencies/frontend-baseline.json');
-    const registerPath = path.join(tempDir, 'security/findings/register.json');
-    const warningId = 'SAST-SEMGRP-abc123';
-    const overdueId = 'SAST-SEMGRP-absent';
-
-    writeJson(scanTypesPath, createScanTypesFixture());
-    writeJson(sastBaselinePath, createSastBaselineFixture());
-    writeJson(sastScanConfigPath, createSastScanConfigFixture());
-    writeJson(backendBaselinePath, {
-      scope: 'backend',
-      scanner: { name: 'yarn-audit' },
-      baselineDate: '2026-06-17',
-      findings: [],
-    });
-    writeJson(frontendBaselinePath, {
-      scope: 'frontend',
-      scanner: { name: 'yarn-audit' },
-      baselineDate: '2026-06-17',
-      findings: [],
-    });
-    writeJson(registerPath, {
-      version: 1,
-      generatedAt: '2026-06-17T12:00:00.000Z',
-      items: {
-        [warningId]: {
-          id: warningId,
-          scanType: 'sast',
-          scanner: 'semgrep',
-          scope: 'application',
-          scannerFindingId: 'javascript.lang.security.test-rule',
-          title: 'Test finding',
-          severity: 'high',
-          sourceSeverity: 'ERROR',
-          firstDetected: '2026-06-10',
-          lastObserved: '2026-06-10',
-          disposition: 'deferred',
-          justification: 'Needs later remediation.',
-          owner: 'TTA Hub AppDev',
-          ticket: 'TTAHUB-5243',
-          closureTarget: '2026-06-25',
-        },
-        [overdueId]: {
-          id: overdueId,
-          scanType: 'sast',
-          scanner: 'semgrep',
-          scope: 'application',
-          scannerFindingId: 'javascript.lang.security.absent-rule',
-          title: 'Absent finding',
-          severity: 'moderate',
-          sourceSeverity: 'WARNING',
-          firstDetected: '2026-05-01',
-          lastObserved: '2026-05-01',
-          disposition: 'deferred',
-          justification: 'Needs later remediation.',
-          owner: 'TTA Hub AppDev',
-          ticket: 'TTAHUB-5243',
-          closureTarget: '2026-06-01',
-        },
-      },
+    const paths = writeDeadlineRegisterFixtures(tempDir, {
+      warningTarget: '2026-06-25',
+      overdueTarget: '2026-06-01',
     });
 
     const validation = validateRegister({
-      registerPath: path.relative(tempDir, registerPath),
-      scanTypesPath: path.relative(tempDir, scanTypesPath),
-      sastBaselinePath: path.relative(tempDir, sastBaselinePath),
-      sastScanConfigPath: path.relative(tempDir, sastScanConfigPath),
-      backendBaselinePath: path.relative(tempDir, backendBaselinePath),
-      frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
+      ...relativeTo(tempDir, paths),
       observedOn: '2026-06-17',
       cwd: tempDir,
     });
@@ -902,6 +927,59 @@ describe('security-findings tooling', () => {
     expect(validation.errors).toEqual(
       expect.arrayContaining([expect.stringContaining('exceeding the 7-day grace period')])
     );
+  });
+
+  it('defaults observedOn to the current operational date when enforcing deadlines', () => {
+    const paths = writeDeadlineRegisterFixtures(tempDir, {
+      warningTarget: '2026-06-25',
+      overdueTarget: '2026-06-01',
+    });
+
+    jest.useFakeTimers({ now: new Date('2026-06-17T16:00:00.000Z') });
+    let validation;
+    try {
+      validation = validateRegister({ ...relativeTo(tempDir, paths), cwd: tempDir });
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(validation.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining('due in 8 calendar days')])
+    );
+    expect(validation.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining('exceeding the 7-day grace period')])
+    );
+  });
+
+  it('defaults --observed-on to the current operational date in the validate CLI', () => {
+    const today = operationalDate();
+    const paths = writeDeadlineRegisterFixtures(tempDir, {
+      warningTarget: shiftIsoDate(today, 8),
+      overdueTarget: shiftIsoDate(today, -30),
+    });
+
+    const result = runSecurityFindingsCli(
+      [
+        'validate',
+        '--register',
+        paths.registerPath,
+        '--scan-types',
+        paths.scanTypesPath,
+        '--sast-baseline',
+        paths.sastBaselinePath,
+        '--sast-scan-config',
+        paths.sastScanConfigPath,
+        '--backend-baseline',
+        paths.backendBaselinePath,
+        '--frontend-baseline',
+        paths.frontendBaselinePath,
+      ],
+      tempDir
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('due in 8 calendar days');
+    expect(result.stderr).toContain('exceeding the 7-day grace period');
   });
 
   it('warns when Semgrep config differs from the SAST baseline metadata', () => {
