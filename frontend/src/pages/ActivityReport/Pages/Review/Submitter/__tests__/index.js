@@ -203,6 +203,12 @@ describe('Submitter review page', () => {
       expect(await screen.findByText(/review and submit/i)).toBeVisible();
     });
 
+    it('does not show approver status before submission', async () => {
+      renderReview(REPORT_STATUSES.DRAFT, () => {});
+      expect(await screen.findByText(/review and submit/i)).toBeVisible();
+      expect(screen.queryByText(/pending approval/i)).toBeNull();
+    });
+
     it('allows the author to submit for review', async () => {
       const mockSubmit = jest.fn();
       renderReview(REPORT_STATUSES.DRAFT, mockSubmit);
