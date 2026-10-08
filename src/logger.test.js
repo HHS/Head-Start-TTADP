@@ -186,3 +186,54 @@ describe('logger callsite helpers', () => {
     expect(info.err.stack).toContain('Error: boom');
   });
 });
+
+describe('hashForLogging', () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it('returns the same hash for the same value and secret', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).toBe(hashForLogging('user@example.com'));
+  });
+
+  it('never reveals the original value', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).not.toMatch(/user@example\.com/);
+  });
+
+  it('produces a different hash under a different secret (not a bare/guessable hash)', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'secret-one' };
+    const hashOne = loadLogger().hashForLogging('user@example.com');
+
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'secret-two' };
+    const hashTwo = loadLogger().hashForLogging('user@example.com');
+
+    expect(hashOne).not.toBe(hashTwo);
+  });
+
+  it('returns undefined when no SESSION_SECRET is configured, rather than hashing with a known key', () => {
+    // Set (not delete): envParser re-runs dotenv.config() on every resetModules()+require,
+    // and dotenv only fills in keys that are absent from process.env, so deleting the key
+    // here would just have dotenv silently refill it from .env on the next require.
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: '' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).toBeUndefined();
+  });
+
+  it.each([undefined, null, ''])('returns undefined for %p', (value) => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging(value)).toBeUndefined();
+  });
+});
