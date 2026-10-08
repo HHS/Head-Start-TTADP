@@ -21,6 +21,7 @@ import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/us
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
@@ -140,7 +141,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  const roleData = reduceDataToMatchKeys(keyArray, data);
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,
@@ -206,16 +208,8 @@ export default function SessionForm({ match }) {
 
   const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
 
-  const {
-    isPoc,
-    isAdminUser,
-    isCollaborator,
-    isOwner,
-    isApprover,
-    isNcUser,
-    applicationPages,
-    isSessionNavigationDead,
-  } = useSessionFormRoleAndPages(hookForm);
+  const { isPoc, isAdminUser, isCollaborator, isOwner, isApprover, isNcUser, applicationPages } =
+    useSessionFormRoleAndPages(hookForm);
 
   const canSelectApprover = useCanSelectApprover({
     isPoc,
@@ -414,12 +408,6 @@ export default function SessionForm({ match }) {
           isNcUser,
         });
 
-        // we push approvers to the review page
-        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
-          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-          return;
-        }
-
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -434,7 +422,6 @@ export default function SessionForm({ match }) {
     reportFetched,
     sessionId,
     history,
-    currentPage,
     isNcUser,
     trainingReportId,
     user.id,
@@ -508,11 +495,22 @@ export default function SessionForm({ match }) {
       try {
         // reset the error message
         setError('');
-        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
         const data = hookForm.getValues();
+        const invalidNextStepDateFields = getInvalidNextStepDateFields(data);
+        if (invalidNextStepDateFields.length) {
+          invalidNextStepDateFields.forEach((field) => {
+            hookForm.setError(field, {
+              type: 'validate',
+              message: 'Next step date must be after the session start date',
+            });
+          });
+          return;
+        }
+
+        setIsAppLoading(true);
 
         const keyArray = determineKeyArray({
           isAdminUser,
@@ -781,7 +779,6 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={isSessionNavigationDead}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}

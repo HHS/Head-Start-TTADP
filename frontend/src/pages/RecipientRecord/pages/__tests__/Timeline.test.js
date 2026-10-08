@@ -176,7 +176,23 @@ describe('Recipient Record - TTA Timeline', () => {
 
   it('renders a result count when timeline events exist', () => {
     useFetch.mockReturnValue({
-      data: { count: 2, events: [{ id: 1 }, { id: 2 }] },
+      data: {
+        count: 2,
+        events: [1, 2].map((sourceId) => ({
+          source: 'activityReport',
+          sourceId,
+          date: '2026-07-07',
+          eventType: 'TTA activity',
+          title: 'TTA activity',
+          subtitle: null,
+          byline: null,
+          durationHours: null,
+          indicators: [],
+          tags: [],
+          details: [],
+          links: [],
+        })),
+      },
       error: '',
       loading: false,
     });
@@ -184,5 +200,7 @@ describe('Recipient Record - TTA Timeline', () => {
     renderTimeline();
 
     expect(screen.getByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    expect(screen.getAllByRole('article')).toHaveLength(2);
+    expect(screen.getByRole('list', { name: 'Timeline events' })).toBeVisible();
   });
 });
