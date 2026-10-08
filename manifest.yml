@@ -4,7 +4,7 @@ applications:
     strategy: rolling
     stack: cflinuxfs4
     buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack.git#48441914fa396d2c0d09c7382c02f5f53198d43f
+      - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.4
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
