@@ -6,6 +6,7 @@ import transactionWrapper from '../transactionWrapper';
 import {
   createGlobalNotificationHandler,
   getArchivedNotificationsHandler,
+  getNotificationsCountHandler,
   getNotificationsHandler,
   updateNotificationHandler,
 } from './handlers';
@@ -24,5 +25,6 @@ router.put(
 );
 router.get('/archived', transactionWrapper(getArchivedNotificationsHandler));
 router.get('/', transactionWrapper(getNotificationsHandler));
+router.get('/count', transactionWrapper(getNotificationsCountHandler));
 
 export default router;
