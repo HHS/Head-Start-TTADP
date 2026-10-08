@@ -6,6 +6,12 @@ import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
 import UserContext from '../../UserContext';
 import FilterSelect from './FilterSelect';
 
+// territories served by a region that ALL_STATES files under a different region
+// (e.g. Virgin Islands is listed under region 9 but is also served by region 2)
+const ADDITIONAL_REGION_STATE_CODES = {
+  2: ['VI'],
+};
+
 export default function FilterStateSelect({ onApply, inputId, query }) {
   const { user } = useContext(UserContext);
   const [stateCodes, setStateCodes] = useState([]);
@@ -52,7 +58,12 @@ export default function FilterStateSelect({ onApply, inputId, query }) {
               if (!ALL_STATES[curr - 1]) {
                 return acc;
               }
-              return [...acc, ...ALL_STATES[curr - 1]];
+
+              const additionalStates = (ADDITIONAL_REGION_STATE_CODES[curr] || []).map((code) =>
+                ALL_STATES_FLATTENED.find((c) => c.value === code)
+              );
+
+              return [...acc, ...ALL_STATES[curr - 1], ...additionalStates];
             }, [])
           )
         ),
