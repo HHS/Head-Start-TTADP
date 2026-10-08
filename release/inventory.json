@@ -515,15 +515,15 @@
       "tier": "reconciled",
       "locator": {
         "type": "cloudFoundryBuildpack",
-        "value": "1.9.4",
+        "value": "1.9.5",
         "pinned": true
       },
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "manifest.yml",
-        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.4, the released v1.9.4 tag, which currently resolves to commit 48441914fa396d2c0d09c7382c02f5f53198d43f. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.5, the released v1.9.5 tag, which currently resolves to commit ec0fbc6a2ac4f08d9ad0120fefa2a209bb2d6d80. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
       },
-      "notes": "Pinned by TTAHUB-5732 to the released v1.9.4 tag, which matches the version cloud.gov reported for the droplet. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
+      "notes": "Pinned by TTAHUB-5732 to the released v1.9.5 tag, the first release whose Node 24.21.0 build matches package.json engines. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
     },
     {
       "id": "platform.nodeVersion",
