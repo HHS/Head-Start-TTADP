@@ -463,6 +463,65 @@ describe('Objectives DB service', () => {
       expect(foundObj.title).toBe('there are many titles but this one is mine');
       expect(foundObj.status).toBe('Not Started');
     });
+
+    it('drops a stale objective deleted in another tab instead of re-creating it', async () => {
+      const staleReport = await ActivityReport.create({ ...reportObject });
+      const staleTitle = 'stale other entity objective deleted in another tab';
+      const staleFile = await File.create({
+        originalFileName: 'stale-oe-objective.pdf',
+        key: 'stale-oe-objective.pdf',
+        status: FILE_STATUSES.APPROVED,
+        fileSize: 1234,
+      });
+
+      try {
+        const deletedObjective = await Objective.create({
+          title: staleTitle,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          otherEntityId: 1,
+        });
+        // Another tab removed the objective (soft delete) and its orphaned file.
+        await deletedObjective.destroy();
+        await staleFile.destroy();
+
+        await expect(
+          saveObjectivesForReport(
+            [
+              {
+                id: deletedObjective.id,
+                ids: [deletedObjective.id],
+                title: staleTitle,
+                ttaProvided: 'stale tta',
+                status: OBJECTIVE_STATUS.NOT_STARTED,
+                recipientIds: [1],
+                topics: [],
+                files: [{ id: staleFile.id }],
+                resources: [{ value: 'https://stale-oe-objective.gov' }],
+                courses: [],
+              },
+            ],
+            staleReport
+          )
+        ).resolves.not.toThrow();
+
+        expect(await Objective.findAll({ where: { title: staleTitle } })).toHaveLength(0);
+        expect(
+          await ActivityReportObjective.count({ where: { activityReportId: staleReport.id } })
+        ).toBe(0);
+      } finally {
+        const staleAros = await ActivityReportObjective.findAll({
+          where: { activityReportId: staleReport.id },
+        });
+        await ActivityReportObjectiveFile.destroy({
+          where: { activityReportObjectiveId: staleAros.map((aro) => aro.id) },
+        });
+        await ActivityReportObjective.destroy({ where: { activityReportId: staleReport.id } });
+        await Resource.destroy({ where: { url: 'https://stale-oe-objective.gov' } });
+        await Objective.destroy({ where: { title: staleTitle }, force: true, paranoid: false });
+        await File.destroy({ where: { id: staleFile.id } });
+        await ActivityReport.destroy({ where: { id: staleReport.id } });
+      }
+    });
   });
 
   describe('updateObjectiveStatusByIds', () => {

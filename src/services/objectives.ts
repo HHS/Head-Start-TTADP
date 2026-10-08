@@ -8,7 +8,7 @@ import type {
 } from '../goalServices/types';
 import db from '../models';
 import { cacheObjectiveMetadata } from './reportCache';
-import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
+import { isStaleObjective, removeUnusedGoalsObjectivesFromReport } from './standardGoals';
 
 const {
   Objective,
@@ -62,8 +62,14 @@ export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
 
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(
-    objectives.map(async (objective, index) =>
-      Promise.all(
+    objectives.map(async (objective, index) => {
+      // A stale form (e.g. another tab) can submit an objective that has since been
+      // deleted. If none of its ids exist anymore, honor the delete and skip it.
+      if (!objective.isNew && (await isStaleObjective(objective.ids))) {
+        return [];
+      }
+
+      return Promise.all(
         objective.recipientIds.map(async (otherEntityId) => {
           const { topics, files, resources, courses, objectiveCreatedHere, citations } = objective;
 
@@ -133,8 +139,8 @@ export async function saveObjectivesForReport(objectives, report) {
 
           return savedObjective;
         })
-      )
-    )
+      );
+    })
   );
 
   const currentObjectives = updatedObjectives.flat();
