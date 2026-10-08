@@ -21,6 +21,7 @@ import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/us
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
@@ -140,7 +141,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  const roleData = reduceDataToMatchKeys(keyArray, data);
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,
@@ -493,11 +495,22 @@ export default function SessionForm({ match }) {
       try {
         // reset the error message
         setError('');
-        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
         const data = hookForm.getValues();
+        const invalidNextStepDateFields = getInvalidNextStepDateFields(data);
+        if (invalidNextStepDateFields.length) {
+          invalidNextStepDateFields.forEach((field) => {
+            hookForm.setError(field, {
+              type: 'validate',
+              message: 'Next step date must be after the session start date',
+            });
+          });
+          return;
+        }
+
+        setIsAppLoading(true);
 
         const keyArray = determineKeyArray({
           isAdminUser,
