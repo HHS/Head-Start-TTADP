@@ -4,6 +4,7 @@ import { Op, UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import { serviceError } from '../lib/serviceError';
+import { auditLogger } from '../logger';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import {
@@ -170,6 +171,27 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectivesFromReport(objectiveIdsToRemove, reportId);
 }
 
+/**
+ * Returns true when none of the submitted (numeric) objective ids still exist,
+ * e.g. the objective was deleted in another tab while this form held stale data.
+ * Objectives without numeric ids are never considered stale.
+ */
+export async function isStaleObjective(ids: unknown[]): Promise<boolean> {
+  const numericIds = (ids || []).map(Number).filter((id) => Number.isInteger(id) && id > 0);
+  if (!numericIds.length) {
+    return false;
+  }
+
+  const existingCount = await Objective.count({ where: { id: numericIds } });
+  if (existingCount === 0) {
+    auditLogger.info(
+      `Skipping stale objective; objective ids no longer exist: ${numericIds.join(', ')}`
+    );
+    return true;
+  }
+  return false;
+}
+
 /** *
  * This function will create objectives for a goal.
  * It will only create objectives that have a title or other data.
@@ -188,7 +210,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     return [];
   }
 
-  return Promise.all(
+  const savedObjectives = await Promise.all(
     objectives
       .filter(
         (o) =>
@@ -240,6 +262,12 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
               goalId: goal.id,
             },
           });
+
+          // A stale form (e.g. another tab) can submit an objective that has since been
+          // deleted. If none of its ids exist anymore, honor the delete and skip it.
+          if (!savedObjective && (await isStaleObjective(idsToCheck))) {
+            return null;
+          }
         }
 
         if (savedObjective) {
@@ -306,6 +334,8 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
         };
       })
   );
+
+  return savedObjectives.filter(Boolean);
 }
 
 export async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
