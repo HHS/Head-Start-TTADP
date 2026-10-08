@@ -63,7 +63,7 @@ if ! cf_output=$(cf version); then
 fi
 
 version=$(printf '%s\n' "$cf_output" | sed -nE '1s/^cf version ([0-9]+)\..*/\1/p')
-if [[ ! $version =~ ^[0-9]+$ ]] || (( 10#$version < 8 )); then
+if [[ ! $version =~ ^[0-9]+$ ]] || [ "$version" -lt 8 ]; then
     echo "Cloud Foundry CLI v8 or later is required. Please install it to continue." >&2
     echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html" >&2
     exit 1
