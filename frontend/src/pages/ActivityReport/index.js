@@ -171,7 +171,8 @@ function ActivityReport({ match, location, region }) {
     shouldUnregister: false,
   });
 
-  const { reset, getValues } = hookForm;
+  const { reset, getValues, watch } = hookForm;
+  const activityReportCollaborators = watch('activityReportCollaborators') || [];
 
   useHookFormLocalStorage(LOCAL_STORAGE_AR_DATA_KEY(activityReportId), hookForm);
 
@@ -270,14 +271,6 @@ function ActivityReport({ match, location, region }) {
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
-        const reportParticipantIds = new Set([
-          report.userId,
-          ...(report.activityReportCollaborators || []).map((collaborator) => collaborator.userId),
-        ]);
-        const eligibleApprovers = (availableApprovers || []).filter(
-          (approver) => !reportParticipantIds.has(approver.id)
-        );
-
         const isCollaborator =
           report.activityReportCollaborators &&
           report.activityReportCollaborators.find((u) => u.userId === user.id);
@@ -314,7 +307,7 @@ function ActivityReport({ match, location, region }) {
             otherEntities: [],
           },
           collaborators: filteredCollaborators || [],
-          availableApprovers: eligibleApprovers,
+          availableApprovers: availableApprovers || [],
           groups: groupsWithRecipientIds || [],
         });
 
@@ -420,6 +413,16 @@ function ActivityReport({ match, location, region }) {
   if (!formData) {
     return 'loading...';
   }
+
+  const reportParticipantIds = new Set([
+    formData.userId,
+    ...activityReportCollaborators.map((collaborator) => (
+      collaborator?.userId ?? collaborator?.user?.id
+    )),
+  ]);
+  const availableApprovers = (initialAdditionalData.availableApprovers || []).filter(
+    (approver) => !reportParticipantIds.has(approver.id)
+  );
 
   if (error && !formData) {
     return <Alert type="error">{error}</Alert>;
@@ -748,7 +751,7 @@ function ActivityReport({ match, location, region }) {
           updateLastSaveTime={updateLastSaveTime}
           reportId={reportId.current}
           currentPage={currentPage}
-          additionalData={initialAdditionalData}
+          additionalData={{ ...initialAdditionalData, availableApprovers }}
           hookForm={hookForm}
           pages={pages}
           onFormSubmit={onFormSubmit}

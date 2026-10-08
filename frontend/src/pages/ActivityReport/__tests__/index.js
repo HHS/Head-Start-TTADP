@@ -367,6 +367,48 @@ describe('ActivityReport', () => {
       expect(screen.queryByRole('option', { name: 'Report Collaborator' })).not.toBeInTheDocument();
     });
 
+    it('updates approver options when collaborators change', async () => {
+      const data = formData();
+      const collaborators = [
+        { id: 2, name: 'New Collaborator', roles: [{ fullName: 'Specialist' }] },
+      ];
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityReportCollaborators: [],
+      });
+      fetchMock.get('/api/users/collaborators?region=1', collaborators, { overwriteRoutes: true });
+      fetchMock.get(
+        '/api/activity-reports/approvers?region=1',
+        [
+          { id: 1, name: 'Report Creator' },
+          { id: 2, name: 'New Collaborator' },
+          { id: 3, name: 'Eligible Approver' },
+        ],
+        { overwriteRoutes: true }
+      );
+      fetchMock.put('/api/activity-reports/1', (url, opts) => ({
+        ...data,
+        ...JSON.parse(opts.body),
+      }));
+
+      renderActivityReport('1', 'activity-summary');
+
+      const collaboratorSelect = await screen.findByRole('combobox', {
+        name: /collaborating specialists/i,
+      });
+      await reactSelectEvent.select(collaboratorSelect, ['New Collaborator']);
+
+      const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
+      await userEvent.click(reviewButton);
+
+      const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+      await userEvent.click(approverSelect);
+
+      expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+      expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'New Collaborator' })).not.toBeInTheDocument();
+    });
+
     it('finds whats changed', () => {
       const old = {
         beans: 'kidney',
