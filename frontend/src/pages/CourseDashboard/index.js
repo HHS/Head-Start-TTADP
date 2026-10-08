@@ -5,7 +5,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -28,6 +28,7 @@ export default function CourseDashboard() {
   const [courseData, setCourseData] = useState({});
   const [error, updateError] = useState();
   const [resetPagination, setResetPagination] = useState(false);
+  const onFiltersChange = useCallback(() => setResetPagination(true), []);
 
   const {
     // from useUserDefaultRegionFilters
@@ -44,7 +45,8 @@ export default function CourseDashboard() {
     REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
     true,
     [],
-    COURSE_DASHBOARD_FILTER_CONFIG
+    COURSE_DASHBOARD_FILTER_CONFIG,
+    onFiltersChange
   );
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
@@ -58,7 +60,7 @@ export default function CourseDashboard() {
         const data = await fetchCourseDashboardData(filterQuery);
         setCourseData(data);
         updateError('');
-      } catch (e) {
+      } catch (_e) {
         updateError('Unable to fetch course data');
       } finally {
         setIsLoading(false);

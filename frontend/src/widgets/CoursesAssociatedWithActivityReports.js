@@ -46,6 +46,7 @@ function CoursesAssociatedWithActivityReports({
       const courseToUse = data.courses || [];
       setCourseUse(courseToUse);
       setCourseCount(courseToUse.length);
+      setCheckBoxes({});
     } finally {
       setLocalLoading(false);
     }
@@ -56,9 +57,10 @@ function CoursesAssociatedWithActivityReports({
     if (resetPagination) {
       setSortConfig({ ...sortConfig, activePage: 1 });
       setOffset(0); // 0 times perpage = 0
+      setCheckBoxes({});
       setResetPagination(false);
     }
-  }, [activePage, resetPagination, setResetPagination, setSortConfig, sortConfig, data]);
+  }, [resetPagination, setResetPagination, setSortConfig, sortConfig]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -131,8 +133,12 @@ function CoursesAssociatedWithActivityReports({
         coursesToExport = courseUse.filter((row) => selectedRowsIds.includes(row.id));
       }
 
-      // Create a header row.
-      const headerData = data.headers.map((h) => ({ title: h, value: h }));
+      // Create a header row. Backend headers are { name, displayName } objects.
+      const headerData = data.headers.map((h) => {
+        const label = typeof h === 'string' ? h : h.displayName || h.name;
+        const value = label.includes(',') ? `"${label}"` : label;
+        return { title: label, value };
+      });
       headerData.push({ title: 'Total', value: 'Total' });
       coursesToExport = [
         {
