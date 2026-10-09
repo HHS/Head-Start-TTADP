@@ -1,10 +1,11 @@
 /* eslint-disable max-len */
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import reactSelectEvent from 'react-select-event';
 import { HTTPError } from '../../../fetchers';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
@@ -14,6 +15,7 @@ import {
   formData,
   history,
   mockGoalsAndObjectives,
+  ReportComponent,
   recipients,
   renderActivityReport,
 } from '../testHelpers';
@@ -412,7 +414,7 @@ describe('ActivityReport', () => {
         ...JSON.parse(opts.body),
       }));
 
-      renderActivityReport('1', 'activity-summary');
+      const { rerender } = render(<ReportComponent id="1" currentPage="activity-summary" />);
 
       const collaboratorSelect = await screen.findByRole('combobox', {
         name: /collaborating specialists/i,
@@ -421,6 +423,8 @@ describe('ActivityReport', () => {
 
       const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
       await userEvent.click(reviewButton);
+      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports/1/review'));
+      rerender(<ReportComponent id="1" currentPage="review" />);
 
       const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
       await userEvent.click(approverSelect);
