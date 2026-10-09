@@ -7,14 +7,17 @@ describe('grants/standard', () => {
   let recipientWithFEI;
   let recipientWithERSEA;
   let recipientSpanningRegions;
+  let recipientWithHiddenFEIGoal;
   let feiGrant;
   let secondGrantForFEIRecipient;
   let erseaGrant;
   let regionOneGrantWithFEI;
   let regionTwoGrantWithoutFEI;
+  let grantWithHiddenFEIGoal;
   let goalFEI;
   let goalERSEA;
   let goalFEIForRegionOne;
+  let hiddenGoalFEI;
 
   beforeAll(async () => {
     const [templateFEI, templateERSEA] = await Promise.all([
@@ -25,6 +28,7 @@ describe('grants/standard', () => {
     recipientWithFEI = await createRecipient();
     recipientWithERSEA = await createRecipient();
     recipientSpanningRegions = await createRecipient();
+    recipientWithHiddenFEIGoal = await createRecipient();
     feiGrant = await createGrant({ recipientId: recipientWithFEI.id });
     secondGrantForFEIRecipient = await createGrant({ recipientId: recipientWithFEI.id });
     erseaGrant = await createGrant({ recipientId: recipientWithERSEA.id });
@@ -36,6 +40,7 @@ describe('grants/standard', () => {
       recipientId: recipientSpanningRegions.id,
       regionId: 2,
     });
+    grantWithHiddenFEIGoal = await createGrant({ recipientId: recipientWithHiddenFEIGoal.id });
 
     goalFEI = await Goal.create({
       name: 'FEI goal for grant standard filter',
@@ -63,11 +68,21 @@ describe('grants/standard', () => {
       goalTemplateId: templateFEI.id,
       createdVia: 'rtr',
     });
+
+    hiddenGoalFEI = await Goal.create({
+      name: 'Hidden FEI goal on a draft activity report',
+      status: 'Not Started',
+      timeframe: '12 months',
+      grantId: grantWithHiddenFEIGoal.id,
+      goalTemplateId: templateFEI.id,
+      createdVia: 'activityReport',
+      onApprovedAR: false,
+    });
   });
 
   afterAll(async () => {
     await Goal.destroy({
-      where: { id: [goalFEI.id, goalERSEA.id, goalFEIForRegionOne.id] },
+      where: { id: [goalFEI.id, goalERSEA.id, goalFEIForRegionOne.id, hiddenGoalFEI.id] },
       force: true,
       individualHooks: true,
     });
@@ -79,6 +94,7 @@ describe('grants/standard', () => {
           erseaGrant.id,
           regionOneGrantWithFEI.id,
           regionTwoGrantWithoutFEI.id,
+          grantWithHiddenFEIGoal.id,
         ],
       },
       force: true,
@@ -87,6 +103,7 @@ describe('grants/standard', () => {
     await recipientWithFEI.destroy({ force: true });
     await recipientWithERSEA.destroy({ force: true });
     await recipientSpanningRegions.destroy({ force: true });
+    await recipientWithHiddenFEIGoal.destroy({ force: true });
     await sequelize.close();
   });
 
@@ -104,6 +121,17 @@ describe('grants/standard', () => {
     expect(found.map((grant) => grant.id).sort()).toEqual(
       [feiGrant.id, secondGrantForFEIRecipient.id].sort()
     );
+  });
+
+  it('does not match grants whose only matching standard is a hidden activity-report goal', async () => {
+    const { grant: scope } = await filtersToScopes({ 'standard.in': ['FEI'] });
+    const found = await Grant.findAll({
+      where: {
+        [Op.and]: [scope.where, { id: grantWithHiddenFEIGoal.id }],
+      },
+    });
+
+    expect(found).toHaveLength(0);
   });
 
   it('filters every grant for a recipient out by excluded goal standard', async () => {
