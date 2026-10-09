@@ -506,7 +506,7 @@ describe('communication log timeline integration', () => {
     beforeAll(async () => {
       purposeLogs = await CommunicationLog.bulkCreate(
         [
-          { purpose: ` \t${purposeA}\r\n `, communicationDate: '03/01/2026' },
+          { purpose: `\u00a0${purposeA}\u00a0`, communicationDate: '03/01/2026' },
           { purpose: purposeB },
           { purpose: purposeC },
           { purpose: purposeA }, // Multiple associated recipients.
@@ -543,6 +543,16 @@ describe('communication log timeline integration', () => {
       const ids = purposeLogs?.map(({ id }) => id) ?? [];
       await CommunicationLogRecipient.destroy({ where: { communicationLogId: ids } });
       await CommunicationLog.destroy({ where: { id: ids } });
+    });
+
+    it('normalizes nonbreaking spaces consistently for filtering and display', async () => {
+      const result = await getRecipientTimeline({
+        ...params,
+        filters: [dateFilter, { topic: 'purpose', condition: 'is', query: [purposeA] }],
+      });
+
+      const event = result.events.find(({ sourceId }) => sourceId === purposeLogs[0].id);
+      expect(event).toMatchObject({ sourceId: purposeLogs[0].id, subtitle: purposeA });
     });
 
     it.each([

@@ -609,6 +609,11 @@ const COMMUNICATION_EVENT_TYPES: ReadonlyArray<{
 const communicationText = (value: unknown): string | null =>
   typeof value === 'string' ? value.trim() || null : null;
 
+// Keep SQL purpose comparisons aligned with JavaScript String.trim(), which is used for the
+// displayed subtitle. PostgreSQL's default BTRIM set omits Unicode whitespace such as NBSP.
+const JAVASCRIPT_TRIM_CHARACTERS_SQL =
+  "E' \\t\\n\\v\\f\\r' || U&'\\00A0\\1680\\2000\\2001\\2002\\2003\\2004\\2005\\2006\\2007\\2008\\2009\\200A\\2028\\2029\\202F\\205F\\3000\\FEFF'";
+
 const buildCommunicationLogIndexQuery = (
   context: RecipientTimelineRequestParams,
   bindings: TimelineSourceBindings
@@ -653,7 +658,7 @@ const buildCommunicationLogIndexQuery = (
       // and are included by "is not", rather than being lost to SQL NULL comparison semantics.
       predicates.push(`COALESCE(CASE
       WHEN jsonb_typeof("log"."data"->'purpose') = 'string'
-        THEN BTRIM("log"."data"->>'purpose', E' \\t\\r\\n')
+        THEN BTRIM("log"."data"->>'purpose', ${JAVASCRIPT_TRIM_CHARACTERS_SQL})
       END, '') ${filter.condition === 'is not' ? 'NOT ' : ''}IN (${replacement})`);
     });
   if (context.excludeMultiRecipientCommunications) {
