@@ -11,6 +11,7 @@ import {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Citation,
+  File,
   Goal,
   GoalFieldResponse,
   GoalTemplate,
@@ -40,7 +41,26 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
   const originalFileIds = originalAROFiles.map((originalAROFile) => originalAROFile.fileId);
   const removedFileIds = originalFileIds.filter((fileId) => !filesSet.has(fileId));
   const currentFileIds = new Set(originalFileIds.filter((fileId) => filesSet.has(fileId)));
-  const newFilesIds = fileIds.filter((topic) => !currentFileIds.has(topic));
+  const candidateNewFileIds = fileIds.filter((fileId) => !currentFileIds.has(fileId));
+
+  // A stale form (e.g. another tab deleted the objective, which removes orphaned files)
+  // can submit file ids that no longer exist; linking them would violate the FK.
+  const existingFiles = candidateNewFileIds.length
+    ? await File.findAll({
+        attributes: ['id'],
+        where: { id: candidateNewFileIds },
+        raw: true,
+      })
+    : [];
+  const existingFileIds = new Set(existingFiles.map((file) => file.id));
+  const newFilesIds = candidateNewFileIds.filter((fileId) => existingFileIds.has(fileId));
+  const missingFileIds = candidateNewFileIds.filter((fileId) => !existingFileIds.has(fileId));
+  if (missingFileIds.length) {
+    auditLogger.info(
+      `Skipping nonexistent file ids for ObjectiveId: ${objectiveId}, ` +
+        `AROId: ${activityReportObjectiveId}, fileIds: ${missingFileIds.join(', ')}`
+    );
+  }
 
   return Promise.all([
     ...newFilesIds.map(async (fileId) =>

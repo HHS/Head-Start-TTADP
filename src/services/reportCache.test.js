@@ -10,9 +10,11 @@ import {
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveFile,
   ActivityReportObjectiveTopic,
   Citation,
   Course,
+  File,
   Goal,
   GoalFieldResponse,
   GoalTemplate,
@@ -23,7 +25,13 @@ import {
   User,
 } from '../models';
 import { createGoal, createGrant, createRecipient, createReport } from '../testUtils';
-import { cacheCitations, cacheCourses, cacheGoalMetadata, cacheTopics } from './reportCache';
+import {
+  cacheCitations,
+  cacheCourses,
+  cacheFiles,
+  cacheGoalMetadata,
+  cacheTopics,
+} from './reportCache';
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -93,6 +101,63 @@ describe('cacheCourses', () => {
 
     expect(aroCourses).toHaveLength(1);
     expect(aroCourses[0].courseId).toEqual(courseTwo.id);
+  });
+});
+
+describe('cacheFiles', () => {
+  let activityReport;
+  let grant;
+  let recipient;
+  let goal;
+  let objective;
+  let aro;
+  let file;
+  let snapShot;
+  let mockAuditLoggerInfo;
+
+  beforeAll(async () => {
+    snapShot = await captureSnapshot();
+    mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+
+    recipient = await createRecipient({});
+    grant = await createGrant({ recipientId: recipient.id });
+    activityReport = await createReport({ activityRecipients: [{ grantId: grant.id }] });
+    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+    objective = await Objective.create({
+      goalId: goal.id,
+      title: faker.string.sample(200),
+      status: 'Not Started',
+    });
+    aro = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: activityReport.id,
+    });
+    file = await File.create({
+      originalFileName: 'cache-files-test.pdf',
+      key: `${faker.string.uuid()}.pdf`,
+      status: 'APPROVED',
+      fileSize: 1234,
+    });
+  });
+
+  afterAll(async () => {
+    mockAuditLoggerInfo.mockRestore();
+    await rollbackToSnapshot(snapShot);
+  });
+
+  it('skips file ids that no longer exist instead of violating the FK', async () => {
+    const missingFileId = file.id + 999999;
+
+    await expect(
+      cacheFiles(objective.id, aro.id, [{ id: file.id }, { id: missingFileId }])
+    ).resolves.toBeDefined();
+
+    const aroFiles = await ActivityReportObjectiveFile.findAll({
+      where: { activityReportObjectiveId: aro.id },
+    });
+
+    expect(aroFiles.map((f) => f.fileId)).toEqual([file.id]);
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining(`${missingFileId}`));
   });
 });
 
