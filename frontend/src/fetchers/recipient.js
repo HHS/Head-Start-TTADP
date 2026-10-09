@@ -136,13 +136,16 @@ export const getRecipientTimeline = async (
     throw new Error('Offset must be a non-negative integer');
   }
 
-  const query = new URLSearchParams({
+  const controls = new URLSearchParams({
     direction,
     limit: String(parsedLimit),
     offset: String(parsedOffset),
   });
-  filters.forEach((filter) => query.append('filters', filter));
-  query.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
+  controls.set(
+    'excludeMultiRecipientCommunications',
+    String(excludeMultiRecipientCommunications)
+  );
+  const filterQuery = filtersToQueryString(filters);
 
   const url = join(
     recipientUrl,
@@ -151,6 +154,7 @@ export const getRecipientTimeline = async (
     idRegion.toString(DECIMAL_BASE),
     'timeline'
   );
-  const timeline = await get(`${url}?${query.toString()}`);
+  const query = [filterQuery, controls.toString()].filter(Boolean).join('&');
+  const timeline = await get(`${url}?${query}`);
   return timeline.json();
 };

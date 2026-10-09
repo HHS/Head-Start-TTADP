@@ -207,6 +207,57 @@ describe('queryTimelineEventIndex', () => {
     expect(result.events[0].sourceId).toBe(201);
   });
 
+  it.each(['asc', 'desc'] as const)(
+    'combines inclusive date bounds across all four sources before paging in %s order',
+    async (direction) => {
+      const sources = [
+        ['activityReport', 'TTA activity'],
+        ['communicationLog', 'Email communication'],
+        ['goalStatusChange', 'Goal added'],
+        ['sessionReport', 'Training session'],
+      ].map(([name, eventType]) =>
+        source(
+          name,
+          `SELECT * FROM (VALUES
+            (1, DATE '2026-08-19', '${eventType}', 100000, 1),
+            (2, DATE '2026-08-20', '${eventType}', 100000, 1),
+            (3, DATE '2026-08-21', '${eventType}', 100000, 1),
+            (4, DATE '2026-08-22', '${eventType}', 100000, 1)
+          ) AS "event"("sourceId", "date", "eventType", "recipientId", "regionId")`
+        )
+      );
+      const filteredParams: RecipientTimelineRequestParams = {
+        ...timelineParams,
+        direction,
+        filters: [
+          { topic: 'date', condition: 'is on or after', query: '08/20/2026' },
+          { topic: 'date', condition: 'is on or before', query: '08/21/2026' },
+        ],
+      };
+      const expected = (direction === 'asc' ? [2, 3] : [3, 2]).flatMap((sourceId) =>
+        sources.map(({ name }) => [name, sourceId])
+      );
+      const pages = await Promise.all(
+        [0, 3, 6, 9].map((offset) =>
+          queryTestTimeline({ ...filteredParams, limit: 3, offset }, sources)
+        )
+      );
+      expect(pages.map(({ count }) => count)).toEqual([8, 8, 8, 8]);
+      expect(
+        pages.flatMap(({ events }) => events.map(({ source, sourceId }) => [source, sourceId]))
+      ).toEqual(expected);
+      expect(pages[3].events).toEqual([]);
+      const range = await queryTestTimeline(
+        {
+          ...filteredParams,
+          filters: [{ topic: 'date', condition: 'is within', query: '08/20/2026-08/21/2026' }],
+        },
+        sources
+      );
+      expect(range.events).toEqual(pages.flatMap(({ events }) => events));
+    }
+  );
+
   it('applies event type inclusion and exclusion filters', async () => {
     const included = await queryTestTimeline({
       ...timelineParams,
@@ -254,9 +305,9 @@ describe('queryTimelineEventIndex', () => {
       description: 'an unsupported source-specific filter',
       params: {
         ...timelineParams,
-        filters: [{ topic: 'purpose', condition: 'is', query: ['Follow-up'] }],
+        filters: [{ topic: 'unknown', condition: 'is', query: ['Follow-up'] }],
       },
-      error: 'Recipient timeline filter is not supported: purpose',
+      error: 'Recipient timeline filter is not supported: unknown',
     },
     {
       description: 'an invalid date',
@@ -291,6 +342,21 @@ describe('queryTimelineEventIndex', () => {
       error as string
     );
   });
+
+  it.each([['Unknown purpose'], [null], [42], ["General Check-In') OR TRUE --"]])(
+    'rejects invalid purposes for direct service callers: %j',
+    async (purpose) => {
+      await expect(
+        queryTestTimeline({
+          ...timelineParams,
+          filters: [{ topic: 'purpose', condition: 'is', query: [purpose] }],
+        } as RecipientTimelineRequestParams)
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Timeline purpose filter contains an unsupported communication purpose',
+      });
+    }
+  );
 
   it('rejects duplicate or unsafe source names', async () => {
     await expect(
