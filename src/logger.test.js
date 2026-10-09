@@ -187,6 +187,79 @@ describe('logger callsite helpers', () => {
   });
 });
 
+describe('requestLogger header masking', () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+    jest.restoreAllMocks();
+  });
+
+  it('redacts cookie and authorization and leaves other headers intact', () => {
+    const { maskHeaders } = loadTesting();
+    expect(
+      maskHeaders({
+        Cookie: 'session=s%3Asecret',
+        authorization: 'Bearer secret',
+        'x-forwarded-for': '1.2.3.4',
+        'user-agent': 'jest',
+      })
+    ).toEqual({
+      Cookie: '[REDACTED]',
+      authorization: '[REDACTED]',
+      'x-forwarded-for': '1.2.3.4',
+      'user-agent': 'jest',
+    });
+  });
+
+  it('does not mutate the original request headers', () => {
+    const { requestFilter } = loadTesting();
+    const req = { headers: { cookie: 'session=secret' } };
+    requestFilter(req, 'headers');
+    expect(req.headers.cookie).toBe('session=secret');
+  });
+
+  it('writes a request log entry with cookie and authorization redacted', async () => {
+    const { EventEmitter } = require('events');
+    const { requestLogger } = loadLogger();
+    const writes = [];
+    const capture = (chunk) => {
+      writes.push(String(chunk));
+      return true;
+    };
+    jest.spyOn(process.stdout, 'write').mockImplementation(capture);
+    if (console._stdout) {
+      jest.spyOn(console._stdout, 'write').mockImplementation(capture);
+    }
+    const req = {
+      method: 'GET',
+      url: '/api/test',
+      originalUrl: '/api/test',
+      headers: {
+        cookie: 'session=s%3Asecret',
+        authorization: 'Bearer secret-token',
+        'auth-impersonation-id': '7',
+        referer: 'https://example.com',
+      },
+      connection: {},
+    };
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.locals = {};
+    res.end = () => {};
+    await new Promise((resolve) => {
+      requestLogger(req, res, () => {
+        res.end();
+        setImmediate(resolve);
+      });
+    });
+    jest.restoreAllMocks();
+    const output = writes.join('');
+    expect(output).toContain('/api/test');
+    expect(output).toContain('[REDACTED]');
+    expect(output).toContain('https://example.com');
+    expect(output).not.toContain('secret');
+  });
+});
+
 describe('hashForLogging', () => {
   afterEach(() => {
     process.env = { ...ORIGINAL_ENV };
