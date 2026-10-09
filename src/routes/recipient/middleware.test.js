@@ -42,19 +42,21 @@ describe('checkRecipientTimelineQuery', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('parses valid pagination, structured filters, and the multi-recipient switch', () => {
-    const filter = JSON.stringify({
-      topic: 'eventType',
-      condition: 'is',
-      query: ['Email communication', 'Phone communication', 'In person communication'],
-    });
+  it('translates dotted query parameters into timeline filters', () => {
     const req = {
       query: {
         limit: '25',
         offset: '10',
         sortBy: 'date',
         direction: 'asc',
-        filters: filter,
+        'date.win': '08/01/2025-08/01/2026',
+        'purpose.nin': ['General Check-In', 'New TTA request'],
+        'standard.in': 'Monitoring',
+        'eventType.in': [
+          'Email communication',
+          'Phone communication',
+          'In person communication',
+        ],
         excludeMultiRecipientCommunications: 'true',
       },
     };
@@ -70,6 +72,21 @@ describe('checkRecipientTimelineQuery', () => {
       direction: 'asc',
       filters: [
         {
+          topic: 'date',
+          condition: 'is within',
+          query: '08/01/2025-08/01/2026',
+        },
+        {
+          topic: 'purpose',
+          condition: 'is not',
+          query: ['General Check-In', 'New TTA request'],
+        },
+        {
+          topic: 'standard',
+          condition: 'is',
+          query: ['Monitoring'],
+        },
+        {
           topic: 'eventType',
           condition: 'is',
           query: ['Email communication', 'Phone communication', 'In person communication'],
@@ -80,9 +97,10 @@ describe('checkRecipientTimelineQuery', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['is', 'is not'])('accepts every canonical purpose with %s', (condition) => {
+  it.each(['is', 'is not'])('accepts every defined purpose with %s', (condition) => {
     const filter = { topic: 'purpose', condition, query: COMMUNICATION_PURPOSES };
-    const req = { query: { filters: JSON.stringify(filter) } };
+    const parameter = condition === 'is' ? 'purpose.in' : 'purpose.nin';
+    const req = { query: { [parameter]: COMMUNICATION_PURPOSES } };
     const res = mockResponse();
     const next = jest.fn();
 
@@ -98,25 +116,15 @@ describe('checkRecipientTimelineQuery', () => {
     ['unsupported sort field', { sortBy: 'title' }],
     ['unsupported direction', { direction: 'sideways' }],
     ['invalid checkbox', { excludeMultiRecipientCommunications: 'sometimes' }],
-    ...[
-      [],
-      ['Unknown purpose'],
-      [null],
-      [42],
-      'General Check-In',
-      ["General Check-In') OR TRUE --"],
-    ].map((query) => [
-      'invalid purpose selection',
-      {
-        filters: JSON.stringify({ topic: 'purpose', condition: 'is', query }),
-      },
-    ]),
-    ['non-serialized filters', { filters: { key: 'value' } }],
-    ['malformed serialized filter', { filters: '{' }],
-    [
-      'serialized filter with an unsupported topic',
-      { filters: JSON.stringify({ topic: 'recipient', condition: 'is', query: ['1'] }) },
-    ],
+    ...[[], ['Unknown purpose'], [null], [42], ["General Check-In') OR TRUE --"]].map(
+      (query) => ['invalid purpose selection', { 'purpose.in': query }]
+    ),
+    ['removed JSON filters parameter', { filters: '{"topic":"date"}' }],
+    ['unsupported topic', { 'recipient.in': ['1'] }],
+    ['unsupported condition', { 'purpose.ctn': ['General Check-In'] }],
+    ['multiple date selections', { 'date.in': ['08/01/2026', '08/02/2026'] }],
+    ['array supplied for a date range', { 'date.win': ['08/01/2026', '08/02/2026'] }],
+    ['empty event type selection', { 'eventType.in': [] }],
     ['unknown query parameter', { extra: 'value' }],
   ])('rejects %s', (_description, query) => {
     const req = { query };

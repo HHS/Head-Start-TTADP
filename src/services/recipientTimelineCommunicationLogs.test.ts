@@ -467,17 +467,12 @@ describe('communication log timeline integration', () => {
   ] as const)(
     'combines the date range, hide=$hide, and $direction sorting through the API across pages',
     async ({ direction, hide, indices }) => {
-      const filter = JSON.stringify({
-        topic: 'date',
-        condition: 'is within',
-        query: '01/01/2026-01/02/2026',
-      });
       const pages = [];
       for (let offset = 0; offset <= indices.length; offset += 1) {
         const response = await request(app)
           .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
           .query({
-            filters: filter,
+            'date.win': '01/01/2026-01/02/2026',
             direction,
             excludeMultiRecipientCommunications: hide,
             limit: 1,
@@ -545,7 +540,7 @@ describe('communication log timeline integration', () => {
       await CommunicationLog.destroy({ where: { id: ids } });
     });
 
-    it('normalizes nonbreaking spaces consistently for filtering and display', async () => {
+    it('trims nonbreaking spaces consistently for filtering and display', async () => {
       const result = await getRecipientTimeline({
         ...params,
         filters: [dateFilter, { topic: 'purpose', condition: 'is', query: [purposeA] }],
@@ -567,20 +562,15 @@ describe('communication log timeline integration', () => {
     ] as const)(
       'combines purpose $condition values, inclusive dates, hide=$hide, and $direction ordering across API pages',
       async ({ condition, direction, hide, indices }) => {
-        const filters = [
-          dateFilter,
-          {
-            topic: 'purpose',
-            condition,
-            query: [condition === 'is' ? purposeA : purposeC, purposeB],
-          },
-        ];
+        const selectedPurposes = [condition === 'is' ? purposeA : purposeC, purposeB];
         const events = [];
         for (let offset = 0; offset <= indices.length; offset += 1) {
+          const purposeParameter = condition === 'is' ? 'purpose.in' : 'purpose.nin';
           const response = await request(app)
             .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
             .query({
-              filters: filters.map((filter) => JSON.stringify(filter)),
+              'date.win': dateFilter.query,
+              [purposeParameter]: selectedPurposes,
               direction,
               excludeMultiRecipientCommunications: hide,
               limit: 1,
@@ -684,7 +674,7 @@ describe('communication log timeline integration', () => {
         });
         const response = await request(app)
           .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
-          .query({ filters: JSON.stringify({ topic: 'purpose', condition, query: [purposeA] }) });
+          .query({ [condition === 'is' ? 'purpose.in' : 'purpose.nin']: [purposeA] });
         expect(response.status).toBe(200);
         expect(response.body).toEqual({ count: 0, events: [] });
         expect(s3.getSignedDownloadUrl).not.toHaveBeenCalled();
@@ -692,16 +682,17 @@ describe('communication log timeline integration', () => {
     );
 
     it.each([
-      { topic: 'purpose', condition: 'is', query: ['Unknown purpose'] },
-      { topic: 'purpose', condition: 'is', query: ["General Check-In') OR TRUE --"] },
-      { topic: 'purpose', condition: 'is', query: [] },
-      { topic: 'purpose', condition: 'contains', query: [purposeA] },
-      { topic: 'date', condition: 'is within', query: '03/03/2026-03/01/2026' },
-      { topic: 'date', condition: 'is on or after', query: '02/30/2026' },
-    ])('rejects invalid filters through the API: %j', async (filter) => {
+      { 'purpose.in': ['Unknown purpose'] },
+      { 'purpose.in': ["General Check-In') OR TRUE --"] },
+      { 'purpose.in': [''] },
+      { 'purpose.ctn': [purposeA] },
+      { 'date.win': '03/03/2026-03/01/2026' },
+      { 'date.aft': '02/30/2026' },
+      { filters: JSON.stringify({ topic: 'purpose', condition: 'is', query: [purposeA] }) },
+    ])('rejects invalid filter query parameters through the API: %j', async (query) => {
       const response = await request(app)
         .get(`/recipient/${params.recipientId}/region/${params.regionId}/timeline`)
-        .query({ filters: JSON.stringify(filter) });
+        .query(query);
       expect(response.status).toBe(400);
       expect(s3.getSignedDownloadUrl).not.toHaveBeenCalled();
     });

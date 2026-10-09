@@ -10,7 +10,6 @@ import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import {
   createInitialTimelineFilters,
-  serializeTimelineFilter,
   TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
@@ -62,10 +61,6 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     () => filters.filter(({ topic }) => supportedFilterTopics.has(topic)),
     [filters, supportedFilterTopics]
   );
-  const serializedFilters = useMemo(
-    () => supportedFilters.map(serializeTimelineFilter),
-    [supportedFilters]
-  );
   // Matches the URL encoding, so panel filters and filters read back from the URL share a key.
   const filterQuery = useMemo(() => filtersToQueryString(supportedFilters), [supportedFilters]);
 
@@ -81,7 +76,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     setView,
     listRef,
     restoring,
-  } = useTimelineNavigation(recipientId, regionId, serializedFilters, filterQuery);
+  } = useTimelineNavigation(recipientId, regionId, supportedFilters, filterQuery);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
