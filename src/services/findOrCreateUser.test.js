@@ -1,9 +1,17 @@
 import moment from 'moment';
-import { auditLogger } from '../logger';
+import { auditLogger, hashForLogging } from '../logger';
 import { sequelize, User } from '../models';
 import findOrCreateUser from './findOrCreateUser';
 
-jest.mock('../logger');
+jest.mock('../logger', () => ({
+  ...jest.requireActual('../logger'),
+  hashForLogging: jest.fn(jest.requireActual('../logger').hashForLogging),
+  auditLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+  },
+}));
 
 describe('findOrCreateUser', () => {
   afterEach(() => {
@@ -111,11 +119,22 @@ describe('findOrCreateUser', () => {
 
     expect(existingUser).toBeNull();
 
+    hashForLogging.mockReturnValue('hashed-34');
+
     // Now find or create `user2`, and confirm that a new user was created
     const createdUser = await findOrCreateUser(user);
 
     expect(createdUser.id).toBeDefined();
     expect(createdUser.email).toEqual(user.email);
+
+    // Audit log carries a correlation hash, never the raw hsesUsername/email.
+    expect(hashForLogging).toHaveBeenCalledWith(user.hsesUsername);
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      `Created user ${createdUser.id} with no access permissions`,
+      { subHash: 'hashed-34' }
+    );
+    const loggedValues = auditLogger.info.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/test34@test\.com/);
 
     // Look up the user that was just created, make sure it can now be found
     const existingUserAfter = await User.findOne({
@@ -147,6 +166,42 @@ describe('findOrCreateUser', () => {
     expect(retrievedUser.id).toEqual(userId);
 
     expect(retrievedUser.email).toEqual(updatedEmail);
+  });
+
+  it('Backfills hsesUsername by legacy hsesUserId without logging the raw email', async () => {
+    const userId = 41;
+    await User.destroy({ where: { id: userId } });
+    await User.create({
+      id: userId,
+      hsesUserId: '41',
+      email: 'old41@test.com',
+      hsesUsername: 'old41@test.com',
+      homeRegionId: 3,
+      lastLogin: new Date(),
+    });
+
+    hashForLogging.mockReturnValue('hashed-41');
+
+    // new hsesUsername not found by username, but hsesUserId matches the existing row
+    const updatedUser = await findOrCreateUser({
+      hsesUserId: '41',
+      hsesUsername: 'new41@test.com',
+      email: 'new41@test.com',
+      homeRegionId: 3,
+    });
+
+    expect(updatedUser.id).toEqual(userId);
+    expect(updatedUser.hsesUsername).toEqual('new41@test.com');
+
+    expect(hashForLogging).toHaveBeenCalledWith('new41@test.com');
+    expect(auditLogger.warn).toHaveBeenCalledWith(
+      `Backfilled user ${userId} by legacy hsesUserId`,
+      {
+        subHash: 'hashed-41',
+      }
+    );
+    const loggedValues = auditLogger.warn.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/new41@test\.com|old41@test\.com/);
   });
 
   it('Throws when there is something wrong', async () => {
