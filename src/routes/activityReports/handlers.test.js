@@ -64,6 +64,8 @@ import {
 } from './handlers';
 
 jest.mock('../../services/activityReports', () => ({
+  assertApproversAreNotParticipants: jest.requireActual('../../services/activityReports')
+    .assertApproversAreNotParticipants,
   activityReportAndRecipientsById: jest.fn(),
   createOrUpdate: jest.fn(),
   possibleRecipients: jest.fn(),
@@ -1841,10 +1843,7 @@ describe('Activity Report handlers', () => {
         ...request,
         body: { approverUserIds: [mockUser.id] },
       };
-      await submitReport(
-        invalidRequest,
-        mockResponse
-      );
+      await submitReport(invalidRequest, mockResponse);
 
       expect(handleErrors).toHaveBeenCalledWith(
         invalidRequest,
