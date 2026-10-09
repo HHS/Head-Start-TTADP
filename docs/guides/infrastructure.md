@@ -207,10 +207,10 @@ Our project includes three deployed Postgres databases, one to interact with eac
 
 ### First, log into Cloud Foundry instance
 
-1. Install the lastest version (**Version 8** as of this writing) of the Cloud Foundry CLI tool
+1. Install Cloud Foundry CLI v8 or later.
 
    - On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
-   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8.x
+   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8 or later.
 
 1. Login to cloud.gov account
 
@@ -237,13 +237,13 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
 
    ```bash
    # Mac OSX ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_arm64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_darwin_arm64
    # Mac OSX non-ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_amd64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_darwin_amd64
    # Windows
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_windows_386
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_windows_386
    # Linux
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
    ```
 
 1. Connect to your desired database
@@ -392,7 +392,7 @@ For details on how to perform a backup and restore, there is information on the 
 
 if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
 
-This script require that you have [Cloud Foundry's CLI v7](https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide) installed to run.
+This script requires Cloud Foundry CLI v8 or later. See [Download and install cf][cf-install].
 
 The script takes two flags
 
@@ -559,10 +559,10 @@ git config core.hooksPath .githooks
 
 If you are already using git hooks, add the `.githooks/pre-commit` contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
-**Install Version 7 of the Cloud Foundry CLI tool**
+**Install Cloud Foundry CLI v8 or later**
 
-- On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
-- On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
+- On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
+- On other platforms: [Download and install cf][cf-install]. Be sure to get version 8 or later.
 
 **Add target environment credentials**
 
