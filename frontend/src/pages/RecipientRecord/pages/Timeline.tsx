@@ -49,7 +49,9 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     FILTER_KEY,
     false,
     initialFilters,
-    TIMELINE_FILTER_CONFIG
+    TIMELINE_FILTER_CONFIG,
+    undefined,
+    true
   );
 
   const supportedFilterTopics = useMemo(

@@ -90,7 +90,9 @@ describe('Recipient Record - TTA Timeline', () => {
           condition: 'is within',
         }),
       ],
-      TIMELINE_FILTER_CONFIG
+      TIMELINE_FILTER_CONFIG,
+      undefined,
+      true
     );
     expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).not.toContain('purpose');
     await screen.findByText('No results found.');

@@ -23,6 +23,12 @@ export default function useSession(key, initialValue) {
       return initialValue;
     }
 
+    // An explicit empty-filter history entry must stay empty when navigating
+    // Back/Forward; session storage may still contain the prior filter set.
+    if (location.state?.filtersExplicitlyEmptyFor === key) {
+      return initialValue;
+    }
+
     try {
       const fromStorage = sessionStorage.getItem(key);
       if (fromStorage) {
@@ -34,7 +40,7 @@ export default function useSession(key, initialValue) {
     }
 
     return initialValue;
-  }, [initialValue, key, location.search]);
+  }, [initialValue, key, location.search, location.state]);
 
   const [filters, setFilters] = useSessionStorage(key, initial);
 

@@ -131,6 +131,102 @@ describe('timeline navigation restoration', () => {
     expect(screen.queryByText('Restoring timeline position…')).not.toBeInTheDocument();
   });
 
+  it('returns to the previous page with one Back after scrolling through four batches', async () => {
+    mockRealFilters();
+    const filters = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['TTA activity'] }];
+    const search = `?${filtersToQueryString(filters)}`;
+    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
+      Promise.resolve({ count: 125, events: batch(offset + 1, 25) })
+    );
+    const history = createMemoryHistory({
+      initialEntries: ['/detail', `/timeline${search}`],
+      initialIndex: 1,
+    });
+    const push = jest.spyOn(history, 'push');
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 25' });
+    for (const end of [50, 75, 100]) {
+      act(() => {
+        scrollTo((end - 25) * 100);
+        window.dispatchEvent(new Event('scroll'));
+      });
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
+      await screen.findByRole('heading', { name: `Event ${end}` });
+      await waitFor(() =>
+        expect(history.location.state.timelinePosition.loadedPages).toBe(end / 25)
+      );
+      expect(history.length).toBe(2);
+      expect(history.location.search).toBe(search);
+    }
+    expect(push).not.toHaveBeenCalled();
+    act(() => history.goBack());
+    expect(screen.getByText('Detail page')).toBeVisible();
+    expect(history.location.pathname).toBe('/detail');
+  });
+
+  it('does not recreate a filtered URL when Back returns to an unfiltered timeline', async () => {
+    window.sessionStorage.clear();
+    const realFilters = mockRealFilters();
+    getRecipientTimeline.mockImplementation((_recipient, _region, { offset, filters }) =>
+      Promise.resolve({ count: 100, events: batch(offset + 1, filters.length ? 25 : 1) })
+    );
+    const history = createMemoryHistory({
+      initialEntries: ['/detail', '/timeline'],
+      initialIndex: 1,
+    });
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 1' });
+    const filtered = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    act(() => realFilters.setFilters(filtered));
+    await waitFor(() => expect(history.location.search).toContain('Goal%20added'));
+    await screen.findByRole('heading', { name: 'Event 25' });
+    act(() => history.goBack());
+    await waitFor(() => expect(history.location.pathname).toBe('/timeline'));
+    await screen.findByRole('heading', { name: 'Event 1' });
+    expect(history.length).toBe(3);
+    act(() => history.goBack());
+    expect(history.location.pathname).toBe('/detail');
+  });
+
+  it('preserves an explicitly empty filter state when navigating Back and Forward', async () => {
+    const realFilters = mockRealFilters();
+    const filters = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    const history = createMemoryHistory({
+      initialEntries: [`/timeline?${filtersToQueryString(filters)}`],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 1, events: batch(1, 1) });
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 1' });
+    act(() => realFilters.setFilters([]));
+    await waitFor(() => expect(history.location.search).toBe(''));
+    const entriesAfterClear = history.length;
+    act(() => history.goBack());
+    await waitFor(() => expect(history.location.search).toContain('Goal%20added'));
+    act(() => history.goForward());
+    await waitFor(() => expect(history.location.search).toBe(''));
+    expect(history.length).toBe(entriesAfterClear);
+  });
+
+  it('preserves a session-restored empty filter state when navigating Back', async () => {
+    window.sessionStorage.setItem('timeline-filters', JSON.stringify([]));
+    const realFilters = mockRealFilters();
+    const history = createMemoryHistory({
+      initialEntries: ['/detail', '/timeline'],
+      initialIndex: 1,
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 1, events: batch(1, 1) });
+    renderTimeline(history);
+    await screen.findByRole('heading', { name: 'Event 1' });
+    const filter = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    act(() => realFilters.setFilters(filter));
+    await waitFor(() => expect(history.location.search).toContain('Goal%20added'));
+    act(() => history.goBack());
+    await waitFor(() => expect(history.location.search).toBe(''));
+    expect(history.length).toBe(3);
+    act(() => history.goBack());
+    expect(history.location.pathname).toBe('/detail');
+  });
+
   it('does not replace location state while at the top, even after several slices', async () => {
     getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
       Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
