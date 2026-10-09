@@ -91,6 +91,8 @@ const admin = user(true, true, true, false, 6);
 const approver = user(false, false, false, true, 7);
 const canApproveRegion = user(false, false, false, true, 8);
 const canNotApproveRegion = user(false, false, false, false, 9);
+const authorApprover = user(true, false, false, true, 1);
+const collaboratorApprover = user(true, false, false, true, 2);
 
 describe('Activity Report policies', () => {
   describe('isApproverAndCreator', () => {
@@ -122,6 +124,20 @@ describe('Activity Report policies', () => {
     it('is false if the user does not have regional approval', () => {
       const report = activityReport(author.id, null, [canNotApproveRegion.id]);
       const policy = new ActivityReport(canNotApproveRegion, report);
+      expect(policy.canReview()).toBeFalsy();
+    });
+
+    it('is false if the user is the author, even with regional approval', () => {
+      const report = activityReport(authorApprover.id, null, [authorApprover.id]);
+      const policy = new ActivityReport(authorApprover, report);
+      expect(policy.canReview()).toBeFalsy();
+    });
+
+    it('is false if the user is a collaborator, even with regional approval', () => {
+      const report = activityReport(author.id, { user: collaboratorApprover }, [
+        collaboratorApprover.id,
+      ]);
+      const policy = new ActivityReport(collaboratorApprover, report);
       expect(policy.canReview()).toBeFalsy();
     });
   });

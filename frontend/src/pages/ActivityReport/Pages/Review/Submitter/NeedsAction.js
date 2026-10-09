@@ -27,6 +27,7 @@ const NeedsAction = ({
   reviewItems,
   grantsMissingMonitoring,
   grantsMissingCitations,
+  hasIneligibleApprovers,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
@@ -43,6 +44,10 @@ const NeedsAction = ({
 
   const submit = async () => {
     const hasCitationIssues = grantsMissingMonitoring.length || grantsMissingCitations.length;
+
+    if (hasIneligibleApprovers) {
+      return;
+    }
 
     if (!submitCR) {
       setShowCreatorRoleError(true);
@@ -199,6 +204,7 @@ NeedsAction.propTypes = {
   ).isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  hasIneligibleApprovers: PropTypes.bool.isRequired,
 };
 
 NeedsAction.defaultProps = {
