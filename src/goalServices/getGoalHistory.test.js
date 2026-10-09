@@ -64,7 +64,7 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     // Point the httpContext mock to the real user so Goal afterCreate hooks can set collaborators.
-    httpContext.get.mockReturnValue(user.id);
+    httpContext.get.mockImplementation((key) => (key === 'loggedUser' ? user.id : undefined));
 
     permission = await Permission.create({
       userId: user.id,

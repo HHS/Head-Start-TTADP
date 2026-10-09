@@ -245,24 +245,69 @@ describe('resource', () => {
         ]);
         expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
       });
-      it('releases the resource semaphore when resource lookup fails', async () => {
+      it('creates exactly one resource when two concurrent requests race on a new url', async () => {
+        const newUrl = 'http://concurrent-new-resource.test';
+        try {
+          const [resource1, resource2] = await Promise.all([
+            findOrCreateResource(newUrl),
+            findOrCreateResource(newUrl),
+          ]);
+
+          expect(resource1.id).toBe(resource2.id);
+          const matchingResources = await Resource.findAll({ where: { url: newUrl } });
+          expect(matchingResources.length).toBe(1);
+        } finally {
+          await Resource.destroy({
+            where: { url: newUrl },
+            individualHooks: false,
+            force: true,
+          });
+        }
+      });
+      it('keeps a shared transaction usable when sibling calls race on a new url', async () => {
+        const newUrl = 'http://concurrent-same-transaction.test';
+        const eclkcUrl = 'https://eclkc.ohs.acf.hhs.gov/concurrent-same-transaction';
+        const headStartUrl = 'https://headstart.gov/concurrent-same-transaction';
+        try {
+          // Mirrors saving one objective for two grants: both siblings share the request's
+          // transaction (and connection) and create the same urls at the same time.
+          const [resources1, resources2, count] = await db.sequelize.transaction(
+            async (transaction) => {
+              const results = await Promise.all([
+                findOrCreateResources([newUrl, eclkcUrl], transaction),
+                findOrCreateResources([newUrl, eclkcUrl], transaction),
+              ]);
+              // Fails with "current transaction is aborted" if a savepoint rollback leaked.
+              const total = await Resource.count({
+                where: { url: [newUrl, eclkcUrl, headStartUrl] },
+                transaction,
+              });
+              return [...results, total];
+            }
+          );
+
+          expect(resources1.map((r) => r.id).sort()).toEqual(resources2.map((r) => r.id).sort());
+          expect(count).toBe(3);
+        } finally {
+          await Resource.destroy({
+            where: { url: [newUrl, eclkcUrl, headStartUrl] },
+            individualHooks: false,
+            force: true,
+          });
+        }
+      });
+      it('recovers on subsequent calls when a resource lookup fails', async () => {
         const error = new Error('resource lookup failed');
-        const recoverUrl = 'http://semaphore-release.test';
+        const recoverUrl = 'http://lookup-failure-recovery.test';
         const findAllSpy = jest.spyOn(Resource, 'findAll').mockRejectedValueOnce(error);
 
-        await expect(findOrCreateResources(['http://semaphore-failure.test'])).rejects.toThrow(
+        await expect(findOrCreateResources(['http://lookup-failure.test'])).rejects.toThrow(
           error
         );
         findAllSpy.mockRestore();
 
         try {
-          const resources = await Promise.race([
-            findOrCreateResources([recoverUrl]),
-            new Promise((_resolve, reject) =>
-              setTimeout(() => reject(new Error('timed out waiting for semaphore')), 1000)
-            ),
-          ]);
-
+          const resources = await findOrCreateResources([recoverUrl]);
           expect(resources).toEqual([expect.objectContaining({ url: recoverUrl })]);
         } finally {
           await Resource.destroy({
@@ -1128,7 +1173,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReport', () => {
       let resources;
-      beforeAll(async () => {});
+      beforeAll(async () => { });
       beforeEach(async () => {
         const urls = [
           'http://google.com',
