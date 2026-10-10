@@ -13,10 +13,11 @@ import runValidation from './validation/runValidation';
  * validation steps (each in its own module under ./validation) through the
  * shared runner:
  *
- * This whole process runs read-only, after updateMonitoringFactTables.ts has
- * already completed (this file never calls or triggers it - it only reads the
- * raw IT-AMS tables and the fact tables that a separate, already-finished run
- * of that script wrote). Steps:
+ * This process is read-only with respect to any data outside the validation
+ * system itself, and runs after updateMonitoringFactTables.ts has already
+ * completed (this file never calls or triggers it - it only reads the raw
+ * IT-AMS tables and the fact tables that a separate, already-finished run of
+ * that script wrote). Steps:
  *
  * 1. refreshMonitoringValidationStaging - builds shared temp tables (e.g. the
  *    validation date window) that later steps read instead of each re-deriving

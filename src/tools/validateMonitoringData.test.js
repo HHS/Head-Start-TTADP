@@ -200,7 +200,6 @@ describe('validateMonitoringData', () => {
   const mfidStale = faker.number.int({ min: 900000, max: 89999999 });
   const mridFresh = faker.number.int({ min: 900000, max: 89999999 });
   const mridStale = faker.number.int({ min: 900000, max: 89999999 });
-  const citationReopenedFreshAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const citationReopenedStaleAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Soft-deleted Citations cited on a real report ->
   // activity_report_citation_source_deleted(_editable). deletedAt is read
@@ -2280,12 +2279,38 @@ describe('validateMonitoringData', () => {
     await validateMonitoringData();
     const runA = await latestRun(CYCLE_A_ID);
 
+    // Reimport churn: source-delete findingIdNoCategory's row and reinsert it
+    // under the same findingId but a new id, same as a real IT-AMS re-import
+    // jitter event (see docs/monitoring-data-validation.md). Nothing about
+    // the finding changed, so finding_standard_missing must stay suppressed
+    // in cycle B even though its entity_id just changed.
+    const staleFinding = await MonitoringFinding.findOne({
+      where: { findingId: findingIdNoCategory },
+    });
+    await staleFinding.update({ sourceDeletedAt: new Date(), deletedAt: new Date() });
+    await MonitoringFinding.create({
+      findingId: findingIdNoCategory,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      source: null,
+      name: 'Finding VMD no category (reimported)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     getMonitoringImportCycle.mockResolvedValueOnce({
       import_id: CYCLE_B_ID,
       source_updated_at: new Date('2026-07-27T00:00:00.000Z'),
     });
     await validateMonitoringData();
     const runB = await latestRun(CYCLE_B_ID);
+
+    // Suppressed despite the id churn - no newly-flagged alert in cycle B.
+    const standardMissingAlertB = await ValidationAlert.findOne({
+      where: { run_id: runB.id, check_name: 'finding_standard_missing' },
+      raw: true,
+    });
+    expect(standardMissingAlertB).toBeNull();
 
     // grouping: each run is stamped with its own cycle
     expect(runA.import_id).toBe(CYCLE_A_ID);

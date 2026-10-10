@@ -65,18 +65,46 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     GROUP BY 1
     ;
 
+    -- finding_live_id: findingId -> its current live MonitoringFindings.id.
+    -- DISTINCT ON guards against duplicate-live-row fan-out.
+    DROP TABLE IF EXISTS pg_temp.finding_live_id;
+    CREATE TEMP TABLE finding_live_id
+    ON COMMIT DROP
+    AS
+    SELECT DISTINCT ON (mf."findingId")
+      mf."findingId",
+      mf.id
+    FROM "MonitoringFindings" mf
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ORDER BY mf."findingId", mf.id DESC
+    ;
+
     -- previously_flagged: (entity_type, entity_id, observation_name, category)
     -- combinations already true as of the previous cycle's run - the "since
     -- previous cycle" alert window (see docs/monitoring-data-validation.md,
     -- Conventions). A real temp table, not a CTE, since it's reused across
-    -- every INSERT below, each its own top-level statement.
+    -- every INSERT below, each its own top-level statement. For
+    -- MonitoringFindings rows, entity_id is translated forward to today's
+    -- live id for the same findingId - import jitter can source-delete and
+    -- reinsert a finding under a new id with nothing about the finding
+    -- itself changed, which would otherwise make it look newly flagged.
     DROP TABLE IF EXISTS pg_temp.previously_flagged;
     CREATE TEMP TABLE previously_flagged
     ON COMMIT DROP
     AS
-    SELECT prev.entity_type, prev.entity_id, prev.observation_name, prev.category
+    SELECT
+      prev.entity_type,
+      COALESCE(fli.id, prev.entity_id) entity_id,
+      prev.observation_name,
+      prev.category
     FROM "ValidationRecords" prev
     CROSS JOIN monitoring_validation_cycles cyc
+    LEFT JOIN "MonitoringFindings" old_mf
+      ON prev.entity_type = 'MonitoringFindings'
+      AND old_mf.id = prev.entity_id
+    LEFT JOIN finding_live_id fli
+      ON fli."findingId" = old_mf."findingId"
     WHERE prev.run_id = cyc.prev_cycle_run_id
     ;
 
