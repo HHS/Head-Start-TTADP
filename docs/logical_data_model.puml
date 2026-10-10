@@ -1430,6 +1430,7 @@ class ValidationRecords{
  * run_id : integer
  * updatedAt : timestamp with time zone : now()
  category : text
+ context : jsonb
  scalar : decimal
 }
 

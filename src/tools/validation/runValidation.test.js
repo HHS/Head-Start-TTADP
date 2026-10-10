@@ -9,8 +9,8 @@ const PROCESS = 'test_run_validation';
 // requires one - see the both-null rejection test).
 const CYCLE = { import_id: 4242, source_updated_at: new Date('2026-08-01T00:00:00.000Z') };
 
-// A step that inserts one critical and one non-critical alert for the current
-// run (read from the validation_run temp table the runner sets up).
+// A step that inserts one alert of each severity for the current run (read
+// from the validation_run temp table the runner sets up).
 const insertAlertsStep = async (transaction) => {
   await sequelize.query(
     `
@@ -18,6 +18,8 @@ const insertAlertsStep = async (transaction) => {
     SELECT run_id, 'test_critical', 'a critical thing', :critical, NOW(), NOW() FROM validation_run
     UNION ALL
     SELECT run_id, 'test_alert', 'a normal thing', :alert, NOW(), NOW() FROM validation_run
+    UNION ALL
+    SELECT run_id, 'test_team_notification', 'a team thing', :teamNotification, NOW(), NOW() FROM validation_run
     ;
     `,
     {
@@ -26,6 +28,7 @@ const insertAlertsStep = async (transaction) => {
       replacements: {
         critical: VALIDATION_ALERT_SEVERITY.CRITICAL,
         alert: VALIDATION_ALERT_SEVERITY.ALERT,
+        teamNotification: VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION,
       },
     }
   );
@@ -58,15 +61,19 @@ describe('runValidation', () => {
       cycle: CYCLE,
     });
 
-    expect(result.alertCount).toBe(2);
+    expect(result.alertCount).toBe(3);
     expect(result.criticalCount).toBe(1);
-    // severity DESC orders 'critical' before 'alert' in the summary
-    expect(result.alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.CRITICAL);
-    expect(result.alerts.map((a) => a.check_name).sort()).toEqual(['test_alert', 'test_critical']);
+    // severity DESC orders 'team_notification' before 'critical' before 'alert' in the summary
+    expect(result.alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION);
+    expect(result.alerts.map((a) => a.check_name).sort()).toEqual([
+      'test_alert',
+      'test_critical',
+      'test_team_notification',
+    ]);
 
     const run = await ValidationRun.findByPk(result.runId);
     expect(run.status).toBe(VALIDATION_RUN_STATUS.SUCCESS);
-    expect(run.alert_count).toBe(2);
+    expect(run.alert_count).toBe(3);
     expect(run.completed_at).not.toBeNull();
   });
 
