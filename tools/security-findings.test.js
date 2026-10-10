@@ -506,6 +506,7 @@ describe('security-findings tooling', () => {
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       strict: false,
+      observedOn: '2026-06-17',
       cwd: tempDir,
     });
     expect(validation.errors).toEqual([]);
@@ -1030,6 +1031,7 @@ describe('security-findings tooling', () => {
       sastScanConfigPath: path.relative(tempDir, sastScanConfigPath),
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
+      observedOn: '2026-06-17',
       cwd: tempDir,
     });
 
