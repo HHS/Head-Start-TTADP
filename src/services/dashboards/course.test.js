@@ -381,6 +381,7 @@ describe('Course dashboard', () => {
 
     const expectedResults = [
       {
+        id: 0,
         heading: 'Widget Course 1',
         url: 'Widget Course 1',
         course: 'Widget Course 1',
@@ -394,6 +395,7 @@ describe('Course dashboard', () => {
         ],
       },
       {
+        id: 1,
         heading: 'Widget Course 2',
         url: 'Widget Course 2',
         course: 'Widget Course 2',
@@ -407,6 +409,7 @@ describe('Course dashboard', () => {
         ],
       },
       {
+        id: 2,
         heading: 'Widget Course 3',
         url: 'Widget Course 3',
         course: 'Widget Course 3',
@@ -477,9 +480,11 @@ describe('Course dashboard', () => {
     expect(courses[0].data.length).toBe(3);
     expect(courses[1].data.length).toBe(3);
     expect(courses[2].data.length).toBe(3);
+    expect(new Set(courses.map((course) => course.id)).size).toBe(courses.length);
 
     const expectedResults = [
       {
+        id: 1,
         heading: 'Widget Course 2',
         url: 'Widget Course 2',
         course: 'Widget Course 2',
@@ -494,6 +499,7 @@ describe('Course dashboard', () => {
         ],
       },
       {
+        id: 0,
         heading: 'Widget Course 1',
         url: 'Widget Course 1',
         course: 'Widget Course 1',
@@ -508,6 +514,7 @@ describe('Course dashboard', () => {
         ],
       },
       {
+        id: 2,
         heading: 'Widget Course 3',
         url: 'Widget Course 3',
         course: 'Widget Course 3',
@@ -556,6 +563,7 @@ describe('Course dashboard', () => {
 
     const expectedResults = [
       {
+        id: 0,
         heading: 'Widget Course 1',
         url: 'Widget Course 1',
         course: 'Widget Course 1',
