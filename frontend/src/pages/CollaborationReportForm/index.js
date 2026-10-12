@@ -323,6 +323,7 @@ function CollaborationReport({ match, location }) {
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+        const filteredApprovers = approvers.filter((approver) => approver.id !== report.userId);
 
         // istanbul ignore next - hard to test collaborator mode
         const isCollaborator =
@@ -343,7 +344,7 @@ function CollaborationReport({ match, location }) {
 
         updateAdditionalData({
           collaborators: filteredCollaborators,
-          approvers,
+          approvers: filteredApprovers,
           goalTemplates,
         });
 

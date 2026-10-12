@@ -159,6 +159,25 @@ describe('CollaborationReportForm', () => {
     expect(heading).toBeInTheDocument();
   });
 
+  it('does not offer the report creator as an approver', async () => {
+    fetchMock.get(
+      '/api/activity-reports/approvers?region=1',
+      [
+        { id: 1, name: 'Report Creator' },
+        { id: 2, name: 'Eligible Approver' },
+      ],
+      { overwriteRoutes: true }
+    );
+
+    render(<ReportComponent id="new" currentPage="review" />);
+
+    const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+    await userEvent.click(approverSelect);
+
+    expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+  });
+
   it('keeps activity summary validation errors after review navigation', async () => {
     getItem.mockReturnValue(
       JSON.stringify({
