@@ -598,7 +598,6 @@ describe('security-findings tooling', () => {
       strict: false,
       observedOn: '2026-06-17',
       cwd: tempDir,
-      observedOn: '2026-06-17',
     });
     expect(validation.errors).toEqual([]);
     expect(validation.warnings).toEqual(
@@ -1118,7 +1117,6 @@ describe('security-findings tooling', () => {
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
       observedOn: '2026-06-17',
       cwd: tempDir,
-      observedOn: '2026-06-17',
     });
 
     expect(validation.errors).toEqual([]);
