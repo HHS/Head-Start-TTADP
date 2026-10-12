@@ -11,6 +11,10 @@ declare global {
 
 import { blur } from './common';
 
+// Seeded region 1 approver (see src/seeders/20201124160449-users.js); creators can't approve their own ARs.
+const APPROVER_ID = '10';
+const APPROVER_NAME = 'adam';
+
 async function getFullName(page: Page) {
   await page.goto('/');
   const welcomeText = page.getByRole('heading', { name: /welcome to the tta hub,/i });
@@ -350,9 +354,7 @@ test.describe('Activity Report', () => {
     const approverDropdown = page.getByLabel('Approving manager');
     await approverDropdown.click();
 
-    // type our name into the dropdown to filter to just us
-    await page.keyboard.type(fullName);
-    // press Enter to select ourself
+    await page.keyboard.type(APPROVER_NAME);
     await page.keyboard.press('Enter');
 
     await blur(page);
@@ -361,6 +363,10 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
     await page.waitForTimeout(5000);
+
+    // switch to the approver to review the report
+    await page.setExtraHTTPHeaders({ 'playwright-user-id': APPROVER_ID });
+    await page.goto('/activity-reports');
 
     // find the recently created AR in the table and navigate to it
     await page
