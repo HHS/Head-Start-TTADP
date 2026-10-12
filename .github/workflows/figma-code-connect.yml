@@ -1,0 +1,46 @@
+name: Publish Figma Code Connect
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/src/codeConnect/**'
+      - 'frontend/figma.config.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: figma-code-connect
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # parse/publish skip unreadable files and exit 0 by default;
+      # --exit-on-unreadable-files makes a broken mapping fail the job.
+      - name: Validate Code Connect mappings
+        run: yarn figma:parse --exit-on-unreadable-files --skip-update-check
+
+      - name: Publish Code Connect
+        run: yarn figma:publish --exit-on-unreadable-files --skip-update-check
+        env:
+          FIGMA_ACCESS_TOKEN: ${{ secrets.FIGMA_ACCESS_TOKEN }}
