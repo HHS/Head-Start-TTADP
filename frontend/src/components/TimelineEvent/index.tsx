@@ -47,7 +47,7 @@ interface TimelineEventProps {
 }
 
 /** Renders the shared presentation contract without depending on a particular source model. */
-export default function TimelineEvent({
+function TimelineEvent({
   event,
   isLast = false,
   defaultExpanded = false,
@@ -220,3 +220,6 @@ export default function TimelineEvent({
     </article>
   );
 }
+
+// Timeline position saves replace the router location; skip re-rendering unchanged rows.
+export default React.memo(TimelineEvent);
