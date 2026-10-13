@@ -193,18 +193,20 @@ describe('requestLogger header masking', () => {
     jest.restoreAllMocks();
   });
 
-  it('redacts cookie and authorization and leaves other headers intact', () => {
+  it('redacts cookie, authorization, and proxy-authorization (any case) and leaves other headers intact', () => {
     const { maskHeaders } = loadTesting();
     expect(
       maskHeaders({
         Cookie: 'session=s%3Asecret',
         authorization: 'Bearer secret',
+        'Proxy-Authorization': 'Basic secret',
         'x-forwarded-for': '1.2.3.4',
         'user-agent': 'jest',
       })
     ).toEqual({
       Cookie: '[REDACTED]',
       authorization: '[REDACTED]',
+      'Proxy-Authorization': '[REDACTED]',
       'x-forwarded-for': '1.2.3.4',
       'user-agent': 'jest',
     });

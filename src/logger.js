@@ -192,7 +192,7 @@ auditLogger.alertError = (message, alertType, err = undefined) => {
 const REDACTED_VALUE = '[REDACTED]';
 
 // Headers that carry credentials or session identifiers.
-const SENSITIVE_HEADERS = ['cookie', 'authorization'];
+const SENSITIVE_HEADERS = ['cookie', 'authorization', 'proxy-authorization'];
 
 const maskHeaders = (headers) =>
   Object.entries(headers || {}).reduce((acc, [name, value]) => {
