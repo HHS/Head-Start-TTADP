@@ -141,10 +141,7 @@ export const getRecipientTimeline = async (
     limit: String(parsedLimit),
     offset: String(parsedOffset),
   });
-  controls.set(
-    'excludeMultiRecipientCommunications',
-    String(excludeMultiRecipientCommunications)
-  );
+  controls.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
   const filterQuery = filtersToQueryString(filters);
 
   const url = join(
