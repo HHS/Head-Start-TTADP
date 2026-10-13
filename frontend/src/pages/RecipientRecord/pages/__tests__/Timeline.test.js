@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -8,12 +8,10 @@ import {
   TIMELINE_FILTER_CONFIG,
 } from '../../../../components/filter/timelineFilters';
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
-import useFetch from '../../../../hooks/useFetch';
 import useFilters from '../../../../hooks/useFilters';
 import UserContext from '../../../../UserContext';
 import Timeline from '../Timeline';
 
-jest.mock('../../../../hooks/useFetch');
 jest.mock('../../../../hooks/useFilters');
 jest.mock('../../../../fetchers/recipient', () => ({
   getRecipientTimeline: jest.fn(),
@@ -22,6 +20,22 @@ jest.mock('../../../../fetchers/recipient', () => ({
 const user = { homeRegionId: 1 };
 const onApplyFilters = jest.fn();
 const onRemoveFilter = jest.fn();
+
+const batch = (start, length) =>
+  Array.from({ length }, (_, index) => ({
+    source: 'activityReport',
+    sourceId: start + index,
+    eventType: 'TTA activity',
+    title: `Event ${start + index}`,
+    date: '2026-07-07',
+    subtitle: null,
+    byline: null,
+    durationHours: null,
+    indicators: [],
+    tags: [],
+    details: [],
+    links: [],
+  }));
 
 const renderTimeline = () =>
   render(
@@ -40,11 +54,6 @@ describe('Recipient Record - TTA Timeline', () => {
       onRemoveFilter,
       filterConfig: TIMELINE_FILTER_CONFIG,
     });
-    useFetch.mockReturnValue({
-      data: { count: 0, events: [] },
-      error: '',
-      loading: false,
-    });
     getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
   });
 
@@ -52,7 +61,7 @@ describe('Recipient Record - TTA Timeline', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the page shell and design controls', () => {
+  it('renders the page shell and design controls', async () => {
     renderTimeline();
 
     expect(screen.getByRole('heading', { name: 'TTA timeline' })).toBeVisible();
@@ -81,9 +90,12 @@ describe('Recipient Record - TTA Timeline', () => {
           condition: 'is within',
         }),
       ],
-      TIMELINE_FILTER_CONFIG
+      TIMELINE_FILTER_CONFIG,
+      undefined,
+      true
     );
     expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).not.toContain('purpose');
+    await screen.findByText('No results found.');
   });
 
   it('sends the multi-recipient communication checkbox state with the timeline request', async () => {
@@ -92,19 +104,16 @@ describe('Recipient Record - TTA Timeline', () => {
       name: 'Hide multi-recipient communications',
     });
 
-    userEvent.click(checkbox);
+    await act(async () => userEvent.click(checkbox));
 
     expect(checkbox).toBeChecked();
 
-    await waitFor(async () => {
-      const [, fetchTimeline] = useFetch.mock.calls[useFetch.mock.calls.length - 1];
-      await fetchTimeline();
-    });
-
-    expect(getRecipientTimeline).toHaveBeenLastCalledWith(
-      '401',
-      '1',
-      expect.objectContaining({ excludeMultiRecipientCommunications: true })
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ excludeMultiRecipientCommunications: true })
+      )
     );
   });
 
@@ -128,8 +137,7 @@ describe('Recipient Record - TTA Timeline', () => {
 
     expect(screen.queryByText('General Check-In')).not.toBeInTheDocument();
 
-    const [, fetchTimeline] = useFetch.mock.calls[useFetch.mock.calls.length - 1];
-    await fetchTimeline();
+    await screen.findByText('No results found.');
 
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
@@ -142,65 +150,163 @@ describe('Recipient Record - TTA Timeline', () => {
   });
 
   it('renders a loading state', () => {
-    useFetch.mockReturnValue({
-      data: { count: 0, events: [] },
-      error: '',
-      loading: true,
-    });
-
+    getRecipientTimeline.mockReturnValue(new Promise(() => {}));
     renderTimeline();
-
     expect(screen.getByLabelText('Loading TTA timeline')).toBeVisible();
     expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
   });
 
-  it('renders an empty state', () => {
+  it('renders an empty state', async () => {
     renderTimeline();
-
-    expect(screen.getByText('No results found.')).toBeVisible();
+    expect(await screen.findByText('No results found.')).toBeVisible();
     expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
   });
 
-  it('renders an error state', () => {
-    useFetch.mockReturnValue({
-      data: { count: 0, events: [] },
-      error: 'Unable to load the TTA timeline.',
-      loading: false,
-    });
-
+  it('renders a result count when timeline events exist', async () => {
+    getRecipientTimeline.mockResolvedValueOnce({ count: 2, events: batch(1, 2) });
     renderTimeline();
-
-    expect(screen.getByRole('alert')).toHaveTextContent('Unable to load the TTA timeline.');
-    expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
-  });
-
-  it('renders a result count when timeline events exist', () => {
-    useFetch.mockReturnValue({
-      data: {
-        count: 2,
-        events: [1, 2].map((sourceId) => ({
-          source: 'activityReport',
-          sourceId,
-          date: '2026-07-07',
-          eventType: 'TTA activity',
-          title: 'TTA activity',
-          subtitle: null,
-          byline: null,
-          durationHours: null,
-          indicators: [],
-          tags: [],
-          details: [],
-          links: [],
-        })),
-      },
-      error: '',
-      loading: false,
-    });
-
-    renderTimeline();
-
-    expect(screen.getByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    expect(await screen.findByTestId('timeline-results')).toHaveTextContent('2 timeline events');
     expect(screen.getAllByRole('article')).toHaveLength(2);
     expect(screen.getByRole('list', { name: 'Timeline events' })).toBeVisible();
+  });
+
+  it('renders loaded events when the response count is malformed', async () => {
+    getRecipientTimeline.mockResolvedValueOnce({ count: 'many', events: batch(1, 2) });
+    renderTimeline();
+    expect(await screen.findByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    expect(screen.getByRole('status')).toHaveTextContent('2 events loaded.');
+    expect(screen.getByText('2 events loaded.')).toHaveClass('usa-sr-only');
+    expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
+    expect(getRecipientTimeline).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to a "Load more events" button without IntersectionObserver', async () => {
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 27, events: batch(1, 25) })
+      .mockResolvedValueOnce({ count: 27, events: batch(26, 2) });
+    renderTimeline();
+    await screen.findByRole('heading', { name: 'Event 25' });
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    expect(await screen.findByRole('heading', { name: 'Event 27' })).toBeVisible();
+    expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+      '401',
+      '1',
+      expect.objectContaining({ limit: 25, offset: 25 })
+    );
+    expect(screen.getAllByRole('listitem')).toHaveLength(27);
+    expect(screen.getByTestId('timeline-results')).toHaveTextContent('27 timeline events');
+    expect(screen.getByRole('status')).toHaveTextContent('27 events loaded.');
+    expect(screen.getByText('27 events loaded.')).toHaveClass('usa-sr-only');
+    expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Load more events' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [26, 50],
+    [25, 49],
+  ])(
+    'announces %i-based non-final batches with %i distinct events loaded',
+    async (start, loaded) => {
+      getRecipientTimeline
+        .mockResolvedValueOnce({ count: 75, events: batch(1, 25) })
+        .mockResolvedValueOnce({ count: 75, events: batch(start, 25) });
+      renderTimeline();
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('25 of 75 events loaded.')
+      );
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(`${loaded} of 75 events loaded.`);
+      expect(screen.getByRole('status')).not.toHaveTextContent('End of timeline.');
+      expect(screen.getAllByRole('article')).toHaveLength(loaded);
+    }
+  );
+
+  it('keeps loaded events visible and retries when a later slice fails', async () => {
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 26, events: batch(1, 25) })
+      .mockRejectedValueOnce(new Error('failed'))
+      .mockResolvedValueOnce({ count: 26, events: batch(26, 1) });
+    renderTimeline();
+    await screen.findByRole('heading', { name: 'Event 25' });
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load the TTA timeline.');
+    expect(screen.getAllByRole('listitem')).toHaveLength(25);
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Retry loading events' }))
+    );
+    expect(await screen.findByRole('heading', { name: 'Event 26' })).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(getRecipientTimeline.mock.calls.slice(1).map((call) => call[2].offset)).toEqual([
+      25, 25,
+    ]);
+  });
+
+  it('renders an error state and retries the first page', async () => {
+    getRecipientTimeline.mockRejectedValueOnce(new Error('failed'));
+    renderTimeline();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load the TTA timeline.');
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Retry loading events' }))
+    );
+    await screen.findByText('No results found.');
+    expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+      '401',
+      '1',
+      expect.objectContaining({ offset: 0, limit: 25 })
+    );
+  });
+
+  it('loads the next slice on scroll, keeps existing events visible, and ends without visible wording', async () => {
+    let intersect;
+    const disconnect = jest.fn();
+    const originalObserver = window.IntersectionObserver;
+    window.IntersectionObserver = jest.fn((callback) => {
+      intersect = callback;
+      return { observe: jest.fn(), disconnect };
+    });
+    let resolveNext;
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 27, events: batch(1, 25) })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveNext = resolve;
+        })
+      );
+    try {
+      renderTimeline();
+      await screen.findByRole('heading', { name: 'Event 25' });
+      expect(getRecipientTimeline).toHaveBeenCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ limit: 25, offset: 0 })
+      );
+      act(() => {
+        intersect([{ isIntersecting: true }]);
+        intersect([{ isIntersecting: true }]);
+      });
+      expect(screen.getByRole('heading', { name: 'Event 1' })).toBeVisible();
+      expect(screen.getByRole('status')).toHaveTextContent('Loading more events');
+      expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ limit: 25, offset: 25 })
+      );
+      await act(async () => resolveNext({ count: 27, events: batch(25, 2) }));
+      expect(screen.getAllByRole('listitem')).toHaveLength(26);
+      expect(screen.getByRole('status')).toHaveTextContent('26 events loaded.');
+      expect(screen.getByText('26 events loaded.')).toHaveClass('usa-sr-only');
+      expect(screen.queryByText('End of timeline.')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Load more events' })).not.toBeInTheDocument();
+      expect(disconnect).toHaveBeenCalled();
+    } finally {
+      window.IntersectionObserver = originalObserver;
+    }
   });
 });

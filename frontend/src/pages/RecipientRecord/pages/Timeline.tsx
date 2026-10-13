@@ -1,9 +1,9 @@
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Checkbox, Dropdown } from '@trussworks/react-uswds';
-import type { RecipientTimelineResponse } from '@ttahub/common/src/recipientTimeline';
-import React, { useContext, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Checkbox, Dropdown } from '@trussworks/react-uswds';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { useHistory, useLocation } from 'react-router-dom';
 import Container from '../../../components/Container';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
@@ -15,10 +15,10 @@ import {
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import TimelineEvent from '../../../components/TimelineEvent';
-import { getRecipientTimeline } from '../../../fetchers/recipient';
-import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
+import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import './Timeline.css';
 
 const FILTER_KEY = 'timeline-filters';
@@ -28,10 +28,20 @@ interface TimelineProps {
   regionId: string;
 }
 
-export default function Timeline({ recipientId, regionId }: TimelineProps): React.ReactElement {
+export default function Timeline(props: TimelineProps): React.ReactElement {
+  const { pathname, search } = useLocation();
+  const { action } = useHistory();
+  const [navigation, setNavigation] = useState({ pathname, search, version: 0 });
+  if (navigation.pathname !== pathname || navigation.search !== search) {
+    // useFilters reads URL filters on mount. Reinitialize before its effects can overwrite a
+    // Back/Forward destination with the previous entry's filters. Normal filter edits stay mounted.
+    setNavigation({ pathname, search, version: navigation.version + (action === 'POP' ? 1 : 0) });
+  }
+  return <TimelineContent key={navigation.version} {...props} />;
+}
+
+function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactElement {
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
-  const [direction, setDirection] = useState<'asc' | 'desc'>('desc');
-  const [hideMultiRecipientCommunications, setHideMultiRecipientCommunications] = useState(false);
   const { user } = useContext(UserContext);
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
@@ -39,7 +49,9 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
     FILTER_KEY,
     false,
     initialFilters,
-    TIMELINE_FILTER_CONFIG
+    TIMELINE_FILTER_CONFIG,
+    undefined,
+    true
   );
 
   const supportedFilterTopics = useMemo(
@@ -54,24 +66,48 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
     () => supportedFilters.map(serializeTimelineFilter),
     [supportedFilters]
   );
+  // Matches the URL encoding, so panel filters and filters read back from the URL share a key.
+  const filterQuery = useMemo(() => filtersToQueryString(supportedFilters), [supportedFilters]);
 
-  const { data, error, loading } = useFetch(
-    { count: 0, events: [] } as RecipientTimelineResponse,
-    () =>
-      getRecipientTimeline(recipientId, regionId, {
-        direction,
-        filters: serializedFilters,
-        excludeMultiRecipientCommunications: hideMultiRecipientCommunications,
-      }),
-    [recipientId, regionId, direction, serializedFilters, hideMultiRecipientCommunications],
-    'Unable to load the TTA timeline.'
-  );
+  const {
+    events,
+    count,
+    error,
+    loading,
+    hasMore,
+    loadMore,
+    direction,
+    excludeMultiRecipientCommunications,
+    setView,
+    listRef,
+    restoring,
+  } = useTimelineNavigation(recipientId, regionId, serializedFilters, filterQuery);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
-  const events = Array.isArray(data?.events) ? data.events : [];
-  const count =
-    Number.isInteger(data?.count) && data.count >= 0
-      ? Math.max(data.count, events.length)
-      : events.length;
+  // Rebuilding the observer on every loading flip is intentional. A fresh observe() fires an
+  // initial callback, which chains the next load when a short slice leaves the sentinel in view.
+  // Keeping one long lived observer would stall the timeline until the user scrolls.
+  useEffect(() => {
+    if (
+      restoring ||
+      loading ||
+      error ||
+      !hasMore ||
+      !sentinelRef.current ||
+      !supportsIntersectionObserver
+    ) {
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [restoring, loading, error, hasMore, loadMore, supportsIntersectionObserver]);
 
   return (
     <>
@@ -109,7 +145,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
           className="width-full position-relative"
           paddingX={0}
           paddingY={0}
-          loading={loading}
+          loading={loading && events.length === 0}
           loadingLabel="Loading TTA timeline"
         >
           <div className="padding-3">
@@ -124,7 +160,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
                   id="timeline-sort"
                   name="timeline-sort"
                   value={direction}
-                  onChange={(event) => setDirection(event.target.value as 'asc' | 'desc')}
+                  onChange={(event) => setView({ direction: event.target.value as 'asc' | 'desc' })}
                 >
                   <option value="desc">All TTA activity by date (most recent first)</option>
                   <option value="asc">All TTA activity by date (oldest first)</option>
@@ -146,8 +182,10 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
                       />
                     </span>
                   }
-                  checked={hideMultiRecipientCommunications}
-                  onChange={(event) => setHideMultiRecipientCommunications(event.target.checked)}
+                  checked={excludeMultiRecipientCommunications}
+                  onChange={(event) =>
+                    setView({ excludeMultiRecipientCommunications: event.target.checked })
+                  }
                 />
               </div>
             </div>
@@ -160,20 +198,46 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
               </Alert>
             )}
             {!loading && !error && events.length === 0 && <NoResultsFound hideFilterHelp />}
-            {!loading && !error && events.length > 0 && (
+            {events.length > 0 && (
               <p className="usa-sr-only" data-testid="timeline-results">
                 {count} timeline {count === 1 ? 'event' : 'events'}
               </p>
             )}
-            {!loading && !error && events.length > 0 && (
-              <ol className="usa-list--unstyled" aria-label="Timeline events">
+            {events.length > 0 && (
+              <ol ref={listRef} className="usa-list--unstyled" aria-label="Timeline events">
                 {events.map((event, index) => (
-                  <li key={`${event.source}-${event.sourceId}`}>
+                  <li
+                    key={JSON.stringify([event.source, event.sourceId])}
+                    data-timeline-event={JSON.stringify([event.source, event.sourceId])}
+                  >
                     <TimelineEvent event={event} isLast={index === events.length - 1} />
                   </li>
                 ))}
               </ol>
             )}
+            <div ref={sentinelRef}>
+              <p role="status" className="margin-bottom-0">
+                {restoring && !error && 'Restoring timeline position…'}
+                {!restoring && loading && events.length > 0 && 'Loading more events…'}
+                {!restoring &&
+                  !loading &&
+                  !error &&
+                  hasMore &&
+                  events.length > 0 &&
+                  `${events.length} of ${count} events loaded.`}
+                {!restoring && !loading && !error && !hasMore && events.length > 0 && (
+                  <span className="usa-sr-only">
+                    {events.length} {events.length === 1 ? 'event' : 'events'} loaded.
+                  </span>
+                )}
+              </p>
+              {/* Infinite scroll replaces "Load more" where supported; retry is always offered. */}
+              {!loading && (error || (hasMore && !restoring && !supportsIntersectionObserver)) && (
+                <Button type="button" onClick={loadMore} className="margin-top-2">
+                  {error ? 'Retry loading events' : 'Load more events'}
+                </Button>
+              )}
+            </div>
           </div>
         </Container>
       </div>
