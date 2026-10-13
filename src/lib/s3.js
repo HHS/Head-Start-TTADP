@@ -128,6 +128,18 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return res;
 };
 
+// The backend may reach MinIO by its Docker-internal name (http://minio:9000), which a browser
+// cannot resolve. Use S3_PUBLIC_ENDPOINT if set; otherwise map the internal "minio" host to
+// localhost so existing .env files keep working.
+const getPublicEndpoint = () => {
+  const { S3_PUBLIC_ENDPOINT, S3_ENDPOINT } = process.env;
+  if (S3_PUBLIC_ENDPOINT) return S3_PUBLIC_ENDPOINT;
+  if (!S3_ENDPOINT) return null;
+  const endpoint = new URL(S3_ENDPOINT);
+  if (endpoint.hostname === 'minio') endpoint.hostname = 'localhost';
+  return endpoint.origin;
+};
+
 const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
   const url = { url: null, error: null };
   if (!client || !bucket) {
@@ -140,14 +152,17 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     secretAccessKey: s3Config.credentials.secretAccessKey,
   };
 
-  const host = process.env.S3_ENDPOINT
-    ? new URL(process.env.S3_ENDPOINT).host
-    : `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`;
+  // When using a custom endpoint (local MinIO), links are path-style and must point at an
+  // address the browser can reach.
+  const customEndpoint = getPublicEndpoint();
+  const { protocol, host } = customEndpoint
+    ? new URL(customEndpoint)
+    : { protocol: 'https:', host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com` };
 
   const opts = {
     service: 's3',
     host,
-    path: `/${key}`,
+    path: customEndpoint ? `/${bucket}/${key}` : `/${key}`,
     region: s3Config.region,
     expires,
     signQuery: true,
@@ -155,7 +170,7 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
 
   try {
     const result = sign(opts, creds);
-    url.url = `https://${result.host}${result.path}`;
+    url.url = `${protocol}//${result.host}${result.path}`;
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
     auditLogger.error(`Failed to generate: ${error.message}`);

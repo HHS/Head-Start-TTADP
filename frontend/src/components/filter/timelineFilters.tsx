@@ -102,6 +102,3 @@ export const createInitialTimelineFilters = (): TimelineFilter[] => [
     query: LAST_TWELVE_MONTHS,
   },
 ];
-
-export const serializeTimelineFilter = ({ topic, condition, query }: TimelineFilter) =>
-  JSON.stringify({ topic, condition, query });

@@ -66,13 +66,20 @@
       "componentName": "nodejs-buildpack",
       "componentClass": "platformRuntime",
       "finding": "manifest.yml references the Node.js buildpack by git URL with no tag or commit, so the staged buildpack version can change without any repository change.",
-      "status": "deferred",
-      "justification": "The platform layer is not fully pinned. The inventory records the version cloud.gov reported for the current droplet, 1.9.4, but that value is an observation rather than a control. This is recorded as a known limitation in ADR 0029 rather than presented as a satisfied entry.",
+      "status": "resolved",
+      "justification": "Resolved by TTAHUB-5732 on 2026-10-01. manifest.yml now references the released v1.9.5 tag of the Node.js buildpack (a git buildpack ref must be a tag or branch name, not a commit SHA; the tag resolves to commit ec0fbc6a2ac4f08d9ad0120fefa2a209bb2d6d80), the first release shipping the Node 24.21.0 build required by package.json engines, and the platform.buildpack inventory entry is set to pinned true. Residual risk: upstream tags are mutable, so if cloudfoundry/nodejs-buildpack moves or deletes v1.9.5, staging could consume different code or fail to stage without a repository change. A tag is used because cloud.gov git buildpack refs do not accept commit SHAs.",
       "owner": "TTA Hub Tech Lead",
-      "trackingTicket": "TTAHUB-5245",
-      "closureTarget": "2026-11-05",
+      "trackingTicket": "TTAHUB-5732",
+      "closureTarget": "2026-10-01",
       "recommendation": "Pin the buildpack in manifest.yml to a released version, then set pinned to true on the inventory entry and close this disposition.",
-      "approval": null
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3996",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-01",
+        "decision": "Approved. Node.js buildpack pinned to the released v1.9.5 tag in manifest.yml."
+      }
     },
     {
       "id": "INV-2026-0006",

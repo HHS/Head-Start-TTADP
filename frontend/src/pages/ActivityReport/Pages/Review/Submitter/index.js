@@ -203,7 +203,6 @@ const Submitter = ({
             onFormSubmit={onFormSubmit}
             reportId={id}
             displayId={displayId}
-            approverStatusList={approverStatusList}
             lastSaveTime={lastSaveTime}
             creatorRole={creatorRole}
             grantsMissingMonitoring={grantsMissingMonitoring()}

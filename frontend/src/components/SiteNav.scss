@@ -1,8 +1,10 @@
 @use '../colors.scss' as *;
 
 @media(min-height: 40em){
-  .smart-hub-sitenav-content-container {
-    overflow-y: hidden;
+  // if we have a big window and no open disclosure groups
+  // we can remove the scrollbar
+.smart-hub-sitenav-content-container {
+    overflow-y: auto;
   }
 }
 

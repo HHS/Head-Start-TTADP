@@ -33,7 +33,7 @@ Training Report sessions have a complex permission model based on user roles, se
 
 ### Approver
 - User assigned to approve the session (`session.approverId`)
-- Can edit as approver after the session is submitted (see completion flags below)
+- Can edit session sections after submission, using the Edit actions on the Review and submit page (see completion flags below)
 - Cannot edit when status is `NEEDS_ACTION` (returned for corrections)
 - Cannot delete sessions (unless also owner/POC/collaborator)
 
