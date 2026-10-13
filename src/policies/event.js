@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import { isNationalCenterUser, isSessionSubmitted } from '../services/eventFlow';
 
@@ -180,7 +180,13 @@ export default class EventReport {
   }
 
   canEditAsSessionApprover() {
-    return !!(this.session && this.session.data && this.isSubmitted() && this.isSessionApprover());
+    return !!(
+      this.session?.data &&
+      this.isSubmitted() &&
+      this.session.data.status !== REPORT_STATUSES.NEEDS_ACTION &&
+      this.session.data.status !== TRAINING_REPORT_STATUSES.COMPLETE &&
+      this.isSessionApprover()
+    );
   }
 
   canEditSession() {

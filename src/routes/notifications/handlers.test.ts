@@ -10,6 +10,7 @@ import * as usersService from '../../services/users';
 import {
   createGlobalNotificationHandler,
   getArchivedNotificationsHandler,
+  getNotificationsCountHandler,
   getNotificationsHandler,
   updateNotificationHandler,
 } from './handlers';
@@ -38,6 +39,49 @@ describe('notification handlers', () => {
     mockRequest = { query: {}, params: {}, body: {} };
     mockResponse = { status: mockStatus, json: mockJson };
     jest.clearAllMocks();
+  });
+
+  describe('getNotificationsCountHandler', () => {
+    it('counts the authenticated user’s notifications with parsed filters', async () => {
+      (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
+      (notificationsService.getNotifications as jest.Mock).mockResolvedValue({
+        count: 3,
+        rows: [],
+      });
+      mockRequest.query = { 'viewed.in': ['false'], 'archived.in': ['true'], offset: '99' };
+      await getNotificationsCountHandler(mockRequest as Request, mockResponse as Response);
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(
+        42,
+        expect.arrayContaining([{ '$userStates.viewedAt$': null }]),
+        { archived: true },
+        true
+      );
+      expect(mockJson).toHaveBeenCalledWith({ count: 3, rows: [] });
+    });
+
+    it.each(['yes', '', ['false', 'true'], { value: 'false' }])(
+      'rejects malformed state filter %p',
+      async (value) => {
+        mockRequest.query = { 'viewed.in': value } as Request['query'];
+        await getNotificationsCountHandler(mockRequest as Request, mockResponse as Response);
+        expect(mockStatus).toHaveBeenCalledWith(400);
+        expect(notificationsService.getNotifications).not.toHaveBeenCalled();
+      }
+    );
+
+    it('defaults to unarchived and forwards failures', async () => {
+      (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
+      const error = new Error('count failed');
+      (notificationsService.getNotifications as jest.Mock).mockRejectedValue(error);
+      await getNotificationsCountHandler(mockRequest as Request, mockResponse as Response);
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(
+        42,
+        [],
+        { archived: false },
+        true
+      );
+      expect(handleErrors).toHaveBeenCalledWith(mockRequest, mockResponse, error, logContext);
+    });
   });
 
   describe('getNotificationsHandler', () => {

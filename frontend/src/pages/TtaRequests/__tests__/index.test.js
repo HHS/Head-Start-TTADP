@@ -78,7 +78,10 @@ describe('TTA Requests', () => {
   it('renders the add request button', () => {
     renderTtaRequests();
 
-    expect(screen.getByRole('button', { name: /add request/i })).toBeVisible();
+    expect(screen.getByRole('link', { name: /add request/i })).toHaveAttribute(
+      'href',
+      '/tta-requests/new'
+    );
   });
 
   it('renders the filter panel', () => {

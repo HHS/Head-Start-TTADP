@@ -8,7 +8,9 @@ import {
   archiveNotification,
   fetchArchivedNotifications,
   fetchNotifications,
+  viewNotification,
 } from '../../../fetchers/notifications';
+import { notifyDataUpdates } from '../../../hooks/useDataUpdates';
 import useFetch from '../../../hooks/useFetch';
 import UserContext from '../../../UserContext';
 import Notifications from '../index';
@@ -58,6 +60,26 @@ describe('Notifications Page', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+  test.each([true, false])(
+    'loading leaves notifications unread and updates refresh the list, actionable=%s',
+    async (actionable) => {
+      useFetch.mockImplementation(jest.requireActual('../../../hooks/useFetch').default);
+      const row = sampleRow({ viewedAt: null, actionable });
+      fetchNotifications.mockResolvedValue({ count: 1, rows: [row] });
+      renderPage();
+      await screen.findByText('Unread notification');
+      expect(viewNotification).not.toHaveBeenCalled();
+      expect(archiveNotification).not.toHaveBeenCalled();
+      fetchNotifications.mockResolvedValue({
+        count: 1,
+        rows: [{ ...row, viewedAt: '2026-09-29' }],
+      });
+      act(() => notifyDataUpdates('notifications'));
+      await waitFor(() => expect(screen.queryByText('Unread notification')).toBeNull());
+      expect(screen.getByText('Test')).toBeVisible();
+    }
+  );
 
   test('displays notifications page', () => {
     renderPage('/notifications');

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import httpContext from 'express-http-context';
-import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
+import { AR_GRANT_END_DATE_GRACE_DAYS, GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
@@ -444,7 +444,7 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
-      // Create a inactive grant with NULL inactivationDate (should be excluded)
+      // Create an inactive grant with no inactivation date and a recent project end.
       await Grant.create({
         id: INACTIVE_GRANT_ID_NULL_DATE,
         number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
@@ -1388,15 +1388,61 @@ describe('Activity report service', () => {
         expect(outsideWindowGrant.length).toBe(0);
       });
 
-      it('excludes inactive grant with NULL inactivationDate', async () => {
+      it('includes inactive grant with NULL inactivationDate and a recent endDate', async () => {
         const region = 19;
         const recipients = await possibleRecipients(region);
 
         const nullDateGrant = recipients.grants[0].grants.filter(
           (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_NULL_DATE
         );
-        expect(nullDateGrant.length).toBe(0);
+        expect(nullDateGrant.length).toBe(1);
       });
+
+      it.each([
+        ['inside the grace window', AR_GRANT_END_DATE_GRACE_DAYS - 1, null, 'Inactive', true],
+        ['at the grace window boundary', AR_GRANT_END_DATE_GRACE_DAYS, null, 'Inactive', true],
+        ['outside the grace window', AR_GRANT_END_DATE_GRACE_DAYS + 1, null, 'Inactive', false],
+        ['with no end date', null, null, 'Inactive', false],
+        ['with another status', 1, null, 'Pending', false],
+        ['with an old inactivation date and recent end date', 1, 366, 'Inactive', false],
+        [
+          'with a recent inactivation date and old end date',
+          AR_GRANT_END_DATE_GRACE_DAYS + 1,
+          60,
+          'Inactive',
+          true,
+        ],
+      ])(
+        '%s has expected AR eligibility',
+        async (_description, endDaysAgo, inactiveDaysAgo, status, eligible) => {
+          const daysAgo = (days) => {
+            if (days === null) return null;
+            const date = new Date();
+            date.setDate(date.getDate() - days);
+            return date;
+          };
+          const grant = await Grant.findByPk(INACTIVE_GRANT_ID_NULL_DATE);
+          const originalValues = {
+            endDate: grant.endDate,
+            inactivationDate: grant.inactivationDate,
+            status: grant.status,
+          };
+          try {
+            await grant.update({
+              endDate: daysAgo(endDaysAgo),
+              inactivationDate: daysAgo(inactiveDaysAgo),
+              status,
+            });
+            const recipients = await possibleRecipients(19);
+            const grantIds = recipients.grants.flatMap((recipient) =>
+              recipient.grants.map((result) => result.dataValues.activityRecipientId)
+            );
+            expect(grantIds.includes(INACTIVE_GRANT_ID_NULL_DATE)).toBe(eligible);
+          } finally {
+            await grant.update(originalValues);
+          }
+        }
+      );
 
       it('includes inactive grant already on activity report even if outside 365-day window', async () => {
         const region = 19;

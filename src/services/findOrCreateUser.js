@@ -1,4 +1,4 @@
-import { auditLogger } from '../logger';
+import { auditLogger, hashForLogging } from '../logger';
 import { sequelize, User } from '../models';
 
 /**
@@ -17,17 +17,19 @@ export default function findOrCreateUser(data) {
     return Promise.reject(new Error(msg));
   }
 
+  const subHash = hashForLogging(hsesUsername);
+
   const createOrUpdateByUsername = () =>
     User.findOrCreate({
       where: { hsesUsername },
       defaults: { lastLogin: sequelize.fn('NOW'), ...data },
     }).then(([user, created]) => {
       if (created) {
-        auditLogger.info(`Created user ${user.id} with no access permissions`);
+        auditLogger.info(`Created user ${user.id} with no access permissions`, { subHash });
         return user;
       }
       // row already exists — update it
-      auditLogger.info(`Updating user ${user.id} found by hsesUsername`);
+      auditLogger.info(`Updating user ${user.id} found by hsesUsername`, { subHash });
       return user.update({ ...data, lastLogin: sequelize.fn('NOW') });
     });
 
@@ -49,9 +51,9 @@ export default function findOrCreateUser(data) {
       if (hsesUserId) {
         return User.findOne({ where: { hsesUserId } }).then((userByLegacyId) => {
           if (userByLegacyId) {
-            auditLogger.warn(
-              `Backfilled user ${userByLegacyId.id} by legacy hsesUserId; setting hsesUsername=${hsesUsername}`
-            );
+            auditLogger.warn(`Backfilled user ${userByLegacyId.id} by legacy hsesUserId`, {
+              subHash,
+            });
             return userByLegacyId.update({
               hsesUsername,
               hsesAuthorities: data.hsesAuthorities,
