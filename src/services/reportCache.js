@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import { auditLogger } from '../logger';
 import {
@@ -45,10 +45,12 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 
   // A stale form (e.g. another tab deleted the objective, which removes orphaned files)
   // can submit file ids that no longer exist; linking them would violate the FK.
+  // KEY SHARE locks the rows so a concurrent orphan cleanup can't delete them before we link.
   const existingFiles = candidateNewFileIds.length
     ? await File.findAll({
         attributes: ['id'],
         where: { id: candidateNewFileIds },
+        lock: Transaction.LOCK.KEY_SHARE,
         raw: true,
       })
     : [];

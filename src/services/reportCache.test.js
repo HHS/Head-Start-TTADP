@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import { GOAL_STATUS } from '../constants';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
@@ -158,6 +158,23 @@ describe('cacheFiles', () => {
 
     expect(aroFiles.map((f) => f.fileId)).toEqual([file.id]);
     expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining(`${missingFileId}`));
+  });
+
+  it('locks the files it links so a concurrent delete cannot remove them first', async () => {
+    const newFile = await File.create({
+      originalFileName: 'cache-files-lock.pdf',
+      key: `${faker.string.uuid()}.pdf`,
+      status: 'APPROVED',
+      fileSize: 1234,
+    });
+    const findAllSpy = jest.spyOn(File, 'findAll');
+
+    await cacheFiles(objective.id, aro.id, [{ id: file.id }, { id: newFile.id }]);
+
+    expect(findAllSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ lock: Transaction.LOCK.KEY_SHARE })
+    );
+    findAllSpy.mockRestore();
   });
 });
 
