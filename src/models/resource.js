@@ -119,6 +119,13 @@ export default (sequelize, DataTypes) => {
       },
       sequelize,
       modelName: 'Resource',
+      indexes: [
+        {
+          unique: true,
+          fields: [sequelize.fn('md5', sequelize.col('url'))],
+          name: 'Resources_url_md5_unique_idx',
+        },
+      ],
     }
   );
   return Resource;
