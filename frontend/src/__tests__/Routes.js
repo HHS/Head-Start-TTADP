@@ -3,7 +3,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Redirect } from 'react-router-dom';
 import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
 import Routes from '../Routes';
@@ -14,11 +14,13 @@ const defaultFlags = [
   'resources_dashboard',
   'view_courses',
   'communication_log',
+  'recipient_tta_request',
 ];
 
 // mock child components lightly to ensure they render *something* identifiable
 // this avoids needing to mock deeply nested dependencies of each page
 jest.mock('../pages/Home', () => () => <div>Home Page Welcome</div>);
+jest.mock('../pages/Home/NewHome', () => () => <div>New Home Page Welcome</div>);
 jest.mock('../pages/Landing', () => () => <div>Activity Reports Landing</div>);
 jest.mock('../pages/ActivityReport', () => () => <div>Activity Report Form</div>);
 jest.mock('../pages/ApprovedActivityReport', () => () => <div>Approved Activity Report View</div>);
@@ -33,6 +35,7 @@ jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
+jest.mock('../pages/TtaRequests', () => () => <div>TTA Requests Page</div>);
 jest.mock('../pages/TrainingReportForm', () => () => <div>Training Report Form Page</div>);
 jest.mock('../pages/ViewTrainingReport', () => () => <div>View Training Report Page</div>);
 jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
@@ -46,9 +49,6 @@ jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
-  <div>Recipients With No TTA Page</div>
-));
 jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => (
   <div>Recipients With Class Scores and Goals Page</div>
 ));
@@ -88,6 +88,10 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
 
   if (flag === 'actionable_notifications' && !window.test_actionable_notifications_flag) {
     return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
+  }
+
+  if (flag === 'recipient_tta_request' && !window.test_recipient_tta_request_flag) {
+    return renderNotFound ? <Redirect to="/something-went-wrong/404" /> : null;
   }
 
   return children;
@@ -130,8 +134,11 @@ const RenderRoutes = async (
 
   const user = { ...defaultUser, ...userOverrides };
 
-  window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
-  window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
+  window.test_quality_assurance_dashboard_flag = user.flags?.includes(
+    'quality_assurance_dashboard'
+  );
+  window.test_actionable_notifications_flag = user.flags?.includes('actionable_notifications');
+  window.test_recipient_tta_request_flag = user.flags?.includes('recipient_tta_request');
 
   const defaultProps = {
     alert: null,
@@ -198,13 +205,48 @@ describe('Routes', () => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
     delete window.test_actionable_notifications_flag;
+    delete window.test_recipient_tta_request_flag;
   });
 
   // --- authenticated routes ---
 
-  it('renders the Home page for "/"', async () => {
-    await RenderRoutes('/');
+  it('renders the legacy Home page for an unflagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
     expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the legacy Home page for a non-admin without a flags array', async () => {
+    await RenderRoutes('/', true, {
+      flags: undefined,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for a flagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for an admin without the flag', async () => {
+    await RenderRoutes('/', true, {
+      flags: defaultFlags,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
+      roles: [{ name: 'Admin' }],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders the Landing page for "/activity-reports"', async () => {
@@ -272,6 +314,20 @@ describe('Routes', () => {
     expect(await screen.findByText('Training Reports Page')).toBeInTheDocument();
   });
 
+  it('renders the TTA Requests page for "/tta-requests"', async () => {
+    await RenderRoutes('/tta-requests');
+    expect(await screen.findByText('TTA Requests Page')).toBeInTheDocument();
+  });
+
+  it('redirects "/tta-requests" to 404 when the recipient_tta_request flag is off', async () => {
+    const flagsWithoutRecipientTtaRequest = defaultFlags.filter(
+      (f) => f !== 'recipient_tta_request'
+    );
+    await RenderRoutes('/tta-requests', true, { flags: flagsWithoutRecipientTtaRequest });
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
+    expect(screen.queryByText('TTA Requests Page')).toBe(null);
+  });
+
   it('renders the Training Report Form page for "/training-report/:id/event-summary"', async () => {
     await RenderRoutes('/training-report/1/event-summary');
     expect(await screen.findByText('Training Report Form Page')).toBeInTheDocument();
@@ -317,9 +373,9 @@ describe('Routes', () => {
     expect(await screen.findByText('QA Dashboard Page')).toBeInTheDocument();
   });
 
-  it('renders the QA Recipients With No TTA page', async () => {
+  it('redirects the removed QA Recipients With No TTA route to 404', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-no-tta');
-    expect(await screen.findByText('Recipients With No TTA Page')).toBeInTheDocument();
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With Class Scores and Goals page', async () => {
@@ -407,9 +463,11 @@ describe('Routes', () => {
 
   // --- unauthenticated scenarios ---
 
-  it('renders Unauthenticated component when not authenticated on "/"', async () => {
+  it('does not render either Home page when unauthenticated on "/"', async () => {
     await RenderRoutes('/', false);
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders Unauthenticated component when not authenticated on "/activity-reports"', async () => {
@@ -417,8 +475,10 @@ describe('Routes', () => {
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
   });
 
-  it('renders Request Permissions component when authError is 403', async () => {
+  it('renders Request Permissions instead of either Home page for a 403', async () => {
     await RenderRoutes('/', false, {}, {}, 403);
     expect(await screen.findByText('Request Permissions Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 });

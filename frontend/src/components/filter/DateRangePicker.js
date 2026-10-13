@@ -9,7 +9,10 @@ import './DateRangePicker.scss';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
-export default function DateRangePicker({ onApply, query }) {
+export default function DateRangePicker({ onApply, query, minDate }) {
+  const formattedMinDate = moment(minDate, ['YYYY-MM-DD', DATE_DISPLAY_FORMAT], true).format(
+    DATE_DISPLAY_FORMAT
+  );
   let defaultDateRange = {
     startDate: '',
     endDate: '',
@@ -138,7 +141,11 @@ export default function DateRangePicker({ onApply, query }) {
           Start date
         </label>
         <span className="usa-hint" id="custom-date-range-hint">
-          mm/dd/yyyy (after 08/31/2020)
+          mm/dd/yyyy (after{' '}
+          {moment(formattedMinDate, DATE_DISPLAY_FORMAT)
+            .subtract(1, 'day')
+            .format(DATE_DISPLAY_FORMAT)}
+          )
         </span>
         <DatePicker
           aria-describedby="startDateLabel custom-date-range-hint"
@@ -149,6 +156,7 @@ export default function DateRangePicker({ onApply, query }) {
           error={startDateError}
           setError={setStartDateError}
           datePickerKey={startDateKey}
+          minDate={formattedMinDate}
         />
 
         <label id="endDateLabel" className="usa-label" htmlFor="end-date">
@@ -181,4 +189,9 @@ export default function DateRangePicker({ onApply, query }) {
 DateRangePicker.propTypes = {
   onApply: PropTypes.func.isRequired,
   query: PropTypes.string.isRequired,
+  minDate: PropTypes.string,
+};
+
+DateRangePicker.defaultProps = {
+  minDate: '09/01/2020',
 };

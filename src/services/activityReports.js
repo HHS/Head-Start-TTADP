@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/quotes */
 
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
+import {
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  AR_GRANT_END_DATE_GRACE_DAYS,
+  REPORTS_PER_PAGE,
+} from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
@@ -469,19 +473,15 @@ export async function activityReportAndRecipientsById(activityReportId) {
     order: [[{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC']],
   });
 
+  // Use real NextStep model instances (not plain objects) for the empty-note placeholder so the
+  // report instance can still be serialized via toJSON (e.g. when enqueued to the notification
+  // queue, which serializes the job data via JSON.stringify). A plain object here has no `.get()`
+  // method and breaks Sequelize's association serialization.
   if (report?.specialistNextSteps?.length === 0) {
-    report.specialistNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.specialistNextSteps[0] = NextStep.build({ note: '' });
   }
   if (report?.recipientNextSteps?.length === 0) {
-    report.recipientNextSteps[0] = {
-      dataValues: {
-        note: '',
-      },
-    };
+    report.recipientNextSteps[0] = NextStep.build({ note: '' });
   }
 
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
@@ -1306,6 +1306,15 @@ export async function possibleRecipients(regionId, activityReportId = null) {
             ),
           },
         },
+        {
+          '$grants.status$': 'Inactive',
+          '$grants.inactivationDate$': null,
+          '$grants.endDate$': {
+            [Op.gte]: sequelize.literal(
+              `date_trunc('day', NOW()) - interval '${AR_GRANT_END_DATE_GRACE_DAYS} days'`
+            ),
+          },
+        },
       ],
     },
   });
@@ -1634,6 +1643,13 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsChangesRequestedByDate(userId, date) {
+  // userId is interpolated into a raw subquery below, so validate it is an integer
+  // to guard against SQL injection regardless of the caller.
+  const numericUserId = Number.parseInt(userId, 10);
+  if (Number.isNaN(numericUserId)) {
+    return [];
+  }
+
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1644,7 +1660,28 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           },
         },
         {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [
+            { userId },
+            { '$activityReportCollaborators.userId$': userId },
+            // Approvers are notified too. The approver who requested the changes is
+            // filtered out separately below so this only needs to match on userId.
+            { '$approvers.userId$': userId },
+          ],
+        },
+        {
+          // Exclude reports where this user is the approver who requested the
+          // changes (their approver row has a NEEDS_ACTION status). This is applied
+          // regardless of any other role the user has on the report (e.g. also a
+          // collaborator), and correctly handles NULL approver statuses.
+          id: {
+            [Op.notIn]: sequelize.literal(
+              `(SELECT "activityReportId"
+          FROM "ActivityReportApprovers"
+          WHERE "userId" = ${numericUserId}
+            AND "status" = '${APPROVER_STATUSES.NEEDS_ACTION}'
+            AND "deletedAt" IS NULL)`
+            ),
+          },
         },
         {
           id: {
@@ -1665,9 +1702,17 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
         attributes: ['userId'],
         required: false,
       },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+        attributes: ['userId'],
+        required: false,
+      },
     ],
   });
-  return reports;
+  // The report can join multiple collaborator/approver rows, so de-duplicate by id to
+  // avoid listing the same report more than once in a digest.
+  return _.uniqBy(reports, 'id');
 }
 
 /**
@@ -1786,9 +1831,11 @@ export async function activityReportsSubmittedWhereCreatorByDate(userId, date) {
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
 export async function activityReportsApprovedByDate(userId, date) {
-  const safeUserId = parsePositiveInteger(userId);
+  // A null/undefined userId means "no user filter" (fetch all approved reports),
+  // which recipientApprovedDigest relies on. Only validate when a userId is provided.
+  const safeUserId = userId == null ? null : parsePositiveInteger(userId);
 
-  if (!safeUserId) {
+  if (userId != null && !safeUserId) {
     throw new Error('Invalid userId provided');
   }
 

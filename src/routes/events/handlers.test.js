@@ -22,6 +22,7 @@ import {
   getTrainingReportAlertsHandler,
   updateHandler,
 } from './handlers';
+import { checkUpdateEventBody } from './middleware';
 
 jest.mock('../../policies/event');
 
@@ -782,6 +783,48 @@ describe('event handlers', () => {
         mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  // The tests above call handlers directly, which bypasses the router's
+  // middleware. This proves the middleware actually hands its stripped body to
+  // the handler, and therefore to the service.
+  describe('schema validation middleware handoff', () => {
+    it('passes the stripped body through to updateEvent', async () => {
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
+      EventReport.mockImplementation(() => ({
+        canEditEvent: () => true,
+        canSuspendOrCompleteEvent: () => true,
+      }));
+
+      const req = {
+        params: { eventId: 99_999 },
+        session: { userId: 1 },
+        body: {
+          ownerId: 99_999,
+          pocIds: [99_999],
+          collaboratorIds: [99_998],
+          regionId: 1,
+          data: {
+            eventName: 'An event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+            sessionReports: [{ id: 1 }],
+            aKeyNobodyDeclared: true,
+          },
+        },
+      };
+
+      await new Promise((resolve) => {
+        checkUpdateEventBody(req, mockResponse, resolve);
+      });
+      await updateHandler(req, mockResponse);
+
+      expect(updateEvent).toHaveBeenCalled();
+      const [, payload] = updateEvent.mock.calls[0];
+      expect(payload.data).not.toHaveProperty('sessionReports');
+      expect(payload.data).not.toHaveProperty('aKeyNobodyDeclared');
+      expect(payload.data.eventName).toBe('An event');
     });
   });
 });

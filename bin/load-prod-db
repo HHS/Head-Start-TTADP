@@ -39,17 +39,19 @@ if [ ! -f "$SQL_FILE" ]; then
 fi
 
 # Export postgres credentials from .env
-export $(grep POSTGRES_PASSWORD ./.env)
-export $(grep POSTGRES_USERNAME ./.env)
+set -a
+# shellcheck disable=SC1091
+source ./.env
+set +a
 export PGPASSWORD=${POSTGRES_PASSWORD}
 
 echo "Dropping current data"
-psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+psql -U "${POSTGRES_USERNAME}" -h localhost -p 5432 -d ttasmarthub -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 echo "Loading data from $SQL_FILE into ttasmarthub database..."
 
 # Load the SQL file into the database
-psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -f "$SQL_FILE"
+psql -U "${POSTGRES_USERNAME}" -h localhost -p 5432 -d ttasmarthub -f "$SQL_FILE"
 
 echo "Successfully loaded data from $SQL_FILE"
 

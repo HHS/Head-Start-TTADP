@@ -3,7 +3,6 @@ import {
   domainClassroomOrganizationFilter,
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
-  endDateFilter,
   grantNumberFilter,
   grantStatusFilter,
   groupsFilter,
@@ -15,7 +14,6 @@ import {
   reportTextFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
-  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
@@ -31,8 +29,6 @@ const QA_DASHBOARD_FILTER_KEY = 'qa-dashboard';
 
 const QA_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
-  endDateFilter,
-  startDateFilter,
   activityReportGoalResponseFilter,
   goalNameFilter,
   grantNumberFilter,

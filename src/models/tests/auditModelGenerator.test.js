@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Model } from 'sequelize';
 import { auditLogger } from '../../logger';
 import db, { User, ZALUser } from '..';
@@ -11,9 +11,9 @@ describe('Audit System', () => {
   beforeEach(async () => {
     t = await db.sequelize.transaction();
     transactionVariables = {
-      loggedUser: `${faker.datatype.number()}`,
-      transactionId: faker.datatype.uuid(),
-      sessionSig: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
+      loggedUser: `${faker.number.int({ min: 0, max: 99999 })}`,
+      transactionId: faker.string.uuid(),
+      sessionSig: faker.string.sample(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
       auditDescriptor: 'Audit System Test',
       impersonationUserId: '3',
     };
@@ -220,7 +220,7 @@ describe('Audit System', () => {
         let addTest;
         try {
           addTest = await Test.create(
-            { value: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
+            { value: faker.string.sample(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, '') },
             { transaction: t }
           );
         } catch (err) {
@@ -247,7 +247,7 @@ describe('Audit System', () => {
         const updateTo = {
           id: addTest.id,
           oldValue: addTest.value,
-          newValue: faker.datatype.string(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
+          newValue: faker.string.sample(32).replace(/[^a-zA-Z0-9!@#$%^&*()_+,.<>?;:]/g, ''),
         };
 
         try {
@@ -314,10 +314,10 @@ describe('Audit System', () => {
     beforeEach(async () => {
       addedUser = await User.create(
         {
-          name: faker.name.findName(),
+          name: faker.person.fullName(),
           email: faker.internet.exampleEmail(),
-          hsesUserId: faker.datatype.number(),
-          hsesUsername: faker.internet.userName(),
+          hsesUserId: faker.number.int({ min: 0, max: 99999 }),
+          hsesUsername: faker.internet.username(),
           lastLogin: new Date(),
         },
         { transaction: t }
@@ -343,9 +343,9 @@ describe('Audit System', () => {
 
     it('Modified users in audit record', async () => {
       const updateData = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.exampleEmail(),
-        hsesUsername: faker.internet.userName(),
+        hsesUsername: faker.internet.username(),
       };
 
       await User.update(updateData, {

@@ -1,7 +1,7 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import httpContext from 'express-http-context';
-import { GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
+import { AR_GRANT_END_DATE_GRACE_DAYS, GOAL_STATUS, NOTIFICATION_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
@@ -58,12 +58,12 @@ const ALERT_RECIPIENT_ID = 345;
 const RECIPIENT_WITH_PROGRAMS_ID = 425;
 const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
 
-const INACTIVE_GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_BOUNDARY = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.datatype.number({ min: 9999 });
-const INACTIVE_GRANT_ID_NULL_DATE = faker.datatype.number({ min: 9999 });
-const GRANT_ON_ACTIVITY_REPORT_ID = faker.datatype.number({ min: 9999 });
-const OTHER_ENTITY_TEST_ID = faker.datatype.number({ min: 9999 });
+const INACTIVE_GRANT_ID_ONE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_BOUNDARY = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_OUTSIDE_WINDOW = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const INACTIVE_GRANT_ID_NULL_DATE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const GRANT_ON_ACTIVITY_REPORT_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const OTHER_ENTITY_TEST_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
 
 let testActivityReport;
 
@@ -145,8 +145,8 @@ const digestMockApprover = {
   id: 21161430,
   homeRegionId: 1,
   name: 'b',
-  hsesUserId: 'b',
-  hsesUsername: 'b',
+  hsesUserId: 'digestMockApprover',
+  hsesUsername: 'digestMockApprover',
   role: [],
   lastLogin: new Date(),
 };
@@ -411,7 +411,7 @@ describe('Activity report service', () => {
       // Create a inactive grant with a 'inactivationDate' date less than 60 days ago.
       await Grant.create({
         id: INACTIVE_GRANT_ID_ONE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -423,7 +423,7 @@ describe('Activity report service', () => {
       // Create a inactive grant exactly 365 days ago (boundary condition)
       await Grant.create({
         id: INACTIVE_GRANT_ID_BOUNDARY,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -435,7 +435,7 @@ describe('Activity report service', () => {
       // Create a inactive grant more than 365 days ago (should be excluded)
       await Grant.create({
         id: INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -444,10 +444,10 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
-      // Create a inactive grant with NULL inactivationDate (should be excluded)
+      // Create an inactive grant with no inactivation date and a recent project end.
       await Grant.create({
         id: INACTIVE_GRANT_ID_NULL_DATE,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -459,7 +459,7 @@ describe('Activity report service', () => {
       // Create a inactive grant already on an activity report
       await Grant.create({
         id: GRANT_ON_ACTIVITY_REPORT_ID,
-        number: faker.datatype.number({ min: 9999 }),
+        number: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         recipientId: RECIPIENT_ID,
         regionId: 19,
         status: 'Inactive',
@@ -489,7 +489,7 @@ describe('Activity report service', () => {
       // Create an other entity for testing
       await OtherEntity.create({
         id: OTHER_ENTITY_TEST_ID,
-        name: `Test Other Entity ${faker.datatype.uuid()}`,
+        name: `Test Other Entity ${faker.string.uuid()}`,
       });
     });
 
@@ -810,7 +810,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(1);
-        expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.recipientNextSteps[0].note).toBe('');
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['i am groot', 'harry'])
@@ -843,7 +843,7 @@ describe('Activity report service', () => {
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(1);
-        expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(report.specialistNextSteps[0].note).toBe('');
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(
           expect.arrayContaining(['One Piece', 'Toy Story'])
@@ -940,9 +940,9 @@ describe('Activity report service', () => {
         // Then we see the report was updated correctly
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.recipientNextSteps.length).toBe(1);
-        expect(updatedReport.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.recipientNextSteps[0].note).toBe('');
         expect(updatedReport.specialistNextSteps.length).toBe(1);
-        expect(updatedReport.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.specialistNextSteps[0].note).toBe('');
       });
 
       it('handles notes being the same', async () => {
@@ -1037,6 +1037,21 @@ describe('Activity report service', () => {
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
+      });
+      it('returns a serializable report when there are no next steps', async () => {
+        // Regression: a report with no next steps used to receive a plain-object placeholder in its
+        // specialistNextSteps/recipientNextSteps associations. That broke Sequelize's toJSON (used
+        // when the report is enqueued to the notification queue via JSON.stringify), throwing
+        // "instance.get is not a function" and 502-ing report approval.
+        const report = await ActivityReport.create(reportObject);
+
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
+        expect(foundReport.specialistNextSteps.length).toBe(1);
+        expect(foundReport.specialistNextSteps[0].note).toBe('');
+        expect(foundReport.recipientNextSteps.length).toBe(1);
+        expect(foundReport.recipientNextSteps[0].note).toBe('');
+        // Mirrors what Bull does when enqueuing the notification job.
+        expect(() => JSON.stringify(foundReport)).not.toThrow();
       });
       it('includes approver with full name', async () => {
         const report = await ActivityReport.create({ ...submittedReport, regionId: 5 });
@@ -1373,15 +1388,61 @@ describe('Activity report service', () => {
         expect(outsideWindowGrant.length).toBe(0);
       });
 
-      it('excludes inactive grant with NULL inactivationDate', async () => {
+      it('includes inactive grant with NULL inactivationDate and a recent endDate', async () => {
         const region = 19;
         const recipients = await possibleRecipients(region);
 
         const nullDateGrant = recipients.grants[0].grants.filter(
           (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_NULL_DATE
         );
-        expect(nullDateGrant.length).toBe(0);
+        expect(nullDateGrant.length).toBe(1);
       });
+
+      it.each([
+        ['inside the grace window', AR_GRANT_END_DATE_GRACE_DAYS - 1, null, 'Inactive', true],
+        ['at the grace window boundary', AR_GRANT_END_DATE_GRACE_DAYS, null, 'Inactive', true],
+        ['outside the grace window', AR_GRANT_END_DATE_GRACE_DAYS + 1, null, 'Inactive', false],
+        ['with no end date', null, null, 'Inactive', false],
+        ['with another status', 1, null, 'Pending', false],
+        ['with an old inactivation date and recent end date', 1, 366, 'Inactive', false],
+        [
+          'with a recent inactivation date and old end date',
+          AR_GRANT_END_DATE_GRACE_DAYS + 1,
+          60,
+          'Inactive',
+          true,
+        ],
+      ])(
+        '%s has expected AR eligibility',
+        async (_description, endDaysAgo, inactiveDaysAgo, status, eligible) => {
+          const daysAgo = (days) => {
+            if (days === null) return null;
+            const date = new Date();
+            date.setDate(date.getDate() - days);
+            return date;
+          };
+          const grant = await Grant.findByPk(INACTIVE_GRANT_ID_NULL_DATE);
+          const originalValues = {
+            endDate: grant.endDate,
+            inactivationDate: grant.inactivationDate,
+            status: grant.status,
+          };
+          try {
+            await grant.update({
+              endDate: daysAgo(endDaysAgo),
+              inactivationDate: daysAgo(inactiveDaysAgo),
+              status,
+            });
+            const recipients = await possibleRecipients(19);
+            const grantIds = recipients.grants.flatMap((recipient) =>
+              recipient.grants.map((result) => result.dataValues.activityRecipientId)
+            );
+            expect(grantIds.includes(INACTIVE_GRANT_ID_NULL_DATE)).toBe(eligible);
+          } finally {
+            await grant.update(originalValues);
+          }
+        }
+      );
 
       it('includes inactive grant already on activity report even if outside 365-day window', async () => {
         const region = 19;
@@ -1819,16 +1880,22 @@ describe('Activity report service', () => {
 
     describe('activityReportsChangesRequestedByDate', () => {
       beforeEach(async () => {
-        await User.create(digestMockCollabOne, { validate: false }, { individualHooks: false });
-        await User.create(mockUser, { validate: false }, { individualHooks: false });
+        await User.create(digestMockCollabOne, { validate: false });
+        await User.create(digestMockApprover, { validate: false });
+        await User.create(mockUser, { validate: false });
       });
       afterEach(async () => {
         await ActivityReportCollaborator.destroy({
           where: { userId: digestMockCollabOne.id },
           force: true,
         });
+        await ActivityReportApprover.destroy({
+          where: { userId: [digestMockApprover.id, digestMockCollabOne.id, mockUser.id] },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id }, force: true });
+        await User.destroy({ where: { id: digestMockApprover.id }, force: true });
         await User.destroy({ where: { id: mockUser.id }, force: true });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
@@ -2000,12 +2067,119 @@ describe('Activity report service', () => {
         );
         expect(authorDigest).toBeUndefined();
       });
+
+      it('retrieves reports for an approver who did not request the changes', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // A second approver requested the changes, keeping the report in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // This approver approved (i.e. did not request the changes).
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeDefined();
+        expect(dailyDigestReport.id).toBe(report.id);
+      });
+
+      it('does not retrieve reports for the approver who requested the changes', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // The approver who requested the changes has a NEEDS_ACTION approver status.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // Another approver approved, so the report remains in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeUndefined();
+      });
+
+      it('does not retrieve reports for a changes-requesting approver who is also a collaborator', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // This user requested the changes (NEEDS_ACTION approver row)...
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // ...and is also a collaborator on the same report. The NEEDS_ACTION
+        // approver status must win, so they should not be notified.
+        await ActivityReportCollaborator.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+        });
+        // Another approver approved, so the report remains in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(dailyDigestReport).toBeUndefined();
+      });
+
+      it('returns a single row when a user is both author and approver', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
+        // A second approver requested the changes, keeping the report in NEEDS_ACTION.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: digestMockCollabOne.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+        // mockUser is the author and also an approver who approved.
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUser.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const reports = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
+        expect(reports.filter((r) => r.id === report.id)).toHaveLength(1);
+      });
     });
 
     describe('activityReportsSubmittedByDate', () => {
       beforeEach(async () => {
-        await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
-        await User.create(mockUser, { validate: false }, { individualHooks: false });
+        await User.create(digestMockApprover, { validate: false });
+        await User.create(mockUser, { validate: false });
       });
       afterEach(async () => {
         await ActivityReportApprover.destroy({
@@ -2414,6 +2588,24 @@ describe('Activity report service', () => {
         });
         await ActivityReport.destroy({ where: { id: draftReport.id } });
       });
+      it('returns all approved reports when userId is null and rejects invalid userIds', async () => {
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const allApproved = await activityReportsApprovedByDate(null, "NOW() - INTERVAL '1 DAY'");
+        expect(allApproved.some((r) => r.id === report.id)).toBe(true);
+
+        await expect(activityReportsApprovedByDate(0, "NOW() - INTERVAL '1 DAY'")).rejects.toThrow(
+          'Invalid userId provided'
+        );
+        await expect(
+          activityReportsApprovedByDate('abc', "NOW() - INTERVAL '1 DAY'")
+        ).rejects.toThrow('Invalid userId provided');
+
+        await ActivityReport.destroy({ where: { id: report.id } });
+      });
     });
   });
   describe('handleSoftDeleteReport', () => {
@@ -2433,8 +2625,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });
@@ -2617,8 +2809,8 @@ describe('Activity report service', () => {
     beforeAll(async () => {
       user = await User.create({
         ...mockUserFour,
-        hsesUserId: faker.datatype.string(10),
-        id: faker.datatype.number({ min: 90000 }),
+        hsesUserId: faker.string.sample(10),
+        id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       });
       recipient = await createRecipient({});
       grant = await createGrant({ recipientId: recipient.id });

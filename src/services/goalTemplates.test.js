@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from '../constants';
@@ -45,29 +45,29 @@ describe('goalTemplates services', () => {
     beforeAll(async () => {
       // Create recipient.
       monitoringRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       regularRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       // Create grants.
       monitoringGrant = await Grant.create({
         regionId: 1,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: monitoringRecipient.id,
       });
 
       regularGrant = await Grant.create({
         regionId: 1,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: regularRecipient.id,
       });
 
@@ -154,31 +154,31 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
       grantTwo = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
       grantThree = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -273,15 +273,15 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -315,15 +315,15 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -338,7 +338,7 @@ describe('goalTemplates services', () => {
         creationMethod: AUTOMATIC_CREATION,
       });
 
-      promptTitle = faker.datatype.string(255);
+      promptTitle = faker.string.sample(255);
 
       const prompt = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
@@ -451,15 +451,15 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -477,8 +477,8 @@ describe('goalTemplates services', () => {
       prompt = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 1,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
@@ -528,8 +528,8 @@ describe('goalTemplates services', () => {
       const promptWithNoMaxSelections = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 2,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
@@ -551,8 +551,8 @@ describe('goalTemplates services', () => {
       const newPrompt = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 3,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
@@ -576,15 +576,15 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -602,8 +602,8 @@ describe('goalTemplates services', () => {
       prompt = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 1,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
@@ -616,8 +616,8 @@ describe('goalTemplates services', () => {
       promptTwo = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 2,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 4', 'option 5', 'option 6'],
         fieldType: 'multiselect',
@@ -694,8 +694,8 @@ describe('goalTemplates services', () => {
       const promptWithExistingResponse = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 3,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
@@ -730,15 +730,15 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
+        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        number: faker.string.sample(255),
         recipientId: recipient.id,
       });
 
@@ -756,8 +756,8 @@ describe('goalTemplates services', () => {
       prompt = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 1,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
@@ -770,8 +770,8 @@ describe('goalTemplates services', () => {
       promptTwo = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 2,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 4', 'option 5', 'option 6'],
         fieldType: 'multiselect',
@@ -867,8 +867,8 @@ describe('goalTemplates services', () => {
       const promptWithExistingResponse = await GoalTemplateFieldPrompt.create({
         goalTemplateId: template.id,
         ordinal: 3,
-        title: faker.datatype.string(255),
-        prompt: faker.datatype.string(255),
+        title: faker.string.sample(255),
+        prompt: faker.string.sample(255),
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
@@ -926,7 +926,7 @@ describe('goalTemplates services', () => {
         creationMethod: AUTOMATIC_CREATION,
       });
 
-      promptTitle = faker.datatype.string(255);
+      promptTitle = faker.string.sample(255);
       options = ['option 1', 'option 2', 'option 3'];
 
       await GoalTemplateFieldPrompt.create({

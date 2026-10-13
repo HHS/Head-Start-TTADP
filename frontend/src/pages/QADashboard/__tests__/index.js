@@ -5,11 +5,12 @@ import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import moment from 'moment';
 import React from 'react';
 import { Router } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { mockRSSData } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import QADashboard from '../index';
 
 const history = createMemoryHistory();
@@ -29,17 +30,11 @@ const defaultUser = {
   ],
 };
 
-const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-const today = moment().format('YYYY/MM/DD');
-
-// Convert todayMinus12Months to the format used in the API.
-const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`;
-
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
-const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`;
-const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
-const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
-const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
+const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget`;
+const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
+const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
+const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_class_widget`;
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
     data_set: 'no_tta_widget',
@@ -187,7 +182,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
   },
 ];
 
-describe('Resource Dashboard page', () => {
+describe('QA Dashboard page', () => {
   beforeEach(() => {
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
@@ -200,6 +195,8 @@ describe('Resource Dashboard page', () => {
 
     // Mock Dashboard data.
     fetchMock.get(dashboardApi, DASHBOARD_DATA);
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
   });
 
   afterEach(() => fetchMock.restore());
@@ -223,14 +220,12 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 
     // Assert test data.
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText('54.38%')).toBeVisible();
         expect(screen.getByText('18.26%')).toBeVisible();
         expect(screen.getByText('55.35%')).toBeVisible();
       });
@@ -253,7 +248,7 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     const filters = await screen.findByRole('button', {
-      name: /open filters for this page , 2 currently applied/i,
+      name: /open filters for this page/i,
     });
 
     act(() => {
@@ -265,15 +260,45 @@ describe('Resource Dashboard page', () => {
     act(() => {
       userEvent.click(addFilter);
     });
-    const select = screen.queryAllByLabelText(/select a filter/i)[2];
+    const selectFilters = screen.queryAllByLabelText(/select a filter/i);
+    const select = selectFilters[selectFilters.length - 1];
 
     // expect select not to have "region" as an option
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
   });
 
+  it('does not send removed date filters that linger in the URL to the SSDI requests', async () => {
+    // Simulate a previously-saved AR start date filter still present in the URL/session state.
+    // This topic was removed from the QA dashboard filter config, so it is hidden in the UI and
+    // must not be forwarded to the SSDI requests.
+    const persistedFilters = [
+      { id: '1', topic: 'region', condition: 'is', query: 1 },
+      { id: '2', topic: 'region', condition: 'is', query: 2 },
+      { id: '3', topic: 'startDate', condition: 'is within', query: '2024/01/01-2024/12/31' },
+    ];
+    history.push({ search: `?${filtersToQueryString(persistedFilters)}` });
+
+    try {
+      renderQADashboard();
+
+      // Wait for the overview to render. The mocked SSDI endpoints intentionally omit any
+      // startDate param, so data only renders when every request matches a mock; a leaked
+      // startDate filter would prevent this from showing.
+      expect(await screen.findByText('55.35%')).toBeVisible();
+
+      // Explicitly assert no SSDI request carried the removed startDate filter.
+      const requestedStartDate = fetchMock.calls().some(([url]) => url.includes('startDate'));
+      expect(requestedStartDate).toBe(false);
+    } finally {
+      history.push({ search: '' });
+    }
+  });
+
   it('renders the graphs correctly if the records are null', async () => {
     fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -398,7 +423,6 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 
@@ -414,6 +438,9 @@ describe('Resource Dashboard page', () => {
 
   it('renders the graphs correctly with empty data', async () => {
     fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
     // Mock Recipients with no TTA data.
     fetchMock.get(noTtaApi, [
       {
@@ -518,7 +545,6 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
     // Overview
-    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
 
@@ -530,5 +556,74 @@ describe('Resource Dashboard page', () => {
         expect(screen.getByText('Root cause on FEI goals')).toBeVisible();
       });
     });
+  });
+
+  it('defaults filtered reports to zero when the activity widget has no data', async () => {
+    fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
+    fetchMock.get(noTtaApi, RECIPIENTS_WITH_NO_TTA_DATA);
+    fetchMock.get(feiApi, ROOT_CAUSE_FEI_GOALS_DATA);
+    fetchMock.get(classApi, RECIPIENT_CLASS_DATA);
+
+    // Mock Dashboard data with an empty activity_widget data set so the
+    // `activityWidgetData.data.length ? ... : 0` fallback branch runs.
+    fetchMock.get(dashboardApi, [
+      {
+        data_set: 'role_graph',
+        records: '0',
+        data: null,
+      },
+      {
+        data_set: 'delivery_method_graph',
+        records: '1',
+        data: [
+          {
+            month: 'Total',
+            hybrid_count: null,
+            virtual_count: null,
+            in_person_count: null,
+            hybrid_percentage: 0,
+            virtual_percentage: 0,
+            in_person_percentage: 0,
+          },
+        ],
+      },
+      {
+        data_set: 'activity_widget',
+        records: '0',
+        data: [],
+      },
+    ]);
+
+    renderQADashboard();
+
+    // Header
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+
+    // Assert the dashboard still renders its graphs.
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Delivery method')).toBeVisible();
+        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible();
+      });
+    });
+  });
+
+  it('shows an error when fetching QA data fails', async () => {
+    fetchMock.restore();
+
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-filters', mockRSSData());
+
+    // Force the SSDI requests to fail so the catch branch runs.
+    fetchMock.get(noTtaApi, 500);
+    fetchMock.get(feiApi, 500);
+    fetchMock.get(classApi, 500);
+    fetchMock.get(dashboardApi, 500);
+
+    renderQADashboard();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to fetch QA data');
   });
 });

@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { createCoverageMap } = require('istanbul-lib-coverage');
-const simpleGit = require('simple-git');
+const { simpleGit } = require('simple-git');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 

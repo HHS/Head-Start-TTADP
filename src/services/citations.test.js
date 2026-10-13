@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable prefer-destructuring */
 
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import db, {
@@ -13,6 +13,7 @@ import db, {
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingStandard,
   MonitoringFindingStatus,
   MonitoringReview,
@@ -33,14 +34,14 @@ const createMonitoringData = async (
   monitoringReviewStatusName, // Monitoring Review Status Name must be 'Complete'.
   citationsArray, // Array of citations to create.
   granteeId = uuidv4(),
-  reviewName = faker.random.words(3)
+  reviewName = faker.word.words(3)
 ) => {
   const reviewId = uuidv4();
 
   // MonitoringReviewGrantee.
   await MonitoringReviewGrantee.create(
     {
-      id: faker.datatype.number({ min: 9999 }),
+      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
       grantNumber: grantNUmber,
       reviewId,
       granteeId,
@@ -57,16 +58,16 @@ const createMonitoringData = async (
   await MonitoringReview.create(
     {
       reviewId,
-      contentId: faker.datatype.uuid(),
+      contentId: faker.string.uuid(),
       statusId: reviewStatusId,
       name: reviewName,
       startDate: new Date(),
       endDate: new Date(),
       reviewType,
       reportDeliveryDate,
-      reportAttachmentId: faker.datatype.uuid(),
-      outcome: faker.random.words(5),
-      hash: faker.datatype.uuid(),
+      reportAttachmentId: faker.string.uuid(),
+      outcome: faker.word.words(5),
+      hash: faker.string.uuid(),
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
     },
@@ -90,20 +91,33 @@ const createMonitoringData = async (
     citationsArray.map(async (citation) => {
       const sourceDeletedAt = citation.sourceDeletedAt || null;
       const findingId = citation.findingId || uuidv4();
-      const findingStatusId = faker.datatype.number({ min: 9999 });
+      const findingStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
       await MonitoringFindingHistory.create(
         {
           reviewId,
           findingHistoryId: uuidv4(),
           findingId,
           statusId: findingStatusId,
-          narrative: faker.random.words(10),
-          ordinal: faker.datatype.number({ min: 1, max: 10 }),
+          narrative: faker.word.words(10),
+          ordinal: faker.number.int({ min: 1, max: 10 }),
           determination: citation.determination || null,
-          hash: faker.datatype.uuid(),
+          hash: faker.string.uuid(),
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
           sourceDeletedAt,
+        },
+        { individualHooks: true }
+      );
+
+      // MonitoringFindingHistoryStatus. Names the same statusId used on the
+      // MonitoringFindingHistory row above, so Citations.latest_raw_history_status
+      // (and therefore calculated_status/active) resolves instead of staying null.
+      await MonitoringFindingHistoryStatus.create(
+        {
+          statusId: findingStatusId,
+          name: citation.monitoringFindingStatusName,
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
         },
         { individualHooks: true }
       );
@@ -114,7 +128,7 @@ const createMonitoringData = async (
           findingId,
           statusId: findingStatusId,
           findingType: citation.monitoringFindingType,
-          hash: faker.datatype.uuid(),
+          hash: faker.string.uuid(),
           source: 'Internal Controls',
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
@@ -145,7 +159,7 @@ const createMonitoringData = async (
           correctionDeadLine: new Date(),
           reportedDate: new Date(),
           closedDate: null,
-          hash: faker.datatype.uuid(),
+          hash: faker.string.uuid(),
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
           sourceDeletedAt: null,
@@ -154,8 +168,8 @@ const createMonitoringData = async (
       );
 
       // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
-      const standardId = citation.standardId ?? faker.datatype.number({ min: 9999 });
-      const citable = faker.datatype.number({ min: 1, max: 10 });
+      const standardId = citation.standardId ?? faker.number.int({ min: 9999, max: 9999 + 99999 });
+      const citable = faker.number.int({ min: 1, max: 10 });
       await MonitoringFindingStandard.create(
         {
           findingId,
@@ -177,7 +191,7 @@ const createMonitoringData = async (
           sourceUpdatedAt: new Date(),
           contentId: uuidv4(),
           hash: uuidv4(),
-          text: citation.standardText ?? faker.random.words(10),
+          text: citation.standardText ?? faker.word.words(10),
           citable,
         },
         individualHooks: true,
@@ -219,53 +233,53 @@ describe('citations service', () => {
     });
 
     // Grant Numbers.
-    const grantNumber1 = faker.datatype.string(8);
-    const grantNumber1a = faker.datatype.string(8);
-    const grantNumber2 = faker.datatype.string(8);
-    const grantNumber3 = faker.datatype.string(8);
-    const followUpGrantNumber = faker.datatype.string(8);
-    const multiReviewGrantNumber = faker.datatype.string(8);
-    const suppressedGrantNumber = faker.datatype.string(8);
-    const reopenedGrantNumber = faker.datatype.string(8);
+    const grantNumber1 = faker.string.sample(8);
+    const grantNumber1a = faker.string.sample(8);
+    const grantNumber2 = faker.string.sample(8);
+    const grantNumber3 = faker.string.sample(8);
+    const followUpGrantNumber = faker.string.sample(8);
+    const multiReviewGrantNumber = faker.string.sample(8);
+    const suppressedGrantNumber = faker.string.sample(8);
+    const reopenedGrantNumber = faker.string.sample(8);
 
     // Recipients 1.
     recipient1 = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     // Recipients 2.
     recipient2 = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     // FollowUpRecipient.
     followUpRecipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     multiReviewRecipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     suppressedRecipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     reopenedRecipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
 
     // Grants.
     const grants = await Grant.bulkCreate([
       {
         // Grant 1 for Recipient 1.
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: grantNumber1,
         recipientId: recipient1.id,
         regionId: 1,
@@ -275,7 +289,7 @@ describe('citations service', () => {
       },
       {
         // Grant 1a for Recipient 1.
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: grantNumber1a,
         recipientId: recipient1.id,
         regionId: 1,
@@ -285,7 +299,7 @@ describe('citations service', () => {
       },
       {
         // Grant 2 for Recipient 2.
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: grantNumber2,
         recipientId: recipient2.id,
         regionId: 1,
@@ -295,7 +309,7 @@ describe('citations service', () => {
       },
       {
         // Grant 3 for Recipient 2 (Inactive).
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: grantNumber3,
         recipientId: recipient2.id,
         regionId: 1,
@@ -305,7 +319,7 @@ describe('citations service', () => {
       },
       // FollowUp Grant for FollowUp Recipient.
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: followUpGrantNumber,
         recipientId: followUpRecipient.id,
         regionId: 1,
@@ -315,7 +329,7 @@ describe('citations service', () => {
       },
       // Multi-review grant: tests that the correct review is selected based on reportStartDate.
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: multiReviewGrantNumber,
         recipientId: multiReviewRecipient.id,
         regionId: 1,
@@ -325,7 +339,7 @@ describe('citations service', () => {
       },
       // Suppressed grant: tests that citations are hidden when last_closed_goal > latest delivery.
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: suppressedGrantNumber,
         recipientId: suppressedRecipient.id,
         regionId: 1,
@@ -335,7 +349,7 @@ describe('citations service', () => {
       },
       // Reopened grant: tests that citations reappear when a new open goal is created after closure.
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: reopenedGrantNumber,
         recipientId: reopenedRecipient.id,
         regionId: 1,
@@ -630,7 +644,7 @@ describe('citations service', () => {
     // will have a fractionally later sourceCreatedAt and a higher id
     await MonitoringReviewGrantee.create(
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         grantNumber: followUpGrant.number,
         reviewId: followUpReviewId,
         granteeId: followUpGranteeId,
@@ -646,17 +660,17 @@ describe('citations service', () => {
     await MonitoringReview.create(
       {
         reviewId: followUpReviewId,
-        contentId: faker.datatype.uuid(),
+        contentId: faker.string.uuid(),
         statusId: 9,
-        name: faker.random.words(3),
+        name: faker.word.words(3),
         startDate: new Date(),
         endDate: new Date(),
         reviewType: 'RAN',
         // There is no reportDeliveryDate for active Reviews
         // reportDeliveryDate,
-        reportAttachmentId: faker.datatype.uuid(),
-        outcome: faker.random.words(5),
-        hash: faker.datatype.uuid(),
+        reportAttachmentId: faker.string.uuid(),
+        outcome: faker.word.words(5),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -674,19 +688,29 @@ describe('citations service', () => {
     );
 
     // Link the Corrected Finding to the new review
+    const followUpHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
     await MonitoringFindingHistory.create(
       {
         reviewId: followUpReviewId,
         findingHistoryId: uuidv4(),
         findingId: followUpFindingId,
-        statusId: faker.datatype.number({ min: 9999 }),
-        narrative: faker.random.words(10),
-        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        statusId: followUpHistoryStatusId,
+        narrative: faker.word.words(10),
+        ordinal: faker.number.int({ min: 1, max: 10 }),
         determination: null,
-        hash: faker.datatype.uuid(),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistoryStatus.create(
+      {
+        statusId: followUpHistoryStatusId,
+        name: 'New',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
       },
       { individualHooks: true }
     );
@@ -721,7 +745,7 @@ describe('citations service', () => {
 
     await MonitoringReviewGrantee.create(
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         grantNumber: multiReviewGrant.number,
         reviewId: multiReviewId2,
         granteeId: multiReviewGranteeId,
@@ -737,16 +761,16 @@ describe('citations service', () => {
     await MonitoringReview.create(
       {
         reviewId: multiReviewId2,
-        contentId: faker.datatype.uuid(),
+        contentId: faker.string.uuid(),
         statusId: 11,
         name: 'Multi Review Follow-up',
         startDate: new Date('2025-05-01'),
         endDate: new Date('2025-05-15'),
         reviewType: 'FA-2',
         reportDeliveryDate: new Date('2025-06-01'),
-        reportAttachmentId: faker.datatype.uuid(),
-        outcome: faker.random.words(5),
-        hash: faker.datatype.uuid(),
+        reportAttachmentId: faker.string.uuid(),
+        outcome: faker.word.words(5),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -763,19 +787,29 @@ describe('citations service', () => {
       { individualHooks: true }
     );
 
+    const multiReviewHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
     await MonitoringFindingHistory.create(
       {
         reviewId: multiReviewId2,
         findingHistoryId: uuidv4(),
         findingId: multiReviewFindingId,
-        statusId: faker.datatype.number({ min: 9999 }),
-        narrative: faker.random.words(10),
-        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        statusId: multiReviewHistoryStatusId,
+        narrative: faker.word.words(10),
+        ordinal: faker.number.int({ min: 1, max: 10 }),
         determination: null,
-        hash: faker.datatype.uuid(),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistoryStatus.create(
+      {
+        statusId: multiReviewHistoryStatusId,
+        name: 'New',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
       },
       { individualHooks: true }
     );
@@ -823,14 +857,14 @@ describe('citations service', () => {
     // crossGrantOtherGrant. The GrantDeliveredReviews join in the service should exclude
     // the citation when querying crossGrant.
     const crossGrantRecipient = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
     });
-    const crossGrantNumber = faker.datatype.string(8);
-    const crossGrantOtherGrantNumber = faker.datatype.string(8);
+    const crossGrantNumber = faker.string.sample(8);
+    const crossGrantOtherGrantNumber = faker.string.sample(8);
     [crossGrant, crossGrantOtherGrant] = await Grant.bulkCreate([
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: crossGrantNumber,
         recipientId: crossGrantRecipient.id,
         regionId: 1,
@@ -839,7 +873,7 @@ describe('citations service', () => {
         status: 'Active',
       },
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         number: crossGrantOtherGrantNumber,
         recipientId: crossGrantRecipient.id,
         regionId: 1,
@@ -865,25 +899,25 @@ describe('citations service', () => {
     const crossGrantStubReviewId = uuidv4();
     const crossGrantOtherDeliveredReviewId = uuidv4();
     const crossGrantFindingId = uuidv4();
-    const crossGrantStubStatusId = faker.datatype.number({ min: 9999 });
-    const crossGrantOtherStatusId = faker.datatype.number({ min: 9999 });
-    const crossGrantFindingStatusId = faker.datatype.number({ min: 9999 });
-    const crossGrantStandardId = faker.datatype.number({ min: 9999 });
+    const crossGrantStubStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const crossGrantOtherStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const crossGrantFindingStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const crossGrantStandardId = faker.number.int({ min: 9999, max: 9999 + 99999 });
 
     // Stub review for crossGrant — exists only to satisfy the FK in MonitoringReviewGrantee
     // and give the fact table an entry that links crossGrantGranteeId to crossGrantNumber.
     await MonitoringReview.create(
       {
         reviewId: crossGrantStubReviewId,
-        contentId: faker.datatype.uuid(),
+        contentId: faker.string.uuid(),
         statusId: crossGrantStubStatusId,
-        name: faker.random.words(3),
+        name: faker.word.words(3),
         startDate: new Date(),
         endDate: new Date(),
         reviewType: 'RAN',
-        reportAttachmentId: faker.datatype.uuid(),
-        outcome: faker.random.words(5),
-        hash: faker.datatype.uuid(),
+        reportAttachmentId: faker.string.uuid(),
+        outcome: faker.word.words(5),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -900,7 +934,7 @@ describe('citations service', () => {
     );
     await MonitoringReviewGrantee.create(
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         grantNumber: crossGrantNumber,
         reviewId: crossGrantStubReviewId,
         granteeId: crossGrantGranteeId,
@@ -918,16 +952,16 @@ describe('citations service', () => {
     await MonitoringReview.create(
       {
         reviewId: crossGrantOtherDeliveredReviewId,
-        contentId: faker.datatype.uuid(),
+        contentId: faker.string.uuid(),
         statusId: crossGrantOtherStatusId,
         name: 'Cross Review On Other Grant',
         startDate: new Date(),
         endDate: new Date(),
         reviewType: 'RAN',
         reportDeliveryDate: new Date(),
-        reportAttachmentId: faker.datatype.uuid(),
-        outcome: faker.random.words(5),
-        hash: faker.datatype.uuid(),
+        reportAttachmentId: faker.string.uuid(),
+        outcome: faker.word.words(5),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -944,7 +978,7 @@ describe('citations service', () => {
     );
     await MonitoringReviewGrantee.create(
       {
-        id: faker.datatype.number({ min: 9999 }),
+        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
         grantNumber: crossGrantOtherGrantNumber,
         reviewId: crossGrantOtherDeliveredReviewId,
         granteeId: crossGrantOtherGranteeId,
@@ -963,7 +997,7 @@ describe('citations service', () => {
         findingId: crossGrantFindingId,
         statusId: crossGrantFindingStatusId,
         findingType: 'Noncompliance',
-        hash: faker.datatype.uuid(),
+        hash: faker.string.uuid(),
         source: 'Internal Controls',
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
@@ -985,10 +1019,10 @@ describe('citations service', () => {
         findingHistoryId: uuidv4(),
         findingId: crossGrantFindingId,
         statusId: crossGrantFindingStatusId,
-        narrative: faker.random.words(10),
-        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        narrative: faker.word.words(10),
+        ordinal: faker.number.int({ min: 1, max: 10 }),
         determination: null,
-        hash: faker.datatype.uuid(),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
@@ -1005,7 +1039,7 @@ describe('citations service', () => {
         correctionDeadLine: new Date(),
         reportedDate: new Date(),
         closedDate: null,
-        hash: faker.datatype.uuid(),
+        hash: faker.string.uuid(),
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
         sourceDeletedAt: null,
@@ -1029,7 +1063,7 @@ describe('citations service', () => {
         sourceUpdatedAt: new Date(),
         contentId: uuidv4(),
         hash: uuidv4(),
-        text: faker.random.words(10),
+        text: faker.word.words(10),
         citable: 1,
       },
       { individualHooks: true }

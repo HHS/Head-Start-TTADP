@@ -197,20 +197,27 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     comments: approverNote,
   };
 
-  // The author and collaborators need to make changes and resubmit, while the
-  // remaining approvers need to review/approve, so each group gets its own template.
-  const authorCollabAddresses = [];
+  // The author, collaborators, and remaining approvers each get their own template:
+  // the author and collaborators need to make changes and resubmit (with distinct copy so
+  // collaborators are told they are a collaborator), while the approvers review/approve.
+  const authorAddresses = [];
   if (authorWithSetting) {
-    authorCollabAddresses.push(authorWithSetting.email);
-  }
-  if (collabArray && collabArray.length > 0) {
-    authorCollabAddresses.push(collabArray);
+    authorAddresses.push(authorWithSetting.email);
   }
 
   return Promise.all([
-    sendIfEnabled(authorCollabAddresses, (toEmails) =>
+    sendIfEnabled(authorAddresses, (toEmails) =>
       createEmailSender(transport).send({
         template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(collabArray, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager_collaborator'),
         message: {
           to: toEmails,
         },
@@ -264,6 +271,36 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   );
 };
 
+/**
+ * Process function for approverReportApproved jobs added to the notification queue.
+ * Sends an email to the report's other approvers telling them that an approver approved it.
+ */
+export const notifyApproverReportApproved = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, approversWithSettings = [], approverName } = job.data;
+  const { id, displayId } = report;
+  logger.info(
+    `MAILER: Notifying approvers that report ${displayId} was approved by ${approverName}.`
+  );
+  const approverEmailAddresses = approversWithSettings.map((a) => a.user.email);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+
+  return sendIfEnabled(approverEmailAddresses, (toEmails) =>
+    createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'report_approved_approver'),
+      message: {
+        to: toEmails,
+      },
+      locals: {
+        reportPath,
+        displayId,
+        approverName,
+      },
+    })
+  );
+};
+
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
@@ -297,7 +334,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
 export const notifyApproverAssigned = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, newApprover } = job.data;
+  const { report, newApprover, isResubmission = false } = job.data;
   const { id, displayId } = report;
   const approverEmail = newApprover.user.email;
   logger.debug(
@@ -317,6 +354,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       locals: {
         reportPath,
         displayId,
+        isResubmission,
       },
     });
   });
@@ -361,7 +399,7 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
 export const notifyCollaboratorReportSubmittedForReview = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, collaborator } = job.data;
+  const { report, collaborator, isResubmission = false } = job.data;
   const { id, displayId } = report;
   logger.debug(
     `MAILER: Attempting to notify ${collaborator.email} that report ${displayId} was submitted for approval`
@@ -375,16 +413,21 @@ export const notifyCollaboratorReportSubmittedForReview = (job, transport = defa
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'collaborator_report_submitted_for_review'),
       message: { to: toEmails },
-      locals: { reportPath, displayId },
+      locals: { reportPath, displayId, isResubmission },
     });
   });
 };
 
-export const collaboratorReportSubmittedForReviewNotification = (report, collaborators) => {
+export const collaboratorReportSubmittedForReviewNotification = (
+  report,
+  collaborators,
+  isResubmission = false
+) => {
   collaborators.forEach((collaborator) => {
     enqueueNotification(EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW, {
       report,
       collaborator: collaborator.user,
+      isResubmission,
     });
   });
 };
@@ -396,7 +439,7 @@ export const collaboratorReportSubmittedForReviewNotification = (report, collabo
 export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, creator } = job.data;
+  const { report, creator, isResubmission = false } = job.data;
   const { id, displayId } = report;
   logger.debug(
     `MAILER: Attempting to notify ${creator.email} that report ${displayId} was submitted for approval`
@@ -410,15 +453,20 @@ export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTr
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'creator_report_submitted_for_review'),
       message: { to: toEmails },
-      locals: { reportPath, displayId },
+      locals: { reportPath, displayId, isResubmission },
     });
   });
 };
 
-export const creatorReportSubmittedForReviewNotification = (report, creator) => {
+export const creatorReportSubmittedForReviewNotification = (
+  report,
+  creator,
+  isResubmission = false
+) => {
   enqueueNotification(EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, {
     report,
     creator,
+    isResubmission,
   });
 };
 
@@ -432,12 +480,13 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
   });
 };
 
-export const approverAssignedNotification = (report, newApprovers) => {
+export const approverAssignedNotification = (report, newApprovers, isResubmission = false) => {
   // Each approver will get an individual notification
   newApprovers.forEach((approver) => {
     enqueueNotification(EMAIL_ACTIONS.SUBMITTED, {
       report,
       newApprover: approver,
+      isResubmission,
     });
   });
 };
@@ -452,6 +501,20 @@ export const reportApprovedNotification = (
     report,
     authorWithSetting,
     collabsWithSettings,
+    approverName,
+  });
+};
+
+/**
+ * Notifies the report's other approvers, by email, that an approver approved the report.
+ * @param {ActivityReport} report
+ * @param {User[]} approversWithSettings The other approvers opted into immediate emails.
+ * @param {string} approverName The name of the approver who just approved.
+ */
+export const approverReportApprovedNotification = (report, approversWithSettings, approverName) => {
+  enqueueNotification(EMAIL_ACTIONS.APPROVER_APPROVED, {
+    report,
+    approversWithSettings,
     approverName,
   });
 };
@@ -1211,6 +1274,7 @@ export const processNotificationQueue = () => {
     [EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested],
     [EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned],
     [EMAIL_ACTIONS.APPROVED, notifyReportApproved],
+    [EMAIL_ACTIONS.APPROVER_APPROVED, notifyApproverReportApproved],
     [EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned],
     [EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved],
     [

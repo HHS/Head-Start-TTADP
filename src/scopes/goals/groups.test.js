@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { Goal, Grant, Group, GroupCollaborator, GroupGrant, User } from '../../models';
 import { createGoal, createGrant } from '../../testUtils';
@@ -14,10 +14,10 @@ describe('goal filtersToScopes', () => {
     let goalForGroups;
     const possibleGoalIds = [];
 
-    const userName = faker.datatype.string(100);
+    const userName = faker.string.sample(100);
 
     const mockUser = {
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: REGION_ID,
       name: userName,
       hsesUsername: userName,
@@ -27,18 +27,18 @@ describe('goal filtersToScopes', () => {
     beforeAll(async () => {
       grantForGroups = await createGrant({
         regionId: REGION_ID,
-        number: faker.datatype.string(100),
+        number: faker.string.sample(100),
       });
       await User.create(mockUser);
 
       group = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         userId: mockUser.id,
         isPublic: false,
       });
 
       group2 = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         userId: mockUser.id,
         isPublic: false,
       });

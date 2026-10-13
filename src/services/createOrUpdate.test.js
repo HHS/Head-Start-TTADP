@@ -1,6 +1,7 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import fakerUnique from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { createReport, destroyReport } from '../testUtils';
@@ -39,43 +40,43 @@ describe('createOrUpdate', () => {
   beforeAll(async () => {
     report = await createReport({
       version: 2,
-      userId: faker.datatype.number({ min: 666 }),
+      userId: faker.number.int({ min: 666, max: 666 + 99999 }),
       activityRecipients: [
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
         {
-          grantId: faker.datatype.number({ min: 666 }),
+          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
         },
       ],
     });
@@ -348,9 +349,9 @@ describe('createOrUpdate', () => {
   it('filters approvers without the approve permission for the region', async () => {
     const permittedUser = await User.create({
       homeRegionId: report.regionId,
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 1000000 }))}`,
+      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 1000000 }))}`,
       email: faker.internet.email(),
       phoneNumber: '555-123-4567',
       lastLogin: new Date(),
@@ -358,9 +359,9 @@ describe('createOrUpdate', () => {
 
     const unauthorizedUser = await User.create({
       homeRegionId: report.regionId,
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 1000000 }))}`,
+      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 1000000 }))}`,
       email: faker.internet.email(),
       phoneNumber: '555-987-6543',
       lastLogin: new Date(),

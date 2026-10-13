@@ -17,6 +17,7 @@ describe('EventCard', () => {
     collaboratorIds: [],
     pocIds: [],
     regionId: 1,
+    eventId: 'TR-R01-1234',
     data: {
       eventName: 'This is my event title',
       eventId: 'TR-R01-1234',

@@ -6,6 +6,7 @@ import { createGoalsForReport } from '../goals/handlers';
 import transactionWrapper from '../transactionWrapper';
 import {
   createReport,
+  downloadActivityReportExport,
   downloadAllAlerts,
   downloadAllReports,
   downloadReports,
@@ -59,6 +60,9 @@ router.get('/alerts/download-all', transactionWrapper(downloadAllAlerts));
 router.get('/legacy/:legacyReportId', transactionWrapper(getLegacyReport));
 router.get('/download', transactionWrapper(downloadReports));
 router.get('/download-all', nameTransactionByPath, transactionWrapper(downloadAllReports));
+// No transactionWrapper: the export streams from a server-side cursor inside its
+// own explicit transaction (see streamActivityReportExportCsv).
+router.post('/export', nameTransactionByPath, downloadActivityReportExport);
 router.put(
   '/legacy/:legacyReportId',
   userAdminAccessMiddleware,

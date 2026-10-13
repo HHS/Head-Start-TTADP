@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import moment from 'moment';
 import { SiteAlert, sequelize, User } from '../../models';
@@ -10,11 +10,11 @@ describe('site alerts', () => {
 
   beforeAll(async () => {
     mockUser = await User.create({
-      hsesUserId: faker.datatype.string(),
-      name: faker.name.findName(),
+      hsesUserId: faker.string.sample(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       homeRegionId: 1,
-      hsesUsername: faker.internet.userName(),
+      hsesUsername: faker.internet.username(),
       lastLogin: new Date(),
     });
 

@@ -1,9 +1,14 @@
 import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
+import parseDate from '../lib/date';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
+import { isSessionSubmitted } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
   GetSessionReportsParams,
@@ -21,6 +26,41 @@ const {
   SessionReportPilotTrainer,
   Grant,
 } = db;
+
+// Completion flags (and their audit fields) for every workflow side. Facilitation
+// determines which of these apply, so they are all cleared when it changes.
+export const SESSION_COMPLETION_KEYS = ['ownerComplete', 'collabComplete', 'pocComplete'] as const;
+
+const SESSION_COMPLETION_AUDIT_KEYS = SESSION_COMPLETION_KEYS.flatMap((key) => [
+  `${key}Id`,
+  `${key}Date`,
+]);
+
+/**
+ * True when an update changes the session's facilitation. Facilitation picks both
+ * the completion workflow and the approver candidates, so a change invalidates them.
+ */
+export const isFacilitationChange = (
+  existingData: Record<string, unknown>,
+  incomingData: Record<string, unknown>
+): boolean =>
+  Object.hasOwn(incomingData, 'facilitation') &&
+  (incomingData.facilitation ?? '') !== (existingData.facilitation ?? '');
+
+/**
+ * Returns a copy of session data with every completion flag reset, used when
+ * facilitation changes so the session restarts in the new workflow.
+ */
+export const resetSessionCompletion = (data: Record<string, unknown>): Record<string, unknown> => {
+  const reset = { ...data };
+  SESSION_COMPLETION_KEYS.forEach((key) => {
+    reset[key] = false;
+  });
+  SESSION_COMPLETION_AUDIT_KEYS.forEach((key) => {
+    delete reset[key];
+  });
+  return reset;
+};
 
 type WhereOptions = {
   id?: number;
@@ -154,8 +194,8 @@ export async function findSessionHelper(
       'approverId',
       'submitterId',
       'submitted',
-      // eslint-disable-next-line @typescript-eslint/quotes
-      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+      'startDate',
+      'endDate',
     ],
     where,
     order: [['startDate', 'ASC']],
@@ -196,15 +236,39 @@ export async function findSessionHelper(
   }
 
   if (Array.isArray(session)) {
-    return session;
+    return (session as Model[]).map((s) => {
+      const sd = s.get('startDate') as string | null;
+      const ed = s.get('endDate') as string | null;
+      const plain = s.get({ plain: true }) as SessionShape & { event: EventShape };
+      return {
+        ...plain,
+        submitted: isSessionSubmitted(plain.event, plain),
+        data: {
+          ...((s.get('data') as Record<string, unknown>) ?? {}),
+          startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+          endDate: ed ? moment(ed, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+        },
+      };
+    }) as unknown as SessionReportShape[];
   }
 
-  const eventId = session?.event?.data?.eventId ?? null;
+  const eventId = session?.event?.eventId ?? null;
+
+  const startDate = session?.startDate
+    ? moment(session.startDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+  const endDate = session?.endDate
+    ? moment(session.endDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
 
   return {
     id: session?.id,
     eventId,
-    data: session?.data ?? {},
+    data: {
+      ...((session?.data as Record<string, unknown>) ?? {}),
+      startDate,
+      endDate,
+    },
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     goalTemplates: session?.goalTemplates ?? [],
@@ -212,7 +276,10 @@ export async function findSessionHelper(
     event: session?.event,
     approverId: session?.approverId ?? null,
     approver: session?.approver ?? null,
-    submitted: session?.submitted ?? false,
+    submitted: isSessionSubmitted(
+      session?.event as unknown as EventShape,
+      session as unknown as SessionShape
+    ),
     submitterId: session?.submitterId ?? null,
     submitter: session?.submitter ?? null,
     trainers: session?.trainers ?? [],
@@ -231,13 +298,16 @@ export async function createSession(request) {
   }
 
   const cleanData = removeAssociationsFromData(data);
+  const { startDate, endDate, ...restData } = cleanData;
 
   const created = await SessionReportPilot.create(
     {
       eventId: event.id,
+      startDate: parseDate(startDate as string),
+      endDate: parseDate(endDate as string),
       data: cast(
         JSON.stringify({
-          ...cleanData,
+          ...restData,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
           additionalRegions: event.data.additionalRegions || [],
@@ -269,23 +339,49 @@ export async function updateSession(id: number, request) {
     data: { approverId, goalTemplates, submitterId, trainers, ...data },
   } = request;
 
-  // Combine existing session data with new data.
-  const existingData = session.data;
-  const newData = { ...existingData, ...removeAssociationsFromData(data) };
+  // Combine existing session data with new data. The dedicated startDate/endDate
+  // columns are the source of truth; the JSONB `data` keeps a mirror that is
+  // re-derived from the columns on read (see findSessionHelper).
+  const existingData = session.data as Record<string, unknown>;
+  const { startDate, endDate, ...restExistingData } = existingData;
+  const cleanIncomingData = removeAssociationsFromData(data);
+  const {
+    startDate: incomingStartDate,
+    endDate: incomingEndDate,
+    ...restIncomingData
+  } = cleanIncomingData;
+  const facilitationChanged = isFacilitationChange(restExistingData, restIncomingData);
+  const mergedData = { ...restExistingData, ...restIncomingData };
+  // Changing facilitation switches workflows, so stale completion flags and an
+  // approver chosen from the old candidate list must not carry over.
+  const newData = facilitationChanged ? resetSessionCompletion(mergedData) : mergedData;
 
   const event = await findEventBySmartsheetId(eventId);
 
+  const hasStartDate = Object.hasOwn(cleanIncomingData, 'startDate');
+  const hasEndDate = Object.hasOwn(cleanIncomingData, 'endDate');
+
   const update = {
     eventId: event.id,
+    startDate: hasStartDate
+      ? (parseDate(incomingStartDate as string | null | undefined) as Date | null)
+      : (session.get('startDate') as unknown as Date | null),
+    endDate: hasEndDate
+      ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
+      : (session.get('endDate') as unknown as Date | null),
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
-    approverId?: number;
+    approverId?: number | null;
     submitterId?: number;
+    startDate?: Date | null;
+    endDate?: Date | null;
     data: Cast;
   };
 
-  if (approverId) {
+  if (facilitationChanged) {
+    update.approverId = null;
+  } else if (approverId) {
     update.approverId = Number(approverId);
   }
 
@@ -397,26 +493,6 @@ export async function getPossibleSessionParticipants(
   });
 }
 
-/**
- * Builds a SQL CASE expression that casts a JSONB date string field to a proper date,
- * handling the inconsistent formats found in production data:
- *   YYYY-MM-DD  (ISO — direct cast, strict match)
- *   M/D/YY or MM/DD/YY  (short year — TO_DATE MM/DD/YY)
- *   M/D/YYYY or MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY)
- *   null / ''   (guarded by NULLIF → NULL)
- *   any other value (unrecognized format → NULL to prevent sort errors)
- */
-function sessionReportDateSort(field: string): string {
-  const col = `"SessionReportPilot".data->>'${field}'`;
-  return `CASE
-    WHEN NULLIF(${col}, '') IS NULL THEN NULL
-    WHEN ${col} ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN (${col})::date
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
-    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${col}, 'MM/DD/YYYY')
-    ELSE NULL
-  END`;
-}
-
 function removeRegionFilters(filters: Record<string, unknown>): Record<string, unknown> {
   return Object.keys(filters || {}).reduce((acc, key) => {
     if (key === 'region.in' || key === 'region.in[]' || key === 'region.nin') {
@@ -460,9 +536,9 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
-    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
-    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
+    endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
+    eventId: ['event', 'eventId'],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [
       sequelize.literal(
@@ -474,20 +550,49 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
 
   // Use the requested sort column or default to id descending
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
-  return [[...sortEntry, sortDir]];
+
+  if (sortEntry === sortMap.id) {
+    return [[...sortEntry, sortDir]];
+  }
+
+  // Every session under an event shares that event's eventId, and dates, topics and goals tie
+  // just as freely. A single-column ORDER BY leaves Postgres free to order tied rows differently
+  // between the LIMIT/OFFSET queries backing each page, so one session can land on two pages
+  // while another never shows at all. The primary key pins the order.
+  return [
+    [...sortEntry, sortDir],
+    [sequelize.literal('"SessionReportPilot"."id"'), sortDir],
+  ];
 }
 
 const sessionReportAttributes = [
   'id',
-  [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
+  [sequelize.literal('"event"."eventId"'), 'eventId'],
   [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
-  [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
-  [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+  'startDate',
+  'endDate',
   [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
   [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  // Selected raw so participantCount can be derived with getActivityReportParticipantCount,
+  // the same helper the dashboards and overview widget use. Casting these to ::integer in SQL
+  // fails on the empty strings the session form writes into the fields that don't apply to the
+  // selected delivery method.
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipants\''),
+    'numberOfParticipants',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsInPerson\''),
+    'numberOfParticipantsInPerson',
+  ],
+  [
+    sequelize.literal('"SessionReportPilot"."data"->>\'numberOfParticipantsVirtually\''),
+    'numberOfParticipantsVirtually',
+  ],
 ];
 
 /**
@@ -503,13 +608,21 @@ async function fetchSessionReports(
     offset = 0,
     limit = 10 as number | 'all',
     extraWhereClauses = [] as unknown[],
+    userId,
+  }: {
+    sortBy?: string;
+    sortDir?: string;
+    offset?: number;
+    limit?: number | 'all';
+    extraWhereClauses?: unknown[];
+    userId?: number;
   }
 ): Promise<GetSessionReportsResponse> {
   const orderClause = sessionReportOrderClause(sortBy, sortDir);
 
   // Get scopes from filters
   const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
-    await filtersToScopes(filterParams, {});
+    await filtersToScopes(filterParams, { userId });
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -603,6 +716,8 @@ async function fetchSessionReports(
       duration: plain.duration,
       recipients: plain.recipients,
       participants: plain.participants,
+      participantCount: getActivityReportParticipantCount(plain),
+      deliveryMethod: plain.deliveryMethod,
     };
   });
 
@@ -620,9 +735,16 @@ async function fetchSessionReports(
 export async function getSessionReports(
   params: GetSessionReportsParams
 ): Promise<GetSessionReportsResponse> {
-  const { sortBy = 'id', sortDir = 'DESC', offset = 0, limit = 10, ...filterParams } = params;
+  const {
+    sortBy = 'id',
+    sortDir = 'DESC',
+    offset = 0,
+    limit = 10,
+    userId,
+    ...filterParams
+  } = params;
 
-  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit });
+  return fetchSessionReports(filterParams, { sortBy, sortDir, offset, limit, userId });
 }
 
 /**
@@ -638,6 +760,7 @@ export async function getSessionReportsByRecipient(
     sortDir = 'DESC',
     offset = 0,
     limit = 10,
+    userId,
     ...filterParams
   } = params;
 
@@ -672,6 +795,7 @@ export async function getSessionReportsByRecipient(
     sortDir,
     offset,
     limit,
+    userId,
     extraWhereClauses: [recipientGrantFilter(grantIds)],
   });
 }

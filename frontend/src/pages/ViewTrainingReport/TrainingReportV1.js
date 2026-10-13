@@ -77,9 +77,7 @@ export default function TrainingReportV1({ event, eventCollaborators, eventPoc, 
   const hideBackLink = searchParams.get('back_link') === 'hide';
 
   const pageTitle =
-    event && event.data && event.data.eventId
-      ? `Training event report ${event.data.eventId}`
-      : 'Training event report';
+    event && event.eventId ? `Training event report ${event.eventId}` : 'Training event report';
   const ownerName = formatOwnerName(event);
 
   const eventSummary =
@@ -188,7 +186,7 @@ export default function TrainingReportV1({ event, eventCollaborators, eventPoc, 
                       ? session.data.objectiveResources.map((o) => o.value)
                       : []
                   ),
-'EEP Courses': valueOrDefault(
+                  'EEP Courses': valueOrDefault(
                     session.data.courses ? session.data.courses.map((o) => o.name) : []
                   ),
                   'Resource attachments': valueOrDefault(
@@ -237,7 +235,7 @@ export default function TrainingReportV1({ event, eventCollaborators, eventPoc, 
   return (
     <>
       <Helmet>
-        <title>Training Event Report {event && event.data ? String(event.data.eventId) : ''}</title>
+        <title>Training Event Report {event && event.eventId ? String(event.eventId) : ''}</title>
       </Helmet>
       {!hideBackLink && <BackLink to={backLinkUrl}>Back to Training Reports</BackLink>}
       <ApprovedReportSpecialButtons showCompleteEvent={false} onCompleteEvent={() => {}} />

@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, { ActivityReportObjective, Goal, Grant, Objective, Recipient } from '../models';
 import { createReport, destroyReport } from '../testUtils';
@@ -14,16 +14,16 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
   beforeAll(async () => {
     recipientForFirstGrant = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }),
-      name: faker.random.alphaNumeric(6),
-      uei: faker.datatype.string(12),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      name: faker.string.alphanumeric(6),
+      uei: faker.string.sample(12),
     });
     firstGrant = await Grant.create({
       number: recipientForFirstGrant.id,
       recipientId: recipientForFirstGrant.id,
-      programSpecialistName: faker.name.firstName(),
+      programSpecialistName: faker.person.firstName(),
       regionId: 1,
-      id: faker.datatype.number({ min: 64000 }),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
       startDate: new Date(),
       endDate: new Date(),
     });
@@ -33,7 +33,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       timeframe: '12 months',
       grantId: firstGrant.id,
       isFromSmartsheetTtaPlan: false,
-      id: faker.datatype.number({ min: 64000 }),
+      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
     });
     const objective = await Objective.create({
       goalId: goalOnActivityReport.id,

@@ -53,12 +53,6 @@ export async function missingDataForActivityReport(regionId, goalIds) {
   return response.json();
 }
 
-export async function reopenGoal(goalId, reason, context) {
-  const url = join(goalsUrl, 'reopen');
-  const response = await put(url, { goalId, reason, context });
-  return response.json();
-}
-
 export async function fetchGoalDashboardData(query = '') {
   const request = query
     ? join('/', 'api', 'widgets', `goalDashboard?${query}`)

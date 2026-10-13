@@ -10,12 +10,16 @@ export const NOTIFICATION_TYPES: {
   readonly ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned';
   readonly ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested';
   readonly ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator';
+  readonly ACTIVITY_REPORT_NEEDS_ACTION_APPROVER: 'changesRequestedApprover';
   readonly ACTIVITY_REPORT_SUBMITTED: 'approverAssigned';
   readonly ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator';
   readonly ACTIVITY_REPORT_SUBMITTED_CREATOR: 'approverAssignedCreator';
   readonly ACTIVITY_REPORT_APPROVED: 'reportApproved';
+  readonly ACTIVITY_REPORT_APPROVED_APPROVER: 'reportApprovedApprover';
   readonly ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved';
   readonly ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted';
+  readonly ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover';
+  readonly ACTIVITY_REPORT_RESUBMITTED_CREATOR: 'activityReportResubmittedCreator';
   readonly COLLAB_REPORT_COLLABORATOR_ADDED: 'collabReportCollaboratorAdded';
   readonly COLLAB_REPORT_SUBMITTED: 'collabReportSubmitted';
   readonly COLLAB_REPORT_RESUBMITTED: 'collabReportResubmitted';
@@ -130,4 +134,30 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenMonitoringDetailsAdded',
   'inAppWhenAddedAsCoOwner',
   'inAppWhenSharedMyGroup',
+];
+
+export const TIMELINE_FILTER_TOPICS: readonly ['date', 'purpose', 'standard', 'eventType'];
+
+export const TIMELINE_DATE_FILTER_CONDITIONS: readonly [
+  'is',
+  'is within',
+  'is on or after',
+  'is on or before',
+];
+
+export const TIMELINE_SELECT_FILTER_CONDITIONS: readonly ['is', 'is not'];
+
+export const TIMELINE_EVENT_TYPES: readonly [
+  'Email communication',
+  'Phone communication',
+  'In person communication',
+  'Virtual communication',
+  'TTA activity',
+  'Training session',
+  'Goal added',
+  'Goal suspended',
+  'Goal closed',
+  'Goal reopened',
+  'TTA request',
+  'Monitoring report received',
 ];

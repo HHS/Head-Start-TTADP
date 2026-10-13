@@ -46,11 +46,11 @@ const logCronError = (auditMessage, loggerMessage, error) => {
   logger.error(error instanceof Error ? error.stack || error : error);
 };
 
-const runUpdateJob = () => {
+const runUpdateJob = async () => {
   try {
     logger.info('Starting update job');
-    return updateGrantsRecipients();
-  } /* istanbul ignore next: can't force an error here */ catch (error) {
+    return await updateGrantsRecipients();
+  } catch (error) {
     logCronError('Error processing HSES file', 'HSES file Error', error);
   }
   return false;

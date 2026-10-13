@@ -14,6 +14,7 @@ import {
   TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
+import TimelineEvent from '../../../components/TimelineEvent';
 import { getRecipientTimeline } from '../../../fetchers/recipient';
 import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
@@ -41,7 +42,18 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
     TIMELINE_FILTER_CONFIG
   );
 
-  const serializedFilters = useMemo(() => filters.map(serializeTimelineFilter), [filters]);
+  const supportedFilterTopics = useMemo(
+    () => new Set(filterConfig.map(({ id }) => id)),
+    [filterConfig]
+  );
+  const supportedFilters = useMemo(
+    () => filters.filter(({ topic }) => supportedFilterTopics.has(topic)),
+    [filters, supportedFilterTopics]
+  );
+  const serializedFilters = useMemo(
+    () => supportedFilters.map(serializeTimelineFilter),
+    [supportedFilters]
+  );
 
   const { data, error, loading } = useFetch(
     { count: 0, events: [] } as RecipientTimelineResponse,
@@ -72,7 +84,7 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
           data-testid="timeline-filter-panel"
         >
           <FilterPanel
-            filters={filters}
+            filters={supportedFilters}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
             filterConfig={filterConfig}
@@ -149,9 +161,18 @@ export default function Timeline({ recipientId, regionId }: TimelineProps): Reac
             )}
             {!loading && !error && events.length === 0 && <NoResultsFound hideFilterHelp />}
             {!loading && !error && events.length > 0 && (
-              <p className="margin-0" data-testid="timeline-results">
+              <p className="usa-sr-only" data-testid="timeline-results">
                 {count} timeline {count === 1 ? 'event' : 'events'}
               </p>
+            )}
+            {!loading && !error && events.length > 0 && (
+              <ol className="usa-list--unstyled" aria-label="Timeline events">
+                {events.map((event, index) => (
+                  <li key={`${event.source}-${event.sourceId}`}>
+                    <TimelineEvent event={event} isLast={index === events.length - 1} />
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
         </Container>

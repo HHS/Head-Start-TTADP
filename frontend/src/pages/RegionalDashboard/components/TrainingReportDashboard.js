@@ -1,6 +1,6 @@
 import { Alert, Grid, GridContainer } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { getSessionReportsTable } from '../../../fetchers/session';
 import useFetch from '../../../hooks/useFetch';
@@ -12,7 +12,11 @@ import Overview from '../../../widgets/TrainingReportDashboardOverview';
 import VTopicFrequency from '../../../widgets/VTopicFrequency';
 import TrainingReportsTable from './TrainingReportsTable';
 
-export default function TrainingReportDashboard({ filtersToApply: filters }) {
+export default function TrainingReportDashboard({
+  filtersToApply: filters,
+  resetPagination,
+  setResetPagination,
+}) {
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'Event_ID',
@@ -24,6 +28,14 @@ export default function TrainingReportDashboard({ filtersToApply: filters }) {
   );
 
   const requestSort = useRequestSort(setSortConfig);
+
+  // reset pagination to page 1 when filters change so a stale offset can't hide matching rows
+  useEffect(() => {
+    if (resetPagination) {
+      setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   const { data, error } = useFetch(
     { rows: [], count: 0 },
@@ -89,8 +101,12 @@ export default function TrainingReportDashboard({ filtersToApply: filters }) {
 
 TrainingReportDashboard.defaultProps = {
   filtersToApply: [],
+  resetPagination: false,
+  setResetPagination: () => {},
 };
 
 TrainingReportDashboard.propTypes = {
   filtersToApply: PropTypes.arrayOf(PropTypes.shape({})),
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
 };

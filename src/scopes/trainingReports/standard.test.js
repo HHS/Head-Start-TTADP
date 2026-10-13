@@ -56,7 +56,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-1',
+      data: { eventId: 'TR-STANDARD-TEST-1' },
     });
 
     reportWithERSEA = await EventReportPilot.create({
@@ -64,7 +65,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-2',
+      data: { eventId: 'TR-STANDARD-TEST-2' },
     });
 
     reportWithBothStandards = await EventReportPilot.create({
@@ -72,7 +74,8 @@ describe('trainingReports/standard', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STANDARD-TEST-3',
+      data: { eventId: 'TR-STANDARD-TEST-3' },
     });
 
     // Create session reports
@@ -193,5 +196,35 @@ describe('trainingReports/standard', () => {
     });
 
     expect(found.length).toBe(0);
+  });
+
+  it('does not restrict reports when all curated standards are included', async () => {
+    const standards = await GoalTemplate.findAll({
+      attributes: ['standard'],
+      where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
+      raw: true,
+    });
+    const { trainingReport: scope } = await filtersToScopes({
+      'standard.in': standards.map(({ standard }) => standard),
+    });
+    const found = await EventReportPilot.findAll({
+      where: { [Op.and]: [scope, { id: possibleIds }] },
+    });
+    expect(found).toHaveLength(3);
+  });
+
+  it('returns no reports when all curated standards are excluded', async () => {
+    const standards = await GoalTemplate.findAll({
+      attributes: ['standard'],
+      where: { standard: { [Op.not]: null }, creationMethod: 'Curated' },
+      raw: true,
+    });
+    const { trainingReport: scope } = await filtersToScopes({
+      'standard.nin': standards.map(({ standard }) => standard),
+    });
+    const found = await EventReportPilot.findAll({
+      where: { [Op.and]: [scope, { id: possibleIds }] },
+    });
+    expect(found).toHaveLength(0);
   });
 });

@@ -29,6 +29,7 @@ describe('SessionReportFacilitation', () => {
     owner: {
       id: 1,
     },
+    eventId: 'R01-TR-1234',
     data: {
       eventId: 'R01-TR-1234',
       eventName: 'Test Training Event',

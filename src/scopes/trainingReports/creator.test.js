@@ -27,7 +27,8 @@ describe('trainingReports/creator', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [mockUser.id],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-CREATOR-TEST-1',
+      data: { eventId: 'TR-CREATOR-TEST-1' },
     });
 
     // create second report by mockUser
@@ -36,7 +37,8 @@ describe('trainingReports/creator', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-CREATOR-TEST-2',
+      data: { eventId: 'TR-CREATOR-TEST-2' },
     });
 
     // create report by collaboratorUser
@@ -45,7 +47,8 @@ describe('trainingReports/creator', () => {
       pocIds: [mockCollaboratorUser.id],
       collaboratorIds: [mockCollaboratorUser.id],
       regionId: 3,
-      data: {},
+      eventId: 'TR-CREATOR-TEST-3',
+      data: { eventId: 'TR-CREATOR-TEST-3' },
     });
 
     possibleIds = [reportByMockUser1.id, reportByMockUser2.id, reportByCollaboratorUser.id];

@@ -28,7 +28,7 @@ function EventCard({
   const { user } = useContext(UserContext);
   const history = useHistory();
   const hasAdminRights = isAdmin(user);
-  const { id, data, sessionReports } = event;
+  const { id, data, sessionReports, eventId } = event;
 
   const { eventOrganizer } = data;
 
@@ -38,7 +38,7 @@ function EventCard({
   });
   const [eventStatus, setEventStatus] = useState(data.status);
 
-  const { eventId, eventSubmitted } = data;
+  const { eventSubmitted } = data;
   const isOwner = event.ownerId === user.id;
   const isPoc = event?.pocIds?.includes(user.id);
   const isCollaborator = event?.collaboratorIds?.includes(user.id);
@@ -240,7 +240,7 @@ function EventCard({
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Event ID</p>
           <p className="usa-prose margin-y-0">
-            <Link to={link}>{data.eventId}</Link>
+            <Link to={link}>{eventId}</Link>
           </p>
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
@@ -273,7 +273,7 @@ function EventCard({
       <div className="margin-top-3">
         <ExpanderButton
           type="session"
-          ariaLabel={`sessions for event ${data.eventId}`}
+          ariaLabel={`sessions for event ${eventId}`}
           closeOrOpen={closeOrOpenReports}
           count={event.sessionReports.length}
           expanded={reportsExpanded}

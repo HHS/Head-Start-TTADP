@@ -10,6 +10,9 @@ export type SessionShape = {
   id: number;
   eventId?: number;
   approverId?: number;
+  // Dedicated columns; single source of truth for session dates (YYYY-MM-DD).
+  startDate?: string | null;
+  endDate?: string | null;
   data: {
     sessionName: string;
     status: string;
@@ -41,6 +44,7 @@ export type EventShape = {
   pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
+  eventId: string;
   data: {
     startDate: string;
     endDate: string;
@@ -68,6 +72,7 @@ export type CreateEventRequest = {
   data: {
     owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
+    eventId: string;
   };
 };
 

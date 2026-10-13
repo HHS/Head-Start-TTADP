@@ -19,7 +19,7 @@ run_root_tests() {
 		node \
 			--expose-gc \
 			./node_modules/.bin/jest \
-			src/*.js \
+			src/*.{js,ts} \
 			--coverage \
 			--coverageDirectory="$(pwd)"/coverage/src/root \
 			--collectCoverageFrom="src/*.{js,ts}" \

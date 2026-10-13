@@ -14,6 +14,7 @@ import { userById } from '../../services/users';
 import {
   approvedDigest,
   approverAssignedNotification,
+  approverReportApprovedNotification,
   changesRequestedDigest,
   changesRequestedNotification,
   collaboratorAssignedNotification,
@@ -28,6 +29,7 @@ import {
   notificationQueue as notificationDigestQueueMock,
   notificationQueue as notificationQueueMock,
   notifyApproverAssigned,
+  notifyApproverReportApproved,
   notifyChangesRequested,
   notifyCollaboratorAssigned,
   notifyCollaboratorReportSubmittedForReview,
@@ -377,9 +379,9 @@ describe('mailer tests', () => {
   });
 
   describe('Changes requested by manager', () => {
-    it('Tests that separate emails are sent to author/collaborators and approvers', async () => {
+    it('Tests that separate emails are sent to author, collaborators, and approvers', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
+      const [authorEmail, collabEmail, approverEmail] = await notifyChangesRequested(
         {
           data: {
             report: mockReport,
@@ -392,23 +394,36 @@ describe('mailer tests', () => {
         jsonTransport
       );
 
-      // Author and collaborators get the "make changes and resubmit" template.
-      expect(authorCollabEmail.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
-      expect(authorCollabEmail.envelope.to).toStrictEqual([
-        mockAuthor.email,
+      // Author gets the "make changes and resubmit" template.
+      expect(authorEmail.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(authorEmail.envelope.to).toStrictEqual([mockAuthor.email]);
+      const authorMessage = JSON.parse(authorEmail.message);
+      expect(authorMessage.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Changes requested`
+      );
+      expect(authorMessage.text).toContain(
+        `${mockManager.name} requested changes to report ${mockReport.displayId}.`
+      );
+      expect(authorMessage.text).toContain('Make changes and resubmit this report');
+      expect(authorMessage.text).not.toContain('on which you are a collaborator');
+      expect(authorMessage.text).toContain(mockApprover.note);
+      expect(authorMessage.text).toContain(reportPath);
+
+      // Collaborators get the collaborator-specific template.
+      expect(collabEmail.envelope.to).toStrictEqual([
         mockCollaborator1.user.email,
         mockCollaborator2.user.email,
       ]);
-      const authorCollabMessage = JSON.parse(authorCollabEmail.message);
-      expect(authorCollabMessage.subject).toBe(
+      const collabMessage = JSON.parse(collabEmail.message);
+      expect(collabMessage.subject).toBe(
         `Activity Report ${mockReport.displayId}: Changes requested`
       );
-      expect(authorCollabMessage.text).toContain(
-        `${mockManager.name} requested changes to report ${mockReport.displayId}.`
+      expect(collabMessage.text).toContain(
+        `${mockManager.name} requested changes to report ${mockReport.displayId}, on which you are a collaborator.`
       );
-      expect(authorCollabMessage.text).toContain('Make changes and resubmit this report');
-      expect(authorCollabMessage.text).toContain(mockApprover.note);
-      expect(authorCollabMessage.text).toContain(reportPath);
+      expect(collabMessage.text).toContain('Make changes and resubmit this report');
+      expect(collabMessage.text).toContain(mockApprover.note);
+      expect(collabMessage.text).toContain(reportPath);
 
       // Approvers get the separate "approve this report" template.
       expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
@@ -419,13 +434,13 @@ describe('mailer tests', () => {
       expect(approverMessage.text).toContain(
         `${mockManager.name} requested changes to report ${mockReport.displayId}.`
       );
-      expect(approverMessage.text).toContain('Approve this report');
+      expect(approverMessage.text).toContain('Access this report in the TTA Hub');
       expect(approverMessage.text).toContain(mockApprover.note);
       expect(approverMessage.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
+      const [authorEmail, collabEmail, approverEmail] = await notifyChangesRequested(
         {
           data: {
             report: mockReport,
@@ -437,12 +452,34 @@ describe('mailer tests', () => {
         },
         jsonTransport
       );
-      expect(authorCollabEmail).toBe(null);
+      expect(authorEmail).toBe(null);
+      expect(collabEmail).toBe(null);
       expect(approverEmail).toBe(null);
+    });
+    it('Tests that an email is sent only to collaborators when there is no author or approver', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const [authorEmail, collabEmail, approverEmail] = await notifyChangesRequested(
+        {
+          data: {
+            report: mockReport,
+            approver: mockApprover,
+            authorWithSetting: null,
+            collabsWithSettings: [mockCollaborator1],
+            approversWithSettings: [],
+          },
+        },
+        jsonTransport
+      );
+
+      expect(authorEmail).toBe(null);
+      expect(approverEmail).toBe(null);
+      expect(collabEmail.envelope.to).toStrictEqual([mockCollaborator1.user.email]);
+      const collabMessage = JSON.parse(collabEmail.message);
+      expect(collabMessage.text).toContain('on which you are a collaborator');
     });
     it('Tests that an email is sent to approvers if no author or collaborators are recipients', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
-      const [authorCollabEmail, approverEmail] = await notifyChangesRequested(
+      const [authorEmail, collabEmail, approverEmail] = await notifyChangesRequested(
         {
           data: {
             report: mockReport,
@@ -455,7 +492,8 @@ describe('mailer tests', () => {
         jsonTransport
       );
 
-      expect(authorCollabEmail).toBe(null);
+      expect(authorEmail).toBe(null);
+      expect(collabEmail).toBe(null);
       expect(approverEmail.envelope.to).toStrictEqual([mockApprover.user.email]);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
@@ -539,6 +577,60 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Approver Report Approved', () => {
+    it('Tests that an email is sent to the other approvers naming the approver', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyApproverReportApproved(
+        {
+          data: {
+            report: mockReport,
+            approversWithSettings: [mockApprover, mockCollaborator1],
+            approverName: 'Approver McApproverface',
+          },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([
+        mockApprover.user.email,
+        mockCollaborator1.user.email,
+      ]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Approved by Approver McApproverface`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId} has been approved by Approver McApproverface.`
+      );
+      expect(message.text).toContain('Access this report in the TTA Hub.');
+      expect(message.text).toContain(reportPath);
+    });
+    it('Tests that an email is not sent if there are no approver recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyApproverReportApproved(
+        {
+          data: {
+            report: mockReport,
+            approversWithSettings: [],
+            approverName: 'Approver McApproverface',
+          },
+        },
+        jsonTransport
+      );
+      expect(email).toBe(null);
+    });
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyApproverReportApproved(
+        {
+          data: { report: mockReport },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+  });
+
   describe('Program Specialists: Recipient Report Approved', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
@@ -611,6 +703,22 @@ describe('mailer tests', () => {
         `Activity Report ${mockReport.displayId} has been submitted for your approval.`
       );
       expect(message.text).toContain(reportPath);
+    });
+    it('uses Revised wording for resubmissions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyApproverAssigned(
+        {
+          data: { report: mockReport, newApprover: mockApprover, isResubmission: true },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Revised Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Revised Activity Report ${mockReport.displayId} has been submitted for your approval.`
+      );
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
@@ -699,6 +807,27 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
 
+    it('uses Revised wording for resubmissions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: {
+            report: mockReport,
+            collaborator: mockNewCollaborator,
+            isResubmission: true,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Revised Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Revised Activity Report ${mockReport.displayId}, on which you are a collaborator, has been submitted for approval.`
+      );
+    });
+
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
       const email = await notifyCollaboratorReportSubmittedForReview(
@@ -731,11 +860,33 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
-        expect.objectContaining({ report: mockReport, collaborator: collaborators[0].user })
+        expect.objectContaining({
+          report: mockReport,
+          collaborator: collaborators[0].user,
+          isResubmission: false,
+        })
       );
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
-        expect.objectContaining({ report: mockReport, collaborator: collaborators[1].user })
+        expect.objectContaining({
+          report: mockReport,
+          collaborator: collaborators[1].user,
+          isResubmission: false,
+        })
+      );
+    });
+
+    it('enqueues collaborator jobs with the resubmission flag', () => {
+      jest.spyOn(notificationQueueMock, 'add').mockClear();
+      const collaborators = [{ user: { email: 'collab1@test.gov' }, userId: 10 }];
+      collaboratorReportSubmittedForReviewNotification(mockReport, collaborators, true);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({
+          report: mockReport,
+          collaborator: collaborators[0].user,
+          isResubmission: true,
+        })
       );
     });
   });
@@ -759,6 +910,23 @@ describe('mailer tests', () => {
         `Activity Report ${mockReport.displayId}, which you created, has been submitted for approval.`
       );
       expect(message.text).toContain(reportPath);
+    });
+
+    it('uses Revised wording for resubmissions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCreatorReportSubmittedForReview(
+        {
+          data: { report: mockReport, creator: mockAuthor, isResubmission: true },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Revised Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Revised Activity Report ${mockReport.displayId}, which you created, has been submitted for approval.`
+      );
     });
 
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
@@ -789,7 +957,16 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
-        expect.objectContaining({ report: mockReport, creator: mockAuthor })
+        expect.objectContaining({ report: mockReport, creator: mockAuthor, isResubmission: false })
+      );
+    });
+
+    it('enqueues the creator job with the resubmission flag', () => {
+      jest.spyOn(notificationQueueMock, 'add').mockClear();
+      creatorReportSubmittedForReviewNotification(mockReport, mockAuthor, true);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, creator: mockAuthor, isResubmission: true })
       );
     });
   });
@@ -1683,6 +1860,19 @@ describe('mailer tests', () => {
         );
       });
 
+      it('adds approver approved notifications to the queue with the correct action', () => {
+        approverReportApprovedNotification(mockReport, [mockApprover], 'Approver McApproverface');
+
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.APPROVER_APPROVED,
+          expect.objectContaining({
+            report: mockReport,
+            approversWithSettings: [mockApprover],
+            approverName: 'Approver McApproverface',
+          })
+        );
+      });
+
       it('logs queue add errors without throwing', () => {
         notificationQueueMock.add.mockImplementationOnce(() => {
           throw new Error('queue exploded');
@@ -1707,6 +1897,8 @@ describe('mailer tests', () => {
         .mockImplementation(async () => Promise.resolve());
     });
     afterEach(async () => {
+      notificationQueueMock.add.mockClear();
+      notificationDigestQueueMock.add.mockClear();
       await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
       await ActivityReportApprover.destroy({
         where: {
@@ -1748,6 +1940,21 @@ describe('mailer tests', () => {
 
       approverAssignedNotification(report, [mockApprover]);
       expect(notificationQueueMock.add).toHaveBeenCalled();
+    });
+
+    it('"approver assigned" includes resubmission flag on the notificationQueue', async () => {
+      notificationQueueMock.add.mockClear();
+      const report = await ActivityReport.create(reportObject);
+
+      approverAssignedNotification(report, [mockApprover], true);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.SUBMITTED,
+        expect.objectContaining({
+          report,
+          newApprover: mockApprover,
+          isResubmission: true,
+        })
+      );
     });
 
     it('"approver assigned" which logs on error', async () => {

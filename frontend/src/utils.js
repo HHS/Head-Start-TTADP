@@ -59,6 +59,21 @@ export const isExternalURL = (url) => {
   return newUrl.host !== currentHost.host;
 };
 
+/**
+ * Decide if a string is safe to render as a link: either a same-app relative
+ * path (e.g. "/goal/123") or a valid http(s) URL per `isValidURL`.
+ *
+ * Whitespace and backslashes are rejected outright, even though `new URL()`
+ * would otherwise accept them: it silently normalizes backslashes to slashes
+ * and encodes spaces, which can disguise the link's real destination (e.g.
+ * "http:\\trusted.example@evil.example" resolves to host "evil.example").
+ */
+export const isSafeRenderableLink = (to) => {
+  if (/[\s\\]/.test(to)) return false;
+  if (/^\/(?!\/)/.test(to)) return true;
+  return isValidURL(to);
+};
+
 export const reportIsEditable = (status) =>
   status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.NEEDS_ACTION;
 
@@ -586,6 +601,7 @@ export const SUPPORTED_DATE_FORMATS = [
   'M.D.YYYY',
   'MM.D.YYYY',
   'M.DD.YYYY',
+  'MM.DD.YYYY',
   'M.D.YY',
   'MM.DD.YY',
 ];
@@ -594,6 +610,18 @@ export function isValidDate(value) {
   if (!value) return null;
   const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
   return parsed ? moment(value, parsed, true) : null;
+}
+
+// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
+// ISO 8601 values are parsed as UTC so a date-only timestamp (e.g. midnight UTC) doesn't
+// shift to the previous calendar day when formatted in timezones behind UTC.
+export function parseDateStrict(value) {
+  if (!value) return null;
+  if (moment(value, moment.ISO_8601, true).isValid()) {
+    return moment.utc(value);
+  }
+  const parsed = moment(value, ['YYYY-MM-DD', 'MM/DD/YYYY'], true);
+  return parsed.isValid() ? parsed : null;
 }
 
 /**
