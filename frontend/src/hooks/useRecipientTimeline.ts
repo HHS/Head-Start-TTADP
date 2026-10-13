@@ -1,5 +1,6 @@
 import type {
   RecipientTimelineEvent,
+  RecipientTimelineFilter,
   RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import { useCallback, useRef, useState } from 'react';
@@ -8,7 +9,7 @@ import { getRecipientTimeline } from '../fetchers/recipient';
 
 interface TimelineOptions {
   direction: 'asc' | 'desc';
-  filters: string[];
+  filters: RecipientTimelineFilter[];
   excludeMultiRecipientCommunications: boolean;
 }
 

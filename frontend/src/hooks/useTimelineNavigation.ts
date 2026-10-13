@@ -1,3 +1,4 @@
+import type { RecipientTimelineFilter } from '@ttahub/common/src/recipientTimeline';
 import { useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import useRecipientTimeline from './useRecipientTimeline';
@@ -41,14 +42,14 @@ function savedPosition(state: TimelineLocationState): TimelinePosition | null {
 /**
  * Restore this browser history entry without adding an entry for each scroll or API slice.
  *
- * `filterQuery` keys the saved position. Pass the canonical URL query string rather than
+ * `filterQuery` keys the saved position. Pass the URL query string rather than
  * `filters`: panel filters can change shape on the URL round trip (a date "is" value comes
  * back as an array), so their serialized form would not match after Back or refresh.
  */
 export default function useTimelineNavigation(
   recipientId: string,
   regionId: string,
-  filters: string[],
+  filters: RecipientTimelineFilter[],
   filterQuery: string
 ) {
   const history = useHistory<TimelineLocationState>();
