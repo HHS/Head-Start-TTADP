@@ -51,8 +51,8 @@ test.describe('Activity Report Text Search Filter', () => {
       .filter({ hasText: '- Select -' })
       .nth(1)
       .click();
-    // select first available option.
-    await page.keyboard.press('ArrowDown');
+    // must differ from the approver selected later; collaborators can't approve
+    await page.keyboard.type('krys');
     await page.keyboard.press('Enter');
     await blur(page);
 
