@@ -1,0 +1,84 @@
+# Plan: Automate production PR creation/update on merge to main
+
+## Goal
+On each merge to `main`, automatically create (or update, if one already exists) a `main -> production` PR, with the description, test steps, and issue list synthesized from the release's merged PRs.
+
+## High-level flow
+1. **Trigger**: `push` to `main`, plus `workflow_dispatch` (with a dry-run mode) for manual testing/debugging.
+2. **Detect state**: Check for an open PR `main -> production` (`gh pr list --base production --head main --state open`). Fail the run if more than one open match exists (should never happen, but don't guess which to update).
+3. **Build release-scope payload**:
+   - Checkout with `fetch-depth: 0` (full history — `origin/production..origin/main` does not work with the default shallow checkout).
+   - Compute first-parent commits `origin/production..origin/main`.
+   - Resolve each commit to its originating PR via GitHub's "list pull requests associated with a commit" API (not by parsing squash-merge message text) — filter for merged PRs targeting `main`.
+   - For commits with no resolvable PR, include normalized commit metadata rather than silently dropping them.
+   - If the commit range is empty, do nothing (no-op, not an error).
+   - Assemble the JSON payload matching the Credal prompt's expected shape (`mode`, `baseBranch`, `headBranch`, `releaseCommits[]`, `existingProductionPr`).
+4. **Call CredalAI** (confirmed working — tested 2026-10-09):
+   - `POST https://api.credal.acf.gov/api/v0/copilots/sendMessage`
+   - Headers: `Authorization: Bearer $CREDAL_API_KEY_ACF`, `Content-Type: application/json`.
+   - Body: `{ "agentId": "e85a3cc2-5944-11f1-aad1-9f8702339566", "message": "<JSON.stringify(releaseScopePayload)>", "userEmail": "<caller email>" }` — the release-scope payload (`mode`, `baseBranch`, `headBranch`, `releaseCommits[]`, `existingProductionPr`) goes in as a JSON-stringified string inside `message`, not as structured JSON.
+   - `userEmail`: use a shared/service-account email for the CI automation rather than a personal one, if one exists — ties the automation's audit trail to an individual otherwise.
+   - See [credalProductionPrPrompt.md](credalProductionPrPrompt.md) for the current agent prompt (kept in sync with what's actually configured in Credal). Add a request timeout and bounded retry.
+5. **Parse and validate the response**:
+   - The response body is `{ sendChatResult: { response: { message: "<JSON string>", structuredOutput: {...}, ... }, ... } }`.
+   - **Parse `response.message` (JSON.parse it) as the canonical source — do not use `structuredOutput` directly.** A test call showed `structuredOutput.descriptionOfChange` missing a space after a markdown link (`...TTAHUB-5660)Add...`) that the `message` string had correctly (`...TTAHUB-5660) Add...`). The two fields aren't guaranteed to match; `message` was correct in testing, so treat it as source of truth and ignore `structuredOutput`.
+   - Treat the parsed content as untrusted — schema-validate `{ title, descriptionOfChange, howToTest, issues }` (required fields present, length caps — title under ~80 chars per the updated prompt — `issues` entries match the `https://jira.acf.gov/browse/TTAHUB-####` format) before using it to touch GitHub. Fail the run rather than posting malformed content.
+6. **Render PR body**:
+   - The template's actual issue heading is `## Jira Issue(s)` (not `## Issue(s)`) — Credal's `issues` output is already full `https://jira.acf.gov/browse/TTAHUB-####` links; the wrapper script places that string under the real heading, so no prompt-side heading text needs to match.
+   - **On create**: render the full `.github/pull_request_template.md` with the three generated sections filled in, plus the checklist defaults below.
+   - **On update**: fetch the *current* PR body and replace only the three managed sections (Description of change / How to test / Jira Issue(s)) in place, using explicit HTML comment markers rather than matching on heading text where possible. Never reconstruct/overwrite the whole body from the template on update. The checklist's deterministic items are then recomputed and reapplied on top (see step 7's update) — only the non-deterministic checklist items (manual sign-offs) and any other content outside the three managed sections stay untouched.
+   - **Bootstrap case (discovered 2026-10-13 testing against the real repo)**: a real open production PR (#4032) already exists, hand-written before this automation existed, with no managed-section markers. Rather than failing on every such PR and requiring a manual one-time fix, the update path tries markers first and **falls back to the same heading-based matcher `renderCreateBody` uses** when a section has no markers yet, stamping markers onto it so the PR self-upgrades to the marker-based fast path on its next update. This only throws if the heading itself is also missing (body doesn't match the template shape at all) — verified against PR #4032's real body with no mutation (`gh pr view` read + local render, no `gh pr edit`).
+7. **Fill checklist defaults deterministically (script, not Credal)** — Credal explicitly declines to touch the checklist, so the script applies the same defaults already used for real production PRs (see `~/.codex/skills/ttahub-prod-pr/SKILL.md`):
+   - `Linked Jira issue`, `JIRA issue status updated`, `Code is meaningfully tested`, `OHS demo complete`, `Ready to create production PR`, `PR created as Draft` -> `[x]`.
+   - `Meets accessibility standards`, `UI review complete`, `QA review complete` -> `[n/a]` for docs/CI/infra-only releases, otherwise `[x]`.
+   - `API Documentation updated`, `Boundary diagram updated` -> `[n/a]` unless the release scope materially changed API docs/system boundaries.
+   - `Logical Data Model updated` -> `[x]` only if migrations/schema changes are in the release span, otherwise `[n/a]`.
+   - `Architectural Decision Records written` -> `[x]` if an ADR is part of the release span, otherwise `[n/a]`.
+   - Leave Production Deploy (other than "PR created as Draft") / After merge/deploy items unchecked — these reflect an actual manual action (smoke test done, reviewer added), not a deterministic fact about the diff, so they're never touched.
+   - **Recomputed and reapplied on every run, create and update alike, overwriting a covered box regardless of its current state** — including one a human already changed. Decided 2026-10-13: without this, the checklist is a one-time snapshot from whenever the PR was first created, and a later merge that adds, say, a migration or UI change to the still-open PR's scope would never update "Logical Data Model updated" or "UI review complete" to match. The tradeoff is accepted deliberately: if a human unchecks one of these items for their own reason, the next merge's update will silently re-check it, since the automation can't tell "a human's deliberate override" apart from "the original deterministic default" from the checkbox state alone. This only applies to the items with a rule above - the rest of Production Deploy and all of After merge/deploy are never touched, so real manual progress (smoke test, reviewer, Jira ticket status) is always preserved.
+8. **Create or update**:
+   - No existing PR -> `gh pr create --base production --head main --draft --title <title> --body-file <rendered>`. **Must be created as a draft** — the template requires draft creation and the `ready_for_review` transition intentionally drives Slack/Jira automation (`pr-notifications.yml`); creating it non-draft would bypass that gate and misfire notifications.
+   - Existing PR -> `gh pr edit <number> --title <title> --body-file <rendered-with-managed-sections-patched>`.
+
+## Why not the `ttahub-pr` skill, and how `ttahub-prod-pr` factors in
+The (Claude Code) `ttahub-pr` skill is scoped to interactive, single feature-branch PRs — it pulls a Jira ticket from the branch name and fills the template from one diff, not a multi-PR release summary.
+
+There's also a `ttahub-prod-pr` skill (Codex CLI, `~/.codex/skills/ttahub-prod-pr/SKILL.md`) that already encodes the real production-PR pattern this automation targets: draft-only, derive from `origin/production..origin/main`, Jira-linked flat bullets, and — notably — a **fixed "How to test" string** and **deterministic checklist defaults**, rather than LLM-generated versions of either. That skill isn't invocable from this session (different tool), but its rules were folded in directly:
+- How to test and checklist handling in this plan now match that skill's deterministic approach (steps 6 and 7 above), rather than what the original Credal prompt draft asked for (freeform generated test steps, which risked implying validation that wasn't actually described in the source PRs).
+- Title/description-bullet generation is the one piece that still needs an LLM — theme-grouping across many unrelated PRs into a short title, and condensing each PR's body into one release-note line, are both summarization judgment calls that rule-based matching can't do well. Credal (now connected) handles exactly that, with no update needed to its role in the design.
+
+## Components
+- **Workflow**: [.github/workflows/production-pr.yml](../.github/workflows/production-pr.yml) — triggers (`push` to `main`, `workflow_dispatch` with a `dry_run` boolean input, default `true`), permissions (`contents: read`, `pull-requests: write`), concurrency group (`production-pr`, `cancel-in-progress: false`). Checks out with `fetch-depth: 0`, sets up Node via `.nvmrc`, runs `yarn install --production --frozen-lockfile` (only `joi` is needed from `node_modules`), then runs the orchestrator.
+- **Scripts** (plain JS in top-level `tools/`, not `src/tools/*.ts` — see the MVP sequencing entries below for why):
+  - `tools/productionPr.js` — commit-range + associated-PR resolution (via `gh api`, not `@octokit/rest` — no new npm dependency needed), existing-PR detection, payload assembly, `getChangedFiles`, and the `gh pr create --draft`/`gh pr edit` wrappers (`--body-file`, not a shell argument).
+  - `tools/productionPrChecklist.js` — deterministic checklist-default logic.
+  - `tools/productionPrCredal.js` — the Credal API call, response parsing/validation, retry logic.
+  - `tools/productionPrBody.js` — template rendering (create) and managed-section patching with heading-based fallback (update).
+  - `tools/productionPrCLI.js` — the orchestrator: builds the payload, no-ops on an empty range, calls Credal, renders the body (create or update path), and calls `gh` unless `DRY_RUN=true` (in which case it logs what it would do). Not unit tested directly, matching this repo's convention for I/O-wrapper entry points (e.g. `tools/releaseInventory.js`) — its building blocks are each tested in isolation instead.
+- **Secrets/variables**: `CREDAL_API_KEY_ACF` (secret, already connected), `PRODUCTION_PR_CREDAL_USER_EMAIL` (repo/org variable — **still needs to be created**; should be a shared/service-account email, not a personal one, per the open question below).
+- **Tests**: `tools/productionPr.test.js`, `tools/productionPrChecklist.test.js`, `tools/productionPrCredal.test.js`, `tools/productionPrBody.test.js` — 56+ tests covering commit normalization, checklist-default logic, response validation/retry, and repeated/idempotent body updates (including against a real legacy PR body shape). All passing, lint clean.
+
+## Open questions (need answers before implementation)
+1. ~~**Credal API contract**~~ — resolved; see step 4/5 above.
+2. ~~**Repo/token permissions**~~ — resolved (checked 2026-10-09):
+   - `gh api repos/HHS/Head-Start-TTADP/actions/permissions/workflow` returns `"can_approve_pull_request_reviews": true` (the API name for "Allow GitHub Actions to create and approve pull requests"), so default `GITHUB_TOKEN` can create/edit PRs in this repo. No PAT needed.
+   - Production deploys run on CircleCI, triggered by a push to `production` (the merge itself) — per `docs/guides/infrastructure.md` — not by any GitHub Actions `pull_request` workflow, so `GITHUB_TOKEN`-authored PRs not firing `pull_request` events is a non-issue for deploy.
+   - The one workflow keyed on a production-PR `pull_request` event is `pr-notifications.yml` (`types: [ready_for_review]`). That event fires when a human clicks "Ready for review" in the UI (their own session, not `GITHUB_TOKEN`), so it's unaffected by how the PR was originally created. No other workflow in this repo acts on a production PR's `opened`/`synchronize` events (they all explicitly skip `base.ref == 'production'`).
+   - Workflow permissions needed: `contents: read`, `pull-requests: write` — standard default-token scopes, as already specified under Components.
+3. ~~**Failure behavior**~~ — resolved: **fail loudly**. If the Credal call errors, times out, or returns invalid/malformed output, the workflow run fails and no PR is created or updated — never post a degraded/placeholder body to a real production PR. A human notices the failed run and re-triggers or investigates; this is preferred over silently degrading quality in a document people rely on for production release review.
+
+## Explicit state handling to define
+- Zero commits in range -> no-op.
+- Multiple open `main -> production` PRs -> fail (ambiguous, don't guess).
+- Force-pushes to `main` -> re-run naturally on next push; no special handling needed beyond idempotent update logic.
+- Closed-but-unmerged production PR -> treat as "no existing PR", create a new one.
+- Malformed/unparseable current PR body on update -> the heading-based fallback (see the Bootstrap case above) handles the common "predates this automation" case; only a body missing the heading entirely still fails rather than corrupting it.
+- Credal call fails/times out -> fail the run, no partial PR content.
+
+## Recommended MVP sequencing
+1. ~~Land `tools/productionPr.js` with commit-range + associated-PR resolution, payload assembly, and unit tests.~~ Done (2026-10-09) — see `tools/productionPr.js`, `tools/productionPrCLI.js`, `tools/productionPr.test.js`. Built as plain JS in top-level `tools/` (not `src/tools/*.ts`) to match the established convention for GitHub Actions-invoked scripts (`pr-jira-issue-link.js`, `releaseInventory.js`) and avoid requiring a full backend build just to run this.
+2. ~~Add deterministic checklist-default assembly + unit tests.~~ Done (2026-10-09) — see `tools/productionPrChecklist.js`, `tools/productionPrChecklist.test.js`, plus `getChangedFiles` added to `tools/productionPr.js`. (How-to-test is *not* part of this step — it's Credal-generated per the updated prompt, not scripted; the stale wording here originally predated that decision.)
+3. ~~Add Credal call + response validation + unit tests (mocked HTTP).~~ Done (2026-10-09) — see `tools/productionPrCredal.js`, `tools/productionPrCredal.test.js`. Validates `{ title, descriptionOfChange, howToTest, issues }` via Joi (title `[Prod]` prefix + 80-char cap, `issues` lines checked against the Jira link pattern), retries only on timeout/network/429/5xx (never on a parse or validation failure, matching fail-loudly), and parses `response.message` per the canonical-source decision above.
+4. ~~Add PR create/update logic (draft handling, managed-section markers) + unit tests for idempotent repeated updates.~~ Done (2026-10-13) — see `tools/productionPrBody.js` (`renderCreateBody`/`renderUpdateBody`, HTML comment markers per managed section, `productionPrBody.test.js` including idempotency checks) and `createProductionPr`/`updateProductionPr` added to `tools/productionPr.js` (`gh pr create --draft`/`gh pr edit` via `--body-file`, not a shell-escaped argument).
+5. ~~Wire up the workflow with `workflow_dispatch` dry-run first; validate manually against a real range.~~ Workflow file and orchestrator (`tools/productionPrCLI.js`) built (2026-10-13). Read-only portions (payload assembly, existing-PR detection, checklist facts) verified against the real repo state and the real PR #4032 body with no mutation. **Not yet verified**: a live `workflow_dispatch` run in GitHub Actions (needs the `PRODUCTION_PR_CREDAL_USER_EMAIL` variable set first) and the full Credal round-trip from CI.
+6. Enable the `push` trigger — only after a successful `workflow_dispatch` dry run, and ideally one successful non-dry-run `workflow_dispatch` update against the real #4032 (to confirm the bootstrap self-heal works end-to-end), both with explicit sign-off before anything mutates the real repo automatically on every merge.
