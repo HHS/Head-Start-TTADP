@@ -3,6 +3,9 @@ import { Model } from 'sequelize';
 // Per-entity observations captured during a validation run. Each row records
 // one observation (scalar or categorical) about one entity (entity_type/entity_id),
 // e.g. the number of findings on a review, or a categorization of a finding's state.
+// context is optional generic JSONB for auxiliary data about the same
+// observation (e.g. the date an observation's value was learned) that doesn't
+// warrant its own observation_name row - mirrors ValidationAlerts.context.
 // Validations compare observations to expectations and raise ValidationAlerts.
 export default (sequelize, DataTypes) => {
   class ValidationRecord extends Model {
@@ -46,6 +49,10 @@ export default (sequelize, DataTypes) => {
       },
       category: {
         type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      context: {
+        type: DataTypes.JSONB,
         allowNull: true,
       },
     },
