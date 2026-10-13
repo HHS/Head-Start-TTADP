@@ -6,6 +6,7 @@ const {
   getChangedFiles,
   createProductionPr,
   updateProductionPr,
+  getProductionPrByNumber,
 } = require('./productionPr');
 const { deriveChecklistFacts, applyChecklistDefaults } = require('./productionPrChecklist');
 const { callCredalAgent } = require('./productionPrCredal');
@@ -47,20 +48,29 @@ async function run() {
     return;
   }
 
+  // Re-read the PR right before writing rather than reusing the snapshot
+  // from when the payload was built, so a human edit made during the Credal
+  // round-trip isn't silently clobbered - see docs/productionPrAutomationPlan.md.
+  const latest = getProductionPrByNumber(payload.existingProductionPr.number);
+
+  if (latest.state !== 'OPEN') {
+    throw new Error(
+      `Production PR #${latest.number} is no longer open (state: ${latest.state}); aborting rather than writing a stale update.`
+    );
+  }
+
   const body = applyChecklistDefaults(
-    renderUpdateBody({ currentBody: payload.existingProductionPr.body, content }),
+    renderUpdateBody({ currentBody: latest.body, content }),
     facts
   );
 
   if (dryRun) {
-    console.log(
-      `[dry run] Would update PR #${payload.existingProductionPr.number}.\nTitle: ${content.title}\n\n${body}`
-    );
+    console.log(`[dry run] Would update PR #${latest.number}.\nTitle: ${content.title}\n\n${body}`);
     return;
   }
 
-  updateProductionPr({ number: payload.existingProductionPr.number, title: content.title, body });
-  console.log(`Updated production PR #${payload.existingProductionPr.number}: ${content.title}`);
+  updateProductionPr({ number: latest.number, title: content.title, body });
+  console.log(`Updated production PR #${latest.number}: ${content.title}`);
 }
 
 run().catch((error) => {

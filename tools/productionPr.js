@@ -172,6 +172,26 @@ function getExistingProductionPr({
 }
 
 /**
+ * Fetches one PR by number, including its current state. Used to re-read the
+ * PR immediately before writing an update, rather than reusing the snapshot
+ * taken when the payload was first built - the Credal round-trip in between
+ * is the main window in which a human could edit the PR (check a box, add a
+ * note), and re-reading right before the write shrinks that window to just
+ * the final render + `gh pr edit` call.
+ */
+function getProductionPrByNumber(number) {
+  const stdout = runCommand('gh', [
+    'pr',
+    'view',
+    String(number),
+    '--json',
+    'number,title,body,state',
+  ]);
+
+  return JSON.parse(stdout);
+}
+
+/**
  * Assembles the normalized payload the Credal agent prompt documents under
  * "Input Expectations". `mode` is derived from whether an existing PR was
  * found, not passed in separately, so callers can't get the two out of sync.
@@ -283,6 +303,7 @@ module.exports = {
   getChangedFiles,
   createProductionPr,
   updateProductionPr,
+  getProductionPrByNumber,
   parseAssociatedPullRequest,
   getAssociatedPullRequest,
   buildReleaseCommit,

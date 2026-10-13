@@ -6,6 +6,8 @@ const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 1000;
 const JIRA_ISSUE_LINE_PATTERN = /^\*\s+https:\/\/jira\.acf\.gov\/browse\/TTAHUB-\d+$/;
+const JIRA_KEY_PATTERN = /\bTTAHUB-\d+\b/gi;
+const JIRA_PLACEHOLDER_KEY = 'TTAHUB-0';
 
 // Keep in sync with docs/credalProductionPrPrompt.md's Title Rules cap.
 const TITLE_MAX_LENGTH = 80;
@@ -69,6 +71,66 @@ function validateProductionPrContent(content) {
   }
 
   return value;
+}
+
+function extractJiraKeys(text) {
+  // `?? ''` rather than a default parameter, since release-commit fields
+  // (prTitle/prBody) are explicitly `null` for an unresolved commit, not
+  // `undefined` - a default parameter alone wouldn't catch that.
+  const keys = (text ?? '').match(JIRA_KEY_PATTERN) || [];
+  return [...new Set(keys.map((key) => key.toUpperCase()))];
+}
+
+/**
+ * The Jira tickets actually present in the release scope's source commits -
+ * the only tickets Credal's "issues" output is allowed to mention. Looks at
+ * each commit's subject, source PR title, and source PR body, since a ticket
+ * can appear in any of the three depending on how the commit was authored.
+ */
+function extractExpectedJiraKeys(releaseCommits = []) {
+  const keys = releaseCommits.flatMap((commit) => [
+    ...extractJiraKeys(commit.subject),
+    ...extractJiraKeys(commit.prTitle),
+    ...extractJiraKeys(commit.prBody),
+  ]);
+
+  return [...new Set(keys)].filter((key) => key !== JIRA_PLACEHOLDER_KEY);
+}
+
+/**
+ * Cross-checks Credal's "issues" output against the release scope's actual
+ * Jira tickets, rather than trusting link-syntax validity alone. The
+ * downstream notification workflow transitions every ticket this section
+ * lists, so a ticket Credal silently dropped, or a syntactically valid ID it
+ * substituted in instead, is operationally significant, not cosmetic.
+ */
+function validateIssuesAgainstReleaseScope(issues, releaseCommits = []) {
+  const expected = new Set(extractExpectedJiraKeys(releaseCommits));
+  const actual = new Set(extractJiraKeys(issues).filter((key) => key !== JIRA_PLACEHOLDER_KEY));
+  const hasPlaceholder = new RegExp(`\\b${JIRA_PLACEHOLDER_KEY}\\b`).test(issues);
+
+  const missing = [...expected].filter((key) => !actual.has(key));
+  const invented = [...actual].filter((key) => !expected.has(key));
+
+  if (!hasPlaceholder && missing.length === 0 && invented.length === 0) {
+    return;
+  }
+
+  const problems = [];
+
+  if (hasPlaceholder) {
+    problems.push(`still contains the placeholder ${JIRA_PLACEHOLDER_KEY}`);
+  }
+
+  if (missing.length > 0) {
+    problems.push(`is missing ticket(s) present in the release scope: ${missing.join(', ')}`);
+  }
+
+  if (invented.length > 0) {
+    problems.push(`includes ticket(s) not present in the release scope: ${invented.join(', ')}`);
+  }
+
+  throw new CredalNonRetryableError(`Credal response's "issues" ${problems.join('; ')}`);
 }
 
 /**
@@ -176,7 +238,9 @@ async function callCredalAgent({
       // eslint-disable-next-line no-await-in-loop
       const rawBody = await response.text();
       const content = parseCredalResponse(rawBody);
-      return validateProductionPrContent(content);
+      const validated = validateProductionPrContent(content);
+      validateIssuesAgainstReleaseScope(validated.issues, payload.releaseCommits);
+      return validated;
     } catch (error) {
       const isAbort = error.name === 'AbortError';
 
@@ -217,6 +281,9 @@ module.exports = {
   CredalNonRetryableError,
   PRODUCTION_PR_CONTENT_SCHEMA,
   validateProductionPrContent,
+  extractJiraKeys,
+  extractExpectedJiraKeys,
+  validateIssuesAgainstReleaseScope,
   parseCredalResponse,
   buildCredalRequestBody,
   callCredalAgent,

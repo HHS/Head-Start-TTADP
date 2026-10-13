@@ -32,9 +32,8 @@ function deriveChecklistFacts(filesChanged = []) {
 }
 
 // Each rule's `match` is a unique substring of its checklist line in
-// .github/pull_request_template.md. Items with no rule here (the rest of
-// "Production Deploy" and all of "After merge/deploy") are left untouched,
-// i.e. unchecked, matching the real production-PR convention.
+// .github/pull_request_template.md, scoped to "Every PR" and "Before merge
+// to main" only - see the hard Production Deploy exclusion below.
 const CHECKLIST_RULES = [
   { match: 'Linked Jira issue', value: () => 'x' },
   { match: 'JIRA issue status updated', value: () => 'x' },
@@ -54,26 +53,48 @@ const CHECKLIST_RULES = [
   },
   { match: 'OHS demo complete', value: () => 'x' },
   { match: 'Ready to create production PR', value: () => 'x' },
-  { match: 'PR created as', value: () => 'x' },
 ];
+
+const PRODUCTION_DEPLOY_HEADING_PATTERN = /^###\s+Production Deploy\s*$/;
+const ANY_HEADING_PATTERN = /^#{1,6}\s/;
 
 /**
  * Sets `- [ ]`/`- [x]`/`- [n/a]` to the freshly computed default for every
  * checklist line covered by CHECKLIST_RULES, leaving every other line
- * (including unmatched checklist items, like the rest of "Production
- * Deploy") exactly as-is. Called on both create and update: recomputed on
- * every run from the current full release scope, and intentionally
- * overwrites a line regardless of its current state - including one a human
- * already changed - so the covered boxes never go stale as more commits land
- * on `main` while the production PR is still open. The items with no rule
- * here are the ones that reflect an actual manual action (smoke test done,
- * reviewer added, etc.), not a deterministic fact about the diff, so those
- * stay human-only and are never touched.
+ * exactly as-is. Called on both create and update: recomputed on every run
+ * from the current full release scope, and intentionally overwrites a line
+ * regardless of its current state - including one a human already changed -
+ * so the covered boxes never go stale as more commits land on `main` while
+ * the production PR is still open.
+ *
+ * The entire "### Production Deploy" subsection is hard-excluded by section
+ * boundary, not just by omitting a rule for it - every item there reflects a
+ * real, human-performed action (draft creation, smoke test, reviewer added),
+ * never a deterministic fact about the diff, so this automation must never
+ * touch it even if a future template edit happens to reuse one of the
+ * phrases above inside that section. "After merge/deploy" has no rule either
+ * and is left untouched the same way CHECKLIST_RULES always worked.
  */
 function applyChecklistDefaults(templateBody, facts) {
+  let inProductionDeploySection = false;
+
   return templateBody
     .split('\n')
     .map((line) => {
+      const trimmed = line.trim();
+
+      if (inProductionDeploySection && ANY_HEADING_PATTERN.test(trimmed)) {
+        inProductionDeploySection = false;
+      }
+
+      if (PRODUCTION_DEPLOY_HEADING_PATTERN.test(trimmed)) {
+        inProductionDeploySection = true;
+      }
+
+      if (inProductionDeploySection) {
+        return line;
+      }
+
       const checkboxMatch = line.match(/^(\s*-\s*)\[(?: |x|X|n\/a)\](.*)$/);
 
       if (!checkboxMatch) {

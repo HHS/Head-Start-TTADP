@@ -102,7 +102,7 @@ describe('applyChecklistDefaults', () => {
     expect(result).toContain('- [n/a] QA review complete');
     expect(result).toContain('- [x] OHS demo complete');
     expect(result).toContain('- [x] Ready to create production PR');
-    expect(result).toContain('- [x] PR created as **Draft**');
+    expect(result).toContain('- [ ] PR created as **Draft**');
   });
 
   it('checks UI/QA/feature-dependent items when the release touches app code', () => {
@@ -206,6 +206,50 @@ describe('applyChecklistDefaults', () => {
 
     const result = applyChecklistDefaults(humanChecked, deriveChecklistFactsAllFalse());
     expect(result).toContain('- [x] Staging smoke test completed');
+  });
+
+  it('never touches any line inside "### Production Deploy", even one that coincidentally matches a rule', () => {
+    // Simulates a future template edit reusing a covered phrase inside
+    // Production Deploy - the section-boundary exclusion must still hold
+    // even though the line text would otherwise match a CHECKLIST_RULES entry.
+    const templateWithCollision = template.replace(
+      '- [ ] PR transitioned to **Open** _(triggers automation)_',
+      '- [ ] Code is meaningfully tested before PR transitioned to **Open**'
+    );
+
+    const result = applyChecklistDefaults(templateWithCollision, {
+      hasMigrations: true,
+      hasAdr: true,
+      hasApiDocsChange: true,
+      hasBoundaryDiagramChange: true,
+      affectsUi: true,
+      affectsFunctionalCode: true,
+    });
+
+    expect(result).toContain(
+      '- [ ] Code is meaningfully tested before PR transitioned to **Open**'
+    );
+  });
+
+  it('never checks "PR created as Draft", even when every other item is checked', () => {
+    const result = applyChecklistDefaults(template, {
+      hasMigrations: true,
+      hasAdr: true,
+      hasApiDocsChange: true,
+      hasBoundaryDiagramChange: true,
+      affectsUi: true,
+      affectsFunctionalCode: true,
+    });
+
+    expect(result).toContain('- [ ] PR created as **Draft**');
+  });
+
+  it('resumes applying defaults correctly to "After merge/deploy" once Production Deploy has ended', () => {
+    const result = applyChecklistDefaults(template, deriveChecklistFactsAllFalse());
+    // "Update JIRA ticket status" has no rule, so it's untouched either way,
+    // but this confirms the section-boundary flag was correctly cleared
+    // rather than leaking past the end of Production Deploy.
+    expect(result).toContain('- [ ] Update JIRA ticket status');
   });
 });
 

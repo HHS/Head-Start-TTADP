@@ -1,5 +1,8 @@
 const {
   validateProductionPrContent,
+  extractJiraKeys,
+  extractExpectedJiraKeys,
+  validateIssuesAgainstReleaseScope,
   parseCredalResponse,
   buildCredalRequestBody,
   callCredalAgent,
@@ -93,6 +96,102 @@ describe('validateProductionPrContent', () => {
   });
 });
 
+describe('extractJiraKeys', () => {
+  it('extracts and dedupes keys regardless of case', () => {
+    expect(extractJiraKeys('ttahub-1 and TTAHUB-1 and TTAHUB-2')).toEqual(['TTAHUB-1', 'TTAHUB-2']);
+  });
+
+  it('returns an empty array when there are no keys', () => {
+    expect(extractJiraKeys('nothing here')).toEqual([]);
+  });
+
+  it('handles undefined input', () => {
+    expect(extractJiraKeys(undefined)).toEqual([]);
+  });
+
+  it("handles null input (e.g. an unresolved commit's prTitle/prBody)", () => {
+    expect(extractJiraKeys(null)).toEqual([]);
+  });
+});
+
+describe('extractExpectedJiraKeys', () => {
+  it('collects keys from subject, prTitle, and prBody across all commits', () => {
+    const releaseCommits = [
+      {
+        sha: 'a',
+        subject: 'TTAHUB-1 - Foo (#1)',
+        prTitle: 'TTAHUB-1 - Foo',
+        prBody: 'Fixes TTAHUB-2 too',
+      },
+      { sha: 'b', subject: 'Hotfix: typo', prTitle: null, prBody: null },
+    ];
+
+    expect(extractExpectedJiraKeys(releaseCommits)).toEqual(['TTAHUB-1', 'TTAHUB-2']);
+  });
+
+  it('excludes the TTAHUB-0 placeholder even if it somehow appears in source data', () => {
+    const releaseCommits = [
+      { sha: 'a', subject: 'TTAHUB-0 placeholder', prTitle: null, prBody: null },
+    ];
+    expect(extractExpectedJiraKeys(releaseCommits)).toEqual([]);
+  });
+
+  it('returns an empty array for an empty release scope', () => {
+    expect(extractExpectedJiraKeys([])).toEqual([]);
+  });
+});
+
+describe('validateIssuesAgainstReleaseScope', () => {
+  const releaseCommits = [
+    {
+      sha: 'a',
+      subject: 'TTAHUB-5660 - Add communication logs (#1)',
+      prTitle: 'TTAHUB-5660 - Add communication logs',
+      prBody: '',
+    },
+  ];
+
+  it('passes when issues exactly match the release scope', () => {
+    expect(() =>
+      validateIssuesAgainstReleaseScope('* https://jira.acf.gov/browse/TTAHUB-5660', releaseCommits)
+    ).not.toThrow();
+  });
+
+  it('rejects an omitted ticket that is present in the release scope', () => {
+    const twoTicketCommits = [
+      ...releaseCommits,
+      {
+        sha: 'b',
+        subject: 'TTAHUB-9999 - Other change (#2)',
+        prTitle: 'TTAHUB-9999 - Other change',
+        prBody: '',
+      },
+    ];
+
+    expect(() =>
+      validateIssuesAgainstReleaseScope(
+        '* https://jira.acf.gov/browse/TTAHUB-5660',
+        twoTicketCommits
+      )
+    ).toThrow(/missing ticket\(s\).*TTAHUB-9999/);
+  });
+
+  it('rejects an invented ticket not present in the release scope', () => {
+    expect(() =>
+      validateIssuesAgainstReleaseScope('* https://jira.acf.gov/browse/TTAHUB-9999', releaseCommits)
+    ).toThrow(/includes ticket\(s\) not present.*TTAHUB-9999/);
+  });
+
+  it('rejects the TTAHUB-0 placeholder even if no other problem exists', () => {
+    expect(() =>
+      validateIssuesAgainstReleaseScope(
+        '* https://jira.acf.gov/browse/TTAHUB-5660\n* https://jira.acf.gov/browse/TTAHUB-0',
+        releaseCommits
+      )
+    ).toThrow(/placeholder TTAHUB-0/);
+  });
+});
+
 describe('buildCredalRequestBody', () => {
   it('JSON-stringifies the payload into the message field', () => {
     const payload = { mode: 'create', releaseCommits: [] };
@@ -124,7 +223,17 @@ describe('callCredalAgent', () => {
   });
 
   const baseArgs = {
-    payload: { mode: 'create', releaseCommits: [] },
+    payload: {
+      mode: 'create',
+      releaseCommits: [
+        {
+          sha: 'abc1234',
+          subject: 'TTAHUB-5660 - Add communication logs (#1)',
+          prTitle: 'TTAHUB-5660 - Add communication logs',
+          prBody: '',
+        },
+      ],
+    },
     userEmail: 'ci@example.com',
     apiKey: 'test-key',
     retryDelayMs: 0,
@@ -185,6 +294,16 @@ describe('callCredalAgent', () => {
 
     await expect(callCredalAgent({ ...baseArgs, fetchImpl, maxAttempts: 3 })).rejects.toThrow(
       /Credal response failed validation/
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry an issues/release-scope mismatch, and never returns the content', async () => {
+    const mismatched = { ...VALID_CONTENT, issues: '* https://jira.acf.gov/browse/TTAHUB-9999' };
+    const fetchImpl = jest.fn().mockResolvedValue(okResponse(mismatched));
+
+    await expect(callCredalAgent({ ...baseArgs, fetchImpl, maxAttempts: 3 })).rejects.toThrow(
+      /includes ticket\(s\) not present/
     );
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
