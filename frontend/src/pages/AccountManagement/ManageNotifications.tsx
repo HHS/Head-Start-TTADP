@@ -7,8 +7,10 @@ import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
+import NavigationPromptModal from '../../components/NavigationPromptModal';
 import { getSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+import useNavigationPromptModal from '../../hooks/useNavigationPromptModal';
 import UserContext from '../../UserContext';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
 import CollabReportNotifications from './components/notifications/CollabReportNotifications';
@@ -174,7 +176,64 @@ export default function ManageNotifications({
     },
   });
 
-  const { setValue } = methods;
+  const {
+    formState: { isDirty },
+    reset,
+    setValue,
+  } = methods;
+
+  const onSubmit = async (formData: SettingFormData): Promise<boolean> => {
+    const settingsData = Object.entries(formData).map(([key, value]) => ({
+      key,
+      value,
+    }));
+
+    const newSettings = [];
+
+    settingsData.forEach(({ key, value }) => {
+      // note that the backend validates these settings
+      // against existing UserSettings
+      if (!emailValidated && key.startsWith('email')) {
+        // if the email is not validated, don't send email settings to the backend
+        // but still send in-app notification settings
+        return;
+      }
+
+      newSettings.push({ key, value });
+    });
+
+    try {
+      setIsAppLoading(true);
+      await updateSettings(newSettings);
+      reset(formData);
+      setSaveError(false);
+      setSaveSuccess(true);
+      return true;
+    } catch (error) {
+      setSaveSuccess(false);
+      setSaveError(String(error.message || error));
+      return false;
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
+  const saveAndContinue = async (): Promise<boolean> => {
+    let saved = false;
+    await methods.handleSubmit(async (formData: SettingFormData) => {
+      saved = await onSubmit(formData);
+    })();
+    return saved;
+  };
+
+  const {
+    isOpen: isNavigationPromptOpen,
+    isSaving: isSavingAndContinuing,
+    bypassOnce,
+    continueWithoutSaving,
+    dismiss,
+    saveAndContinue: saveAndContinueNavigation,
+  } = useNavigationPromptModal({ when: isDirty, onSave: saveAndContinue });
 
   useEffect(() => {
     const emailValidationStatus = (user.validationStatus ?? []).find(
@@ -206,41 +265,15 @@ export default function ManageNotifications({
     fetchSettings();
   }, [setValue, setIsAppLoading]);
 
-  const onSubmit = async (formData: SettingFormData) => {
-    const settingsData = Object.entries(formData).map(([key, value]) => ({
-      key,
-      value,
-    }));
-
-    const newSettings = [];
-
-    settingsData.forEach(({ key, value }) => {
-      // note that the backend validates these settings
-      // against existing UserSettings
-      if (!emailValidated && key.startsWith('email')) {
-        // if the email is not validated, don't send email settings to the backend
-        // but still send in-app notification settings
-        return;
-      }
-
-      newSettings.push({ key, value });
-    });
-
-    try {
-      setIsAppLoading(true);
-      await updateSettings(newSettings);
-      setSaveError(false);
-      setSaveSuccess(true);
-    } catch (error) {
-      setSaveSuccess(false);
-      setSaveError(String(error.message || error));
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
-
   return (
     <>
+      <NavigationPromptModal
+        isOpen={isNavigationPromptOpen}
+        isSaving={isSavingAndContinuing}
+        onContinueWithoutSaving={continueWithoutSaving}
+        onSaveAndContinue={saveAndContinueNavigation}
+        onDismiss={dismiss}
+      />
       <BackLink to="/notifications">Back to Notifications</BackLink>
       <h1 className="landing margin-top-0">Notification Preferences</h1>
       <EmailValidationPreferenceBox
@@ -252,7 +285,11 @@ export default function ManageNotifications({
       />
       <Container>
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)}>
+          <form
+            onSubmit={methods.handleSubmit(async (formData: SettingFormData) => {
+              await onSubmit(formData);
+            })}
+          >
             {saveSuccess && (
               <Alert headingLevel="h2" type="success" className="margin-bottom-2">
                 Your preferences have been saved.
@@ -270,6 +307,7 @@ export default function ManageNotifications({
             <Link
               to="/notifications"
               className="usa-button usa-button--outline margin-top-2 margin-left-1"
+              onClick={bypassOnce}
             >
               Cancel
             </Link>

@@ -2,12 +2,30 @@ import { Modal, ModalHeading } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-export default function VanillaModal({ heading, children, modalRef, className, id, forceAction }) {
+export default function VanillaModal({
+  heading,
+  children,
+  modalRef,
+  className,
+  id,
+  forceAction,
+  onClose,
+}) {
   // strip everything but letters and numbers
   const regex = /[^a-zA-Z0-9]/g;
 
   const textForHeadingId = id || heading;
   const modalId = `modal-${textForHeadingId.toLowerCase().replace(regex, '-')}`;
+  const handleClick = (event) => {
+    if (event.target.closest?.('.usa-modal__close')) {
+      onClose?.();
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape' && modalRef.current?.modalIsOpen) {
+      onClose?.();
+    }
+  };
 
   return (
     <Modal
@@ -17,6 +35,8 @@ export default function VanillaModal({ heading, children, modalRef, className, i
       aria-labelledby={`${modalId}-heading`}
       aria-describedby={`${modalId}-description`}
       forceAction={forceAction}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <ModalHeading id={`${modalId}-heading`}>{heading}</ModalHeading>
       <div id={`${modalId}-description`}>{children}</div>
@@ -31,6 +51,7 @@ VanillaModal.propTypes = {
   modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   id: PropTypes.string,
   forceAction: PropTypes.bool,
+  onClose: PropTypes.func,
 };
 
 VanillaModal.defaultProps = {

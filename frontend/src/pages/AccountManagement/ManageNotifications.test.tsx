@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import type { MemoryHistory } from 'history';
+import { createMemoryHistory } from 'history';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Router } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import UserContext from '../../UserContext';
 import ManageNotifications from './ManageNotifications';
@@ -175,20 +177,27 @@ describe('ManageNotifications', () => {
     user = validatedUser,
     setIsAppLoading = jest.fn(),
     updateUser = jest.fn(),
+    history,
   }: {
     user?: { id: number; validationStatus: Array<{ type: string; validatedAt?: string }> };
     setIsAppLoading?: jest.Mock;
     updateUser?: jest.Mock;
-  } = {}) =>
-    render(
-      <MemoryRouter>
+    history?: MemoryHistory;
+  } = {}) => {
+    const page = (
+      <>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
           <UserContext.Provider value={{ user }}>
             <ManageNotifications updateUser={updateUser} />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </MemoryRouter>
+      </>
     );
+
+    return render(
+      history ? <Router history={history}>{page}</Router> : <MemoryRouter>{page}</MemoryRouter>
+    );
+  };
 
   beforeEach(() => {
     Object.keys(mockClearAlertsCaptures).forEach((key) => {
@@ -337,6 +346,156 @@ describe('ManageNotifications', () => {
       expect(
         screen.getByText(/there was an error saving your preferences: unable to save preferences/i)
       ).toBeInTheDocument();
+    });
+  });
+
+  it('prompts before navigating away from a dirty form and can discard changes', async () => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    act(() => history.push('/reports'));
+
+    expect(
+      screen.getByRole('heading', { name: 'Are you sure you want to leave this page?' })
+    ).toBeInTheDocument();
+    expect(history.location.pathname).toBe('/account/notifications');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue without saving' }));
+
+    expect(history.location.pathname).toBe('/reports');
+    expect(fetchMock.called('/api/settings', { method: 'PUT' })).toBe(false);
+  });
+
+  it('saves dirty preferences before continuing to the pending destination', async () => {
+    fetchMock.get('/api/settings', settings);
+    fetchMock.put('/api/settings', 204);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    act(() => history.push('/reports'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    await waitFor(() => {
+      expect(history.location.pathname).toBe('/reports');
+      expect(fetchMock.called('/api/settings', { method: 'PUT' })).toBe(true);
+    });
+  });
+
+  it('stays on the page and closes the prompt when saving before navigation fails', async () => {
+    fetchMock.get('/api/settings', settings);
+    fetchMock.put('/api/settings', { throws: new Error('Unable to save preferences') });
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    act(() => history.push('/reports'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/there was an error saving your preferences: unable to save preferences/i)
+      ).toBeInTheDocument();
+    });
+
+    expect(history.location.pathname).toBe('/account/notifications');
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
+    });
+  });
+
+  it('allows the Cancel link to leave without showing the prompt', async () => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    fireEvent.click(screen.getByRole('link', { name: 'Cancel' }));
+
+    expect(history.location.pathname).toBe('/notifications');
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
+    });
+  });
+
+  it('prompts when browser Back is pressed on a dirty form', async () => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({
+      initialEntries: ['/notifications', '/account/notifications'],
+      initialIndex: 1,
+    });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    act(() => history.goBack());
+
+    expect(history.location.pathname).toBe('/account/notifications');
+    expect(
+      screen.getByRole('heading', { name: 'Are you sure you want to leave this page?' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue without saving' }));
+
+    expect(history.location.pathname).toBe('/notifications');
+  });
+
+  it('dismisses from the modal close button without navigating or clearing form values', async () => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    act(() => history.push('/reports'));
+    fireEvent.click(screen.getByRole('button', { name: 'Close this window' }));
+
+    expect(history.location.pathname).toBe('/account/notifications');
+    expect(screen.getByLabelText('Submitted for review')).toHaveValue('today');
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
     });
   });
 
@@ -519,6 +678,7 @@ describe('ManageNotifications', () => {
 
   describe('unvalidated user email gating', () => {
     it('excludes email-prefixed keys from the payload when email is not validated', async () => {
+      fetchMock.get('/api/settings', settings);
       fetchMock.get('/api/settings/email', emailSettings);
       fetchMock.put('/api/settings', 204);
 
@@ -542,6 +702,7 @@ describe('ManageNotifications', () => {
     });
 
     it('includes email-prefixed keys when email is validated', async () => {
+      fetchMock.get('/api/settings', settings);
       fetchMock.get('/api/settings/email', emailSettings);
       fetchMock.put('/api/settings', 204);
 
