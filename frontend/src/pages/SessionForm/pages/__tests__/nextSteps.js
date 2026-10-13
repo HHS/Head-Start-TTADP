@@ -18,6 +18,7 @@ describe('nextSteps', () => {
       expect(
         isPageComplete({
           getValues: jest.fn(() => ({
+            startDate: '12/31/2020',
             specialistNextSteps: [
               {
                 note: 'Note',
@@ -33,6 +34,18 @@ describe('nextSteps', () => {
           })),
         })
       ).toBe(true);
+    });
+
+    it('returns false if a next step date is not after the session start date', () => {
+      expect(
+        isPageComplete({
+          getValues: jest.fn(() => ({
+            startDate: '01/01/2021',
+            specialistNextSteps: [{ note: 'Note', completeDate: '01/01/2021' }],
+            recipientNextSteps: [{ note: 'Note', completeDate: '01/02/2021' }],
+          })),
+        })
+      ).toBe(false);
     });
 
     it('returns false if missing a specialist note', () => {

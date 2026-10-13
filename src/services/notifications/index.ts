@@ -529,7 +529,8 @@ async function getNotifications(
     sortBy = 'action_needed',
     sortDir = 'DESC',
     archived = false,
-  } = {}
+  } = {},
+  countOnly = false
 ): Promise<{ count: number; rows: NotificationWithState[] }> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField)
     ? (sortBy as AllowedSortField)
@@ -543,7 +544,7 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  const { rows, count } = await Notification.findAndCountAll({
+  const query = {
     where: {
       [Op.and]: [
         {
@@ -568,6 +569,15 @@ async function getNotifications(
       },
     ],
     subQuery: false,
+  };
+
+  if (countOnly) {
+    const count = await Notification.count({ ...query, distinct: true, col: 'id' });
+    return { count, rows: [] };
+  }
+
+  const { count, rows } = await Notification.findAndCountAll({
+    ...query,
     order: buildOrder(sort, direction),
     limit: limitValue,
     offset: offsetValue,

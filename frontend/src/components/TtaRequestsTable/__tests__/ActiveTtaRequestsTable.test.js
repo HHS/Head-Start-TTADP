@@ -122,14 +122,14 @@ describe('ActiveTtaRequestsTable', () => {
     const firstRow = screen.getAllByRole('row')[1];
     const draft = ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA[0];
 
-    // every link stays within the recipient record being viewed, so none of them 401
+    // the id and the draft status both open the request itself
     expect(within(firstRow).getByRole('link', { name: draft.requestId })).toHaveAttribute(
       'href',
-      `${RECIPIENT_PATH}/tta-request`
+      `${RECIPIENT_PATH}/tta-request/${draft.id}`
     );
     expect(within(firstRow).getByRole('link', { name: 'Draft' })).toHaveAttribute(
       'href',
-      `${RECIPIENT_PATH}/tta-request`
+      `${RECIPIENT_PATH}/tta-request/${draft.id}`
     );
 
     const secondRow = screen.getAllByRole('row')[2];
@@ -206,12 +206,11 @@ describe('ActiveTtaRequestsTable', () => {
     expect(screen.getByRole('heading', { name: "You're all caught up!", level: 3 })).toBeVisible();
     expect(screen.getByText('Would you like to begin a new TTA request?')).toBeVisible();
 
-    const newRequest = screen.getByRole('button', { name: 'New TTA request' });
+    const newRequest = screen.getByRole('link', { name: 'New TTA request' });
     expect(newRequest).toBeVisible();
 
-    // there is no creation flow yet, so the button goes nowhere on purpose
-    expect(newRequest).toHaveAttribute('type', 'button');
-    expect(screen.queryByRole('link', { name: 'New TTA request' })).toBeNull();
+    // the empty state starts a request for the recipient whose record this is
+    expect(newRequest).toHaveAttribute('href', `${RECIPIENT_PATH}/tta-request/new`);
 
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
     expect(
@@ -271,10 +270,9 @@ describe('ActiveTtaRequestsTable', () => {
         `/recipient-tta-records/${request.recipientId}/region/${request.regionId}/profile`
       );
 
-      // the request itself has nowhere of its own to go yet
       expect(within(firstRow).getByRole('link', { name: request.requestId })).toHaveAttribute(
         'href',
-        '/tta-requests'
+        `/tta-requests/${request.id}`
       );
     });
 

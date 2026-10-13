@@ -1,6 +1,5 @@
 import express from 'express';
 import transactionWrapper from '../transactionWrapper';
-import { checkCreateEventBody, checkUpdateEventBody } from './middleware';
 import {
   createHandler,
   deleteHandler,
@@ -9,6 +8,7 @@ import {
   getTrainingReportAlertsHandler,
   updateHandler,
 } from './handlers';
+import { checkCreateEventBody, checkUpdateEventBody } from './middleware';
 
 const router = express.Router();
 const context = 'events';

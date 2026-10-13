@@ -254,7 +254,7 @@ describe('recipient record page', () => {
     expect(
       await screen.findByRole('heading', { name: 'the Mighty Recipient - Region 45' })
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Add request' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Add request' })).toBeVisible();
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
   });
 

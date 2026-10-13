@@ -77,6 +77,9 @@ const DISPLAY_DATE_FORMATS = [
 ];
 
 const REPORTS_PER_PAGE = 10;
+// AR eligibility after project end when an inactive grant has no inactivation date.
+// Proposed value for TTAHUB-5860; Product must confirm before merge.
+const AR_GRANT_END_DATE_GRACE_DAYS = 365;
 const RECIPIENTS_PER_PAGE = 12;
 const GOALS_PER_PAGE = 5;
 
@@ -223,7 +226,7 @@ const NOTIFICATION_CONFIGURATION = {
   },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER]: {
     textFn: ({ approver, recipientName }) =>
-      `${approver} has approved your Activity Report for ${recipientName}.`,
+      `${approver} has approved an Activity Report for ${recipientName}.`,
     // Actionable ("Take action") only when the receiving approver has neither approved nor
     // marked the report as needs action; once they have done either it is informational
     // ("View AR"). (TTAHUB-5581)
@@ -503,11 +506,18 @@ const VALIDATION_PROCESS = {
 };
 
 const VALIDATION_ALERT_SEVERITY = {
+  // Worth the team looking into when there's time; posted to a team-only Slack
+  // channel, never the customer-facing mirror or the urgent-alerts channel.
+  TEAM_NOTIFICATION: 'team_notification',
+  // Drives immediate action; posted to the urgent-alerts channel (and its
+  // customer-facing mirror, when enabled).
   ALERT: 'alert',
+  // Can block the pre-refresh gate.
   CRITICAL: 'critical',
 };
 
 module.exports = {
+  AR_GRANT_END_DATE_GRACE_DAYS,
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
