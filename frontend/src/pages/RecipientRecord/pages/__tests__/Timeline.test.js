@@ -143,7 +143,7 @@ describe('Recipient Record - TTA Timeline', () => {
       '401',
       '1',
       expect.objectContaining({
-        filters: [expect.stringContaining('"topic":"date"')],
+        filters: [expect.objectContaining({ topic: 'date', condition: 'is within' })],
       })
     );
     expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toHaveLength(1);

@@ -22,6 +22,12 @@ get:
     not affect other event sources. Standard filters match the log's selected supporting-goal
     labels; absent or malformed goal arrays have no labels. An unmatched positive standard filter
     returns no communications.
+    Communication-purpose filters use `purpose.in[]` and `purpose.nin[]` with the defined
+    communication-log purpose options. `purpose.in[]` matches any selected purpose;
+    `purpose.nin[]` matches none and includes missing, null, blank, or malformed stored purposes.
+    Stored string purposes are trimmed before comparison. Both parameters restrict the feed to
+    communications; readers without communication-log access receive an empty result when a
+    purpose filter is active. Unknown requested purposes return 400.
     Communication presentations include purpose as subtitle, numeric durationHours (null when
     blank or invalid), and the creator's name and current role abbreviations as the By byline.
     Retired roles are omitted. Missing roles leave the creator's name; a missing creator produces
@@ -44,6 +50,11 @@ get:
     goal history), then source and sourceId ascending for ties. Date-only sources sort at UTC
     midnight; timestamps without a timezone are interpreted as UTC. Date filters include the
     entire UTC calendar day, and response dates remain YYYY-MM-DD, independent of session timezone.
+    Filters combine with AND, including the multi-recipient exclusion when enabled. Filtering and
+    ordering apply to the full combined event index before counts, limit, and offset. Newest first
+    (desc) is the default; asc returns oldest first. Clients must send the same controls on each
+    page request and reset offset to zero when controls change. Ordering is stable for unchanged
+    data; concurrent changes between requests may shift offset-based pages.
     Goal presentations include the event title, goal name as subtitle, recorded author and roles
     as byline (falling back to the associated user's name), and available previous/new status,
     reason, context, and grant number details. Missing optional values are omitted from details;
@@ -96,16 +107,129 @@ get:
           - desc
         default: desc
     - in: query
-      name: filters
+      name: date.in[]
       required: false
+      description: An inclusive start-end date range. Invalid and reversed ranges return 400.
       schema:
         type: array
+        minItems: 1
+        maxItems: 1
+        items:
+          type: string
+          minLength: 1
+          maxLength: 500
+    - in: query
+      name: date.win
+      required: false
+      description: An inclusive start-end date range, such as `2026-10-01-2026-10-07`.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+    - in: query
+      name: date.aft
+      required: false
+      description: Include events on or after this date.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+    - in: query
+      name: date.bef
+      required: false
+      description: Include events on or before this date.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+    - in: query
+      name: purpose.in[]
+      required: false
+      description: Match communications with any selected purpose.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          enum:
+            - General Check-In
+            - New TTA request
+            - Program Specialist or Regional Office meeting
+            - Program Specialist's Monthly contact
+            - Program Specialist's site visit
+            - Recipient question/feedback
+            - RTTAPA updates
+            - RTTAPA Initial Plan / New Recipient
+            - TTA planning or scheduling
+    - in: query
+      name: purpose.nin[]
+      required: false
+      description: Exclude communications with any selected purpose.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          enum:
+            - General Check-In
+            - New TTA request
+            - Program Specialist or Regional Office meeting
+            - Program Specialist's Monthly contact
+            - Program Specialist's site visit
+            - Recipient question/feedback
+            - RTTAPA updates
+            - RTTAPA Initial Plan / New Recipient
+            - TTA planning or scheduling
+    - in: query
+      name: standard.in[]
+      required: false
+      description: Match events with any selected standard or goal category.
+      schema:
+        type: array
+        minItems: 1
         maxItems: 20
         items:
           type: string
           minLength: 1
-          maxLength: 2000
-          description: Serialized timeline filter JSON with topic, condition, and query fields.
+          maxLength: 100
+    - in: query
+      name: standard.nin[]
+      required: false
+      description: Exclude events with any selected standard or goal category.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
+    - in: query
+      name: eventType.in[]
+      required: false
+      description: Match events with any selected event type.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
+    - in: query
+      name: eventType.nin[]
+      required: false
+      description: Exclude events with any selected event type.
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
     - in: query
       name: excludeMultiRecipientCommunications
       required: false

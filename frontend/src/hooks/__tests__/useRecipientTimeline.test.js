@@ -100,7 +100,7 @@ describe('useRecipientTimeline', () => {
 
   it.each([
     { direction: 'asc' },
-    { filters: ['new filter'] },
+    { filters: [{ topic: 'date', condition: 'is on or after', query: '07/01/2026' }] },
     { excludeMultiRecipientCommunications: true },
     { recipientId: '402' },
     { regionId: '2' },

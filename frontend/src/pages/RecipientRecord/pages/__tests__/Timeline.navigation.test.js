@@ -4,10 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Link, Route, Router } from 'react-router-dom';
-import {
-  serializeTimelineFilter,
-  TIMELINE_FILTER_CONFIG,
-} from '../../../../components/filter/timelineFilters';
+import { TIMELINE_FILTER_CONFIG } from '../../../../components/filter/timelineFilters';
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
 import useFilters from '../../../../hooks/useFilters';
 import UserContext from '../../../../UserContext';
@@ -455,7 +452,11 @@ describe('timeline navigation restoration', () => {
     );
     expect(history.location.search).toBe(`?${filtersToQueryString(firstFilters)}`);
     expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual([
-      expect.stringContaining('TTA activity'),
+      expect.objectContaining({
+        topic: 'eventType',
+        condition: 'is',
+        query: ['TTA activity'],
+      }),
     ]);
   });
 
@@ -492,7 +493,7 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline).toHaveBeenCalledWith(
         '401',
         '1',
-        expect.objectContaining({ filters: [serializeTimelineFilter(filter)], offset: 0 })
+        expect.objectContaining({ filters: [filter], offset: 0 })
       )
     );
     await screen.findByRole('heading', { name: 'Event 25' });

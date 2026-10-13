@@ -47,23 +47,31 @@ describe('recipient fetcher', () => {
     expect(res.name).toBe('Tim Johnson the Recipient');
   });
 
-  it('getRecipientTimeline sends sort direction, serialized filters, and the multi-recipient switch', async () => {
-    const filter = JSON.stringify({ topic: 'date', condition: 'is within', query: 'date-range' });
-    const query = new URLSearchParams({
+  it('getRecipientTimeline sends dotted filters, sort direction, and the multi-recipient switch', async () => {
+    const filters = [
+      { topic: 'date', condition: 'is within', query: '07/01/2026-07/31/2026' },
+      {
+        topic: 'eventType',
+        condition: 'is',
+        query: ['Email communication', 'Phone communication'],
+      },
+    ];
+    const controls = new URLSearchParams({
       direction: 'asc',
       limit: '25',
       offset: '25',
-      filters: filter,
     });
-    query.set('excludeMultiRecipientCommunications', 'true');
-    const url = `${join(recipientUrl, '1', 'region', '2', 'timeline')}?${query.toString()}`;
+    controls.set('excludeMultiRecipientCommunications', 'true');
+    const filterQuery =
+      'date.win=2026%2F07%2F01-2026%2F07%2F31&eventType.in[]=Email%20communication&eventType.in[]=Phone%20communication';
+    const url = `${join(recipientUrl, '1', 'region', '2', 'timeline')}?${filterQuery}&${controls.toString()}`;
     fetchMock.getOnce(url, { count: 0, events: [] });
 
     const result = await getRecipientTimeline('1', '2', {
       direction: 'asc',
       limit: 25,
       offset: 25,
-      filters: [filter],
+      filters,
       excludeMultiRecipientCommunications: true,
     });
 
