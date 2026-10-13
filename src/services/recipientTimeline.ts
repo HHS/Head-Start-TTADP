@@ -1,3 +1,4 @@
+import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { TIMELINE_EVENT_TYPES } from '@ttahub/common/src/constants';
 import type {
   RecipientTimelineEvent,
@@ -43,7 +44,11 @@ interface TimelineEventIndexParams extends RecipientTimelineRequestParams {
   sources: readonly TimelineEventSource[];
 }
 
-const SHARED_FILTER_TOPICS = new Set<RecipientTimelineFilterTopic>(['date', 'eventType']);
+const SHARED_FILTER_TOPICS = new Set<RecipientTimelineFilterTopic>([
+  'date',
+  'eventType',
+  'purpose',
+]);
 const DATE_INPUT_FORMATS = [
   'YYYY/MM/DD',
   'YYYY-MM-DD',
@@ -134,6 +139,17 @@ const validateFilters = (
     if (topic === 'eventType' && query.some((eventType) => !isValidTimelineEventType(eventType))) {
       throw badTimelineRequest('Timeline eventType filter contains an unsupported event type');
     }
+
+    if (
+      topic === 'purpose' &&
+      query.some(
+        (purpose) => typeof purpose !== 'string' || !COMMUNICATION_PURPOSES.includes(purpose.trim())
+      )
+    ) {
+      throw badTimelineRequest(
+        'Timeline purpose filter contains an unsupported communication purpose'
+      );
+    }
   });
 };
 
@@ -167,6 +183,13 @@ const addSharedFilters = (
   const predicates: string[] = [];
   let dateIndex = 0;
   let eventTypeIndex = 0;
+
+  // A purpose filter narrows the feed to communications for both inclusion and exclusion.
+  // The authorized source list still controls whether any communications can be indexed.
+  if (filters.some(({ topic }) => topic === 'purpose')) {
+    replacements.timelinePurposeSource = COMMUNICATION_LOG_TIMELINE_SOURCE.name;
+    predicates.push('"source" = :timelinePurposeSource');
+  }
 
   filters.forEach((filter) => {
     if (filter.topic === 'date') {
