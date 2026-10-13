@@ -6,7 +6,7 @@ import { get } from './index';
 
 const recipientUrl = join('/', 'api', 'recipient');
 
-const parsePositiveInteger = (value) => {
+const parseNonNegativeInteger = (value) => {
   const isWholeNumber =
     (typeof value === 'number' && Number.isInteger(value)) ||
     (typeof value === 'string' && /^[0-9]+$/.test(value));
@@ -16,7 +16,12 @@ const parsePositiveInteger = (value) => {
   }
 
   const parsedValue = Number(value);
-  return Number.isSafeInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
+  return Number.isSafeInteger(parsedValue) && parsedValue >= 0 ? parsedValue : null;
+};
+
+const parsePositiveInteger = (value) => {
+  const parsedValue = parseNonNegativeInteger(value);
+  return parsedValue !== null && parsedValue > 0 ? parsedValue : null;
 };
 
 export const getRecipient = async (recipientId, regionId = '') => {
@@ -103,7 +108,13 @@ export const getRecipientLeadership = async (recipientId, regionId) => {
 export const getRecipientTimeline = async (
   recipientId,
   regionId,
-  { direction = 'desc', filters = [], excludeMultiRecipientCommunications = false } = {}
+  {
+    direction = 'desc',
+    filters = [],
+    excludeMultiRecipientCommunications = false,
+    limit = 25,
+    offset = 0,
+  } = {}
 ) => {
   const id = parsePositiveInteger(recipientId);
   if (id === null) {
@@ -115,9 +126,23 @@ export const getRecipientTimeline = async (
     throw new Error('Region ID must be a positive integer');
   }
 
-  const query = new URLSearchParams({ direction });
-  filters.forEach((filter) => query.append('filters', filter));
-  query.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
+  const parsedLimit = parsePositiveInteger(limit);
+  if (parsedLimit === null) {
+    throw new Error('Limit must be a positive integer');
+  }
+
+  const parsedOffset = parseNonNegativeInteger(offset);
+  if (parsedOffset === null) {
+    throw new Error('Offset must be a non-negative integer');
+  }
+
+  const controls = new URLSearchParams({
+    direction,
+    limit: String(parsedLimit),
+    offset: String(parsedOffset),
+  });
+  controls.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
+  const filterQuery = filtersToQueryString(filters);
 
   const url = join(
     recipientUrl,
@@ -126,6 +151,7 @@ export const getRecipientTimeline = async (
     idRegion.toString(DECIMAL_BASE),
     'timeline'
   );
-  const timeline = await get(`${url}?${query.toString()}`);
+  const query = [filterQuery, controls.toString()].filter(Boolean).join('&');
+  const timeline = await get(`${url}?${query}`);
   return timeline.json();
 };
