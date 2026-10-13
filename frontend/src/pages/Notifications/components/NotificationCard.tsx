@@ -39,9 +39,11 @@ function NotificationCardDismiss({
 export default function NotificationCard({
   notification,
   onArchive,
+  isArchive,
 }: {
   onArchive: (notificationId: number | string) => void;
   notification: Notification;
+  isArchive?: boolean;
 }): React.ReactElement {
   const isUnread = !notification.viewedAt;
 
@@ -66,7 +68,9 @@ export default function NotificationCard({
       >
         {notification.displayId || ''}
       </div>
-      <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
+      {!isArchive && (
+        <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
+      )}
       <div
         className={`notification-card__text text-left flex-1 ${isUnread ? 'text-semibold' : ''}`}
       >
@@ -87,7 +91,7 @@ export default function NotificationCard({
           </Link>
         ) : null}
       </div>
-      <NotificationCardDismiss notification={notification} onArchive={onArchive} />
+      {!isArchive && <NotificationCardDismiss notification={notification} onArchive={onArchive} />}
     </li>
   );
 }
