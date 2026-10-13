@@ -4,6 +4,7 @@ import db, {
   CommunicationLog,
   CommunicationLogFile,
   CommunicationLogRecipient,
+  CommunicationLogStaff,
   File,
   Recipient,
   User,
@@ -177,6 +178,102 @@ describe('communicationLog services', () => {
       where: { communicationLogId: log.id },
     });
     expect(remainingRecipients).toEqual(0);
+  });
+
+  describe('other TTA staff', () => {
+    let staffUser;
+    let secondStaffUser;
+    let staffRecipient;
+    let staffLog;
+
+    beforeAll(async () => {
+      staffUser = await createUser();
+      secondStaffUser = await createUser();
+      staffRecipient = await createRecipient({});
+    });
+
+    afterAll(async () => {
+      if (staffLog) {
+        await CommunicationLogStaff.destroy({ where: { communicationLogId: staffLog.id } });
+        await CommunicationLogRecipient.destroy({ where: { communicationLogId: staffLog.id } });
+        await CommunicationLog.destroy({ where: { id: staffLog.id } });
+      }
+      await Recipient.destroy({ where: { id: staffRecipient.id } });
+      await User.destroy({ where: { id: [staffUser.id, secondStaffUser.id] } });
+    });
+
+    it('writes otherStaff to the join table on create and excludes it from JSON', async () => {
+      staffLog = await createLog([staffRecipient.id], staffUser.id, {
+        foo: 'bar',
+        otherStaff: [{ value: String(staffUser.id), label: 'ignored label' }],
+      });
+
+      // the JSON column does not persist otherStaff going forward
+      expect(staffLog.data).toEqual({ foo: 'bar' });
+      // the returned array is sourced from the join table, with the label from the User
+      expect(staffLog.otherStaff).toEqual([{ value: String(staffUser.id), label: staffUser.name }]);
+
+      const rows = await CommunicationLogStaff.findAll({
+        where: { communicationLogId: staffLog.id },
+      });
+      expect(rows.map((r) => r.userId)).toEqual([staffUser.id]);
+    });
+
+    it('reconciles otherStaff on update via the join table', async () => {
+      const result = await updateLog(staffLog.id, {
+        foo: 'baz',
+        recipients: [{ value: staffRecipient.id }],
+        otherStaff: [{ value: String(secondStaffUser.id) }],
+      });
+
+      expect(result.otherStaff).toEqual([
+        { value: String(secondStaffUser.id), label: secondStaffUser.name },
+      ]);
+
+      const rows = await CommunicationLogStaff.findAll({
+        where: { communicationLogId: staffLog.id },
+      });
+      expect(rows.map((r) => r.userId)).toEqual([secondStaffUser.id]);
+    });
+
+    it('clears otherStaff when an empty array is provided', async () => {
+      const result = await updateLog(staffLog.id, { otherStaff: [] });
+      expect(result.otherStaff).toEqual([]);
+
+      const count = await CommunicationLogStaff.count({
+        where: { communicationLogId: staffLog.id },
+      });
+      expect(count).toEqual(0);
+    });
+
+    it('preserves legacy JSON otherStaff but never updates it', async () => {
+      const legacyLog = await CommunicationLog.create({
+        userId: staffUser.id,
+        data: {
+          foo: 'legacy',
+          otherStaff: [{ value: String(staffUser.id), label: 'Legacy Name' }],
+        },
+      });
+
+      await updateLog(legacyLog.id, {
+        foo: 'updated',
+        otherStaff: [{ value: String(secondStaffUser.id) }],
+      });
+
+      const raw = await CommunicationLog.findByPk(legacyLog.id);
+      // legacy JSON otherStaff is left exactly as it was
+      expect(raw.data.otherStaff).toEqual([{ value: String(staffUser.id), label: 'Legacy Name' }]);
+      expect(raw.data.foo).toEqual('updated');
+
+      // the join table is the source of truth and reflects the new selection
+      const rows = await CommunicationLogStaff.findAll({
+        where: { communicationLogId: legacyLog.id },
+      });
+      expect(rows.map((r) => r.userId)).toEqual([secondStaffUser.id]);
+
+      await CommunicationLogStaff.destroy({ where: { communicationLogId: legacyLog.id } });
+      await CommunicationLog.destroy({ where: { id: legacyLog.id } });
+    });
   });
 
   describe('orderLogsBy', () => {

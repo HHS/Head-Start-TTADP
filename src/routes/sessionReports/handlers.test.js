@@ -25,6 +25,7 @@ import {
   getSessionReportsHandler,
   updateHandler,
 } from './handlers';
+import { checkUpdateSessionBody } from './middleware';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -274,6 +275,7 @@ describe('session report handlers', () => {
     it('allows a POC to create a session for a regional PD with national centers event', async () => {
       const pocEvent = {
         ...mockEvent,
+        eventId: 'R01-PD-100',
         data: {
           eventId: 'R01-PD-100',
           eventName: 'Regional PD Event (with National Centers)',
@@ -291,19 +293,89 @@ describe('session report handlers', () => {
       }));
       createSession.mockResolvedValue(createdSession);
 
-      await createHandler(mockRequest, mockResponse);
+      const request = {
+        ...mockRequest,
+        body: { ...mockRequest.body, data: { facilitation: 'national_center' } },
+      };
+      await createHandler(request, mockResponse);
 
       expect(createSession).toHaveBeenCalledWith({
         eventId: pocEvent.id,
         data: {
-          ...mockRequest.body.data,
+          ...request.body.data,
           eventName: pocEvent.data.eventName,
-          eventDisplayId: pocEvent.data.eventId,
+          eventDisplayId: pocEvent.eventId,
           regionId: pocEvent.regionId,
           eventOwner: pocEvent.ownerId,
         },
       });
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it.each([undefined, null, '', 'national_centers', 'invalid', 1, ['national_center']])(
+      'rejects NC event session creation with invalid facilitation %p',
+      async (facilitation) => {
+        findEventBySmartsheetId.mockResolvedValue({
+          ...mockEvent,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        });
+        EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+
+        await createHandler(
+          {
+            ...mockRequest,
+            body: { ...mockRequest.body, data: { facilitation } },
+          },
+          mockResponse
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(400);
+        expect(mockStatusSend).toHaveBeenCalledWith({
+          message: expect.stringContaining('Select who is providing the training'),
+        });
+        expect(createSession).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each(['national_center', 'regional_tta_staff', 'both'])(
+      'creates an NC event session with facilitation %s',
+      async (facilitation) => {
+        findEventBySmartsheetId.mockResolvedValue({
+          ...mockEvent,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        });
+        EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+        createSession.mockResolvedValue(mockSession);
+
+        await createHandler(
+          {
+            ...mockRequest,
+            body: { ...mockRequest.body, data: { facilitation } },
+          },
+          mockResponse
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+        expect(createSession).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ facilitation }),
+          })
+        );
+      }
+    );
+
+    it('allows regional-only session creation without facilitation', async () => {
+      findEventBySmartsheetId.mockResolvedValue({
+        ...mockEvent,
+        data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+      });
+      EventReport.mockImplementation(() => ({ canCreateSession: () => true }));
+      createSession.mockResolvedValue(mockSession);
+
+      await createHandler(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(createSession).toHaveBeenCalled();
     });
 
     it('returns 400 when there is no body', async () => {
@@ -486,6 +558,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 1',
           startDate: '2024-01-01',
           endDate: '2024-01-02',
+          participantCount: 13,
+          deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
         },
         {
@@ -495,6 +569,8 @@ describe('session report handlers', () => {
           sessionName: 'Session 2',
           startDate: '2024-01-03',
           endDate: '2024-01-04',
+          participantCount: 8,
+          deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
         },
       ],
@@ -534,6 +610,25 @@ describe('session report handlers', () => {
           limit: 10,
           format: 'json',
         })
+      );
+    });
+
+    it('uses the authenticated user ID when the query includes a user ID', async () => {
+      setTrainingReportReadRegions.mockResolvedValue({
+        userId: 'another-user',
+        'myReports.in[]': 'TR POC',
+      });
+      getSessionReports.mockResolvedValue(mockTrainingReportResponse);
+
+      const requestWithUserIdFilter = {
+        session: { userId: 1 },
+        query: { userId: 'another-user', 'myReports.in[]': 'TR POC' },
+      };
+
+      await getSessionReportsHandler(requestWithUserIdFilter, mockResponse);
+
+      expect(getSessionReports).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 1, 'myReports.in[]': 'TR POC' })
       );
     });
 
@@ -585,6 +680,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Session Start Date');
       expect(csvOutput).toContain('Session End Date');
       expect(csvOutput).toContain('Topics');
+      expect(csvOutput).toContain('Participant Count');
+      expect(csvOutput).toContain('Delivery type');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -593,6 +690,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-01');
       expect(csvOutput).toContain('Topic 1');
       expect(csvOutput).toContain('Topic 2');
+      expect(csvOutput).toContain('13');
+      expect(csvOutput).toContain('hybrid');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');
@@ -600,6 +699,8 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('2024-01-03');
       expect(csvOutput).toContain('2024-01-04');
       expect(csvOutput).toContain('Topic 3');
+      expect(csvOutput).toContain('8');
+      expect(csvOutput).toContain('virtual');
     });
 
     it('supports sorting by event fields (eventId, eventName)', async () => {
@@ -707,6 +808,50 @@ describe('session report handlers', () => {
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
       expect(getSessionReportsByRecipient).not.toHaveBeenCalled();
+    });
+  });
+
+  // The tests above call handlers directly, which bypasses the router's
+  // middleware. This proves the middleware hands its stripped body to the
+  // handler, and therefore to the service.
+  describe('schema validation middleware handoff', () => {
+    it('passes the stripped body through to updateSession', async () => {
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue(mockSession);
+      updateSession.mockResolvedValue(mockSession);
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+
+      const req = {
+        params: { id: 99_999 },
+        session: { userId: 1 },
+        body: {
+          eventId: 99_998,
+          trainingReportId: 99_998,
+          data: {
+            sessionName: 'A session',
+            approverId: 5,
+            event: { id: 99_998 },
+            approver: { id: 5 },
+            aKeyNobodyDeclared: true,
+          },
+        },
+      };
+
+      await new Promise((resolve) => {
+        checkUpdateSessionBody(req, mockResponse, resolve);
+      });
+      await updateHandler(req, mockResponse);
+
+      expect(updateSession).toHaveBeenCalled();
+      const [, payload] = updateSession.mock.calls[0];
+      expect(payload.data).not.toHaveProperty('event');
+      expect(payload.data).not.toHaveProperty('approver');
+      expect(payload.data).not.toHaveProperty('aKeyNobodyDeclared');
+      expect(payload.data.sessionName).toBe('A session');
+      // still needed by updateSession for the approver column
+      expect(payload.data.approverId).toBe(5);
     });
   });
 });

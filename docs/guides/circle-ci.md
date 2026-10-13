@@ -88,7 +88,7 @@ These workflows are triggered at regular intervals using cron schedules:
    - Scheduled at 12:00 UTC, Monday to Friday.
 
 2. **Daily Backup Upload Production**:
-   - Creates a backup of the production database, processes it, and restores it to staging, sandbox, and dev environments for testing.
+   - Creates a backup of the production database, processes it, and restores it to staging and dev environments for testing.
    - Scheduled at 10:00 UTC, Monday to Friday.
 
 ---
@@ -109,7 +109,7 @@ The configuration supports several workflows that can be manually triggered usin
 4. **Manual Process Backup** (`manual-backup`):
    - Processes and uploads a backup for distribution to other environments.
 
-5. **Manual Restore to Staging, Sandbox, or Dev** (`manual-restore-staging`, `manual-restore-sandbox`, `manual-restore-dev`):
+5. **Manual Restore to Staging or Dev** (`manual-restore-staging`, `manual-restore-dev`):
    - Restores processed backups to the respective environments for further testing or analysis.
 
 ---

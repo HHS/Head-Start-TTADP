@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { COLLAB_REPORT_PARTICIPANTS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import db, {

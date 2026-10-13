@@ -83,6 +83,7 @@ describe('Recipient Record - TTA Timeline', () => {
       ],
       TIMELINE_FILTER_CONFIG
     );
+    expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).not.toContain('purpose');
   });
 
   it('sends the multi-recipient communication checkbox state with the timeline request', async () => {
@@ -105,6 +106,39 @@ describe('Recipient Record - TTA Timeline', () => {
       '1',
       expect.objectContaining({ excludeMultiRecipientCommunications: true })
     );
+  });
+
+  it('does not render or submit filters removed from the timeline configuration', async () => {
+    useFilters.mockReturnValue({
+      filters: [
+        ...createInitialTimelineFilters(),
+        {
+          id: 'stale-purpose-filter',
+          topic: 'purpose',
+          condition: 'is',
+          query: ['General Check-In'],
+        },
+      ],
+      onApplyFilters,
+      onRemoveFilter,
+      filterConfig: TIMELINE_FILTER_CONFIG,
+    });
+
+    renderTimeline();
+
+    expect(screen.queryByText('General Check-In')).not.toBeInTheDocument();
+
+    const [, fetchTimeline] = useFetch.mock.calls[useFetch.mock.calls.length - 1];
+    await fetchTimeline();
+
+    expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+      '401',
+      '1',
+      expect.objectContaining({
+        filters: [expect.stringContaining('"topic":"date"')],
+      })
+    );
+    expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toHaveLength(1);
   });
 
   it('renders a loading state', () => {
@@ -142,7 +176,23 @@ describe('Recipient Record - TTA Timeline', () => {
 
   it('renders a result count when timeline events exist', () => {
     useFetch.mockReturnValue({
-      data: { count: 2, events: [{ id: 1 }, { id: 2 }] },
+      data: {
+        count: 2,
+        events: [1, 2].map((sourceId) => ({
+          source: 'activityReport',
+          sourceId,
+          date: '2026-07-07',
+          eventType: 'TTA activity',
+          title: 'TTA activity',
+          subtitle: null,
+          byline: null,
+          durationHours: null,
+          indicators: [],
+          tags: [],
+          details: [],
+          links: [],
+        })),
+      },
       error: '',
       loading: false,
     });
@@ -150,5 +200,7 @@ describe('Recipient Record - TTA Timeline', () => {
     renderTimeline();
 
     expect(screen.getByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    expect(screen.getAllByRole('article')).toHaveLength(2);
+    expect(screen.getByRole('list', { name: 'Timeline events' })).toBeVisible();
   });
 });

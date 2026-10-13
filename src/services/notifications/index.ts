@@ -7,6 +7,7 @@ import type {
   NotificationModel,
   NotificationScope,
   NotificationType,
+  NotificationUserStateAttributes,
   NotificationUserStateModel,
   NotificationWithState,
 } from '../types/notifications';
@@ -105,14 +106,19 @@ async function createNotification(
     ? notificationConfig.linkFn(metadata)
     : undefined;
   const notificationLinkText = notificationConfig.linkText
-    ? notificationConfig.linkText()
+    ? notificationConfig.linkText(metadata)
     : undefined;
 
   const displayId = notificationConfig.displayId
     ? notificationConfig.displayId(metadata)
     : undefined;
 
-  const actionable = Boolean(notificationConfig.actionable);
+  // `actionable` may be a static boolean or a metadata-driven function (e.g. a CTA that
+  // depends on whether the recipient has already approved the report). (TTAHUB-5581)
+  const actionable =
+    typeof notificationConfig.actionable === 'function'
+      ? Boolean(notificationConfig.actionable(metadata))
+      : Boolean(notificationConfig.actionable);
 
   const skipArchived = skipExisting === 'archived';
 
@@ -324,6 +330,98 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
   return deletedCount;
 }
 /*
+ * Archives a single user's notifications for a given entity and one or more notification
+ * types. This is the per-user counterpart to {@link archiveNotificationsByEntityAndType}:
+ * it only touches notifications and state rows belonging to `userId`, leaving other users'
+ * notifications for the same entity/type untouched. It is used when a state change makes
+ * one user's notifications obsolete but they should remain visible in that user's archived
+ * list (e.g. a collaborator's "report submitted" notification is archived when the report
+ * is resubmitted).
+ *
+ * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
+ * rows intact and instead marks the user's NotificationUserState as archived. For state
+ * rows that already exist, `archivedAt` is set only when currently null, so existing
+ * archive timestamps are preserved. For matching notifications that have no state row for
+ * the user yet, an archived + viewed state row is created.
+ *
+ * Not to be called from Sequelize model hooks — call it inline in the same service function
+ * that performs the state change.
+ * @param {number} entityId The ID of the entity whose notifications should be archived.
+ * @param {number} userId The ID of the user whose notifications should be archived.
+ * @param {NotificationType | NotificationType[]} notificationType The notification type(s) to target.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ * @throws {Error} Throws when entityId, userId, or notificationType is falsy/empty.
+ */
+async function archiveNotificationsByUserEntityAndType(
+  entityId: number,
+  userId: number,
+  notificationType: NotificationType | NotificationType[]
+): Promise<void> {
+  if (!entityId) {
+    throw new Error('entityId is required');
+  }
+
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+
+  const notificationTypes = Array.isArray(notificationType) ? notificationType : [notificationType];
+
+  if (!notificationTypes.length || notificationTypes.some((type) => !type)) {
+    throw new Error('notificationType is required');
+  }
+
+  const notifications = (await Notification.findAll({
+    attributes: ['id'],
+    where: {
+      entityId,
+      type: { [Op.in]: notificationTypes },
+      userId,
+    },
+    raw: true,
+  })) as unknown as { id: number }[];
+
+  if (!notifications.length) {
+    return;
+  }
+
+  const notificationIds = notifications.map((n) => n.id);
+  const archivedAt = new Date();
+
+  await NotificationUserState.update(
+    { archivedAt },
+    {
+      where: {
+        notificationId: notificationIds,
+        userId,
+        archivedAt: null,
+      },
+    }
+  );
+
+  const existingStates = (await NotificationUserState.findAll({
+    attributes: ['notificationId'],
+    where: { notificationId: notificationIds, userId },
+    raw: true,
+  })) as unknown as { notificationId: number }[];
+
+  const existingSet = new Set(existingStates.map((state) => state.notificationId));
+
+  const missingStates = notificationIds
+    .filter((notificationId) => !existingSet.has(notificationId))
+    .map((notificationId) => ({
+      notificationId,
+      userId,
+      archivedAt,
+      viewedAt: archivedAt,
+    }));
+
+  if (missingStates.length) {
+    await NotificationUserState.bulkCreate(missingStates, { ignoreDuplicates: true });
+  }
+}
+
+/*
  * Archives all notifications for a given entity and one or more notification types.
  * Archiving (unlike {@link deleteNotificationsByEntityAndType}) leaves the notification
  * rows intact and instead marks each recipient's NotificationUserState as archived. It is
@@ -431,7 +529,8 @@ async function getNotifications(
     sortBy = 'action_needed',
     sortDir = 'DESC',
     archived = false,
-  } = {}
+  } = {},
+  countOnly = false
 ): Promise<{ count: number; rows: NotificationWithState[] }> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField)
     ? (sortBy as AllowedSortField)
@@ -445,7 +544,7 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  const { rows, count } = await Notification.findAndCountAll({
+  const query = {
     where: {
       [Op.and]: [
         {
@@ -470,6 +569,15 @@ async function getNotifications(
       },
     ],
     subQuery: false,
+  };
+
+  if (countOnly) {
+    const count = await Notification.count({ ...query, distinct: true, col: 'id' });
+    return { count, rows: [] };
+  }
+
+  const { count, rows } = await Notification.findAndCountAll({
+    ...query,
     order: buildOrder(sort, direction),
     limit: limitValue,
     offset: offsetValue,
@@ -485,7 +593,7 @@ async function getNotifications(
 
       const plain = notification.get({ plain: true }) as NotificationWithState;
       plain.userState = userState
-        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        ? (userState.get({ plain: true }) as NotificationUserStateAttributes)
         : null;
       plain.viewedAt = userState?.viewedAt ?? null;
       plain.archivedAt = userState?.archivedAt ?? null;
@@ -497,6 +605,7 @@ async function getNotifications(
 
 export {
   archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
   createGlobalNotification,
   createNotification,
   deleteExpiredArchivedNotifications,

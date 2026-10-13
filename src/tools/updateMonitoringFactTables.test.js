@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ActivityReport,
@@ -21,7 +21,7 @@ import {
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
-  MonitoringFindingHistoryStatusLink,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingLink,
   MonitoringFindingStandard,
   MonitoringFindingStatus,
@@ -49,6 +49,24 @@ const FINDING_STATUS_CORRECTED_ID = 80003;
 const FINDING_STATUS_ELEVATED_DEFICIENCY_ID = 80004;
 const STANDARD_ID_1 = 80001;
 const STANDARD_ID_2 = 80002;
+// History-status-only IDs (no matching MonitoringFindingStatus row) — used solely to
+// exercise the other two "translates to Active" history statuses in Scenario L below.
+const HISTORY_STATUS_ONLY_NOT_CORRECTED_ID = 80005;
+const HISTORY_STATUS_ONLY_NOT_REVIEWED_ID = 80006;
+
+// MonitoringFindingHistories carry their own status vocabulary, distinct from the
+// finding-level MonitoringFindingStatuses: an active finding's history status reads
+// "New", which the fact-table pipeline translates to "Active". These scenarios reuse
+// the finding-status IDs above for their MonitoringFindingHistory rows, so the
+// MonitoringFindingHistoryStatus name for a given ID differs from the
+// MonitoringFindingStatus name for that same ID (Active -> New, others unchanged).
+const HISTORY_STATUS_NAME_BY_ID = {
+  [FINDING_STATUS_ACTIVE_ID]: 'New',
+  [FINDING_STATUS_CORRECTED_ID]: 'Corrected',
+  [FINDING_STATUS_ELEVATED_DEFICIENCY_ID]: 'Elevated Deficiency',
+  [HISTORY_STATUS_ONLY_NOT_CORRECTED_ID]: 'Not Corrected',
+  [HISTORY_STATUS_ONLY_NOT_REVIEWED_ID]: 'Not Reviewed',
+};
 
 const timestamps = {
   sourceCreatedAt: new Date(),
@@ -65,7 +83,7 @@ const linkTimestamps = {
 };
 
 const granteeRow = (grantNumber, reviewId, granteeId) => ({
-  id: faker.datatype.number({ min: 9999 }),
+  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
   grantNumber,
   reviewId,
   granteeId,
@@ -80,9 +98,9 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario A: Active deficiency, TWO grants on same review
   // ----------------------------------------------------------
-  const recipientIdA = faker.datatype.number({ min: 70000 });
-  const grantIdA1 = faker.datatype.number({ min: 70000 });
-  const grantIdA2 = faker.datatype.number({ min: 70000 });
+  const recipientIdA = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdA1 = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdA2 = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberA1 = `UFT-${uuidv4().slice(0, 8)}`;
   const grantNumberA2 = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdA = uuidv4();
@@ -93,10 +111,18 @@ describe('updateMonitoringFactTables', () => {
   const findingIdADeletedStandard = uuidv4(); // Finding whose only MonitoringFindingStandard is source-deleted — must not produce a Citation
 
   // ----------------------------------------------------------
+  // Scenario L: "Not Corrected" / "Not Reviewed" history statuses translate to Active
+  // Reuses reviewIdA/grantNumberA1/granteeIdA1 above (already delivered + Complete) so no
+  // additional grant/recipient/review scaffolding is needed — just two more findings on it.
+  // ----------------------------------------------------------
+  const findingIdNotCorrected = uuidv4();
+  const findingIdNotReviewed = uuidv4();
+
+  // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
   // ----------------------------------------------------------
-  const recipientIdB = faker.datatype.number({ min: 70000 });
-  const grantIdB = faker.datatype.number({ min: 70000 });
+  const recipientIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberB = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdB1 = uuidv4();
   const reviewIdB2 = uuidv4();
@@ -106,8 +132,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario C: AOC closed by monitoring goal
   // ----------------------------------------------------------
-  const recipientIdC = faker.datatype.number({ min: 70000 });
-  const grantIdC = faker.datatype.number({ min: 70000 });
+  const recipientIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberC = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdC = uuidv4();
   const granteeIdC = uuidv4();
@@ -117,8 +143,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario E: CLASS review with scores, no findings
   // ----------------------------------------------------------
-  const recipientIdE = faker.datatype.number({ min: 70000 });
-  const grantIdE = faker.datatype.number({ min: 70000 });
+  const recipientIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberE = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdE = uuidv4();
   const granteeIdE = uuidv4();
@@ -129,8 +155,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario D: Undelivered current review forces Active
   // ----------------------------------------------------------
-  const recipientIdD = faker.datatype.number({ min: 70000 });
-  const grantIdD = faker.datatype.number({ min: 70000 });
+  const recipientIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberD = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdD1 = uuidv4();
   const reviewIdD2 = uuidv4();
@@ -140,8 +166,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario F: Excluded finding type (Withdrawn) — must not produce any fact table rows
   // ----------------------------------------------------------
-  const recipientIdF = faker.datatype.number({ min: 70000 });
-  const grantIdF = faker.datatype.number({ min: 70000 });
+  const recipientIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdF = uuidv4();
   const granteeIdF = uuidv4();
@@ -150,19 +176,20 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario G: last_tta computed from ActivityReport.endDate
   // ----------------------------------------------------------
-  const userIdG = faker.datatype.number({ min: 70000 });
+  const userIdG = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const expectedLastTtaDate = '2026-01-15';
 
   // ----------------------------------------------------------
   // Scenario H: live-value views pick latest endDate; null & tie
   // ----------------------------------------------------------
-  const userIdH = faker.datatype.number({ min: 70000 });
+  const userIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
 
   // ----------------------------------------------------------
-  // Scenario H: Elevated Deficiency + Compliant outcome → Corrected
+  // Scenario H: Elevated Deficiency history status on a Compliant delivered review
+  //             → passes through as Elevated Deficiency (no outcome coercion)
   // ----------------------------------------------------------
-  const recipientIdH = faker.datatype.number({ min: 70000 });
-  const grantIdH = faker.datatype.number({ min: 70000 });
+  const recipientIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberH = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdH = uuidv4();
   const granteeIdH = uuidv4();
@@ -171,8 +198,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario I: Elevated Deficiency + Compliant but undelivered → Active
   // ----------------------------------------------------------
-  const recipientIdI = faker.datatype.number({ min: 70000 });
-  const grantIdI = faker.datatype.number({ min: 70000 });
+  const recipientIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberI = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdI1 = uuidv4();
   const reviewIdI2 = uuidv4();
@@ -184,8 +211,8 @@ describe('updateMonitoringFactTables', () => {
   // Must be included because MonitoringClassSummaries scores exist,
   // even though reportDeliveryDate and sourceCreatedAt predate 2025-01-21.
   // ----------------------------------------------------------
-  const recipientIdJ = faker.datatype.number({ min: 70000 });
-  const grantIdJ = faker.datatype.number({ min: 70000 });
+  const recipientIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberJ = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdJ = uuidv4();
   const granteeIdJ = uuidv4();
@@ -199,8 +226,8 @@ describe('updateMonitoringFactTables', () => {
   // (lower id) to confirm the UPDATE picks by reportDeliveryDate DESC, not
   // insertion order. A CLASS review is also present and must not count.
   // ----------------------------------------------------------
-  const recipientIdK = faker.datatype.number({ min: 70000 });
-  const grantIdK = faker.datatype.number({ min: 70000 });
+  const recipientIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const grantIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
   const grantNumberK = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdK1 = uuidv4(); // created first, older delivery date — must NOT win
   const reviewIdK2 = uuidv4(); // created second, newer delivery date — must win
@@ -417,16 +444,22 @@ describe('updateMonitoringFactTables', () => {
       }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdH } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdI } }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_ACTIVE_ID },
-      }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_CORRECTED_ID },
-      }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({
-        where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
-      }),
     ]);
+
+    // Sequential, not folded into the Promise.all above: MonitoringFindingHistoryStatus's
+    // beforeCreate hook (syncMonitoringFindingHistoryStatusLink) creates the matching
+    // MonitoringFindingHistoryStatusLink row itself. Creating both concurrently races two
+    // independent findOrCreate paths against the same Link row and can throw a duplicate-key
+    // error under load (see genericLink.js's syncLink — its semaphore only serializes hook-driven
+    // syncs against each other, not against an explicit findOrCreate outside the hook).
+    await Promise.all(
+      Object.entries(HISTORY_STATUS_NAME_BY_ID).map(([statusId, name]) =>
+        MonitoringFindingHistoryStatus.findOrCreate({
+          where: { statusId: Number(statusId) },
+          defaults: { statusId: Number(statusId), name, ...timestamps },
+        })
+      )
+    );
 
     await GrantRelationshipToActive.refresh();
 
@@ -587,6 +620,56 @@ describe('updateMonitoringFactTables', () => {
       hash: `hash-${uuidv4()}`,
       ...timestamps,
     });
+
+    // =====================================================
+    // Scenario L: "Not Corrected" / "Not Reviewed" history statuses translate to Active
+    // Both findings ride on reviewIdA/grantNumberA1/granteeIdA1 (already delivered + Complete).
+    // =====================================================
+    await Promise.all(
+      [
+        [findingIdNotCorrected, HISTORY_STATUS_ONLY_NOT_CORRECTED_ID, 'Finding L (Not Corrected)'],
+        [findingIdNotReviewed, HISTORY_STATUS_ONLY_NOT_REVIEWED_ID, 'Finding L (Not Reviewed)'],
+      ].map(async ([findingId, historyStatusId, name]) => {
+        await MonitoringFindingLink.findOrCreate({
+          where: { findingId },
+          defaults: linkTimestamps,
+        });
+        await MonitoringFinding.create({
+          findingId,
+          statusId: FINDING_STATUS_CORRECTED_ID,
+          findingType: 'Deficiency',
+          source: 'FA-1',
+          name,
+          hash: `hash-${uuidv4()}`,
+          ...timestamps,
+        });
+        await MonitoringFindingHistory.create({
+          reviewId: reviewIdA,
+          findingHistoryId: uuidv4(),
+          findingId,
+          statusId: historyStatusId,
+          narrative: `Narrative for ${name}`,
+          ordinal: 1,
+          determination: 'Deficiency',
+          name: `History ${name}`,
+          ...timestamps,
+        });
+        await MonitoringFindingStandard.create({
+          findingId,
+          standardId: STANDARD_ID_1,
+          name: `Standard ${name}`,
+          ...timestamps,
+        });
+        await MonitoringFindingGrant.create({
+          findingId,
+          granteeId: granteeIdA1,
+          statusId: FINDING_STATUS_CORRECTED_ID,
+          findingType: 'Deficiency',
+          hash: `hash-${uuidv4()}`,
+          ...timestamps,
+        });
+      })
+    );
 
     // =====================================================
     // Scenario B: Corrected finding, two delivered reviews
@@ -752,7 +835,7 @@ describe('updateMonitoringFactTables', () => {
       paranoid: false,
     });
     const goalC = await Goal.create({
-      id: faker.datatype.number({ min: 90000 }),
+      id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
       name: goalTemplate.templateName,
       grantId: grantIdC,
       goalTemplateId: goalTemplate.id,
@@ -829,7 +912,7 @@ describe('updateMonitoringFactTables', () => {
         reviewId: reviewIdD1,
         findingHistoryId: uuidv4(),
         findingId: findingIdD,
-        statusId: FINDING_STATUS_ACTIVE_ID,
+        statusId: FINDING_STATUS_CORRECTED_ID,
         narrative: 'Narrative for finding D initial',
         ordinal: 1,
         determination: 'Deficiency',
@@ -961,7 +1044,7 @@ describe('updateMonitoringFactTables', () => {
     });
 
     // =====================================================
-    // Scenario H: Elevated Deficiency + Compliant delivered → Corrected
+    // Scenario H: Elevated Deficiency history status on a Compliant delivered review
     // =====================================================
     await MonitoringReviewLink.findOrCreate({
       where: { reviewId: reviewIdH },
@@ -1276,6 +1359,8 @@ describe('updateMonitoringFactTables', () => {
       findingIdA,
       findingIdADeleted,
       findingIdADeletedStandard,
+      findingIdNotCorrected,
+      findingIdNotReviewed,
       findingIdB,
       findingIdC,
       findingIdD,
@@ -1383,6 +1468,8 @@ describe('updateMonitoringFactTables', () => {
 
       const citation = citations[0];
       expect(citation.raw_status).toBe('Active');
+      // latest delivered review's history status is "New", which the pipeline translates to "Active"
+      expect(citation.latest_raw_history_status).toBe('New');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(true);
@@ -1473,6 +1560,29 @@ describe('updateMonitoringFactTables', () => {
   });
 
   // =====================
+  // Scenario L
+  // =====================
+  describe('Scenario L: Not Corrected / Not Reviewed history statuses translate to Active', () => {
+    it('translates a Not Corrected history status to Active', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdNotCorrected } });
+      expect(citation).not.toBeNull();
+      expect(citation.raw_status).toBe('Corrected');
+      expect(citation.latest_raw_history_status).toBe('Not Corrected');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
+    });
+
+    it('translates a Not Reviewed history status to Active', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdNotReviewed } });
+      expect(citation).not.toBeNull();
+      expect(citation.raw_status).toBe('Corrected');
+      expect(citation.latest_raw_history_status).toBe('Not Reviewed');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
+    });
+  });
+
+  // =====================
   // Scenario B
   // =====================
   describe('Scenario B: corrected finding with two reviews', () => {
@@ -1480,6 +1590,8 @@ describe('updateMonitoringFactTables', () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
       expect(citation).not.toBeNull();
       expect(citation.raw_status).toBe('Corrected');
+      // latest delivered review (B2) history status is "Corrected", passed through unchanged
+      expect(citation.latest_raw_history_status).toBe('Corrected');
       expect(citation.calculated_status).toBe('Corrected');
       expect(citation.active).toBe(false);
       expect(citation.last_review_delivered).toBe(true);
@@ -1537,6 +1649,22 @@ describe('updateMonitoringFactTables', () => {
       expect(junctions).toHaveLength(2);
     });
 
+    it('records the per-review raw_history_status on each DeliveredReviewCitation', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
+      const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
+      const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
+
+      const drcB1 = await DeliveredReviewCitation.findOne({
+        where: { citationId: citation.id, deliveredReviewId: reviewB1.id },
+      });
+      const drcB2 = await DeliveredReviewCitation.findOne({
+        where: { citationId: citation.id, deliveredReviewId: reviewB2.id },
+      });
+
+      expect(drcB1.raw_history_status).toBe('New');
+      expect(drcB2.raw_history_status).toBe('Corrected');
+    });
+
     it('creates two GrantDeliveredReview entries (one grant × two reviews)', async () => {
       const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
       const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
@@ -1580,10 +1708,13 @@ describe('updateMonitoringFactTables', () => {
   // Scenario D
   // =====================
   describe('Scenario D: undelivered current review', () => {
-    it('overrides calculated_status to Active despite Corrected raw status', async () => {
+    it('overrides calculated_status to Active despite a Corrected latest delivered history status', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdD } });
       expect(citation).not.toBeNull();
       expect(citation.raw_status).toBe('Corrected');
+      // The latest DELIVERED review (D1) says Corrected, but an undelivered follow-up
+      // (D2) is in progress, so calculated_status still overrides to Active.
+      expect(citation.latest_raw_history_status).toBe('Corrected');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(false);
@@ -2188,19 +2319,20 @@ describe('updateMonitoringFactTables', () => {
   // =====================
   // Scenario H
   // =====================
-  describe('Scenario H: Elevated Deficiency with Compliant delivered review', () => {
-    it('sets calculated_status to Corrected and active to false', async () => {
+  describe('Scenario H: Elevated Deficiency history status on a Compliant delivered review', () => {
+    it('passes the Elevated Deficiency history status through unchanged (no outcome-based coercion)', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
       expect(citation).not.toBeNull();
       expect(citation.calculated_finding_type).toBe('Deficiency');
-      expect(citation.calculated_status).toBe('Corrected');
-      expect(citation.active).toBe(false);
+      expect(citation.latest_raw_history_status).toBe('Elevated Deficiency');
+      expect(citation.calculated_status).toBe('Elevated Deficiency');
+      expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(true);
     });
 
-    it('sets active_through to the report delivery date', async () => {
+    it('leaves active_through open-ended because the finding is not resolved', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
-      expect(citation.active_through).toBe('2025-04-15');
+      expect(citation.active_through).toBe('9999-12-31');
     });
   });
 
@@ -2211,6 +2343,9 @@ describe('updateMonitoringFactTables', () => {
     it('keeps calculated_status Active when the latest review has no delivery date', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdI } });
       expect(citation).not.toBeNull();
+      // The latest DELIVERED review (I1) history status is Elevated Deficiency, but the
+      // undelivered follow-up (I2) means calculated_status still overrides to Active.
+      expect(citation.latest_raw_history_status).toBe('Elevated Deficiency');
       expect(citation.calculated_finding_type).toBe('Deficiency');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);

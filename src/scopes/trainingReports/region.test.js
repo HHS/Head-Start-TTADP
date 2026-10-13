@@ -16,7 +16,8 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-REGION-TEST-1',
+      data: { eventId: 'TR-REGION-TEST-1' },
     });
 
     // create report with region 2.
@@ -25,7 +26,8 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-REGION-TEST-2',
+      data: { eventId: 'TR-REGION-TEST-2' },
     });
 
     // create report with different region.
@@ -34,7 +36,8 @@ describe('trainingReports/region', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: 3,
-      data: {},
+      eventId: 'TR-REGION-TEST-3',
+      data: { eventId: 'TR-REGION-TEST-3' },
     });
 
     possibleIds = [reportWithRegion1.id, reportWithRegion2.id, reportWithoutRegion.id];

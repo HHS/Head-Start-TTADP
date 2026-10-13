@@ -26,14 +26,14 @@ import CollaborationReportsLanding from './pages/CollaborationReports';
 import CourseDashboard from './pages/CourseDashboard';
 import GoalDashboard from './pages/GoalDashboard';
 import GoalDashboardPrintPreview from './pages/GoalDashboard/GoalDashboardPrintPreview';
-import Home from './pages/Home';
+import LegacyHome from './pages/Home';
+import NewHome from './pages/Home/NewHome';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
 import Logout from './pages/Logout';
 import Notifications from './pages/Notifications';
 import QADashboard from './pages/QADashboard';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
-import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
@@ -49,11 +49,13 @@ import SessionReportFacilitation from './pages/SessionReportFacilitation';
 import SubmittedActivityReport from './pages/SubmittedActivityReport';
 import TrainingReportForm from './pages/TrainingReportForm';
 import TrainingReports from './pages/TrainingReports';
+import AllRegionsTtaRequestForm from './pages/TtaRequestForm/AllRegionsTtaRequestForm';
+import TtaRequests from './pages/TtaRequests';
 import Unauthenticated from './pages/Unauthenticated';
 import ViewCollabReport from './pages/ViewCollabReport';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import WhatsNewPage from './pages/WhatsNewPage';
-import isAdmin from './permissions';
+import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
 import UserContext from './UserContext';
 
 export default function Routes({
@@ -71,6 +73,7 @@ export default function Routes({
   whatsNewNotifications,
 }) {
   const admin = isAdmin(user);
+  const Home = canSeeBehindFeatureFlag(user, 'actionable_notifications') ? NewHome : LegacyHome;
 
   const locationRef = useLocation();
   const isLogoutPage = locationRef.pathname === '/logout';
@@ -226,15 +229,6 @@ export default function Routes({
         />
         <Route
           exact
-          path="/dashboards/qa-dashboard/recipients-with-no-tta"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <RecipientsWithNoTta />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
           path="/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal"
           render={() => (
             <AppWrapper authenticated logout={logout}>
@@ -258,6 +252,28 @@ export default function Routes({
             <AppWrapper authenticated logout={logout}>
               <TrainingReports user={user} match={match} />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/tta-requests"
+          render={() => (
+            <FeatureFlag renderNotFound flag="recipient_tta_request">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <TtaRequests />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/tta-requests/:ttaRequestId(new|[0-9]*)"
+          render={() => (
+            <FeatureFlag renderNotFound flag="recipient_tta_request">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <AllRegionsTtaRequestForm />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route

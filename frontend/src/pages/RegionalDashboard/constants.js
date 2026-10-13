@@ -41,7 +41,10 @@ const MONITORING_FILTER_CONFIG = [
   {
     ...startDateFilter,
     display: 'Date',
+    minDate: '2025-01-21',
+    minDateErrorMessage: 'Please enter a date on or after 01/21/2025',
   },
+  topicsFilter,
 ];
 
 // sort by display prop

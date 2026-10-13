@@ -101,7 +101,8 @@ find_in_latest_backup_list() {
 
 # Function to check if the installed version of cf CLI is at least version 8
 check_cf_version() {
-    local current_version=$(cf --version | grep "cf version" | awk '{print $3}')
+    local current_version
+    current_version=$(cf --version | grep "cf version" | awk '{print $3}')
     local minimum_version="8.0.0"
     if version_ge "$current_version" "$minimum_version"; then
         log_info "Current cf version ($current_version) is >= $minimum_version."
@@ -115,8 +116,10 @@ check_cf_version() {
 version_ge() {
     local IFS=.
     local i
-    local current=($1)
-    local minimum=($2)
+    local current
+    local minimum
+    read -ra current <<< "$1"
+    read -ra minimum <<< "$2"
 
     for ((i = 0; i < 3; i++)); do
         local current_part=${current[i]:-0}
@@ -165,7 +168,8 @@ parse_date_to_epoch() {
 
     # Try removing milliseconds if present (e.g., "2024-01-15T14:23:45.123Z" -> "2024-01-15T14:23:45Z")
     if [[ "$date_str" =~ \.[0-9]+Z$ ]]; then
-        local cleaned_date=$(echo "$date_str" | sed 's/\.[0-9]*Z$/Z/')
+        local cleaned_date
+        cleaned_date=$(echo "$date_str" | sed 's/\.[0-9]*Z$/Z/')
         if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$cleaned_date" +%s >/dev/null 2>&1; then
             date -j -f "%Y-%m-%dT%H:%M:%SZ" "$cleaned_date" +%s
             return 0
@@ -249,8 +253,10 @@ create_service_key() {
 fetch_service_key() {
     local cf_s3_service_name=$1
     local key_name=$2
-    local full_output=$(cf service-key "${cf_s3_service_name}" "${key_name}" 2>&1)
-    local credentials_json=$(echo "${full_output}" | awk '/\{/,0')
+    local full_output
+    full_output=$(cf service-key "${cf_s3_service_name}" "${key_name}" 2>&1)
+    local credentials_json
+    credentials_json=$(echo "${full_output}" | awk '/\{/,0')
     if [ -z "${credentials_json}" ]; then
         log_error "No JSON data found."
         exit 5
@@ -282,7 +288,8 @@ delete_service_key() {
 delete_service_keys() {
     local cf_s3_service_name=$1
     local current_service_key=$2
-    local current_time=$(date +%s)
+    local current_time
+    current_time=$(date +%s)
     log_info "Deleting service keys older than ${SERVICE_KEY_MAX_AGE_SECONDS}s for ${cf_s3_service_name}..."
 
     local service_guid
@@ -346,7 +353,8 @@ verify_aws_credentials() {
 find_latest_backup_file_path() {
     local bucket_name=$1
     local s3_folder=$2
-    local latest_backup_file_path=$(
+    local latest_backup_file_path
+    latest_backup_file_path=$(
         aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | \
         awk '$4 ~ /latest-backup\.txt$/ {print $1, $2, $4}' | \
         sort | \
@@ -373,7 +381,8 @@ generate_presigned_urls() {
         fi
         # Check if the file exists in the S3 bucket
         if aws s3 ls "s3://${bucket_name}/${file}" >/dev/null 2>&1; then
-            local url=$(aws s3 presign "s3://${bucket_name}/${file}" --expires-in "$PRESIGNED_URL_EXPIRATION_SECONDS")
+            local url
+            url=$(aws s3 presign "s3://${bucket_name}/${file}" --expires-in "$PRESIGNED_URL_EXPIRATION_SECONDS")
             urls+=("$url")
         else
             log_error "File s3://${bucket_name}/${file} does not exist."
@@ -388,7 +397,8 @@ generate_presigned_urls() {
 list_all_backup_files() {
     local bucket_name=$1
     local s3_folder=$2
-    local backup_files=$(aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | grep -E '\.zip|\.zenc|\.pwd|\.md5|\.sha256')
+    local backup_files
+    backup_files=$(aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | grep -E '\.zip|\.zenc|\.pwd|\.md5|\.sha256')
     if [ -z "${backup_files}" ]; then
         log_info "No backup files found in S3 bucket."
     else
@@ -484,9 +494,12 @@ download_and_verify() {
     local format=$6
 
     # Download password, SHA-256 checksum, and MD5 checksum directly into variables
-    local password=$(fetch_url "$password_url")
-    local checksum_sha256=$(fetch_url "$sha256_url")
-    local checksum_md5=$(fetch_url "$md5_url")
+    local password
+    password=$(fetch_url "$password_url")
+    local checksum_sha256
+    checksum_sha256=$(fetch_url "$sha256_url")
+    local checksum_md5
+    checksum_md5=$(fetch_url "$md5_url")
 
     # Download file
     log_info "Downloading file..."
@@ -607,8 +620,10 @@ main() {
     local delete_keys="${delete_keys:-no}"
 
     # Generate a daily service key name to enable reuse within a day.
-    local username=$(cf target | grep user | awk '{print $2}')
-    local key_name="${cf_s3_service_name}-key-${username}-$(date +%Y%m%d)"
+    local username
+    username=$(cf target | grep user | awk '{print $2}')
+    local key_name
+    key_name="${cf_s3_service_name}-key-${username}-$(date +%Y%m%d)"
     log_info "Using service key name: $key_name for service instance: $cf_s3_service_name"
 
     # Attempt to retrieve or create the service key
@@ -618,10 +633,14 @@ main() {
     credentials_json=$(fetch_service_key "$cf_s3_service_name" "$key_name")
 
     # Parse AWS credentials and bucket name from service key output
-    local aws_access_key_id=$(echo "${credentials_json}" | jq -r '.credentials.access_key_id')
-    local aws_secret_access_key=$(echo "${credentials_json}" | jq -r '.credentials.secret_access_key')
-    local aws_default_region=$(echo "${credentials_json}" | jq -r '.credentials.region')
-    local bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
+    local aws_access_key_id
+    aws_access_key_id=$(echo "${credentials_json}" | jq -r '.credentials.access_key_id')
+    local aws_secret_access_key
+    aws_secret_access_key=$(echo "${credentials_json}" | jq -r '.credentials.secret_access_key')
+    local aws_default_region
+    aws_default_region=$(echo "${credentials_json}" | jq -r '.credentials.region')
+    local bucket_name
+    bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
 
     # Set AWS environment variables to use AWS CLI
     export AWS_ACCESS_KEY_ID="$aws_access_key_id"
@@ -645,7 +664,8 @@ main() {
                 exit 8
             fi
         else
-            local latest_backup_file_path=$(find_latest_backup_file_path "$bucket_name" "$s3_folder")
+            local latest_backup_file_path
+            latest_backup_file_path=$(find_latest_backup_file_path "$bucket_name" "$s3_folder")
 
             # Download and read the latest-backup.txt file using the full path
             aws s3 cp "s3://${bucket_name}/${latest_backup_file_path}" /tmp/latest-backup.txt

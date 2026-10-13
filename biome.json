@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/*.min.js"]
+    "includes": ["**", "!**/*.min.js", "!docs/boundary_diagram.svg"]
   },
   "formatter": {
     "enabled": true,

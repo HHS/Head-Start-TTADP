@@ -28,6 +28,8 @@
   $ref: './activity-reports/downloadAlerts.yaml'
 '/activity-reports/download':
   $ref: './activity-reports/download.yaml'
+'/activity-reports/export':
+  $ref: './activity-reports/export.yaml'
 '/activity-reports/goals':
   $ref: './activity-reports/goals.yaml'
 '/activity-reports/approvers':
@@ -62,6 +64,8 @@
   $ref: './monitoring/finding-categories.yaml'
 '/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
+'/courses/dashboard':
+  $ref: './courses/dashboard.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
 '/widgets/ttaHistoryOverview':
@@ -106,3 +110,6 @@
   $ref: './session-reports/id/id.yaml'
 '/session-reports/eventId/${eventId}':
   $ref: './session-reports/eventId/eventId.yaml'
+
+'/notifications/count':
+  $ref: './notifications-count.yaml'

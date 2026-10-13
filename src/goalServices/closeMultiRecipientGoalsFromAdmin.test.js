@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { CLOSE_SUSPEND_REASONS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -20,7 +20,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
   let objectiveNotOnApprovedAr;
 
   beforeAll(async () => {
-    const regionId = faker.datatype.number({ min: 999 });
+    const regionId = faker.number.int({ min: 999, max: 999 + 99999 });
     region = await Region.create({
       id: regionId,
       name: `Region ${regionId}`,
@@ -30,21 +30,21 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
 
     goals = await Promise.all([
       Goal.create({
-        name: faker.datatype.string(999),
+        name: faker.string.sample(999),
         status: GOAL_STATUS.NOT_STARTED,
         grantId: grant.id,
         onAR: true,
         onApprovedAR: false,
       }),
       Goal.create({
-        name: faker.datatype.string(999),
+        name: faker.string.sample(999),
         status: GOAL_STATUS.NOT_STARTED,
         grantId: grant.id,
         onAR: true,
         onApprovedAR: false,
       }),
       Goal.create({
-        name: faker.datatype.string(999),
+        name: faker.string.sample(999),
         status: GOAL_STATUS.SUSPENDED,
         grantId: grant.id,
         onAR: true,
@@ -55,35 +55,35 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
     const objectives = await Objective.bulkCreate([
       {
         goalId: goals[0].id,
-        title: faker.datatype.string(999),
+        title: faker.string.sample(999),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         onAR: true,
         onApprovedAR: false,
       },
       {
         goalId: goals[0].id,
-        title: faker.datatype.string(999),
+        title: faker.string.sample(999),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         onAR: true,
         onApprovedAR: false,
       },
       {
         goalId: goals[1].id,
-        title: faker.datatype.string(999),
+        title: faker.string.sample(999),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         onAR: true,
         onApprovedAR: false,
       },
       {
         goalId: goals[1].id,
-        title: faker.datatype.string(999),
+        title: faker.string.sample(999),
         status: OBJECTIVE_STATUS.COMPLETE,
         onAR: true,
         onApprovedAR: false,
       },
       {
         goalId: goals[2].id,
-        title: faker.datatype.string(999),
+        title: faker.string.sample(999),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         onAR: true,
         onApprovedAR: false,
@@ -98,13 +98,13 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
 
     objectiveNotOnApprovedAr = await Objective.create({
       goalId: goals[1].id,
-      title: faker.datatype.string(999),
+      title: faker.string.sample(999),
       status: OBJECTIVE_STATUS.NOT_STARTED,
       onAR: true,
       onApprovedAR: false,
     });
     activeGoal = await Goal.create({
-      name: faker.datatype.string(999),
+      name: faker.string.sample(999),
       status: GOAL_STATUS.NOT_STARTED,
       grantId: grant.id,
       onAR: true,
@@ -112,7 +112,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
     });
     activeGoalObjective = await Objective.create({
       goalId: activeGoal.id,
-      title: faker.datatype.string(999),
+      title: faker.string.sample(999),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
       onAR: true,
       onApprovedAR: true,

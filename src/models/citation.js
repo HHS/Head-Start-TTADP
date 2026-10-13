@@ -56,6 +56,7 @@ export default (sequelize, DataTypes) => {
       mfid: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: true,
       },
       finding_uuid: {
         type: DataTypes.TEXT,
@@ -156,6 +157,10 @@ export default (sequelize, DataTypes) => {
       },
       latest_report_delivery_date: {
         type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      latest_raw_history_status: {
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       latest_goal_closure: {

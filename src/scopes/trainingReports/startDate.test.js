@@ -19,7 +19,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-TEST-1',
       data: {
+        eventId: 'TR-STARTDATE-TEST-1',
         startDate: '06/06/2021',
       },
     });
@@ -30,7 +32,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-TEST-2',
       data: {
+        eventId: 'TR-STARTDATE-TEST-2',
         startDate: '06/08/2021',
       },
     });
@@ -41,7 +45,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-TEST-3',
       data: {
+        eventId: 'TR-STARTDATE-TEST-3',
         startDate: '09/08/2019',
       },
     });
@@ -52,7 +58,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-TEST-4',
       data: {
+        eventId: 'TR-STARTDATE-TEST-4',
         startDate: '06/07/2021',
       },
     });
@@ -236,7 +244,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-MALFORMED-ISO',
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-ISO',
         startDate: '2021-06-09',
       },
     });
@@ -246,7 +256,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-MALFORMED-SHORTYEAR',
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-SHORTYEAR',
         startDate: '6/9/21',
       },
     });
@@ -256,7 +268,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-MALFORMED-EMPTY',
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-EMPTY',
         startDate: '',
       },
     });
@@ -266,7 +280,9 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
+      eventId: 'TR-STARTDATE-MALFORMED-INVALID',
       data: {
+        eventId: 'TR-STARTDATE-MALFORMED-INVALID',
         startDate: 'this-is-not-a-date',
       },
     });
@@ -276,7 +292,8 @@ describe('trainingReports/startDate', () => {
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
-      data: {},
+      eventId: 'TR-STARTDATE-MALFORMED-MISSING',
+      data: { eventId: 'TR-STARTDATE-MALFORMED-MISSING' },
     });
 
     try {
@@ -319,6 +336,54 @@ describe('trainingReports/startDate', () => {
           ],
         },
       });
+    }
+  });
+
+  /**
+   * Dotted dates reached the blob before the routes validated and normalized
+   * these fields (see validateDisplayDate in src/routes/events/middleware.ts),
+   * and the CASE in dateUtils.js had no dotted branch, so those rows silently
+   * sorted and filtered as NULL. New saves are normalized; these legacy rows
+   * still have to be found.
+   */
+  it('matches stored startDates in dotted formats', async () => {
+    const [dotted, paddedDotted, shortYearDotted] = await Promise.all(
+      [
+        ['TR-STARTDATE-DOTTED', '6.9.2021'],
+        ['TR-STARTDATE-DOTTED-PADDED', '06.09.2021'],
+        ['TR-STARTDATE-DOTTED-SHORTYEAR', '6.9.21'],
+      ].map(([eventId, startDate]) =>
+        EventReportPilot.create({
+          ownerId: mockUser.id,
+          pocIds: [mockUser.id],
+          collaboratorIds: [],
+          regionId: mockUser.homeRegionId,
+          eventId,
+          data: { eventId, startDate },
+        })
+      )
+    );
+
+    const ids = [dotted.id, paddedDotted.id, shortYearDotted.id];
+
+    try {
+      const filters = { 'startDate.aft': '2021/06/08' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: ids }] },
+      });
+
+      expect(found.map((f) => f.id).sort()).toEqual([...ids].sort());
+
+      const beforeFilters = { 'startDate.bef': '2021/06/08' };
+      const { trainingReport: beforeScope } = await filtersToScopes(beforeFilters);
+      const notFound = await EventReportPilot.findAll({
+        where: { [Op.and]: [beforeScope, { id: ids }] },
+      });
+
+      expect(notFound).toHaveLength(0);
+    } finally {
+      await EventReportPilot.destroy({ where: { id: ids } });
     }
   });
 });

@@ -8,7 +8,6 @@ import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { EMPTY_MULTI_SELECT } from '../../Constants';
 import { formatDateRange } from '../../utils';
-import { purposeFilter } from './communicationLogFilters';
 import FilterDateRange from './FilterDateRange';
 import FilterSelect from './FilterSelect';
 import { goalCategoryFilter } from './goalFilters';
@@ -91,12 +90,9 @@ const eventTypeFilter = {
   ),
 };
 
-export const TIMELINE_FILTER_CONFIG = [
-  dateFilter,
-  { ...purposeFilter, display: 'Communication purpose' },
-  goalCategoryFilter,
-  eventTypeFilter,
-].sort((a, b) => a.display.localeCompare(b.display));
+export const TIMELINE_FILTER_CONFIG = [dateFilter, goalCategoryFilter, eventTypeFilter].sort(
+  (a, b) => a.display.localeCompare(b.display)
+);
 
 export const createInitialTimelineFilters = (): TimelineFilter[] => [
   {

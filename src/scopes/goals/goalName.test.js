@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../../constants';
 import { Goal, Grant, Recipient } from '../../models';

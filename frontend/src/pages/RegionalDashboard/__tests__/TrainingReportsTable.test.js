@@ -166,7 +166,8 @@ describe('TrainingReportsTable', () => {
       await waitFor(() => {
         expect(getSessionReportsCSV).toHaveBeenCalledWith(
           defaultProps.sortConfig,
-          defaultProps.filters
+          defaultProps.filters,
+          null
         );
       });
     });
@@ -225,7 +226,8 @@ describe('TrainingReportsTable', () => {
         expect(getSessionReportsCSVById).toHaveBeenCalledWith(
           ['1', '2'],
           defaultProps.sortConfig,
-          defaultProps.filters
+          defaultProps.filters,
+          null
         );
       });
     });

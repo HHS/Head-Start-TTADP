@@ -178,6 +178,35 @@ const EVENT_REPORT_STATUSES = {
 
 exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
+const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
+
+exports.TIMELINE_FILTER_TOPICS = TIMELINE_FILTER_TOPICS;
+
+const TIMELINE_DATE_FILTER_CONDITIONS = ['is', 'is within', 'is on or after', 'is on or before'];
+
+exports.TIMELINE_DATE_FILTER_CONDITIONS = TIMELINE_DATE_FILTER_CONDITIONS;
+
+const TIMELINE_SELECT_FILTER_CONDITIONS = ['is', 'is not'];
+
+exports.TIMELINE_SELECT_FILTER_CONDITIONS = TIMELINE_SELECT_FILTER_CONDITIONS;
+
+const TIMELINE_EVENT_TYPES = [
+  'Email communication',
+  'Phone communication',
+  'In person communication',
+  'Virtual communication',
+  'TTA activity',
+  'Training session',
+  'Goal added',
+  'Goal suspended',
+  'Goal closed',
+  'Goal reopened',
+  'TTA request',
+  'Monitoring report received',
+];
+
+exports.TIMELINE_EVENT_TYPES = TIMELINE_EVENT_TYPES;
+
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool Children (ages 3-5)',
@@ -635,6 +664,8 @@ const NOTIFICATION_TYPES = {
   // AR-6/8: Approver requests changes (existing)
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
   ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
+  // AR-8 (TTAHUB-5683): Approver 1 notified when a second+ approver requests changes
+  ACTIVITY_REPORT_NEEDS_ACTION_APPROVER: 'changesRequestedApprover',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   //
@@ -643,10 +674,16 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_SUBMITTED_CREATOR: 'approverAssignedCreator',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
+  // TTAHUB-5581: Approver notified when another approver approves the report
+  ACTIVITY_REPORT_APPROVED_APPROVER: 'reportApprovedApprover',
   // Recipient notified when their AR is approved (existing)
   ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   // AR-4/5: Creator or collaborator re-submits a report for approval
   ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
+  // AR-4a/5a: Approver notified when a report is re-submitted for approval
+  ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover',
+  // AR-4b: Creator notified when a collaborator re-submits a report for approval
+  ACTIVITY_REPORT_RESUBMITTED_CREATOR: 'activityReportResubmittedCreator',
 
   // ── Collaborative Report ──────────────────────────────────────────────────────
   // CR-1: Creator adds collaborator

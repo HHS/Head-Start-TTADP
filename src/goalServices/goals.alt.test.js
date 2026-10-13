@@ -1,7 +1,8 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { determineMergeGoalStatus } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import fakerUnique from '../fakerUnique';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -56,7 +57,7 @@ describe('Goals DB service', () => {
     let secondGrant;
     let template;
 
-    const existingGoalName = faker.datatype.string(100);
+    const existingGoalName = faker.string.sample(100);
 
     let mockRequestData;
 
@@ -64,26 +65,26 @@ describe('Goals DB service', () => {
       user = await User.create({
         homeRegionId: 1,
         hsesUsername: faker.internet.email(),
-        hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+        hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
         email: faker.internet.email(),
-        phoneNumber: faker.phone.phoneNumber(),
-        name: faker.name.findName(),
+        phoneNumber: faker.phone.number(),
+        name: faker.person.fullName(),
         role: ['Grants Specialist'],
         lastLogin: new Date(),
       });
 
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
       });
 
       // Grant.
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -91,8 +92,8 @@ describe('Goals DB service', () => {
       });
 
       secondGrant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -107,7 +108,7 @@ describe('Goals DB service', () => {
         createdVia: 'rtr',
       });
 
-      const templateName = faker.name.firstName();
+      const templateName = faker.person.firstName();
       const secret = 'secret';
       const hash = crypto.createHmac('md5', secret).update(templateName).digest('hex');
 
@@ -252,7 +253,7 @@ describe('Goals DB service', () => {
     });
 
     it('creates a new goal', async () => {
-      const goalText = faker.datatype.string(100);
+      const goalText = faker.string.sample(100);
       const data = {
         ...mockRequestData,
         goalText,
@@ -266,7 +267,7 @@ describe('Goals DB service', () => {
     });
 
     it('creates a new report', async () => {
-      const goalText = faker.datatype.string(100);
+      const goalText = faker.string.sample(100);
       const data = {
         ...mockRequestData,
         goalText,
@@ -321,16 +322,16 @@ describe('Goals DB service', () => {
     beforeAll(async () => {
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
       });
 
       // Grant.
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),

@@ -874,6 +874,10 @@ describe('communicationLogToCsvRecord', () => {
         },
       ],
     },
+    otherStaff: [
+      { value: '5', label: 'Jane Roe' },
+      { value: '6', label: 'Sam Poe' },
+    ],
     files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.txt' }],
   };
 
@@ -890,7 +894,7 @@ describe('communicationLogToCsvRecord', () => {
       files: 'file1.txt\nfile2.txt',
       recipientNextSteps: 'Follow up with client',
       specialistNextSteps: 'Schedule a meeting',
-      otherStaff: '',
+      otherStaff: 'Jane Roe\nSam Poe',
       goals: '',
       regionId: '',
     };
@@ -921,7 +925,6 @@ describe('communicationLogToCsvRecord', () => {
       purpose: '',
       result: '',
       goals: '',
-      otherStaff: '',
       recipientNextSteps: '',
       specialistNextSteps: '',
       regionId: '',

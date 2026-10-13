@@ -21,6 +21,7 @@ const EXPORTABLE_SOURCES = {
     'last_review_delivered',
     'latest_review_uuid',
     'latest_report_delivery_date',
+    'latest_raw_history_status',
     'latest_goal_closure',
     'updatedAt',
     'deletedAt',

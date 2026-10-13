@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import db, { File } from '../models';
 import { createFileMetaData, updateStatusByKey } from './files';
 
@@ -77,7 +77,7 @@ describe('files service', () => {
       filesForCreateFileMetaData = await Promise.all([
         File.create({
           originalFileName: 'test.pdf',
-          key: faker.datatype.uuid(),
+          key: faker.string.uuid(),
           status: 'APPROVED',
           fileSize: 12345,
         }),
@@ -93,7 +93,7 @@ describe('files service', () => {
     });
 
     it('creates a file where needed', async () => {
-      const newFile = await createFileMetaData('test2.pdf', faker.datatype.uuid(), 99);
+      const newFile = await createFileMetaData('test2.pdf', faker.string.uuid(), 99);
       filesForCreateFileMetaData = [...filesForCreateFileMetaData, newFile];
       expect(newFile.originalFileName).toBe('test2.pdf');
     });

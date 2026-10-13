@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
-import parse from 'csv-parse/lib/sync';
+import { parse } from 'csv-parse/sync';
 import { downloadFile } from '../lib/s3';
 import { logger } from '../logger';
 import { Goal, GoalTemplate, Grant } from '../models';

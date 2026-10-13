@@ -13,8 +13,9 @@ const otherStaffQuery = (userId: number, exclude = false) =>
   sequelize.literal(`
   ${exclude ? 'NOT ' : ''}EXISTS (
     SELECT 1
-    FROM jsonb_array_elements(COALESCE("CommunicationLog"."data"->'otherStaff', '[]'::jsonb)) AS staff
-    WHERE staff->>'value' = ${sequelize.escape(String(userId))}
+    FROM "CommunicationLogStaff" AS cls
+    WHERE cls."communicationLogId" = "CommunicationLog".id
+      AND cls."userId" = ${sequelize.escape(userId)}
   )
 `);
 

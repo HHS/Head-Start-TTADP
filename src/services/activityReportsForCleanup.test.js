@@ -1,4 +1,4 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
@@ -12,12 +12,12 @@ import {
 import { createReport, destroyReport } from '../testUtils';
 import { activityReportsForCleanup } from './activityReports';
 
-const RECIPIENT_ID = faker.datatype.number({ min: 900 });
+const RECIPIENT_ID = faker.number.int({ min: 900, max: 900 + 99999 });
 
-const MOCK_AUTHOR_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_COLLABORATOR_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_APPROVER_ID = faker.datatype.number({ min: 11111111 });
-const MOCK_PHANTOM_USER_ID = faker.datatype.number({ min: 11111111 });
+const MOCK_AUTHOR_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
+const MOCK_COLLABORATOR_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
+const MOCK_APPROVER_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
+const MOCK_PHANTOM_USER_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
 
 const mockAuthor = {
   id: MOCK_AUTHOR_ID,
@@ -160,7 +160,13 @@ describe('Activity report cleanup service', () => {
         userId: [mockAuthor.id, mockPhantomUser.id],
       },
     });
-    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
+    // These reports share the same author, grant, recipient, and region, so
+    // destroying them concurrently races on those shared rows against the
+    // shared test database. Destroy them sequentially to avoid the race.
+    for (const r of reportsToDestroy) {
+      // eslint-disable-next-line no-await-in-loop
+      await destroyReport(r);
+    }
     await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await User.destroy({

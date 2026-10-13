@@ -4,7 +4,6 @@ import React from 'react';
 
 export default function GoalStatusChangeAlert({
   invalidStatusChangeAttempted,
-  internalLeftMargin,
   activeActivityReport,
   incompleteObjectives,
 }) {
@@ -19,12 +18,7 @@ export default function GoalStatusChangeAlert({
   const hasMultipleReasons = activeActivityReport && incompleteObjectives;
 
   return (
-    <Alert
-      type="info"
-      role="alert"
-      validation={hasMultipleReasons}
-      className={`${internalLeftMargin} margin-bottom-2`}
-    >
+    <Alert type="info" role="alert" validation={hasMultipleReasons} className="margin-bottom-2">
       {hasMultipleReasons ? (
         <>
           <p className="usa-alert__text">
@@ -48,7 +42,6 @@ export default function GoalStatusChangeAlert({
 }
 
 GoalStatusChangeAlert.propTypes = {
-  internalLeftMargin: PropTypes.string.isRequired,
   invalidStatusChangeAttempted: PropTypes.bool,
   activeActivityReport: PropTypes.bool,
   incompleteObjectives: PropTypes.bool,
