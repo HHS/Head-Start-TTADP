@@ -108,14 +108,14 @@ All major gaps were resolved with the user. Residual items to confirm during rev
 
 ## Todos (tracked in SQL)
 
-1. `scaffold-branch-pr` — feature branch exists; draft PR not yet created
+1. `scaffold-branch-pr` — complete; feature branch and draft PR #4034 created
 2. `nav-prompt-hook` — complete
 3. `nav-prompt-modal` — complete
 4. `wire-managenotifications` — complete
 5. `tests` — complete
 6. `lint-test` — complete
 7. `spec-file` — complete; see `index.md`
-8. `pr-ready` — fill PR template (Jira link, how-to-test), create draft PR
+8. `pr-ready` — complete; template-filled draft PR created; keep draft pending UI/QA review and staging smoke test
 
 ## Note on spec-handoff gate
 
@@ -123,4 +123,4 @@ Per the spec-handoff skill, the deliverable at gate 2 is the spec at `specs/noti
 followed by a stop for human approval before implementation.
 
 **Status:** The implementation is complete and verified; `index.md` is the approved, implemented spec.
-The branch is ready for draft PR creation.
+Draft PR #4034 is open and remains a draft pending UI/QA review and staging smoke test.
