@@ -178,6 +178,38 @@ describe('CollaborationReportForm', () => {
     expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
   });
 
+  it('does not offer collaborators as approvers', async () => {
+    getItem.mockReturnValue(null);
+    fetchMock.get(
+      '/api/collaboration-reports/123',
+      {
+        ...dummyReport,
+        collabReportSpecialists: [
+          { specialistId: 2, specialist: { id: 2, fullName: 'Report Collaborator' } },
+        ],
+      },
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      '/api/activity-reports/approvers?region=1',
+      [
+        { id: 1, name: 'Report Creator' },
+        { id: 2, name: 'Report Collaborator' },
+        { id: 3, name: 'Eligible Approver' },
+      ],
+      { overwriteRoutes: true }
+    );
+
+    render(<ReportComponent id="123" currentPage="review" />);
+
+    const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+    await userEvent.click(approverSelect);
+
+    expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Report Collaborator' })).not.toBeInTheDocument();
+  });
+
   it('keeps activity summary validation errors after review navigation', async () => {
     getItem.mockReturnValue(
       JSON.stringify({
@@ -1376,6 +1408,7 @@ describe('CollaborationReportForm', () => {
     it('does not redirect when report is submitted and user is an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
+        userId: 2,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [{ user: { id: 1 } }], // Same user
@@ -1396,6 +1429,27 @@ describe('CollaborationReportForm', () => {
       });
 
       expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
+    });
+
+    it.each([
+      { userId: 1, collabReportSpecialists: [] },
+      { userId: 2, collabReportSpecialists: [{ specialistId: 1 }] },
+    ])('redirects a participant assigned as approver to view: %o', async (participants) => {
+      getItem.mockReturnValue(null);
+      fetchMock.get('/api/collaboration-reports/123', {
+        ...dummyReport,
+        ...participants,
+        id: 123,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [{ user: { id: 1 }, status: null }],
+      });
+
+      render(<ReportComponent id="123" userId={1} currentPage="review" />);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
+      });
     });
 
     it('does not redirect when report is not approved and not submitted', async () => {

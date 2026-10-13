@@ -274,9 +274,13 @@ function CollaborationReport({ match, location }) {
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
             // eslint-disable-next-line max-len
-            const isApproverFromFetched = approvers.some(
-              ({ user: approver }) => user.id === approver.id
-            );
+            const isParticipant =
+              fetchedReport.userId === user.id ||
+              fetchedReport.collabReportSpecialists?.some(
+                ({ specialistId }) => specialistId === user.id
+              );
+            const isApproverFromFetched =
+              !isParticipant && approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
@@ -330,7 +334,10 @@ function CollaborationReport({ match, location }) {
           report.collabReportSpecialists &&
           report.collabReportSpecialists.some((u) => u.specialistId === user.id);
         const isAuthor = report.userId === user.id;
-        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+        const isMatchingApprover =
+          isCollaborator || isAuthor
+            ? []
+            : report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor =
           (isCollaborator || isAuthor) &&
@@ -377,15 +384,11 @@ function CollaborationReport({ match, location }) {
 
         // Determine if the current user matches any of the approvers for this collab report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
-        if (isMatchingApprover && isMatchingApprover.length > 0) {
-          // This user is an approver on the report.
-          updateIsApprover(true);
-
-          // This user is a approver on the report and has a pending approval.
-          if (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending') {
-            updateIsPendingApprover(true);
-          }
-        }
+        updateIsApprover(isMatchingApprover.length > 0);
+        updateIsPendingApprover(
+          isMatchingApprover.length > 0 &&
+            (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending')
+        );
 
         const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
