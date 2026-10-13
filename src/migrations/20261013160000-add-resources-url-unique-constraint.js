@@ -126,7 +126,7 @@ module.exports = {
             // strings) at insert time, and fail this migration outright if any already exist.
             await queryInterface.sequelize.query(
         /* sql */ `
-          CREATE UNIQUE INDEX "Resources_url_md5_unique_idx" ON "Resources" (md5(url));
+          CREATE UNIQUE INDEX IF NOT EXISTS "Resources_url_md5_unique_idx" ON "Resources" (md5(url));
         `,
                 { transaction }
             );

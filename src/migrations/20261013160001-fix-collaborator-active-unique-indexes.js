@@ -98,19 +98,19 @@ module.exports = {
         /* sql */ `
           ALTER TABLE "GoalCollaborators" DROP CONSTRAINT IF EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
           DROP INDEX IF EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
-          CREATE UNIQUE INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_active"
+          CREATE UNIQUE INDEX IF NOT EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_active"
           ON "GoalCollaborators" ("goalId", "userId", "collaboratorTypeId")
           WHERE "deletedAt" IS NULL;
 
           ALTER TABLE "ObjectiveCollaborators" DROP CONSTRAINT IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
           DROP INDEX IF EXISTS "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
-          CREATE UNIQUE INDEX "ObjectiveCollaborators_objectiveId_userId_collabTypeId_active"
+          CREATE UNIQUE INDEX IF NOT EXISTS "ObjectiveCollaborators_objectiveId_userId_collabTypeId_active"
           ON "ObjectiveCollaborators" ("objectiveId", "userId", "collaboratorTypeId")
           WHERE "deletedAt" IS NULL;
 
           ALTER TABLE "GroupCollaborators" DROP CONSTRAINT IF EXISTS "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_";
           DROP INDEX IF EXISTS "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_";
-          CREATE UNIQUE INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_active"
+          CREATE UNIQUE INDEX IF NOT EXISTS "GroupCollaborators_groupId_userId_collaboratorTypeId_active"
           ON "GroupCollaborators" ("groupId", "userId", "collaboratorTypeId")
           WHERE "deletedAt" IS NULL;
         `,
