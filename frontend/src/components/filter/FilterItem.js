@@ -48,7 +48,7 @@ export default function FilterItem({
     let willValidate = true;
 
     // no validation if you are clicking on something within the filter item
-    if (fieldset.current.contains(e.relatedTarget)) {
+    if (e.relatedTarget instanceof Node && fieldset.current.contains(e.relatedTarget)) {
       willValidate = false;
     }
 
