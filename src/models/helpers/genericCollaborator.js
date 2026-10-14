@@ -1,9 +1,9 @@
 import httpContext from 'express-http-context';
+import { isEqual } from 'lodash';
 import { Op } from 'sequelize';
 import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
-import Semaphore from '../../lib/semaphore';
-
-const semaphore = new Semaphore(1);
+import createOrFindExisting from '../../lib/createOrFindExisting';
+import withTransactionLock from '../../lib/transactionLock';
 
 const collaboratorDetails = {
   goal: {
@@ -62,6 +62,36 @@ const getIdForCollaboratorType = async (
     ...(transaction && { transaction }),
   });
 
+const buildCollaboratorValues = async (
+  genericCollaboratorType,
+  sequelize,
+  transaction,
+  entityId,
+  userId,
+  typeName,
+  linkBack
+) => {
+  const collaboratorType = await getIdForCollaboratorType(
+    genericCollaboratorType,
+    sequelize,
+    transaction,
+    typeName
+  );
+
+  if (!collaboratorType) {
+    throw new Error(
+      `No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`
+    );
+  }
+
+  return {
+    [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+    userId,
+    collaboratorTypeId: collaboratorType.id,
+    linkBack,
+  };
+};
+
 /**
  * Creates a new entity collaborator in the database.
  *
@@ -83,28 +113,17 @@ const createCollaborator = async (
   typeName,
   linkBack = null
 ) => {
-  const collaboratorType = await getIdForCollaboratorType(
+  const values = await buildCollaboratorValues(
     genericCollaboratorType,
     sequelize,
     transaction,
-    typeName
+    entityId,
+    userId,
+    typeName,
+    linkBack
   );
-
-  if (!collaboratorType) {
-    throw new Error(
-      `No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`
-    );
-  }
-
-  const { id: collaboratorTypeId } = collaboratorType;
-
   return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].create(
-    {
-      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-      userId,
-      collaboratorTypeId,
-      linkBack,
-    },
+    values,
     {
       ...(transaction && { transaction }),
     }
@@ -120,6 +139,8 @@ const createCollaborator = async (
  * @param {number} entityId - The ID of the entity.
  * @param {number} userId - The ID of the user.
  * @param {string} typeName - The name of the collaborator type.
+ * @param {boolean} [lock] - When true (and a transaction is active), locks the row with
+ * `FOR UPDATE` so a concurrent linkBack merge on the same row must wait rather than clobber it.
  * @returns {Promise<object>} - A promise that resolves to the entity collaborator record.
  */
 const getCollaboratorRecord = async (
@@ -128,38 +149,45 @@ const getCollaboratorRecord = async (
   transaction,
   entityId,
   userId,
-  typeName
+  typeName,
+  lock = false
   // Find the entity collaborator record in the database
 ) =>
-  sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].findOne(
-    {
-      where: {
-        [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-        userId,
-      },
-      include: [
-        {
-          model: sequelize.models.CollaboratorType,
-          as: 'collaboratorType',
-          required: true,
-          where: { name: typeName },
-          attributes: ['name'],
-          include: [
-            {
-              model: sequelize.models.ValidFor,
-              as: 'validFor',
-              required: true,
-              attributes: [],
-              where: { name: collaboratorDetails[genericCollaboratorType].validFor },
-            },
-          ],
-        },
-      ],
+  sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].findOne({
+    where: {
+      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+      userId,
     },
-    {
-      ...(transaction && { transaction }),
-    }
-  );
+    include: [
+      {
+        model: sequelize.models.CollaboratorType,
+        as: 'collaboratorType',
+        required: true,
+        where: { name: typeName },
+        attributes: ['name'],
+        include: [
+          {
+            model: sequelize.models.ValidFor,
+            as: 'validFor',
+            required: true,
+            attributes: [],
+            where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+          },
+        ],
+      },
+    ],
+    ...(transaction && { transaction }),
+    ...(lock &&
+      transaction?.LOCK && {
+      lock: {
+        level: transaction.LOCK.UPDATE,
+        // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
+        // locking a query with joined lookup tables ("cannot be applied to the nullable
+        // side of an outer join").
+        of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+      },
+    }),
+  });
 
 const mergeObjects = (obj1, obj2) => {
   if (obj1 === null && obj2 === null) return null;
@@ -183,6 +211,16 @@ const mergeObjects = (obj1, obj2) => {
 /**
  * Finds or creates a collaborator record in the database.
  *
+ * The unique index on (userId, entityId, collaboratorTypeId) enforces the row-uniqueness
+ * invariant at the database level, so a create race is safe on its own: the loser simply falls
+ * back to re-reading the winner's row. But merging `linkBack` onto an *existing* row is a
+ * read-modify-write that the unique index alone can't protect — two concurrent merges could
+ * both read the same starting value and one would clobber the other's write. To prevent that,
+ * the read-merge-write always runs inside a transaction with the row locked via `FOR UPDATE`,
+ * joining the caller's transaction when one is provided, or opening a short-lived one otherwise.
+ * A row lock doesn't serialize callers that share one transaction, so those are serialized with
+ * `withTransactionLock` instead.
+ *
  * @param {string} genericCollaboratorType - entity type for collaborator.
  * @param {Object} sequelize - The Sequelize instance.
  * @param {Object} transaction - The transaction object for database operations.
@@ -201,50 +239,59 @@ const findOrCreateCollaborator = async (
   typeName,
   linkBack = null
 ) => {
-  const semaphoreKey = `${entityId}_${userId}_${typeName}`;
-  await semaphore.acquire(semaphoreKey);
-  try {
-    // Check if a collaborator record already exists
+  const findOrCreateWithinTransaction = async (t) => {
     let collaborator = await getCollaboratorRecord(
       genericCollaboratorType,
       sequelize,
-      transaction,
+      t,
       entityId,
       userId,
-      typeName
+      typeName,
+      true
     );
 
-    // If no collaborator record found, create a new one
     if (!collaborator) {
-      collaborator = await createCollaborator(
-        genericCollaboratorType,
-        sequelize,
-        transaction,
-        entityId,
-        userId,
-        typeName,
-        linkBack
+      const { record, created } = await createOrFindExisting(
+        sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+        await buildCollaboratorValues(
+          genericCollaboratorType,
+          sequelize,
+          t,
+          entityId,
+          userId,
+          typeName,
+          linkBack
+        ),
+        () => getCollaboratorRecord(genericCollaboratorType, sequelize, t, entityId, userId, typeName, true),
+        t
       );
-    } else {
-      collaborator = await sequelize.models[
-        collaboratorDetails[genericCollaboratorType].collaborators
-      ].update(
-        {
-          linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
-        },
-        {
-          where: { id: collaborator.dataValues.id },
-          ...(transaction && { transaction }),
-          individualHooks: true,
-          returning: true,
-        }
-      );
+      if (created) return record;
+      collaborator = record;
     }
 
-    return collaborator;
-  } finally {
-    semaphore.release(semaphoreKey);
+    const nextLinkBack = mergeObjects(collaborator.dataValues.linkBack, linkBack);
+    // Skip the write (and its individualHooks chain) when the merge doesn't actually change
+    // anything -- the common case for call sites that always pass the same static linkBack
+    // (or null) on every save of an already-collaborated-on entity.
+    if (isEqual(nextLinkBack, collaborator.dataValues.linkBack)) return collaborator;
+
+    return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
+      {
+        linkBack: nextLinkBack,
+      },
+      {
+        where: { id: collaborator.dataValues.id },
+        transaction: t,
+        individualHooks: true,
+        returning: true,
+      }
+    );
+  };
+
+  if (transaction) {
+    return withTransactionLock(transaction, () => findOrCreateWithinTransaction(transaction));
   }
+  return sequelize.transaction(findOrCreateWithinTransaction);
 };
 
 /**
@@ -321,74 +368,88 @@ const removeCollaboratorsForType = async (
   // Extract the key-value pair from the linkBack object
   const [[linkBackKey, linkBackValues]] = Object.entries(filteredLinkBack);
 
-  // Find all entity CollaboratorType records that meet the specified criteria
-  const currentCollaboratorsForType = await sequelize.models[
-    collaboratorDetails[genericCollaboratorType].collaborators
-  ].findAll({
-    where: {
-      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-      linkBack: { [Op.contains]: filteredLinkBack },
-    },
-    include: [
-      {
-        model: sequelize.models.CollaboratorType,
-        as: 'collaboratorType',
-        required: true,
-        attributes: [],
-        where: {
-          name: typeName,
-        },
-        include: [
-          {
-            model: sequelize.models.ValidFor,
-            as: 'validFor',
-            required: true,
-            attributes: [],
-            where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+  // Siblings sharing a transaction must take turns: the FOR UPDATE lock below only guards
+  // against other transactions (see withTransactionLock).
+  await withTransactionLock(transaction, async () => {
+    // Find all entity CollaboratorType records that meet the specified criteria. Locked with
+    // `FOR UPDATE` (when a transaction is active) so this read-modify-write can't race the
+    // read-modify-write in findOrCreateCollaborator's linkBack merge above.
+    const currentCollaboratorsForType = await sequelize.models[
+      collaboratorDetails[genericCollaboratorType].collaborators
+    ].findAll({
+      where: {
+        [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+        linkBack: { [Op.contains]: filteredLinkBack },
+      },
+      include: [
+        {
+          model: sequelize.models.CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          attributes: [],
+          where: {
+            name: typeName,
           },
-        ],
-      },
-    ],
-    ...(transaction && { transaction }),
-  });
+          include: [
+            {
+              model: sequelize.models.ValidFor,
+              as: 'validFor',
+              required: true,
+              attributes: [],
+              where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+            },
+          ],
+        },
+      ],
+      ...(transaction && { transaction }),
+      ...(transaction?.LOCK && {
+        lock: {
+          level: transaction.LOCK.UPDATE,
+          // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
+          // locking a query with joined lookup tables ("cannot be applied to the nullable
+          // side of an outer join").
+          of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+        },
+      }),
+    });
 
-  if (currentCollaboratorsForType) {
-    // Separate the updates and deletes based on the conditions
-    const { updates, deletes } = currentCollaboratorsForType.reduce(
-      (acc, current) => {
-        if (current.dataValues.linkBack[linkBackKey].length > 1) {
-          // Remove the specified linkBack values from the array
-          const newLinkBack = {
-            ...current.dataValues.linkBack,
-            [linkBackKey]: current.dataValues.linkBack[linkBackKey].filter(
-              (value) => !linkBackValues.includes(value)
-            ),
-          };
-          acc.updates.push({
-            id: current.dataValues.id,
-            linkBack: newLinkBack,
-          });
-        } else if (Object.keys(current.dataValues.linkBack).length > 1) {
-          // Remove the specified linkBack key from the object
-          const newLinkBack = current.dataValues.linkBack;
-          delete newLinkBack[linkBackKey];
-          acc.updates.push({
-            id: current.dataValues.id,
-            linkBack: newLinkBack,
-          });
-        } else {
-          // Add the ID to the deletes array
-          acc.deletes.push(current.dataValues.id);
-        }
-        return acc;
-      },
-      { updates: [], deletes: [] }
-    );
+    if (currentCollaboratorsForType) {
+      // Separate the updates and deletes based on the conditions
+      const { updates, deletes } = currentCollaboratorsForType.reduce(
+        (acc, current) => {
+          if (current.dataValues.linkBack[linkBackKey].length > 1) {
+            // Remove the specified linkBack values from the array
+            const newLinkBack = {
+              ...current.dataValues.linkBack,
+              [linkBackKey]: current.dataValues.linkBack[linkBackKey].filter(
+                (value) => !linkBackValues.includes(value)
+              ),
+            };
+            acc.updates.push({
+              id: current.dataValues.id,
+              linkBack: newLinkBack,
+            });
+          } else if (Object.keys(current.dataValues.linkBack).length > 1) {
+            // Remove the specified linkBack key from the object
+            const newLinkBack = current.dataValues.linkBack;
+            delete newLinkBack[linkBackKey];
+            acc.updates.push({
+              id: current.dataValues.id,
+              linkBack: newLinkBack,
+            });
+          } else {
+            // Add the ID to the deletes array
+            acc.deletes.push(current.dataValues.id);
+          }
+          return acc;
+        },
+        { updates: [], deletes: [] }
+      );
 
-    // Update the entity CollaboratorType records and delete the specified records
-    const updatePromises =
-      updates.length > 0
-        ? updates.map(async (update) =>
+      // Update the entity CollaboratorType records and delete the specified records
+      const updatePromises =
+        updates.length > 0
+          ? updates.map(async (update) =>
             sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
               { linkBack: update.linkBack },
               {
@@ -398,18 +459,19 @@ const removeCollaboratorsForType = async (
               }
             )
           )
-        : [Promise.resolve()];
-    const deletePromise =
-      deletes.length > 0
-        ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
+          : [Promise.resolve()];
+      const deletePromise =
+        deletes.length > 0
+          ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
             where: { id: deletes },
             individualHooks: true,
             ...(transaction && { transaction }),
           })
-        : Promise.resolve();
+          : Promise.resolve();
 
-    await Promise.all([...updatePromises, deletePromise]);
-  }
+      await Promise.all([...updatePromises, deletePromise]);
+    }
+  });
 };
 
 export {

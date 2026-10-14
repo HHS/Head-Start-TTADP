@@ -8,7 +8,7 @@ function Avatar({ name }) {
   return (
     <div
       data-testid="avatar"
-      className="avatar display-flex flex-align-center flex-justify-center circle-5 text-white"
+      className="avatar ttahub-header-indicator display-flex flex-align-center flex-justify-center circle-5 text-white"
     >
       {initial}
     </div>

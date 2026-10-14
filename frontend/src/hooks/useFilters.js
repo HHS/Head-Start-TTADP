@@ -16,16 +16,18 @@ export default function useFilters(
   // `() => setResetPagination(true)` here to keep table pagination in sync
   // with filter mutations. See TTAHUB-5283.
   onFiltersChange = NOOP,
+  replaceInitialUrl = false
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const { regions, defaultRegion, hasMultipleRegions, allRegionsFilters, defaultFilters } =
     useUserDefaultRegionFilters(user, manageRegions);
 
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(filterKey, [
-    ...defaultFilters,
-    ...additionalDefaultFilters,
-  ]);
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    filterKey,
+    [...defaultFilters, ...additionalDefaultFilters],
+    replaceInitialUrl
+  );
 
   // Wrap setFilters so every filter mutation - whether driven by the
   // FilterPanel, by a region-permission modal, or by some other consumer -

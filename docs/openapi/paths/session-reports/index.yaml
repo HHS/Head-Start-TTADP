@@ -1,3 +1,49 @@
+post:
+  tags:
+    - session report
+  summary: Create a session for a training report
+  description: >-
+    Available to authorized event owners, collaborators, POCs, and admins.
+    Regional PD events with National Centers require a valid data.facilitation
+    before creation, including when the creator is an admin. Regional TTA events
+    without National Centers do not require this field.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - eventId
+            - data
+          properties:
+            eventId:
+              type: string
+              description: Training report event identifier
+              example: R08-PD-26-26848
+            data:
+              type: object
+              properties:
+                facilitation:
+                  type: string
+                  description: Required for Regional PD events with National Centers
+                  enum:
+                    - national_center
+                    - regional_tta_staff
+                    - both
+  responses:
+    '201':
+      description: Created session report
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/sessionReport'
+    '400':
+      description: Missing event ID or missing/invalid facilitation for a Regional PD event with National Centers
+    '403':
+      description: Not authorized to create a session for this event
+    '404':
+      description: Event not found
 get:
   tags:
     - session report
@@ -59,4 +105,3 @@ get:
       description: Forbidden - user does not have access to any region
     500:
       description: Internal server error
-

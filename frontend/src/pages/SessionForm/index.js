@@ -13,6 +13,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import BackLink from '../../components/BackLink';
 import Navigator from '../../components/Navigator';
+import { eventById } from '../../fetchers/event';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
@@ -20,6 +21,7 @@ import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/us
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
@@ -139,7 +141,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  const roleData = reduceDataToMatchKeys(keyArray, data);
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,
@@ -205,16 +208,8 @@ export default function SessionForm({ match }) {
 
   const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
 
-  const {
-    isPoc,
-    isAdminUser,
-    isCollaborator,
-    isOwner,
-    isApprover,
-    isNcUser,
-    applicationPages,
-    isSessionNavigationDead,
-  } = useSessionFormRoleAndPages(hookForm);
+  const { isPoc, isAdminUser, isCollaborator, isOwner, isApprover, isNcUser, applicationPages } =
+    useSessionFormRoleAndPages(hookForm);
 
   const canSelectApprover = useCanSelectApprover({
     isPoc,
@@ -268,6 +263,20 @@ export default function SessionForm({ match }) {
       }
 
       try {
+        // Alert links and direct URLs can reach this route without the event card.
+        // Resolve the organizer before creating anything so NC events cannot skip facilitation.
+        // Users who can create sessions but not read the event fall through; the create API
+        // still requires facilitation on NC events.
+        const event = await eventById(trainingReportId, true).catch(() => null);
+        if (
+          event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+        ) {
+          // This form unmounts on redirect, so its loading effect cannot clear the app loader.
+          setIsAppLoading(false);
+          history.replace(`/training-report/${trainingReportId}/session/new/choose-facilitation`);
+          return;
+        }
+
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
@@ -317,6 +326,7 @@ export default function SessionForm({ match }) {
     isAdminUser,
     user.id,
     isNcUser,
+    setIsAppLoading,
   ]);
 
   useEffect(() => {
@@ -398,12 +408,6 @@ export default function SessionForm({ match }) {
           isNcUser,
         });
 
-        // we push approvers to the review page
-        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
-          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-          return;
-        }
-
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -418,7 +422,6 @@ export default function SessionForm({ match }) {
     reportFetched,
     sessionId,
     history,
-    currentPage,
     isNcUser,
     trainingReportId,
     user.id,
@@ -492,11 +495,22 @@ export default function SessionForm({ match }) {
       try {
         // reset the error message
         setError('');
-        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
         const data = hookForm.getValues();
+        const invalidNextStepDateFields = getInvalidNextStepDateFields(data);
+        if (invalidNextStepDateFields.length) {
+          invalidNextStepDateFields.forEach((field) => {
+            hookForm.setError(field, {
+              type: 'validate',
+              message: 'Next step date must be after the session start date',
+            });
+          });
+          return;
+        }
+
+        setIsAppLoading(true);
 
         const keyArray = determineKeyArray({
           isAdminUser,
@@ -765,7 +779,6 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={isSessionNavigationDead}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}

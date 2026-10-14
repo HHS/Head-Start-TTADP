@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useSession from './useSession';
 import useUrlFilters from './useUrlFilters';
 
@@ -10,13 +10,25 @@ import useUrlFilters from './useUrlFilters';
  * @param {Object[]} defaultFilters
  * @returns {[ Object[], Function ]}
  */
-export default function useSessionFiltersAndReflectInUrl(key, defaultFilters) {
-  const [initialValue, updateUrl] = useUrlFilters(defaultFilters);
+export default function useSessionFiltersAndReflectInUrl(
+  key,
+  defaultFilters,
+  replaceInitialUrl = false
+) {
+  const [initialValue, updateUrl] = useUrlFilters(defaultFilters, key);
   const [filters, setFilters] = useSession(key, initialValue);
+  const initialSync = useRef(true);
+  const previousFilters = useRef(filters);
 
   useEffect(() => {
-    updateUrl(filters);
-  }, [filters, updateUrl]);
+    const isInitialSync = initialSync.current;
+    const explicitlyCleared =
+      !isInitialSync && previousFilters.current.length > 0 && filters.length === 0;
+    const initiallyEmpty = replaceInitialUrl && isInitialSync && filters.length === 0;
+    updateUrl(filters, replaceInitialUrl && isInitialSync, explicitlyCleared || initiallyEmpty);
+    initialSync.current = false;
+    previousFilters.current = filters;
+  }, [filters, replaceInitialUrl, updateUrl]);
 
   return [filters, setFilters];
 }

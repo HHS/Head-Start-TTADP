@@ -11,6 +11,7 @@
 import type { EventShape, SessionShape } from './types/event';
 
 export const REGIONAL_PD_WITH_NATIONAL_CENTERS = 'Regional PD Event (with National Centers)';
+export const REGIONAL_TTA_NO_NATIONAL_CENTERS = 'Regional TTA Hosted Event (no National Centers)';
 export const FACILITATION_NATIONAL_CENTER = 'national_center';
 export const NATIONAL_CENTER_ROLE_NAME = 'NC';
 
@@ -35,8 +36,8 @@ export const isNationalCenterUser = (
  * normally not involved (but may create sessions and fill `pocComplete`).
  */
 export const isNationalCenterFacilitator = (event: EventShape, session: SessionShape): boolean =>
-  event.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
-  session.data?.facilitation === FACILITATION_NATIONAL_CENTER;
+  event?.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+  session?.data?.facilitation === FACILITATION_NATIONAL_CENTER;
 
 /**
  * Single source of truth for "this session has been submitted for approval".

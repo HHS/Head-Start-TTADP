@@ -95,7 +95,8 @@ const runValidation = async ({
         'RunValidation'
       );
 
-      // Make the current run id and the severity constants available to every
+      // Make the current run id and the severity constants (including
+      // team_notification - see VALIDATION_ALERT_SEVERITY) available to every
       // query in this transaction without interpolating them into each one, so a
       // check's SQL can also be run by hand. ON COMMIT DROP so no stale values can
       // be seen by a later transaction on the same pooled connection.
@@ -106,7 +107,11 @@ const runValidation = async ({
         CREATE TEMP TABLE validation_run
         ON COMMIT DROP
         AS
-        SELECT :runId::bigint run_id, :critical::text critical, :alert::text alert
+        SELECT
+          :runId::bigint run_id,
+          :critical::text critical,
+          :alert::text alert,
+          :teamNotification::text team_notification
         ;
         `,
         {
@@ -116,6 +121,7 @@ const runValidation = async ({
             runId,
             critical: VALIDATION_ALERT_SEVERITY.CRITICAL,
             alert: VALIDATION_ALERT_SEVERITY.ALERT,
+            teamNotification: VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION,
           },
         }
       );
