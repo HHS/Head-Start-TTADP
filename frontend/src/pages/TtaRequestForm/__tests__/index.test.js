@@ -401,6 +401,21 @@ describe('TtaRequestForm', () => {
     expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
   });
 
+  it.each(['/tta-requests/0', '/tta-requests/00'])(
+    'treats %s as a request that cannot load, not a new one',
+    async (path) => {
+      renderFormAt(path, {
+        recipient: RECIPIENT,
+        recipientOptions: [RECIPIENT],
+        regionId: 14,
+      });
+
+      expect(await screen.findByText('Unable to load the TTA request.')).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+      expect(fetchMock.called('begin:/api/tta-requests')).toBe(false);
+    }
+  );
+
   it('autosaves a loaded draft only once something has changed', async () => {
     fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
     fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);

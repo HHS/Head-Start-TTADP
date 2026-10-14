@@ -16,6 +16,7 @@ import {
   AUTOSAVE_INTERVAL,
   DATE_DISPLAY_SAVED_FORMAT,
   defaultValues,
+  LOAD_ERROR,
   NO_REGION_ERROR,
   SAVE_ERROR,
   TTA_REQUEST_FIELDS,
@@ -76,9 +77,14 @@ export default function TtaRequestForm({
     setAppLoadingText: (text: string) => void;
   };
 
-  // the id of the request being edited, from the route or from this form's first save
+  // only a "new" route starts a request; any other id must load one, or say it can't
+  const isNewRequest = ttaRequestIdParam === undefined || ttaRequestIdParam === 'new';
+  const parsedRouteId = isNewRequest ? null : Number(ttaRequestIdParam);
   const routeId =
-    ttaRequestIdParam && ttaRequestIdParam !== 'new' ? Number(ttaRequestIdParam) : null;
+    parsedRouteId !== null && Number.isSafeInteger(parsedRouteId) && parsedRouteId > 0
+      ? parsedRouteId
+      : null;
+  // the id of the request being edited, from the route or from this form's first save
   const ttaRequestIdRef = useRef<number | null>(routeId);
 
   const hookForm = useForm({
@@ -94,7 +100,7 @@ export default function TtaRequestForm({
   const { isDirty } = formState;
 
   const fetchSavedRequest = useCallback(async (): Promise<TtaRequestResponse | null> => {
-    if (!routeId) {
+    if (routeId === null) {
       return null;
     }
     return getTtaRequest(routeId);
@@ -104,7 +110,7 @@ export default function TtaRequestForm({
     null,
     fetchSavedRequest,
     [routeId],
-    'Unable to load the TTA request.',
+    LOAD_ERROR,
     true
   );
 
@@ -166,7 +172,7 @@ export default function TtaRequestForm({
     const ttaRequestId = ttaRequestIdRef.current;
 
     // a new request needs its region, which comes from the grant until one is chosen
-    if (!ttaRequestId && !effectiveRegionId) {
+    if (ttaRequestId === null && !effectiveRegionId) {
       if (!isAutoSave) {
         setSaveError(NO_REGION_ERROR);
       }
@@ -182,7 +188,7 @@ export default function TtaRequestForm({
       const payload = toApiPayload(getValues() as TtaRequestFormValues);
 
       let saved: TtaRequestResponse;
-      if (ttaRequestId) {
+      if (ttaRequestId !== null) {
         saved = await saveTtaRequest(ttaRequestId, payload);
       } else {
         saved = await createTtaRequest({ ...payload, regionId: effectiveRegionId });
@@ -234,11 +240,13 @@ export default function TtaRequestForm({
   };
 
   // nothing to show until the draft in the route has been fetched, as the other forms wait for
-  // their report; the form's defaults would otherwise be saved over it
-  if (routeId && !savedRequest) {
-    return loadError ? (
+  // their report; the form's defaults would otherwise be saved over it. An id that can't be a
+  // request's has nothing to fetch.
+  if (!isNewRequest && !savedRequest) {
+    const error = routeId === null ? LOAD_ERROR : loadError;
+    return error ? (
       <Alert type="error" headingLevel="h4" className="margin-bottom-3">
-        {loadError}
+        {error}
       </Alert>
     ) : null;
   }
