@@ -115,10 +115,6 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 db.descriptiveDetails = descriptiveDetails;
 db.isConnectionOpen = isConnectionOpen;
-// The CLS namespace Sequelize uses for ambient transactions. Prefer this over
-// cls.getNamespace('transaction'), which can resolve to a different namespace when
-// cls-hooked is loaded more than once (e.g. jest automocks).
-db.transactionNamespace = namespace;
 
 module.exports = db;
 

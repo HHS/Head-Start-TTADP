@@ -94,6 +94,20 @@ const waitForCalls = async (mockFn, count, timeoutMs = 2000) => {
   }
 };
 
+const waitForFileStatus = async (fileId, status, timeoutMs = 2000) => {
+  const start = Date.now();
+  let file = await File.findByPk(fileId);
+  while (file?.status !== status && Date.now() - start < timeoutMs) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    // eslint-disable-next-line no-await-in-loop
+    file = await File.findByPk(fileId);
+  }
+  return file;
+};
+
 const mockUser = {
   id: 2046,
   hsesUserId: '2046',
@@ -266,7 +280,6 @@ describe('File Upload', () => {
         });
     });
     it('tests a queuing failure', async () => {
-      const updateStatus = jest.spyOn(Files, 'updateStatus');
       addToScanQueue.mockImplementation(() => {
         throw new Error('Scanning failed (mock error)');
       });
@@ -276,26 +289,17 @@ describe('File Upload', () => {
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
 
-      await request(app)
+      const res = await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(200);
 
-      // queueing happens after the request transaction commits
-      await waitForCalls(updateStatus, 3);
+      const [{ id: fileId }] = res.body;
+      // queueing happens after the response is sent
+      const file = await waitForFileStatus(fileId, FILE_STATUSES.QUEUEING_FAILED);
       expect(uploadFile).toHaveBeenCalled();
       expect(addToScanQueue).toHaveBeenCalled();
-
-      const statuses = updateStatus.mock.calls.map(([, status]) => status);
-      expect(statuses).toEqual([
-        FILE_STATUSES.UPLOADED,
-        FILE_STATUSES.QUEUED,
-        FILE_STATUSES.QUEUEING_FAILED,
-      ]);
-
-      const [[fileId]] = updateStatus.mock.calls;
-      const file = await File.findByPk(fileId);
       expect(file.status).toBe(FILE_STATUSES.QUEUEING_FAILED);
     });
     it('only queues the scan once the file record is committed', async () => {

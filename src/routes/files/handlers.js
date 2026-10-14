@@ -7,7 +7,7 @@ import { FILE_STATUSES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { deleteFileFromS3, getSignedDownloadUrl, uploadFile } from '../../lib/s3';
 import { auditLogger, logger } from '../../logger';
-import { ActivityReport, ActivityReportObjective, transactionNamespace } from '../../models';
+import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import EventPolicy from '../../policies/event';
@@ -30,11 +30,13 @@ import {
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
   getFileById,
+  markFilesQueuedForScan,
+  queueFilesForScan,
   updateStatus,
 } from '../../services/files';
-import addToScanQueue from '../../services/scanQueue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const multiparty = require('multiparty');
 
@@ -44,7 +46,7 @@ const logContext = {
   namespace,
 };
 
-const { UPLOADED, UPLOAD_FAILED, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
+const { UPLOADED, UPLOAD_FAILED } = FILE_STATUSES;
 
 const altFileTypes = [
   {
@@ -426,20 +428,6 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
   };
 };
 
-const queueFilesForScan = (files) =>
-  Promise.all(
-    files.map(async (data) => {
-      try {
-        await addToScanQueue({ key: data.key });
-      } catch (err) {
-        auditLogger.error(
-          `${logContext.namespace}:uploadHandler Failed to queue ${data.originalFileName}. Error: ${err}`
-        );
-        await updateStatus(data.id, QUEUEING_FAILED);
-      }
-    })
-  );
-
 const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
 
@@ -527,34 +515,22 @@ const uploadHandler = async (req, res) => {
     })
   );
 
-  if (!res.headersSent) {
-    if (error) {
-      res.status(status).send({ error });
-    } else {
-      res.status(httpCodes.OK).send(fileResponse);
+  // Set QUEUED inside the transaction, before any scan job exists.
+  await markFilesQueuedForScan(fileResponse);
+
+  // Respond and queue scans only once the File rows are committed. The scan worker looks
+  // files up by key, and the client shouldn't get IDs for rows that might be rolled back.
+  onTransactionCommitted(req, async () => {
+    if (!res.headersSent) {
+      if (error) {
+        res.status(status).send({ error });
+      } else {
+        res.status(httpCodes.OK).send(fileResponse);
+      }
     }
-  }
-
-  // Mark files QUEUED inside the request transaction, before the scan job exists, so the
-  // worker's later SCANNING/APPROVED updates can't be overwritten by this one.
-  await Promise.all(fileResponse.map((data) => updateStatus(data.id, QUEUED)));
-
-  // The scan worker looks the File row up by key, so the job must not be enqueued until the
-  // row is committed. Otherwise the worker can run first, find nothing, and drop the job
-  // with "File with key not found." leaving the file unscanned.
-  const transaction = transactionNamespace.get('transaction');
-  if (transaction) {
-    // afterCommit hooks still run inside the request's CLS context, which holds the now
-    // finished transaction; clear it so any QUEUEING_FAILED update runs on its own.
-    transaction.afterCommit(() =>
-      transactionNamespace.runPromise(() => {
-        transactionNamespace.set('transaction', undefined);
-        return queueFilesForScan(fileResponse);
-      })
-    );
-    return undefined;
-  }
-  return queueFilesForScan(fileResponse);
+    await queueFilesForScan(fileResponse);
+  });
+  return undefined;
 };
 
 async function deleteActivityReportObjectiveFile(req, res) {
