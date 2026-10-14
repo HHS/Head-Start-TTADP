@@ -1,5 +1,6 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { PassThrough } from 'node:stream';
 import RedisMock from 'ioredis-mock';
 import { WebSocket } from 'ws';
 import {
@@ -8,6 +9,7 @@ import {
   PRESENCE_TTL_MS,
   parseClientMessage,
   presenceKey,
+  presenceMetaKey,
   type RealtimeUser,
   summarizePresence,
 } from '.';
@@ -22,6 +24,7 @@ const USERS: Record<string, RealtimeUser> = {
 type Message = {
   type: string;
   room: string;
+  epoch?: string;
   version?: number;
   users?: unknown[];
   event?: string;
@@ -90,6 +93,20 @@ describe('realtime', () => {
       ]);
     });
 
+    it('counts a reconnected tab once while its old connection lingers', () => {
+      const now = Date.now();
+      const { users } = summarizePresence(
+        {
+          oldConnection: JSON.stringify({ userId: 1, username: 'Alice', tabId: 't1', seen: now }),
+          newConnection: JSON.stringify({ userId: 1, username: 'Alice', tabId: 't1', seen: now }),
+          otherTab: JSON.stringify({ userId: 1, username: 'Alice', tabId: 't2', seen: now }),
+        },
+        now
+      );
+
+      expect(users).toEqual([{ userId: 1, username: 'Alice', tabs: 2 }]);
+    });
+
     it('drops entries that were not refreshed in time or cannot be parsed', () => {
       const now = Date.now();
       const { users, stale } = summarizePresence(
@@ -114,6 +131,11 @@ describe('realtime', () => {
       ['{"type":"join","room":"other-1"}', null],
       ['{"type":"publish","room":"ar-1"}', null],
       ['{"type":"join"}', null],
+      [
+        '{"type":"join","room":"ar-1","tabId":"tab-1"}',
+        { type: 'join', room: 'ar-1', tabId: 'tab-1' },
+      ],
+      ['{"type":"join","room":"ar-1","tabId":"<bad>"}', { type: 'join', room: 'ar-1' }],
       ['not json', null],
     ])('parses %s', (raw, expected) => {
       expect(parseClientMessage(Buffer.from(raw))).toEqual(expected);
@@ -127,6 +149,7 @@ describe('realtime', () => {
     let realtime: ReturnType<typeof createRealtimeServer>;
     const clients: ReturnType<typeof openClient>[] = [];
     const authorize = jest.fn();
+    const authenticate = jest.fn();
     const HEARTBEAT_TEST_MS = 50;
 
     const connect = async (user?: string, options?: { autoPong?: boolean }) => {
@@ -141,10 +164,14 @@ describe('realtime', () => {
       await redis.flushall();
       authorize.mockReset();
       authorize.mockResolvedValue(true);
+      authenticate.mockReset();
+      authenticate.mockImplementation(
+        async (req: IncomingMessage) => USERS[req.headers['x-test-user'] as string] || null
+      );
       server = createServer();
       realtime = createRealtimeServer({
         server,
-        authenticate: async (req) => USERS[req.headers['x-test-user'] as string] || null,
+        authenticate,
         authorize,
         redis,
         subscriber: redis.duplicate(),
@@ -170,6 +197,29 @@ describe('realtime', () => {
 
     it('rejects connections without an authenticated user', async () => {
       await expect(connect()).rejects.toThrow('401');
+    });
+
+    it('survives a client resetting the connection while authentication is pending', async () => {
+      let finishAuth: (user: RealtimeUser) => void;
+      authenticate.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishAuth = resolve;
+          })
+      );
+      const socket = new PassThrough();
+      const req = { headers: {}, url: '/' } as IncomingMessage;
+
+      server.emit('upgrade', req, socket, Buffer.alloc(0));
+      // with no listener, emitting 'error' throws, as an uncaught ECONNRESET would
+      expect(() => socket.emit('error', new Error('read ECONNRESET'))).not.toThrow();
+      socket.destroy();
+      finishAuth(USERS.alice);
+      await new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+
+      expect(socket.destroyed).toBe(true);
     });
 
     it('refuses joins the user is not authorized for', async () => {
@@ -229,6 +279,84 @@ describe('realtime', () => {
       const second = await alice.next(presenceWith(2));
 
       expect(second.version).toBeGreaterThan(first.version);
+      expect(second.epoch).toBe(first.epoch);
+    });
+
+    it('starts a new epoch if Redis loses the version counter', async () => {
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-5' });
+      const first = await alice.next(presenceWith(1));
+
+      await redis.del(presenceMetaKey('ar-5'));
+      const bob = await connect('bob');
+      bob.send({ type: 'join', room: 'ar-5' });
+      const afterReset = await alice.next(presenceWith(2));
+
+      expect(afterReset.version).toBe(1);
+      expect(afterReset.epoch).not.toBe(first.epoch);
+    });
+
+    it('counts a reconnect from the same tab as one tab', async () => {
+      const first = await connect('alice');
+      first.send({ type: 'join', room: 'ar-6', tabId: 'tab-a' });
+      await first.next(presenceWith(1));
+
+      // the old connection is still registered when the tab reconnects
+      const reconnected = await connect('alice');
+      reconnected.send({ type: 'join', room: 'ar-6', tabId: 'tab-a' });
+      const update = await first.next(
+        (m) => m.type === 'presence' && m.version > 1 && m.users.length === 1
+      );
+
+      expect(update.users).toEqual([{ userId: 1, username: 'Alice', tabs: 1 }]);
+      expect(Object.keys(await redis.hgetall(presenceKey('ar-6')))).toHaveLength(2);
+    });
+
+    it('keeps a stale entry that its instance refreshes before cleanup, and republishes', async () => {
+      const ghost = JSON.stringify({
+        userId: 2,
+        username: 'Bob',
+        tabId: 'bob-tab',
+        seen: Date.now() - PRESENCE_TTL_MS - 1000,
+      });
+      await redis.hset(presenceKey('ar-3'), 'bob-connection', ghost);
+
+      // another instance refreshes Bob's entry between our snapshot and the cleanup
+      const realEval = redis.eval.bind(redis);
+      jest.spyOn(redis, 'eval').mockImplementationOnce(async (...args: unknown[]) => {
+        await redis.hset(
+          presenceKey('ar-3'),
+          'bob-connection',
+          JSON.stringify({ userId: 2, username: 'Bob', tabId: 'bob-tab', seen: Date.now() })
+        );
+        return realEval(...(args as Parameters<typeof realEval>));
+      });
+
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-3' });
+
+      const repaired = await alice.next(presenceWith(2));
+      expect(repaired.users).toEqual(
+        expect.arrayContaining([expect.objectContaining({ userId: 2, tabs: 1 })])
+      );
+      expect(await redis.hget(presenceKey('ar-3'), 'bob-connection')).not.toBe(ghost);
+    });
+
+    it('removes stale entries that nobody refreshed', async () => {
+      await redis.hset(
+        presenceKey('ar-2'),
+        'dead-connection',
+        JSON.stringify({ userId: 2, username: 'Bob', seen: Date.now() - PRESENCE_TTL_MS - 1000 })
+      );
+
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-2' });
+      await alice.next(presenceWith(1));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+
+      expect(await redis.hexists(presenceKey('ar-2'), 'dead-connection')).toBe(0);
     });
 
     it('drops sockets that stop answering pings, even before joining a room', async () => {
@@ -330,7 +458,7 @@ describe('realtime', () => {
 
       expect(await redis.hgetall(presenceKey('ar-7'))).toEqual({});
       // afterEach closes again; make that a no-op-safe second close
-      realtime = { ready: async () => {}, close: async () => {} };
+      realtime = { ready: async () => {}, close: async () => {} } as typeof realtime;
     });
   });
 });

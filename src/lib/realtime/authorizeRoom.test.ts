@@ -1,75 +1,151 @@
-import ActivityReportPolicy from '../../policies/activityReport';
-import CollabReportPolicy from '../../policies/collabReport';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
-import { collabReportById } from '../../services/collabReports';
-import { userById } from '../../services/users';
+import { REPORT_STATUSES } from '@ttahub/common';
+import SCOPES from '../../middleware/scopeConstants';
+import db from '../../models';
+import { createReport, createUser, destroyReport, getUniqueId } from '../../testUtils';
 import authorizeRoom from './authorizeRoom';
 
-jest.mock('../../policies/activityReport');
-jest.mock('../../policies/collabReport');
-jest.mock('../../services/activityReports', () => ({
-  activityReportAndRecipientsById: jest.fn(),
-}));
-jest.mock('../../services/collabReports', () => ({ collabReportById: jest.fn() }));
-jest.mock('../../services/users', () => ({ userById: jest.fn() }));
+const {
+  ActivityReportApprover,
+  ActivityReportCollaborator,
+  CollabReport,
+  CollabReportApprover,
+  CollabReportSpecialist,
+  Permission,
+  User,
+} = db;
 
-const user = { userId: 3, username: 'Sam' };
-const fullUser = { id: 3, permissions: [] };
-
-const policyThat = (canGet: boolean) =>
-  jest.fn().mockImplementation(() => ({ canGet: () => canGet }));
-
+// Runs against the database so the trimmed policy queries are checked against
+// the real associations, not just mocks.
 describe('authorizeRoom', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-    (userById as jest.Mock).mockResolvedValue(fullUser);
+  const REGION = 1;
+  let author;
+  let collaborator;
+  let approver;
+  let regionalReader;
+  let outsider;
+  let draftReport;
+  let approvedReport;
+  let collabReport;
+
+  const asRealtimeUser = (user) => ({ userId: user.id, username: user.name });
+
+  beforeAll(async () => {
+    [author, collaborator, approver, regionalReader, outsider] = await Promise.all(
+      Array.from({ length: 5 }, () => createUser({ homeRegionId: REGION }))
+    );
+    await Permission.create({
+      userId: regionalReader.id,
+      regionId: REGION,
+      scopeId: SCOPES.READ_REPORTS,
+    });
+
+    const activityRecipients = [{ grantId: getUniqueId() }];
+    [draftReport, approvedReport] = await Promise.all([
+      createReport({
+        activityRecipients,
+        userId: author.id,
+        regionId: REGION,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      }),
+      createReport({
+        activityRecipients: [{ grantId: getUniqueId() }],
+        userId: author.id,
+        regionId: REGION,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      }),
+    ]);
+    await Promise.all([
+      ActivityReportCollaborator.create({
+        activityReportId: draftReport.id,
+        userId: collaborator.id,
+      }),
+      ActivityReportApprover.create({ activityReportId: draftReport.id, userId: approver.id }),
+    ]);
+
+    collabReport = await CollabReport.create({
+      name: 'Realtime room test',
+      regionId: REGION,
+      startDate: '2026-01-01',
+      endDate: '2026-01-02',
+      duration: 1,
+      userId: author.id,
+      conductMethod: 'email',
+      isStateActivity: false,
+      description: 'Realtime room test',
+      submissionStatus: REPORT_STATUSES.DRAFT,
+    });
+    await Promise.all([
+      CollabReportSpecialist.create({
+        collabReportId: collabReport.id,
+        specialistId: collaborator.id,
+      }),
+      CollabReportApprover.create({ collabReportId: collabReport.id, userId: approver.id }),
+    ]);
   });
 
-  it('allows an activity report room when the user can get the report', async () => {
-    const report = { id: 10 };
-    (activityReportAndRecipientsById as jest.Mock).mockResolvedValue([report, [], []]);
-    (ActivityReportPolicy as jest.Mock).mockImplementation(policyThat(true));
-
-    expect(await authorizeRoom(user, 'ar-10')).toBe(true);
-    expect(activityReportAndRecipientsById).toHaveBeenCalledWith('10');
-    expect(ActivityReportPolicy).toHaveBeenCalledWith(fullUser, report);
+  afterAll(async () => {
+    // collab report first: destroyReport also removes the author once they have no reports
+    await CollabReportSpecialist.destroy({
+      where: { collabReportId: collabReport.id },
+      force: true,
+    });
+    await CollabReportApprover.destroy({
+      where: { collabReportId: collabReport.id },
+      force: true,
+    });
+    await CollabReport.destroy({ where: { id: collabReport.id }, force: true });
+    await ActivityReportCollaborator.destroy({ where: { activityReportId: draftReport.id } });
+    await ActivityReportApprover.destroy({
+      where: { activityReportId: draftReport.id },
+      force: true,
+    });
+    await destroyReport(draftReport);
+    await destroyReport(approvedReport);
+    await Permission.destroy({ where: { userId: regionalReader.id } });
+    await User.destroy({
+      where: { id: [author, collaborator, approver, regionalReader, outsider].map((u) => u.id) },
+    });
   });
 
-  it('denies an activity report room when the user cannot get the report', async () => {
-    (activityReportAndRecipientsById as jest.Mock).mockResolvedValue([{ id: 10 }, [], []]);
-    (ActivityReportPolicy as jest.Mock).mockImplementation(policyThat(false));
+  it('lets the author, collaborators, and approvers into a draft activity report room', async () => {
+    const room = `ar-${draftReport.id}`;
 
-    expect(await authorizeRoom(user, 'ar-10')).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(author), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(collaborator), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(approver), room)).toBe(true);
   });
 
-  it('denies a room for a report that does not exist', async () => {
-    (activityReportAndRecipientsById as jest.Mock).mockResolvedValue([null, [], []]);
+  it('keeps everyone else out of a draft activity report room', async () => {
+    const room = `ar-${draftReport.id}`;
 
-    expect(await authorizeRoom(user, 'ar-10')).toBe(false);
-    expect(ActivityReportPolicy).not.toHaveBeenCalled();
+    expect(await authorizeRoom(asRealtimeUser(regionalReader), room)).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(outsider), room)).toBe(false);
   });
 
-  it('checks collaboration report rooms against the collab report policy', async () => {
-    const report = { id: 4 };
-    (collabReportById as jest.Mock).mockResolvedValue(report);
-    (CollabReportPolicy as jest.Mock).mockImplementation(policyThat(true));
+  it('lets regional readers into an approved activity report room', async () => {
+    const room = `ar-${approvedReport.id}`;
 
-    expect(await authorizeRoom(user, 'cr-4')).toBe(true);
-    expect(collabReportById).toHaveBeenCalledWith('4');
-    expect(CollabReportPolicy).toHaveBeenCalledWith(fullUser, report);
-
-    (CollabReportPolicy as jest.Mock).mockImplementation(policyThat(false));
-    expect(await authorizeRoom(user, 'cr-4')).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(regionalReader), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(outsider), room)).toBe(false);
   });
 
-  it('denies when the user cannot be loaded', async () => {
-    (userById as jest.Mock).mockResolvedValue(null);
-    (collabReportById as jest.Mock).mockResolvedValue({ id: 4 });
+  it('applies the collaboration report policy to collaboration report rooms', async () => {
+    const room = `cr-${collabReport.id}`;
 
-    expect(await authorizeRoom(user, 'cr-4')).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(author), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(collaborator), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(approver), room)).toBe(true);
+    expect(await authorizeRoom(asRealtimeUser(outsider), room)).toBe(false);
+  });
+
+  it('denies rooms for reports that do not exist', async () => {
+    expect(await authorizeRoom(asRealtimeUser(author), 'ar-999999999')).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(author), 'cr-999999999')).toBe(false);
   });
 
   it('denies unknown room types', async () => {
-    expect(await authorizeRoom(user, 'tr-4')).toBe(false);
+    expect(await authorizeRoom(asRealtimeUser(author), `tr-${draftReport.id}`)).toBe(false);
   });
 });

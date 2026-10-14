@@ -9,6 +9,7 @@ import { createRealtimeServer } from './lib/realtime';
 import authenticateUpgrade from './lib/realtime/authenticateUpgrade';
 import authorizeRoom from './lib/realtime/authorizeRoom';
 import { auditLogger } from './logger';
+import { onShutdown } from './processHandler';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 Error.stackTraceLimit = 50;
@@ -25,23 +26,17 @@ if (!bypassSockets) {
     authorize: authorizeRoom,
   });
 
-  realtime
-    .ready()
-    .then(() => {
-      process.on('SIGINT', async () => {
-        // removes this instance's presence entries, closes sockets, and releases redis
-        await realtime.close();
+  // runs on SIGTERM (deploys and restarts) as well as SIGINT, so this instance's
+  // presence entries are removed instead of lingering as phantom tabs
+  onShutdown(() => realtime.close());
 
-        process.exit(0);
-      });
-    })
-    .catch((err: unknown) => {
-      auditLogger.alertError(
-        'Failed to initialize realtime server:',
-        'startup_realtime_init_failure',
-        err
-      );
-    });
+  realtime.ready().catch((err: unknown) => {
+    auditLogger.alertError(
+      'Failed to initialize realtime server:',
+      'startup_realtime_init_failure',
+      err
+    );
+  });
 }
 
 export default server;

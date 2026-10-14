@@ -6,14 +6,18 @@
  * presence so every instance sees the same set of users.
  *
  * Protocol (JSON text frames):
- *   client -> server  { type: 'join' | 'leave', room }
- *   server -> client  { type: 'presence', room, version, users: [{ userId, username, tabs }] }
+ *   client -> server  { type: 'join', room, tabId? } | { type: 'leave', room }
+ *   server -> client  { type: 'presence', room, epoch, version, users: [{ userId, username, tabs }] }
  *                     { type: 'event', room, event, data }
  *                     { type: 'error', room, error: 'forbidden' }
  *
  * Presence snapshots can reach a client out of order when several instances
  * publish at once; `version` increases with every snapshot so clients can
- * ignore stale ones.
+ * ignore stale ones. `epoch` changes if Redis loses the counter, telling
+ * clients to start comparing versions over.
+ *
+ * `tabId` identifies the browser tab, so a reconnect from the same tab is not
+ * counted as a second tab while the old connection's entry is still around.
  */
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, Server } from 'node:http';
@@ -33,7 +37,22 @@ export const PRESENCE_TTL_MS = HEARTBEAT_MS * 3;
 const MAX_PAYLOAD_BYTES = 4 * 1024;
 
 export const presenceKey = (room: string) => `realtime:presence:${room}`;
-export const presenceVersionKey = (room: string) => `realtime:presence-version:${room}`;
+export const presenceMetaKey = (room: string) => `realtime:presence-meta:${room}`;
+const TAB_ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
+
+// Deletes each field only if it still holds the value that was read as stale,
+// so an entry another instance refreshed in the meantime survives.
+// KEYS[1] = presence hash; ARGV = field1, value1, field2, value2, ...
+const DELETE_IF_UNCHANGED = `
+local removed = 0
+for i = 1, #ARGV, 2 do
+  if redis.call('HGET', KEYS[1], ARGV[i]) == ARGV[i + 1] then
+    redis.call('HDEL', KEYS[1], ARGV[i])
+    removed = removed + 1
+  end
+end
+return removed
+`;
 
 export interface RealtimeUser {
   userId: number;
@@ -46,10 +65,12 @@ export interface PresenceUser extends RealtimeUser {
 
 interface PresenceEntry extends RealtimeUser {
   seen: number;
+  tabId?: string;
 }
 
 interface Client extends RealtimeUser {
   id: string;
+  tabId: string;
   ws: WebSocket;
   rooms: Set<string>;
   isAlive: boolean;
@@ -58,7 +79,7 @@ interface Client extends RealtimeUser {
 }
 
 type RoomMessage =
-  | { type: 'presence'; room: string; version: number; users: PresenceUser[] }
+  | { type: 'presence'; room: string; epoch: string; version: number; users: PresenceUser[] }
   | { type: 'event'; room: string; event: string; data: unknown };
 
 export type Authenticate = (req: IncomingMessage) => Promise<RealtimeUser | null>;
@@ -79,15 +100,15 @@ export async function broadcastRoom(
 }
 
 /**
- * Collapses per-connection presence entries into one row per user, dropping
- * entries that have not been refreshed recently. Returns the users and the
- * connection ids that were stale.
+ * Collapses per-connection presence entries into one row per user, counting
+ * distinct tabs and dropping entries that have not been refreshed recently.
+ * Returns the users and the connection ids that were stale.
  */
 export function summarizePresence(
   entries: Record<string, string>,
   now = Date.now()
 ): { users: PresenceUser[]; stale: string[] } {
-  const byUser = new Map<number, PresenceUser>();
+  const byUser = new Map<number, { username: string; tabs: Set<string> }>();
   const stale: string[] = [];
 
   Object.entries(entries).forEach(([connectionId, raw]) => {
@@ -102,18 +123,23 @@ export function summarizePresence(
       stale.push(connectionId);
       return;
     }
-    const existing = byUser.get(entry.userId);
-    if (existing) {
-      existing.tabs += 1;
-    } else {
-      byUser.set(entry.userId, { userId: entry.userId, username: entry.username, tabs: 1 });
+    if (!byUser.has(entry.userId)) {
+      byUser.set(entry.userId, { username: entry.username, tabs: new Set() });
     }
+    byUser.get(entry.userId).tabs.add(entry.tabId || connectionId);
   });
 
-  return { users: [...byUser.values()], stale };
+  const users = [...byUser].map(([userId, { username, tabs }]) => ({
+    userId,
+    username,
+    tabs: tabs.size,
+  }));
+  return { users, stale };
 }
 
-export function parseClientMessage(raw: RawData): { type: 'join' | 'leave'; room: string } | null {
+export function parseClientMessage(
+  raw: RawData
+): { type: 'join' | 'leave'; room: string; tabId?: string } | null {
   try {
     const message = JSON.parse(raw.toString());
     if (
@@ -122,7 +148,13 @@ export function parseClientMessage(raw: RawData): { type: 'join' | 'leave'; room
       typeof message.room === 'string' &&
       ROOM_PATTERN.test(message.room)
     ) {
-      return { type: message.type, room: message.room };
+      const tabId =
+        typeof message.tabId === 'string' && TAB_ID_PATTERN.test(message.tabId)
+          ? message.tabId
+          : undefined;
+      return tabId
+        ? { type: message.type, room: message.room, tabId }
+        : { type: message.type, room: message.room };
     }
   } catch {
     // fall through
@@ -151,27 +183,56 @@ export function createRealtimeServer({
   const clients = new Set<Client>();
 
   const entryFor = (client: Client) =>
-    JSON.stringify({ userId: client.userId, username: client.username, seen: Date.now() });
+    JSON.stringify({
+      userId: client.userId,
+      username: client.username,
+      tabId: client.tabId,
+      seen: Date.now(),
+    });
 
   async function publishPresence(room: string) {
-    // read the snapshot and bump the version atomically, so a higher version
-    // always means a newer snapshot no matter which instance publishes first
-    const [[, entries], [, version]] = (await redis
+    // Read the snapshot and bump the version atomically, so a higher version
+    // always means a newer snapshot no matter which instance publishes first.
+    // The epoch only changes if Redis lost the meta key.
+    const results = await redis
       .multi()
+      .hsetnx(presenceMetaKey(room), 'epoch', randomUUID())
+      .hincrby(presenceMetaKey(room), 'version', 1)
+      .hget(presenceMetaKey(room), 'epoch')
+      .pexpire(presenceMetaKey(room), PRESENCE_TTL_MS * 2)
       .hgetall(presenceKey(room))
-      .incr(presenceVersionKey(room))
-      .pexpire(presenceVersionKey(room), PRESENCE_TTL_MS * 2)
-      .exec()) as [[null, Record<string, string>], [null, number], unknown];
+      .exec();
+    const version = Number(results[1][1]);
+    const epoch = results[2][1] as string;
+    const entries = results[4][1] as Record<string, string>;
+
     const { users, stale } = summarizePresence(entries);
-    if (stale.length) {
-      await redis.hdel(presenceKey(room), ...stale);
-    }
-    const message: RoomMessage = { type: 'presence', room, version, users };
+    const message: RoomMessage = { type: 'presence', room, epoch, version, users };
     await redis.publish(CHANNEL, JSON.stringify(message));
+
+    if (stale.length) {
+      const removed = Number(
+        await redis.eval(
+          DELETE_IF_UNCHANGED,
+          1,
+          presenceKey(room),
+          ...stale.flatMap((id) => [id, entries[id]])
+        )
+      );
+      // an entry we left out was refreshed by its instance after we read it;
+      // publish again so clients don't keep a snapshot that is missing it
+      if (removed < stale.length) {
+        await publishPresence(room);
+      }
+    }
   }
 
-  async function join(client: Client, room: string) {
+  async function join(client: Client, room: string, tabId?: string) {
     if (client.rooms.has(room)) return;
+    // the tab id is fixed for the life of a connection
+    if (tabId && client.tabId === client.id) {
+      client.tabId = tabId;
+    }
 
     if (!(await authorize(client, room))) {
       auditLogger.warn(`[realtime] user ${client.userId} denied access to room ${room}`);
@@ -232,8 +293,10 @@ export function createRealtimeServer({
   const subscribed = subscriber.subscribe(CHANNEL);
 
   wss.on('connection', (ws: WebSocket, user: RealtimeUser) => {
+    const id = randomUUID();
     const client: Client = {
-      id: randomUUID(),
+      id,
+      tabId: id,
       ws,
       userId: user.userId,
       username: user.username,
@@ -250,9 +313,12 @@ export function createRealtimeServer({
     ws.on('message', (raw) => {
       const message = parseClientMessage(raw);
       if (!message) return;
-      const action = message.type === 'join' ? join : leave;
       client.queue = client.queue
-        .then(() => action(client, message.room))
+        .then(() =>
+          message.type === 'join'
+            ? join(client, message.room, message.tabId)
+            : leave(client, message.room)
+        )
         .catch(logError(`${message.type} ${message.room}`));
     });
 
@@ -271,21 +337,36 @@ export function createRealtimeServer({
   });
 
   const onUpgrade = (req: IncomingMessage, socket: Duplex, head: Buffer) => {
+    // Node removes its own error listener before handing the socket over. Without
+    // one, a client resetting the connection while we authenticate is an uncaught
+    // exception, which shuts the whole process down.
+    const onSocketError = (err: Error) => {
+      auditLogger.debug(`[realtime] socket error during upgrade: ${err.message}`);
+    };
+    socket.on('error', onSocketError);
+
+    const reject = (status: string) => {
+      if (socket.destroyed) return;
+      socket.write(`HTTP/1.1 ${status}\r\n\r\n`);
+      socket.destroy();
+    };
+
     authenticate(req)
       .then((user) => {
+        if (socket.destroyed) return;
         if (!user) {
-          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-          socket.destroy();
+          reject('401 Unauthorized');
           return;
         }
+        // ws attaches its own error handling from here on
+        socket.off('error', onSocketError);
         wss.handleUpgrade(req, socket, head, (ws) => {
           wss.emit('connection', ws, user);
         });
       })
       .catch((err) => {
         logError('upgrade failed')(err);
-        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
-        socket.destroy();
+        reject('500 Internal Server Error');
       });
   };
   server.on('upgrade', onUpgrade);
@@ -310,7 +391,7 @@ export function createRealtimeServer({
         pipeline.hset(presenceKey(room), client.id, entryFor(client));
       });
       pipeline.pexpire(presenceKey(room), PRESENCE_TTL_MS * 2);
-      pipeline.pexpire(presenceVersionKey(room), PRESENCE_TTL_MS * 2);
+      pipeline.pexpire(presenceMetaKey(room), PRESENCE_TTL_MS * 2);
       pipeline
         .exec()
         .then(() => redis.hgetall(presenceKey(room)))
