@@ -630,6 +630,77 @@ describe('TtaRequestForm', () => {
     }
   });
 
+  it('keeps what was typed while an autosave was in flight', async () => {
+    let finishCreate;
+    fetchMock.post(
+      '/api/tta-requests',
+      new Promise((resolve) => {
+        finishCreate = () => resolve(savedWithNote('A note'));
+      })
+    );
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note, edited'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      userEvent.type(screen.getByLabelText(/add creator notes/i), ', edited');
+      await act(async () => {
+        finishCreate();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+      });
+      expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('A note, edited');
+
+      // still unsaved, so the next tick saves it - to the draft the first save created
+      await advanceAutosave();
+      await waitFor(() => {
+        expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+      });
+      expect(fetchMock.calls('/api/tta-requests')).toHaveLength(1);
+      expect(
+        JSON.parse(fetchMock.lastOptions('/api/tta-requests/42', { method: 'PUT' }).body)
+          .creatorNotes
+      ).toBe('A note, edited');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps Save draft disabled when an autosave outlasts the next tick', async () => {
+    let finishCreate;
+    fetchMock.post(
+      '/api/tta-requests',
+      new Promise((resolve) => {
+        finishCreate = () => resolve(savedWithNote('A note'));
+      })
+    );
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+      // this tick skips saving, and mustn't release the lock the first save holds
+      await advanceAutosave();
+      expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+      await act(async () => {
+        finishCreate();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+      });
+      expect(saveCalls()).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('does not create a draft on the interval when nothing has been entered', async () => {
     fetchMock.post('/api/tta-requests', SAVED_REQUEST);
     jest.useFakeTimers();

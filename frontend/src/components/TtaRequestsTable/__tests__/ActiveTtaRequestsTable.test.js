@@ -247,6 +247,19 @@ describe('ActiveTtaRequestsTable', () => {
     expect(rows[1]).toBe('R14-REQ-112,06/12/2026,Monitoring,Ross Geller,,,Draft');
   });
 
+  it("says the requests couldn't load, rather than that there are none", async () => {
+    fetchMock.get(RECIPIENT_URL, 500);
+    render(
+      <MemoryRouter>
+        <ActiveTtaRequestsTable recipientId={RECIPIENT_ID} regionId={REGION_ID} />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Unable to load TTA requests.')).toBeVisible();
+    expect(screen.queryByText("You're all caught up!")).toBeNull();
+    expect(screen.queryByRole('table')).toBeNull();
+  });
+
   it('offers to start a request when there are none', async () => {
     renderTable([]);
 

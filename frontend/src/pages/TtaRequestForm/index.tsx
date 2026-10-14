@@ -1,5 +1,6 @@
 import { Alert, Button } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
+import { isEqual } from 'lodash';
 import moment from 'moment';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
@@ -200,7 +201,9 @@ export default function TtaRequestForm({
         );
       }
 
-      if (shouldUpdateFormData(isAutoSave)) {
+      // anything changed while the save was in flight stays, and stays dirty for the next save
+      const unchanged = isEqual(toApiPayload(getValues() as TtaRequestFormValues), payload);
+      if (unchanged && shouldUpdateFormData(isAutoSave)) {
         // the saved grants are the ones already chosen, not a change of grant
         previousGrantKey.current = grantIdsKey(saved.grants);
         reset(toFormValues(saved, recipientOptions ?? []));
@@ -223,12 +226,14 @@ export default function TtaRequestForm({
   };
 
   useInterval(async () => {
-    // Don't auto save if we are already saving, or if the form hasn't been touched
+    // Don't auto save if we are already saving, or if the form hasn't been touched. A skipped
+    // tick returns before taking the lock, so it can't release one an in-flight save holds.
+    if (isAppLoading || !isDirty || weAreAutoSaving) {
+      return;
+    }
+    setWeAreAutoSaving(true);
     try {
-      if (!isAppLoading && isDirty && !weAreAutoSaving) {
-        setWeAreAutoSaving(true);
-        await onSaveDraft(true);
-      }
+      await onSaveDraft(true);
     } finally {
       setWeAreAutoSaving(false);
     }

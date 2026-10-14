@@ -219,7 +219,7 @@ export default function ActiveTtaRequestsTable({
     [filters, recipientId, regionId, showRecipientColumns]
   );
 
-  const { data, loading } = useFetch(
+  const { data, loading, error } = useFetch(
     NO_REQUESTS,
     fetcher,
     [filters, recipientId, regionId, showRecipientColumns],
@@ -254,6 +254,7 @@ export default function ActiveTtaRequestsTable({
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
       loading={loading}
+      error={error}
       emptyState={emptyState(`${requestRoot}/new`)}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn

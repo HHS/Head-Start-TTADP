@@ -49,6 +49,8 @@ interface TtaRequestsTableProps {
   loading?: boolean;
   /** shown in place of the table when there is nothing to list */
   emptyState: React.ReactElement;
+  /** shown in place of the table when the rows couldn't be fetched */
+  error?: string;
   /** freezes the final column against the right edge as the table scrolls */
   stickyLastDataColumn?: boolean;
 }
@@ -69,6 +71,7 @@ export default function TtaRequestsTable({
   rows,
   loading = false,
   emptyState,
+  error = '',
   stickyLastDataColumn = false,
 }: TtaRequestsTableProps): React.ReactElement {
   const [tableData, setTableData] = useState<TtaRequestsTableRow[]>(rows);
@@ -145,6 +148,7 @@ export default function TtaRequestsTable({
       title={title}
       className="ttahub-tta-requests-table maxw-widescreen"
       loading={loading}
+      error={error || null}
       showPagingTop={!isEmpty}
       showPagingBottom={!isEmpty}
       currentPage={activePage}
@@ -164,7 +168,8 @@ export default function TtaRequestsTable({
       titleMargin={{ bottom: 1 }}
       titleGroupClassNames={titleGroupClassNames}
     >
-      {isEmpty ? (
+      {/* a failed fetch isn't an empty list, so it doesn't claim there's nothing to do */}
+      {error ? null : isEmpty ? (
         emptyState
       ) : (
         <HorizontalTableWidget
