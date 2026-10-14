@@ -23,6 +23,7 @@ import {
 } from '../../Constants';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import Navigator from '../../components/Navigator';
+import { HTTPError } from '../../fetchers';
 import { getApprovers } from '../../fetchers/activityReports';
 import {
   createReport,
@@ -217,6 +218,8 @@ function CollaborationReport({ match, location }) {
 
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
+  // Form values from a failed save, kept so page navigation doesn't discard them.
+  const unsavedChangesRef = useRef(null);
   const { user } = useContext(UserContext);
 
   const showLastUpdatedTime =
@@ -243,7 +246,10 @@ function CollaborationReport({ match, location }) {
   // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
     updateShowSavedDraft(false);
-    hookForm.reset(formData, { errors: true });
+    const values = unsavedChangesRef.current
+      ? { ...formData, ...unsavedChangesRef.current }
+      : formData;
+    hookForm.reset(values, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
 
   // Focus the form when a new page is loaded
@@ -534,6 +540,7 @@ function CollaborationReport({ match, location }) {
       }
     } catch (e) {
       setConnectionActiveWithError(e, setConnectionActive);
+      throw e;
     }
   };
 
@@ -567,16 +574,26 @@ function CollaborationReport({ match, location }) {
 
       // save the form data to the server
       await onSave(data, forceUpdate);
+      unsavedChangesRef.current = null;
 
       // Update the last saved time
       updateLastSaveTime(moment());
 
       // show the saved draft message
       updateShowSavedDraft(true);
+      return true;
     } catch (e) {
+      const { status, ...formValues } = hookForm.getValues();
+      unsavedChangesRef.current = formValues;
+      updateShowSavedDraft(false);
+
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
       updateErrorMessage(
-        'A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.'
+        validationMessage ||
+          'A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.'
       );
+      return false;
     } finally {
       setIsAppLoading(false);
     }
@@ -618,7 +635,10 @@ function CollaborationReport({ match, location }) {
     const currentPosition = pages.find((page) => page.path === currentPage)?.position;
 
     const isAutoSave = false;
-    await onSaveDraft(isAutoSave);
+    const saved = await onSaveDraft(isAutoSave);
+    if (saved === false) {
+      return;
+    }
     updatePage(currentPosition + 1);
   };
 

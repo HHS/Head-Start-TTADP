@@ -42,10 +42,11 @@ const ReportComponent = ({
   userId = 1,
   userRoles = [{ fullName: 'Reporter' }],
   region = 1,
+  isAppLoading = true,
 }) => (
   <Router history={history}>
     <AppLoadingContext.Provider
-      value={{ isAppLoading: true, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+      value={{ isAppLoading, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
     >
       <UserContext.Provider
         value={{
@@ -1052,6 +1053,41 @@ describe('CollaborationReportForm', () => {
         });
 
         // Component should handle error gracefully
+      });
+
+      it('shows the validation message and keeps edits when the save is rejected', async () => {
+        const validationMessage =
+          'The report creator and collaborators cannot be assigned as approvers.';
+        fetchMock.put('/api/collaboration-reports/123', {
+          status: 400,
+          body: { error: validationMessage },
+        });
+        getItem.mockReturnValue(null);
+        const mockPush = jest.fn();
+        history.push = mockPush;
+
+        render(<ReportComponent id="123" isAppLoading={false} />);
+
+        const activityNameInput = await screen.findByTestId('activity-name-input');
+        userEvent.type(activityNameInput, 'Unsaved name');
+
+        userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
+
+        expect(await screen.findByText(validationMessage)).toBeVisible();
+        expect(screen.queryByText(/Autosaved on/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/issue with your connection/i)).not.toBeInTheDocument();
+        expect(activityNameInput).toHaveValue('Unsaved name');
+
+        userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+        await waitFor(() => {
+          expect(fetchMock.calls('/api/collaboration-reports/123', 'PUT')).toHaveLength(2);
+        });
+        expect(mockPush).not.toHaveBeenCalledWith(
+          expect.stringContaining('/collaboration-reports/123/'),
+          expect.anything()
+        );
+        expect(activityNameInput).toHaveValue('Unsaved name');
       });
     });
   });
