@@ -304,9 +304,14 @@ export default function ManageNotifications({
       try {
         const settings = await getSettings();
         // reset (not setValue) so the fetched values become the baseline isDirty compares against
+        // only keep rendered keys; unregistered keys in the baseline would keep isDirty true
         reset({
           ...DEFAULT_SETTINGS,
-          ...Object.fromEntries(settings.map(({ key, value }) => [key, value])),
+          ...Object.fromEntries(
+            settings
+              .filter(({ key }) => key in DEFAULT_SETTINGS)
+              .map(({ key, value }) => [key, value])
+          ),
         });
       } catch (_error) {
         // fail silently, form defaults will be used

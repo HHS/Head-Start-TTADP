@@ -65,6 +65,24 @@ describe('NavigationPromptModal', () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
+  it('dismisses when the modal overlay is clicked', () => {
+    const onDismiss = jest.fn();
+
+    render(
+      <NavigationPromptModal
+        isOpen
+        isSaving={false}
+        onContinueWithoutSaving={jest.fn()}
+        onSaveAndContinue={jest.fn()}
+        onDismiss={onDismiss}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('modalOverlay'));
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
   it('disables both choices while saving', () => {
     render(
       <NavigationPromptModal

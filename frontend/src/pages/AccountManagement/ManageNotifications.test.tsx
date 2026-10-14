@@ -561,6 +561,32 @@ describe('ManageNotifications', () => {
     expect(history.location.pathname).toBe('/reports');
   });
 
+  it('does not prompt after reverting an edit when the response includes unrendered keys', async () => {
+    fetchMock.get('/api/settings', [
+      ...settings,
+      { key: 'emailWhenNoSessionsPoc', value: 'never' },
+      { key: 'inAppWhenNoSessionsPoc', value: true },
+      { key: 'inAppWhenAddedAsCoOwner', value: true },
+    ]);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'today' },
+    });
+    fireEvent.change(screen.getByLabelText('Submitted for review'), {
+      target: { value: 'this week' },
+    });
+    act(() => history.push('/reports'));
+
+    expect(history.location.pathname).toBe('/reports');
+  });
+
   it('dismisses from the modal close button without navigating or clearing form values', async () => {
     fetchMock.get('/api/settings', settings);
     const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });

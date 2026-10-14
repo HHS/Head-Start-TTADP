@@ -1,6 +1,6 @@
 import { Modal, ModalHeading } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export default function VanillaModal({
   heading,
@@ -21,6 +21,18 @@ export default function VanillaModal({
       onClose?.();
     }
   };
+  // The overlay closes the modal on click but sits outside the element that receives
+  // our props, so listen at the document level to keep callers in sync with it.
+  useEffect(() => {
+    if (!onClose || forceAction) return undefined;
+    const handleOverlayClick = (event) => {
+      if (event.target.matches?.(`.usa-modal-overlay[aria-controls="${modalId}"]`)) {
+        onClose();
+      }
+    };
+    document.addEventListener('click', handleOverlayClick);
+    return () => document.removeEventListener('click', handleOverlayClick);
+  }, [forceAction, modalId, onClose]);
   const handleKeyDown = (event) => {
     if (event.key === 'Escape' && modalRef.current?.modalIsOpen) {
       onClose?.();
