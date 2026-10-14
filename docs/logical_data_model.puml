@@ -477,6 +477,29 @@ class EventReportPilots{
  version : integer
 }
 
+!issue='model missing for table'
+class FeedbackSurveyCompletions #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : integer : <generated>
+!issue='column should not allow null' * completedAt : timestamp with time zone
+!issue='column should not allow null' * createdAt : timestamp with time zone
+!issue='column should not allow null' * pageId : varchar(255)
+!issue='column should not allow null' * updatedAt : timestamp with time zone
+!issue='column should not allow null' * userId : integer
+}
+
+!issue='model missing for table'
+class FeedbackSurveys #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : integer : <generated>
+!issue='column should not allow null' * createdAt : timestamp with time zone
+!issue='column should not allow null' * pageId : varchar(255)
+!issue='column should not allow null' * response : enum
+!issue='column should not allow null' * submittedAt : timestamp with time zone
+!issue='column should not allow null' * updatedAt : timestamp with time zone
+!issue='column should not allow null' * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
+ comment : text
+ regionId : integer
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -2006,6 +2029,36 @@ class ZALEventReportPilots{
  * dml_timestamp : timestamp with time zone
  * dml_txid : uuid
  * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+!issue='model missing for table'
+class ZALFeedbackSurveyCompletions #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : bigint : <generated>
+!issue='column should not allow null' * data_id : bigint
+!issue='column should not allow null' * dml_as : bigint
+!issue='column should not allow null' * dml_by : bigint
+!issue='column should not allow null' * dml_timestamp : timestamp with time zone
+!issue='column should not allow null' * dml_txid : uuid
+!issue='column should not allow null' * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+!issue='model missing for table'
+class ZALFeedbackSurveys #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : bigint : <generated>
+!issue='column should not allow null' * data_id : bigint
+!issue='column should not allow null' * dml_as : bigint
+!issue='column should not allow null' * dml_by : bigint
+!issue='column should not allow null' * dml_timestamp : timestamp with time zone
+!issue='column should not allow null' * dml_txid : uuid
+!issue='column should not allow null' * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb

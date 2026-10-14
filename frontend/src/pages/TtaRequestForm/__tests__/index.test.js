@@ -313,13 +313,15 @@ describe('TtaRequestForm', () => {
     expect(fetchMock.called('/api/feeds/item?tag=ttahub-ohs-standard-goals')).toBe(true);
   });
 
-  it('records a save time when the draft is saved, without validating', async () => {
+  it('says the draft was saved, as the activity report does, without validating', async () => {
     fetchMock.post('/api/tta-requests', { ...SAVED_REQUEST, id: 1 });
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
-    expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+    expect(await screen.findByText(/^Draft saved on \d{2}\/\d{2}\/\d{4} at /)).toBeVisible();
+    // saving by hand isn't an autosave
+    expect(screen.queryByText(/autosaved on:/i)).toBeNull();
     expect(screen.queryByText('Select a goal')).toBeNull();
   });
 
@@ -431,7 +433,7 @@ describe('TtaRequestForm', () => {
 
     userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
-    expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+    expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     expect(mockSetAppLoadingText).toHaveBeenCalledWith('Saving');
     expect(mockSetIsAppLoading).toHaveBeenLastCalledWith(false);
   });
@@ -488,7 +490,7 @@ describe('TtaRequestForm', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
     expect(await screen.findByText(SAVE_ERROR)).toBeVisible();
-    expect(screen.queryByText(/autosaved on:/i)).toBeNull();
+    expect(screen.queryByText(/draft saved on/i)).toBeNull();
   });
 
   it('asks for a grant before saving a request with no region', async () => {
@@ -516,6 +518,8 @@ describe('TtaRequestForm', () => {
       });
 
       expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+      // the draft saved message is for saving by hand
+      expect(screen.queryByText(/draft saved on/i)).toBeNull();
       expect(fetchMock.called('/api/tta-requests')).toBe(true);
     } finally {
       jest.useRealTimers();

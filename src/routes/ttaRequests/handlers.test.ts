@@ -2,26 +2,38 @@ import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
+import filtersToScopes from '../../scopes';
+import { setReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
+  getTtaRequests as getTtaRequestsService,
   TtaRequestDataError,
   ttaRequestById,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
-import { createTtaRequest, getTtaRequest, saveTtaRequest } from './handlers';
+import {
+  createTtaRequest,
+  getTtaRequest,
+  getTtaRequests,
+  getTtaRequestsByRecipient,
+  saveTtaRequest,
+} from './handlers';
 
 jest.mock('../../services/ttaRequests', () => {
   const actual = jest.requireActual('../../services/ttaRequests');
   return {
     TtaRequestDataError: actual.TtaRequestDataError,
     createTtaRequest: jest.fn(),
+    getTtaRequests: jest.fn(),
     ttaRequestById: jest.fn(),
     updateTtaRequest: jest.fn(),
   };
 });
 jest.mock('../../services/currentUser');
+jest.mock('../../services/accessValidation');
+jest.mock('../../scopes');
 jest.mock('../../services/users');
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('../../logger', () => ({
@@ -68,6 +80,63 @@ describe('TTA request handlers', () => {
     res = { json, sendStatus, status };
     (currentUserId as jest.Mock).mockResolvedValue(CREATOR_ID);
     (userById as jest.Mock).mockResolvedValue(writer);
+  });
+
+  describe('getTtaRequests', () => {
+    const SCOPED = [{ regionId: [1] }];
+    const LIST = { count: 1, rows: [draft] };
+
+    beforeEach(() => {
+      req.query = { 'region.in': ['1'] };
+      (setReadRegions as jest.Mock).mockResolvedValue({ 'region.in': [1] });
+      (filtersToScopes as jest.Mock).mockResolvedValue({ ttaRequest: SCOPED });
+    });
+
+    it("lists the user's requests in the regions they can read", async () => {
+      (getTtaRequestsService as jest.Mock).mockResolvedValue(LIST);
+      await getTtaRequests(req as Request, res as Response);
+      expect(setReadRegions).toHaveBeenCalledWith(req.query, CREATOR_ID);
+      expect(filtersToScopes).toHaveBeenCalledWith({ 'region.in': [1] }, { userId: CREATOR_ID });
+      expect(getTtaRequestsService).toHaveBeenCalledWith(SCOPED, CREATOR_ID);
+      expect(json).toHaveBeenCalledWith(LIST);
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (getTtaRequestsService as jest.Mock).mockRejectedValue(new Error('boom'));
+      await getTtaRequests(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTtaRequestsByRecipient', () => {
+    const SCOPED = [{ regionId: ['1'] }];
+    const LIST = { count: 1, rows: [draft] };
+
+    beforeEach(() => {
+      req.params = { regionId: '1', recipientId: '9' };
+      (filtersToScopes as jest.Mock).mockResolvedValue({ ttaRequest: SCOPED });
+    });
+
+    it("lists the user's requests for the recipient in the region", async () => {
+      (getTtaRequestsService as jest.Mock).mockResolvedValue(LIST);
+      await getTtaRequestsByRecipient(req as Request, res as Response);
+      expect(filtersToScopes).toHaveBeenCalledWith({ 'region.in': ['1'] }, { userId: CREATOR_ID });
+      expect(getTtaRequestsService).toHaveBeenCalledWith(SCOPED, CREATOR_ID, 9);
+      expect(json).toHaveBeenCalledWith(LIST);
+    });
+
+    it('returns 403 without read permission in the region', async () => {
+      (userById as jest.Mock).mockResolvedValue(stranger);
+      await getTtaRequestsByRecipient(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(getTtaRequestsService).not.toHaveBeenCalled();
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (getTtaRequestsService as jest.Mock).mockRejectedValue(new Error('boom'));
+      await getTtaRequestsByRecipient(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
   });
 
   describe('getTtaRequest', () => {

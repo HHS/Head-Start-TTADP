@@ -1,9 +1,11 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
+import filtersToScopes from '../scopes';
 import { createGoalTemplate, createGrant, createRecipient, createUser } from '../testUtils';
 import {
   createTtaRequest,
+  getTtaRequests,
   TtaRequestDataError,
   ttaRequestById,
   updateTtaRequest,
@@ -266,6 +268,72 @@ describe('ttaRequests service', () => {
       const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: creator.id }, creator.id);
       expect(updated.reviewerId).toBeNull();
+    });
+  });
+
+  describe('getTtaRequests', () => {
+    let ownDraft;
+    let otherRecipientDraft;
+    let someoneElsesDraft;
+
+    beforeAll(async () => {
+      [ownDraft, otherRecipientDraft, someoneElsesDraft] = await Promise.all([
+        createTtaRequest(
+          {
+            regionId: 1,
+            recipientId: recipient.id,
+            grantIds: [grantOne.id],
+            goalTemplateId: goalTemplate.id,
+            reviewerId: reviewer.id,
+          },
+          creator.id
+        ),
+        createTtaRequest({ regionId: 1, recipientId: otherRecipient.id }, creator.id),
+        createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
+      ]);
+    });
+
+    afterAll(async () => {
+      await TtaRequest.destroy({ where: { id: someoneElsesDraft.id }, force: true });
+    });
+
+    const scopesFor = async (filters) => {
+      const { ttaRequest: scopes } = await filtersToScopes(filters, { userId: creator.id });
+      return scopes;
+    };
+
+    it("lists the creator's own drafts with what the tables show", async () => {
+      const { rows } = await getTtaRequests(await scopesFor({ 'region.in': [1] }), creator.id);
+      const ids = rows.map((row) => row.id);
+
+      expect(ids).toContain(ownDraft.id);
+      expect(ids).toContain(otherRecipientDraft.id);
+      expect(ids).not.toContain(someoneElsesDraft.id);
+
+      const row = rows.find((r) => r.id === ownDraft.id).toJSON();
+      expect(row.displayId).toBe(`R01-REQ-${ownDraft.id}`);
+      expect(row.recipient.name).toBe(recipient.name);
+      expect(row.creator.id).toBe(creator.id);
+      expect(row.reviewer.id).toBe(reviewer.id);
+      expect(row.goalTemplate.id).toBe(goalTemplate.id);
+      expect(row.grants.map((g) => g.id)).toEqual([grantOne.id]);
+    });
+
+    it('lists only the drafts for one recipient', async () => {
+      const { rows } = await getTtaRequests(
+        await scopesFor({ 'region.in': [1] }),
+        creator.id,
+        recipient.id
+      );
+      const ids = rows.map((row) => row.id);
+
+      expect(ids).toContain(ownDraft.id);
+      expect(ids).not.toContain(otherRecipientDraft.id);
+    });
+
+    it('lists nothing outside the filtered regions', async () => {
+      const { rows } = await getTtaRequests(await scopesFor({ 'region.in': [2] }), creator.id);
+      expect(rows.map((row) => row.id)).not.toContain(ownDraft.id);
     });
   });
 

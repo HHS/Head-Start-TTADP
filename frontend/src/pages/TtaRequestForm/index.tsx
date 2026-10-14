@@ -7,6 +7,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
+import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import { createTtaRequest, getTtaRequest, saveTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
@@ -61,7 +62,10 @@ export default function TtaRequestForm({
   const history = useHistory();
   const location = useLocation();
   const { ttaRequestId: ttaRequestIdParam } = useParams<{ ttaRequestId?: string }>();
+  // an autosave says so; saving by hand says the draft was saved, as the activity report does
+  const [lastAutoSaveTime, setLastAutoSaveTime] = useState<moment.Moment | null>(null);
   const [lastSaveTime, setLastSaveTime] = useState<moment.Moment | null>(null);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // this is used to disable the save button (we don't use the overlay on auto save)
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
@@ -187,7 +191,12 @@ export default function TtaRequestForm({
       }
 
       setSaveError(null);
-      setLastSaveTime(moment());
+      if (isAutoSave) {
+        setLastAutoSaveTime(moment());
+      } else {
+        setLastSaveTime(moment());
+        updateShowSavedDraft(true);
+      }
     } catch {
       setSaveError(SAVE_ERROR);
     } finally {
@@ -250,7 +259,7 @@ export default function TtaRequestForm({
                 {saveError}
               </Alert>
             )}
-            {lastSaveTime && (
+            {lastAutoSaveTime && (
               <Alert
                 type="success"
                 headingLevel="h4"
@@ -262,7 +271,7 @@ export default function TtaRequestForm({
               >
                 Autosaved on:
                 <br />
-                <span>• our network at {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}</span>
+                <span>• our network at {lastAutoSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}</span>
               </Alert>
             )}
             <div className="display-flex margin-top-4">
@@ -278,6 +287,24 @@ export default function TtaRequestForm({
                 Save draft
               </Button>
             </div>
+            <DismissingComponentWrapper
+              shown={showSavedDraft}
+              updateShown={updateShowSavedDraft}
+              hideFromScreenReader={false}
+            >
+              {lastSaveTime && (
+                <Alert
+                  className="margin-top-3 maxw-mobile-lg"
+                  headingLevel="h4"
+                  noIcon
+                  slim
+                  type="success"
+                  aria-live="off"
+                >
+                  Draft saved on {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+                </Alert>
+              )}
+            </DismissingComponentWrapper>
           </form>
         </Container>
       </FormProvider>

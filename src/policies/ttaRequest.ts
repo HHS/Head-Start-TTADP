@@ -38,7 +38,15 @@ export default class TtaRequest {
     return false;
   }
 
+  /**
+   * A draft is private to its creator until it is submitted. Without a request, this is
+   * whether the user can see the region's requests at all.
+   */
   canGet() {
+    if (this.ttaRequest?.status === TTA_REQUEST_STATUSES.DRAFT) {
+      return this.isCreator();
+    }
+
     return this.isCreator() || this.canReadInRegion() || this.isAdmin();
   }
 

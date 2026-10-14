@@ -10,6 +10,7 @@ import { grantsFiltersToScopes as grant } from './grants';
 import { notificationFiltersToScopes as notification } from './notifications';
 import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
+import { ttaRequestFiltersToScopes as ttaRequest } from './ttaRequests';
 import { getValidTopicsSet } from './utils';
 
 const models = {
@@ -24,6 +25,7 @@ const models = {
   citation,
   grantCitation,
   notification,
+  ttaRequest,
 };
 
 /**

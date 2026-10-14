@@ -51,23 +51,33 @@ describe('TtaRequest policy', () => {
   });
 
   describe('canGet', () => {
-    it('is true for the creator', () => {
+    it('is true for the creator of a draft', () => {
       const policy = new TtaRequest(createUser({}), 1, draft);
       expect(policy.canGet()).toBe(true);
     });
 
-    it('is true with read permission in the region', () => {
+    it("keeps someone else's draft private, even with read permission in the region", () => {
       const policy = new TtaRequest(createUser({ id: 2, read: true }), 1, draft);
-      expect(policy.canGet()).toBe(true);
+      expect(policy.canGet()).toBe(false);
     });
 
-    it('is true for an admin', () => {
+    it("keeps someone else's draft private from an admin", () => {
       const policy = new TtaRequest(createUser({ id: 2, admin: true }), 1, draft);
+      expect(policy.canGet()).toBe(false);
+    });
+
+    it('is true with read permission in the region when there is no request', () => {
+      const policy = new TtaRequest(createUser({ id: 2, read: true }), 1);
       expect(policy.canGet()).toBe(true);
     });
 
-    it('is false for anyone else', () => {
-      const policy = new TtaRequest(createUser({ id: 2 }), 1, draft);
+    it('is true for an admin when there is no request', () => {
+      const policy = new TtaRequest(createUser({ id: 2, admin: true }), 1);
+      expect(policy.canGet()).toBe(true);
+    });
+
+    it('is false without read permission in the region when there is no request', () => {
+      const policy = new TtaRequest(createUser({ id: 2 }), 1);
       expect(policy.canGet()).toBe(false);
     });
   });

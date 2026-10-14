@@ -2,7 +2,9 @@ get:
   tags:
     - tta request
   summary: Get a TTA request by its ID
-  description: Available to its creator, users who can read its region, and admins.
+  description: >-
+    A draft is available only to its creator. Once submitted, it is also
+    available to users who can read its region, and admins.
   parameters:
     - name: ttaRequestId
       in: path

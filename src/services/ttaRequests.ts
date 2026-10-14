@@ -1,5 +1,5 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
-import { Op } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
@@ -115,6 +115,58 @@ export async function ttaRequestById(id: number) {
       [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
       [{ model: TtaRequestCitation, as: 'citations' }, 'citation', 'ASC'],
     ],
+  });
+}
+
+/**
+ * The creator's own draft requests that the scopes allow, optionally for one recipient.
+ * Drafts are private to their creator until they are submitted.
+ */
+export async function getTtaRequests(
+  scopes: WhereOptions[],
+  userId: number,
+  recipientId: number | null = null
+) {
+  return TtaRequest.findAndCountAll({
+    where: {
+      [Op.and]: [
+        ...scopes,
+        { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+        ...(recipientId ? [{ recipientId }] : []),
+      ],
+    },
+    attributes: ['id', 'displayId', 'regionId', 'recipientId', 'status', 'createdAt'],
+    include: [
+      {
+        model: User,
+        as: 'creator',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: User,
+        as: 'reviewer',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: Recipient,
+        as: 'recipient',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['id', 'templateName'],
+      },
+      {
+        // the state a request is in is the state its grants are in
+        model: Grant.unscoped(), // remove recipient from response
+        as: 'grants',
+        attributes: ['id', 'stateCode'],
+        through: { attributes: [] },
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+    distinct: true,
   });
 }
 
