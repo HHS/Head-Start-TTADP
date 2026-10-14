@@ -1,6 +1,10 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
-import type { EmailFrequencyValue } from '@ttahub/common/src/notifications';
+import type {
+  EmailFrequencyValue,
+  EmailNotificationSettingKey,
+  InAppNotificationSettingKey,
+} from '@ttahub/common/src/notifications';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -20,18 +24,78 @@ import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
 import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
 
-interface SettingFormData {
-  emailWhenAppointedCollaborator: EmailFrequencyValue;
-  emailWhenChangeRequested: EmailFrequencyValue;
-  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequencyValue;
-  emailWhenReportApproval: EmailFrequencyValue;
-  emailWhenReportSubmittedForReview: EmailFrequencyValue;
-  inAppWhenAppointedCollaborator: boolean;
-  inAppWhenChangeRequested: boolean;
-  inAppWhenRecipientReportApprovedProgramSpecialist: boolean;
-  inAppWhenReportApproval: boolean;
-  inAppWhenReportSubmittedForReview: boolean;
-}
+type SettingFormData = Partial<Record<EmailNotificationSettingKey, EmailFrequencyValue>> &
+  Partial<Record<InAppNotificationSettingKey, boolean>>;
+
+// Every field rendered on this page, with the same defaults the UserSettings table uses.
+// Any new notification field added to the page must also be added here. React Hook Form
+// only treats the form as pristine when its values deep-equal this object, so a field that
+// is rendered but missing here (or listed here but not rendered) makes the form look dirty
+// after every change, and the unsaved-changes prompt can no longer tell real edits apart.
+export const DEFAULT_SETTINGS: SettingFormData = {
+  // Activity Reports
+  emailWhenReportSubmittedForReview: 'never',
+  inAppWhenReportSubmittedForReview: true,
+  emailWhenCollaboratorReportSubmittedForReview: 'never',
+  inAppWhenCollaboratorReportSubmittedForReview: true,
+  emailWhenCreatorReportSubmittedForReview: 'never',
+  inAppWhenCreatorReportSubmittedForReview: true,
+  emailWhenChangeRequested: 'never',
+  inAppWhenChangeRequested: true,
+  emailWhenReportApproval: 'never',
+  inAppWhenReportApproval: true,
+  emailWhenAppointedCollaborator: 'never',
+  inAppWhenAppointedCollaborator: true,
+  emailWhenRecipientReportApprovedProgramSpecialist: 'never',
+  inAppWhenRecipientReportApprovedProgramSpecialist: true,
+  // Collaboration Reports
+  emailWhenCollabReportSubmittedForReview: 'never',
+  inAppWhenCollabReportSubmittedForReview: true,
+  emailWhenCollaborationReportSubmittedForReview: 'never',
+  inAppWhenCollaborationReportSubmittedForReview: true,
+  emailWhenCollaborationReportCollaboratorSubmitted: 'never',
+  inAppWhenCollaborationReportCollaboratorSubmitted: true,
+  emailWhenCollaborationChangeRequested: 'never',
+  inAppWhenCollaborationChangeRequested: true,
+  emailWhenCollaborationReportApproved: 'never',
+  inAppWhenCollaborationReportApproved: true,
+  emailWhenAddedAsCollaborationCollaborator: 'never',
+  inAppWhenAddedAsCollaborationCollaborator: true,
+  // Communication Logs
+  emailWhenAddedAsTTAStaffCommLog: 'never',
+  inAppWhenAddedAsTTAStaffCommLog: true,
+  emailWhenAddedAsRecipientCommLog: 'never',
+  inAppWhenAddedAsRecipientCommLog: true,
+  // Training Reports
+  emailWhenAddedAsPocTrainingReport: 'never',
+  inAppWhenAddedAsPocTrainingReport: true,
+  emailWhenAddedAsCollaboratorTrainingReport: 'never',
+  inAppWhenAddedAsCollaboratorTrainingReport: true,
+  emailWhenSessionReviewRequestedTrainingReport: 'never',
+  inAppWhenSessionReviewRequestedTrainingReport: true,
+  emailWhenSessionChangesRequestedTrainingReport: 'never',
+  inAppWhenSessionChangesRequestedTrainingReport: true,
+  emailWhenEventDetails20DaysCreatorCollaborator: 'never',
+  inAppWhenEventDetails20DaysCreatorCollaborator: true,
+  emailWhenSessionDetails20DaysCreatorCollaborator: 'never',
+  inAppWhenSessionDetails20DaysCreatorCollaborator: true,
+  emailWhenSessionDetails20DaysPoc: 'never',
+  inAppWhenSessionDetails20DaysPoc: true,
+  emailWhenNoSessionsCreatorCollaborator: 'never',
+  inAppWhenNoSessionsCreatorCollaborator: true,
+  emailWhenEventNotCompleted: 'never',
+  inAppWhenEventNotCompleted: true,
+  // System Related (unplanned outage has no in-app checkbox)
+  emailWhenPlannedOutage: 'never',
+  inAppWhenPlannedOutage: true,
+  emailWhenUnplannedOutage: 'never',
+  // Other (added as co-owner has no in-app checkbox)
+  emailWhenMonitoringDetailsAdded: 'never',
+  inAppWhenMonitoringDetailsAdded: true,
+  emailWhenAddedAsCoOwner: 'never',
+  emailWhenSharedMyGroup: 'never',
+  inAppWhenSharedMyGroup: true,
+};
 
 export default function ManageNotifications({
   updateUser,
@@ -160,26 +224,13 @@ export default function ManageNotifications({
     [emailValidated, sendVerificationEmail, emailVerificationSent, clearAlerts]
   );
 
-  const methods = useForm({
-    defaultValues: {
-      // TODO: blow up into a complete list of all notification settings, with defaults for each
-      emailWhenAppointedCollaborator: 'never',
-      emailWhenChangeRequested: 'never',
-      emailWhenRecipientReportApprovedProgramSpecialist: 'never',
-      emailWhenReportApproval: 'never',
-      emailWhenReportSubmittedForReview: 'never',
-      inAppWhenAppointedCollaborator: true,
-      inAppWhenChangeRequested: true,
-      inAppWhenRecipientReportApprovedProgramSpecialist: true,
-      inAppWhenReportApproval: true,
-      inAppWhenReportSubmittedForReview: true,
-    },
+  const methods = useForm<SettingFormData>({
+    defaultValues: DEFAULT_SETTINGS,
   });
 
   const {
     formState: { isDirty },
     reset,
-    setValue,
   } = methods;
 
   const onSubmit = async (formData: SettingFormData): Promise<boolean> => {
@@ -252,8 +303,10 @@ export default function ManageNotifications({
       setIsAppLoading(true);
       try {
         const settings = await getSettings();
-        settings.forEach(({ key, value }) => {
-          setValue(key, value);
+        // reset (not setValue) so the fetched values become the baseline isDirty compares against
+        reset({
+          ...DEFAULT_SETTINGS,
+          ...Object.fromEntries(settings.map(({ key, value }) => [key, value])),
         });
       } catch (_error) {
         // fail silently, form defaults will be used
@@ -263,7 +316,7 @@ export default function ManageNotifications({
     }
 
     fetchSettings();
-  }, [setValue, setIsAppLoading]);
+  }, [reset, setIsAppLoading]);
 
   return (
     <>

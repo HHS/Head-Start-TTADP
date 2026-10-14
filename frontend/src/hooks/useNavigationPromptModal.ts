@@ -1,4 +1,4 @@
-import type { Location } from 'history';
+import type { Action, Location } from 'history';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ export default function useNavigationPromptModal({
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const pendingLocation = useRef<Location | null>(null);
+  const pendingTransition = useRef<{ location: Location; action: Action } | null>(null);
   const bypassNextNavigation = useRef(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function useNavigationPromptModal({
       return undefined;
     }
 
-    return history.block((location) => {
+    return history.block((location, action) => {
       if (bypassNextNavigation.current) {
         bypassNextNavigation.current = false;
         return undefined;
@@ -32,24 +32,35 @@ export default function useNavigationPromptModal({
         return undefined;
       }
 
-      pendingLocation.current = location;
+      pendingTransition.current = { location, action };
       setIsOpen(true);
       return false;
     });
   }, [history, when]);
 
   const dismiss = useCallback(() => {
-    pendingLocation.current = null;
+    pendingTransition.current = null;
     setIsOpen(false);
   }, []);
 
   const continueWithoutSaving = useCallback(() => {
-    const destination = pendingLocation.current;
+    const transition = pendingTransition.current;
     dismiss();
 
-    if (destination) {
-      bypassNextNavigation.current = true;
-      history.push(destination);
+    if (!transition) {
+      return;
+    }
+
+    bypassNextNavigation.current = true;
+    const { location, action } = transition;
+    if (action === 'REPLACE') {
+      history.replace(location);
+    } else {
+      // Browser history v4 reports Back and Forward both as POP and doesn't expose
+      // how far a POP moved, so a POP can't be replayed exactly. Pushing the
+      // destination always lands the user on the right page, at the cost of
+      // duplicating this page in the stack and dropping any forward entries.
+      history.push(location);
     }
   }, [dismiss, history]);
 
