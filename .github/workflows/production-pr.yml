@@ -1,9 +1,11 @@
 name: Production PR Automation
 
 on:
-  push:
-    branches:
-      - main
+  # push-to-main is intentionally NOT enabled yet. Dispatch-only until a
+  # successful workflow_dispatch dry run and an explicit sign-off happen -
+  # see docs/productionPrAutomationPlan.md's MVP sequencing. Enabling push
+  # here would let every merge to main write to a real production PR before
+  # that validation.
   workflow_dispatch:
     inputs:
       dry_run:
