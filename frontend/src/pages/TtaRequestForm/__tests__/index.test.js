@@ -162,13 +162,13 @@ describe('TtaRequestForm', () => {
     mockFetches();
   });
 
-  it('renders the heading, draft tag and required field note', () => {
+  it('renders the heading and required field note', () => {
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     expect(
       screen.getByRole('heading', { name: 'Training and Technical Assistance (TTA) Request' })
     ).toBeVisible();
-    expect(screen.getByText('Draft')).toBeVisible();
+    expect(screen.queryByText('Draft')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to TTA Requests' })).toHaveAttribute(
       'href',
       BACK_LINK
