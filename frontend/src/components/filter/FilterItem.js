@@ -53,7 +53,10 @@ export default function FilterItem({
     }
 
     // no validation if you are clicking on the cancel button
-    if (e.relatedTarget && e.relatedTarget.getAttribute('aria-label') === CANCEL_ARIA) {
+    if (
+      e.relatedTarget instanceof Element &&
+      e.relatedTarget.getAttribute('aria-label') === CANCEL_ARIA
+    ) {
       willValidate = false;
     }
 
