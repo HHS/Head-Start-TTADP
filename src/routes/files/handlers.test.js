@@ -78,6 +78,8 @@ jest.mock('../../lib/queue');
 jest.mock('../../services/s3Queue');
 jest.mock('file-type');
 
+// Waits until mockFn has been called `count` times, then for that call's async work to settle,
+// so assertions don't race the database writes it makes.
 const waitForCalls = async (mockFn, count, timeoutMs = 2000) => {
   const start = Date.now();
   while (mockFn.mock.calls.length < count && Date.now() - start < timeoutMs) {
@@ -85,6 +87,10 @@ const waitForCalls = async (mockFn, count, timeoutMs = 2000) => {
     await new Promise((resolve) => {
       setTimeout(resolve, 10);
     });
+  }
+  const result = mockFn.mock.results[count - 1];
+  if (result?.type === 'return') {
+    await result.value;
   }
 };
 
