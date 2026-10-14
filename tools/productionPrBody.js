@@ -89,7 +89,13 @@ function setManagedSection(body, markers, newContent) {
   const pattern = new RegExp(
     `${escapeRegExp(markers.start)}[\\s\\S]*?${escapeRegExp(markers.end)}`
   );
-  return body.replace(pattern, wrapManagedSection(markers, newContent));
+  // A replacer function, not a string: String.replace treats a string
+  // replacement's `$&`/`$'`/`` $` ``/`$1`/`$$` as special patterns. newContent
+  // is LLM-generated and not guaranteed to be free of a literal `$` sequence,
+  // and a hit would silently corrupt the body - e.g. `$'` would duplicate
+  // everything after the match, including the real Production Deploy
+  // checklist. A function return value is always inserted verbatim.
+  return body.replace(pattern, () => wrapManagedSection(markers, newContent));
 }
 
 /**

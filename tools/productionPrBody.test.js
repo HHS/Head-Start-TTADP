@@ -146,6 +146,24 @@ describe('renderUpdateBody', () => {
     expect(updatedTwice).toBe(updatedOnce);
   });
 
+  it('inserts content containing $-tokens verbatim, not as String.replace patterns', () => {
+    const created = renderCreateBody({ template, content: CONTENT });
+    const dollarContent = {
+      ...CONTENT,
+      descriptionOfChange: "- Costs $5 and uses $& $' $` $1 $$ literally.",
+    };
+
+    const updated = renderUpdateBody({ currentBody: created, content: dollarContent });
+
+    expect(updated).toContain(dollarContent.descriptionOfChange);
+    // The dangerous case: $' as a real String.replace pattern re-inserts
+    // everything after the match, which would duplicate the rest of the
+    // body - including the real Production Deploy checklist - rather than
+    // just inserting the literal two characters "$'".
+    expect(countOccurrences(updated, '### Production Deploy')).toBe(1);
+    expect(countOccurrences(updated, MANAGED_SECTIONS.descriptionOfChange.start)).toBe(1);
+  });
+
   it('does not duplicate or leave stale markers when content changes across repeated updates', () => {
     const created = renderCreateBody({ template, content: CONTENT });
     const firstUpdate = renderUpdateBody({ currentBody: created, content: OTHER_CONTENT });
