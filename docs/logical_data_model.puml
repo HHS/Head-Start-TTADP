@@ -1382,23 +1382,12 @@ class Users{
  * lastLogin : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  email : varchar(255)
- flags : enum[] : ARRAY[]::"enum_Users_flags"[]
+ flags : varchar(255)[] : '{}'::character varying(255)[]
  hsesAuthorities : varchar(255)[]
  hsesUserId : varchar(255)
  name : varchar(255)
  phoneNumber : varchar(255)
 }
-
-enum enum_Users_flags {
- actionable_notifications
- compliant_follow_up_reviews_tta_support
- monitoring-regional-dashboard
- quality_assurance_dashboard
- recipient_tta_request
- tta_timeline
-}
-
-enum_Users_flags <|-- Users
 
 class ValidFor{
  * id : integer : <generated>

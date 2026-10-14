@@ -3,6 +3,7 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Op, QueryTypes } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
+import { FEATURE_FLAGS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
   EventReportPilot,
@@ -151,29 +152,33 @@ export async function userEmailIsVerifiedByUserId(userId) {
  * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
  */
 export async function setFlag(flag, on = true) {
+  if (!FEATURE_FLAGS.includes(flag)) {
+    throw new Error(`Invalid feature flag: ${flag}`);
+  }
+
   const query = `
     UPDATE
     "Users" u
     SET
       flags = CASE
-        WHEN ${!!on} THEN CASE
-            WHEN flags @> ARRAY ['${flag}'::"enum_Users_flags"] THEN flags
-            ELSE array_append(flags, '${flag}')
-        END
-        ELSE array_remove(flags, '${flag}')
+        WHEN :on THEN array_append(flags, :flag)
+        ELSE array_remove(flags, :flag::VARCHAR(255))
       END
     FROM
     "Permissions" p
     WHERE
       p."userId" = u.id AND
-      p."scopeId" = ${SITE_ACCESS}
+      p."scopeId" = :scopeId
       AND CASE
-        WHEN ${!!on} THEN NOT flags @> ARRAY ['${flag}'::"enum_Users_flags"]
-        ELSE flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+        WHEN :on THEN NOT flags @> ARRAY[:flag]::VARCHAR(255)[]
+        ELSE flags @> ARRAY[:flag]::VARCHAR(255)[]
     END;
   `;
 
-  const result = sequelize.query(query, { type: QueryTypes.UPDATE });
+  const result = sequelize.query(query, {
+    type: QueryTypes.UPDATE,
+    replacements: { flag, on: !!on, scopeId: SITE_ACCESS },
+  });
   return result;
 }
 

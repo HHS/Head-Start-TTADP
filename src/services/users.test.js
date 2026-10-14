@@ -404,6 +404,18 @@ describe('Users DB service', () => {
       const user = await User.findOne({ where: { id: 53 } });
       expect(user.flags[0]).toBe(undefined);
     });
+    it('does not add a flag twice', async () => {
+      await setFlag('quality_assurance_dashboard', true);
+      await setFlag('quality_assurance_dashboard', true);
+      const user = await User.findOne({ where: { id: 50 } });
+      expect(user.flags).toEqual(['quality_assurance_dashboard']);
+      await setFlag('quality_assurance_dashboard', false);
+    });
+    it('rejects unknown flags', async () => {
+      await expect(setFlag('not_a_flag\'; DROP TABLE "Users"; --', true)).rejects.toThrow(
+        'Invalid feature flag'
+      );
+    });
   });
 
   describe('getTrainingReportUsersByRegion', () => {

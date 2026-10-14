@@ -137,8 +137,25 @@ export default (sequelize, DataTypes) => {
         },
       },
       flags: {
-        type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
-        defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
+        // Stored as strings rather than an enum array; see the Sequelize enum array note in AGENTS.md
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        defaultValue: sequelize.literal("'{}'::character varying(255)[]"),
+        validate: {
+          flagsValid(value) {
+            if (value === null || value === undefined) {
+              return;
+            }
+            if (!Array.isArray(value)) {
+              throw new Error('Flags must be an array');
+            }
+            const allowed = new Set(FEATURE_FLAGS);
+            value.forEach((flag) => {
+              if (!allowed.has(flag)) {
+                throw new Error(`Invalid feature flag: ${flag}`);
+              }
+            });
+          },
+        },
       },
       fullName: {
         type: DataTypes.VIRTUAL,
