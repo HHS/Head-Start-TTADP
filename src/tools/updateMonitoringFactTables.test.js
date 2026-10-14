@@ -448,10 +448,10 @@ describe('updateMonitoringFactTables', () => {
 
     // Sequential, not folded into the Promise.all above: MonitoringFindingHistoryStatus's
     // beforeCreate hook (syncMonitoringFindingHistoryStatusLink) creates the matching
-    // MonitoringFindingHistoryStatusLink row itself. Creating both concurrently races two
-    // independent findOrCreate paths against the same Link row and can throw a duplicate-key
-    // error under load (see genericLink.js's syncLink — its semaphore only serializes hook-driven
-    // syncs against each other, not against an explicit findOrCreate outside the hook).
+    // MonitoringFindingHistoryStatusLink row itself. genericLink.js's syncLink now relies on the
+    // database's unique/primary-key constraint on the Link row (rather than an in-process lock),
+    // so a duplicate-key race there is caught and treated as "already linked" — this grouping is
+    // kept separate simply to keep this setup step easy to reason about, not to avoid a race.
     await Promise.all(
       Object.entries(HISTORY_STATUS_NAME_BY_ID).map(([statusId, name]) =>
         MonitoringFindingHistoryStatus.findOrCreate({
