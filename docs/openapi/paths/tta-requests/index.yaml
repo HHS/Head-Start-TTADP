@@ -1,0 +1,35 @@
+post:
+  tags:
+    - tta request
+  summary: Save a new draft TTA request
+  description: >-
+    Available to users with write permission in the region. A draft is saved
+    as it stands, so every field except regionId is optional. Saving a draft
+    does not create goals; that happens when a request is approved.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: '../../index.yaml#/components/schemas/ttaRequestInput'
+            - type: object
+              required:
+                - regionId
+              properties:
+                regionId:
+                  type: integer
+                  description: The region the request belongs to; it cannot change later
+  responses:
+    '201':
+      description: Created draft TTA request
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: >-
+        Malformed body, or grants and a recipient that do not belong together
+        in the request's region
+    '403':
+      description: No write permission in the region

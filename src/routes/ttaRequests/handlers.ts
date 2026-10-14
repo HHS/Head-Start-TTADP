@@ -1,0 +1,98 @@
+import type { Request, Response } from 'express';
+import httpCodes from 'http-codes';
+import handleErrors from '../../lib/apiErrorHandler';
+import TtaRequestPolicy from '../../policies/ttaRequest';
+import { currentUserId } from '../../services/currentUser';
+import {
+  createTtaRequest as createTtaRequestService,
+  ttaRequestById,
+  updateTtaRequest,
+} from '../../services/ttaRequests';
+import { userById } from '../../services/users';
+
+const namespace = 'SERVICE:TTA_REQUESTS';
+
+const logContext = {
+  namespace,
+};
+
+export async function getTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    const ttaRequest = await ttaRequestById(Number(ttaRequestId));
+
+    if (!ttaRequest) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, ttaRequest.regionId, ttaRequest);
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    // toJSON keeps the virtual fields
+    res.json(ttaRequest.toJSON());
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function createTtaRequest(req: Request, res: Response) {
+  try {
+    const data = req.body;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, data.regionId);
+
+    if (!authorization.canCreate()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await createTtaRequestService(data, userId);
+    res.status(httpCodes.CREATED).json(ttaRequest);
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function saveTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await updateTtaRequest(existing, req.body, userId);
+    res.json(ttaRequest);
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
