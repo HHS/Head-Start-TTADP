@@ -8,7 +8,7 @@ import type {
 } from '../goalServices/types';
 import db from '../models';
 import { cacheObjectiveMetadata } from './reportCache';
-import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
+import { isStaleObjective, removeUnusedGoalsObjectivesFromReport } from './standardGoals';
 
 const {
   Objective,
@@ -81,6 +81,16 @@ export async function saveObjectivesForReport(objectives, report) {
                 status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               },
             });
+
+            // A stale form (e.g. another tab) can submit an objective that has since been
+            // deleted. If none of its ids exist anymore, honor the delete and skip it.
+            if (
+              !existingObjective &&
+              !objective.isNew &&
+              (await isStaleObjective(validIdsToCheck, { otherEntityId }))
+            ) {
+              return null;
+            }
           }
 
           // 2. Find by title and 'entity' id.
@@ -137,7 +147,7 @@ export async function saveObjectivesForReport(objectives, report) {
     )
   );
 
-  const currentObjectives = updatedObjectives.flat();
+  const currentObjectives = updatedObjectives.flat().filter(Boolean);
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 

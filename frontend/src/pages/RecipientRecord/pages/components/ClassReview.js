@@ -29,16 +29,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
   return (
     <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">
       <Drawer triggerRef={howMetRef} stickyHeader stickyFooter title="CLASS® review thresholds">
-        <ContentFromFeedByTag
-          tagName="ttahub-class-thresholds"
-          contentSelector="div:nth-child(3)"
-          className="ttahub-class-feed-article"
-        />
-        <ContentFromFeedByTag
-          tagName="ttahub-class-thresholds"
-          contentSelector="div:nth-child(4)"
-          className="ttahub-class-feed-article"
-        />
+        <ContentFromFeedByTag tagName="ttahub-class-thresholds" className="ttahub-class-feed-article" />
       </Drawer>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
