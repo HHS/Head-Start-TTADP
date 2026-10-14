@@ -314,7 +314,7 @@ describe('User handlers', () => {
     const request = {
       ...mockRequest,
       body: {
-        flag: 'anv_statistics',
+        flag: 'quality_assurance_dashboard',
         on: false,
       },
     };
@@ -334,6 +334,17 @@ describe('User handlers', () => {
       });
       await setFeatureFlag(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('rejects unknown flags', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      setFlag.mockClear();
+      await setFeatureFlag(
+        { ...request, body: { flag: 'not_a_real_flag', on: true } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+      expect(setFlag).not.toHaveBeenCalled();
     });
 
     it('calls the error handler on error', async () => {

@@ -215,6 +215,10 @@ const dropAndRecreateEnum = async (
  * given set of feature flags.
  * If no set is provided, the default FEATURE_FLAGS constant is used.
  *
+ * Only for migrations that predate 20261014130000-change-users-flags-type, which
+ * converted "Users"."flags" to VARCHAR(255)[]. New feature flags only need to be
+ * added to FEATURE_FLAGS in constants.js.
+ *
  * @param {sequelize.queryInterface} queryInterface
  * @param {sequelize.transaction} transaction
  * @param {string[]} valuesToRemove
