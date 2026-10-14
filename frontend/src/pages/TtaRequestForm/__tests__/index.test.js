@@ -7,10 +7,17 @@ import React from 'react';
 import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR } from '../constants';
 import TtaRequestForm from '../index';
 
 // eslint-disable-next-line react/prop-types
+// the real guard looks for the cursor in a react-draft-wysiwyg editor, which the mocked
+// rich editor below doesn't render, so tests say directly whether the cursor is in one
+jest.mock('../../../utils/formRichTextEditorHelper', () => ({
+  shouldUpdateFormData: jest.fn(() => true),
+}));
+
 jest.mock('focus-trap-react', () => ({ children }) => <>{children}</>);
 
 jest.mock(
@@ -148,6 +155,7 @@ describe('TtaRequestForm', () => {
   afterEach(() => {
     fetchMock.restore();
     jest.clearAllMocks();
+    shouldUpdateFormData.mockImplementation(() => true);
   });
 
   beforeEach(() => {
@@ -521,6 +529,87 @@ describe('TtaRequestForm', () => {
       // the draft saved message is for saving by hand
       expect(screen.queryByText(/draft saved on/i)).toBeNull();
       expect(fetchMock.called('/api/tta-requests')).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  // the server's copy of a draft saved with this creator note, as the save endpoints return it
+  const savedWithNote = (creatorNotes) => ({
+    ...SAVED_REQUEST,
+    recipientAware: null,
+    originator: null,
+    context: '',
+    creatorNotes,
+    grants: [GRANT_ONE],
+    goalTemplate: null,
+    reviewer: null,
+  });
+
+  const advanceAutosave = () =>
+    act(async () => {
+      jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+    });
+
+  const saveCalls = () =>
+    fetchMock.calls('/api/tta-requests').length + fetchMock.calls('/api/tta-requests/42').length;
+
+  it('does not autosave again until something changes after a save', async () => {
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note, edited'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      // the form now matches what was saved, so there is nothing to send
+      await advanceAutosave();
+      expect(saveCalls()).toBe(1);
+      expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('A note');
+
+      userEvent.type(screen.getByLabelText(/add creator notes/i), ', edited');
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(2));
+      expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not autosave a draft that was just saved by hand and left unchanged', async () => {
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+      userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      await advanceAutosave();
+      expect(saveCalls()).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('leaves the form alone after an autosave while the cursor is in the rich text editor', async () => {
+    shouldUpdateFormData.mockImplementation((isAutoSave) => !isAutoSave);
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      // nothing was reset, so the form still counts as changed and saves again
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(2));
     } finally {
       jest.useRealTimers();
     }

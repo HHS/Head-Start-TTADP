@@ -11,6 +11,7 @@ import DismissingComponentWrapper from '../../components/DismissingComponentWrap
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import { createTtaRequest, getTtaRequest, saveTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
+import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import {
   AUTOSAVE_INTERVAL,
   DATE_DISPLAY_SAVED_FORMAT,
@@ -156,8 +157,10 @@ export default function TtaRequestForm({
   }, [grantKey, setValue]);
 
   /**
-   * A draft is saved as it stands, so this deliberately sidesteps validation. Nothing here
-   * resets the form, which would throw the cursor out of the rich text editor mid-sentence.
+   * A draft is saved as it stands, so this deliberately sidesteps validation. The form is then
+   * reset to what was saved, as the activity report does, which clears its dirty state so an
+   * autosave only follows a change - unless an autosave would throw the cursor out of the
+   * rich text editor mid-sentence.
    */
   const onSaveDraft = async (isAutoSave = false) => {
     const ttaRequestId = ttaRequestIdRef.current;
@@ -178,16 +181,23 @@ export default function TtaRequestForm({
     try {
       const payload = toApiPayload(getValues() as TtaRequestFormValues);
 
+      let saved: TtaRequestResponse;
       if (ttaRequestId) {
-        await saveTtaRequest(ttaRequestId, payload);
+        saved = await saveTtaRequest(ttaRequestId, payload);
       } else {
-        const created = await createTtaRequest({ ...payload, regionId: effectiveRegionId });
-        ttaRequestIdRef.current = created.id;
+        saved = await createTtaRequest({ ...payload, regionId: effectiveRegionId });
+        ttaRequestIdRef.current = saved.id;
         window.history.replaceState(
           null,
           null,
-          location.pathname.replace(/\/new\/?$/, `/${created.id}`)
+          location.pathname.replace(/\/new\/?$/, `/${saved.id}`)
         );
+      }
+
+      if (shouldUpdateFormData(isAutoSave)) {
+        // the saved grants are the ones already chosen, not a change of grant
+        previousGrantKey.current = grantIdsKey(saved.grants);
+        reset(toFormValues(saved, recipientOptions ?? []));
       }
 
       setSaveError(null);
