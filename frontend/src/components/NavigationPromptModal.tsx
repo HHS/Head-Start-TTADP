@@ -34,7 +34,7 @@ export default function NavigationPromptModal({
       onClose={onDismiss}
     >
       <p className="margin-top-0">You have unsaved preferences that will be lost.</p>
-      <div className="display-flex flex-justify-end">
+      <div className="display-flex flex-justify">
         <Button
           type="button"
           className="usa-button--secondary margin-right-2"
@@ -43,7 +43,12 @@ export default function NavigationPromptModal({
         >
           Continue without saving
         </Button>
-        <Button type="button" disabled={isSaving} onClick={onSaveAndContinue}>
+        <Button
+          type="button"
+          disabled={isSaving}
+          onClick={onSaveAndContinue}
+          className="padding-x-105"
+        >
           Save and continue
         </Button>
       </div>
