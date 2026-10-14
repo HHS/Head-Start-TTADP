@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef } from 'react';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
 import UserContext from '../UserContext';
 import RealtimeClient, { type PresenceUser } from '../utils/realtimeClient';
 
@@ -28,6 +29,24 @@ interface PresenceManagerProps {
   ) => void;
 }
 
+/**
+ * Browsers can't set headers on a websocket handshake, so the impersonation id
+ * the fetchers send as a header goes in the query string instead.
+ */
+export function realtimeUrl(baseUrl: string): string {
+  if (!baseUrl) return baseUrl;
+  let impersonationId: string | null = null;
+  try {
+    impersonationId = window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY);
+  } catch {
+    // storage unavailable; connect as the session user
+  }
+  if (!impersonationId) return baseUrl;
+  const url = new URL(baseUrl, window.location.href);
+  url.searchParams.set('impersonationId', impersonationId);
+  return url.toString();
+}
+
 export function toPresenceUpdate(users: PresenceUser[], currentUserId: number): PresenceUpdate {
   return {
     presentUsers: users,
@@ -54,7 +73,7 @@ export default function PresenceManager({
   callbacks.current = { onPresenceUpdate, onRevisionUpdate, userId: user.id };
 
   useEffect(() => {
-    const client = new RealtimeClient(WS_URL, room, {
+    const client = new RealtimeClient(realtimeUrl(WS_URL), room, {
       onPresence: (users) => {
         callbacks.current.onPresenceUpdate?.(toPresenceUpdate(users, callbacks.current.userId));
       },

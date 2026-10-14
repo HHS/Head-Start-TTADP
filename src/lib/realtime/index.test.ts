@@ -19,11 +19,19 @@ const USERS: Record<string, RealtimeUser> = {
   bob: { userId: 2, username: 'Bob' },
 };
 
-type Message = { type: string; room: string; users?: unknown[]; event?: string; data?: unknown };
+type Message = {
+  type: string;
+  room: string;
+  version?: number;
+  users?: unknown[];
+  event?: string;
+  data?: unknown;
+  error?: string;
+};
 
 /** Collects every message a socket receives so tests can wait for a specific one. */
-function openClient(url: string, user?: string) {
-  const ws = new WebSocket(url, { headers: user ? { 'x-test-user': user } : {} });
+function openClient(url: string, user?: string, { autoPong = true } = {}) {
+  const ws = new WebSocket(url, { headers: user ? { 'x-test-user': user } : {}, autoPong });
   // a rejected handshake emits 'error' as well as 'unexpected-response'
   ws.on('error', () => {});
   const received: Message[] = [];
@@ -118,9 +126,11 @@ describe('realtime', () => {
     let redis: InstanceType<typeof RedisMock>;
     let realtime: ReturnType<typeof createRealtimeServer>;
     const clients: ReturnType<typeof openClient>[] = [];
+    const authorize = jest.fn();
+    const HEARTBEAT_TEST_MS = 50;
 
-    const connect = async (user?: string) => {
-      const client = openClient(url, user);
+    const connect = async (user?: string, options?: { autoPong?: boolean }) => {
+      const client = openClient(url, user, options);
       clients.push(client);
       await client.opened;
       return client;
@@ -129,12 +139,16 @@ describe('realtime', () => {
     beforeEach(async () => {
       redis = new RedisMock();
       await redis.flushall();
+      authorize.mockReset();
+      authorize.mockResolvedValue(true);
       server = createServer();
       realtime = createRealtimeServer({
         server,
         authenticate: async (req) => USERS[req.headers['x-test-user'] as string] || null,
+        authorize,
         redis,
         subscriber: redis.duplicate(),
+        heartbeatMs: HEARTBEAT_TEST_MS,
       });
       await realtime.ready();
       await new Promise<void>((resolve) => {
@@ -156,6 +170,75 @@ describe('realtime', () => {
 
     it('rejects connections without an authenticated user', async () => {
       await expect(connect()).rejects.toThrow('401');
+    });
+
+    it('refuses joins the user is not authorized for', async () => {
+      authorize.mockImplementation(async (_user, room) => room !== 'ar-8');
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-8' });
+
+      expect(await alice.next((m) => m.type === 'error')).toEqual({
+        type: 'error',
+        room: 'ar-8',
+        error: 'forbidden',
+      });
+      expect(authorize).toHaveBeenCalledWith(expect.objectContaining({ userId: 1 }), 'ar-8');
+      expect(await redis.exists(presenceKey('ar-8'))).toBe(0);
+
+      await broadcastRoom('ar-8', 'revision-updated', { reportId: 8 }, redis);
+      alice.send({ type: 'join', room: 'ar-9' });
+      await alice.next(presenceWith(1));
+      expect(alice.received.some((m) => m.type === 'event')).toBe(false);
+    });
+
+    it('processes a join and a following leave in order', async () => {
+      let allow: (value: boolean) => void;
+      authorize.mockImplementation(
+        () =>
+          new Promise<boolean>((resolve) => {
+            allow = resolve;
+          })
+      );
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-4' });
+      alice.send({ type: 'leave', room: 'ar-4' });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      allow(true);
+
+      // the join completes first; the leave then removes the entry it added
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+      expect(await redis.hgetall(presenceKey('ar-4'))).toEqual({});
+      await broadcastRoom('ar-4', 'revision-updated', {}, redis);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      expect(alice.received.some((m) => m.type === 'event')).toBe(false);
+    });
+
+    it('numbers presence snapshots so clients can drop stale ones', async () => {
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-5' });
+      const first = await alice.next(presenceWith(1));
+
+      const bob = await connect('bob');
+      bob.send({ type: 'join', room: 'ar-5' });
+      const second = await alice.next(presenceWith(2));
+
+      expect(second.version).toBeGreaterThan(first.version);
+    });
+
+    it('drops sockets that stop answering pings, even before joining a room', async () => {
+      const silent = await connect('alice', { autoPong: false });
+      const closed = new Promise((resolve) => {
+        silent.ws.once('close', resolve);
+      });
+
+      await closed;
+      expect(silent.ws.readyState).toBe(WebSocket.CLOSED);
     });
 
     it('reports presence to everyone in the room as users join and leave', async () => {

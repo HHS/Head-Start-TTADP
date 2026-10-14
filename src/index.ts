@@ -7,6 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 import app from './app';
 import { createRealtimeServer } from './lib/realtime';
 import authenticateUpgrade from './lib/realtime/authenticateUpgrade';
+import authorizeRoom from './lib/realtime/authorizeRoom';
 import { auditLogger } from './logger';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
@@ -18,7 +19,11 @@ const server = app.listen(port, () => {
 });
 
 if (!bypassSockets) {
-  const realtime = createRealtimeServer({ server, authenticate: authenticateUpgrade });
+  const realtime = createRealtimeServer({
+    server,
+    authenticate: authenticateUpgrade,
+    authorize: authorizeRoom,
+  });
 
   realtime
     .ready()

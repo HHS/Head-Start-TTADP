@@ -7,8 +7,13 @@
  *
  * Protocol (JSON text frames):
  *   client -> server  { type: 'join' | 'leave', room }
- *   server -> client  { type: 'presence', room, users: [{ userId, username, tabs }] }
+ *   server -> client  { type: 'presence', room, version, users: [{ userId, username, tabs }] }
  *                     { type: 'event', room, event, data }
+ *                     { type: 'error', room, error: 'forbidden' }
+ *
+ * Presence snapshots can reach a client out of order when several instances
+ * publish at once; `version` increases with every snapshot so clients can
+ * ignore stale ones.
  */
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, Server } from 'node:http';
@@ -28,6 +33,7 @@ export const PRESENCE_TTL_MS = HEARTBEAT_MS * 3;
 const MAX_PAYLOAD_BYTES = 4 * 1024;
 
 export const presenceKey = (room: string) => `realtime:presence:${room}`;
+export const presenceVersionKey = (room: string) => `realtime:presence-version:${room}`;
 
 export interface RealtimeUser {
   userId: number;
@@ -47,13 +53,16 @@ interface Client extends RealtimeUser {
   ws: WebSocket;
   rooms: Set<string>;
   isAlive: boolean;
+  // join/leave are async; chaining them keeps a client's messages in order
+  queue: Promise<void>;
 }
 
 type RoomMessage =
-  | { type: 'presence'; room: string; users: PresenceUser[] }
+  | { type: 'presence'; room: string; version: number; users: PresenceUser[] }
   | { type: 'event'; room: string; event: string; data: unknown };
 
 export type Authenticate = (req: IncomingMessage) => Promise<RealtimeUser | null>;
+export type Authorize = (user: RealtimeUser, room: string) => Promise<boolean>;
 
 /**
  * Sends an event to every socket in a room, on every web instance.
@@ -124,32 +133,56 @@ export function parseClientMessage(raw: RawData): { type: 'join' | 'leave'; room
 export function createRealtimeServer({
   server,
   authenticate,
+  authorize,
   redis = getRedis(),
   subscriber = getRedis().duplicate({ connectionName: 'app:realtime-sub' }),
+  heartbeatMs = HEARTBEAT_MS,
 }: {
   server: Server;
   authenticate: Authenticate;
+  authorize: Authorize;
   redis?: Redis;
   subscriber?: Redis;
+  heartbeatMs?: number;
 }) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD_BYTES });
   const rooms = new Map<string, Set<Client>>();
+  // every connected client, whether or not it has joined a room, so heartbeat reaches all of them
+  const clients = new Set<Client>();
 
   const entryFor = (client: Client) =>
     JSON.stringify({ userId: client.userId, username: client.username, seen: Date.now() });
 
   async function publishPresence(room: string) {
-    const entries = await redis.hgetall(presenceKey(room));
+    // read the snapshot and bump the version atomically, so a higher version
+    // always means a newer snapshot no matter which instance publishes first
+    const [[, entries], [, version]] = (await redis
+      .multi()
+      .hgetall(presenceKey(room))
+      .incr(presenceVersionKey(room))
+      .pexpire(presenceVersionKey(room), PRESENCE_TTL_MS * 2)
+      .exec()) as [[null, Record<string, string>], [null, number], unknown];
     const { users, stale } = summarizePresence(entries);
     if (stale.length) {
       await redis.hdel(presenceKey(room), ...stale);
     }
-    const message: RoomMessage = { type: 'presence', room, users };
+    const message: RoomMessage = { type: 'presence', room, version, users };
     await redis.publish(CHANNEL, JSON.stringify(message));
   }
 
   async function join(client: Client, room: string) {
     if (client.rooms.has(room)) return;
+
+    if (!(await authorize(client, room))) {
+      auditLogger.warn(`[realtime] user ${client.userId} denied access to room ${room}`);
+      if (client.ws.readyState === WebSocket.OPEN) {
+        client.ws.send(JSON.stringify({ type: 'error', room, error: 'forbidden' }));
+      }
+      return;
+    }
+    // the socket may have closed while authorization was pending
+    if (client.ws.readyState !== WebSocket.OPEN) return;
+
     client.rooms.add(room);
     if (!rooms.has(room)) rooms.set(room, new Set());
     rooms.get(room).add(client);
@@ -206,7 +239,9 @@ export function createRealtimeServer({
       username: user.username,
       rooms: new Set(),
       isAlive: true,
+      queue: Promise.resolve(),
     };
+    clients.add(client);
 
     ws.on('pong', () => {
       client.isAlive = true;
@@ -216,12 +251,19 @@ export function createRealtimeServer({
       const message = parseClientMessage(raw);
       if (!message) return;
       const action = message.type === 'join' ? join : leave;
-      action(client, message.room).catch(logError(`${message.type} ${message.room}`));
+      client.queue = client.queue
+        .then(() => action(client, message.room))
+        .catch(logError(`${message.type} ${message.room}`));
     });
 
     ws.on('close', () => {
-      [...client.rooms].forEach((room) => {
-        leave(client, room).catch(logError(`leave ${room} on close`));
+      clients.delete(client);
+      client.queue = client.queue.then(async () => {
+        await Promise.all(
+          [...client.rooms].map((room) =>
+            leave(client, room).catch(logError(`leave ${room} on close`))
+          )
+        );
       });
     });
 
@@ -252,13 +294,7 @@ export function createRealtimeServer({
   // instances don't prune them. Pruning on publish also clears out entries left
   // behind by an instance that crashed.
   const heartbeat = setInterval(() => {
-    const allClients = new Set<Client>();
-    rooms.forEach((members) => {
-      members.forEach((c) => {
-        allClients.add(c);
-      });
-    });
-    allClients.forEach((client) => {
+    clients.forEach((client) => {
       if (!client.isAlive) {
         client.ws.terminate();
         return;
@@ -274,6 +310,7 @@ export function createRealtimeServer({
         pipeline.hset(presenceKey(room), client.id, entryFor(client));
       });
       pipeline.pexpire(presenceKey(room), PRESENCE_TTL_MS * 2);
+      pipeline.pexpire(presenceVersionKey(room), PRESENCE_TTL_MS * 2);
       pipeline
         .exec()
         .then(() => redis.hgetall(presenceKey(room)))
@@ -285,7 +322,7 @@ export function createRealtimeServer({
         })
         .catch(logError(`heartbeat ${room}`));
     });
-  }, HEARTBEAT_MS);
+  }, heartbeatMs);
   heartbeat.unref();
 
   return {

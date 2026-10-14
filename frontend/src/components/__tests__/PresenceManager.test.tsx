@@ -1,8 +1,9 @@
 import { render } from '@testing-library/react';
 import React from 'react';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import UserContext from '../../UserContext';
 import RealtimeClient from '../../utils/realtimeClient';
-import PresenceManager, { toPresenceUpdate } from '../PresenceManager';
+import PresenceManager, { realtimeUrl, toPresenceUpdate } from '../PresenceManager';
 
 jest.mock('../../utils/realtimeClient');
 
@@ -20,6 +21,16 @@ const handlersFor = (index = 0) => MockClient.mock.calls[index][2];
 describe('PresenceManager', () => {
   beforeEach(() => {
     MockClient.mockClear();
+    window.sessionStorage.clear();
+  });
+
+  it('adds the impersonated user id to the socket url', () => {
+    expect(realtimeUrl('wss://localhost')).toBe('wss://localhost');
+
+    window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, '9');
+
+    expect(realtimeUrl('wss://localhost')).toBe('wss://localhost/?impersonationId=9');
+    expect(realtimeUrl('')).toBe('');
   });
 
   it('builds the presence summary from the current user perspective', () => {

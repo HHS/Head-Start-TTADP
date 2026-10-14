@@ -12,7 +12,7 @@ export interface PresenceUser {
 }
 
 type ServerMessage =
-  | { type: 'presence'; room: string; users: PresenceUser[] }
+  | { type: 'presence'; room: string; version: number; users: PresenceUser[] }
   | { type: 'event'; room: string; event: string; data: unknown };
 
 interface Handlers {
@@ -32,6 +32,9 @@ export default class RealtimeClient {
 
   private closed = false;
 
+  // presence snapshots can arrive out of order across server instances
+  private presenceVersion = 0;
+
   constructor(
     private readonly url: string,
     private readonly room: string,
@@ -46,6 +49,7 @@ export default class RealtimeClient {
 
     socket.addEventListener('open', () => {
       this.retryMs = INITIAL_RETRY_MS;
+      this.presenceVersion = 0;
       socket.send(JSON.stringify({ type: 'join', room: this.room }));
     });
 
@@ -58,6 +62,8 @@ export default class RealtimeClient {
       }
       if (message.room !== this.room) return;
       if (message.type === 'presence') {
+        if (message.version <= this.presenceVersion) return;
+        this.presenceVersion = message.version;
         this.handlers.onPresence?.(message.users);
       } else if (message.type === 'event') {
         this.handlers.onEvent?.(message.event, message.data);

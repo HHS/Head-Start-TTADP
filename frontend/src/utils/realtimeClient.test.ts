@@ -88,14 +88,44 @@ describe('RealtimeClient', () => {
     socket.open();
 
     const users = [{ userId: 1, username: 'Alice', tabs: 1 }];
-    socket.receive({ type: 'presence', room: 'ar-1', users });
-    socket.receive({ type: 'presence', room: 'ar-2', users: [] });
+    socket.receive({ type: 'presence', room: 'ar-1', version: 1, users });
+    socket.receive({ type: 'presence', room: 'ar-2', version: 2, users: [] });
     socket.receive({ type: 'event', room: 'ar-1', event: 'revision-updated', data: { a: 1 } });
     socket.receive('not json');
 
     expect(onPresence).toHaveBeenCalledTimes(1);
     expect(onPresence).toHaveBeenCalledWith(users);
     expect(onEvent).toHaveBeenCalledWith('revision-updated', { a: 1 });
+  });
+
+  it('ignores presence snapshots older than the latest one seen', () => {
+    const onPresence = jest.fn();
+    new RealtimeClient('wss://hub', 'ar-1', { onPresence }).connect();
+    const socket = FakeSocket.instances[0];
+    socket.open();
+
+    const newer = [{ userId: 1, username: 'Alice', tabs: 1 }];
+    const older = [...newer, { userId: 2, username: 'Bob', tabs: 1 }];
+    socket.receive({ type: 'presence', room: 'ar-1', version: 5, users: newer });
+    socket.receive({ type: 'presence', room: 'ar-1', version: 4, users: older });
+    socket.receive({ type: 'presence', room: 'ar-1', version: 5, users: older });
+
+    expect(onPresence).toHaveBeenCalledTimes(1);
+    expect(onPresence).toHaveBeenCalledWith(newer);
+  });
+
+  it('starts version tracking over after reconnecting', () => {
+    const onPresence = jest.fn();
+    new RealtimeClient('wss://hub', 'ar-1', { onPresence }).connect();
+    FakeSocket.instances[0].open();
+    FakeSocket.instances[0].receive({ type: 'presence', room: 'ar-1', version: 9, users: [] });
+    FakeSocket.instances[0].emit('close');
+    jest.advanceTimersByTime(2000);
+
+    FakeSocket.instances[1].open();
+    FakeSocket.instances[1].receive({ type: 'presence', room: 'ar-1', version: 1, users: [] });
+
+    expect(onPresence).toHaveBeenCalledTimes(2);
   });
 
   it('reconnects with backoff and rejoins after the socket drops', () => {

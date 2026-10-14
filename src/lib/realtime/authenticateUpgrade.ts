@@ -3,7 +3,11 @@ import type { RequestHandler } from 'express';
 import { auditLogger } from '../../logger';
 import sessionMiddleware from '../../middleware/sessionMiddleware';
 import db from '../../models';
+import { validateUserAuthForAccess } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
 import type { RealtimeUser } from '.';
+
+export const IMPERSONATION_PARAM = 'impersonationId';
 
 type SessionRequest = IncomingMessage & { session?: { userId?: number | string } };
 
@@ -17,9 +21,35 @@ function loadSession(req: SessionRequest, session: RequestHandler): Promise<void
 }
 
 /**
- * Resolves the logged in user for a websocket upgrade request from the same
- * session cookie the HTTP API uses, so presence identity comes from the server
- * rather than from whatever the client claims.
+ * Stand-in for an express response. currentUserId rejects a request by sending
+ * a status, so this records whether that happened.
+ */
+function upgradeResponse() {
+  const res = {
+    locals: {},
+    headersSent: false,
+    statusCode: 200,
+    status(code: number) {
+      res.statusCode = code;
+      return res;
+    },
+    sendStatus(code: number) {
+      res.statusCode = code;
+      res.headersSent = true;
+      return res;
+    },
+    end() {
+      res.headersSent = true;
+      return res;
+    },
+  };
+  return res;
+}
+
+/**
+ * Resolves the effective user for a websocket upgrade the same way the HTTP API
+ * does (session, impersonation, and SITE_ACCESS), so presence identity comes
+ * from the server rather than from whatever the client claims.
  */
 export default async function authenticateUpgrade(
   req: IncomingMessage,
@@ -28,14 +58,23 @@ export default async function authenticateUpgrade(
   const sessionReq = req as SessionRequest;
   await loadSession(sessionReq, session);
 
-  let userId = sessionReq.session?.userId;
-
-  // bypass authorization, used for cucumber UAT and axe accessibility testing
-  if (!userId && process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    userId = process.env.CURRENT_USER_ID;
+  // browsers can't set headers on a websocket handshake, so the client sends the
+  // impersonation id as a query param; currentUserId validates it like the header
+  const impersonationId = new URL(req.url || '/', 'http://localhost').searchParams.get(
+    IMPERSONATION_PARAM
+  );
+  if (impersonationId) {
+    req.headers['auth-impersonation-id'] = impersonationId;
   }
 
-  if (!userId) {
+  const res = upgradeResponse();
+  const userId = await currentUserId(req, res);
+  if (res.headersSent || !userId) {
+    return null;
+  }
+
+  if (!(await validateUserAuthForAccess(Number(userId)))) {
+    auditLogger.warn(`[realtime] rejected websocket for user ${userId} without SITE_ACCESS`);
     return null;
   }
 
