@@ -9,6 +9,7 @@ const {
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
+const { broadcastRoom } = require('../../lib/realtime');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
@@ -1045,14 +1046,9 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
         // Get the current user ID
         const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
 
-        // Dynamically import the mesh server to avoid circular dependencies
-        // eslint-disable-next-line global-require
-        const { getMeshServer } = require('../../index');
-        const mesh = getMeshServer();
-
-        if (mesh) {
+        if (!process.env.BYPASS_SOCKETS) {
           const roomName = `ar-${instance.id}`;
-          await mesh.broadcastRoom(roomName, 'revision-updated', {
+          await broadcastRoom(roomName, 'revision-updated', {
             reportId: instance.id,
             revision: currentRevision,
             userId: userId || null, // Include the user ID who made the change

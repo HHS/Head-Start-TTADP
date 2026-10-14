@@ -201,7 +201,6 @@ const LogFormNavigator = ({
       <Navigator
         shouldAutoSave={reportId !== 'new'}
         datePickerKey={datePickerKey}
-        socketMessageStore={{}}
         key={currentPage}
         editable
         updatePage={updatePage}

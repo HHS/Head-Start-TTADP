@@ -22,8 +22,8 @@ import {
   LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
-import MeshPresenceManager from '../../components/MeshPresenceManager';
 import { NOT_STARTED } from '../../components/Navigator/constants';
+import PresenceManager from '../../components/PresenceManager';
 import {
   createReport,
   getApprovers,
@@ -705,9 +705,9 @@ function ActivityReport({ match, location, region }) {
     <div className="smart-hub-activity-report">
       {error && <Alert type="warning">{error}</Alert>}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
-      {/* Don't render the Mesh component unless working on a saved report */}
+      {/* Don't render the presence component unless working on a saved report */}
       {activityReportId !== 'new' && (
-        <MeshPresenceManager
+        <PresenceManager
           room={`ar-${activityReportId}`}
           onPresenceUpdate={handlePresenceUpdate}
           onRevisionUpdate={handleRevisionUpdate}
