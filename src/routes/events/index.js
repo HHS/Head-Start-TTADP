@@ -8,6 +8,7 @@ import {
   getTrainingReportAlertsHandler,
   updateHandler,
 } from './handlers';
+import { checkCreateEventBody, checkUpdateEventBody } from './middleware';
 
 const router = express.Router();
 const context = 'events';
@@ -22,8 +23,8 @@ router.get(
   '/collaboratorId/:collaboratorId',
   transactionWrapper(getHandler, `${context} /collaboratorId/:collaboratorId`)
 );
-router.post('/', transactionWrapper(createHandler, context));
-router.put('/id/:eventId', transactionWrapper(updateHandler, context));
+router.post('/', checkCreateEventBody, transactionWrapper(createHandler, context));
+router.put('/id/:eventId', checkUpdateEventBody, transactionWrapper(updateHandler, context));
 router.delete('/id/:eventId', transactionWrapper(deleteHandler, context));
 
 export default router;

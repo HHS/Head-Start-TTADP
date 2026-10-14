@@ -19,6 +19,7 @@ import UserContext from '../../UserContext';
 import StandardGoalForm from '../StandardGoalForm';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
+import RecipientTtaRequestForm from '../TtaRequestForm/RecipientTtaRequestForm';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import {
@@ -185,6 +186,15 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
       <Switch>
         <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)"
+          render={() => (
+            <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
+              <RecipientTtaRequestForm recipient={recipientData} regionId={regionId} />
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-request"
           render={() => (
             <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
@@ -194,7 +204,12 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientNameWithRegion={recipientNameWithRegion}
                 slug="tta-request"
                 hasAlerts={hasAlerts}
-                inlineHeadingChildren={<AddTtaRequestButton label="Add request" />}
+                inlineHeadingChildren={
+                  <AddTtaRequestButton
+                    label="Add request"
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request/new`}
+                  />
+                }
               >
                 <TtaRequest recipientId={recipientId} regionId={regionId} />
               </PageWithHeading>

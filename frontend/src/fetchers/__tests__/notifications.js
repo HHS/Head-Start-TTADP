@@ -3,11 +3,24 @@ import {
   archiveNotification,
   fetchArchivedNotifications,
   fetchNotifications,
+  fetchNotificationsCount,
   viewNotification,
 } from '../notifications';
 
 describe('notifications fetcher', () => {
   beforeEach(() => fetchMock.reset());
+
+  it('serializes unread filters and returns the unpaginated count', async () => {
+    const url = '/api/notifications/count?viewed.in[]=false&archived.in[]=false';
+    fetchMock.get(url, { count: 12, rows: [] });
+    expect(
+      await fetchNotificationsCount([
+        { topic: 'viewed', condition: 'is', query: 'false' },
+        { topic: 'archived', condition: 'is', query: 'false' },
+      ])
+    ).toEqual({ count: 12, rows: [] });
+    expect(fetchMock.lastUrl()).toBe(url);
+  });
 
   describe('fetchNotifications', () => {
     it('calls GET /api/notifications', async () => {

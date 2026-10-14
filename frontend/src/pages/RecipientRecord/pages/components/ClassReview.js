@@ -31,12 +31,6 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       <Drawer triggerRef={howMetRef} stickyHeader stickyFooter title="CLASS® review thresholds">
         <ContentFromFeedByTag
           tagName="ttahub-class-thresholds"
-          contentSelector="div:nth-child(3)"
-          className="ttahub-class-feed-article"
-        />
-        <ContentFromFeedByTag
-          tagName="ttahub-class-thresholds"
-          contentSelector="div:nth-child(4)"
           className="ttahub-class-feed-article"
         />
       </Drawer>

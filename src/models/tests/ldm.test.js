@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import fs from 'fs';
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 
 function countOccurrencesInFile(fileContent, searchString) {
   const fileLines = fileContent.split(/\r?\n/);

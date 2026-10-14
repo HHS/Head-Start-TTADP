@@ -41,6 +41,39 @@ describe('ClassReview', () => {
     fetchMock.restore();
   });
 
+  describe('thresholds drawer', () => {
+    const confluenceFeed = `<?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <entry>
+          <title>CLASS thresholds</title>
+          <summary type="html">&lt;div class="feed"&gt;
+            &lt;p&gt;Page &lt;b&gt;edited&lt;/b&gt; by &lt;a&gt;User Author&lt;/a&gt;&lt;/p&gt;
+            &lt;div&gt;&lt;p&gt;&lt;strong&gt;Quality thresholds&lt;/strong&gt;&lt;/p&gt;&lt;/div&gt;
+            &lt;div&gt;
+              &lt;a href="https://example.com/page"&gt;email.notification.view.online&lt;/a&gt;
+              &amp;middot;
+              &lt;a href="https://example.com/diff"&gt;View Changes Online&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;</summary>
+        </entry>
+      </feed>`;
+
+    it('renders the whole feed entry so the Confluence footer links stay hidden', async () => {
+      fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', confluenceFeed);
+      fetchMock.getOnce(apiUrl, { received: '05/01/2023', ES: 6, CO: 6, IS: 6 });
+
+      renderClassReview();
+
+      await screen.findByText('Quality thresholds');
+      const footerLink = screen.getByText('View Changes Online');
+      // FeedArticle.scss hides `.feed div:last-child`, which only applies when the
+      // footer is rendered inside its original `.feed` wrapper
+      const footer = footerLink.closest('div');
+      expect(footer.parentElement).toHaveClass('feed');
+      expect(footer.parentElement.lastElementChild).toBe(footer);
+    });
+  });
+
   describe('emotional support', () => {
     beforeEach(() => {
       fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', mockRSSData());

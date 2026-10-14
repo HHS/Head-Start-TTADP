@@ -1,6 +1,6 @@
 import { VALID_URL_REGEX } from '@ttahub/common';
 import { Op } from 'sequelize';
-import Semaphore from '../lib/semaphore';
+import createOrFindExisting from '../lib/createOrFindExisting';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -17,8 +17,6 @@ import {
   Resource,
 } from '../models';
 
-const semaphore = new Semaphore(1);
-
 const REPORT_AUTODETECTED_FIELDS = [];
 
 const NEXTSTEP_AUTODETECTED_FIELDS = [];
@@ -31,83 +29,76 @@ const REPORTGOAL_AUTODETECTED_FIELDS = [];
 
 const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [];
 
-const handleEclkcMapping = async (url) => {
-  let matchingHeadStart = null;
-  if (url.includes('eclkc.ohs.acf.hhs.gov')) {
-    matchingHeadStart = await Resource.findOne({
-      where: {
-        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
-      },
-    });
-    if (!matchingHeadStart) {
-      matchingHeadStart = await Resource.create({
-        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
-        domain: 'headstart.gov',
-      });
-    }
-  }
-  return matchingHeadStart;
+// Resources are unique by url (see the add-resources-url-unique-constraint migration), so a
+// concurrent create for the same url by another request, process, or sibling resolves to the
+// winner's row.
+const findOrCreateResourceByUrl = async (url, values, transaction) => {
+  const findExisting = () => Resource.findOne({ where: { url }, transaction });
+  const existing = await findExisting();
+  if (existing) return existing;
+
+  const { record } = await createOrFindExisting(
+    Resource,
+    { url, ...values },
+    findExisting,
+    transaction
+  );
+  return record;
+};
+
+const handleEclkcMapping = async (url, transaction) => {
+  if (!url.includes('eclkc.ohs.acf.hhs.gov')) return null;
+
+  const headStartUrl = url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov');
+  return findOrCreateResourceByUrl(headStartUrl, { domain: 'headstart.gov' }, transaction);
 };
 
 // -----------------------------------------------------------------------------
 // Resource Table
 // -----------------------------------------------------------------------------
 // Find or create a single resource
-const findOrCreateResource = async (url) => {
+const findOrCreateResource = async (url, transaction) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
-  let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
-  if (!resource) {
-    const matchingHeadStart = await handleEclkcMapping(url);
-    const newResource = await Resource.create({
-      url,
-      mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-    });
-    resource = await newResource.get({ plain: true });
-  }
-  return resource;
+  const resource = await Resource.findOne({ where: { url }, transaction, raw: true, plain: true });
+  if (resource) return resource;
+
+  const matchingHeadStart = await handleEclkcMapping(url, transaction);
+  const created = await findOrCreateResourceByUrl(
+    url,
+    { mapsTo: matchingHeadStart ? matchingHeadStart.id : null },
+    transaction
+  );
+  return created ? created.get({ plain: true }) : created;
 };
 
 // Find or create all resource for the list of urls passed.
-const findOrCreateResources = async (urls) => {
+const findOrCreateResources = async (urls, transaction) => {
   if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
   const filteredUrls = [
     ...new Set(urls.filter((url) => typeof url === 'string').filter((url) => url)),
   ];
-  await semaphore.acquire();
-  try {
-    const currentResources =
-      filteredUrls.length > 0
-        ? (await Resource.findAll({
-            where: {
-              url: {
-                [Op.in]: filteredUrls,
-              },
+  const currentResources =
+    filteredUrls.length > 0
+      ? (await Resource.findAll({
+          where: {
+            url: {
+              [Op.in]: filteredUrls,
             },
-            raw: true,
-          })) || []
-        : [];
-    const currentResourceURLs = new Set(
-      currentResources.map((currentResource) => currentResource.url)
-    );
-    const newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
+          },
+          transaction,
+          raw: true,
+        })) || []
+      : [];
+  const currentResourceURLs = new Set(
+    currentResources.map((currentResource) => currentResource.url)
+  );
+  const newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
 
-    const resources = [
-      ...(await Promise.all(
-        newURLs.map(async (url) => {
-          const matchingHeadStart = await handleEclkcMapping(url);
-          const resource = await Resource.create({
-            url,
-            mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-          });
-          return resource.get({ plain: true });
-        })
-      )),
-      ...(currentResources || []),
-    ].sort((a, b) => b.id - a.id);
-    return resources;
-  } finally {
-    semaphore.release();
-  }
+  const resources = [
+    ...(await Promise.all(newURLs.map((url) => findOrCreateResource(url, transaction)))),
+    ...(currentResources || []),
+  ].sort((a, b) => b.id - a.id);
+  return resources;
 };
 
 // -----------------------------------------------------------------------------

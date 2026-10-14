@@ -31,6 +31,7 @@ import {
 import { groupsByRegion } from '../../services/groups';
 import {
   archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
   createNotification,
 } from '../../services/notifications';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
@@ -317,6 +318,10 @@ describe('Activity Report handlers', () => {
             id: 777,
           },
           activityReportCollaborators: [],
+          approvers: [
+            { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+            { user: { id: 222 }, status: APPROVER_STATUSES.APPROVED },
+          ],
           id: 999999,
           toJSON: () => ({
             id: 999999,
@@ -365,18 +370,35 @@ describe('Activity Report handlers', () => {
           skipExisting: 'archived',
         }
       );
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+      // TTAHUB-5581: the acting approver's own approver-approved notification is archived,
+      // and once fully approved the earlier approver-approved notifications are archived.
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
+        999999,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
-      // TTAHUB-5683: needs-action notifications (incl. the approver-facing type) are
-      // archived once the report is fully approved.
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
-      ]);
+      // The final approval creates the other approver's notification after archival, so it
+      // stays active until dismissed.
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.objectContaining({
+          metadata: expect.objectContaining({ approver: 'Approver Name', hasApproved: true }),
+        })
+      );
+      const approvalCall = createNotification.mock.calls.findIndex(
+        ([, , type]) => type === NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      const archiveCall = archiveNotificationsByEntityAndType.mock.calls.findIndex(([, types]) =>
+        types.includes(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER)
+      );
+      expect(
+        archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
+      ).toBeLessThan(createNotification.mock.invocationCallOrder[approvalCall]);
     });
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
@@ -564,7 +586,7 @@ describe('Activity Report handlers', () => {
       expect(handleErrors).not.toHaveBeenCalled();
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
     });
-    it('does not archive resubmission notifications until the report is fully approved', async () => {
+    it('notifies the other approvers when an approver approves, with a CTA based on whether they have already approved or marked the report as needs action, excluding the acting approver (TTAHUB-5581)', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
         id: 1,
@@ -575,18 +597,32 @@ describe('Activity Report handlers', () => {
         user: { name: 'Approver McApproverface' },
       };
       const reviewedReport = {
-        // acting approver approved, but the aggregate status is still SUBMITTED
-        // because a second approver is pending
+        // still awaiting other approvals
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
         author: { id: 777 },
-        activityReportCollaborators: [],
+        activityReportCollaborators: [
+          { user: { id: 333 } },
+          { userId: 444 },
+          { user: { id: 555 } },
+        ],
+        approvers: [
+          // acting approver (id 1) must be excluded
+          { user: { id: 1 }, status: REPORT_STATUSES.APPROVED },
+          // another approver who has already approved -> informational "View AR"
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          // an approver who has not approved yet -> actionable "Take action"
+          { user: { id: 333 }, status: null },
+          // an approver who marked the report as needs action -> informational "View AR"
+          { user: { id: 444 }, status: APPROVER_STATUSES.NEEDS_ACTION },
+        ],
         id: 999999,
-        toJSON: () => ({ id: 999999 }),
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
       };
       activityReportAndRecipientsById.mockResolvedValue([
         reviewedReport,
-        [{ activityRecipientId: 10 }],
+        [{ name: 'Recipient A' }],
       ]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
@@ -602,8 +638,277 @@ describe('Activity Report handlers', () => {
 
       await reviewReport(approvedReportRequest, mockResponse);
 
-      // resubmission notifications must survive until the aggregate status is APPROVED
-      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
+      // approver 222 (already approved) is notified with hasApproved: true
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // approver 333 (not yet approved) is notified with hasApproved: false
+      expect(createNotification).toHaveBeenCalledWith(
+        333,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // approver 444 (marked the report as needs action) is notified with hasApproved: true
+      expect(createNotification).toHaveBeenCalledWith(
+        444,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // the acting approver (id 1) is never sent an approver-approved notification
+      expect(createNotification).not.toHaveBeenCalledWith(
+        1,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.anything()
+      );
+      // the acting approver's own approver-approved notification is archived instead
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
+        999999,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      // partial approval must not archive the whole report's approver-approved notifications
+      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+      // Approvers receive only their role-specific notification, even when collaborating.
+      for (const approverId of [333, 444]) {
+        expect(createNotification).not.toHaveBeenCalledWith(
+          approverId,
+          999999,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+          expect.anything()
+        );
+      }
+      expect(createNotification).toHaveBeenCalledWith(
+        555,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it("suppresses the author's approved notification when the author is also a non-acting approver", async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // still awaiting other approvals
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 222 },
+        activityReportCollaborators: [],
+        approvers: [
+          { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+          { user: { id: 222 }, status: null },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the author (222), who is also a non-acting approver, gets the approver-specific
+      // notification with the actionable CTA...
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // ...and not the duplicate author-facing notification
+      expect(createNotification).not.toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it("suppresses the author's approved notification on the final approval when the author is also an approver", async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // this is the final approval
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 222 },
+        activityReportCollaborators: [],
+        approvers: [
+          { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+          { user: { id: 222 }, status: APPROVER_STATUSES.APPROVED },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // on the final approval, the author (222) gets the approver-specific notification, which
+      // stays active, and not the duplicate author-facing notification
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).not.toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it('creates an in-app ACTIVITY_REPORT_APPROVED notification for the creator when a second approver approves while the report is still pending overall', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver 2 Name' },
+      };
+      const reviewedReport = {
+        // acting approver approved, but the aggregate status is still SUBMITTED
+        // because a second approver is pending -- the in-app notification must
+        // not wait for full approval
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the creator receives the in-app approved notification even though the
+      // report is not yet fully approved (a second approver is still pending)
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver 2 Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // full-approval-only side effects must not have fired
+      expect(updateTimezone).not.toHaveBeenCalled();
     });
     it('excludes the acting approver from the approved email collaborator recipients', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
@@ -1135,7 +1440,7 @@ describe('Activity Report handlers', () => {
         }
       );
     });
-    it('archives resubmitted notifications when the approver requests changes', async () => {
+    it('archives resubmitted and approver-approved notifications when the approver requests changes', async () => {
       const mockApproverRecord = {
         id: 1,
         userId: needsActionReportRequest.session.userId,
@@ -1177,7 +1482,10 @@ describe('Activity Report handlers', () => {
 
       await reviewReport(needsActionReportRequest, mockResponse);
 
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
@@ -1951,6 +2259,20 @@ describe('Activity Report handlers', () => {
         jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
         jest.spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification').mockImplementation();
         userSettingOverridesById.mockResolvedValue(undefined);
+      });
+
+      it('archives earlier approver approvals before notifying recipients of resubmission', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(savedReport.id, [
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        ]);
+        const archiveCall = archiveNotificationsByEntityAndType.mock.calls.findIndex(([, types]) =>
+          types.includes(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER)
+        );
+        expect(
+          archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
+        ).toBeLessThan(createNotification.mock.invocationCallOrder[0]);
       });
 
       it('sends the resubmitted notification to each collaborator instead of the submitted one', async () => {

@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`24.19.0`).
+2. Install Node using the version in `.nvmrc` (`24.21.0`).
 3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
 4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
@@ -21,6 +21,7 @@
   - This will rebuild code and images, run migrations/reseed the DB
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
 - Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
+  - A `minio-init` job creates the bucket named by `S3_BUCKET` in `.env` automatically; the MinIO console is at http://localhost:9001
 - Tail logs: `yarn docker:logs`
 - Open backend shell: `yarn docker:shell:backend`
 - Open frontend shell: `yarn docker:shell:frontend`
@@ -58,6 +59,21 @@ This repo uses [ShellCheck](https://www.shellcheck.net/) for tracked Bash script
 - Run Bash lint: `yarn lint:shell`
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
+
+## AI Coding Agents
+
+Project instructions for coding agents live in [`AGENTS.md`](../../AGENTS.md). Reusable workflows live in [`.github/skills/`](../../.github/skills/), with a `SKILL.md` file describing when and how to use each skill.
+
+### Codex skill discovery
+
+Codex automatically discovers repository skills in `.agents/skills` and supports symlinked skill folders. To make the existing `.github/skills` workflows discoverable without copying them, run these commands once from the repository root, provided `.agents/skills` does not already exist:
+
+```sh
+mkdir -p .agents
+ln -s ../.github/skills .agents/skills
+```
+
+Keep editing skills in `.github/skills`; the symlink exposes the same files to Codex. If the skills do not appear, restart Codex. In Codex CLI or the IDE extension, use `/skills` or type `$` to select a skill. See the [official Codex skills documentation](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills).
 
 ## Dependency Security
 
