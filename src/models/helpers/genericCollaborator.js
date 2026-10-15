@@ -1,3 +1,4 @@
+import cls from 'cls-hooked';
 import httpContext from 'express-http-context';
 import { QueryTypes } from 'sequelize';
 import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
@@ -378,10 +379,6 @@ const removeCollaboratorsForType = async (
   const reportIds = activityReportIdsFrom(linkBack);
   if (reportIds.length === 0 || !reportLinks) return;
 
-  const options = {
-    replacements: { entityId, typeName, validFor, reportIds },
-    ...(transaction && { transaction }),
-  };
   const matchingCollaborators = /* sql */ `
     c."${idName}" = :entityId
     AND c."deletedAt" IS NULL
@@ -392,39 +389,53 @@ const removeCollaboratorsForType = async (
       WHERE ct.name = :typeName AND vf.name = :validFor
     )`;
 
-  // Lock the collaborators first, in a statement of their own: an add from another transaction
-  // then waits for this removal to commit (or this waits for it), and the removal below starts
-  // with a fresh snapshot that sees any links that add committed.
-  await sequelize.query(
-    /* sql */ `SELECT c.id FROM "${collaboratorTable}" c WHERE ${matchingCollaborators} FOR UPDATE`,
-    { ...options, type: QueryTypes.SELECT }
-  );
+  // The FOR UPDATE lock only protects the removal while both statements share a transaction.
+  // Join the caller's (passed or ambient) or open one. Not a nested transaction: that would be a
+  // savepoint, which sibling calls sharing the caller's transaction can't use concurrently.
+  const unlink = async (t) => {
+    const options = {
+      replacements: { entityId, typeName, validFor, reportIds },
+      transaction: t,
+    };
 
-  // A single statement unlinks the reports and soft-deletes collaborators left with no reports,
-  // so it can't interleave badly with an add sharing this transaction. NOT EXISTS sees the links
-  // as they were before this statement's DELETE, so the ones being removed are excluded.
-  await sequelize.query(
-    /* sql */ `
-    WITH removed AS (
-      DELETE FROM "${reportLinks.table}" l
-      USING "${collaboratorTable}" c
-      WHERE l."${reportLinks.collaboratorIdName}" = c.id
-        AND l."activityReportId" IN (:reportIds)
-        AND ${matchingCollaborators}
-      RETURNING l."${reportLinks.collaboratorIdName}" AS collaborator_id
-    )
-    UPDATE "${collaboratorTable}" c
-    SET "deletedAt" = NOW()
-    WHERE c.id IN (SELECT collaborator_id FROM removed)
-      AND NOT EXISTS (
-        SELECT 1
-        FROM "${reportLinks.table}" l
+    // Lock the collaborators first, in a statement of their own: an add from another transaction
+    // then waits for this removal to commit (or this waits for it), and the removal below starts
+    // with a fresh snapshot that sees any links that add committed.
+    await sequelize.query(
+      /* sql */ `SELECT c.id FROM "${collaboratorTable}" c WHERE ${matchingCollaborators} FOR UPDATE`,
+      { ...options, type: QueryTypes.SELECT }
+    );
+
+    // A single statement unlinks the reports and soft-deletes collaborators left with no reports,
+    // so it can't interleave badly with an add sharing this transaction. NOT EXISTS sees the links
+    // as they were before this statement's DELETE, so the ones being removed are excluded.
+    await sequelize.query(
+      /* sql */ `
+      WITH removed AS (
+        DELETE FROM "${reportLinks.table}" l
+        USING "${collaboratorTable}" c
         WHERE l."${reportLinks.collaboratorIdName}" = c.id
-          AND l."activityReportId" NOT IN (:reportIds)
-      );
-  `,
-    options
-  );
+          AND l."activityReportId" IN (:reportIds)
+          AND ${matchingCollaborators}
+        RETURNING l."${reportLinks.collaboratorIdName}" AS collaborator_id
+      )
+      UPDATE "${collaboratorTable}" c
+      SET "deletedAt" = NOW()
+      WHERE c.id IN (SELECT collaborator_id FROM removed)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM "${reportLinks.table}" l
+          WHERE l."${reportLinks.collaboratorIdName}" = c.id
+            AND l."activityReportId" NOT IN (:reportIds)
+        );
+    `,
+      options
+    );
+  };
+
+  const current = transaction || cls.getNamespace('transaction')?.get('transaction');
+  if (current) return unlink(current);
+  return sequelize.transaction(unlink);
 };
 
 export {

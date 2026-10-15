@@ -384,6 +384,48 @@ describe('concurrency races (real database)', () => {
       }
     );
 
+    // Callers without a transaction (neither passed nor ambient) still get an atomic removal.
+    // Each case repeats the race, since its interleaving isn't controlled.
+    it('standalone removes of different reports soft-delete the collaborator once both are gone', async () => {
+      const goalId = goals[0].id;
+      const [first, second] = reportIds;
+
+      for (let i = 0; i < 20; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await collab(null, goalId, [first, second]);
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all([
+          removeLinker(null, goalId, [first]),
+          removeLinker(null, goalId, [second]),
+        ]);
+        // eslint-disable-next-line no-await-in-loop
+        expect(await GoalCollaborator.count({ where: { goalId, userId: user.id } })).toBe(0);
+      }
+    });
+
+    it('a standalone add racing a standalone remove of the last report keeps the new link', async () => {
+      const goalId = goals[0].id;
+      const [lastReport, newReport] = reportIds;
+
+      for (let i = 0; i < 20; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await GoalCollaborator.destroy({ where: { goalId }, force: true });
+        // eslint-disable-next-line no-await-in-loop
+        await collab(null, goalId, [lastReport]);
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all([
+          collab(null, goalId, [newReport]),
+          removeLinker(null, goalId, [lastReport]),
+        ]);
+
+        // eslint-disable-next-line no-await-in-loop
+        const active = await GoalCollaborator.findAll({ where: { goalId, userId: user.id } });
+        expect(active).toHaveLength(1);
+        // eslint-disable-next-line no-await-in-loop
+        expect(await linkedReportIds(active[0].id)).toEqual([newReport]);
+      }
+    });
+
     it("removing a collaborator's last report soft-deletes it, and re-adding creates a fresh one", async () => {
       const goalId = goals[0].id;
       const [report] = reportIds;

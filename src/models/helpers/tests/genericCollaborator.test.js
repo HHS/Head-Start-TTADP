@@ -358,6 +358,24 @@ describe('GenericCollaborator', () => {
       });
     });
 
+    it('opens a transaction for both statements when the caller has none', async () => {
+      const transaction = {};
+      const sequelize = {
+        query: jest.fn().mockResolvedValue([]),
+        transaction: jest.fn((work) => work(transaction)),
+      };
+
+      await removeCollaboratorsForType('goal', sequelize, null, 1, 'Linker', {
+        activityReportIds: [7],
+      });
+
+      expect(sequelize.transaction).toHaveBeenCalledTimes(1);
+      expect(sequelize.query).toHaveBeenCalledTimes(2);
+      sequelize.query.mock.calls.forEach(([, options]) => {
+        expect(options.transaction).toBe(transaction);
+      });
+    });
+
     it('should do nothing when no linkBack given', async () => {
       const sequelize = { query: jest.fn() };
 
