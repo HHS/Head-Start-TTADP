@@ -10,6 +10,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotification,
   createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
@@ -227,6 +228,38 @@ describe('activityReport notification helpers', () => {
         { ...reportBase, activityRecipients: [] },
         'Approver Name'
       );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createRecipientReportApprovedNotificationForProgramSpecialists', () => {
+    it('calls createNotification once per program specialist with the ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED type', async () => {
+      await createRecipientReportApprovedNotificationForProgramSpecialists([20, 21], reportBase);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      [20, 21].forEach((userId) => {
+        expect(mockCreateNotification).toHaveBeenCalledWith(
+          userId,
+          reportBase.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+          {
+            metadata: {
+              id: reportBase.id,
+              displayId: reportBase.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+      });
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createRecipientReportApprovedNotificationForProgramSpecialists([20], {
+        ...reportBase,
+        activityRecipients: [],
+      });
 
       expect(mockCreateNotification).not.toHaveBeenCalled();
     });

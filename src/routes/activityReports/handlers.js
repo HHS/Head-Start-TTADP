@@ -60,6 +60,7 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotification,
   createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
@@ -406,6 +407,31 @@ export async function getGroups(req, res) {
 }
 
 /**
+ * Finds the users who are the program specialist on a grant associated with the report.
+ * FIXME: This should be temporary until we have a solid relationship between
+ * program specialists and grants.
+ * Related: TTAHUB-1253
+ * @param {number} reportId
+ * @returns {Promise<Array<{ id: number }>>}
+ */
+async function programSpecialistsForReport(reportId) {
+  return sequelize.query(
+    `
+    SELECT DISTINCT u.id
+    FROM "ActivityReports" a
+    JOIN "ActivityRecipients" ar
+    ON a.id = ar."activityReportId"
+    JOIN "Grants" gr
+    ON ar."grantId" = gr.id
+    JOIN "Users" u
+    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+    WHERE a.id = :reportId
+  `,
+    { type: QueryTypes.SELECT, replacements: { reportId: Number(reportId) } }
+  );
+}
+
+/**
  * Checks if author and collaborators and program specialists
  * are subscribed to the immediate notifications.
  *
@@ -456,23 +482,7 @@ async function checkEmailSettings(report, setting) {
         })
       : [];
 
-  // FIXME: This should be temporary until we have a solid relationship between
-  // program specialists and grants.
-  // Related: TTAHUB-1253
-  let programSpecialistsToNotify = await sequelize.query(
-    `
-    SELECT DISTINCT u.id
-    FROM "ActivityReports" a
-    JOIN "ActivityRecipients" ar
-    ON a.id = ar."activityReportId"
-    JOIN "Grants" gr
-    ON ar."grantId" = gr.id
-    JOIN "Users" u
-    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
-    WHERE a.id = ${report.id}
-  `,
-    { type: QueryTypes.SELECT }
-  );
+  let programSpecialistsToNotify = await programSpecialistsForReport(report.id);
 
   // For each program specialist ID number, I want to make sure they
   // are subscribed to immediate notifications given the `setting` key.
@@ -641,6 +651,16 @@ export async function reviewReport(req, res) {
         // Clear earlier approver-approved notifications before creating the final-approval ones,
         // so the final-approval notifications stay active until the recipient dismisses them.
         await archiveApproverApprovedNotifications(reviewedReport.id);
+
+        // Notify program specialists whose caseload includes a grant on this
+        // report. Opt-out is checked per user in createNotification.
+        const programSpecialistIds = (await programSpecialistsForReport(reviewedReport.id)).map(
+          (ps) => ps.id
+        );
+        await createRecipientReportApprovedNotificationForProgramSpecialists(programSpecialistIds, {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        });
       }
 
       // Notify other approvers on every approval, including the final one. The CTA is

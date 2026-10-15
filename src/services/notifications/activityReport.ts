@@ -279,6 +279,45 @@ async function createReportApprovedNotificationForApprovers(
 }
 
 /**
+ * Creates the "one of my recipients' activity reports is available" in-app notification for
+ * each program specialist whose caseload includes a grant on the report. Fired when the report
+ * reaches the APPROVED status.
+ * @param programSpecialistIds The program specialists' user ids to notify.
+ * @param savedReport The saved activity report.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+async function createRecipientReportApprovedNotificationForProgramSpecialists(
+  programSpecialistIds: number[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+  }
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return Promise.all(
+    programSpecialistIds.map((userId) =>
+      createNotification(
+        userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+          },
+          skipExisting: 'archived',
+        }
+      )
+    )
+  );
+}
+
+/**
  * Archives the "another approver approved this report" in-app notifications for an activity
  * report. Called when the report is fully approved, changes are requested, or the report
  * is resubmitted so earlier approval notifications no longer remain active or get reused.
@@ -519,6 +558,7 @@ export {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotification,
   createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
