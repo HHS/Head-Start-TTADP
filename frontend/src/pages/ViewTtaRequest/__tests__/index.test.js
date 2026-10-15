@@ -21,15 +21,15 @@ const SUBMITTED_REQUEST = {
   // midday UTC, so the dates read the same in every US time zone
   createdAt: '2026-06-23T16:00:00.000Z',
   submittedAt: '2026-06-23T17:00:00.000Z',
-  creator: { id: 1, name: 'Annika Lewis' },
-  reviewer: { id: 2, name: 'Monica Geller' },
-  recipient: { id: 3, name: 'Children and Families First' },
+  creator: { id: 1, name: 'Avery Example', fullName: 'Avery Example, GS' },
+  reviewer: { id: 2, name: 'Jordan Sample', fullName: 'Jordan Sample, TTAC' },
+  recipient: { id: 3, name: 'Sample Recipient Agency' },
   grants: [
     {
       id: 4,
       regionId: 14,
       numberWithProgramTypes: '14HP1234 - EHS',
-      name: 'Children and Families First - 14HP1234 - EHS',
+      name: 'Sample Recipient Agency - 14HP1234 - EHS',
     },
   ],
   goalTemplate: {
@@ -76,20 +76,28 @@ describe('ViewTtaRequest', () => {
       '/tta-requests'
     );
 
-    expect(screen.getByText('Creator:').parentElement).toHaveTextContent('Annika Lewis');
-    expect(screen.getByText('Reviewer:').parentElement).toHaveTextContent('Monica Geller');
-    expect(screen.getByText('Date created:').parentElement).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Creator:').parentElement).toHaveTextContent('Avery Example, GS');
+    expect(screen.getByText('Reviewer:').parentElement).toHaveTextContent('Jordan Sample, TTAC');
+    expect(screen.getByText('Date Created:').parentElement).toHaveTextContent('06/23/2026');
     expect(screen.getByText('Date submitted:').parentElement).toHaveTextContent('06/23/2026');
 
     expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
-    expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
+    const grant = screen.getByText('Sample Recipient Agency - 14HP1234 - EHS');
+    expect(grant).toBeVisible();
+    // the grants are not bulleted
+    expect(grant.closest('li')).toBeNull();
     expect(screen.getByText('Yes')).toBeVisible();
     expect(screen.getByText('TTA Staff')).toBeVisible();
 
     expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
     expect(screen.getByText('Lorem ipsum dolor sit amet')).toBeVisible();
-    expect(screen.getByText('The recipient will develop and implement a QIP/CAP')).toBeVisible();
-    expect(screen.getByText('ANC - 1302.91(e)(1)')).toBeVisible();
+    expect(
+      screen.getByText('(Monitoring) The recipient will develop and implement a QIP/CAP')
+    ).toBeVisible();
+    const citation = screen.getByText('ANC - 1302.91(e)(1)');
+    expect(citation).toBeVisible();
+    // the citations are bulleted
+    expect(citation.closest('ul')).toHaveClass('usa-list');
     expect(screen.getByText('1302.91(e)(2)(ii)')).toBeVisible();
   });
 
@@ -99,6 +107,18 @@ describe('ViewTtaRequest', () => {
 
     await screen.findByRole('heading', { name: 'Goal and context' });
     expect(screen.queryByText('Citations addressed')).toBeNull();
+  });
+
+  it('shows the goal without a standard prefix when the goal has no standard', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      goalTemplate: { ...SUBMITTED_REQUEST.goalTemplate, standard: null },
+    });
+    renderView();
+
+    expect(
+      await screen.findByText('The recipient will develop and implement a QIP/CAP')
+    ).toBeVisible();
   });
 
   it('sends the user to the error page when the request cannot load', async () => {

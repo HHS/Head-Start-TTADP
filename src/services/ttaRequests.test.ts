@@ -12,8 +12,18 @@ import {
   updateTtaRequest,
 } from './ttaRequests';
 
-const { Goal, Grant, GoalTemplate, Permission, Recipient, TtaRequest, TtaRequestCitation, User } =
-  db;
+const {
+  Goal,
+  Grant,
+  GoalTemplate,
+  Permission,
+  Recipient,
+  Role,
+  TtaRequest,
+  TtaRequestCitation,
+  User,
+  UserRole,
+} = db;
 
 describe('ttaRequests service', () => {
   let creator;
@@ -56,6 +66,7 @@ describe('ttaRequests service', () => {
     await Recipient.destroy({ where: { id: [recipient.id, otherRecipient.id] }, force: true });
     await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
     await Permission.destroy({ where: { userId: [creator.id, reviewer.id] } });
+    await UserRole.destroy({ where: { userId: [creator.id, reviewer.id] } });
     await User.destroy({ where: { id: [creator.id, reviewer.id] } });
     await db.sequelize.close();
   });
@@ -425,6 +436,18 @@ describe('ttaRequests service', () => {
   describe('ttaRequestById', () => {
     it('returns null for a missing request', async () => {
       expect(await ttaRequestById(0)).toBeNull();
+    });
+
+    it('names the creator and reviewer with their roles', async () => {
+      const grantsSpecialist = await Role.findOne({ where: { name: 'GS' } });
+      await UserRole.create({ userId: creator.id, roleId: grantsSpecialist.id });
+      const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
+
+      const found = await ttaRequestById(created.id);
+
+      expect(found.creator.fullName).toBe(`${creator.name}, GS`);
+      // the reviewer has no role, so it is just their name
+      expect(found.reviewer.fullName).toBe(reviewer.name);
     });
   });
 });

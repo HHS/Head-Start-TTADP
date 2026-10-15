@@ -21,6 +21,14 @@ const recipientAwareLabel = (recipientAware: boolean | null) => {
   return recipientAware ? 'Yes' : 'No';
 };
 
+const goalLabel = (goalTemplate: TtaRequestResponse['goalTemplate']) => {
+  if (!goalTemplate) {
+    return '';
+  }
+  const { standard, templateName } = goalTemplate;
+  return standard ? `(${standard}) ${templateName}` : templateName;
+};
+
 const citationLabel = ({ citation, findingType }: TtaRequestResponse['citations'][number]) =>
   findingType ? `${findingType} - ${citation}` : citation;
 
@@ -69,13 +77,13 @@ export default function ViewTtaRequest(): React.ReactElement | null {
         <h1 className="font-serif-2xl margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
         <div className="margin-bottom-4">
           <p>
-            <strong>Creator:</strong> {ttaRequest.creator?.name}
+            <strong>Creator:</strong> {ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}
           </p>
           <p>
-            <strong>Reviewer:</strong> {ttaRequest.reviewer?.name}
+            <strong>Reviewer:</strong> {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
           </p>
           <p>
-            <strong>Date created:</strong> {formatDate(ttaRequest.createdAt)}
+            <strong>Date Created:</strong> {formatDate(ttaRequest.createdAt)}
           </p>
           {ttaRequest.submittedAt && (
             <p>
@@ -88,7 +96,14 @@ export default function ViewTtaRequest(): React.ReactElement | null {
           sections={[
             {
               data: {
-                'Recipient grant': ttaRequest.grants.map((grant) => grant.name),
+                // one grant per line, without the bullets an array would get
+                'Recipient grant': (
+                  <>
+                    {ttaRequest.grants.map((grant) => (
+                      <div key={grant.id}>{grant.name}</div>
+                    ))}
+                  </>
+                ),
                 'Recipient aware of request': recipientAwareLabel(ttaRequest.recipientAware),
                 'Request originator': ttaRequest.originator ?? '',
               },
@@ -101,10 +116,20 @@ export default function ViewTtaRequest(): React.ReactElement | null {
             {
               data: {
                 'Request background or context': ttaRequest.context ?? '',
-                "Recipient's Goal": ttaRequest.goalTemplate?.templateName ?? '',
                 ...(citations.length
-                  ? { 'Citations addressed': citations.map(citationLabel) }
+                  ? {
+                      'Citations addressed': (
+                        <ul className="usa-list margin-0">
+                          {citations.map((citation) => (
+                            <li key={`${citation.findingType}::${citation.citation}`}>
+                              {citationLabel(citation)}
+                            </li>
+                          ))}
+                        </ul>
+                      ),
+                    }
                   : {}),
+                "Recipient's Goal": goalLabel(ttaRequest.goalTemplate),
               },
             },
           ]}

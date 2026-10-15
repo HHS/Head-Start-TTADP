@@ -15,6 +15,7 @@ const {
   Program,
   Recipient,
   GoalTemplate,
+  Role,
   User,
 } = db;
 
@@ -61,12 +62,14 @@ export async function ttaRequestById(id: number) {
       {
         model: User,
         as: 'creator',
-        attributes: ['id', 'name'],
+        attributes: ['id', 'name', 'fullName'],
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
       },
       {
         model: User,
         as: 'reviewer',
-        attributes: ['id', 'name'],
+        attributes: ['id', 'name', 'fullName'],
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
       },
       {
         model: Recipient,
