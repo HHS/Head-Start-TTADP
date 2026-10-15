@@ -1,6 +1,6 @@
 const { prepMigration, removeTables } = require('../lib/migration');
 
-const TTA_REQUEST_STATUSES = ['draft'];
+const TTA_REQUEST_STATUSES = ['draft', 'submitted'];
 const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
 
 /** @type {import('sequelize-cli').Migration} */
@@ -67,6 +67,10 @@ module.exports = {
             type: Sequelize.ENUM(TTA_REQUEST_STATUSES),
             allowNull: false,
             defaultValue: 'draft',
+          },
+          submittedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
           createdAt: {
             allowNull: false,

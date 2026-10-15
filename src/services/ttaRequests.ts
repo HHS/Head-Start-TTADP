@@ -119,8 +119,9 @@ export async function ttaRequestById(id: number) {
 }
 
 /**
- * The creator's own draft requests that the scopes allow, optionally for one recipient.
- * Drafts are private to their creator until they are submitted.
+ * The requests the scopes allow, optionally for one recipient: the user's own drafts,
+ * since drafts are private to their creator until they are submitted, and anyone's
+ * submitted requests.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
@@ -131,11 +132,24 @@ export async function getTtaRequests(
     where: {
       [Op.and]: [
         ...scopes,
-        { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+        {
+          [Op.or]: [
+            { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+            { status: TTA_REQUEST_STATUSES.SUBMITTED },
+          ],
+        },
         ...(recipientId ? [{ recipientId }] : []),
       ],
     },
-    attributes: ['id', 'displayId', 'regionId', 'recipientId', 'status', 'createdAt'],
+    attributes: [
+      'id',
+      'displayId',
+      'regionId',
+      'recipientId',
+      'status',
+      'createdAt',
+      'submittedAt',
+    ],
     include: [
       {
         model: User,
@@ -372,4 +386,40 @@ export async function updateTtaRequest(
 
   const saved = await ttaRequestById(existing.id);
   return saved.toJSON();
+}
+
+// the goal template standard that citations apply to
+const MONITORING_STANDARD = 'Monitoring';
+
+/**
+ * Saves the request as it stands and submits it for review. The body has already been
+ * checked for the required fields; what is left to check depends on the saved request:
+ * the reviewer must still be one of the region's approvers, and the monitoring goal
+ * needs citations.
+ */
+export async function submitTtaRequest(
+  existing: ExistingTtaRequest,
+  data: TtaRequestData,
+  userId: number
+) {
+  const saved = await updateTtaRequest(existing, data, userId);
+
+  if (!saved.reviewerId) {
+    throw new TtaRequestDataError('The reviewer must be able to approve in the request region');
+  }
+
+  if (saved.goalTemplate?.standard === MONITORING_STANDARD && !saved.citations.length) {
+    throw new TtaRequestDataError('A request for the monitoring goal needs at least one citation');
+  }
+
+  await TtaRequest.update(
+    {
+      status: TTA_REQUEST_STATUSES.SUBMITTED,
+      submittedAt: new Date(),
+    },
+    { where: { id: existing.id } }
+  );
+
+  const submitted = await ttaRequestById(existing.id);
+  return submitted.toJSON();
 }

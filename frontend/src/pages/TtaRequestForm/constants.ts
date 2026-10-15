@@ -43,6 +43,12 @@ export const defaultValues = {
   [TTA_REQUEST_FIELDS.REVIEWER]: null,
 };
 
+export const SUBMIT_ERROR =
+  'There was an error submitting the TTA request. Please try again later.';
+
+/** where a submitted request is shown read only */
+export const ttaRequestViewPath = (ttaRequestId: number) => `/tta-requests/view/${ttaRequestId}`;
+
 export const SAVE_ERROR = 'There was an error saving the TTA request. Please try again later.';
 
 export const NO_REGION_ERROR = 'Select a recipient grant before saving a draft.';

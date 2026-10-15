@@ -204,6 +204,20 @@ describe('ActiveTtaRequestsTable', () => {
     );
   });
 
+  it('links a submitted request id to its read-only view, and leaves its status unlinked', async () => {
+    renderTable([apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })]);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      '/tta-requests/view/101'
+    );
+    expect(within(firstRow).getByText('Submitted')).toBeVisible();
+    expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
+  });
+
   it('freezes the status column to the right of the table', async () => {
     renderTable();
     await waitForRows();

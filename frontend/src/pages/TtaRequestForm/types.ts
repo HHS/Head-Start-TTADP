@@ -88,4 +88,7 @@ export interface TtaRequestResponse {
   goalTemplate: { id: number; templateName: string; standard?: string | null } | null;
   citations: { citation: string; findingType: string | null }[];
   reviewer: { id: number; name: string } | null;
+  creator?: { id: number; name: string };
+  createdAt?: string;
+  submittedAt?: string | null;
 }

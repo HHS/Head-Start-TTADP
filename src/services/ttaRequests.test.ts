@@ -6,6 +6,7 @@ import { createGoalTemplate, createGrant, createRecipient, createUser } from '..
 import {
   createTtaRequest,
   getTtaRequests,
+  submitTtaRequest,
   TtaRequestDataError,
   ttaRequestById,
   updateTtaRequest,
@@ -275,26 +276,37 @@ describe('ttaRequests service', () => {
     let ownDraft;
     let otherRecipientDraft;
     let someoneElsesDraft;
+    let someoneElsesSubmitted;
 
     beforeAll(async () => {
-      [ownDraft, otherRecipientDraft, someoneElsesDraft] = await Promise.all([
-        createTtaRequest(
-          {
-            regionId: 1,
-            recipientId: recipient.id,
-            grantIds: [grantOne.id],
-            goalTemplateId: goalTemplate.id,
-            reviewerId: reviewer.id,
-          },
-          creator.id
-        ),
-        createTtaRequest({ regionId: 1, recipientId: otherRecipient.id }, creator.id),
-        createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
-      ]);
+      [ownDraft, otherRecipientDraft, someoneElsesDraft, someoneElsesSubmitted] = await Promise.all(
+        [
+          createTtaRequest(
+            {
+              regionId: 1,
+              recipientId: recipient.id,
+              grantIds: [grantOne.id],
+              goalTemplateId: goalTemplate.id,
+              reviewerId: reviewer.id,
+            },
+            creator.id
+          ),
+          createTtaRequest({ regionId: 1, recipientId: otherRecipient.id }, creator.id),
+          createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
+          createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
+        ]
+      );
+      await TtaRequest.update(
+        { status: TTA_REQUEST_STATUSES.SUBMITTED, submittedAt: new Date() },
+        { where: { id: someoneElsesSubmitted.id } }
+      );
     });
 
     afterAll(async () => {
-      await TtaRequest.destroy({ where: { id: someoneElsesDraft.id }, force: true });
+      await TtaRequest.destroy({
+        where: { id: [someoneElsesDraft.id, someoneElsesSubmitted.id] },
+        force: true,
+      });
     });
 
     const scopesFor = async (filters) => {
@@ -309,6 +321,7 @@ describe('ttaRequests service', () => {
       expect(ids).toContain(ownDraft.id);
       expect(ids).toContain(otherRecipientDraft.id);
       expect(ids).not.toContain(someoneElsesDraft.id);
+      expect(ids).toContain(someoneElsesSubmitted.id);
 
       const row = rows.find((r) => r.id === ownDraft.id).toJSON();
       expect(row.displayId).toBe(`R01-REQ-${ownDraft.id}`);
@@ -334,6 +347,78 @@ describe('ttaRequests service', () => {
     it('lists nothing outside the filtered regions', async () => {
       const { rows } = await getTtaRequests(await scopesFor({ 'region.in': [2] }), creator.id);
       expect(rows.map((row) => row.id)).not.toContain(ownDraft.id);
+    });
+  });
+
+  describe('submitTtaRequest', () => {
+    let monitoringTemplate;
+
+    const complete = {
+      recipientId: null,
+      grantIds: [],
+      recipientAware: true,
+      originator: 'Recipient',
+      goalTemplateId: null,
+      citations: [],
+      context: '<p>Context</p>',
+      creatorNotes: '',
+      reviewerId: null,
+    };
+
+    beforeAll(async () => {
+      // standard is generated from the template name, and the monitoring template is unique
+      monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+      Object.assign(complete, {
+        recipientId: recipient.id,
+        grantIds: [grantOne.id],
+        goalTemplateId: goalTemplate.id,
+        reviewerId: reviewer.id,
+      });
+    });
+
+    it('saves the request and marks it submitted', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(draft, complete, creator.id);
+
+      expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(submitted.submittedAt).toBeInstanceOf(Date);
+      expect(submitted.recipient.id).toBe(recipient.id);
+      expect(submitted.grants.map((g) => g.id)).toEqual([grantOne.id]);
+      expect(submitted.reviewer.id).toBe(reviewer.id);
+      expect(submitted.context).toBe('<p>Context</p>');
+    });
+
+    it('rejects a reviewer who cannot approve in the region', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await expect(
+        submitTtaRequest(draft, { ...complete, reviewerId: creator.id }, creator.id)
+      ).rejects.toThrow(TtaRequestDataError);
+    });
+
+    it('rejects the monitoring goal without citations', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await expect(
+        submitTtaRequest(draft, { ...complete, goalTemplateId: monitoringTemplate.id }, creator.id)
+      ).rejects.toThrow(TtaRequestDataError);
+    });
+
+    it('submits the monitoring goal with citations', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(
+        draft,
+        {
+          ...complete,
+          goalTemplateId: monitoringTemplate.id,
+          citations: [{ citation: '1302.47(b)(5)(iv)', findingType: 'Deficiency' }],
+        },
+        creator.id
+      );
+
+      expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
     });
   });
 
