@@ -3,13 +3,7 @@ import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import { createGoalTemplate, createGrant, createRecipient, createUser } from '../testUtils';
-import {
-  createTtaRequest,
-  getTtaRequests,
-  TtaRequestDataError,
-  ttaRequestById,
-  updateTtaRequest,
-} from './ttaRequests';
+import { createTtaRequest, getTtaRequests, ttaRequestById, updateTtaRequest } from './ttaRequests';
 
 const { Goal, Grant, GoalTemplate, Permission, Recipient, TtaRequest, TtaRequestCitation, User } =
   db;
@@ -125,7 +119,7 @@ describe('ttaRequests service', () => {
           { regionId: 1, recipientId: recipient.id, grantIds: [otherRegionGrant.id] },
           creator.id
         )
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('rejects a grant belonging to another recipient', async () => {
@@ -134,13 +128,13 @@ describe('ttaRequests service', () => {
           { regionId: 1, recipientId: recipient.id, grantIds: [otherRecipientGrant.id] },
           creator.id
         )
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('rejects grants without a recipient', async () => {
       await expect(
         createTtaRequest({ regionId: 1, grantIds: [grantOne.id] }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('drops a reviewer who is not an approver in the region', async () => {
@@ -156,7 +150,7 @@ describe('ttaRequests service', () => {
     it('rejects a recipient with no grants in the region', async () => {
       await expect(
         createTtaRequest({ regionId: 3, recipientId: recipient.id }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 
@@ -253,7 +247,7 @@ describe('ttaRequests service', () => {
 
       await expect(
         updateTtaRequest(created, { grantIds: [otherRecipientGrant.id] }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 

@@ -56,7 +56,14 @@ const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.i
  *
  * TODO: submitting validates and navigates but does not persist yet; that is its own ticket.
  */
-export default function TtaRequestForm({
+export default function TtaRequestForm(props: TtaRequestFormProps): React.ReactElement {
+  const { ttaRequestId } = useParams<{ ttaRequestId?: string }>();
+  // the router reuses the form when the route moves to another draft, so each draft gets its
+  // own form and nothing - least of all the request it saves to - carries over from the last
+  return <TtaRequestFormBody key={ttaRequestId ?? 'new'} {...props} />;
+}
+
+function TtaRequestFormBody({
   recipient = null,
   recipientOptions = null,
   regionId = null,
