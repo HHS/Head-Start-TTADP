@@ -333,18 +333,20 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
 /*
  * Swaps the CTA label on archived notifications for the type's `archiveLabel` (e.g. "Take
  * action" -> "View AR"), since an archived notification no longer calls for action.
- * Types without an `archiveLabel` keep their original label.
+ * Types without an `archiveLabel` keep their original label. Global notifications (null
+ * `userId`) are skipped: their row is shared, so relabeling it would change the CTA for
+ * users who haven't archived it.
  * @param notifications The notifications being archived.
  * @returns {Promise<void>} Resolves once labels are updated.
  */
 async function applyArchiveLabels(
-  notifications: { id: number; type: NotificationType }[]
+  notifications: { id: number; type: NotificationType; userId: number | null }[]
 ): Promise<void> {
   const idsByLabel = new Map<string, number[]>();
 
-  notifications.forEach(({ id, type }) => {
+  notifications.forEach(({ id, type, userId }) => {
     const archiveLabel = NOTIFICATION_CONFIGURATION[type]?.archiveLabel?.();
-    if (archiveLabel) {
+    if (archiveLabel && userId) {
       idsByLabel.set(archiveLabel, [...(idsByLabel.get(archiveLabel) ?? []), id]);
     }
   });
@@ -397,14 +399,14 @@ async function archiveNotificationsByUserEntityAndType(
   }
 
   const notifications = (await Notification.findAll({
-    attributes: ['id', 'type'],
+    attributes: ['id', 'type', 'userId'],
     where: {
       entityId,
       type: { [Op.in]: notificationTypes },
       userId,
     },
     raw: true,
-  })) as unknown as { id: number; type: NotificationType }[];
+  })) as unknown as { id: number; type: NotificationType; userId: number }[];
 
   if (!notifications.length) {
     return;

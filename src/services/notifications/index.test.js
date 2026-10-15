@@ -1245,6 +1245,25 @@ describe('Notification service', () => {
       });
     });
 
+    it('does not relabel global notifications, since their row is shared across users', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const globalNotification = await createTrackedNotification({
+        entityId,
+        userId: null,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        label: 'Take Action',
+      });
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      ]);
+
+      const updated = await Notification.findByPk(globalNotification.id);
+      expect(updated.label).toBe('Take Action');
+
+      await NotificationUserState.destroy({ where: { notificationId: globalNotification.id } });
+    });
+
     it('creates an archived and viewed state row for notifications with a userId but no state', async () => {
       const entityId = faker.number.int({ min: 99001, max: 99999 });
       const notification = await createTrackedNotification({
