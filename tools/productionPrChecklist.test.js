@@ -251,6 +251,30 @@ describe('applyChecklistDefaults', () => {
     // rather than leaking past the end of Production Deploy.
     expect(result).toContain('- [ ] Update JIRA ticket status');
   });
+
+  it('applies defaults on a CRLF body (the line ending a real GitHub PR body actually uses) while leaving Production Deploy unchanged', () => {
+    const crlfTemplate = template.split('\n').join('\r\n');
+
+    const result = applyChecklistDefaults(crlfTemplate, {
+      hasMigrations: true,
+      hasAdr: false,
+      hasApiDocsChange: false,
+      hasBoundaryDiagramChange: false,
+      affectsUi: false,
+      affectsFunctionalCode: false,
+    });
+
+    // Every line, including a CRLF one, should have had its default applied -
+    // not just the last line of the body (which has no trailing \r).
+    expect(result).toContain('- [x] Linked Jira issue\r\n');
+    expect(result).toContain('- [x] Logical Data Model updated\r\n');
+    expect(result).toContain('- [n/a] QA review complete\r\n');
+    // Production Deploy must still never be touched on a CRLF body.
+    expect(result).toContain('- [ ] PR created as **Draft**\r\n');
+    expect(result).toContain('- [ ] Staging smoke test completed\r\n');
+    // The whole body stays CRLF throughout, not partially converted to LF.
+    expect(result).not.toMatch(/[^\r]\n/);
+  });
 });
 
 function deriveChecklistFactsAllFalse() {

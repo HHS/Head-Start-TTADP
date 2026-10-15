@@ -19,6 +19,31 @@ const TITLE_MAX_LENGTH = 80;
  */
 class CredalNonRetryableError extends Error {}
 
+const OUTER_HEADING_PATTERN = /^##[^#]/m;
+
+/**
+ * Rejects an embedded `##` (H2) heading line inside a prose field. Without
+ * this, generated content containing e.g. "## Jira Issue(s)" plus its own
+ * Jira link gets written verbatim into the body by wrapManagedSection, and
+ * pr-notifications.yml's naive awk-based section extractor - which just
+ * matches the first line satisfying `^## (Jira )?Issue` anywhere in the body,
+ * not specifically the real template section - would pick up the injected
+ * block instead of (or as well as) the real, already-validated `issues`
+ * field, sending whatever tickets it contains to the Jira transition webhook.
+ * `issues` itself doesn't need this check: its own per-line format validator
+ * already rejects anything that isn't a bare Jira link line, which a heading
+ * line could never satisfy.
+ */
+function rejectEmbeddedHeading(value, helpers) {
+  if (OUTER_HEADING_PATTERN.test(value)) {
+    return helpers.message(
+      'must not contain a markdown "##" heading - that could inject a fake section into the rendered PR body'
+    );
+  }
+
+  return value;
+}
+
 function validateIssuesFormat(value, helpers) {
   const lines = value
     .split('\n')
@@ -50,8 +75,8 @@ const PRODUCTION_PR_CONTENT_SCHEMA = Joi.object({
     .messages({
       'string.pattern.base': '"title" must start with "[Prod]"',
     }),
-  descriptionOfChange: Joi.string().trim().min(1).required(),
-  howToTest: Joi.string().trim().min(1).required(),
+  descriptionOfChange: Joi.string().trim().min(1).custom(rejectEmbeddedHeading).required(),
+  howToTest: Joi.string().trim().min(1).custom(rejectEmbeddedHeading).required(),
   issues: Joi.string().trim().min(1).custom(validateIssuesFormat).required(),
 }).required();
 

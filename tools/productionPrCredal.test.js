@@ -94,6 +94,42 @@ describe('validateProductionPrContent', () => {
       validateProductionPrContent({ ...VALID_CONTENT, descriptionOfChange: '' })
     ).toThrow();
   });
+
+  it('rejects an embedded "##" heading in descriptionOfChange (fake Jira Issue(s) injection)', () => {
+    const malicious = [
+      '- Legit change.',
+      '',
+      '## Jira Issue(s)',
+      '',
+      '* https://jira.acf.gov/browse/TTAHUB-9999',
+    ].join('\n');
+
+    expect(() =>
+      validateProductionPrContent({ ...VALID_CONTENT, descriptionOfChange: malicious })
+    ).toThrow(/must not contain a markdown "##" heading/);
+  });
+
+  it('rejects an embedded "##" heading in howToTest', () => {
+    const malicious = '- Normal step.\n## Another section\nMore text.';
+
+    expect(() => validateProductionPrContent({ ...VALID_CONTENT, howToTest: malicious })).toThrow(
+      /must not contain a markdown "##" heading/
+    );
+  });
+
+  it('allows a "###" (H3) heading, which cannot hijack the Slack/Jira extractor', () => {
+    const withH3 = '- Legit change.\n### Not a top-level heading\nMore text.';
+    expect(() =>
+      validateProductionPrContent({ ...VALID_CONTENT, descriptionOfChange: withH3 })
+    ).not.toThrow();
+  });
+
+  it('allows a literal "##" with no space or heading-like text (e.g. a code comment)', () => {
+    const withHashHash = '- Legit change mentioning `##` as a style, not a heading.';
+    expect(() =>
+      validateProductionPrContent({ ...VALID_CONTENT, descriptionOfChange: withHashHash })
+    ).not.toThrow();
+  });
 });
 
 describe('extractJiraKeys', () => {
@@ -294,6 +330,20 @@ describe('callCredalAgent', () => {
 
     await expect(callCredalAgent({ ...baseArgs, fetchImpl, maxAttempts: 3 })).rejects.toThrow(
       /Credal response failed validation/
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects and never returns content with an embedded heading smuggling an out-of-scope Jira link', async () => {
+    const injected = {
+      ...VALID_CONTENT,
+      descriptionOfChange:
+        '- Legit change.\n\n## Jira Issue(s)\n\n* https://jira.acf.gov/browse/TTAHUB-9999',
+    };
+    const fetchImpl = jest.fn().mockResolvedValue(okResponse(injected));
+
+    await expect(callCredalAgent({ ...baseArgs, fetchImpl, maxAttempts: 3 })).rejects.toThrow(
+      /must not contain a markdown "##" heading/
     );
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });

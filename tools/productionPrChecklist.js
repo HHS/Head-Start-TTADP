@@ -95,7 +95,11 @@ function applyChecklistDefaults(templateBody, facts) {
         return line;
       }
 
-      const checkboxMatch = line.match(/^(\s*-\s*)\[(?: |x|X|n\/a)\](.*)$/);
+      // Trailing (\r?) preserves a CRLF line ending. `.` doesn't match `\r`,
+      // so without this, a real GitHub PR body (which commonly uses CRLF -
+      // confirmed against PR #4032's actual body) fails this match on every
+      // line except the last, silently leaving the checklist untouched.
+      const checkboxMatch = line.match(/^(\s*-\s*)\[(?: |x|X|n\/a)\](.*)(\r?)$/);
 
       if (!checkboxMatch) {
         return line;
@@ -107,7 +111,7 @@ function applyChecklistDefaults(templateBody, facts) {
         return line;
       }
 
-      return `${checkboxMatch[1]}[${rule.value(facts)}]${checkboxMatch[2]}`;
+      return `${checkboxMatch[1]}[${rule.value(facts)}]${checkboxMatch[2]}${checkboxMatch[3]}`;
     })
     .join('\n');
 }
