@@ -11,6 +11,7 @@ import db, {
 } from '../models';
 import { syncApprovers, upsertApprover } from './activityReportApprovers';
 import { activityReportAndRecipientsById } from './activityReports';
+import * as activityReportNotifications from './notifications/activityReport';
 
 const mockUser = {
   id: 11184161,
@@ -460,10 +461,18 @@ describe('activityReportApprovers services', () => {
 
       // Removing the pending approver leaves only the already-approved approver, which
       // completes the report's approval as a side effect of the destroy.
-      await syncApprovers(report.id, [mockManager.id]);
+      const notifyProgramSpecialists = jest
+        .spyOn(activityReportNotifications, 'notifyProgramSpecialistsOfApprovedReport')
+        .mockResolvedValue();
+      try {
+        await syncApprovers(report.id, [mockManager.id]);
+      } finally {
+        notifyProgramSpecialists.mockRestore();
+      }
 
       const [updatedReport] = await activityReportAndRecipientsById(report.id);
       expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+      expect(notifyProgramSpecialists).toHaveBeenCalledWith(report.id);
 
       const updatedUserState = await NotificationUserState.findByPk(userState.id);
       expect(updatedUserState.archivedAt).not.toBeNull();

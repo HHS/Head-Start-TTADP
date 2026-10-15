@@ -402,7 +402,7 @@ describe('Activity Report handlers', () => {
         archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
       ).toBeLessThan(createNotification.mock.invocationCallOrder[approvalCall]);
     });
-    it('creates an in-app notification for program specialists when the report is fully approved', async () => {
+    it('sends the program specialist email when the report is fully approved', async () => {
       activityReportAndRecipientsById.mockResolvedValue([
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -435,19 +435,11 @@ describe('Activity Report handlers', () => {
       }
 
       expect(psEmail).toHaveBeenCalled();
-      expect(createNotification).toHaveBeenCalledWith(
-        55,
-        999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
-        {
-          metadata: {
-            id: 999999,
-            displayId: 'R01-AR-999999',
-            recipientName: 'Recipient A',
-          },
-          skipExisting: 'archived',
-        }
-      );
+      expect(
+        createNotification.mock.calls.some(
+          ([, , type]) => type === NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+        )
+      ).toBe(false);
     });
 
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
@@ -3123,8 +3115,25 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canUnlock: () => true,
       }));
+      activityReportAndRecipientsById.mockResolvedValueOnce([report]);
       await unlockReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
+    });
+
+    it('archives program specialist approval notifications when an approved report is unlocked', async () => {
+      ActivityReport.mockImplementation(() => ({
+        canUnlock: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValueOnce([
+        { ...report, calculatedStatus: REPORT_STATUSES.APPROVED },
+      ]);
+
+      await unlockReport(request, mockResponse);
+
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+      ]);
     });
 
     it('handles unauthorized', async () => {

@@ -1,4 +1,6 @@
+import { QueryTypes } from 'sequelize';
 import { NOTIFICATION_TYPES } from '../../constants';
+import db, { sequelize } from '../../models';
 import type { NotificationType } from '../types/notifications';
 import {
   archiveNotificationsByEntityAndType,
@@ -6,12 +8,73 @@ import {
   createNotification,
 } from './index';
 
+const { ActivityRecipient, ActivityReport, Grant, OtherEntity } = db;
+
 const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
   return !!(activityRecipients || [])
     .map((r) => r.name)
     .join(', ')
     .trim();
 };
+
+/**
+ * Finds the program specialists assigned to grants included on an activity report.
+ * FIXME: This email-based association is temporary until a direct specialist/grant relationship
+ * exists. Related: TTAHUB-1253.
+ */
+async function programSpecialistsForReport(reportId: number): Promise<{ id: number }[]> {
+  return sequelize.query<{ id: number }>(
+    `
+    SELECT DISTINCT u.id
+    FROM "ActivityReports" a
+    JOIN "ActivityRecipients" ar
+    ON a.id = ar."activityReportId"
+    JOIN "Grants" gr
+    ON ar."grantId" = gr.id
+    JOIN "Users" u
+    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+    WHERE a.id = :reportId
+  `,
+    { type: QueryTypes.SELECT, replacements: { reportId: Number(reportId) } }
+  );
+}
+
+async function notifyProgramSpecialistsOfApprovedReport(reportId: number): Promise<void> {
+  const report = await ActivityReport.findByPk(reportId, {
+    attributes: ['id', 'regionId', 'legacyId'],
+    include: [
+      {
+        model: ActivityRecipient,
+        as: 'activityRecipients',
+        attributes: ['id', 'grantId', 'otherEntityId'],
+        required: false,
+        include: [
+          { model: Grant, as: 'grant', attributes: ['name'], required: false },
+          { model: OtherEntity, as: 'otherEntity', attributes: ['name'], required: false },
+        ],
+      },
+    ],
+  });
+
+  if (!report) {
+    throw new Error(`Activity report ${reportId} not found when notifying program specialists`);
+  }
+
+  const { id, displayId } = report;
+  const activityRecipients = report.activityRecipients.map((recipient) => ({
+    name: recipient.name,
+  }));
+  const programSpecialists = await programSpecialistsForReport(reportId);
+
+  await createRecipientReportApprovedNotificationForProgramSpecialists(
+    programSpecialists.map(({ id: userId }) => userId),
+    {
+      id,
+      displayId,
+      activityRecipients,
+    }
+  );
+}
 
 async function createChangesRequestedNotification(
   notificationRecipient: { userId: number },
@@ -331,6 +394,13 @@ async function archiveApproverApprovedNotifications(reportId: number): Promise<v
   ]);
 }
 
+async function archiveRecipientReportApprovedNotifications(reportId: number): Promise<void> {
+  return archiveNotificationsByEntityAndType(
+    reportId,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+  );
+}
+
 /**
  * Archives a single approver's "another approver approved this report" in-app notification
  * for an activity report. Called when that approver themselves approves the report, so the
@@ -552,6 +622,7 @@ export {
   archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
+  archiveRecipientReportApprovedNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
@@ -565,4 +636,6 @@ export {
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
   createResubmittedNotificationForCreator,
+  notifyProgramSpecialistsOfApprovedReport,
+  programSpecialistsForReport,
 };

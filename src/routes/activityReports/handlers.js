@@ -2,8 +2,7 @@ import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common
 import stringify from 'csv-stringify/lib/sync';
 import { once } from 'events';
 import { uniq } from 'lodash';
-import { QueryTypes } from 'sequelize';
-import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -24,7 +23,6 @@ import {
   ActivityReportGoal,
   ActivityReport as ActivityReportModel,
   Role,
-  sequelize,
   User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
@@ -60,13 +58,13 @@ import {
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
-  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotification,
   createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
   createResubmittedNotificationForCreator,
+  programSpecialistsForReport,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -407,31 +405,6 @@ export async function getGroups(req, res) {
 }
 
 /**
- * Finds the users who are the program specialist on a grant associated with the report.
- * FIXME: This should be temporary until we have a solid relationship between
- * program specialists and grants.
- * Related: TTAHUB-1253
- * @param {number} reportId
- * @returns {Promise<Array<{ id: number }>>}
- */
-async function programSpecialistsForReport(reportId) {
-  return sequelize.query(
-    `
-    SELECT DISTINCT u.id
-    FROM "ActivityReports" a
-    JOIN "ActivityRecipients" ar
-    ON a.id = ar."activityReportId"
-    JOIN "Grants" gr
-    ON ar."grantId" = gr.id
-    JOIN "Users" u
-    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
-    WHERE a.id = :reportId
-  `,
-    { type: QueryTypes.SELECT, replacements: { reportId: Number(reportId) } }
-  );
-}
-
-/**
  * Checks if author and collaborators and program specialists
  * are subscribed to the immediate notifications.
  *
@@ -651,16 +624,6 @@ export async function reviewReport(req, res) {
         // Clear earlier approver-approved notifications before creating the final-approval ones,
         // so the final-approval notifications stay active until the recipient dismisses them.
         await archiveApproverApprovedNotifications(reviewedReport.id);
-
-        // Notify program specialists whose caseload includes a grant on this
-        // report. Opt-out is checked per user in createNotification.
-        const programSpecialistIds = (await programSpecialistsForReport(reviewedReport.id)).map(
-          (ps) => ps.id
-        );
-        await createRecipientReportApprovedNotificationForProgramSpecialists(programSpecialistIds, {
-          ...reviewedReport.toJSON(),
-          activityRecipients,
-        });
       }
 
       // Notify other approvers on every approval, including the final one. The CTA is
@@ -833,6 +796,12 @@ export async function unlockReport(req, res) {
         individualHooks: true,
       }
     );
+
+    if (report.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      await archiveNotificationsByEntityAndType(Number(activityReportId), [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+      ]);
+    }
 
     res.sendStatus(204);
   } catch (error) {

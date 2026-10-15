@@ -4,6 +4,7 @@ import {
   archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
+  archiveRecipientReportApprovedNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
@@ -404,6 +405,17 @@ describe('activityReport notification helpers', () => {
       expect(mockArchiveNotifications).toHaveBeenCalledWith(77, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
+    });
+  });
+
+  describe('archiveRecipientReportApprovedNotifications', () => {
+    it('archives the program specialist recipient-approved notification for the report', async () => {
+      await archiveRecipientReportApprovedNotifications(77);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(
+        77,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+      );
     });
   });
 
