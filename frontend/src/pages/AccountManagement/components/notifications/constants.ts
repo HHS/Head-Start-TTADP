@@ -1,10 +1,10 @@
+import { USER_SETTINGS } from '@ttahub/common';
 import type { EmailFrequencyValue } from '@ttahub/common/src/notifications';
 
-// these keys should match the keys in /src/constants.js:USER_SETTINGS.EMAIL.VALUES
 export const frequencyValues: { key: EmailFrequencyValue; label: string }[] = [
-  { key: 'never', label: 'Do not notify me' },
-  { key: 'immediately', label: 'Immediately' },
-  { key: 'today', label: 'Daily digest' },
-  { key: 'this week', label: 'Weekly digest' },
-  { key: 'this month', label: 'Monthly digest' },
+  { key: USER_SETTINGS.EMAIL.VALUES.NEVER, label: 'Do not notify me' },
+  { key: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY, label: 'Immediately' },
+  { key: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST, label: 'Daily digest' },
+  { key: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST, label: 'Weekly digest' },
+  { key: USER_SETTINGS.EMAIL.VALUES.MONTHLY_DIGEST, label: 'Monthly digest' },
 ];
