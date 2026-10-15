@@ -329,6 +329,31 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
 
   return deletedCount;
 }
+
+/*
+ * Swaps the CTA label on archived notifications for the type's `archiveLabel` (e.g. "Take
+ * action" -> "View AR"), since an archived notification no longer calls for action.
+ * Types without an `archiveLabel` keep their original label.
+ * @param notifications The notifications being archived.
+ * @returns {Promise<void>} Resolves once labels are updated.
+ */
+async function applyArchiveLabels(
+  notifications: { id: number; type: NotificationType }[]
+): Promise<void> {
+  const idsByLabel = new Map<string, number[]>();
+
+  notifications.forEach(({ id, type }) => {
+    const archiveLabel = NOTIFICATION_CONFIGURATION[type]?.archiveLabel?.();
+    if (archiveLabel) {
+      idsByLabel.set(archiveLabel, [...(idsByLabel.get(archiveLabel) ?? []), id]);
+    }
+  });
+
+  await Promise.all(
+    [...idsByLabel].map(([label, ids]) => Notification.update({ label }, { where: { id: ids } }))
+  );
+}
+
 /*
  * Archives a single user's notifications for a given entity and one or more notification
  * types. This is the per-user counterpart to {@link archiveNotificationsByEntityAndType}:
@@ -372,14 +397,14 @@ async function archiveNotificationsByUserEntityAndType(
   }
 
   const notifications = (await Notification.findAll({
-    attributes: ['id'],
+    attributes: ['id', 'type'],
     where: {
       entityId,
       type: { [Op.in]: notificationTypes },
       userId,
     },
     raw: true,
-  })) as unknown as { id: number }[];
+  })) as unknown as { id: number; type: NotificationType }[];
 
   if (!notifications.length) {
     return;
@@ -387,6 +412,8 @@ async function archiveNotificationsByUserEntityAndType(
 
   const notificationIds = notifications.map((n) => n.id);
   const archivedAt = new Date();
+
+  await applyArchiveLabels(notifications);
 
   await NotificationUserState.update(
     { archivedAt },
@@ -456,13 +483,13 @@ async function archiveNotificationsByEntityAndType(
   }
 
   const notifications = (await Notification.findAll({
-    attributes: ['id', 'userId'],
+    attributes: ['id', 'userId', 'type'],
     where: {
       entityId,
       type: { [Op.in]: notificationTypes },
     },
     raw: true,
-  })) as unknown as { id: number; userId: number | null }[];
+  })) as unknown as { id: number; userId: number | null; type: NotificationType }[];
 
   if (!notifications.length) {
     return;
@@ -470,6 +497,8 @@ async function archiveNotificationsByEntityAndType(
 
   const notificationIds = notifications.map((n) => n.id);
   const archivedAt = new Date();
+
+  await applyArchiveLabels(notifications);
 
   await NotificationUserState.update(
     { archivedAt },
