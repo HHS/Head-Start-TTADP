@@ -360,7 +360,6 @@
   "bugs": {
     "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
   },
-  "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
   "nodemonConfig": {
     "ignore": [
       "./reports/",
