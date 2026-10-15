@@ -647,11 +647,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`${mockRecipient.name}: Activity Report approved in TTA Hub`);
-      expect(message.text).toContain(`${mockReport.displayId}`);
+      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Approved`);
       expect(message.text).toContain(
-        'An Activity Report associated with one of your recipients has been approved.'
+        'An Activity Report for one of your recipients has been approved.'
       );
+      expect(message.text).toContain('Access this report in the TTA Hub.');
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no program specialists/recipients', async () => {
@@ -1547,7 +1547,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub daily digest: your recipients' approved Activity Reports"
+        "TTA Hub daily digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for today.');
@@ -1575,7 +1575,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub weekly digest: your recipients' approved Activity Reports"
+        "TTA Hub weekly digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
@@ -1603,7 +1603,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub monthly digest: your recipients' approved Activity Reports"
+        "TTA Hub monthly digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
