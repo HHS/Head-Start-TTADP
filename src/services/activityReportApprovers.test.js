@@ -466,13 +466,14 @@ describe('activityReportApprovers services', () => {
         .mockResolvedValue();
       try {
         await syncApprovers(report.id, [mockManager.id]);
+        // Assert before mockRestore(), which clears the spy's recorded calls.
+        expect(notifyProgramSpecialists).toHaveBeenCalledWith(report.id);
       } finally {
         notifyProgramSpecialists.mockRestore();
       }
 
       const [updatedReport] = await activityReportAndRecipientsById(report.id);
       expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
-      expect(notifyProgramSpecialists).toHaveBeenCalledWith(report.id);
 
       const updatedUserState = await NotificationUserState.findByPk(userState.id);
       expect(updatedUserState.archivedAt).not.toBeNull();
