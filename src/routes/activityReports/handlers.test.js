@@ -3118,22 +3118,6 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValueOnce([report]);
       await unlockReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
-      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalled();
-    });
-
-    it('archives program specialist approval notifications when an approved report is unlocked', async () => {
-      ActivityReport.mockImplementation(() => ({
-        canUnlock: () => true,
-      }));
-      activityReportAndRecipientsById.mockResolvedValueOnce([
-        { ...report, calculatedStatus: REPORT_STATUSES.APPROVED },
-      ]);
-
-      await unlockReport(request, mockResponse);
-
-      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(report.id, [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
-      ]);
     });
 
     it('handles unauthorized', async () => {

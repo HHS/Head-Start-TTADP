@@ -2,7 +2,7 @@ import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common
 import stringify from 'csv-stringify/lib/sync';
 import { once } from 'events';
 import { uniq } from 'lodash';
-import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -796,12 +796,6 @@ export async function unlockReport(req, res) {
         individualHooks: true,
       }
     );
-
-    if (report.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      await archiveNotificationsByEntityAndType(Number(activityReportId), [
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
-      ]);
-    }
 
     res.sendStatus(204);
   } catch (error) {
