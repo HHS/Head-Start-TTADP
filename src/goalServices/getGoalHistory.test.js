@@ -8,6 +8,7 @@ import db, {
   ActivityReportCollaborator,
   ActivityReportObjective,
   CollaboratorRole,
+  EventReportPilot,
   Goal,
   GoalTemplate,
   Grant,
@@ -15,6 +16,9 @@ import db, {
   Permission,
   Recipient,
   Role,
+  SessionReportPilot,
+  SessionReportPilotGoalTemplate,
+  SessionReportPilotGrant,
   User,
 } from '../models';
 import { getUniqueId } from '../testUtils';
@@ -271,12 +275,90 @@ describe('getGoalHistory (database-backed)', () => {
     const { overview } = result;
     // objective1 links to report1 AND report2; objective2 links to report1 only → 2 unique ARs
     expect(overview.activityReports).toBe(2);
+    expect(overview.trainingReports).toBe(0);
     // 2 objectives on the Suspended goal; Closed goal has none
     expect(overview.objectives).toBe(2);
     // 1 goal with status Closed
     expect(overview.closures).toBe(1);
     // 1 goal with status Suspended
     expect(overview.suspensions).toBe(1);
+  });
+
+  it('counts distinct sessions matching the goal category and recipient across grants', async () => {
+    const transaction = await db.sequelize.transaction();
+    const options = { transaction, hooks: false };
+
+    try {
+      const otherRecipient = await Recipient.create(
+        { id: getUniqueId(), name: faker.company.name() },
+        options
+      );
+      const [secondGrant, otherGrant] = await Promise.all(
+        [recipient.id, otherRecipient.id].map((recipientId) =>
+          Grant.create(
+            {
+              id: getUniqueId(),
+              number: faker.string.uuid(),
+              regionId: REGION_ID,
+              status: 'Active',
+              startDate: new Date('2021/01/01'),
+              endDate: new Date(),
+              recipientId,
+            },
+            options
+          )
+        )
+      );
+      const event = await EventReportPilot.create(
+        {
+          ownerId: user.id,
+          collaboratorIds: [],
+          regionId: REGION_ID,
+          eventId: faker.string.uuid(),
+          data: {},
+        },
+        options
+      );
+      const sessions = await SessionReportPilot.bulkCreate(
+        Array.from({ length: 5 }, () => ({ eventId: event.id, data: {} })),
+        options
+      );
+      await SessionReportPilotGoalTemplate.bulkCreate(
+        [0, 1, 2, 4].map((index) => ({
+          sessionReportPilotId: sessions[index].id,
+          goalTemplateId: goalTemplate.id,
+        })),
+        options
+      );
+      await SessionReportPilotGrant.bulkCreate(
+        [
+          { sessionReportPilotId: sessions[0].id, grantId: grant.id },
+          { sessionReportPilotId: sessions[0].id, grantId: secondGrant.id },
+          { sessionReportPilotId: sessions[1].id, grantId: secondGrant.id },
+          { sessionReportPilotId: sessions[2].id, grantId: otherGrant.id },
+          { sessionReportPilotId: sessions[3].id, grantId: grant.id },
+        ],
+        options
+      );
+
+      const originalCount = SessionReportPilot.count;
+      const countWithTransaction = jest
+        .spyOn(SessionReportPilot, 'count')
+        .mockImplementation((query) =>
+          originalCount.call(SessionReportPilot, {
+            ...query,
+            transaction,
+          })
+        );
+      try {
+        const result = await getGoalHistory(goalSuspended.id);
+        expect(result.overview.trainingReports).toBe(2);
+      } finally {
+        countWithTransaction.mockRestore();
+      }
+    } finally {
+      await transaction.rollback();
+    }
   });
 
   it('only includes objectives created via RTR or on approved ARs', async () => {

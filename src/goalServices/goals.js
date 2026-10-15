@@ -22,6 +22,7 @@ import {
   Objective,
   Program,
   Resource,
+  SessionReportPilot,
   sequelize,
   Topic,
 } from '../models';
@@ -1626,6 +1627,7 @@ export async function getGoalHistory(id) {
       goals: [],
       overview: {
         activityReports: 0,
+        trainingReports: 0,
         objectives: 0,
         closures: 0,
         suspensions: 0,
@@ -1635,6 +1637,31 @@ export async function getGoalHistory(id) {
   }
 
   const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
+
+  const trainingReports = goal.goalTemplateId
+    ? await SessionReportPilot.count({
+        distinct: true,
+        col: 'id',
+        include: [
+          {
+            model: GoalTemplate,
+            as: 'goalTemplates',
+            attributes: [],
+            through: { attributes: [] },
+            where: { id: goal.goalTemplateId },
+            required: true,
+          },
+          {
+            model: Grant,
+            as: 'grants',
+            attributes: [],
+            through: { attributes: [] },
+            where: { recipientId: grantRecord.recipientId },
+            required: true,
+          },
+        ],
+      })
+    : 0;
 
   const activityReportIds = new Set(
     goalsWithPreparedSpecialists
@@ -1646,6 +1673,7 @@ export async function getGoalHistory(id) {
 
   const overview = {
     activityReports: activityReportIds.size,
+    trainingReports,
     objectives: goalsWithPreparedSpecialists.reduce(
       (sum, g) => sum + (g.objectives?.length || 0),
       0
