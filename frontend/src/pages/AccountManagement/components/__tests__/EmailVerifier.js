@@ -50,6 +50,35 @@ describe('EmailVerifier', () => {
     );
   });
 
+  it.each([[], undefined])(
+    'adds an email validation entry when the user has no email validation status',
+    async (validationStatus) => {
+      fetchMock.post(verifyUrl, 200);
+      const updateUser = jest.fn();
+      renderVerifier({ token, updateUser }, { id: 1, validationStatus });
+
+      expect(await screen.findByText(/your email has been verified/i)).toBeVisible();
+      expect(updateUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 1,
+          validationStatus: [{ type: 'email', validatedAt: true }],
+        })
+      );
+    }
+  );
+
+  it('shows success without re-verifying when the user is already verified', async () => {
+    const updateUser = jest.fn();
+    renderVerifier(
+      { token, updateUser },
+      { id: 1, validationStatus: [{ type: 'email', validatedAt: '2024-01-01' }] }
+    );
+
+    expect(await screen.findByText(/your email has been verified/i)).toBeVisible();
+    expect(fetchMock.called()).toBe(false);
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
   it('shows an error alert when the token is invalid', async () => {
     fetchMock.post(verifyUrl, 400);
     const updateUser = jest.fn();

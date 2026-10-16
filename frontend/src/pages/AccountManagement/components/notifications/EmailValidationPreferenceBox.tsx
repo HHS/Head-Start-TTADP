@@ -17,8 +17,12 @@ export default function EmailValidationPreferenceBox({
   updateUser: (user: { id: number }) => void;
   sendVerificationEmail: () => void;
   verificationEmailSendError: boolean | string;
-}): JSX.Element {
+}): JSX.Element | null {
   const { token } = useParams();
+
+  if (emailValidated && !token) {
+    return null;
+  }
 
   return (
     <Container>

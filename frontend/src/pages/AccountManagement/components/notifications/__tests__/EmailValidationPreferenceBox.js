@@ -40,6 +40,15 @@ describe('EmailValidationPreferenceBox', () => {
 
     expect(screen.queryByText(/your email address isn't verified/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /verification email/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/verify email address/i)).not.toBeInTheDocument();
+  });
+
+  it('does not render an empty email verification card for verified users without a token', () => {
+    const { container } = renderBox({ emailValidated: true });
+
+    expect(
+      container.querySelector('.bg-white.radius-md.shadow-2.margin-bottom-3')
+    ).not.toBeInTheDocument();
   });
 
   it('shows a warning alert when email is unverified and no verification email has been sent', () => {
