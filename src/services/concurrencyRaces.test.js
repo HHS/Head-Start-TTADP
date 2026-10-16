@@ -8,6 +8,7 @@ import {
 import { syncLink } from '../models/hooks/genericLink';
 import { createGrant, createRecipient, createUser, getUniqueId } from '../testUtils';
 import { syncApprovers } from './activityReportApprovers';
+import { lockActivityReport, saveNotes } from './activityReports';
 import { findOrCreateResource, findOrCreateResources } from './resource';
 
 // Creating a Resource enqueues a metadata fetch; keep that off Redis and the network.
@@ -449,6 +450,64 @@ describe('concurrency races (real database)', () => {
   });
 
   describe('Approver sync', () => {
+    // Two overlapping saves of one report, as in prod: the "editor" changes a report column
+    // (UPDATE holds the report row), the "autosave" changes nothing on the report, so it upserts
+    // its next steps first and only asks for the report row in syncApprovers. Without a lock taken
+    // up front, each ends up waiting on the other.
+    const overlappingSaves = async ({ lockFirst }) => {
+      const note = await NextStep.create({
+        activityReportId: report.id,
+        note: 'race note',
+        noteType: 'SPECIALIST',
+      });
+      const notes = [{ id: note.id, note: 'race note edited' }];
+      const editorHoldsReport = deferred();
+      const autosaveHoldsNotes = deferred();
+      const autosaveMaySync = deferred();
+
+      const editor = sequelize.transaction(async () => {
+        if (lockFirst) await lockActivityReport(report.id);
+        await ActivityReport.update(
+          { duration: 5 },
+          {
+            where: { id: report.id },
+            individualHooks: false,
+          }
+        );
+        editorHoldsReport.resolve();
+        await autosaveHoldsNotes.promise;
+        await saveNotes(report.id, notes, false);
+        await syncApprovers(report.id, []);
+      });
+      await editorHoldsReport.promise;
+
+      const autosave = sequelize.transaction(async () => {
+        if (lockFirst) {
+          // It waits here on the editor's lock, so let the editor finish instead of waiting on us.
+          autosaveHoldsNotes.resolve();
+          await lockActivityReport(report.id);
+        }
+        await saveNotes(report.id, notes, false);
+        autosaveHoldsNotes.resolve();
+        await autosaveMaySync.promise;
+        await syncApprovers(report.id, []);
+      });
+      await autosaveHoldsNotes.promise;
+      await sleep(300);
+      autosaveMaySync.resolve();
+
+      return Promise.allSettled([editor, autosave]);
+    };
+
+    it('overlapping saves deadlock when they do not lock the report first', async () => {
+      expectOneDeadlockVictim(await overlappingSaves({ lockFirst: false }));
+    });
+
+    it('overlapping saves that lock the report first queue instead of deadlocking', async () => {
+      const outcomes = await overlappingSaves({ lockFirst: true });
+      expect(outcomes.map((o) => o.status)).toEqual(['fulfilled', 'fulfilled']);
+    });
+
     it('does not block on a concurrent save that inserted next steps for the same report', async () => {
       // The NextSteps FK check holds FOR KEY SHARE on the report row. An exclusive FOR UPDATE
       // lock in syncApprovers would wait on it, and deadlock with the save waiting on our rows.
