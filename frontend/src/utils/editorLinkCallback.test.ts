@@ -3,7 +3,17 @@ import editorLinkCallback, { normalizeLinkTarget } from './editorLinkCallback';
 describe('normalizeLinkTarget', () => {
   it('leaves links with a scheme unchanged', () => {
     expect(normalizeLinkTarget('https://example.com/a?b=c')).toBe('https://example.com/a?b=c');
+    expect(normalizeLinkTarget('https://example.com:8443/a')).toBe('https://example.com:8443/a');
     expect(normalizeLinkTarget('mailto:someone@example.com')).toBe('mailto:someone@example.com');
+    expect(normalizeLinkTarget('tel:5551234')).toBe('tel:5551234');
+    expect(normalizeLinkTarget('tel:+1-555-123-4567')).toBe('tel:+1-555-123-4567');
+  });
+
+  it('prefixes scheme-less host and port links with http://', () => {
+    expect(normalizeLinkTarget('example.com:8080/path')).toBe('http://example.com:8080/path');
+    expect(normalizeLinkTarget('example.com:8080')).toBe('http://example.com:8080');
+    expect(normalizeLinkTarget('example.com:8080?q=1')).toBe('http://example.com:8080?q=1');
+    expect(normalizeLinkTarget('localhost:3000/admin')).toBe('http://localhost:3000/admin');
   });
 
   it('leaves relative and anchor links unchanged', () => {
@@ -29,6 +39,7 @@ describe('normalizeLinkTarget', () => {
     const start = Date.now();
     normalizeLinkTarget(`mailto:${'a'.repeat(200000)}`);
     normalizeLinkTarget('a'.repeat(200000));
+    normalizeLinkTarget(`${'a.'.repeat(100000)}:x`);
     expect(Date.now() - start).toBeLessThan(500);
   });
 });

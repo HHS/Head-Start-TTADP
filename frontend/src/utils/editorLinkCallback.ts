@@ -10,12 +10,32 @@ export interface EditorLinkParams {
 }
 
 const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const HOST_AND_PORT = /^([^\s/:?#@]+):\d+(?:[/?#]|$)/;
 const LOOKS_LIKE_EMAIL = /^[^\s@/]+@[^\s@/]+$/;
+
+// "example.com:8080/path" also matches HAS_SCHEME, so check for a host and
+// port first. Requiring a dot (or localhost) keeps "tel:5551234" a scheme.
+const isHostAndPort = (value: string): boolean => {
+  const match = HOST_AND_PORT.exec(value);
+  if (!match) {
+    return false;
+  }
+  const host = match[1];
+  return host.includes('.') || host.toLowerCase() === 'localhost';
+};
 
 export const normalizeLinkTarget = (target: string): string => {
   const trimmed = (target || '').trim();
 
-  if (!trimmed || HAS_SCHEME.test(trimmed) || trimmed.startsWith('/') || trimmed.startsWith('#')) {
+  if (!trimmed || trimmed.startsWith('/') || trimmed.startsWith('#')) {
+    return trimmed;
+  }
+
+  if (isHostAndPort(trimmed)) {
+    return `http://${trimmed}`;
+  }
+
+  if (HAS_SCHEME.test(trimmed)) {
     return trimmed;
   }
 
