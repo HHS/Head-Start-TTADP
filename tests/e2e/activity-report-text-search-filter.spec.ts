@@ -23,20 +23,10 @@ const waitForLandingFilterRequests = (page: Page): Promise<any>[] => {
   ];
 };
 
-async function getFullName(page) {
-  await page.goto('/');
-  const welcomeText = await page.getByRole('heading', { name: /welcome to the tta hub,/i });
-  const text = await welcomeText.textContent();
-  return text.replace(/welcome to the tta hub, /i, '');
-}
-
 test.describe('Activity Report Text Search Filter', () => {
   test('can search for text on indexed fields', async ({ page }) => {
     // Navigate to app.
     await page.goto('http://localhost:3000/');
-
-    // Get username.
-    const fullName = await getFullName(page);
 
     // Navigate to AR landing.
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -61,8 +51,8 @@ test.describe('Activity Report Text Search Filter', () => {
       .filter({ hasText: '- Select -' })
       .nth(1)
       .click();
-    // select first available option.
-    await page.keyboard.press('ArrowDown');
+    // must differ from the approver selected later; collaborators can't approve
+    await page.keyboard.type('krys');
     await page.keyboard.press('Enter');
     await blur(page);
 
@@ -213,9 +203,8 @@ test.describe('Activity Report Text Search Filter', () => {
     const approverDropdown = page.getByLabel('Approving manager');
     await approverDropdown.click();
 
-    // type our name into the dropdown to filter to just us
-    await page.keyboard.type(fullName);
-    // press Enter to select ourself
+    // seeded region 1 approver; creators can't approve their own ARs
+    await page.keyboard.type('adam');
     await page.keyboard.press('Enter');
     await blur(page);
 

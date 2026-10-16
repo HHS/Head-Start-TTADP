@@ -4,9 +4,9 @@ import { storageAvailable } from './helpers';
 
 export function setConnectionActiveWithError(e, setConnectionActive) {
   let connection = false;
-  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
+  // if we get a "bad request", "unauthorized" or "not found" response back from the API, we DON'T
   // display the "network is unavailable" message
-  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
+  if (e instanceof HTTPError && [400, 403, 404].includes(e.status)) {
     connection = true;
   }
   setConnectionActive(connection);

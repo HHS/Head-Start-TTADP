@@ -23,12 +23,13 @@ describe('NotificationCard', () => {
     actionable: false,
   };
 
-  const renderCard = (overrides = {}, onArchive = jest.fn()) =>
+  const renderCard = (overrides = {}, onArchive = jest.fn(), isArchive = false) =>
     render(
       <MemoryRouter>
         <NotificationCard
           notification={{ ...baseNotification, ...overrides }}
           onArchive={onArchive}
+          isArchive={isArchive}
         />
       </MemoryRouter>
     );
@@ -114,6 +115,12 @@ describe('NotificationCard', () => {
       fireEvent.click(buttons[0]);
 
       expect(onArchive).toHaveBeenCalledWith(1);
+    });
+
+    it('does not render dismiss button on archived notifications', () => {
+      renderCard({ actionable: false, archivedAt: '2026-06-10T00:00:00.000Z' }, jest.fn(), true);
+
+      expect(screen.queryByRole('button', { name: /Dismiss/i })).toBeNull();
     });
   });
 

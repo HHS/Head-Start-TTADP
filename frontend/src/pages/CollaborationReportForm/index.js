@@ -23,6 +23,7 @@ import {
 } from '../../Constants';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import Navigator from '../../components/Navigator';
+import { HTTPError } from '../../fetchers';
 import { getApprovers } from '../../fetchers/activityReports';
 import {
   createReport,
@@ -217,6 +218,8 @@ function CollaborationReport({ match, location }) {
 
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
+  // Form values from a failed save, kept so page navigation doesn't discard them.
+  const unsavedChangesRef = useRef(null);
   const { user } = useContext(UserContext);
 
   const showLastUpdatedTime =
@@ -243,7 +246,10 @@ function CollaborationReport({ match, location }) {
   // Also, clear the saved draft message when the page changes
   useDeepCompareEffect(() => {
     updateShowSavedDraft(false);
-    hookForm.reset(formData, { errors: true });
+    const values = unsavedChangesRef.current
+      ? { ...formData, ...unsavedChangesRef.current }
+      : formData;
+    hookForm.reset(values, { errors: true });
   }, [currentPage, formData, hookForm.reset]);
 
   // Focus the form when a new page is loaded
@@ -274,9 +280,13 @@ function CollaborationReport({ match, location }) {
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
             // eslint-disable-next-line max-len
-            const isApproverFromFetched = approvers.some(
-              ({ user: approver }) => user.id === approver.id
-            );
+            const isParticipant =
+              fetchedReport.userId === user.id ||
+              fetchedReport.collabReportSpecialists?.some(
+                ({ specialistId }) => specialistId === user.id
+              );
+            const isApproverFromFetched =
+              !isParticipant && approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
@@ -323,13 +333,17 @@ function CollaborationReport({ match, location }) {
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+        const filteredApprovers = approvers.filter((approver) => approver.id !== report.userId);
 
         // istanbul ignore next - hard to test collaborator mode
         const isCollaborator =
           report.collabReportSpecialists &&
           report.collabReportSpecialists.some((u) => u.specialistId === user.id);
         const isAuthor = report.userId === user.id;
-        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+        const isMatchingApprover =
+          isCollaborator || isAuthor
+            ? []
+            : report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor =
           (isCollaborator || isAuthor) &&
@@ -343,7 +357,7 @@ function CollaborationReport({ match, location }) {
 
         updateAdditionalData({
           collaborators: filteredCollaborators,
-          approvers,
+          approvers: filteredApprovers,
           goalTemplates,
         });
 
@@ -376,15 +390,11 @@ function CollaborationReport({ match, location }) {
 
         // Determine if the current user matches any of the approvers for this collab report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
-        if (isMatchingApprover && isMatchingApprover.length > 0) {
-          // This user is an approver on the report.
-          updateIsApprover(true);
-
-          // This user is a approver on the report and has a pending approval.
-          if (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending') {
-            updateIsPendingApprover(true);
-          }
-        }
+        updateIsApprover(isMatchingApprover.length > 0);
+        updateIsPendingApprover(
+          isMatchingApprover.length > 0 &&
+            (isMatchingApprover[0].status === null || isMatchingApprover[0].status === 'pending')
+        );
 
         const canWriteReport = canWriteAsCollaboratorOrAuthor || canWriteAsApprover;
 
@@ -530,6 +540,7 @@ function CollaborationReport({ match, location }) {
       }
     } catch (e) {
       setConnectionActiveWithError(e, setConnectionActive);
+      throw e;
     }
   };
 
@@ -563,16 +574,26 @@ function CollaborationReport({ match, location }) {
 
       // save the form data to the server
       await onSave(data, forceUpdate);
+      unsavedChangesRef.current = null;
 
       // Update the last saved time
       updateLastSaveTime(moment());
 
       // show the saved draft message
       updateShowSavedDraft(true);
+      return true;
     } catch (e) {
+      const { status, ...formValues } = hookForm.getValues();
+      unsavedChangesRef.current = formValues;
+      updateShowSavedDraft(false);
+
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
       updateErrorMessage(
-        'A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.'
+        validationMessage ||
+          'A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.'
       );
+      return false;
     } finally {
       setIsAppLoading(false);
     }
@@ -614,7 +635,10 @@ function CollaborationReport({ match, location }) {
     const currentPosition = pages.find((page) => page.path === currentPage)?.position;
 
     const isAutoSave = false;
-    await onSaveDraft(isAutoSave);
+    const saved = await onSaveDraft(isAutoSave);
+    if (saved === false) {
+      return;
+    }
     updatePage(currentPosition + 1);
   };
 

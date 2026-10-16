@@ -42,10 +42,11 @@ const ReportComponent = ({
   userId = 1,
   userRoles = [{ fullName: 'Reporter' }],
   region = 1,
+  isAppLoading = true,
 }) => (
   <Router history={history}>
     <AppLoadingContext.Provider
-      value={{ isAppLoading: true, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+      value={{ isAppLoading, setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
     >
       <UserContext.Provider
         value={{
@@ -157,6 +158,57 @@ describe('CollaborationReportForm', () => {
 
     const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
     expect(heading).toBeInTheDocument();
+  });
+
+  it('does not offer the report creator as an approver', async () => {
+    fetchMock.get(
+      '/api/activity-reports/approvers?region=1',
+      [
+        { id: 1, name: 'Report Creator' },
+        { id: 2, name: 'Eligible Approver' },
+      ],
+      { overwriteRoutes: true }
+    );
+
+    render(<ReportComponent id="new" currentPage="review" />);
+
+    const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+    await userEvent.click(approverSelect);
+
+    expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer collaborators as approvers', async () => {
+    getItem.mockReturnValue(null);
+    fetchMock.get(
+      '/api/collaboration-reports/123',
+      {
+        ...dummyReport,
+        collabReportSpecialists: [
+          { specialistId: 2, specialist: { id: 2, fullName: 'Report Collaborator' } },
+        ],
+      },
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      '/api/activity-reports/approvers?region=1',
+      [
+        { id: 1, name: 'Report Creator' },
+        { id: 2, name: 'Report Collaborator' },
+        { id: 3, name: 'Eligible Approver' },
+      ],
+      { overwriteRoutes: true }
+    );
+
+    render(<ReportComponent id="123" currentPage="review" />);
+
+    const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+    await userEvent.click(approverSelect);
+
+    expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+    expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Report Collaborator' })).not.toBeInTheDocument();
   });
 
   it('keeps activity summary validation errors after review navigation', async () => {
@@ -1002,6 +1054,41 @@ describe('CollaborationReportForm', () => {
 
         // Component should handle error gracefully
       });
+
+      it('shows the validation message and keeps edits when the save is rejected', async () => {
+        const validationMessage =
+          'The report creator and collaborators cannot be assigned as approvers.';
+        fetchMock.put('/api/collaboration-reports/123', {
+          status: 400,
+          body: { error: validationMessage },
+        });
+        getItem.mockReturnValue(null);
+        const mockPush = jest.fn();
+        history.push = mockPush;
+
+        render(<ReportComponent id="123" isAppLoading={false} />);
+
+        const activityNameInput = await screen.findByTestId('activity-name-input');
+        userEvent.type(activityNameInput, 'Unsaved name');
+
+        userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
+
+        expect(await screen.findByText(validationMessage)).toBeVisible();
+        expect(screen.queryByText(/Autosaved on/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/issue with your connection/i)).not.toBeInTheDocument();
+        expect(activityNameInput).toHaveValue('Unsaved name');
+
+        userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+        await waitFor(() => {
+          expect(fetchMock.calls('/api/collaboration-reports/123', 'PUT')).toHaveLength(2);
+        });
+        expect(mockPush).not.toHaveBeenCalledWith(
+          expect.stringContaining('/collaboration-reports/123/'),
+          expect.anything()
+        );
+        expect(activityNameInput).toHaveValue('Unsaved name');
+      });
     });
   });
 
@@ -1357,6 +1444,7 @@ describe('CollaborationReportForm', () => {
     it('does not redirect when report is submitted and user is an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
+        userId: 2,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [{ user: { id: 1 } }], // Same user
@@ -1377,6 +1465,27 @@ describe('CollaborationReportForm', () => {
       });
 
       expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
+    });
+
+    it.each([
+      { userId: 1, collabReportSpecialists: [] },
+      { userId: 2, collabReportSpecialists: [{ specialistId: 1 }] },
+    ])('redirects a participant assigned as approver to view: %o', async (participants) => {
+      getItem.mockReturnValue(null);
+      fetchMock.get('/api/collaboration-reports/123', {
+        ...dummyReport,
+        ...participants,
+        id: 123,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [{ user: { id: 1 }, status: null }],
+      });
+
+      render(<ReportComponent id="123" userId={1} currentPage="review" />);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
+      });
     });
 
     it('does not redirect when report is not approved and not submitted', async () => {

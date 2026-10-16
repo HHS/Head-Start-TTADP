@@ -56,6 +56,33 @@ import { usersWithPermissions } from './users';
 
 const namespace = 'SERVICE:ACTIVITY_REPORTS';
 
+export function assertApproversAreNotParticipants(approverUserIds, report, collaborators) {
+  const participantIds = new Set(
+    [
+      report?.userId ?? report?.dataValues?.userId,
+      ...(collaborators || report?.activityReportCollaborators || []).map(
+        (collaborator) => collaborator?.userId ?? collaborator?.user?.id
+      ),
+    ]
+      .map(Number)
+      .filter(Number.isFinite)
+  );
+  const participantApproverIds = approverUserIds
+    .map(Number)
+    .filter(
+      (approverUserId) => Number.isFinite(approverUserId) && participantIds.has(approverUserId)
+    );
+
+  if (participantApproverIds.length) {
+    const error = new Error(
+      'The report creator and collaborators cannot be assigned as approvers.'
+    );
+    error.statusCode = 400;
+    error.responseBody = { error: error.message };
+    throw error;
+  }
+}
+
 export async function batchQuery(query, limit) {
   let finished = false;
   let page = 0;
@@ -979,6 +1006,14 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
+  if (approverUserIds) {
+    assertApproversAreNotParticipants(
+      approverUserIds,
+      report || allFields,
+      activityReportCollaborators
+    );
+  }
+
   const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
