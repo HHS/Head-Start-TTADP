@@ -152,7 +152,9 @@ describe('NotificationsGroupController', () => {
     expect(checkbox).toBeChecked();
     expect(setValueSpy).toHaveBeenCalledTimes(defaultProps.ids.length);
     defaultProps.ids.forEach((id, index) => {
-      expect(setValueSpy).toHaveBeenNthCalledWith(index + 1, `inApp${id}`, true);
+      expect(setValueSpy).toHaveBeenNthCalledWith(index + 1, `inApp${id}`, true, {
+        shouldDirty: true,
+      });
     });
 
     fireEvent.click(checkbox);
@@ -163,7 +165,8 @@ describe('NotificationsGroupController', () => {
       expect(setValueSpy).toHaveBeenNthCalledWith(
         defaultProps.ids.length + index + 1,
         `inApp${id}`,
-        false
+        false,
+        { shouldDirty: true }
       );
     });
   });
@@ -177,7 +180,9 @@ describe('NotificationsGroupController', () => {
     expect(dropdown).toHaveValue('this week');
     expect(setValueSpy).toHaveBeenCalledTimes(defaultProps.ids.length);
     defaultProps.ids.forEach((id, index) => {
-      expect(setValueSpy).toHaveBeenNthCalledWith(index + 1, `email${id}`, 'this week');
+      expect(setValueSpy).toHaveBeenNthCalledWith(index + 1, `email${id}`, 'this week', {
+        shouldDirty: true,
+      });
     });
   });
 
