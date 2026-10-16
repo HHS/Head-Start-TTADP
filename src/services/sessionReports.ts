@@ -506,15 +506,16 @@ function removeRegionFilters(filters: Record<string, unknown>): Record<string, u
   }, {});
 }
 
-function recipientGrantFilter(grantIds: number[]) {
+export function recipientGrantFilter(grantIds: number[]) {
   return sequelize.literal(`EXISTS (
     SELECT 1
-    FROM jsonb_array_elements("SessionReportPilot"."data"->'recipients') elem
-    WHERE (
-      jsonb_typeof(elem->'value') = 'number'
-      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
-    )
-    AND (elem->>'value')::integer IN (${grantIds.join(', ')})
+    FROM jsonb_array_elements(
+      CASE WHEN jsonb_typeof("SessionReportPilot"."data"->'recipients') = 'array'
+           THEN "SessionReportPilot"."data"->'recipients'
+           ELSE '[]'::jsonb END
+    ) elem
+    WHERE CASE WHEN elem->>'value' ~ '^[0-9]+$'
+               THEN (elem->>'value')::integer END IN (${grantIds.join(', ')})
   )`);
 }
 
