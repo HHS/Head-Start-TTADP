@@ -110,6 +110,12 @@
   $ref: './session-reports/id/id.yaml'
 '/session-reports/eventId/${eventId}':
   $ref: './session-reports/eventId/eventId.yaml'
+'/tta-requests':
+  $ref: './tta-requests/index.yaml'
+'/tta-requests/{ttaRequestId}':
+  $ref: './tta-requests/id.yaml'
+'/tta-requests/region/{regionId}/recipient/{recipientId}':
+  $ref: './tta-requests/recipient.yaml'
 
 '/notifications/count':
   $ref: './notifications-count.yaml'

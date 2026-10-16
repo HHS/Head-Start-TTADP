@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import useFilters from '../../../hooks/useFilters';
@@ -16,14 +18,32 @@ const defaultFilterReturn = {
   defaultRegion: 1,
   allRegionsFilters: [],
   hasMultipleRegions: false,
-  filters: [],
+  filters: [{ id: '1', topic: 'region', condition: 'is', query: '1' }],
   setFilters: jest.fn(),
   onApplyFilters,
   onRemoveFilter,
   filterConfig: [],
 };
 
-const user = { homeRegionId: 1, permissions: [] };
+// read access to region 1, the region the page is filtered to
+const user = {
+  homeRegionId: 1,
+  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS }],
+};
+
+const DRAFT = {
+  id: 7,
+  displayId: 'R01-REQ-7',
+  regionId: 1,
+  recipientId: 9,
+  status: 'draft',
+  createdAt: '2026-10-01T16:00:00.000Z',
+  creator: { id: 1, name: 'Rachel Green' },
+  reviewer: null,
+  recipient: { id: 9, name: 'Children and Families First' },
+  goalTemplate: null,
+  grants: [],
+};
 
 const renderTtaRequests = () =>
   render(
@@ -37,9 +57,11 @@ const renderTtaRequests = () =>
 describe('TTA Requests', () => {
   beforeEach(() => {
     useFilters.mockReturnValue(defaultFilterReturn);
+    fetchMock.get('begin:/api/tta-requests?', { count: 1, rows: [DRAFT] });
   });
 
   afterEach(() => {
+    fetchMock.restore();
     jest.clearAllMocks();
   });
 
@@ -103,11 +125,18 @@ describe('TTA Requests', () => {
     expect(screen.getByRole('heading', { name: 'Approved TTA requests', level: 2 })).toBeVisible();
   });
 
-  it('names the recipient and region on both tables', () => {
+  it("lists the requests in the page's filtered regions", async () => {
+    renderTtaRequests();
+
+    expect(await screen.findByRole('link', { name: 'R01-REQ-7' })).toBeVisible();
+    expect(fetchMock.lastUrl('begin:/api/tta-requests?')).toBe('/api/tta-requests?region.in[]=1');
+  });
+
+  it('names the recipient and region of each active request', async () => {
     renderTtaRequests();
 
     // the page spans every region the user can see, so the rows have to say which
-    expect(screen.getAllByRole('columnheader', { name: /recipient/i })).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: /region/i })).toHaveLength(2);
+    expect(await screen.findByRole('columnheader', { name: /recipient/i })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /region/i })).toBeVisible();
   });
 });

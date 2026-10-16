@@ -99,7 +99,7 @@ export default function useWidgetSorting<R extends WidgetSortableRow>(
               ...t,
               sortBy: !t.data
                 ? new Date(t[sortBy]) // If we don't have data, use the value.
-                : new Date(t.data.find((tp) => (tp.sortKey || tp.title) === sortKey || {}).value),
+                : new Date((t.data.find((tp) => (tp.sortKey || tp.title) === sortKey) || {}).value),
             };
           });
           break;
