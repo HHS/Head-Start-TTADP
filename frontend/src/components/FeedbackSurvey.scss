@@ -1,0 +1,120 @@
+@import '../colors.scss';
+
+.survey-feedback__trigger-button {
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+
+  &.survey-feedback__trigger-button--pulse {
+    animation: survey-feedback-button-pulse 900ms ease-out;
+  }
+
+  &.survey-feedback__trigger-button--submitted {
+    background-color: $success;
+    border-color: $success;
+    color: #fff;
+    animation: survey-feedback-button-submitted 1200ms ease forwards;
+
+    &:hover,
+    &:focus {
+      background-color: $success-darkest;
+      border-color: $success-darkest;
+      color: #fff;
+    }
+  }
+}
+
+@keyframes survey-feedback-button-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  35%,
+  55% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 0.4rem rgba($ttahub-blue-light, 0.85), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+}
+
+@keyframes survey-feedback-button-submitted {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-feedback__trigger-button {
+    animation: none;
+  }
+}
+
+.survey-feedback__modal {
+  .usa-modal__content {
+    max-width: 38rem;
+  }
+
+  .usa-modal__main {
+    padding-top: 0;
+  }
+
+  .usa-modal__heading {
+    padding-top: 0;
+  }
+
+  .survey-feedback__optional-comments-label {
+    display: block;
+    width: 100%;
+    padding-bottom: 0.25rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+
+  .usa-radio {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid $base-lighter;
+    border-radius: 0.5rem;
+  }
+
+  .usa-radio__label {
+    display: flex;
+    align-items: center;
+    min-height: 1.25rem;
+    margin-top: 0;
+  }
+
+  .usa-radio__label::before {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  textarea {
+    min-height: 5rem;
+  }
+}
