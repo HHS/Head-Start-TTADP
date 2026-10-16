@@ -6,7 +6,6 @@ src/
 !build/server/src
 !packages
 maintenance_page/
-smartsheet_scripts/
 terraform/
 hses.zip
 temp/

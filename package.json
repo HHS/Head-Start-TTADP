@@ -204,7 +204,7 @@
     "yayson": "^4.4.0"
   },
   "devDependencies": {
-    "@axe-core/cli": "^4.13.0",
+    "@axe-core/cli": "^4.14.0",
     "@axe-core/playwright": "^4.13.0",
     "@babel/cli": "^7.29.7",
     "@babel/core": "^7.29.7",
@@ -235,7 +235,7 @@
     "nodemon": "^3.1.14",
     "nyc": "^18.0.0",
     "playwright-core": "^1.64.0",
-    "puppeteer": "^21.11.0",
+    "puppeteer": "^25.14.0",
     "puppeteer-select": "^1.0.3",
     "selenium-webdriver": "4.51.0",
     "sinon": "^15.0.0",
@@ -258,10 +258,11 @@
     "form-data": "^4.0.6",
     "flatted": "^3.4.2",
     "follow-redirects": "^1.16.0",
-    "ip-address": "^10.3.1",
+    "ip-address": "^10.7.4",
     "js-cookie": "^3.0.7",
     "linkify-it": ">=5.0.2",
     "lodash": "^4.18.1",
+    "nanoid": "^3.3.18",
     "nodemailer": "^10.0.16",
     "protobufjs": "^7.6.5",
     "proxy-addr": "~2.0.8",
@@ -272,7 +273,11 @@
     "test-exclude": "^8.0.0",
     "tar": "^7.5.21",
     "undici": "^7.29.1",
-    "ws": "^8.22.0"
+    "ws": "^8.22.0",
+    "**/@newrelic/security-agent/uuid": "^11.1.1",
+    "bull/uuid": "^11.1.1",
+    "**/preview-email/uuid": "^11.1.1",
+    "sequelize/uuid": "^11.1.1"
   },
   "jest": {
     "modulePathIgnorePatterns": [
