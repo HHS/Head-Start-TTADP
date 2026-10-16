@@ -2,28 +2,28 @@ const { prepMigration } = require('../lib/migration');
 
 // (tableName, idColumn) pairs for the *Collaborators tables.
 const COLLABORATOR_TABLES = [
-    { table: 'GoalCollaborators', idColumn: 'goalId' },
-    { table: 'ObjectiveCollaborators', idColumn: 'objectiveId' },
-    { table: 'GroupCollaborators', idColumn: 'groupId' },
+  { table: 'GoalCollaborators', idColumn: 'goalId' },
+  { table: 'ObjectiveCollaborators', idColumn: 'objectiveId' },
+  { table: 'GroupCollaborators', idColumn: 'groupId' },
 ];
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-    up: async (queryInterface) =>
-        queryInterface.sequelize.transaction(async (transaction) => {
-            await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename);
 
-            // eslint-disable-next-line no-restricted-syntax
-            for (const { table, idColumn } of COLLABORATOR_TABLES) {
-                // The existing unique index/constraint on (idColumn, userId, collaboratorTypeId,
-                // deletedAt) does NOT actually prevent duplicate active rows: SQL unique constraints
-                // treat every NULL "deletedAt" value as distinct from every other NULL, so two
-                // non-deleted rows for the same (idColumn, userId, collaboratorTypeId) can coexist.
-                // Merge and dedupe any such active duplicates onto the lowest id before replacing the
-                // index with a partial one scoped to `WHERE "deletedAt" IS NULL`, which correctly
-                // enforces uniqueness among active rows.
-                // eslint-disable-next-line no-await-in-loop
-                await queryInterface.sequelize.query(
+      // eslint-disable-next-line no-restricted-syntax
+      for (const { table, idColumn } of COLLABORATOR_TABLES) {
+        // The existing unique index/constraint on (idColumn, userId, collaboratorTypeId,
+        // deletedAt) does NOT actually prevent duplicate active rows: SQL unique constraints
+        // treat every NULL "deletedAt" value as distinct from every other NULL, so two
+        // non-deleted rows for the same (idColumn, userId, collaboratorTypeId) can coexist.
+        // Merge and dedupe any such active duplicates onto the lowest id before replacing the
+        // index with a partial one scoped to `WHERE "deletedAt" IS NULL`, which correctly
+        // enforces uniqueness among active rows.
+        // eslint-disable-next-line no-await-in-loop
+        await queryInterface.sequelize.query(
           /* sql */ `
             -- Only rows that belong to an actual duplicate group are merged; rows with no
             -- duplicate are left exactly as they are.
@@ -90,11 +90,11 @@ module.exports = {
 
             DROP TABLE IF EXISTS tmp_collaborator_dedup;
           `,
-                    { transaction }
-                );
-            }
+          { transaction }
+        );
+      }
 
-            await queryInterface.sequelize.query(
+      await queryInterface.sequelize.query(
         /* sql */ `
           ALTER TABLE "GoalCollaborators" DROP CONSTRAINT IF EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
           DROP INDEX IF EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
@@ -114,19 +114,19 @@ module.exports = {
           ON "GroupCollaborators" ("groupId", "userId", "collaboratorTypeId")
           WHERE "deletedAt" IS NULL;
         `,
-                { transaction }
-            );
-        }),
+        { transaction }
+      );
+    }),
 
-    // NOTE: this only reverts the index/constraint change -- it cannot undo the dedup above
-    // (merged duplicate collaborator rows and their combined linkBack are gone for good). There's
-    // no canonical way to un-merge deleted duplicates, so this down() is a one-way trip for the
-    // data even though the schema change itself is fully reverted.
-    down: async (queryInterface) =>
-        queryInterface.sequelize.transaction(async (transaction) => {
-            await prepMigration(queryInterface, transaction, __filename);
+  // NOTE: this only reverts the index/constraint change -- it cannot undo the dedup above
+  // (merged duplicate collaborator rows and their combined linkBack are gone for good). There's
+  // no canonical way to un-merge deleted duplicates, so this down() is a one-way trip for the
+  // data even though the schema change itself is fully reverted.
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename);
 
-            await queryInterface.sequelize.query(
+      await queryInterface.sequelize.query(
         /* sql */ `
           DROP INDEX IF EXISTS "GoalCollaborators_goalId_userId_collaboratorTypeId_active";
           CREATE UNIQUE INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_unique"
@@ -146,7 +146,7 @@ module.exports = {
           ALTER TABLE "GroupCollaborators" ADD CONSTRAINT "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_"
           UNIQUE USING INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_";
         `,
-                { transaction }
-            );
-        }),
+        { transaction }
+      );
+    }),
 };

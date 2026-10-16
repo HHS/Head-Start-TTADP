@@ -43,10 +43,13 @@ async function setup(flags = ['actionable_notifications'], actionable = true) {
 
 afterEach(() => fetchMock.restore());
 
-it('does not fetch or show a bell without the flag', async () => {
+it('fetches and shows unread notifications without the flag', async () => {
+  fetchMock.get(countUrl, { count: 1, rows: [] });
   await setup([]);
-  expect(screen.queryByRole('link', { name: /Notification center/ })).toBeNull();
-  expect(fetchMock.calls()).toHaveLength(0);
+  expect(
+    await screen.findByRole('link', { name: 'Notification center, 1 unread notification' })
+  ).toBeVisible();
+  expect(fetchMock.calls(countUrl)).toHaveLength(1);
 });
 
 it.each([true, false])('refreshes after a delayed CTA write, actionable=%s', async (actionable) => {
