@@ -389,6 +389,64 @@ describe('TtaRequestForm', () => {
     expect(screen.getByText('Ross Geller')).toBeVisible();
   });
 
+  it('saves to the draft in the route after moving from one draft to another', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.get('/api/tta-requests/43', {
+      ...SAVED_REQUEST,
+      id: 43,
+      displayId: 'R14-REQ-43',
+      creatorNotes: 'Other notes',
+    });
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/43', { ...SAVED_REQUEST, id: 43 });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+
+    act(() => {
+      history.push('/tta-requests/43');
+    });
+    const notes = await screen.findByDisplayValue('Other notes');
+    userEvent.type(notes, ' edited');
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/tta-requests/43', { method: 'PUT' })).toBe(true);
+    });
+    expect(JSON.parse(fetchMock.lastOptions('/api/tta-requests/43').body).creatorNotes).toBe(
+      'Other notes edited'
+    );
+    expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(false);
+  });
+
+  it('starts a blank request after moving from a draft to a new one', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.post('/api/tta-requests', { ...SAVED_REQUEST, id: 44 });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+
+    act(() => {
+      history.push('/tta-requests/new');
+    });
+    await waitFor(() => {
+      expect(screen.queryByDisplayValue('Saved notes')).toBeNull();
+    });
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/tta-requests', { method: 'POST' })).toBe(true);
+    });
+    expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(false);
+  });
+
   it('shows no form to save over a draft that failed to load', async () => {
     fetchMock.get('/api/tta-requests/42', 500);
     renderFormAt('/tta-requests/42', {

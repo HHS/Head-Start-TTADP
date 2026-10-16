@@ -63,7 +63,14 @@ const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.i
  * Submitting saves the request as it stands and submits it for review, then returns the user
  * to where they came from with a message saying so.
  */
-export default function TtaRequestForm({
+export default function TtaRequestForm(props: TtaRequestFormProps): React.ReactElement {
+  const { ttaRequestId } = useParams<{ ttaRequestId?: string }>();
+  // the router reuses the form when the route moves to another draft, so each draft gets its
+  // own form and nothing - least of all the request it saves to - carries over from the last
+  return <TtaRequestFormBody key={ttaRequestId ?? 'new'} {...props} />;
+}
+
+function TtaRequestFormBody({
   recipient = null,
   recipientOptions = null,
   regionId = null,

@@ -1,5 +1,7 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import { Op, type WhereOptions } from 'sequelize';
+import { serviceError } from '../lib/serviceError';
+import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
@@ -45,15 +47,7 @@ interface ExistingTtaRequest {
 }
 
 // a request that refers to grants or a recipient it cannot -> 400 rather than 500
-export class TtaRequestDataError extends Error {
-  statusCode: number;
-
-  constructor(message: string) {
-    super(message);
-    this.name = 'TtaRequestDataError';
-    this.statusCode = 400;
-  }
-}
+const dataError = (message: string) => serviceError(400, message, { error: message });
 
 export async function ttaRequestById(id: number) {
   return TtaRequest.findOne({
@@ -197,7 +191,7 @@ async function checkRecipientAndGrants(
   grantIds: number[] | undefined
 ) {
   if (grantIds?.length && !recipientId) {
-    throw new TtaRequestDataError('Grants were selected without a recipient');
+    throw dataError('Grants were selected without a recipient');
   }
 
   if (!recipientId) {
@@ -210,16 +204,14 @@ async function checkRecipientAndGrants(
     });
 
     if (matchingGrants !== grantIds.length) {
-      throw new TtaRequestDataError(
-        "Every grant must belong to the request's recipient and region"
-      );
+      throw dataError("Every grant must belong to the request's recipient and region");
     }
     return;
   }
 
   const grantsInRegion = await Grant.count({ where: { recipientId, regionId } });
   if (!grantsInRegion) {
-    throw new TtaRequestDataError("The recipient has no grants in the request's region");
+    throw dataError("The recipient has no grants in the request's region");
   }
 }
 
@@ -247,26 +239,6 @@ async function sanitizeReviewerId(
     requestedReviewerId: reviewerId,
   });
   return null;
-}
-
-async function syncGrants(ttaRequestId: number, grantIds: number[]) {
-  const existing = await TtaRequestGrant.findAll({
-    attributes: ['grantId'],
-    where: { ttaRequestId },
-  });
-  const existingGrantIds = existing.map((requestGrant) => requestGrant.grantId);
-
-  const toCreate = grantIds
-    .filter((grantId) => !existingGrantIds.includes(grantId))
-    .map((grantId) => ({ ttaRequestId, grantId }));
-
-  await TtaRequestGrant.bulkCreate(toCreate);
-  await TtaRequestGrant.destroy({
-    where: {
-      ttaRequestId,
-      grantId: { [Op.notIn]: grantIds },
-    },
-  });
 }
 
 async function syncCitations(ttaRequestId: number, citations: TtaRequestCitationData[]) {
@@ -305,7 +277,7 @@ async function syncCitations(ttaRequestId: number, citations: TtaRequestCitation
  */
 async function syncAssociations(ttaRequestId: number, data: TtaRequestData) {
   if (data.grantIds !== undefined) {
-    await syncGrants(ttaRequestId, data.grantIds);
+    await syncJoinRows(TtaRequestGrant, { ttaRequestId }, 'grantId', data.grantIds);
   }
 
   if (data.citations !== undefined) {
@@ -408,11 +380,11 @@ export async function submitTtaRequest(
   const saved = await updateTtaRequest(existing, data, userId);
 
   if (!saved.reviewerId) {
-    throw new TtaRequestDataError('The reviewer must be able to approve in the request region');
+    throw dataError('The reviewer must be able to approve in the request region');
   }
 
   if (saved.goalTemplate?.standard === MONITORING_STANDARD && !saved.citations.length) {
-    throw new TtaRequestDataError('A request for the monitoring goal needs at least one citation');
+    throw dataError('A request for the monitoring goal needs at least one citation');
   }
 
   await TtaRequest.update(

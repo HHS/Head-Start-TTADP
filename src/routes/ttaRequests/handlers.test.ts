@@ -1,6 +1,7 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import { serviceError } from '../../lib/serviceError';
 import SCOPES from '../../middleware/scopeConstants';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -9,7 +10,6 @@ import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   submitTtaRequest as submitTtaRequestService,
-  TtaRequestDataError,
   ttaRequestById,
   updateTtaRequest,
 } from '../../services/ttaRequests';
@@ -23,17 +23,13 @@ import {
   submitTtaRequest,
 } from './handlers';
 
-jest.mock('../../services/ttaRequests', () => {
-  const actual = jest.requireActual('../../services/ttaRequests');
-  return {
-    TtaRequestDataError: actual.TtaRequestDataError,
-    createTtaRequest: jest.fn(),
-    getTtaRequests: jest.fn(),
-    submitTtaRequest: jest.fn(),
-    ttaRequestById: jest.fn(),
-    updateTtaRequest: jest.fn(),
-  };
-});
+jest.mock('../../services/ttaRequests', () => ({
+  createTtaRequest: jest.fn(),
+  getTtaRequests: jest.fn(),
+  submitTtaRequest: jest.fn(),
+  ttaRequestById: jest.fn(),
+  updateTtaRequest: jest.fn(),
+}));
 jest.mock('../../services/currentUser');
 jest.mock('../../services/accessValidation');
 jest.mock('../../scopes');
@@ -66,6 +62,9 @@ const draft = {
 };
 
 const mockRequestModel = (data) => ({ ...data, toJSON: () => data });
+
+// how the service rejects grants the request can't have
+const badGrants = () => serviceError(400, 'bad grants', { error: 'bad grants' });
 
 describe('TTA request handlers', () => {
   let req: Partial<Request>;
@@ -195,9 +194,7 @@ describe('TTA request handlers', () => {
     });
 
     it('returns 400 when the service rejects the data', async () => {
-      (createTtaRequestService as jest.Mock).mockRejectedValue(
-        new TtaRequestDataError('bad grants')
-      );
+      (createTtaRequestService as jest.Mock).mockRejectedValue(badGrants());
       await createTtaRequest(req as Request, res as Response);
       expect(status).toHaveBeenCalledWith(400);
       expect(json).toHaveBeenCalledWith({ error: 'bad grants' });
@@ -207,6 +204,13 @@ describe('TTA request handlers', () => {
     it('hands unexpected errors to handleErrors', async () => {
       (createTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
       await createTtaRequest(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+
+    it('hands an error with a server status code to handleErrors', async () => {
+      (createTtaRequestService as jest.Mock).mockRejectedValue(serviceError(500, 'boom'));
+      await createTtaRequest(req as Request, res as Response);
+      expect(status).not.toHaveBeenCalledWith(500);
       expect(handleErrors).toHaveBeenCalled();
     });
   });
@@ -243,7 +247,7 @@ describe('TTA request handlers', () => {
 
     it('returns 400 when the service rejects the data', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
-      (updateTtaRequest as jest.Mock).mockRejectedValue(new TtaRequestDataError('bad grants'));
+      (updateTtaRequest as jest.Mock).mockRejectedValue(badGrants());
       await saveTtaRequest(req as Request, res as Response);
       expect(status).toHaveBeenCalledWith(400);
     });
@@ -297,9 +301,7 @@ describe('TTA request handlers', () => {
 
     it('returns 400 when the service rejects the data', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
-      (submitTtaRequestService as jest.Mock).mockRejectedValue(
-        new TtaRequestDataError('no citations')
-      );
+      (submitTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no citations'));
       await submitTtaRequest(req as Request, res as Response);
       expect(status).toHaveBeenCalledWith(400);
     });

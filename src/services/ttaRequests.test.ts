@@ -7,7 +7,6 @@ import {
   createTtaRequest,
   getTtaRequests,
   submitTtaRequest,
-  TtaRequestDataError,
   ttaRequestById,
   updateTtaRequest,
 } from './ttaRequests';
@@ -137,7 +136,7 @@ describe('ttaRequests service', () => {
           { regionId: 1, recipientId: recipient.id, grantIds: [otherRegionGrant.id] },
           creator.id
         )
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('rejects a grant belonging to another recipient', async () => {
@@ -146,13 +145,13 @@ describe('ttaRequests service', () => {
           { regionId: 1, recipientId: recipient.id, grantIds: [otherRecipientGrant.id] },
           creator.id
         )
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('rejects grants without a recipient', async () => {
       await expect(
         createTtaRequest({ regionId: 1, grantIds: [grantOne.id] }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('drops a reviewer who is not an approver in the region', async () => {
@@ -168,7 +167,7 @@ describe('ttaRequests service', () => {
     it('rejects a recipient with no grants in the region', async () => {
       await expect(
         createTtaRequest({ regionId: 3, recipientId: recipient.id }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 
@@ -265,7 +264,7 @@ describe('ttaRequests service', () => {
 
       await expect(
         updateTtaRequest(created, { grantIds: [otherRecipientGrant.id] }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
   });
 
@@ -405,7 +404,7 @@ describe('ttaRequests service', () => {
 
       await expect(
         submitTtaRequest(draft, { ...complete, reviewerId: creator.id }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('rejects the monitoring goal without citations', async () => {
@@ -413,7 +412,7 @@ describe('ttaRequests service', () => {
 
       await expect(
         submitTtaRequest(draft, { ...complete, goalTemplateId: monitoringTemplate.id }, creator.id)
-      ).rejects.toThrow(TtaRequestDataError);
+      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it('submits the monitoring goal with citations', async () => {

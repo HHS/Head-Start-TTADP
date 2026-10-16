@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
+import { respondWithServiceError } from '../../lib/serviceError';
 import TtaRequestPolicy from '../../policies/ttaRequest';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -96,9 +97,7 @@ export async function createTtaRequest(req: Request, res: Response) {
     const ttaRequest = await createTtaRequestService(data, userId);
     res.status(httpCodes.CREATED).json(ttaRequest);
   } catch (error) {
-    // Errors that set their own statusCode are deliberate client responses
-    if (error?.statusCode) {
-      res.status(error.statusCode).json({ error: error.message });
+    if (respondWithServiceError(res, error)) {
       return;
     }
     await handleErrors(req, res, error, logContext);
@@ -127,9 +126,7 @@ export async function saveTtaRequest(req: Request, res: Response) {
     const ttaRequest = await updateTtaRequest(existing, req.body, userId);
     res.json(ttaRequest);
   } catch (error) {
-    // Errors that set their own statusCode are deliberate client responses
-    if (error?.statusCode) {
-      res.status(error.statusCode).json({ error: error.message });
+    if (respondWithServiceError(res, error)) {
       return;
     }
     await handleErrors(req, res, error, logContext);
