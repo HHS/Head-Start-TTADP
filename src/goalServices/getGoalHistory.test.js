@@ -18,7 +18,6 @@ import db, {
   Role,
   SessionReportPilot,
   SessionReportPilotGoalTemplate,
-  SessionReportPilotGrant,
   User,
 } from '../models';
 import { getUniqueId } from '../testUtils';
@@ -320,7 +319,13 @@ describe('getGoalHistory (database-backed)', () => {
         options
       );
       const sessions = await SessionReportPilot.bulkCreate(
-        Array.from({ length: 5 }, () => ({ eventId: event.id, data: {} })),
+        [
+          { recipients: [{ value: grant.id }, { value: secondGrant.id }] },
+          { recipients: [{ value: secondGrant.id }] },
+          { recipients: [{ value: otherGrant.id }] },
+          { recipients: [{ value: grant.id }] },
+          { recipients: [] },
+        ].map((data) => ({ eventId: event.id, data })),
         options
       );
       await SessionReportPilotGoalTemplate.bulkCreate(
@@ -328,16 +333,6 @@ describe('getGoalHistory (database-backed)', () => {
           sessionReportPilotId: sessions[index].id,
           goalTemplateId: goalTemplate.id,
         })),
-        options
-      );
-      await SessionReportPilotGrant.bulkCreate(
-        [
-          { sessionReportPilotId: sessions[0].id, grantId: grant.id },
-          { sessionReportPilotId: sessions[0].id, grantId: secondGrant.id },
-          { sessionReportPilotId: sessions[1].id, grantId: secondGrant.id },
-          { sessionReportPilotId: sessions[2].id, grantId: otherGrant.id },
-          { sessionReportPilotId: sessions[3].id, grantId: grant.id },
-        ],
         options
       );
 

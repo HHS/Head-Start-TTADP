@@ -1638,10 +1638,23 @@ export async function getGoalHistory(id) {
 
   const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
 
+  const recipientGrantFilter = sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(
+      CASE WHEN jsonb_typeof("SessionReportPilot"."data"->'recipients') = 'array'
+           THEN "SessionReportPilot"."data"->'recipients'
+           ELSE '[]'::jsonb END
+    ) AS r("value" text)
+    INNER JOIN "Grants" AS g
+      ON g."id"::text = r."value"
+    WHERE g."recipientId" = ${sequelize.escape(grantRecord.recipientId)}
+  )`);
+
   const trainingReports = goal.goalTemplateId
     ? await SessionReportPilot.count({
         distinct: true,
         col: 'id',
+        where: { [Op.and]: [recipientGrantFilter] },
         include: [
           {
             model: GoalTemplate,
@@ -1649,14 +1662,6 @@ export async function getGoalHistory(id) {
             attributes: [],
             through: { attributes: [] },
             where: { id: goal.goalTemplateId },
-            required: true,
-          },
-          {
-            model: Grant,
-            as: 'grants',
-            attributes: [],
-            through: { attributes: [] },
-            where: { recipientId: grantRecord.recipientId },
             required: true,
           },
         ],
