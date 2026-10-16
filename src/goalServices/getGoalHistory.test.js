@@ -337,17 +337,35 @@ describe('getGoalHistory (database-backed)', () => {
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
           { recipients: [], status: TRAINING_REPORT_STATUSES.COMPLETE },
+          {
+            recipients: [
+              null,
+              'invalid',
+              123,
+              {},
+              { value: 'invalid' },
+              { value: String(secondGrant.id) },
+            ],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+          { recipients: null, status: TRAINING_REPORT_STATUSES.COMPLETE },
+          { recipients: { value: grant.id }, status: TRAINING_REPORT_STATUSES.COMPLETE },
+          { status: TRAINING_REPORT_STATUSES.COMPLETE },
         ].map((data) => ({ eventId: event.id, data })),
         options
       );
       await SessionReportPilotGoalTemplate.bulkCreate(
-        [0, 1, 2, 4].map((index) => ({
+        [0, 1, 2, 4, 5, 6, 7, 8].map((index) => ({
           sessionReportPilotId: sessions[index].id,
           goalTemplateId: goalTemplate.id,
         })),
         options
       );
 
+      const originalFindAll = Grant.findAll;
+      const findGrantsWithTransaction = jest
+        .spyOn(Grant, 'findAll')
+        .mockImplementation((query) => originalFindAll.call(Grant, { ...query, transaction }));
       const originalCount = SessionReportPilot.count;
       const countWithTransaction = jest
         .spyOn(SessionReportPilot, 'count')
@@ -361,6 +379,7 @@ describe('getGoalHistory (database-backed)', () => {
         const result = await getGoalHistory(goalSuspended.id);
         expect(result.overview.trainingReports).toBe(2);
       } finally {
+        findGrantsWithTransaction.mockRestore();
         countWithTransaction.mockRestore();
       }
     } finally {

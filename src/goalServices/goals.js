@@ -27,6 +27,7 @@ import {
   Topic,
 } from '../models';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
+import { recipientGrantFilter } from '../services/sessionReports';
 import { saveStandardGoalsForReport } from '../services/standardGoals';
 import changeGoalStatus from './changeGoalStatus';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
@@ -1638,40 +1639,40 @@ export async function getGoalHistory(id) {
 
   const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
 
-  const recipientGrantFilter = sequelize.literal(`EXISTS (
-    SELECT 1
-    FROM jsonb_to_recordset(
-      CASE WHEN jsonb_typeof("SessionReportPilot"."data"->'recipients') = 'array'
-           THEN "SessionReportPilot"."data"->'recipients'
-           ELSE '[]'::jsonb END
-    ) AS r("value" text)
-    INNER JOIN "Grants" AS g
-      ON g."id"::text = r."value"
-    WHERE g."recipientId" = ${sequelize.escape(grantRecord.recipientId)}
-  )`);
-
-  const trainingReports = goal.goalTemplateId
-    ? await SessionReportPilot.count({
-        distinct: true,
-        col: 'id',
-        where: {
-          [Op.and]: [
-            { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
-            recipientGrantFilter,
-          ],
-        },
-        include: [
-          {
-            model: GoalTemplate,
-            as: 'goalTemplates',
-            attributes: [],
-            through: { attributes: [] },
-            where: { id: goal.goalTemplateId },
-            required: true,
-          },
-        ],
+  const grants = goal.goalTemplateId
+    ? await Grant.findAll({
+        attributes: ['id'],
+        where: { recipientId: grantRecord.recipientId },
+        raw: true,
       })
-    : 0;
+    : [];
+  const grantIds = [...new Set(grants.map((grant) => Number(grant.id)))].filter(
+    (grantId) => Number.isInteger(grantId) && grantId > 0
+  );
+
+  const trainingReports =
+    goal.goalTemplateId && grantIds.length
+      ? await SessionReportPilot.count({
+          distinct: true,
+          col: 'id',
+          where: {
+            [Op.and]: [
+              { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+              recipientGrantFilter(grantIds),
+            ],
+          },
+          include: [
+            {
+              model: GoalTemplate,
+              as: 'goalTemplates',
+              attributes: [],
+              through: { attributes: [] },
+              where: { id: goal.goalTemplateId },
+              required: true,
+            },
+          ],
+        })
+      : 0;
 
   const activityReportIds = new Set(
     goalsWithPreparedSpecialists
