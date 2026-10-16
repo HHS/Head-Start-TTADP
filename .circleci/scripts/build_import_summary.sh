@@ -55,6 +55,10 @@ extract_failure_message() {
   local error_line
   local fallback_line
   local ignore_pattern='^(PHASE_|Task .* status: |Starting task |Uploading|Waiting for task|Showing logs|OK$|[[:space:]]*$)'
+  # Node process warnings (e.g. "(node:7) [DEP0169] DeprecationWarning: ...")
+  # and their "Use `node --trace-deprecation ...`" follow-up line are not
+  # failures, but contain keywords like "error" that the grep below matches.
+  local warning_pattern='\(node:[0-9]+\) (\[DEP[0-9]+\] )?[A-Za-z]*Warning|--trace-(deprecation|warnings)'
 
   if [[ "$phase" == "login" ]]; then
     log_file="$LOGIN_LOG"
@@ -65,6 +69,7 @@ extract_failure_message() {
   if [[ -f "$log_file" ]]; then
     error_line=$(
       grep -Eiv "$ignore_pattern" "$log_file" \
+        | grep -Ev "$warning_pattern" \
         | grep -Ei '(error|failed|failure|exception|timed out|unable|not found|missing|invalid|denied)' \
         | tail -n 1 \
         | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
@@ -78,6 +83,7 @@ extract_failure_message() {
 
     fallback_line=$(
       grep -Eiv "$ignore_pattern" "$log_file" \
+        | grep -Ev "$warning_pattern" \
         | tail -n 1 \
         | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
         || true
