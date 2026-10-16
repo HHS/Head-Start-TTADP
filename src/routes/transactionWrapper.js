@@ -14,6 +14,21 @@ const logContext = {
   namespace,
 };
 
+/**
+ * Registers work to run once the request's transaction has committed successfully, such as
+ * sending the response or queueing jobs that read the rows it wrote. Callbacks are skipped
+ * if the handler throws or the commit fails. Unlike Sequelize's transaction.afterCommit,
+ * which also runs when the COMMIT itself fails.
+ * @param {object} req - request handled by transactionWrapper
+ * @param {() => (void | Promise<void>)} callback
+ */
+export function onTransactionCommitted(req, callback) {
+  if (!req?.inTransactionWrapper) {
+    throw new Error('onTransactionCommitted must be called from within transactionWrapper');
+  }
+  req.transactionCommittedCallbacks = [...(req.transactionCommittedCallbacks || []), callback];
+}
+
 export default function transactionWrapper(
   originalFunction,
   context = '',
@@ -27,8 +42,7 @@ export default function transactionWrapper(
       if (req) {
         req.inTransactionWrapper = true;
       }
-      // eslint-disable-next-line @typescript-eslint/return-await
-      return await sequelize.transaction(transactionOptions, async (transaction) => {
+      const committed = await sequelize.transaction(transactionOptions, async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         let snapShot;
         try {
@@ -60,6 +74,16 @@ export default function transactionWrapper(
           removeFromAuditedTransactions();
         }
       });
+
+      // sequelize.transaction only resolves once the COMMIT succeeds
+      if (req) {
+        req.inTransactionWrapper = false;
+        for (const callback of req.transactionCommittedCallbacks || []) {
+          // eslint-disable-next-line no-await-in-loop
+          await callback();
+        }
+      }
+      return committed;
     } catch (err) {
       if (req) {
         req.inTransactionWrapper = false;
@@ -75,6 +99,7 @@ export default function transactionWrapper(
     } finally {
       if (req) {
         delete req.inTransactionWrapper;
+        delete req.transactionCommittedCallbacks;
       }
     }
   };

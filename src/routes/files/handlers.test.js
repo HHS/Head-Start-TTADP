@@ -78,6 +78,36 @@ jest.mock('../../lib/queue');
 jest.mock('../../services/s3Queue');
 jest.mock('file-type');
 
+// Waits until mockFn has been called `count` times, then for that call's async work to settle,
+// so assertions don't race the database writes it makes.
+const waitForCalls = async (mockFn, count, timeoutMs = 2000) => {
+  const start = Date.now();
+  while (mockFn.mock.calls.length < count && Date.now() - start < timeoutMs) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+  }
+  const result = mockFn.mock.results[count - 1];
+  if (result?.type === 'return') {
+    await result.value;
+  }
+};
+
+const waitForFileStatus = async (fileId, status, timeoutMs = 2000) => {
+  const start = Date.now();
+  let file = await File.findByPk(fileId);
+  while (file?.status !== status && Date.now() - start < timeoutMs) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    // eslint-disable-next-line no-await-in-loop
+    file = await File.findByPk(fileId);
+  }
+  return file;
+};
+
 const mockUser = {
   id: 2046,
   hsesUserId: '2046',
@@ -153,6 +183,7 @@ describe('File Upload', () => {
   });
   afterAll(async () => {
     const files = await File.findAll({
+      attributes: ['id'],
       include: [
         {
           model: ActivityReportFile,
@@ -162,24 +193,14 @@ describe('File Upload', () => {
         },
       ],
     });
-
-    await Promise.all(
-      files.map(async (file) => {
-        ActivityReportFile.destroy({ where: { fileId: file.id } });
-        File.destroy({ where: { id: file.id } });
-      })
-    );
-
-    // cleanup any leftovers, like from the lonely file test
-    const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
-    await Promise.all([
-      ActivityReportFile.destroy({
-        where: {
-          fileId: testFiles.map((file) => file.id),
-        },
-      }),
-    ]);
-    await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
+    // also cleanup any leftovers, like from the lonely file test
+    const testFiles = await File.findAll({
+      attributes: ['id'],
+      where: { originalFileName: 'testfile.pdf' },
+    });
+    const fileIds = [...new Set([...files, ...testFiles].map((file) => file.id))];
+    await ActivityReportFile.destroy({ where: { fileId: fileIds } });
+    await File.destroy({ where: { id: fileIds } });
 
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await Objective.destroy({
@@ -259,9 +280,33 @@ describe('File Upload', () => {
         });
     });
     it('tests a queuing failure', async () => {
-      const updateStatus = jest.spyOn(Files, 'updateStatus');
       addToScanQueue.mockImplementation(() => {
         throw new Error('Scanning failed (mock error)');
+      });
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => true,
+        reportHasEditableStatus: () => true,
+      }));
+      uploadFile.mockResolvedValue({ key: 'key' });
+
+      const res = await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(200);
+
+      const [{ id: fileId }] = res.body;
+      // queueing happens after the response is sent
+      const file = await waitForFileStatus(fileId, FILE_STATUSES.QUEUEING_FAILED);
+      expect(uploadFile).toHaveBeenCalled();
+      expect(addToScanQueue).toHaveBeenCalled();
+      expect(file.status).toBe(FILE_STATUSES.QUEUEING_FAILED);
+    });
+    it('only queues the scan once the file record is committed', async () => {
+      let fileAtQueueTime;
+      addToScanQueue.mockImplementation(async ({ key }) => {
+        // Read on a separate connection, as the scan worker would
+        fileAtQueueTime = await File.findOne({ where: { key }, transaction: null });
       });
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
@@ -273,22 +318,11 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200)
-        .then(() => {
-          expect(uploadFile).toHaveBeenCalled();
-          expect(addToScanQueue).toHaveBeenCalled();
+        .expect(200);
 
-          const { calls } = updateStatus.mock;
-          const params = calls.flat();
-          // it was called twice
-          expect(params.length).toBe(4);
-          // file uploaded
-          expect(params).toContain(FILE_STATUSES.UPLOADED);
-          // but failed to queue for scan
-          expect(params).toContain(FILE_STATUSES.QUEUEING_FAILED);
-          // we also expect two numbers in addition to the statuses
-          expect(params.filter((param) => typeof param === 'number')).toHaveLength(2);
-        });
+      await waitForCalls(addToScanQueue, 1);
+      expect(fileAtQueueTime).not.toBeNull();
+      expect(fileAtQueueTime.status).toBe(FILE_STATUSES.QUEUED);
     });
     it('tests an upload failure', async () => {
       const updateStatus = jest.spyOn(Files, 'updateStatus');
@@ -341,6 +375,8 @@ describe('File Upload', () => {
           const keyMatch = uploadedFile.key.match(/^[a-f0-9-]{36}\.pdf$/);
           expect(keyMatch).not.toBeNull();
         });
+      // the upload transaction commits after the response; wait for it before cleanup
+      await waitForCalls(addToScanQueue, 1);
     });
 
     it('should generate filenames with proper dot separator for altFileTypes extensions (with dot)', async () => {
@@ -371,6 +407,8 @@ describe('File Upload', () => {
           expect(keyMatch).not.toBeNull();
           expect(uploadedFile.key).not.toContain('..');
         });
+      // the upload transaction commits after the response; wait for it before cleanup
+      await waitForCalls(addToScanQueue, 1);
     });
 
     it('should not create malformed S3 keys without dot separator', async () => {
@@ -401,6 +439,8 @@ describe('File Upload', () => {
           // Verify correct format is used
           expect(uploadedFile.key).toMatch(/[a-f0-9-]{36}\.pdf$/);
         });
+      // the upload transaction commits after the response; wait for it before cleanup
+      await waitForCalls(addToScanQueue, 1);
     });
   });
 });
