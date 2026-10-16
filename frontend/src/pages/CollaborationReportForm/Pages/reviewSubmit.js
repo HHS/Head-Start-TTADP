@@ -49,7 +49,12 @@ const ReviewSubmit = ({
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
+  const isApprover = !isCreator && !isCollaborator && approvers?.some((a) => a.user.id === user.id);
+  const participantIds = new Set([
+    userId,
+    ...(collabReportSpecialists || []).map(({ specialistId }) => specialistId),
+  ]);
+  const eligibleApprovers = (availableApprovers || []).filter(({ id }) => !participantIds.has(id));
 
   const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
   const pendingApprovalCount = approvers
@@ -85,7 +90,7 @@ const ReviewSubmit = ({
           onFormReview={onReview}
           approverStatusList={approvers}
           pages={formPages}
-          availableApprovers={availableApprovers}
+          availableApprovers={eligibleApprovers}
           reviewItems={reviewItems}
           onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
