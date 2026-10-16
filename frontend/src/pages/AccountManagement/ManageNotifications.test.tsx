@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import type { MemoryHistory } from 'history';
 import { createMemoryHistory } from 'history';
@@ -608,6 +609,35 @@ describe('ManageNotifications', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
     });
+  });
+
+  it('reopens the prompt after Escape without losing edits or the next destination', async () => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    userEvent.selectOptions(screen.getByLabelText('Submitted for review'), 'today');
+    act(() => history.push('/reports'));
+    expect(screen.getByRole('dialog')).toHaveClass('is-visible');
+    userEvent.keyboard('{Escape}');
+
+    expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
+    expect(history.location.pathname).toBe('/account/notifications');
+    expect(screen.getByLabelText('Submitted for review')).toHaveValue('today');
+
+    act(() => history.push('/another-page'));
+
+    expect(screen.getByRole('dialog')).toHaveClass('is-visible');
+    expect(history.location.pathname).toBe('/account/notifications');
+    userEvent.click(screen.getByRole('button', { name: 'Continue without saving' }));
+
+    expect(history.location.pathname).toBe('/another-page');
+    expect(fetchMock.called('/api/settings', { method: 'PUT' })).toBe(false);
   });
 
   it('requests a verification email and updates the button label on success', async () => {

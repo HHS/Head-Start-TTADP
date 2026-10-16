@@ -30,14 +30,19 @@ export default function VanillaModal({
         onClose();
       }
     };
+    // USWDS closes on document capture, before React key handlers can read the open state.
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && modalRef.current?.modalIsOpen) {
+        onClose();
+      }
+    };
     document.addEventListener('click', handleOverlayClick);
-    return () => document.removeEventListener('click', handleOverlayClick);
-  }, [forceAction, modalId, onClose]);
-  const handleKeyDown = (event) => {
-    if (event.key === 'Escape' && modalRef.current?.modalIsOpen) {
-      onClose?.();
-    }
-  };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('click', handleOverlayClick);
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [forceAction, modalId, modalRef, onClose]);
 
   return (
     <Modal
@@ -48,7 +53,6 @@ export default function VanillaModal({
       aria-describedby={`${modalId}-description`}
       forceAction={forceAction}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
     >
       <ModalHeading id={`${modalId}-heading`}>{heading}</ModalHeading>
       <div id={`${modalId}-description`}>{children}</div>
