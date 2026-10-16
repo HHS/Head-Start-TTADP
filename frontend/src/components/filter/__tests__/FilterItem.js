@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
@@ -53,6 +53,25 @@ describe('Filter menu item', () => {
       </div>
     );
   };
+
+  it.each([
+    ['window', window],
+    ['EventTarget', new EventTarget()],
+    ['null', null],
+  ])('validates without crashing when the blur target is %s', (_label, relatedTarget) => {
+    const setErrors = jest.fn();
+    renderFilterItem(
+      { id: 'incomplete-filter', topic: '', condition: '', query: '' },
+      jest.fn(),
+      jest.fn(),
+      setErrors
+    );
+
+    // userEvent cannot express focus moving to a non-DOM EventTarget.
+    fireEvent.blur(screen.getByRole('combobox', { name: 'topic' }), { relatedTarget });
+
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a filter']);
+  });
 
   it('updates topic & condition', async () => {
     const filter = {
