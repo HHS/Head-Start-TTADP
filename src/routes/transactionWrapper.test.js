@@ -1,4 +1,7 @@
+import express from 'express';
+import { EventEmitter, once } from 'node:events';
 import { Transaction } from 'sequelize';
+import request from 'supertest';
 import handleErrors from '../lib/apiErrorHandler';
 import { hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
@@ -65,7 +68,7 @@ describe('transactionWrapper', () => {
 
     expect(inTransactionWrapper).toBe(true);
     expect(req.inTransactionWrapper).toBeUndefined();
-    expect(originalFunction).toHaveBeenCalledWith(req, res, next);
+    expect(originalFunction).toHaveBeenCalledWith(req, res, expect.any(Function));
   });
 
   it('should log the execution time of the original function', async () => {
@@ -214,5 +217,244 @@ describe('transactionWrapper', () => {
       { isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ },
       expect.any(Function)
     );
+  });
+
+  it.each([200, 204])('defers a %s response until commit', async (status) => {
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      end: jest.fn(),
+    };
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      await callback({ id: 'transaction-id' });
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+      expect(res.end).not.toHaveBeenCalled();
+    });
+
+    await transactionWrapper(async (_req, response) => {
+      if (status === 204) response.status(status).end();
+      else response.status(status).json({ saved: true });
+    })({}, res);
+
+    expect(res.status).toHaveBeenCalledWith(status);
+    if (status === 204) expect(res.end).toHaveBeenCalledTimes(1);
+    else expect(res.json).toHaveBeenCalledWith({ saved: true });
+  });
+
+  it.each(['commit', 'rollback'])(
+    'returns an error without sending success when %s fails',
+    async (phase) => {
+      const error = new Error(`${phase} failed`);
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn(), end: jest.fn() };
+      db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+        if (phase === 'rollback')
+          await expect(callback({ id: 'transaction-id' })).rejects.toThrow('Handler failed');
+        else await callback({ id: 'transaction-id' });
+        throw error;
+      });
+      handleErrors.mockImplementationOnce((_req, response) => response.status(500).end());
+
+      await transactionWrapper(async (_req, response) => {
+        response.status(200).json({ saved: true });
+        if (phase === 'rollback') throw new Error('Handler failed');
+      })({}, res);
+
+      expect(res.status).toHaveBeenCalledTimes(1);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).not.toHaveBeenCalled();
+      expect(res.end).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('discards pending success when read-only validation fails', async () => {
+    hasModifiedData.mockResolvedValueOnce(true);
+    const res = { sendStatus: jest.fn() };
+
+    await readOnlyTransactionWrapper(async (_req, response) => response.sendStatus(204))({}, res);
+
+    expect(res.sendStatus).not.toHaveBeenCalled();
+    expect(handleErrors).toHaveBeenCalled();
+  });
+
+  it('defers CSV headers and writes until commit', async () => {
+    const res = { setHeader: jest.fn(), write: jest.fn(), end: jest.fn() };
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      await callback({ id: 'transaction-id' });
+      expect(res.setHeader).not.toHaveBeenCalled();
+      expect(res.write).not.toHaveBeenCalled();
+      expect(res.end).not.toHaveBeenCalled();
+    });
+
+    await transactionWrapper(async (_req, response) => {
+      response.setHeader('Content-Type', 'text/csv');
+      expect(response.write('id\n1\n')).toBe(true);
+      response.end();
+    })({}, res);
+
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
+    expect(res.write).toHaveBeenCalledWith('id\n1\n');
+    expect(res.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams directly to the response when response deferral is disabled', async () => {
+    const res = Object.assign(new EventEmitter(), {
+      write: jest.fn().mockReturnValueOnce(false).mockReturnValue(true),
+      end: jest.fn(),
+    });
+    let transactionFinished = false;
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      const result = await callback({ id: 'transaction-id' });
+      transactionFinished = true;
+      return result;
+    });
+
+    const responsePromise = transactionWrapper(
+      async (_req, response) => {
+        if (!response.write('first')) await once(response, 'drain');
+        response.write('second');
+        response.end();
+      },
+      '',
+      false,
+      {},
+      { deferResponseUntilCommit: false }
+    )({}, res);
+
+    await new Promise(setImmediate);
+
+    expect(res.write).toHaveBeenCalledTimes(1);
+    expect(transactionFinished).toBe(false);
+    res.emit('drain');
+    await responsePromise;
+
+    expect(res.write).toHaveBeenCalledTimes(2);
+    expect(res.end).toHaveBeenCalledTimes(1);
+    expect(transactionFinished).toBe(true);
+  });
+
+  it.each(['sendFile', 'sendfile', 'download', 'render'])(
+    'defers %s until commit',
+    async (method) => {
+      const res = { [method]: jest.fn() };
+      db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+        await callback({ id: 'transaction-id' });
+        expect(res[method]).not.toHaveBeenCalled();
+      });
+
+      await transactionWrapper(async (_req, response) => response[method]('report'))({}, res);
+
+      expect(res[method]).toHaveBeenCalledWith('report');
+    }
+  );
+
+  it('defers downstream middleware until commit', async () => {
+    const next = jest.fn();
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      await callback({ id: 'transaction-id' });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    await transactionWrapper(async (_req, _res, proceed) => proceed())({}, {}, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends a real JSON response after commit', async () => {
+    const app = express();
+    let committed = false;
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      const result = await callback({ id: 'transaction-id' });
+      committed = true;
+      return result;
+    });
+    app.get(
+      '/',
+      transactionWrapper(async (_req, response) => {
+        expect(committed).toBe(false);
+        response.status(200).json({ saved: true });
+        expect(response.headersSent).toBe(true);
+      })
+    );
+
+    const response = await request(app).get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ saved: true });
+    expect(committed).toBe(true);
+  });
+
+  it.each([200, 204])(
+    'returns HTTP 500 instead of pending %s when commit fails',
+    async (status) => {
+      const app = express();
+      db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+        await callback({ id: 'transaction-id' });
+        throw new Error('Commit failed');
+      });
+      handleErrors.mockImplementationOnce((_req, response) => response.status(500).end());
+      app.get(
+        '/',
+        transactionWrapper(async (_req, response) => response.sendStatus(status))
+      );
+
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(500);
+    }
+  );
+
+  it('discards buffered CSV headers and data when commit fails', async () => {
+    const res = { setHeader: jest.fn(), write: jest.fn(), end: jest.fn() };
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      await callback({ id: 'transaction-id' });
+      throw new Error('Commit failed');
+    });
+
+    await transactionWrapper(async (_req, response) => {
+      response.setHeader('Content-Type', 'text/csv');
+      response.write('id\n1\n');
+      response.end();
+    })({}, res);
+
+    expect(res.setHeader).not.toHaveBeenCalled();
+    expect(res.write).not.toHaveBeenCalled();
+    expect(res.end).not.toHaveBeenCalled();
+    expect(handleErrors).toHaveBeenCalled();
+  });
+
+  it('aborts instead of committing when the pending response is destroyed', async () => {
+    const error = new Error('Stream failed');
+    const res = { write: jest.fn(), destroy: jest.fn() };
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      await expect(callback({ id: 'transaction-id' })).rejects.toThrow(error);
+      throw error;
+    });
+
+    await transactionWrapper(async (_req, response) => {
+      response.write('pending');
+      response.destroy(error);
+    })({}, res);
+
+    expect(res.write).not.toHaveBeenCalled();
+    expect(res.destroy).not.toHaveBeenCalled();
+    expect(handleErrors).toHaveBeenCalledWith(expect.anything(), res, error, expect.anything());
+  });
+
+  it('forwards errors after real headers are sent', async () => {
+    const error = new Error('Write failed');
+    const res = {
+      headersSent: false,
+      end: jest.fn(() => {
+        res.headersSent = true;
+        throw error;
+      }),
+    };
+    const next = jest.fn();
+
+    await transactionWrapper(async (_req, response) => response.end())({}, res, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(handleErrors).not.toHaveBeenCalled();
   });
 });
