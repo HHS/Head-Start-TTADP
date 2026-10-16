@@ -86,15 +86,20 @@ describe('HeaderUserMenu notification indicators', () => {
     expect(screen.queryByText('new')).toBe(null);
   });
 
-  it('shows the notifications link to a user without the actionable notifications flag', async () => {
+  it('shows unread notification indicators to a user without the actionable notifications flag', async () => {
+    fetchNotificationsCount.mockResolvedValue({ count: 1, rows: [] });
     await renderHeaderUserMenu(defaultProps, { ...user, flags: [] });
+
+    expect(
+      await screen.findByRole('link', { name: 'Notification center, 1 unread notification' })
+    ).toBeVisible();
+    expect(fetchNotificationsCount).toHaveBeenCalled();
 
     await act(async () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getByRole('link', { name: /^notifications$/i })).toBeVisible();
-    expect(fetchNotificationsCount).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: 'Notifications new' })).toBeVisible();
   });
 
   it.each([
