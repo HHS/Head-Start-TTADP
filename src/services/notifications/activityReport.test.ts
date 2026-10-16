@@ -2,6 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import {
   archiveApproverApprovedNotificationForUser,
   archiveApproverApprovedNotifications,
+  archiveApproverSubmittedNotificationsForUser,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
@@ -384,6 +385,18 @@ describe('activityReport notification helpers', () => {
         99,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
       );
+    });
+  });
+
+  describe('archiveApproverSubmittedNotificationsForUser', () => {
+    it('archives the submitted and resubmitted approver notifications for a single user', async () => {
+      await archiveApproverSubmittedNotificationsForUser(77, 99);
+
+      expect(mockArchiveByUser).toHaveBeenCalledTimes(1);
+      expect(mockArchiveByUser).toHaveBeenCalledWith(77, 99, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
     });
   });
 

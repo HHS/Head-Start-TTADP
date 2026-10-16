@@ -379,6 +379,11 @@ describe('Activity Report handlers', () => {
         1,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
       );
+      // The acting approver's own "submitted for approval" CTA is archived.
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(999999, 1, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
       expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
@@ -1090,6 +1095,11 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
       expect(createNotification).toHaveBeenCalledTimes(4);
+      // The acting approver's own "submitted for approval" CTA is archived (currentUserId is 1).
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(999999, 1, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
       expect(changesRequestedNotification).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
