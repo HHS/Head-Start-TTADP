@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import httpContext from 'express-http-context';
 import SCOPES from '../middleware/scopeConstants';
@@ -320,11 +320,23 @@ describe('getGoalHistory (database-backed)', () => {
       );
       const sessions = await SessionReportPilot.bulkCreate(
         [
-          { recipients: [{ value: grant.id }, { value: secondGrant.id }] },
-          { recipients: [{ value: secondGrant.id }] },
-          { recipients: [{ value: otherGrant.id }] },
-          { recipients: [{ value: grant.id }] },
-          { recipients: [] },
+          {
+            recipients: [{ value: grant.id }, { value: secondGrant.id }],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+          {
+            recipients: [{ value: secondGrant.id }],
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+          {
+            recipients: [{ value: otherGrant.id }],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+          {
+            recipients: [{ value: grant.id }],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+          { recipients: [], status: TRAINING_REPORT_STATUSES.COMPLETE },
         ].map((data) => ({ eventId: event.id, data })),
         options
       );

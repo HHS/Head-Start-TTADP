@@ -1,4 +1,4 @@
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { uniq } from 'lodash';
 import { Op } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
@@ -1654,7 +1654,12 @@ export async function getGoalHistory(id) {
     ? await SessionReportPilot.count({
         distinct: true,
         col: 'id',
-        where: { [Op.and]: [recipientGrantFilter] },
+        where: {
+          [Op.and]: [
+            { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+            recipientGrantFilter,
+          ],
+        },
         include: [
           {
             model: GoalTemplate,
