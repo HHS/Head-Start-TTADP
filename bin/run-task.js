@@ -279,6 +279,38 @@ function logRecentTaskOutput(appName, taskName, runCfCommandImpl = runCfCommand)
   }
 }
 
+// Best-effort: writes task output from cf logs --recent that the live stream
+// missed while it was disconnected, skipping lines it already wrote. Never
+// throws, so a recovery problem can't fail a task that succeeded.
+function recoverMissedTaskOutput(
+  appName,
+  taskName,
+  streamedLines,
+  runCfCommandImpl = runCfCommand,
+  write = (line) => process.stdout.write(line)
+) {
+  try {
+    const output = runCfCommandImpl(['logs', appName, '--recent']);
+    const remaining = new Map(streamedLines);
+    let recoveredCount = 0;
+    filterLogChunk(output, taskName, (line) => {
+      const key = line.trim();
+      const seen = remaining.get(key) || 0;
+      if (seen > 0) {
+        remaining.set(key, seen - 1);
+        return;
+      }
+      recoveredCount += 1;
+      write(line);
+    });
+    console.log(
+      `Recovered ${recoveredCount} log line(s) for task ${taskName} missed while cf logs was disconnected`
+    );
+  } catch (error) {
+    console.warn(`Unable to recover missed logs for task ${taskName}: ${error.message}`);
+  }
+}
+
 function readStatusFile(statusFilePath, fsImpl = fs) {
   if (!fsImpl.existsSync(statusFilePath)) {
     return { taskRuns: [] };
@@ -349,6 +381,8 @@ async function runTask(config, dependencies = {}) {
     sleepImpl = sleep,
     startLogStreamImpl = startLogStream,
     waitForTaskImpl = waitForTask,
+    writeStdout = process.stdout.write.bind(process.stdout),
+    writeStderr = process.stderr.write.bind(process.stderr),
   } = dependencies;
   const { appName, cfArgs, taskName, timeoutSeconds } = config;
   const startedAt = isoNow();
@@ -371,9 +405,25 @@ async function runTask(config, dependencies = {}) {
   // The cf tasks status poll is the only thing that decides the task result. The
   // cf logs stream just copies task output into the phase log, so if it drops
   // (e.g. a network blip), restart it a few times and then keep polling without
-  // it rather than failing a task that may still succeed.
-  let logStream = startLogStreamImpl(appName, taskName);
+  // it rather than failing a task that may still succeed. Output the task
+  // printed while disconnected is recovered from cf logs --recent at the end.
+  const streamedLines = new Map();
+  const trackStreamedLine = (write) => (line) => {
+    const key = line.trim();
+    streamedLines.set(key, (streamedLines.get(key) || 0) + 1);
+    write(line);
+  };
+  const startTrackedLogStream = () =>
+    startLogStreamImpl(
+      appName,
+      taskName,
+      trackStreamedLine(writeStdout),
+      trackStreamedLine(writeStderr)
+    );
+
+  let logStream = startTrackedLogStream();
   let logStreamRestarts = 0;
+  let logStreamDropped = false;
   let taskFinished = false;
 
   const superviseLogStream = (stream) => {
@@ -388,6 +438,7 @@ async function runTask(config, dependencies = {}) {
         if (!exitedUnexpectedly || taskFinished) {
           return;
         }
+        logStreamDropped = true;
 
         if (logStreamRestarts >= MAX_LOG_STREAM_RESTARTS) {
           console.warn(
@@ -404,7 +455,7 @@ async function runTask(config, dependencies = {}) {
         if (taskFinished) {
           return;
         }
-        logStream = startLogStreamImpl(appName, taskName);
+        logStream = startTrackedLogStream();
         superviseLogStream(logStream);
       })
       .catch((error) => {
@@ -414,6 +465,7 @@ async function runTask(config, dependencies = {}) {
 
   superviseLogStream(logStream);
 
+  let result;
   try {
     const status = await waitForTaskImpl(appName, taskName, {
       timeoutSeconds,
@@ -429,24 +481,24 @@ async function runTask(config, dependencies = {}) {
 
     if (status === 'SUCCEEDED') {
       console.log(`Task ${taskName} completed successfully`);
-      return {
+      result = {
         exitCode: 0,
         finishedAt: isoNow(),
         startedAt,
         status,
       };
+    } else {
+      console.error(`Task ${taskName} completed with status ${status}`);
+      result = {
+        exitCode: 1,
+        finishedAt: isoNow(),
+        startedAt,
+        status,
+      };
     }
-
-    console.error(`Task ${taskName} completed with status ${status}`);
-    return {
-      exitCode: 1,
-      finishedAt: isoNow(),
-      startedAt,
-      status,
-    };
   } catch (error) {
     console.error(error.message);
-    return {
+    result = {
       exitCode: 1,
       finishedAt: isoNow(),
       startedAt,
@@ -458,6 +510,13 @@ async function runTask(config, dependencies = {}) {
       await logStream.stop();
     }
   }
+
+  if (logStreamDropped) {
+    recoverMissedTaskOutput(appName, taskName, streamedLines, runCfCommandImpl, writeStdout);
+    result.logsRecovered = true;
+  }
+
+  return result;
 }
 
 async function main(argv = process.argv.slice(2)) {
@@ -470,7 +529,7 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   const result = await runTask(config);
-  if (result.exitCode !== 0) {
+  if (result.exitCode !== 0 && !result.logsRecovered) {
     logRecentTaskOutput(config.appName, config.taskName);
   }
 
@@ -508,6 +567,7 @@ module.exports = {
   logRecentTaskOutput,
   parseCliArgs,
   readStatusFile,
+  recoverMissedTaskOutput,
   runTask,
   startLogStream,
   waitForTask,
