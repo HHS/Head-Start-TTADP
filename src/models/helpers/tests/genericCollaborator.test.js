@@ -411,7 +411,12 @@ describe('GenericCollaborator', () => {
 
   describe('removeCollaboratorsForType', () => {
     it('locks the collaborators, then unlinks the reports in a single statement', async () => {
-      const sequelize = { query: jest.fn().mockResolvedValue([]) };
+      const sequelize = {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce([{ id: 3 }, { id: 5 }])
+          .mockResolvedValueOnce([]),
+      };
       const transaction = {};
 
       await removeCollaboratorsForType('goal', sequelize, transaction, 1, 'Linker', {
@@ -422,10 +427,11 @@ describe('GenericCollaborator', () => {
       const [lockSql, lockOptions] = sequelize.query.mock.calls[0];
       const [removeSql, removeOptions] = sequelize.query.mock.calls[1];
       expect(lockSql).toContain('FOR UPDATE');
-      // Only collaborators linked to these reports are locked, in a consistent order.
+      // Only collaborators linked to these reports are locked, in the order adds lock them.
       expect(lockSql).toContain('FROM "GoalCollaboratorActivityReports" l');
-      expect(lockSql).toContain('ORDER BY c.id');
+      expect(lockSql).toContain('ORDER BY c."userId", c.id');
       expect(removeSql).toContain('DELETE FROM "GoalCollaboratorActivityReports"');
+      expect(removeSql).toContain('IN (:lockedIds)');
       expect(removeSql).toContain('SET "deletedAt" = NOW()');
       [lockOptions, removeOptions].forEach((options) => {
         expect(options).toMatchObject({
@@ -433,12 +439,27 @@ describe('GenericCollaborator', () => {
           transaction,
         });
       });
+      // The unlink only touches the collaborators the lock statement returned.
+      expect(removeOptions.replacements.lockedIds).toEqual([3, 5]);
+    });
+
+    it('unlinks nothing when no collaborator is linked to the reports', async () => {
+      const sequelize = { query: jest.fn().mockResolvedValue([]) };
+
+      await removeCollaboratorsForType('goal', sequelize, {}, 1, 'Linker', {
+        activityReportIds: [7],
+      });
+
+      expect(sequelize.query).toHaveBeenCalledTimes(1);
     });
 
     it('opens a transaction for both statements when the caller has none', async () => {
       const transaction = {};
       const sequelize = {
-        query: jest.fn().mockResolvedValue([]),
+        query: jest
+          .fn()
+          .mockResolvedValueOnce([{ id: 3 }])
+          .mockResolvedValueOnce([]),
         transaction: jest.fn((work) => work(transaction)),
       };
 

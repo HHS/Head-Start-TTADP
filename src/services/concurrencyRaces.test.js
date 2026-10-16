@@ -440,6 +440,93 @@ describe('concurrency races (real database)', () => {
       expect(await linkedReportIds(original.id)).toEqual(sortedNumbers([first, second]));
     });
 
+    it('a collaborator that appears between the lock and the unlink is left alone', async () => {
+      const goalId = goals[0].id;
+      const [removed, added] = reportIds;
+
+      // Pause the removal right after its lock statement, before it unlinks anything.
+      const locked = deferred();
+      const proceed = deferred();
+      const pausingSequelize = Object.create(sequelize);
+      pausingSequelize.query = async (sql, options) => {
+        const result = await sequelize.query(sql, options);
+        if (sql.includes('FOR UPDATE')) {
+          locked.resolve();
+          await proceed.promise;
+        }
+        return result;
+      };
+      const removal = trackedTransaction((t) =>
+        removeCollaboratorsForType('goal', pausingSequelize, t, goalId, GOAL_COLLABORATORS.LINKER, {
+          activityReportIds: [removed],
+        })
+      );
+      // Nothing is linked to the report yet, so the removal locked nothing.
+      await locked.promise;
+
+      // Meanwhile one add creates the collaborator linked to that report, and another holds the
+      // collaborator's lock while linking a second report.
+      await collab(null, goalId, [removed]);
+      const held = holdOpenTransaction((t) => collab(t, goalId, [added]));
+      await held.ready;
+
+      proceed.resolve();
+      await sleep(300);
+      held.release();
+      await held.done;
+      await removal.done;
+
+      // The removal ran before the collaborator existed, so the collaborator keeps both links.
+      const active = await GoalCollaborator.findAll({ where: { goalId, userId: user.id } });
+      expect(active).toHaveLength(1);
+      expect(await linkedReportIds(active[0].id)).toEqual(sortedNumbers([removed, added]));
+    });
+
+    it('a removal and an approval-style batch of adds lock in the same order and do not deadlock', async () => {
+      const goalId = goals[0].id;
+      const [unapproved, approved] = reportIds;
+      const [first, second] = (await Promise.all([createUser(), createUser()])).sort(
+        (a, b) => a.id - b.id
+      );
+      const link = (t, userId, ids) =>
+        findOrCreateCollaborator('goal', sequelize, t, goalId, userId, GOAL_COLLABORATORS.LINKER, {
+          activityReportIds: ids,
+        });
+      try {
+        // Create the second user's collaborator first, so collaborator ids run opposite to user ids.
+        await link(null, second.id, [unapproved]);
+        await link(null, first.id, [unapproved]);
+
+        // An approval adds collaborators in user order: lock the first user's row, then pause.
+        const firstLocked = deferred();
+        const continueAdding = deferred();
+        const adds = sequelize.transaction(async (t) => {
+          await link(t, first.id, [approved]);
+          firstLocked.resolve();
+          await continueAdding.promise;
+          await link(t, second.id, [approved]);
+        });
+        await firstLocked.promise;
+
+        // The removal needs both rows; it must wait on the first rather than grab the second.
+        const removal = trackedTransaction((t) => removeLinker(t, goalId, [unapproved]));
+        await sleep(300);
+        expect(removal.state.settled).toBe(false);
+
+        continueAdding.resolve();
+        await Promise.all([adds, removal.done]);
+
+        const active = await GoalCollaborator.findAll({ where: { goalId } });
+        expect(active.map((c) => c.userId).sort((a, b) => a - b)).toEqual([first.id, second.id]);
+        await Promise.all(
+          active.map(async (c) => expect(await linkedReportIds(c.id)).toEqual([approved]))
+        );
+      } finally {
+        await GoalCollaborator.destroy({ where: { goalId }, force: true });
+        await User.destroy({ where: { id: [first.id, second.id] } });
+      }
+    });
+
     it("a removal doesn't block on another user's collaborator it can't change", async () => {
       const goalId = goals[0].id;
       const [mine, theirs] = reportIds;

@@ -440,9 +440,9 @@ const removeCollaboratorsForType = async (
     // Lock the collaborators first, in a statement of their own: an add from another transaction
     // then waits for this removal to commit (or this waits for it), and the removal below starts
     // with a fresh snapshot that sees any links that add committed. Only collaborators linked to
-    // these reports can change, so only they're locked, in id order so that removals touching
-    // the same collaborators take their locks in the same order and can't deadlock each other.
-    await sequelize.query(
+    // these reports can change, so only they're locked. They're locked in user order, the order
+    // the approval hook adds them in, so removals and adds on the same entity can't deadlock.
+    const locked = await sequelize.query(
       /* sql */ `
       SELECT c.id
       FROM "${collaboratorTable}" c
@@ -453,12 +453,18 @@ const removeCollaboratorsForType = async (
           WHERE l."${reportLinks.collaboratorIdName}" = c.id
             AND l."activityReportId" IN (:reportIds)
         )
-      ORDER BY c.id
+      ORDER BY c."userId", c.id
       FOR UPDATE
     `,
       { ...options, type: QueryTypes.SELECT }
     );
+    if (locked.length === 0) return;
 
+    // Only the locked collaborators are changed. One created after the lock statement isn't
+    // locked, so another transaction could still be linking it to more reports, and this
+    // statement's snapshot could miss those links and wrongly soft-delete it. Leaving it alone
+    // orders this removal before the add that created it.
+    //
     // A single statement unlinks the reports and soft-deletes collaborators left with no reports,
     // so it can't interleave badly with an add sharing this transaction. NOT EXISTS sees the links
     // as they were before this statement's DELETE, so the ones being removed are excluded.
@@ -466,10 +472,8 @@ const removeCollaboratorsForType = async (
       /* sql */ `
       WITH removed AS (
         DELETE FROM "${reportLinks.table}" l
-        USING "${collaboratorTable}" c
-        WHERE l."${reportLinks.collaboratorIdName}" = c.id
+        WHERE l."${reportLinks.collaboratorIdName}" IN (:lockedIds)
           AND l."activityReportId" IN (:reportIds)
-          AND ${matchingCollaborators}
         RETURNING l."${reportLinks.collaboratorIdName}" AS collaborator_id
       )
       UPDATE "${collaboratorTable}" c
@@ -482,7 +486,10 @@ const removeCollaboratorsForType = async (
             AND l."activityReportId" NOT IN (:reportIds)
         );
     `,
-      options
+      {
+        ...options,
+        replacements: { ...options.replacements, lockedIds: locked.map(({ id }) => id) },
+      }
     );
   };
 
