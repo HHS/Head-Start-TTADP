@@ -8,7 +8,7 @@ import {
   createNotification,
 } from './index';
 
-const { ActivityRecipient, ActivityReport, Grant, OtherEntity } = db;
+const { ActivityRecipient, ActivityReport, Grant, OtherEntity, Program, Recipient } = db;
 
 const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
   return !!(activityRecipients || [])
@@ -49,7 +49,21 @@ async function notifyProgramSpecialistsOfApprovedReport(reportId: number): Promi
         attributes: ['id', 'grantId', 'otherEntityId'],
         required: false,
         include: [
-          { model: Grant, as: 'grant', attributes: ['name'], required: false },
+          {
+            model: Grant,
+            as: 'grant',
+            attributes: ['id', 'number', 'status'],
+            required: false,
+            include: [
+              { model: Recipient, as: 'recipient', attributes: ['id', 'name'], required: false },
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['id', 'programType'],
+                required: false,
+              },
+            ],
+          },
           { model: OtherEntity, as: 'otherEntity', attributes: ['name'], required: false },
         ],
       },
