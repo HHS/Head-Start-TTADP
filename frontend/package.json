@@ -115,7 +115,9 @@
   },
   "resolutions": {
     "dompurify": "^3.4.16",
-    "ip-address": "^10.3.1",
+    "draft-js/immutable": "~3.8.4",
+    "ip-address": "^10.7.4",
+    "linkify-it": ">=5.0.2",
     "lodash": "^4.18.1",
     "maplibre-gl": ">=6.4.1",
     "nanoid": "^3.3.18",
