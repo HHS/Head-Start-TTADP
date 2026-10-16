@@ -304,10 +304,8 @@ export const notifyApproverReportApproved = (job, transport = defaultTransport) 
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, programSpecialists, recipients } = job.data;
+  const { report, programSpecialists } = job.data;
   const { id, displayId } = report;
-  const recipientNames = recipients.map((r) => r.name);
-  const recipientNamesDisplay = recipientNames.join(', ').trim();
 
   logger.info(
     `MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`
@@ -323,7 +321,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
       message: { to: toEmails },
-      locals: { reportPath, displayId, recipientNamesDisplay },
+      locals: { reportPath, displayId },
     });
   });
 };

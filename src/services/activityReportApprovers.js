@@ -1,7 +1,12 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import cls from 'cls-hooked';
+import { logger } from '../logger';
 import { ActivityReport, ActivityReportApprover, sequelize, User } from '../models';
-import { archiveNotificationsOnActivityReportApproved } from './notifications/activityReport';
+import {
+  archiveNotificationsOnActivityReportApproved,
+  archiveRecipientReportApprovedNotifications,
+  notifyProgramSpecialistsOfApprovedReport,
+} from './notifications/activityReport';
 
 /**
  * Wraps an approver mutation (`fn`) in a transaction that snapshots the activity report's
@@ -52,6 +57,27 @@ async function withApprovalTransition(activityReportId, fn) {
       before !== REPORT_STATUSES.APPROVED
     ) {
       await archiveNotificationsOnActivityReportApproved(Number(activityReportId));
+
+      let rootTransaction = transaction;
+      while (rootTransaction.parent) {
+        rootTransaction = rootTransaction.parent;
+      }
+      rootTransaction.afterCommit(async () => {
+        try {
+          await notifyProgramSpecialistsOfApprovedReport(Number(activityReportId));
+        } catch (error) {
+          logger.error('Failed to notify program specialists of approved activity report', {
+            activityReportId,
+            error,
+          });
+        }
+      });
+    } else if (
+      after &&
+      before === REPORT_STATUSES.APPROVED &&
+      after.calculatedStatus !== REPORT_STATUSES.APPROVED
+    ) {
+      await archiveRecipientReportApprovedNotifications(Number(activityReportId));
     }
 
     return result;

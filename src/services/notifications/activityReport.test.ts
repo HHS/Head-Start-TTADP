@@ -4,12 +4,14 @@ import {
   archiveApproverApprovedNotifications,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
+  archiveRecipientReportApprovedNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotification,
   createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
@@ -232,6 +234,38 @@ describe('activityReport notification helpers', () => {
     });
   });
 
+  describe('createRecipientReportApprovedNotificationForProgramSpecialists', () => {
+    it('calls createNotification once per program specialist with the ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED type', async () => {
+      await createRecipientReportApprovedNotificationForProgramSpecialists([20, 21], reportBase);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      [20, 21].forEach((userId) => {
+        expect(mockCreateNotification).toHaveBeenCalledWith(
+          userId,
+          reportBase.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+          {
+            metadata: {
+              id: reportBase.id,
+              displayId: reportBase.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+      });
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createRecipientReportApprovedNotificationForProgramSpecialists([20], {
+        ...reportBase,
+        activityRecipients: [],
+      });
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createReportApprovedNotificationForCollaborators', () => {
     it('calls createNotification once per collaborator with the ACTIVITY_REPORT_APPROVED type', async () => {
       const collaborators = [{ userId: 10 }, { userId: 11 }];
@@ -371,6 +405,17 @@ describe('activityReport notification helpers', () => {
       expect(mockArchiveNotifications).toHaveBeenCalledWith(77, [
         NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
       ]);
+    });
+  });
+
+  describe('archiveRecipientReportApprovedNotifications', () => {
+    it('archives the program specialist recipient-approved notification for the report', async () => {
+      await archiveRecipientReportApprovedNotifications(77);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(
+        77,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+      );
     });
   });
 

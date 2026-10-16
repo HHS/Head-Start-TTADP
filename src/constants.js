@@ -236,6 +236,14 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenReportApproval',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED]: {
+    textFn: ({ recipientName, displayId }) => `${recipientName} ${displayId} is available to view.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenRecipientReportApprovedProgramSpecialist',
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED]: {
     textFn: ({ recipientName }) =>
       `A revised Activity Report for ${recipientName} has been submitted for approval.`,
