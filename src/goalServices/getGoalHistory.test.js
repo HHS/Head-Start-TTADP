@@ -283,7 +283,7 @@ describe('getGoalHistory (database-backed)', () => {
     expect(overview.suspensions).toBe(1);
   });
 
-  it('counts distinct sessions matching the goal category and recipient across grants', async () => {
+  it('counts only distinct completed sessions matching the goal category and recipient across grants', async () => {
     const transaction = await db.sequelize.transaction();
     const options = { transaction, hooks: false };
 
@@ -351,11 +351,19 @@ describe('getGoalHistory (database-backed)', () => {
           { recipients: null, status: TRAINING_REPORT_STATUSES.COMPLETE },
           { recipients: { value: grant.id }, status: TRAINING_REPORT_STATUSES.COMPLETE },
           { status: TRAINING_REPORT_STATUSES.COMPLETE },
+          {
+            recipients: [{ value: grant.id }],
+            status: TRAINING_REPORT_STATUSES.NOT_STARTED,
+          },
+          {
+            recipients: [{ value: grant.id }],
+            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          },
         ].map((data) => ({ eventId: event.id, data })),
         options
       );
       await SessionReportPilotGoalTemplate.bulkCreate(
-        [0, 1, 2, 4, 5, 6, 7, 8].map((index) => ({
+        [0, 1, 2, 4, 5, 6, 7, 8, 9, 10].map((index) => ({
           sessionReportPilotId: sessions[index].id,
           goalTemplateId: goalTemplate.id,
         })),
