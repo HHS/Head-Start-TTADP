@@ -220,14 +220,9 @@ describe('Submitter review page', () => {
 
     it('requires reassignment when the report creator is selected as an approver', async () => {
       const mockSubmit = jest.fn();
-      renderReview(
-        REPORT_STATUSES.DRAFT,
-        mockSubmit,
-        true,
-        undefined,
-        undefined,
-        [{ status: null, note: '', user: { id: 999, fullName: 'Report Creator' } }]
-      );
+      renderReview(REPORT_STATUSES.DRAFT, mockSubmit, true, undefined, undefined, [
+        { status: null, note: '', user: { id: 999, fullName: 'Report Creator' } },
+      ]);
 
       expect(
         await screen.findByText(/remove them and assign a different approving manager/i)
