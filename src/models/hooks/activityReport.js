@@ -909,6 +909,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       sequelize.models.ActivityReportGoal.findAll({
         // Find all ActivityReportGoals models
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['goalId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -918,6 +920,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       sequelize.models.ActivityReportObjective.findAll({
         // Find all ActivityReportObjective models
         attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['objectiveId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -929,7 +933,9 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
     const users = [
       ...collaborators, // Spread the elements of the 'collaborators' array into a new array
       { userId: instance.userId }, // Add an object with a 'userId' property to the new array
-    ].filter(({ userId }) => userId);
+    ]
+      .filter(({ userId }) => userId)
+      .sort((a, b) => a.userId - b.userId);
 
     const findOrCreateCollaboratorOptions = users.flatMap((user) => [
       ...goals.map((goal) => ({
@@ -983,6 +989,8 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
     const [arGoals, arObjectives] = await Promise.all([
       sequelize.models.ActivityReportGoal.findAll({
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['goalId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -991,6 +999,8 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
       }),
       sequelize.models.ActivityReportObjective.findAll({
         attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['objectiveId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,

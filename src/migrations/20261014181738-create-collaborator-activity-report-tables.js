@@ -71,20 +71,31 @@ module.exports = {
         );
 
         // Copy the report ids out of the JSONB array for active collaborators. Only numeric ids
-        // that still match an existing report are copied, so the foreign key holds; the 9-digit
-        // cap keeps a malformed id from overflowing the int cast and aborting the migration.
+        // that still match an existing report are copied, so the foreign key holds. The CASEs
+        // guard the array expansion and the int cast themselves, because Postgres doesn't
+        // promise to apply WHERE filters first: malformed legacy data (a non-array, "abc", an id
+        // too large for an int) is skipped instead of aborting the migration.
         // The "linkBack" column itself is intentionally left untouched.
         // eslint-disable-next-line no-await-in-loop
         await queryInterface.sequelize.query(
           /* sql */ `
           INSERT INTO "${table}" ("${collaboratorIdColumn}", "activityReportId", "createdAt", "updatedAt")
-          SELECT DISTINCT c.id, report_id::int, NOW(), NOW()
-          FROM "${collaboratorTable}" c
-          CROSS JOIN LATERAL jsonb_array_elements_text(c."linkBack"->'activityReportIds') AS report_id
-          WHERE c."deletedAt" IS NULL
-            AND jsonb_typeof(c."linkBack"->'activityReportIds') = 'array'
-            AND report_id ~ '^[0-9]{1,9}$'
-            AND EXISTS (SELECT 1 FROM "ActivityReports" ar WHERE ar.id = report_id::int);
+          SELECT DISTINCT ids.collaborator_id, ids.report_id, NOW(), NOW()
+          FROM (
+            SELECT
+              c.id AS collaborator_id,
+              CASE WHEN raw_id ~ '^[0-9]{1,9}$' THEN raw_id::int END AS report_id
+            FROM "${collaboratorTable}" c
+            CROSS JOIN LATERAL jsonb_array_elements_text(
+              CASE
+                WHEN jsonb_typeof(c."linkBack"->'activityReportIds') = 'array'
+                THEN c."linkBack"->'activityReportIds'
+                ELSE '[]'::jsonb
+              END
+            ) AS raw_id
+            WHERE c."deletedAt" IS NULL
+          ) ids
+          JOIN "ActivityReports" ar ON ar.id = ids.report_id;
         `,
           { transaction }
         );

@@ -59,6 +59,32 @@ describe('GenericCollaborator', () => {
       );
     });
 
+    it('creates the collaborator and its links in one transaction when the caller has none', async () => {
+      const transaction = {};
+      const sequelize = {
+        models: {
+          GoalCollaborator: { create: jest.fn().mockResolvedValue({ id: 5 }) },
+          GoalCollaboratorActivityReport: { bulkCreate: jest.fn().mockResolvedValue([]) },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'Linker', id: 1 }),
+          },
+        },
+        transaction: jest.fn((work) => work(transaction)),
+      };
+
+      await createCollaborator('goal', sequelize, null, 1, 2, 'Linker', {
+        activityReportIds: [7],
+      });
+
+      expect(sequelize.transaction).toHaveBeenCalledTimes(1);
+      expect(sequelize.models.GoalCollaborator.create.mock.calls[0][1].transaction).toBe(
+        transaction
+      );
+      expect(
+        sequelize.models.GoalCollaboratorActivityReport.bulkCreate.mock.calls[0][1].transaction
+      ).toBe(transaction);
+    });
+
     it('throws an exception if the collaborator type is not found', async () => {
       const sequelize = {
         models: {
@@ -242,18 +268,19 @@ describe('GenericCollaborator', () => {
     });
 
     it('upserts the collaborator and links valid, de-duplicated report ids in one statement', async () => {
-      const linked = { id: 9 };
+      const row = { id: 9, goalId: 1 };
+      const built = { id: 9 };
       const sequelize = {
         models: {
           GoalCollaborator: {
             findOne: jest.fn(),
-            findByPk: jest.fn().mockResolvedValue(linked),
+            build: jest.fn().mockReturnValue(built),
           },
           CollaboratorType: {
             findOne: jest.fn().mockResolvedValue({ name: 'Linker', id: 4 }),
           },
         },
-        query: jest.fn().mockResolvedValue([{ id: 9 }]),
+        query: jest.fn().mockResolvedValue([row]),
       };
       const transaction = {};
 
@@ -265,21 +292,68 @@ describe('GenericCollaborator', () => {
         2,
         'Linker',
         {
-          activityReportIds: [7, '7', 8, null, 'x', 0],
+          activityReportIds: [7, '7', 8, null, 'x', 0, 2147483647, 2147483648],
         }
       );
 
-      expect(result).toBe(linked);
+      expect(result).toBe(built);
       expect(sequelize.query).toHaveBeenCalledTimes(1);
       const [sql, options] = sequelize.query.mock.calls[0];
       expect(sql).toContain('INSERT INTO "GoalCollaborators"');
+      // An existing collaborator is locked without being rewritten.
+      expect(sql).toContain('WHERE FALSE');
       expect(sql).toContain('INSERT INTO "GoalCollaboratorActivityReports"');
       expect(options).toMatchObject({
-        replacements: { entityId: 1, userId: 2, collaboratorTypeId: 4, reportIds: [7, 8] },
+        replacements: {
+          entityId: 1,
+          userId: 2,
+          collaboratorTypeId: 4,
+          reportIds: [7, 8, 2147483647],
+        },
         transaction,
       });
-      expect(sequelize.models.GoalCollaborator.findByPk).toHaveBeenCalledWith(9, { transaction });
+      expect(sequelize.models.GoalCollaborator.build).toHaveBeenCalledWith(row, {
+        isNewRecord: false,
+        raw: true,
+      });
       expect(sequelize.models.GoalCollaborator.findOne).not.toHaveBeenCalled();
+    });
+
+    it('reruns the statement when a concurrently committed collaborator was not yet visible', async () => {
+      const row = { id: 9 };
+      const sequelize = {
+        models: {
+          GoalCollaborator: { build: jest.fn().mockReturnValue(row) },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'Linker', id: 4 }),
+          },
+        },
+        query: jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([row]),
+      };
+
+      const result = await findOrCreateCollaborator('goal', sequelize, {}, 1, 2, 'Linker', {
+        activityReportIds: [7],
+      });
+
+      expect(result).toBe(row);
+      expect(sequelize.query).toHaveBeenCalledTimes(2);
+    });
+
+    it('gives up after repeated attempts find no collaborator', async () => {
+      const sequelize = {
+        models: {
+          GoalCollaborator: { build: jest.fn() },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'Linker', id: 4 }),
+          },
+        },
+        query: jest.fn().mockResolvedValue([]),
+      };
+
+      await expect(
+        findOrCreateCollaborator('goal', sequelize, {}, 1, 2, 'Linker', { activityReportIds: [7] })
+      ).rejects.toThrow('Could not find or create the Linker collaborator for goal 1');
+      expect(sequelize.query).toHaveBeenCalledTimes(3);
     });
 
     it('rejects activity report links for group collaborators', async () => {
@@ -348,6 +422,9 @@ describe('GenericCollaborator', () => {
       const [lockSql, lockOptions] = sequelize.query.mock.calls[0];
       const [removeSql, removeOptions] = sequelize.query.mock.calls[1];
       expect(lockSql).toContain('FOR UPDATE');
+      // Only collaborators linked to these reports are locked, in a consistent order.
+      expect(lockSql).toContain('FROM "GoalCollaboratorActivityReports" l');
+      expect(lockSql).toContain('ORDER BY c.id');
       expect(removeSql).toContain('DELETE FROM "GoalCollaboratorActivityReports"');
       expect(removeSql).toContain('SET "deletedAt" = NOW()');
       [lockOptions, removeOptions].forEach((options) => {

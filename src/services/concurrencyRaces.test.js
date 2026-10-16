@@ -426,6 +426,53 @@ describe('concurrency races (real database)', () => {
       }
     });
 
+    it('linking more reports to an existing collaborator adds links without rewriting its row', async () => {
+      const goalId = goals[0].id;
+      const [first, second] = reportIds;
+      const original = await collab(null, goalId, [first]);
+      await sleep(20);
+
+      const relinked = await collab(null, goalId, [first, second]);
+
+      expect(relinked.id).toBe(original.id);
+      const row = await GoalCollaborator.findByPk(original.id);
+      expect(row.updatedAt.getTime()).toBe(original.updatedAt.getTime());
+      expect(await linkedReportIds(original.id)).toEqual(sortedNumbers([first, second]));
+    });
+
+    it("a removal doesn't block on another user's collaborator it can't change", async () => {
+      const goalId = goals[0].id;
+      const [mine, theirs] = reportIds;
+      const otherUser = await createUser();
+      try {
+        await collab(null, goalId, [mine]);
+        await findOrCreateCollaborator(
+          'goal',
+          sequelize,
+          null,
+          goalId,
+          otherUser.id,
+          GOAL_COLLABORATORS.LINKER,
+          { activityReportIds: [theirs] }
+        );
+
+        const held = holdOpenTransaction((t) => removeLinker(t, goalId, [mine]));
+        await held.ready;
+        const other = trackedTransaction((t) => removeLinker(t, goalId, [theirs]));
+        await sleep(300);
+        // Settles while the first removal still holds its locks.
+        expect(other.state.settled).toBe(true);
+        await other.done;
+
+        held.release();
+        await held.done;
+        expect(await GoalCollaborator.count({ where: { goalId } })).toBe(0);
+      } finally {
+        await GoalCollaborator.destroy({ where: { goalId }, force: true });
+        await User.destroy({ where: { id: otherUser.id } });
+      }
+    });
+
     it("removing a collaborator's last report soft-deletes it, and re-adding creates a fresh one", async () => {
       const goalId = goals[0].id;
       const [report] = reportIds;
