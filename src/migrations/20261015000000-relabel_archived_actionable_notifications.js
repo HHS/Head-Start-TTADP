@@ -12,9 +12,8 @@ const ACTIONABLE_TYPES = [
 ];
 
 // Notifications already archived for their recipient before archiving began relabeling them.
-const archivedActionableWhere = /* sql */ `
+const archivedNotificationsWhere = /* sql */ `
   n.type::text IN (:types)
-  AND n.actionable = true
   AND EXISTS (
     SELECT 1
     FROM "NotificationUserStates" s
@@ -34,8 +33,8 @@ module.exports = {
         /* sql */ `
           UPDATE "Notifications" n
           SET label = 'View AR'
-          WHERE ${archivedActionableWhere}
-            AND n.label IS DISTINCT FROM 'View AR';
+          WHERE ${archivedNotificationsWhere}
+            AND n.label IN ('Take action', 'Take Action');
         `,
         { transaction, replacements: { types: ACTIONABLE_TYPES } }
       );
@@ -51,7 +50,7 @@ module.exports = {
         /* sql */ `
           UPDATE "Notifications" n
           SET label = CASE WHEN n.type::text = :needsAction THEN 'Take Action' ELSE 'Take action' END
-          WHERE ${archivedActionableWhere}
+          WHERE ${archivedNotificationsWhere}
             AND n.label = 'View AR';
         `,
         { transaction, replacements: { types: ACTIONABLE_TYPES, needsAction: NEEDS_ACTION } }

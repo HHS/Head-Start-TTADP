@@ -139,6 +139,26 @@ describe('Check File Date Prefix', () => {
   });
 });
 
+describe('relabel archived actionable notifications migration', () => {
+  it('includes legacy archived notifications whose actionable flag is false', async () => {
+    const migration = require('./migrations/20261015000000-relabel_archived_actionable_notifications');
+    const query = jest.fn();
+    const queryInterface = {
+      sequelize: {
+        query,
+        transaction: (callback) => callback({}),
+      },
+    };
+
+    await migration.up(queryInterface);
+
+    const update = query.mock.calls.find(([sql]) => sql.includes('UPDATE "Notifications"'));
+    expect(update[0]).toContain("n.label IN ('Take action', 'Take Action')");
+    expect(update[0]).not.toContain('n.actionable');
+    expect(update[0]).toContain('s."archivedAt" IS NOT NULL');
+  });
+});
+
 /* eslint-disable max-len */
 /* Example of error message:
     Some files on the branch have dates older than or equal to the latest file on the main branch:
