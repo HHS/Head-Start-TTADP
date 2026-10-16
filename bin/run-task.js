@@ -141,6 +141,29 @@ function filterLogChunk(chunk, taskName, write) {
     });
 }
 
+// Writes each complete line from a child process stream that mentions the
+// task, buffering partial lines. Returns a function that flushes the last one.
+function forwardTaskLines(stream, taskName, write) {
+  let buffer = '';
+
+  stream.on('data', (chunk) => {
+    buffer += chunk.toString();
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    lines.forEach((line) => {
+      if (line.includes(taskName)) {
+        write(`${line}\n`);
+      }
+    });
+  });
+
+  return () => {
+    if (buffer.includes(taskName)) {
+      write(`${buffer}\n`);
+    }
+  };
+}
+
 function startLogStream(
   appName,
   taskName,
@@ -151,18 +174,11 @@ function startLogStream(
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
-  let stdoutBuffer = '';
-  let stderrBuffer = '';
-  let settled = false;
   let stopping = false;
 
   const completion = new Promise((resolve, reject) => {
     child.on('error', reject);
     child.on('exit', (code, signal) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
       resolve({
         code,
         signal,
@@ -171,39 +187,15 @@ function startLogStream(
     });
   });
 
-  child.stdout.on('data', (chunk) => {
-    stdoutBuffer += chunk.toString();
-    const lines = stdoutBuffer.split('\n');
-    stdoutBuffer = lines.pop();
-    lines.forEach((line) => {
-      if (line.includes(taskName)) {
-        writeStdout(`${line}\n`);
-      }
-    });
-  });
-
-  child.stderr.on('data', (chunk) => {
-    stderrBuffer += chunk.toString();
-    const lines = stderrBuffer.split('\n');
-    stderrBuffer = lines.pop();
-    lines.forEach((line) => {
-      if (line.includes(taskName)) {
-        writeStderr(`${line}\n`);
-      }
-    });
-  });
+  const flushStdout = forwardTaskLines(child.stdout, taskName, writeStdout);
+  const flushStderr = forwardTaskLines(child.stderr, taskName, writeStderr);
 
   return {
-    child,
     completion,
     stop() {
       stopping = true;
-      if (stdoutBuffer.includes(taskName)) {
-        writeStdout(`${stdoutBuffer}\n`);
-      }
-      if (stderrBuffer.includes(taskName)) {
-        writeStderr(`${stderrBuffer}\n`);
-      }
+      flushStdout();
+      flushStderr();
       if (!child.killed) {
         child.kill('SIGTERM');
       }
@@ -270,29 +262,19 @@ async function waitForTask(appName, taskName, options = {}) {
   return poll();
 }
 
-function logRecentTaskOutput(appName, taskName, runCfCommandImpl = runCfCommand) {
-  try {
-    const output = runCfCommandImpl(['logs', appName, '--recent']);
-    filterLogChunk(output, taskName, (line) => process.stdout.write(line));
-  } catch (error) {
-    console.error(`Unable to fetch recent logs for ${taskName}: ${error.message}`);
-  }
-}
-
-// Best-effort: writes task output from cf logs --recent that the live stream
-// missed while it was disconnected, skipping lines it already wrote. Never
-// throws, so a recovery problem can't fail a task that succeeded.
-function recoverMissedTaskOutput(
+// Writes the task's lines from cf logs --recent, skipping any already written
+// (counted in alreadyWritten, keyed by trimmed line). Returns how many lines it
+// wrote, or null if the fetch failed. Never throws.
+function logRecentTaskOutput(
   appName,
   taskName,
-  streamedLines,
   runCfCommandImpl = runCfCommand,
-  write = (line) => process.stdout.write(line)
+  { alreadyWritten = new Map(), write = (line) => process.stdout.write(line) } = {}
 ) {
   try {
     const output = runCfCommandImpl(['logs', appName, '--recent']);
-    const remaining = new Map(streamedLines);
-    let recoveredCount = 0;
+    const remaining = new Map(alreadyWritten);
+    let writtenCount = 0;
     filterLogChunk(output, taskName, (line) => {
       const key = line.trim();
       const seen = remaining.get(key) || 0;
@@ -300,14 +282,13 @@ function recoverMissedTaskOutput(
         remaining.set(key, seen - 1);
         return;
       }
-      recoveredCount += 1;
+      writtenCount += 1;
       write(line);
     });
-    console.log(
-      `Recovered ${recoveredCount} log line(s) for task ${taskName} missed while cf logs was disconnected`
-    );
+    return writtenCount;
   } catch (error) {
-    console.warn(`Unable to recover missed logs for task ${taskName}: ${error.message}`);
+    console.error(`Unable to fetch recent logs for ${taskName}: ${error.message}`);
+    return null;
   }
 }
 
@@ -512,7 +493,15 @@ async function runTask(config, dependencies = {}) {
   }
 
   if (logStreamDropped) {
-    recoverMissedTaskOutput(appName, taskName, streamedLines, runCfCommandImpl, writeStdout);
+    const recoveredCount = logRecentTaskOutput(appName, taskName, runCfCommandImpl, {
+      alreadyWritten: streamedLines,
+      write: writeStdout,
+    });
+    if (recoveredCount !== null) {
+      console.log(
+        `Recovered ${recoveredCount} log line(s) for task ${taskName} missed while cf logs was disconnected`
+      );
+    }
     result.logsRecovered = true;
   }
 
@@ -567,7 +556,6 @@ module.exports = {
   logRecentTaskOutput,
   parseCliArgs,
   readStatusFile,
-  recoverMissedTaskOutput,
   runTask,
   startLogStream,
   waitForTask,

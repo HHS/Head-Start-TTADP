@@ -316,10 +316,12 @@ id   name          state
 
     beforeEach(() => {
       jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     afterEach(() => {
       console.warn.mockRestore();
+      console.error.mockRestore();
     });
 
     it('restarts the log stream and succeeds when the task succeeds', async () => {
@@ -473,8 +475,8 @@ id   name          state
 
       expect(result.exitCode).toBe(0);
       expect(result.status).toBe('SUCCEEDED');
-      expect(console.warn).toHaveBeenCalledWith(
-        'Unable to recover missed logs for task import-process-prod: cf logs --recent timed out'
+      expect(console.error).toHaveBeenCalledWith(
+        'Unable to fetch recent logs for import-process-prod: cf logs --recent timed out'
       );
     });
 
