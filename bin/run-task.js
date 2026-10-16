@@ -17,6 +17,8 @@ const {
 const DEFAULT_TIMEOUT_SECONDS = 1800;
 const POLL_INTERVAL_MS = 10000;
 const LOG_FLUSH_WAIT_MS = 30000;
+const MAX_LOG_STREAM_RESTARTS = 3;
+const LOG_STREAM_RESTART_DELAY_MS = 5000;
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -366,26 +368,60 @@ async function runTask(config, dependencies = {}) {
     };
   }
 
-  const logStream = startLogStreamImpl(appName, taskName);
+  // The cf tasks status poll is the only thing that decides the task result. The
+  // cf logs stream just copies task output into the phase log, so if it drops
+  // (e.g. a network blip), restart it a few times and then keep polling without
+  // it rather than failing a task that may still succeed.
+  let logStream = startLogStreamImpl(appName, taskName);
+  let logStreamRestarts = 0;
+  let taskFinished = false;
+
+  const superviseLogStream = (stream) => {
+    if (!stream?.completion) {
+      return;
+    }
+
+    stream.completion
+      .then((result) => result && !result.expected)
+      .catch(() => true)
+      .then(async (exitedUnexpectedly) => {
+        if (!exitedUnexpectedly || taskFinished) {
+          return;
+        }
+
+        if (logStreamRestarts >= MAX_LOG_STREAM_RESTARTS) {
+          console.warn(
+            `cf logs exited unexpectedly while waiting for task ${taskName}; giving up after ${MAX_LOG_STREAM_RESTARTS} restarts and continuing to poll task status`
+          );
+          return;
+        }
+
+        logStreamRestarts += 1;
+        console.warn(
+          `cf logs exited unexpectedly while waiting for task ${taskName}; restarting (attempt ${logStreamRestarts}/${MAX_LOG_STREAM_RESTARTS})`
+        );
+        await sleepImpl(LOG_STREAM_RESTART_DELAY_MS);
+        if (taskFinished) {
+          return;
+        }
+        logStream = startLogStreamImpl(appName, taskName);
+        superviseLogStream(logStream);
+      })
+      .catch((error) => {
+        console.warn(`Unable to restart cf logs for task ${taskName}: ${error.message}`);
+      });
+  };
+
+  superviseLogStream(logStream);
 
   try {
-    const status = await Promise.race([
-      waitForTaskImpl(appName, taskName, {
-        timeoutSeconds,
-        runCfCommandImpl,
-        onStatus: (currentStatus) => {
-          console.log(`Task ${taskName} status: ${currentStatus}`);
-        },
-      }),
-      logStream.completion
-        ? logStream.completion.then((result) => {
-            if (result && !result.expected) {
-              throw new Error(`cf logs exited unexpectedly while waiting for task ${taskName}`);
-            }
-            return new Promise(() => {});
-          })
-        : new Promise(() => {}),
-    ]);
+    const status = await waitForTaskImpl(appName, taskName, {
+      timeoutSeconds,
+      runCfCommandImpl,
+      onStatus: (currentStatus) => {
+        console.log(`Task ${taskName} status: ${currentStatus}`);
+      },
+    });
 
     if (logFlushWaitMs > 0) {
       await sleepImpl(logFlushWaitMs);
@@ -417,6 +453,7 @@ async function runTask(config, dependencies = {}) {
       status: 'FAILED',
     };
   } finally {
+    taskFinished = true;
     if (logStream) {
       await logStream.stop();
     }
@@ -456,6 +493,8 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_TIMEOUT_SECONDS,
   LOG_FLUSH_WAIT_MS,
+  LOG_STREAM_RESTART_DELAY_MS,
+  MAX_LOG_STREAM_RESTARTS,
   POLL_INTERVAL_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
