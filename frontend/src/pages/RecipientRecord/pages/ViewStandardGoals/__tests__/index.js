@@ -1258,7 +1258,7 @@ describe('ViewGoalDetails', () => {
     const widgets = dashboard.querySelectorAll('.smart-hub--dashboard-overview-widget-field');
     expect(widgets).toHaveLength(5);
     expect(within(widgets[0]).getByText('Activity reports')).toBeInTheDocument();
-    expect(within(widgets[1]).getByText('Training reports')).toBeInTheDocument();
+    expect(within(widgets[1]).getByText('Training Reports')).toBeInTheDocument();
     expect(within(widgets[1]).getByText('4')).toBeInTheDocument();
     expect(within(widgets[2]).getByText('Goal objectives')).toBeInTheDocument();
     expect(widgets[1].querySelector('svg').outerHTML).toBe(
@@ -1322,7 +1322,7 @@ describe('ViewGoalDetails', () => {
 
     expect(normalizedText).toContain('Goal information:');
     expect(normalizedText).toContain('2 Activity Reports');
-    expect(normalizedText).toContain('4 Training reports');
+    expect(normalizedText).toContain('4 Training Reports');
     expect(normalizedText).toContain('3 goal objectives');
     expect(normalizedText).toContain('1 goal closures');
     expect(normalizedText).toContain('0 goal suspensions');
@@ -1354,7 +1354,7 @@ describe('ViewGoalDetails', () => {
     const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
 
     expect(normalizedText).toContain('0 Activity Reports');
-    expect(normalizedText).toContain('0 Training reports');
+    expect(normalizedText).toContain('0 Training Reports');
     expect(normalizedText).toContain('0 goal objectives');
     expect(normalizedText).toContain('0 goal closures');
     expect(normalizedText).toContain('0 goal suspensions');
