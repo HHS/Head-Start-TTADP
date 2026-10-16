@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Triggers the CircleCI `deploy_only` pipeline for a branch and target environment.
+#
+# Usage: bin/deploy-env <environment> [branch] [--dry-run]
+#   environment  one of the target_env values in .circleci/config.yml
+#   branch       defaults to the currently checked out branch; must exist on origin
+#
+# Requires CIRCLE_TOKEN (a CircleCI personal API token) in the environment.
+
+readonly PROJECT_SLUG="gh/HHS/Head-Start-TTADP"
+readonly ENVIRONMENTS=(dev-blue dev-green dev-red dev-gold dev-pink staging)
+
+usage() {
+	echo "Usage: bin/deploy-env <environment> [branch] [--dry-run]" >&2
+	echo "Environments: ${ENVIRONMENTS[*]}" >&2
+}
+
+is_valid_environment() {
+	local env
+	for env in "${ENVIRONMENTS[@]}"; do
+		[[ "$env" == "$1" ]] && return 0
+	done
+	return 1
+}
+
+dry_run=false
+args=()
+for arg in "$@"; do
+	case "$arg" in
+		--dry-run) dry_run=true ;;
+		-h|--help) usage; exit 0 ;;
+		*) args+=("$arg") ;;
+	esac
+done
+
+if [[ ${#args[@]} -lt 1 || ${#args[@]} -gt 2 ]]; then
+	usage
+	exit 1
+fi
+
+target_env=${args[0]}
+if ! is_valid_environment "$target_env"; then
+	echo "Unknown environment: $target_env" >&2
+	usage
+	exit 1
+fi
+
+branch=${args[1]:-$(git rev-parse --abbrev-ref HEAD)}
+if [[ "$branch" == "HEAD" ]]; then
+	echo "Detached HEAD: pass a branch name explicitly." >&2
+	exit 1
+fi
+
+if [[ -z "$(git ls-remote --heads origin "$branch")" ]]; then
+	echo "Branch '$branch' was not found on origin. Push it first." >&2
+	exit 1
+fi
+
+payload=$(jq -n --arg branch "$branch" --arg env "$target_env" \
+	'{branch: $branch, parameters: {action: "deploy_only", target_env: $env}}')
+
+if [[ "$dry_run" == true ]]; then
+	echo "Dry run: would POST to https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline"
+	echo "$payload"
+	exit 0
+fi
+
+if [[ -z "${CIRCLE_TOKEN:-}" ]]; then
+	echo "CIRCLE_TOKEN is not set. Create a personal API token at https://circleci.com/account/api" >&2
+	exit 1
+fi
+
+echo "Deploying '$branch' to $target_env..."
+response=$(curl -sS -w '\n%{http_code}' -X POST \
+	"https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline" \
+	-H "Circle-Token: $CIRCLE_TOKEN" \
+	-H "Content-Type: application/json" \
+	-d "$payload")
+
+status=${response##*$'\n'}
+body=${response%$'\n'*}
+
+if [[ "$status" != 2* ]]; then
+	echo "CircleCI returned HTTP $status:" >&2
+	echo "$body" >&2
+	exit 1
+fi
+
+number=$(jq -r '.number' <<<"$body")
+echo "Pipeline #$number started: https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP/$number"
