@@ -65,6 +65,7 @@ export function exportMonitoringDiagnostics(resource) {
       }
       logger.error(`exportMonitoringDiagnostics CSV stream failed after response started`, { err });
       res.destroy(err);
+      throw err;
     }
   };
 }

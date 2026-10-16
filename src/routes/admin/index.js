@@ -29,7 +29,12 @@ router.get('/requestErrors', transactionWrapper(getRequestErrors));
 router.get('/requestErrors/:id', transactionWrapper(getRequestError));
 Object.keys(MONITORING_DIAGNOSTIC_RESOURCES).forEach((resource) => {
   router.get(`/${resource}`, transactionWrapper(getMonitoringDiagnostics(resource)));
-  router.get(`/${resource}/export`, transactionWrapper(exportMonitoringDiagnostics(resource)));
+  router.get(
+    `/${resource}/export`,
+    transactionWrapper(exportMonitoringDiagnostics(resource), '', false, {}, {
+      deferResponseUntilCommit: false,
+    })
+  );
   router.get(`/${resource}/:id`, transactionWrapper(getMonitoringDiagnostic(resource)));
 });
 router.use('/users', userRouter);

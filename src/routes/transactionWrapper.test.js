@@ -1,4 +1,5 @@
 import express from 'express';
+import { EventEmitter, once } from 'node:events';
 import { Transaction } from 'sequelize';
 import request from 'supertest';
 import handleErrors from '../lib/apiErrorHandler';
@@ -294,6 +295,42 @@ describe('transactionWrapper', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
     expect(res.write).toHaveBeenCalledWith('id\n1\n');
     expect(res.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams directly to the response when response deferral is disabled', async () => {
+    const res = Object.assign(new EventEmitter(), {
+      write: jest.fn().mockReturnValueOnce(false).mockReturnValue(true),
+      end: jest.fn(),
+    });
+    let transactionFinished = false;
+    db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+      const result = await callback({ id: 'transaction-id' });
+      transactionFinished = true;
+      return result;
+    });
+
+    const responsePromise = transactionWrapper(
+      async (_req, response) => {
+        if (!response.write('first')) await once(response, 'drain');
+        response.write('second');
+        response.end();
+      },
+      '',
+      false,
+      {},
+      { deferResponseUntilCommit: false }
+    )({}, res);
+
+    await new Promise(setImmediate);
+
+    expect(res.write).toHaveBeenCalledTimes(1);
+    expect(transactionFinished).toBe(false);
+    res.emit('drain');
+    await responsePromise;
+
+    expect(res.write).toHaveBeenCalledTimes(2);
+    expect(res.end).toHaveBeenCalledTimes(1);
+    expect(transactionFinished).toBe(true);
   });
 
   it.each(['sendFile', 'sendfile', 'download', 'render'])(

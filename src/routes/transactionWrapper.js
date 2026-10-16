@@ -95,16 +95,19 @@ export default function transactionWrapper(
   originalFunction,
   context = '',
   isReadOnly = false,
-  transactionOptions = {}
+  transactionOptions = {},
+  { deferResponseUntilCommit = true } = {}
 ) {
   return async function wrapper(req, res, next) {
     const startTime = Date.now();
-    const deferred = res && deferredResponse(res);
+    const deferred = res && deferResponseUntilCommit ? deferredResponse(res) : null;
     let nextArgs;
-    const deferredNext = (...args) => {
-      if (args[0] && args[0] !== 'route' && args[0] !== 'router') throw args[0];
-      nextArgs = args;
-    };
+    const deferredNext = deferResponseUntilCommit
+      ? (...args) => {
+          if (args[0] && args[0] !== 'route' && args[0] !== 'router') throw args[0];
+          nextArgs = args;
+        }
+      : next;
     try {
       httpContext.set('auditDescriptor', originalFunction.name);
       if (req) {
@@ -126,7 +129,7 @@ export default function transactionWrapper(
             snapShot = await captureSnapshot(true);
           }
 
-          const result = await originalFunction(req, deferred?.response, deferredNext);
+          const result = await originalFunction(req, deferred ? deferred.response : res, deferredNext);
           deferred?.check();
 
           if (isReadOnly && (await hasModifiedData(snapShot, transaction.id))) {
