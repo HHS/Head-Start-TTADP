@@ -258,6 +258,32 @@ describe('recipient record page', () => {
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
   });
 
+  it('says a request was submitted above the back link when the form returns here', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request', {
+      message: {
+        reportId: 14322,
+        displayId: 'R45-REQ-14322',
+        time: '06/23/2026 at 11:00 am EDT',
+        status: 'submitted',
+      },
+    });
+
+    act(() => renderRecipientRecord());
+
+    const alert = await screen.findByText(/you submitted request/i);
+    expect(alert).toHaveTextContent(
+      'You submitted request R45-REQ-14322 on 06/23/2026 at 11:00 am EDT.'
+    );
+    expect(screen.getByRole('link', { name: 'R45-REQ-14322' })).toHaveAttribute(
+      'href',
+      '/tta-requests/view/14322'
+    );
+    // the alert comes before the back link, as in the design
+    const backLink = screen.getByRole('link', { name: /back to search/i });
+    expect(alert.compareDocumentPosition(backLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('redirects an unflagged user away from the TTA request page', async () => {
     const unflaggedUser = {
       ...user,

@@ -87,5 +87,9 @@ export interface TtaRequestResponse {
   grants: TtaRequestGrant[];
   goalTemplate: { id: number; templateName: string; standard?: string | null } | null;
   citations: { citation: string; findingType: string | null }[];
-  reviewer: { id: number; name: string } | null;
+  /** fullName is the name with the user's roles, e.g. "Tom Geller, TTAC" */
+  reviewer: { id: number; name: string; fullName?: string } | null;
+  creator?: { id: number; name: string; fullName?: string };
+  createdAt?: string;
+  submittedAt?: string | null;
 }

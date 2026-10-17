@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import AddTtaRequestButton from '../../components/AddTtaRequestButton';
+import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
@@ -47,11 +48,17 @@ export function PageWithHeading({
   backLink,
   slug,
   inlineHeadingChildren,
+  alert,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
   return (
     <div>
-      <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
+      <RecipientTabs
+        region={regionId}
+        recipientId={recipientId}
+        backLink={backLink}
+        alert={alert}
+      />
       {error ? (
         <div className="usa-alert usa-alert--error" role="alert">
           <div className="usa-alert__body">
@@ -84,6 +91,7 @@ PageWithHeading.propTypes = {
   backLink: PropTypes.node,
   slug: PropTypes.string,
   inlineHeadingChildren: PropTypes.node,
+  alert: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
@@ -98,6 +106,7 @@ PageWithHeading.defaultProps = {
   ),
   slug: '',
   inlineHeadingChildren: null,
+  alert: null,
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
@@ -204,6 +213,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientNameWithRegion={recipientNameWithRegion}
                 slug="tta-request"
                 hasAlerts={hasAlerts}
+                alert={<TtaRequestSubmittedAlert />}
                 inlineHeadingChildren={
                   <AddTtaRequestButton
                     label="Add request"

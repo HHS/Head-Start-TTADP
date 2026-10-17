@@ -102,6 +102,10 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: TTA_REQUEST_STATUSES.DRAFT,
       },
+      submittedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       displayId: {
         type: DataTypes.VIRTUAL,
         get() {

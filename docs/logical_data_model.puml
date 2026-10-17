@@ -1371,6 +1371,7 @@ class TtaRequests{
  deletedAt : timestamp with time zone
  originator : enum
  recipientAware : boolean
+ submittedAt : timestamp with time zone
 }
 
 class UserRoles{

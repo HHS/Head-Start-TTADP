@@ -9,6 +9,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
+  submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   updateTtaRequest,
 } from '../../services/ttaRequests';
@@ -126,6 +127,38 @@ export async function saveTtaRequest(req: Request, res: Response) {
     res.json(ttaRequest);
   } catch (error) {
     if (respondWithServiceError(res, error)) {
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function submitTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    // only the creator's draft can be submitted, as only it can be saved
+    if (!authorization.canUpdate()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await submitTtaRequestService(existing, req.body, userId);
+    res.json(ttaRequest);
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
     await handleErrors(req, res, error, logContext);

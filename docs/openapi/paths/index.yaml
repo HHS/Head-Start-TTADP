@@ -114,6 +114,8 @@
   $ref: './tta-requests/index.yaml'
 '/tta-requests/{ttaRequestId}':
   $ref: './tta-requests/id.yaml'
+'/tta-requests/{ttaRequestId}/submit':
+  $ref: './tta-requests/submit.yaml'
 '/tta-requests/region/{regionId}/recipient/{recipientId}':
   $ref: './tta-requests/recipient.yaml'
 

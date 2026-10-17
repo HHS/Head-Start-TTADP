@@ -9,6 +9,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
+  submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   updateTtaRequest,
 } from '../../services/ttaRequests';
@@ -19,11 +20,13 @@ import {
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
+  submitTtaRequest,
 } from './handlers';
 
 jest.mock('../../services/ttaRequests', () => ({
   createTtaRequest: jest.fn(),
   getTtaRequests: jest.fn(),
+  submitTtaRequest: jest.fn(),
   ttaRequestById: jest.fn(),
   updateTtaRequest: jest.fn(),
 }));
@@ -253,6 +256,60 @@ describe('TTA request handlers', () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
       (updateTtaRequest as jest.Mock).mockRejectedValue(new Error('boom'));
       await saveTtaRequest(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('submitTtaRequest', () => {
+    beforeEach(() => {
+      req.params = { ttaRequestId: '1' };
+      req.body = { context: 'submitted' };
+    });
+
+    it('submits the draft', async () => {
+      const existing = mockRequestModel(draft);
+      const submitted = { ...draft, status: TTA_REQUEST_STATUSES.SUBMITTED };
+      (ttaRequestById as jest.Mock).mockResolvedValue(existing);
+      (submitTtaRequestService as jest.Mock).mockResolvedValue(submitted);
+      await submitTtaRequest(req as Request, res as Response);
+      expect(submitTtaRequestService).toHaveBeenCalledWith(existing, req.body, CREATOR_ID);
+      expect(json).toHaveBeenCalledWith(submitted);
+    });
+
+    it('returns 404 when the request does not exist', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(null);
+      await submitTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 for someone other than the creator', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (userById as jest.Mock).mockResolvedValue({ ...writer, id: 456 });
+      await submitTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(submitTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 once the request is already submitted', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(
+        mockRequestModel({ ...draft, status: TTA_REQUEST_STATUSES.SUBMITTED })
+      );
+      await submitTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(submitTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the service rejects the data', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (submitTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no citations'));
+      await submitTtaRequest(req as Request, res as Response);
+      expect(status).toHaveBeenCalledWith(400);
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (submitTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
+      await submitTtaRequest(req as Request, res as Response);
       expect(handleErrors).toHaveBeenCalled();
     });
   });

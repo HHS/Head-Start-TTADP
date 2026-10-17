@@ -1,10 +1,10 @@
 get:
   tags:
     - tta request
-  summary: List the current user's draft TTA requests for a recipient
+  summary: List TTA requests for a recipient
   description: >-
-    Drafts are private to their creator, so this lists only the current
-    user's own drafts for the recipient in the region.
+    Drafts are private to their creator, so this lists the current user's own
+    drafts and anyone's submitted requests for the recipient in the region.
   parameters:
     - name: regionId
       in: path

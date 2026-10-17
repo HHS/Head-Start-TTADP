@@ -2704,10 +2704,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/quickjs-emscripten/-/quickjs-emscripten-0.23.0.tgz#db4ecfd499a9765ab24002c3b696d02e6d32a12c"
   integrity sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==
 
-"@ttahub/common@2.4.11":
-  version "2.4.11"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.11.tgz#2350c92828f5ce7ed9bdbf1d81b9f02271317cb4"
-  integrity sha512-sQ58StnvMP0S+gjtM+P0eRrPfggwdnFY7Z3snI2RzIdMuViNWVKrgRxlepCSXxXmFYqv8Jm02SDLaZTJnv3T4w==
+"@ttahub/common@2.4.12":
+  version "2.4.12"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.12.tgz#a768942afcb6df9d8d94087ac7a1f7c9f54b79f5"
+  integrity sha512-/tx4+0vYIbbDk/JVje93kyaNJspNgOHHGGiXD5NwXfKCXk/pGo5jvGV7RMG1SYthv3KeBLxfUBqpdFoa+WGGAA==
 
 "@types/argparse@1.0.38":
   version "1.0.38"

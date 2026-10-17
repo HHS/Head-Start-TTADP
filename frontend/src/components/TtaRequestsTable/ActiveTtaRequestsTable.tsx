@@ -5,6 +5,7 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { getTtaRequests, getTtaRequestsByRecipient } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
+import { ttaRequestViewPath } from '../../pages/TtaRequestForm/constants';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
 
@@ -33,6 +34,7 @@ const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
 /** how each status reads in the table */
 const STATUS_LABELS: Record<string, string> = {
   [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
+  [TTA_REQUEST_STATUSES.SUBMITTED]: 'Submitted',
 };
 
 // a value a request doesn't have (yet) is left blank, which the table shows as a dash
@@ -137,9 +139,9 @@ const stateCodes = (request: ActiveTtaRequest) =>
   [...new Set(request.grants.map((grant) => grant.stateCode).filter(Boolean))].join(', ');
 
 /*
-  The request id and the draft status open the request itself; the recipient name opens
-  that recipient's record. Approver and assigned staff only exist once a request has been
-  submitted and approved, so a draft leaves them blank.
+  The request id and the draft status open the draft in its form; a submitted request's id
+  opens it read only. The recipient name opens that recipient's record. Approver and assigned
+  staff only exist once a request has been approved, so until then they are blank.
 */
 const toTableRow = (
   request: ActiveTtaRequest,
@@ -147,6 +149,7 @@ const toTableRow = (
   showRecipientColumns: boolean
 ): TtaRequestsTableRow => {
   const status = STATUS_LABELS[request.status] ?? request.status;
+  const isDraft = request.status === TTA_REQUEST_STATUSES.DRAFT;
 
   return {
     id: request.id,
@@ -154,7 +157,7 @@ const toTableRow = (
     sortKey: request.displayId,
     isUrl: true,
     isInternalLink: true,
-    link: requestUrl(request.id),
+    link: isDraft ? requestUrl(request.id) : ttaRequestViewPath(request.id),
     data: [
       ...(showRecipientColumns
         ? [recipientCell(request), { title: COLUMNS.REGION, value: String(request.regionId) }]
@@ -170,7 +173,7 @@ const toTableRow = (
       { title: COLUMNS.APPROVER, value: BLANK },
       { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
       // only drafts are clickable, they take the creator back into the request
-      request.status === TTA_REQUEST_STATUSES.DRAFT
+      isDraft
         ? {
             title: COLUMNS.STATUS,
             value: status,

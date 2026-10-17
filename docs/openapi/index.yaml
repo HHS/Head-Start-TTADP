@@ -460,9 +460,14 @@ components:
           type: string
           enum:
             - draft
+            - submitted
         createdAt:
           type: string
           format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
         creator:
           type: object
           properties:
@@ -517,6 +522,7 @@ components:
           type: string
           enum:
             - draft
+            - submitted
         userId:
           type: integer
         lastUpdatedById:
@@ -543,6 +549,10 @@ components:
           nullable: true
         reviewerId:
           type: integer
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
           nullable: true
         createdAt:
           type: string
