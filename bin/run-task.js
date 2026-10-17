@@ -17,6 +17,8 @@ const {
 const DEFAULT_TIMEOUT_SECONDS = 1800;
 const POLL_INTERVAL_MS = 10000;
 const LOG_FLUSH_WAIT_MS = 30000;
+const MAX_LOG_STREAM_RESTARTS = 3;
+const LOG_STREAM_RESTART_DELAY_MS = 5000;
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -139,6 +141,29 @@ function filterLogChunk(chunk, taskName, write) {
     });
 }
 
+// Writes each complete line from a child process stream that mentions the
+// task, buffering partial lines. Returns a function that flushes the last one.
+function forwardTaskLines(stream, taskName, write) {
+  let buffer = '';
+
+  stream.on('data', (chunk) => {
+    buffer += chunk.toString();
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    lines.forEach((line) => {
+      if (line.includes(taskName)) {
+        write(`${line}\n`);
+      }
+    });
+  });
+
+  return () => {
+    if (buffer.includes(taskName)) {
+      write(`${buffer}\n`);
+    }
+  };
+}
+
 function startLogStream(
   appName,
   taskName,
@@ -149,18 +174,11 @@ function startLogStream(
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
-  let stdoutBuffer = '';
-  let stderrBuffer = '';
-  let settled = false;
   let stopping = false;
 
   const completion = new Promise((resolve, reject) => {
     child.on('error', reject);
     child.on('exit', (code, signal) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
       resolve({
         code,
         signal,
@@ -169,39 +187,15 @@ function startLogStream(
     });
   });
 
-  child.stdout.on('data', (chunk) => {
-    stdoutBuffer += chunk.toString();
-    const lines = stdoutBuffer.split('\n');
-    stdoutBuffer = lines.pop();
-    lines.forEach((line) => {
-      if (line.includes(taskName)) {
-        writeStdout(`${line}\n`);
-      }
-    });
-  });
-
-  child.stderr.on('data', (chunk) => {
-    stderrBuffer += chunk.toString();
-    const lines = stderrBuffer.split('\n');
-    stderrBuffer = lines.pop();
-    lines.forEach((line) => {
-      if (line.includes(taskName)) {
-        writeStderr(`${line}\n`);
-      }
-    });
-  });
+  const flushStdout = forwardTaskLines(child.stdout, taskName, writeStdout);
+  const flushStderr = forwardTaskLines(child.stderr, taskName, writeStderr);
 
   return {
-    child,
     completion,
     stop() {
       stopping = true;
-      if (stdoutBuffer.includes(taskName)) {
-        writeStdout(`${stdoutBuffer}\n`);
-      }
-      if (stderrBuffer.includes(taskName)) {
-        writeStderr(`${stderrBuffer}\n`);
-      }
+      flushStdout();
+      flushStderr();
       if (!child.killed) {
         child.kill('SIGTERM');
       }
@@ -268,12 +262,33 @@ async function waitForTask(appName, taskName, options = {}) {
   return poll();
 }
 
-function logRecentTaskOutput(appName, taskName, runCfCommandImpl = runCfCommand) {
+// Writes the task's lines from cf logs --recent, skipping any already written
+// (counted in alreadyWritten, keyed by trimmed line). Returns how many lines it
+// wrote, or null if the fetch failed. Never throws.
+function logRecentTaskOutput(
+  appName,
+  taskName,
+  runCfCommandImpl = runCfCommand,
+  { alreadyWritten = new Map(), write = (line) => process.stdout.write(line) } = {}
+) {
   try {
     const output = runCfCommandImpl(['logs', appName, '--recent']);
-    filterLogChunk(output, taskName, (line) => process.stdout.write(line));
+    const remaining = new Map(alreadyWritten);
+    let writtenCount = 0;
+    filterLogChunk(output, taskName, (line) => {
+      const key = line.trim();
+      const seen = remaining.get(key) || 0;
+      if (seen > 0) {
+        remaining.set(key, seen - 1);
+        return;
+      }
+      writtenCount += 1;
+      write(line);
+    });
+    return writtenCount;
   } catch (error) {
     console.error(`Unable to fetch recent logs for ${taskName}: ${error.message}`);
+    return null;
   }
 }
 
@@ -347,6 +362,8 @@ async function runTask(config, dependencies = {}) {
     sleepImpl = sleep,
     startLogStreamImpl = startLogStream,
     waitForTaskImpl = waitForTask,
+    writeStdout = process.stdout.write.bind(process.stdout),
+    writeStderr = process.stderr.write.bind(process.stderr),
   } = dependencies;
   const { appName, cfArgs, taskName, timeoutSeconds } = config;
   const startedAt = isoNow();
@@ -366,26 +383,78 @@ async function runTask(config, dependencies = {}) {
     };
   }
 
-  const logStream = startLogStreamImpl(appName, taskName);
+  // The cf tasks status poll is the only thing that decides the task result. The
+  // cf logs stream just copies task output into the phase log, so if it drops
+  // (e.g. a network blip), restart it a few times and then keep polling without
+  // it rather than failing a task that may still succeed. Output the task
+  // printed while disconnected is recovered from cf logs --recent at the end.
+  const streamedLines = new Map();
+  const trackStreamedLine = (write) => (line) => {
+    const key = line.trim();
+    streamedLines.set(key, (streamedLines.get(key) || 0) + 1);
+    write(line);
+  };
+  const startTrackedLogStream = () =>
+    startLogStreamImpl(
+      appName,
+      taskName,
+      trackStreamedLine(writeStdout),
+      trackStreamedLine(writeStderr)
+    );
 
+  let logStream = startTrackedLogStream();
+  let logStreamRestarts = 0;
+  let logStreamDropped = false;
+  let taskFinished = false;
+
+  const superviseLogStream = (stream) => {
+    if (!stream?.completion) {
+      return;
+    }
+
+    stream.completion
+      .then((result) => result && !result.expected)
+      .catch(() => true)
+      .then(async (exitedUnexpectedly) => {
+        if (!exitedUnexpectedly || taskFinished) {
+          return;
+        }
+        logStreamDropped = true;
+
+        if (logStreamRestarts >= MAX_LOG_STREAM_RESTARTS) {
+          console.warn(
+            `cf logs exited unexpectedly while waiting for task ${taskName}; giving up after ${MAX_LOG_STREAM_RESTARTS} restarts and continuing to poll task status`
+          );
+          return;
+        }
+
+        logStreamRestarts += 1;
+        console.warn(
+          `cf logs exited unexpectedly while waiting for task ${taskName}; restarting (attempt ${logStreamRestarts}/${MAX_LOG_STREAM_RESTARTS})`
+        );
+        await sleepImpl(LOG_STREAM_RESTART_DELAY_MS);
+        if (taskFinished) {
+          return;
+        }
+        logStream = startTrackedLogStream();
+        superviseLogStream(logStream);
+      })
+      .catch((error) => {
+        console.warn(`Unable to restart cf logs for task ${taskName}: ${error.message}`);
+      });
+  };
+
+  superviseLogStream(logStream);
+
+  let result;
   try {
-    const status = await Promise.race([
-      waitForTaskImpl(appName, taskName, {
-        timeoutSeconds,
-        runCfCommandImpl,
-        onStatus: (currentStatus) => {
-          console.log(`Task ${taskName} status: ${currentStatus}`);
-        },
-      }),
-      logStream.completion
-        ? logStream.completion.then((result) => {
-            if (result && !result.expected) {
-              throw new Error(`cf logs exited unexpectedly while waiting for task ${taskName}`);
-            }
-            return new Promise(() => {});
-          })
-        : new Promise(() => {}),
-    ]);
+    const status = await waitForTaskImpl(appName, taskName, {
+      timeoutSeconds,
+      runCfCommandImpl,
+      onStatus: (currentStatus) => {
+        console.log(`Task ${taskName} status: ${currentStatus}`);
+      },
+    });
 
     if (logFlushWaitMs > 0) {
       await sleepImpl(logFlushWaitMs);
@@ -393,34 +462,50 @@ async function runTask(config, dependencies = {}) {
 
     if (status === 'SUCCEEDED') {
       console.log(`Task ${taskName} completed successfully`);
-      return {
+      result = {
         exitCode: 0,
         finishedAt: isoNow(),
         startedAt,
         status,
       };
+    } else {
+      console.error(`Task ${taskName} completed with status ${status}`);
+      result = {
+        exitCode: 1,
+        finishedAt: isoNow(),
+        startedAt,
+        status,
+      };
     }
-
-    console.error(`Task ${taskName} completed with status ${status}`);
-    return {
-      exitCode: 1,
-      finishedAt: isoNow(),
-      startedAt,
-      status,
-    };
   } catch (error) {
     console.error(error.message);
-    return {
+    result = {
       exitCode: 1,
       finishedAt: isoNow(),
       startedAt,
       status: 'FAILED',
     };
   } finally {
+    taskFinished = true;
     if (logStream) {
       await logStream.stop();
     }
   }
+
+  if (logStreamDropped) {
+    const recoveredCount = logRecentTaskOutput(appName, taskName, runCfCommandImpl, {
+      alreadyWritten: streamedLines,
+      write: writeStdout,
+    });
+    if (recoveredCount !== null) {
+      console.log(
+        `Recovered ${recoveredCount} log line(s) for task ${taskName} missed while cf logs was disconnected`
+      );
+    }
+    result.logsRecovered = true;
+  }
+
+  return result;
 }
 
 async function main(argv = process.argv.slice(2)) {
@@ -433,7 +518,7 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   const result = await runTask(config);
-  if (result.exitCode !== 0) {
+  if (result.exitCode !== 0 && !result.logsRecovered) {
     logRecentTaskOutput(config.appName, config.taskName);
   }
 
@@ -456,6 +541,8 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_TIMEOUT_SECONDS,
   LOG_FLUSH_WAIT_MS,
+  LOG_STREAM_RESTART_DELAY_MS,
+  MAX_LOG_STREAM_RESTARTS,
   POLL_INTERVAL_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
