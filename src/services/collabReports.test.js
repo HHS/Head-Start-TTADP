@@ -62,6 +62,67 @@ const reportObject = {
   conductMethod: 'in_person',
 };
 
+describe('Collab Report participant approver validation', () => {
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects the creator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            approvers: [{ user: { id: String(mockUser.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+    }
+  );
+
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects a collaborator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+            approvers: [{ user: { id: String(mockUserTwo.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        responseBody: {
+          error: 'The report creator and collaborators cannot be assigned as approvers.',
+        },
+      });
+    }
+  );
+
+  it('checks saved collaborators when an update omits them', async () => {
+    await expect(
+      createOrUpdateReport(
+        { approvers: [{ user: { id: mockUserTwo.id } }] },
+        {
+          ...reportObject,
+          collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+        }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('checks saved approvers when adding a collaborator', async () => {
+    await expect(
+      createOrUpdateReport(
+        { collabReportSpecialists: [{ specialistId: mockUserTwo.id }] },
+        { ...reportObject, approvers: [{ user: { id: mockUserTwo.id } }] }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
 describe('Collab Reports Service', () => {
   beforeAll(async () => {
     // Delete any reports that were previously created
@@ -618,6 +679,10 @@ describe('Collab Reports Service', () => {
           where: { collabReportId: testReport.id },
           force: true,
         });
+        await CollabReportReason.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
         await testReport.destroy({ force: true });
         testReport = null;
       }
@@ -1042,6 +1107,52 @@ describe('Collab Reports Service', () => {
         });
 
         expect(statesInvolvedRecords).toHaveLength(0);
+      });
+    });
+
+    describe('reasons functionality', () => {
+      it('updates reasons when updating a report', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Updates',
+          reportReasons: ['participate_work_groups', 'support_coordination'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport(
+          { ...initialReport, reportReasons: ['support_coordination', 'agg_regional_data'] },
+          testReport
+        );
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons.map((r) => r.reasonId).sort()).toEqual([
+          'agg_regional_data',
+          'support_coordination',
+        ]);
+      });
+
+      it('removes all reasons when array is empty', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Removal',
+          reportReasons: ['participate_work_groups'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport({ ...initialReport, reportReasons: [] }, testReport);
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons).toHaveLength(0);
       });
     });
 
