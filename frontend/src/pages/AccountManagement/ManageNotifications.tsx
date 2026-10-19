@@ -365,7 +365,18 @@ export default function ManageNotifications({
             <Link
               to="/notifications"
               className="usa-button usa-button--outline margin-top-2 margin-left-1"
-              onClick={bypassOnce}
+              onClick={(event) => {
+                if (
+                  !event.defaultPrevented &&
+                  event.button === 0 &&
+                  !event.metaKey &&
+                  !event.ctrlKey &&
+                  !event.shiftKey &&
+                  !event.altKey
+                ) {
+                  bypassOnce();
+                }
+              }}
             >
               Cancel
             </Link>

@@ -495,6 +495,38 @@ describe('ManageNotifications', () => {
     });
   });
 
+  it.each([
+    ['Cmd-click', { metaKey: true }],
+    ['Ctrl-click', { ctrlKey: true }],
+    ['Shift-click', { shiftKey: true }],
+    ['Alt-click', { altKey: true }],
+    ['middle-click', { button: 1 }],
+    ['right-click', { button: 2 }],
+  ])('preserves the next navigation prompt after %s on Cancel', async (_name, clickOptions) => {
+    fetchMock.get('/api/settings', settings);
+    const history = createMemoryHistory({ initialEntries: ['/account/notifications'] });
+
+    renderManageNotifications({ history });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+    });
+
+    userEvent.selectOptions(screen.getByLabelText('Submitted for review'), 'today');
+    fireEvent.click(screen.getByRole('link', { name: 'Cancel' }), clickOptions);
+
+    expect(history.location.pathname).toBe('/account/notifications');
+    expect(screen.getByRole('dialog', { hidden: true })).toHaveClass('is-hidden');
+
+    userEvent.click(screen.getByRole('link', { name: 'Back to Notifications' }));
+
+    expect(history.location.pathname).toBe('/account/notifications');
+    expect(
+      screen.getByRole('heading', { name: 'Are you sure you want to leave this page?' })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Submitted for review')).toHaveValue('today');
+  });
+
   it('prompts when browser Back is pressed on a dirty form', async () => {
     fetchMock.get('/api/settings', settings);
     const history = createMemoryHistory({
