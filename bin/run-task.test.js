@@ -14,6 +14,7 @@ const {
   LOG_FLUSH_WAIT_MS,
   LOG_STREAM_RESTART_DELAY_MS,
   MAX_LOG_STREAM_RESTARTS,
+  RECENT_LOGS_TIMEOUT_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
   filterLogChunk,
@@ -447,7 +448,10 @@ id   name          state
 
       expect(result.exitCode).toBe(0);
       expect(result.logsRecovered).toBe(true);
-      expect(runCfCommandImpl).toHaveBeenCalledWith(['logs', 'tta-smarthub-prod', '--recent']);
+      expect(runCfCommandImpl).toHaveBeenCalledWith(['logs', 'tta-smarthub-prod', '--recent'], {
+        timeout: RECENT_LOGS_TIMEOUT_MS,
+        killSignal: 'SIGKILL',
+      });
       expect(writeStdout.mock.calls.map(([written]) => written)).toEqual([
         `${beforeDrop}\n`,
         `${afterRestart}\n`,
@@ -477,6 +481,33 @@ id   name          state
       expect(result.status).toBe('SUCCEEDED');
       expect(console.error).toHaveBeenCalledWith(
         'Unable to fetch recent logs for import-process-prod: cf logs --recent timed out'
+      );
+    });
+
+    it('keeps the task result when fetching recent logs times out', async () => {
+      const runCfCommandImpl = jest.fn((args) => {
+        if (args[0] === 'logs') {
+          const error = new Error('spawnSync cf ETIMEDOUT');
+          error.code = 'ETIMEDOUT';
+          throw error;
+        }
+      });
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl,
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl: jest
+          .fn()
+          .mockReturnValueOnce(droppedStream())
+          .mockReturnValueOnce(healthyStream()),
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe('SUCCEEDED');
+      expect(console.warn).toHaveBeenCalledWith(
+        `Gave up fetching recent logs for import-process-prod after ${RECENT_LOGS_TIMEOUT_MS / 1000} seconds; continuing without them`
       );
     });
 

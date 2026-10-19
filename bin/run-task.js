@@ -19,6 +19,7 @@ const POLL_INTERVAL_MS = 10000;
 const LOG_FLUSH_WAIT_MS = 30000;
 const MAX_LOG_STREAM_RESTARTS = 3;
 const LOG_STREAM_RESTART_DELAY_MS = 5000;
+const RECENT_LOGS_TIMEOUT_MS = 60000;
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -264,7 +265,9 @@ async function waitForTask(appName, taskName, options = {}) {
 
 // Writes the task's lines from cf logs --recent, skipping any already written
 // (counted in alreadyWritten, keyed by trimmed line). Returns how many lines it
-// wrote, or null if the fetch failed. Never throws.
+// wrote, or null if the fetch failed or timed out. Never throws, and never
+// blocks for long: it can run during the same logging outage that dropped the
+// live stream, after the task already finished.
 function logRecentTaskOutput(
   appName,
   taskName,
@@ -272,7 +275,10 @@ function logRecentTaskOutput(
   { alreadyWritten = new Map(), write = (line) => process.stdout.write(line) } = {}
 ) {
   try {
-    const output = runCfCommandImpl(['logs', appName, '--recent']);
+    const output = runCfCommandImpl(['logs', appName, '--recent'], {
+      timeout: RECENT_LOGS_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+    });
     const remaining = new Map(alreadyWritten);
     let writtenCount = 0;
     filterLogChunk(output, taskName, (line) => {
@@ -287,7 +293,13 @@ function logRecentTaskOutput(
     });
     return writtenCount;
   } catch (error) {
-    console.error(`Unable to fetch recent logs for ${taskName}: ${error.message}`);
+    if (error.code === 'ETIMEDOUT') {
+      console.warn(
+        `Gave up fetching recent logs for ${taskName} after ${RECENT_LOGS_TIMEOUT_MS / 1000} seconds; continuing without them`
+      );
+    } else {
+      console.error(`Unable to fetch recent logs for ${taskName}: ${error.message}`);
+    }
     return null;
   }
 }
@@ -544,6 +556,7 @@ module.exports = {
   LOG_STREAM_RESTART_DELAY_MS,
   MAX_LOG_STREAM_RESTARTS,
   POLL_INTERVAL_MS,
+  RECENT_LOGS_TIMEOUT_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
   filterLogChunk,
