@@ -526,11 +526,15 @@ describe('activityReportApprovers services', () => {
         email: specialistEmail,
         lastLogin: new Date(),
       });
-      const recipient = await Recipient.create({ name: 'Notification Test Recipient' });
+      const recipient = await Recipient.create({
+        id: uniqueId,
+        name: 'Notification Test Recipient',
+        uei: 'NNA5N2KHMGN2',
+      });
       const grantId = uniqueId;
       const grant = await Grant.create({
         id: grantId,
-        number: 'TST123',
+        number: `TST${uniqueId}`,
         regionId: 1,
         status: 'Active',
         startDate: new Date(),
@@ -558,7 +562,7 @@ describe('activityReportApprovers services', () => {
           NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
           expect.objectContaining({
             metadata: expect.objectContaining({
-              recipientName: 'Notification Test Recipient - TST123 - HS',
+              recipientName: `Notification Test Recipient - TST${uniqueId} - HS`,
             }),
           })
         );
@@ -567,8 +571,8 @@ describe('activityReportApprovers services', () => {
         await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
         await ActivityReport.destroy({ where: { id: report.id } });
         await Program.destroy({ where: { id: grantId + 1 } });
-        await Grant.destroy({ where: { id: grant.id } });
-        await Recipient.destroy({ where: { id: recipient.id } });
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
         await User.destroy({ where: { id: specialist.id } });
       }
     });
