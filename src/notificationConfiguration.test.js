@@ -371,6 +371,37 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR];
+
+    it('textFn interpolates the session name', () => {
+      expect(config.textFn({ sessionName: 'Opening session' })).toBe(
+        'Session: Opening session submitted for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the training report view path with the display id', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe('/training-report/view/R01-TR-1234');
+    });
+
+    it('linkText returns "View TR"', () => {
+      expect(config.linkText()).toBe('View TR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenSessionSubmittedCollaboratorTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionSubmittedCollaboratorTrainingReport');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE];
 
