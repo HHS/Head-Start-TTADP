@@ -62,6 +62,67 @@ const reportObject = {
   conductMethod: 'in_person',
 };
 
+describe('Collab Report participant approver validation', () => {
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects the creator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            approvers: [{ user: { id: String(mockUser.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+    }
+  );
+
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects a collaborator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+            approvers: [{ user: { id: String(mockUserTwo.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        responseBody: {
+          error: 'The report creator and collaborators cannot be assigned as approvers.',
+        },
+      });
+    }
+  );
+
+  it('checks saved collaborators when an update omits them', async () => {
+    await expect(
+      createOrUpdateReport(
+        { approvers: [{ user: { id: mockUserTwo.id } }] },
+        {
+          ...reportObject,
+          collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+        }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('checks saved approvers when adding a collaborator', async () => {
+    await expect(
+      createOrUpdateReport(
+        { collabReportSpecialists: [{ specialistId: mockUserTwo.id }] },
+        { ...reportObject, approvers: [{ user: { id: mockUserTwo.id } }] }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
 describe('Collab Reports Service', () => {
   beforeAll(async () => {
     // Delete any reports that were previously created

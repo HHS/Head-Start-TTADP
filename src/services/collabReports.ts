@@ -4,6 +4,7 @@ import { type Model, Op } from 'sequelize';
 import syncJoinRows from '../lib/syncJoinRows';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
+import { assertApproversAreNotParticipants } from './activityReports';
 import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
@@ -333,6 +334,14 @@ export async function collabReportById(crId: string) {
 // todo: create proper typescript interface for the collab report
 export async function createOrUpdateReport(newReport, oldReport): Promise<ICollabReport> {
   let savedReport;
+
+  assertApproversAreNotParticipants(
+    (newReport.approvers ?? oldReport?.approvers ?? []).map(({ user }) => user?.id),
+    { userId: newReport.userId ?? oldReport?.userId },
+    (newReport.collabReportSpecialists ?? oldReport?.collabReportSpecialists ?? []).map(
+      ({ specialistId }) => ({ userId: specialistId })
+    )
+  );
 
   const {
     id,
