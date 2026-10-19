@@ -615,6 +615,61 @@ export const trSessionCreated = async (event, sessionId) => {
 };
 
 /**
+ * Notifies the session approver that a TR session was submitted for their approval,
+ * provided they have opted in to receiving this email immediately.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionSubmittedForApproval = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const { approverId } = session;
+    if (!approverId) return;
+
+    const setting = await userSettingOverridesById(
+      approverId,
+      EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
+    const approver = await userById(approverId, true);
+    if (!approver) {
+      throw new Error(
+        `Unable to notify approver ${approverId} that session ${session.id} was submitted, a user with that ID does not exist`
+      );
+    }
+
+    const { eventId } = event.data;
+    const emailTo = filterAndDeduplicateEmails([approver.email]);
+
+    if (emailTo.length === 0) {
+      logger.info(
+        `Did not send tr session submitted notification for ${eventId} preferences are not set or marked as "no-send"`
+      );
+      return;
+    }
+
+    const data = {
+      displayId: eventId,
+      sessionName: session.data.sessionName,
+      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${session.id}`,
+      emailTo,
+      debugMessage: `MAILER: Notifying ${approver.email} that session ${session.id} for TR ${event.id} was submitted for approval`,
+      templatePath: 'tr_session_submitted',
+      report: {
+        displayId: eventId,
+      },
+      ...referenceData(),
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
  *
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
@@ -1253,6 +1308,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
 const TR_EMAIL_ACTIONS = [
   EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
   EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+  EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
   EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
