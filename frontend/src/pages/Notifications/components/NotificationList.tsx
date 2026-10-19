@@ -42,7 +42,12 @@ export default function NotificationList({
   return (
     <ul className="usa-list--unstyled margin-y-3 margin-x-2">
       {notifications.map((notification) => (
-        <NotificationCard key={notification.id} notification={notification} onArchive={onArchive} />
+        <NotificationCard
+          key={notification.id}
+          notification={notification}
+          isArchive={isArchive}
+          onArchive={onArchive}
+        />
       ))}
     </ul>
   );

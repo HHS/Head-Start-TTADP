@@ -20,6 +20,7 @@ import {
   checkRegionIdParam,
   checkReportIdParam,
   checkSessionAttachmentIdParam,
+  checkTtaRequestIdParam,
   checkUserIdParam,
 } from './checkIdParamMiddleware';
 
@@ -120,6 +121,44 @@ describe('checkIdParamMiddleware', () => {
       checkCollabReportIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: collabReportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkTtaRequestIdParam', () => {
+    it('calls next if TTA request id is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          ttaRequestId: '10',
+        },
+      };
+
+      checkTtaRequestIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if TTA request id is not string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          ttaRequestId: '1#0',
+        },
+      };
+
+      checkTtaRequestIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: ttaRequestId 1#0`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if TTA request id param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkTtaRequestIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: ttaRequestId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

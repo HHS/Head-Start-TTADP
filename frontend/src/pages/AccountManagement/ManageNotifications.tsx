@@ -6,6 +6,7 @@ import type {
   InAppNotificationSettingKey,
 } from '@ttahub/common/src/notifications';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -332,6 +333,9 @@ export default function ManageNotifications({
         onSaveAndContinue={saveAndContinueNavigation}
         onDismiss={dismiss}
       />
+      <Helmet>
+        <title>Notification Preferences</title>
+      </Helmet>
       <BackLink to="/notifications">Back to Notifications</BackLink>
       <h1 className="landing margin-top-0">Notification Preferences</h1>
       <EmailValidationPreferenceBox
