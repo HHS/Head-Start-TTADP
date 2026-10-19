@@ -1,10 +1,15 @@
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const util = require('node:util');
 const {
+  GuardError,
+  MAX_FIXTURE_BYTES,
+  MAX_FIXTURE_LINES,
   checkRange,
   evaluate,
+  findBinaryDataFiles,
   findForbiddenPaths,
   findHsesExtractFiles,
   findStaffEmailsInAddedLines,
@@ -127,14 +132,6 @@ describe('data file guard', () => {
       }
     );
 
-    it('flags a binary file with an extract name even in temp/', () => {
-      const changes = [{ status: 'A', path: 'temp/grant_award.xml' }];
-      const numstat = [{ path: 'temp/grant_award.xml', addedLines: 0, binary: true }];
-      const findings = findHsesExtractFiles(changes, numstat);
-      expect(findings).toHaveLength(1);
-      expect(findings[0].reason).toContain('Binary');
-    });
-
     it('flags a file at the repo root', () => {
       expect(findHsesExtractFiles([{ status: 'A', path: 'grant_program.xml' }], [])).toHaveLength(
         1
@@ -143,16 +140,38 @@ describe('data file guard', () => {
 
     it.each(names)('allows a small fixture %s in temp/', (name) => {
       const changes = [{ status: 'M', path: `temp/${name}` }];
-      const numstat = [{ path: `temp/${name}`, addedLines: 40 }];
-      expect(findHsesExtractFiles(changes, numstat)).toEqual([]);
+      const stats = [{ path: `temp/${name}`, bytes: 5000, lines: 40 }];
+      expect(findHsesExtractFiles(changes, stats)).toEqual([]);
     });
 
-    it('flags a fixture in temp/ that is too large to be a fixture', () => {
+    it('allows a fixture exactly at the limits', () => {
+      const changes = [{ status: 'M', path: 'temp/agency.xml' }];
+      const stats = [
+        { path: 'temp/agency.xml', bytes: MAX_FIXTURE_BYTES, lines: MAX_FIXTURE_LINES },
+      ];
+      expect(findHsesExtractFiles(changes, stats)).toEqual([]);
+    });
+
+    it('flags a fixture in temp/ with too many lines', () => {
       const changes = [{ status: 'A', path: 'temp/grant_award.xml' }];
-      const numstat = [{ path: 'temp/grant_award.xml', addedLines: 5000 }];
-      const findings = findHsesExtractFiles(changes, numstat);
+      const stats = [{ path: 'temp/grant_award.xml', bytes: 50000, lines: 5000 }];
+      const findings = findHsesExtractFiles(changes, stats);
       expect(findings).toHaveLength(1);
-      expect(findings[0].reason).toContain('5000');
+      expect(findings[0].reason).toContain('5000 lines');
+    });
+
+    it('flags a fixture in temp/ that is too many bytes even on a single line', () => {
+      const changes = [{ status: 'M', path: 'temp/agency.xml' }];
+      const stats = [{ path: 'temp/agency.xml', bytes: 200000, lines: null }];
+      const findings = findHsesExtractFiles(changes, stats);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].reason).toContain('200000 bytes');
+    });
+
+    it('reports a file once when it is over both limits', () => {
+      const changes = [{ status: 'M', path: 'temp/agency.xml' }];
+      const stats = [{ path: 'temp/agency.xml', bytes: 900000, lines: 20000 }];
+      expect(findHsesExtractFiles(changes, stats)).toHaveLength(1);
     });
 
     it('allows deleting these files', () => {
@@ -165,6 +184,35 @@ describe('data file guard', () => {
 
     it('ignores unrelated xml files', () => {
       expect(findHsesExtractFiles([{ status: 'A', path: 'data/other.xml' }], [])).toEqual([]);
+    });
+  });
+
+  describe('findBinaryDataFiles', () => {
+    const binaryRow = (path) => ({ path, addedLines: 0, binary: true });
+
+    it.each(['data/staff.tsv', 'data/staff.CSV', 'temp/grant_award.xml', 'a b/c.xml'])(
+      'flags binary data file %s',
+      (name) => {
+        const findings = findBinaryDataFiles([{ status: 'A', path: name }], [binaryRow(name)]);
+        expect(findings).toHaveLength(1);
+        expect(findings[0].reason).toContain('Binary');
+      }
+    );
+
+    it('ignores binary files that are not data files', () => {
+      const changes = [{ status: 'A', path: 'img/logo.png' }];
+      expect(findBinaryDataFiles(changes, [binaryRow('img/logo.png')])).toEqual([]);
+    });
+
+    it('ignores text data files', () => {
+      const changes = [{ status: 'A', path: 'data/ok.csv' }];
+      const rows = [{ path: 'data/ok.csv', addedLines: 3, binary: false }];
+      expect(findBinaryDataFiles(changes, rows)).toEqual([]);
+    });
+
+    it('allows deleting a binary data file', () => {
+      const changes = [{ status: 'D', path: 'data/staff.tsv' }];
+      expect(findBinaryDataFiles(changes, [binaryRow('data/staff.tsv')])).toEqual([]);
     });
   });
 
@@ -402,6 +450,51 @@ describe('data file guard', () => {
       expect(result.findings[0].path).toBe('temp/grant_award.xml');
     });
 
+    it('flags a very large fixture on a single line, which adds only one line', () => {
+      writeFile('temp/agency.xml', `<a>${'x'.repeat(MAX_FIXTURE_BYTES * 2)}</a>`);
+      commitAll('one long line');
+      const result = checkRange({ baseRef: baseSha, cwd: repoDir });
+      expect(result.valid).toBe(false);
+      expect(result.findings[0].path).toBe('temp/agency.xml');
+      expect(result.findings[0].reason).toContain('bytes');
+    });
+
+    it('flags a fixture that grows past the limit across several small changes', () => {
+      writeFile('temp/agency.xml', '<x/>\n'.repeat(MAX_FIXTURE_LINES - 100));
+      commitAll('fixture just under the limit');
+      const afterFirst = git('rev-parse', 'HEAD');
+      expect(checkRange({ baseRef: baseSha, cwd: repoDir }).valid).toBe(true);
+
+      writeFile('temp/agency.xml', '<x/>\n'.repeat(MAX_FIXTURE_LINES + 100));
+      commitAll('small change that crosses the limit');
+      // This change adds only 200 lines, far below the limit, but the whole file is too long.
+      const result = checkRange({ baseRef: afterFirst, cwd: repoDir });
+      expect(result.valid).toBe(false);
+      expect(result.findings[0].reason).toContain('lines');
+    });
+
+    it.each(['data/staff.tsv', 'data/staff.csv', 'data/staff.XML'])(
+      'flags a UTF-16 export %s that git treats as binary, even though it holds a staff email',
+      (name) => {
+        const text = 'name\temail\nPat\tpat@acf.hhs.gov\n';
+        fs.mkdirSync(path.join(repoDir, 'data'), { recursive: true });
+        fs.writeFileSync(path.join(repoDir, name), Buffer.from(`﻿${text}`, 'utf16le'));
+        commitAll('utf16');
+        const result = checkRange({ baseRef: baseSha, cwd: repoDir });
+        expect(result.valid).toBe(false);
+        expect(result.findings[0]).toMatchObject({ path: name });
+        expect(result.findings[0].reason).toContain('Binary');
+        expect(result.message).not.toContain('pat@');
+      }
+    );
+
+    it('does not reject a binary file that is not a data file', () => {
+      fs.mkdirSync(path.join(repoDir, 'img'), { recursive: true });
+      fs.writeFileSync(path.join(repoDir, 'img/logo.png'), Buffer.from([0x89, 0x50, 0x00, 0x01]));
+      commitAll('image');
+      expect(checkRange({ baseRef: baseSha, cwd: repoDir }).valid).toBe(true);
+    });
+
     it('allows deleting a forbidden file', () => {
       writeFile('hses/grant_award.xml', '<a/>\n');
       commitAll('add');
@@ -409,6 +502,73 @@ describe('data file guard', () => {
       git('rm', '-q', 'hses/grant_award.xml');
       git('commit', '-q', '-m', 'remove');
       expect(checkRange({ baseRef: withFile, cwd: repoDir }).valid).toBe(true);
+    });
+
+    describe('when git fails', () => {
+      const sensitiveFragments = ['pat@', 'acf.hhs.gov'];
+
+      // Anything Node could print for an uncaught error: message, stack, and every own property.
+      const everythingPrintable = (error) =>
+        `${error.message}\n${error.stack}\n${util.inspect(error, { depth: 10 })}`;
+
+      it('throws a sanitized error without the patch text when the output is too large', () => {
+        writeFile('data/staff.csv', emailCsv);
+        commitAll('email');
+
+        let caught;
+        try {
+          checkRange({ baseRef: baseSha, cwd: repoDir, maxBuffer: 50 });
+        } catch (error) {
+          caught = error;
+        }
+
+        expect(caught).toBeInstanceOf(GuardError);
+        const printable = everythingPrintable(caught);
+        sensitiveFragments.forEach((fragment) => {
+          expect(printable).not.toContain(fragment);
+        });
+        expect(caught.cause).toBeUndefined();
+        expect(caught.stdout).toBeUndefined();
+        expect(caught.stderr).toBeUndefined();
+        expect(caught.output).toBeUndefined();
+        expect(caught.message).toMatch(/^git \w[\w-]* failed/);
+      });
+
+      it('throws a sanitized error for an unknown base ref', () => {
+        expect(() => checkRange({ baseRef: 'no-such-ref', cwd: repoDir })).toThrow(GuardError);
+        expect(() => checkRange({ baseRef: 'no-such-ref', cwd: repoDir })).toThrow(
+          /^git diff failed/
+        );
+      });
+
+      it('exits 1 and prints only a sanitized message from the CLI', () => {
+        writeFile('data/staff.csv', emailCsv);
+        commitAll('email');
+
+        const result = spawnSync(
+          process.execPath,
+          [path.join(__dirname, 'validate-data-file-guard.js')],
+          { cwd: repoDir, encoding: 'utf8', env: { ...process.env, BASE_REF: 'no-such-ref' } }
+        );
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('Data file guard could not complete');
+        sensitiveFragments.forEach((fragment) => {
+          expect(`${result.stdout}${result.stderr}`).not.toContain(fragment);
+        });
+      });
+
+      it('exits 1 when BASE_REF is missing', () => {
+        const env = { ...process.env };
+        delete env.BASE_REF;
+        const result = spawnSync(
+          process.execPath,
+          [path.join(__dirname, 'validate-data-file-guard.js')],
+          { cwd: repoDir, encoding: 'utf8', env }
+        );
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('BASE_REF is required');
+      });
     });
   });
 });

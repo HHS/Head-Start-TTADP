@@ -9,8 +9,10 @@ const DATA_FILE_PATTERN = /\.(xml|csv|tsv)$/i;
 const STAFF_EMAIL_PATTERN = /@acf\.hhs\.gov\b/i;
 
 // The files inside the nightly HSES zip. Small synthetic copies live in temp/ as test
-// fixtures, so these names are only allowed there and only at fixture size (the largest
-// fixture is a few hundred lines; a real extract is tens of thousands).
+// fixtures, so these names are only allowed there and only at fixture size. The largest
+// fixture is about 17 KB and a few hundred lines; a real extract is megabytes and tens of
+// thousands of lines. The limits apply to the whole file as it will be in HEAD, not to the
+// lines a PR adds, so one long line or growth across several small PRs cannot get past them.
 const HSES_EXTRACT_FILE_NAMES = new Set([
   'agency.xml',
   'grant_agency.xml',
@@ -19,11 +21,25 @@ const HSES_EXTRACT_FILE_NAMES = new Set([
   'grant_program.xml',
 ]);
 const HSES_FIXTURE_DIRECTORY = 'temp/';
-const MAX_FIXTURE_ADDED_LINES = 1000;
+const MAX_FIXTURE_LINES = 1000;
+const MAX_FIXTURE_BYTES = 100 * 1024;
 
 const GIT_MAX_BUFFER = 512 * 1024 * 1024;
 
+// Raised for any failure to run the guard. Its message never includes git output, because
+// git output can contain the patch text (and so staff email addresses) the guard exists to
+// keep out of logs.
+class GuardError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'GuardError';
+  }
+}
+
 const isDataFile = (path) => DATA_FILE_PATTERN.test(path);
+
+const isHsesExtractName = (path) =>
+  HSES_EXTRACT_FILE_NAMES.has(path.split('/').pop().toLowerCase());
 
 // Parses `git diff -z --name-status --no-renames`: NUL separated "status, path" pairs.
 // Paths come through verbatim, so spaces and non ASCII names are not quoted or escaped.
@@ -46,7 +62,7 @@ function parseNumstat(numstatOutput = '') {
     .map((record) => {
       const [added, , ...pathParts] = record.split('\t');
       // Binary files report "-" instead of a line count, so mark them rather than treating
-      // them as zero lines, which would let a binary blob slip under the fixture size limit.
+      // them as zero lines.
       const binary = added === '-';
       return {
         path: pathParts.join('\t'),
@@ -69,15 +85,17 @@ function findForbiddenPaths(changes = []) {
 }
 
 // Flags files named like the ones in the HSES zip when they are outside temp/, or inside
-// temp/ but too large to be a fixture. Paths already caught by findForbiddenPaths are skipped.
-function findHsesExtractFiles(changes = [], numstatRows = []) {
-  const numstatByPath = new Map(numstatRows.map((row) => [row.path, row]));
+// temp/ but too large to be a fixture. `blobStats` holds the size of each such file as it will
+// be in HEAD: [{ path, bytes, lines }] (lines is null when the file was too big to read).
+// Paths already caught by findForbiddenPaths are skipped.
+function findHsesExtractFiles(changes = [], blobStats = []) {
+  const statsByPath = new Map(blobStats.map((stats) => [stats.path, stats]));
   const alreadyForbidden = new Set(findForbiddenPaths(changes).map(({ path }) => path));
 
   return changes
     .filter(({ status }) => !status.startsWith('D'))
     .filter(({ path }) => !alreadyForbidden.has(path))
-    .filter(({ path }) => HSES_EXTRACT_FILE_NAMES.has(path.split('/').pop().toLowerCase()))
+    .filter(({ path }) => isHsesExtractName(path))
     .flatMap(({ path }) => {
       if (!path.startsWith(HSES_FIXTURE_DIRECTORY)) {
         return [
@@ -88,28 +106,43 @@ function findHsesExtractFiles(changes = [], numstatRows = []) {
         ];
       }
 
-      const { addedLines = 0, binary = false } = numstatByPath.get(path) || {};
-      if (binary) {
+      const { bytes = 0, lines = 0 } = statsByPath.get(path) || {};
+      if (bytes > MAX_FIXTURE_BYTES) {
         return [
           {
             path,
-            reason:
-              'Binary file with an HSES extract file name; fixtures in temp/ must be plain text XML',
+            reason: `File is ${bytes} bytes (limit ${MAX_FIXTURE_BYTES}), which looks like a real HSES extract and not a fixture`,
           },
         ];
       }
 
-      if (addedLines > MAX_FIXTURE_ADDED_LINES) {
+      if (lines > MAX_FIXTURE_LINES) {
         return [
           {
             path,
-            reason: `Adds ${addedLines} lines to an HSES extract file name, which looks like a real extract and not a fixture (limit ${MAX_FIXTURE_ADDED_LINES})`,
+            reason: `File has ${lines} lines (limit ${MAX_FIXTURE_LINES}), which looks like a real HSES extract and not a fixture`,
           },
         ];
       }
 
       return [];
     });
+}
+
+// Git reports files with NUL bytes (for example UTF-16 exports) as binary and produces no
+// patch lines for them, so the email scan cannot read them. Reject them instead of letting
+// them through unscanned.
+function findBinaryDataFiles(changes = [], numstatRows = []) {
+  const binaryPaths = new Set(numstatRows.filter(({ binary }) => binary).map(({ path }) => path));
+
+  return changes
+    .filter(({ status }) => !status.startsWith('D'))
+    .filter(({ path }) => isDataFile(path) && binaryPaths.has(path))
+    .map(({ path }) => ({
+      path,
+      reason:
+        'Binary data file (for example UTF-16) cannot be scanned for staff emails; save it as UTF-8 text',
+    }));
 }
 
 // Scans the `git diff --unified=0` of ONE file for added lines that contain real staff email
@@ -146,11 +179,18 @@ function findStaffEmailsInAddedLines(path, diffText = '') {
   return findings;
 }
 
-function evaluate({ nameStatusOutput = '', numstatOutput = '', fileDiffs = [] } = {}) {
+function evaluate({
+  nameStatusOutput = '',
+  numstatOutput = '',
+  blobStats = [],
+  fileDiffs = [],
+} = {}) {
   const changes = parseNameStatus(nameStatusOutput);
+  const numstatRows = parseNumstat(numstatOutput);
   const findings = [
     ...findForbiddenPaths(changes),
-    ...findHsesExtractFiles(changes, parseNumstat(numstatOutput)),
+    ...findHsesExtractFiles(changes, blobStats),
+    ...findBinaryDataFiles(changes, numstatRows),
     ...fileDiffs.flatMap(({ path, diffText }) => findStaffEmailsInAddedLines(path, diffText)),
   ];
 
@@ -169,32 +209,68 @@ function evaluate({ nameStatusOutput = '', numstatOutput = '', fileDiffs = [] } 
   };
 }
 
+const countLines = (text) => {
+  if (text === '') {
+    return 0;
+  }
+  return text.split('\n').length - (text.endsWith('\n') ? 1 : 0);
+};
+
+// Runs git and returns its output. On failure it throws a GuardError that names only the git
+// subcommand and the exit status or error code. The original error is deliberately not
+// chained or logged: it carries the captured output, which may be patch text.
+function runGit({ cwd, maxBuffer }, args) {
+  try {
+    return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer });
+  } catch (error) {
+    const code = error && typeof error.code === 'string' ? ` (${error.code})` : '';
+    const status = error && typeof error.status === 'number' ? ` (exit ${error.status})` : '';
+    throw new GuardError(`git ${args[0]} failed${code}${status}`);
+  }
+}
+
 // Runs the guard against `baseRef...HEAD` in the git repository at `cwd`.
-function checkRange({ baseRef, cwd = process.cwd() } = {}) {
-  const git = (...args) =>
-    execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER });
+function checkRange({ baseRef, cwd = process.cwd(), maxBuffer = GIT_MAX_BUFFER } = {}) {
+  const git = (...args) => runGit({ cwd, maxBuffer }, args);
   const range = `${baseRef}...HEAD`;
   const baseArgs = ['diff', '--no-renames', '--no-ext-diff', '--no-textconv'];
 
   const nameStatusOutput = git(...baseArgs, '-z', '--name-status', range);
   const numstatOutput = git(...baseArgs, '-z', '--numstat', range);
+  const changes = parseNameStatus(nameStatusOutput).filter(({ status }) => !status.startsWith('D'));
+
+  // Size of each possible fixture as it will be in HEAD. The size is read first, and the
+  // content only when the file is small enough to be a fixture, so a huge file is rejected
+  // without reading it into memory.
+  const blobStats = changes
+    .filter(({ path }) => path.startsWith(HSES_FIXTURE_DIRECTORY) && isHsesExtractName(path))
+    .map(({ path }) => {
+      const bytes = Number.parseInt(git('cat-file', '-s', `HEAD:${path}`), 10);
+      const lines =
+        bytes > MAX_FIXTURE_BYTES ? null : countLines(git('cat-file', 'blob', `HEAD:${path}`));
+      return { path, bytes, lines };
+    });
 
   // Data files are chosen here, case insensitively, from verbatim paths. Each gets its own
   // diff through a literal pathspec, so names with spaces, quotes, or non ASCII characters
   // are scanned like any other.
-  const fileDiffs = parseNameStatus(nameStatusOutput)
-    .filter(({ status, path }) => !status.startsWith('D') && isDataFile(path))
+  const fileDiffs = changes
+    .filter(({ path }) => isDataFile(path))
     .map(({ path }) => ({
       path,
       diffText: git(...baseArgs, '--unified=0', range, '--', `:(literal)${path}`),
     }));
 
-  return evaluate({ nameStatusOutput, numstatOutput, fileDiffs });
+  return evaluate({ nameStatusOutput, numstatOutput, blobStats, fileDiffs });
 }
 
 module.exports = {
+  GuardError,
+  MAX_FIXTURE_BYTES,
+  MAX_FIXTURE_LINES,
   checkRange,
   evaluate,
+  findBinaryDataFiles,
   findForbiddenPaths,
   findHsesExtractFiles,
   findStaffEmailsInAddedLines,
