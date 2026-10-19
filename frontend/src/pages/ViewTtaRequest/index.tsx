@@ -10,6 +10,7 @@ import ReadOnlyContent from '../../components/ReadOnlyContent';
 import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
+import './ViewTtaRequest.css';
 
 const formatDate = (date: string | null | undefined) =>
   date ? moment(date).format(DATE_DISPLAY_FORMAT) : '';
@@ -130,6 +131,16 @@ export default function ViewTtaRequest(): React.ReactElement | null {
                     }
                   : {}),
                 "Recipient's Goal": goalLabel(ttaRequest.goalTemplate),
+                // plain text from a textarea, so it is wrapped to keep it from being read as HTML
+                ...(ttaRequest.creatorNotes
+                  ? {
+                      'Creator notes': (
+                        <span className="ttahub-view-tta-request--creator-notes">
+                          {ttaRequest.creatorNotes}
+                        </span>
+                      ),
+                    }
+                  : {}),
               },
             },
           ]}

@@ -304,6 +304,18 @@ describe('TTA request handlers', () => {
       (submitTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no citations'));
       await submitTtaRequest(req as Request, res as Response);
       expect(status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({ error: 'no citations' });
+    });
+
+    it('rethrows rejected data inside the transaction wrapper so the save rolls back', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (submitTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no citations'));
+      (req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper = true;
+      await expect(submitTtaRequest(req as Request, res as Response)).rejects.toMatchObject({
+        statusCode: 400,
+        responseBody: { error: 'no citations' },
+      });
+      expect(status).not.toHaveBeenCalled();
     });
 
     it('hands unexpected errors to handleErrors', async () => {

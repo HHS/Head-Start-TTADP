@@ -146,5 +146,23 @@ describe('TTA request body middleware', () => {
         run(checkSubmitTtaRequestBody, { ...fullBody, context: '  ' }).next
       ).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ['an empty paragraph', '<p></p>\n'],
+      ['a line break', '<p><br></p>'],
+      ['a whitespace entity', '<p>&nbsp;</p>'],
+      ['paragraphs of spaces', '<p>   </p>\n<p></p>\n'],
+    ])('rejects context that is only %s', (_name, context) => {
+      const { status, send, next } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
+      expect(next).not.toHaveBeenCalled();
+      expect(status).toHaveBeenCalledWith(400);
+      expect(send).toHaveBeenCalledWith(expect.stringContaining('"context" must have text'));
+    });
+
+    it('stores the context as HTML', () => {
+      const context = '<p><strong>Background</strong></p>\n';
+      const { req } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
+      expect(req.body.context).toBe(context);
+    });
   });
 });

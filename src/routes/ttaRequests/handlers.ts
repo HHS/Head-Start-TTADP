@@ -158,7 +158,13 @@ export async function submitTtaRequest(req: Request, res: Response) {
   } catch (error) {
     // Errors that set their own statusCode are deliberate client responses
     if (error?.statusCode) {
-      res.status(error.statusCode).json({ error: error.message });
+      const responseBody = error.responseBody ?? { error: error.message };
+      // the draft was saved before the check failed, so the wrapper must roll it back
+      // before it sends the response
+      if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+        throw Object.assign(error, { responseBody });
+      }
+      res.status(error.statusCode).json(responseBody);
       return;
     }
     await handleErrors(req, res, error, logContext);

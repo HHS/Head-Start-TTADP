@@ -109,6 +109,28 @@ describe('ViewTtaRequest', () => {
     expect(screen.queryByText('Citations addressed')).toBeNull();
   });
 
+  it('shows the creator notes as plain text with their line breaks', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      creatorNotes: 'First line <b>not bold</b>\nSecond line',
+    });
+    renderView();
+
+    expect(await screen.findByText('Creator notes')).toBeVisible();
+    const notes = screen.getByText(/First line/);
+    expect(notes.textContent).toBe('First line <b>not bold</b>\nSecond line');
+    expect(notes.querySelector('b')).toBeNull();
+    expect(notes).toHaveClass('ttahub-view-tta-request--creator-notes');
+  });
+
+  it('leaves out the creator notes when there are none', async () => {
+    fetchMock.get(URL, SUBMITTED_REQUEST);
+    renderView();
+
+    await screen.findByRole('heading', { name: 'Goal and context' });
+    expect(screen.queryByText('Creator notes')).toBeNull();
+  });
+
   it('shows the goal without a standard prefix when the goal has no standard', async () => {
     fetchMock.get(URL, {
       ...SUBMITTED_REQUEST,

@@ -407,6 +407,30 @@ describe('ttaRequests service', () => {
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
+    it('leaves the draft as it was when a rejected submission rolls back', async () => {
+      const draft = await createTtaRequest(
+        { regionId: 1, context: '<p>Before</p>', reviewerId: reviewer.id },
+        creator.id
+      );
+
+      // the route runs this in transactionWrapper, which rolls back when it throws
+      await expect(
+        db.sequelize.transaction(() =>
+          submitTtaRequest(
+            draft,
+            { ...complete, context: '<p>After</p>', reviewerId: creator.id },
+            creator.id
+          )
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(draft.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.DRAFT);
+      expect(stored.context).toBe('<p>Before</p>');
+      expect(stored.reviewerId).toBe(reviewer.id);
+      expect(stored.grants).toHaveLength(0);
+    });
+
     it('rejects the monitoring goal without citations', async () => {
       const draft = await createTtaRequest({ regionId: 1 }, creator.id);
 
