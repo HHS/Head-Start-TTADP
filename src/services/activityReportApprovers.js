@@ -16,10 +16,15 @@ import { archiveNotificationsOnActivityReportApproved } from './notifications/ac
  * `sequelize.transaction()` does not pick up the ambient CLS transaction on its own, so the
  * caller's transaction (e.g. from `transactionWrapper`) is passed explicitly as the parent.
  * That makes this a SAVEPOINT on the same connection rather than a new top-level transaction.
- * Without it, the `FOR UPDATE` below runs on a second connection and blocks forever on the
+ * Without it, the row lock below runs on a second connection and blocks forever on the
  * row lock the caller already holds from updating the report, hanging the request. The row
  * lock serializes concurrent approvers reviewing the same report so each transition is
  * observed by exactly one caller.
+ *
+ * The lock is `FOR NO KEY UPDATE`, not `FOR UPDATE`: it still conflicts with itself, so approvers
+ * stay serialized, but it does not conflict with the `FOR KEY SHARE` lock that foreign-key checks
+ * take on this row when child rows (NextSteps, etc.) are inserted. `FOR UPDATE` deadlocked
+ * overlapping report saves, since `syncApprovers` runs on every save after next steps are saved.
  *
  * @param {number|string} activityReportId
  * @param {() => Promise<*>} fn
@@ -31,7 +36,7 @@ async function withApprovalTransition(activityReportId, fn) {
     const report = await ActivityReport.findByPk(activityReportId, {
       attributes: ['id', 'submissionStatus', 'calculatedStatus'],
       transaction,
-      lock: transaction.LOCK.UPDATE,
+      lock: transaction.LOCK.NO_KEY_UPDATE,
     });
 
     if (!report || report.submissionStatus !== REPORT_STATUSES.SUBMITTED) {

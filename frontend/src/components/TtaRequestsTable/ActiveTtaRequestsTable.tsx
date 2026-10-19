@@ -1,12 +1,42 @@
+import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import moment from 'moment';
 import React, { useCallback, useMemo } from 'react';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import { getTtaRequests, getTtaRequestsByRecipient } from '../../fetchers/ttaRequests';
+import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
-import {
-  ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA,
-  type ActiveTtaRequest,
-  DRAFT_STATUS,
-} from './placeholderData';
+
+/** a request as the TTA request list endpoints return it */
+export interface ActiveTtaRequest {
+  id: number;
+  displayId: string;
+  regionId: number;
+  recipientId: number | null;
+  status: string;
+  createdAt: string;
+  creator: { id: number; name: string };
+  reviewer: { id: number; name: string } | null;
+  recipient: { id: number; name: string } | null;
+  goalTemplate: { id: number; templateName: string } | null;
+  grants: { id: number; stateCode: string | null }[];
+}
+
+interface ActiveTtaRequestsResponse {
+  count: number;
+  rows: ActiveTtaRequest[];
+}
+
+const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
+
+/** how each status reads in the table */
+const STATUS_LABELS: Record<string, string> = {
+  [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
+};
+
+// a value a request doesn't have (yet) is left blank, which the table shows as a dash
+const BLANK = '';
 
 const EXPORT_FILE_NAME = 'active-tta-requests.csv';
 
@@ -90,58 +120,68 @@ const DEFAULT_SORT_CONFIG: WidgetSortConfig = {
   offset: 0,
 };
 
-/*
-  The recipient name opens that recipient's record. Note the placeholder rows name
-  recipients that don't exist, so until the API lands those links go nowhere the user can
-  read (a 401) - real rows will carry real ids.
+// a draft may not have a recipient yet, so it has nothing to link to
+const recipientCell = (request: ActiveTtaRequest) =>
+  request.recipient
+    ? {
+        title: COLUMNS.RECIPIENT,
+        value: request.recipient.name,
+        isUrl: true,
+        isInternalLink: true,
+        link: recipientRecordUrl(request.recipient.id, request.regionId),
+      }
+    : { title: COLUMNS.RECIPIENT, value: BLANK };
 
-  The request id and the draft status open the request itself. There is no fetcher yet, so
-  for now that form opens empty whatever id it is given.
+// the states the request's grants are in
+const stateCodes = (request: ActiveTtaRequest) =>
+  [...new Set(request.grants.map((grant) => grant.stateCode).filter(Boolean))].join(', ');
+
+/*
+  The request id and the draft status open the request itself; the recipient name opens
+  that recipient's record. Approver and assigned staff only exist once a request has been
+  submitted and approved, so a draft leaves them blank.
 */
 const toTableRow = (
   request: ActiveTtaRequest,
   requestUrl: (requestId: number) => string,
   showRecipientColumns: boolean
-): TtaRequestsTableRow => ({
-  id: request.id,
-  heading: request.requestId,
-  sortKey: request.requestId,
-  isUrl: true,
-  isInternalLink: true,
-  link: requestUrl(request.id),
-  data: [
-    ...(showRecipientColumns
-      ? [
-          {
-            title: COLUMNS.RECIPIENT,
-            value: request.recipient,
+): TtaRequestsTableRow => {
+  const status = STATUS_LABELS[request.status] ?? request.status;
+
+  return {
+    id: request.id,
+    heading: request.displayId,
+    sortKey: request.displayId,
+    isUrl: true,
+    isInternalLink: true,
+    link: requestUrl(request.id),
+    data: [
+      ...(showRecipientColumns
+        ? [recipientCell(request), { title: COLUMNS.REGION, value: String(request.regionId) }]
+        : []),
+      {
+        title: COLUMNS.CREATED_DATE,
+        value: moment(request.createdAt).format(DATE_DISPLAY_FORMAT),
+      },
+      ...(showRecipientColumns ? [{ title: COLUMNS.CREATOR, value: request.creator.name }] : []),
+      { title: COLUMNS.GOAL, value: request.goalTemplate?.templateName ?? BLANK },
+      ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: stateCodes(request) }] : []),
+      { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
+      { title: COLUMNS.APPROVER, value: BLANK },
+      { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
+      // only drafts are clickable, they take the creator back into the request
+      request.status === TTA_REQUEST_STATUSES.DRAFT
+        ? {
+            title: COLUMNS.STATUS,
+            value: status,
             isUrl: true,
             isInternalLink: true,
-            link: recipientRecordUrl(request.recipientId, request.regionId),
-          },
-          { title: COLUMNS.REGION, value: String(request.regionId) },
-        ]
-      : []),
-    { title: COLUMNS.CREATED_DATE, value: request.createdDate },
-    ...(showRecipientColumns ? [{ title: COLUMNS.CREATOR, value: request.creator }] : []),
-    { title: COLUMNS.GOAL, value: request.goal },
-    // the state the recipient's grant is in
-    ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: request.stateCode }] : []),
-    { title: COLUMNS.REVIEWER, value: request.reviewer },
-    { title: COLUMNS.APPROVER, value: request.approver },
-    { title: COLUMNS.ASSIGNED_STAFF, value: request.assignedStaff },
-    // only drafts are clickable, they take the creator back into the request
-    request.status === DRAFT_STATUS
-      ? {
-          title: COLUMNS.STATUS,
-          value: DRAFT_STATUS,
-          isUrl: true,
-          isInternalLink: true,
-          link: requestUrl(request.id),
-        }
-      : { title: COLUMNS.STATUS, value: request.status },
-  ],
-});
+            link: requestUrl(request.id),
+          }
+        : { title: COLUMNS.STATUS, value: status },
+    ],
+  };
+};
 
 interface ActiveTtaRequestsTableProps {
   /** the recipient record this table is being viewed from, if any */
@@ -149,12 +189,17 @@ interface ActiveTtaRequestsTableProps {
   regionId?: string | number;
   /** adds the recipient, region and creator columns for the all regions page */
   showRecipientColumns?: boolean;
+  /** the all regions page's filters, which pick the regions to list */
+  filters?: { topic: string; condition: string; query: string | string[] }[];
 }
+
+const NO_FILTERS = [];
 
 export default function ActiveTtaRequestsTable({
   recipientId,
   regionId,
   showRecipientColumns = false,
+  filters = NO_FILTERS,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
   // where a request lives depends on whether this table spans regions or one recipient
   const requestRoot = showRecipientColumns
@@ -165,13 +210,28 @@ export default function ActiveTtaRequestsTable({
     [requestRoot]
   );
 
-  // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
+  // across recipients the page's filters pick the regions; a recipient's tab is its own
+  const fetcher = useCallback(
+    (): Promise<ActiveTtaRequestsResponse> =>
+      showRecipientColumns
+        ? getTtaRequests(filters)
+        : getTtaRequestsByRecipient(regionId, recipientId),
+    [filters, recipientId, regionId, showRecipientColumns]
+  );
+
+  const { data, loading, error } = useFetch(
+    NO_REQUESTS,
+    fetcher,
+    [filters, recipientId, regionId, showRecipientColumns],
+    'Unable to load TTA requests.'
+  );
+
   const rows = useMemo(
     () =>
-      ACTIVE_TTA_REQUESTS_PLACEHOLDER_DATA.map((request) =>
+      (data || NO_REQUESTS).rows.map((request) =>
         toTableRow(request, requestUrl, showRecipientColumns)
       ),
-    [requestUrl, showRecipientColumns]
+    [data, requestUrl, showRecipientColumns]
   );
 
   return (
@@ -193,6 +253,8 @@ export default function ActiveTtaRequestsTable({
       dateSortColumns={DATE_SORT_COLUMNS}
       defaultSortConfig={DEFAULT_SORT_CONFIG}
       rows={rows}
+      loading={loading}
+      error={error}
       emptyState={emptyState(`${requestRoot}/new`)}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn

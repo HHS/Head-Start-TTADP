@@ -263,9 +263,16 @@ describe('CollabReport Policy', () => {
 
   describe('canReview', () => {
     it('should return true when user is approving manager and can approve in region', () => {
+      collabReport.userId = 2;
       collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canReview()).toBe(true);
+    });
+
+    it('should return false when the author is an approving manager', () => {
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
+      const policy = new CollabReport(user, collabReport);
+      expect(policy.canReview()).toBe(false);
     });
 
     it('should return false when user is not an approving manager', () => {
