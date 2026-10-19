@@ -29,7 +29,7 @@ import db, {
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { createGrant, createRecipient, createReport, destroyReport } from '../testUtils';
+import { createGrant, createRecipient, createReport, destroyReport, getUniqueId } from '../testUtils';
 import {
   allArUserIdsByRecipientAndRegion,
   allRecipients,
@@ -1223,7 +1223,7 @@ describe('Recipient DB service', () => {
       [user, readOnlyUser] = await Promise.all(
         [0, 1].map(() =>
           User.create({
-            id: faker.number.int({ min: 0, max: 99999 }),
+            id: getUniqueId(),
             homeRegionId: 1,
             hsesUsername: faker.string.sample(),
             hsesUserId: faker.string.sample(),
@@ -2636,7 +2636,7 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       author = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2644,7 +2644,7 @@ describe('Recipient DB service', () => {
       });
 
       collaboratorOne = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2652,7 +2652,7 @@ describe('Recipient DB service', () => {
       });
 
       collaboratorTwo = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2660,7 +2660,7 @@ describe('Recipient DB service', () => {
       });
 
       approverOne = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2668,7 +2668,7 @@ describe('Recipient DB service', () => {
       });
 
       approverTwo = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2676,7 +2676,7 @@ describe('Recipient DB service', () => {
       });
 
       dummyUser = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
