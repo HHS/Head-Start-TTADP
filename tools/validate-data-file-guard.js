@@ -14,6 +14,7 @@ const git = (...args) =>
 const range = `${baseRef}...HEAD`;
 const result = evaluate({
   nameStatusOutput: git('diff', '--name-status', '--no-renames', range),
+  numstatOutput: git('diff', '--numstat', '--no-renames', range),
   diffText: git('diff', '--unified=0', '--no-renames', range, '--', '*.xml', '*.csv', '*.tsv'),
 });
 
