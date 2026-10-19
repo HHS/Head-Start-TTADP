@@ -679,6 +679,10 @@ describe('Collab Reports Service', () => {
           where: { collabReportId: testReport.id },
           force: true,
         });
+        await CollabReportReason.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
         await testReport.destroy({ force: true });
         testReport = null;
       }
@@ -1103,6 +1107,52 @@ describe('Collab Reports Service', () => {
         });
 
         expect(statesInvolvedRecords).toHaveLength(0);
+      });
+    });
+
+    describe('reasons functionality', () => {
+      it('updates reasons when updating a report', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Updates',
+          reportReasons: ['participate_work_groups', 'support_coordination'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport(
+          { ...initialReport, reportReasons: ['support_coordination', 'agg_regional_data'] },
+          testReport
+        );
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons.map((r) => r.reasonId).sort()).toEqual([
+          'agg_regional_data',
+          'support_coordination',
+        ]);
+      });
+
+      it('removes all reasons when array is empty', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Removal',
+          reportReasons: ['participate_work_groups'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport({ ...initialReport, reportReasons: [] }, testReport);
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons).toHaveLength(0);
       });
     });
 

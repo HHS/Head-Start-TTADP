@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Link, Route, Router } from 'react-router-dom';
+import AriaLiveContext from '../../../../AriaLiveContext';
 import { TIMELINE_FILTER_CONFIG } from '../../../../components/filter/timelineFilters';
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
 import useFilters from '../../../../hooks/useFilters';
@@ -47,15 +49,17 @@ const historyAt = (state) =>
 const renderTimeline = (history) =>
   render(
     <UserContext.Provider value={{ user: { homeRegionId: 1 } }}>
-      <Router history={history}>
-        <Route path="/timeline">
-          <Timeline recipientId="401" regionId="1" />
-          <Link to="/detail">View details</Link>
-        </Route>
-        <Route path="/detail">
-          <p>Detail page</p>
-        </Route>
-      </Router>
+      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+        <Router history={history}>
+          <Route path="/timeline">
+            <Timeline recipientId="401" regionId="1" />
+            <Link to="/detail">View details</Link>
+          </Route>
+          <Route path="/detail">
+            <p>Detail page</p>
+          </Route>
+        </Router>
+      </AriaLiveContext.Provider>
     </UserContext.Provider>
   );
 const scrollTo = (top) => {
@@ -75,6 +79,7 @@ const mockRealFilters = () => {
 
 describe('timeline navigation restoration', () => {
   beforeEach(() => {
+    window.sessionStorage.removeItem('timeline-filters');
     getRecipientTimeline.mockReset();
     useFilters.mockReturnValue({
       filters: [],
@@ -94,6 +99,98 @@ describe('timeline navigation restoration', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it.each(['is', 'is not'])(
+    'applies multiple communication purposes with %s',
+    async (condition) => {
+      mockRealFilters();
+      getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
+      renderTimeline(historyAt());
+      await screen.findByText('No results found.');
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: /open filters for this page/i }))
+      );
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'topic' }), 'purpose')
+      );
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'condition' }), condition)
+      );
+      for (const purpose of COMMUNICATION_PURPOSES.slice(0, 2)) {
+        await act(async () =>
+          userEvent.type(screen.getByLabelText('Select purpose to filter by'), purpose)
+        );
+        await act(async () => userEvent.click(screen.getByText(purpose)));
+      }
+      // Draft selections do not fetch until applied.
+      expect(getRecipientTimeline).toHaveBeenCalledTimes(1);
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: 'Apply filters to the TTA timeline' }))
+      );
+      await waitFor(() =>
+        expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+          '401',
+          '1',
+          expect.objectContaining({
+            offset: 0,
+            filters: [
+              expect.objectContaining({
+                topic: 'purpose',
+                condition,
+                query: COMMUNICATION_PURPOSES.slice(0, 2),
+              }),
+            ],
+          })
+        )
+      );
+      expect(screen.getByText('Communication purpose', { selector: 'strong' })).toBeVisible();
+    }
+  );
+
+  it('applies a date range from the panel and removes its pill from the request', async () => {
+    mockRealFilters();
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
+    renderTimeline(historyAt());
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: /open filters for this page/i }))
+    );
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'condition' }), 'is')
+    );
+    await act(async () =>
+      userEvent.selectOptions(
+        screen.getByRole('combobox', { name: 'date' }),
+        screen.getByRole('option', { name: 'Last three months' }).value
+      )
+    );
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Apply filters to the TTA timeline' }))
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          offset: 0,
+          filters: [expect.objectContaining({ topic: 'date', condition: 'is' })],
+        })
+      )
+    );
+    await act(async () =>
+      userEvent.click(
+        screen.getByRole('button', { name: /This button removes the filter: Date is / })
+      )
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ filters: [], offset: 0 })
+      )
+    );
+    expect(screen.queryByText('Date', { selector: 'strong' })).not.toBeInTheDocument();
+  });
 
   it('saves loaded depth and visible event without extra history entries, then restores on refresh', async () => {
     getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>

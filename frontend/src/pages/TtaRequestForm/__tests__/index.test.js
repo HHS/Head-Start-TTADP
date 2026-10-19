@@ -4,12 +4,20 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
-import { AUTOSAVE_INTERVAL } from '../constants';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
+import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR } from '../constants';
 import TtaRequestForm from '../index';
 
 // eslint-disable-next-line react/prop-types
+// the real guard looks for the cursor in a react-draft-wysiwyg editor, which the mocked
+// rich editor below doesn't render, so tests say directly whether the cursor is in one
+jest.mock('../../../utils/formRichTextEditorHelper', () => ({
+  shouldUpdateFormData: jest.fn(() => true),
+}));
+
 jest.mock('focus-trap-react', () => ({ children }) => <>{children}</>);
 
 jest.mock(
@@ -91,30 +99,76 @@ const mockFetches = () => {
 
 const BACK_LINK = '/recipient-tta-records/10/region/14/tta-request';
 
-const renderForm = (props = {}, history = createMemoryHistory()) =>
+const mockSetIsAppLoading = jest.fn();
+const mockSetAppLoadingText = jest.fn();
+
+const renderWithAppLoading = (ui) =>
   render(
+    <AppLoadingContext.Provider
+      value={{
+        isAppLoading: false,
+        setIsAppLoading: mockSetIsAppLoading,
+        setAppLoadingText: mockSetAppLoadingText,
+      }}
+    >
+      {ui}
+    </AppLoadingContext.Provider>
+  );
+
+const renderForm = (props = {}, history = createMemoryHistory()) =>
+  renderWithAppLoading(
     <Router history={history}>
       <TtaRequestForm backLinkTo={BACK_LINK} {...props} />
     </Router>
   );
 
+// rendered the way the routes do, so the form can read the request id
+const renderFormAt = (path, props = {}) => {
+  const history = createMemoryHistory({ initialEntries: [path] });
+  renderWithAppLoading(
+    <Router history={history}>
+      <Route path="/tta-requests/:ttaRequestId(new|[0-9]*)">
+        <TtaRequestForm backLinkTo="/tta-requests" {...props} />
+      </Route>
+    </Router>
+  );
+  return history;
+};
+
+const SAVED_REQUEST = {
+  id: 42,
+  displayId: 'R14-REQ-42',
+  regionId: 14,
+  status: 'draft',
+  recipientAware: false,
+  originator: 'Regional Office',
+  context: '<p>Saved context</p>',
+  creatorNotes: 'Saved notes',
+  recipient: { id: RECIPIENT.id, name: RECIPIENT.name },
+  grants: [GRANT_ONE],
+  goalTemplate: { id: OTHER_GOAL.id, templateName: OTHER_GOAL.name, standard: 'Health' },
+  citations: [],
+  reviewer: { id: 6, name: 'Ross Geller' },
+};
+
 describe('TtaRequestForm', () => {
   afterEach(() => {
     fetchMock.restore();
     jest.clearAllMocks();
+    shouldUpdateFormData.mockImplementation(() => true);
   });
 
   beforeEach(() => {
     mockFetches();
   });
 
-  it('renders the heading, draft tag and required field note', () => {
+  it('renders the heading and required field note', () => {
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     expect(
       screen.getByRole('heading', { name: 'Training and Technical Assistance (TTA) Request' })
     ).toBeVisible();
-    expect(screen.getByText('Draft')).toBeVisible();
+    expect(screen.queryByText('Draft')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to TTA Requests' })).toHaveAttribute(
       'href',
       BACK_LINK
@@ -267,27 +321,456 @@ describe('TtaRequestForm', () => {
     expect(fetchMock.called('/api/feeds/item?tag=ttahub-ohs-standard-goals')).toBe(true);
   });
 
-  it('records a save time when the draft is saved, without validating', async () => {
+  it('says the draft was saved, as the activity report does, without validating', async () => {
+    fetchMock.post('/api/tta-requests', { ...SAVED_REQUEST, id: 1 });
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
-    expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+    expect(await screen.findByText(/^Draft saved on \d{2}\/\d{2}\/\d{4} at /)).toBeVisible();
+    // saving by hand isn't an autosave
+    expect(screen.queryByText(/autosaved on:/i)).toBeNull();
     expect(screen.queryByText('Select a goal')).toBeNull();
   });
 
-  it('saves itself on an interval', async () => {
+  it('creates the draft on its first save, then saves changes to it', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    // as RecipientTtaRequestForm renders it
+    renderFormAt('/tta-requests/new', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+
+    userEvent.click(screen.getByRole('radio', { name: 'No' }));
+    userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    // the URL moves onto the new id without the router reloading the form
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/tta-requests/42');
+    });
+    expect(JSON.parse(fetchMock.lastOptions('/api/tta-requests').body)).toEqual({
+      regionId: 14,
+      recipientId: RECIPIENT.id,
+      grantIds: [GRANT_ONE.id],
+      recipientAware: false,
+      originator: null,
+      goalTemplateId: null,
+      citations: [],
+      context: '',
+      creatorNotes: 'A note',
+      reviewerId: null,
+    });
+    // what was just saved is already on screen, so the new id isn't loaded over it
+    expect(fetchMock.called('/api/tta-requests/42', { method: 'GET' })).toBe(false);
+
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+    });
+    expect(fetchMock.calls('/api/tta-requests', { method: 'POST' })).toHaveLength(1);
+  });
+
+  it('fills the form from a saved draft', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'No' })).toBeChecked();
+    expect(screen.getByText('Regional Office')).toBeVisible();
+    expect(screen.getByText(OTHER_GOAL.name)).toBeVisible();
+    expect(screen.getByText('Ross Geller')).toBeVisible();
+  });
+
+  it('saves to the draft in the route after moving from one draft to another', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.get('/api/tta-requests/43', {
+      ...SAVED_REQUEST,
+      id: 43,
+      displayId: 'R14-REQ-43',
+      creatorNotes: 'Other notes',
+    });
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/43', { ...SAVED_REQUEST, id: 43 });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+
+    act(() => {
+      history.push('/tta-requests/43');
+    });
+    const notes = await screen.findByDisplayValue('Other notes');
+    userEvent.type(notes, ' edited');
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/tta-requests/43', { method: 'PUT' })).toBe(true);
+    });
+    expect(JSON.parse(fetchMock.lastOptions('/api/tta-requests/43').body).creatorNotes).toBe(
+      'Other notes edited'
+    );
+    expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(false);
+  });
+
+  it('starts a blank request after moving from a draft to a new one', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.post('/api/tta-requests', { ...SAVED_REQUEST, id: 44 });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+
+    act(() => {
+      history.push('/tta-requests/new');
+    });
+    await waitFor(() => {
+      expect(screen.queryByDisplayValue('Saved notes')).toBeNull();
+    });
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/tta-requests', { method: 'POST' })).toBe(true);
+    });
+    expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(false);
+  });
+
+  it('shows no form to save over a draft that failed to load', async () => {
+    fetchMock.get('/api/tta-requests/42', 500);
+    renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+
+    expect(await screen.findByText('Unable to load the TTA request.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+  });
+
+  it.each(['/tta-requests/0', '/tta-requests/00'])(
+    'treats %s as a request that cannot load, not a new one',
+    async (path) => {
+      renderFormAt(path, {
+        recipient: RECIPIENT,
+        recipientOptions: [RECIPIENT],
+        regionId: 14,
+      });
+
+      expect(await screen.findByText('Unable to load the TTA request.')).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+      expect(fetchMock.called('begin:/api/tta-requests')).toBe(false);
+    }
+  );
+
+  it('autosaves a loaded draft only once something has changed', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42', SAVED_REQUEST);
+    jest.useFakeTimers();
+    try {
+      renderFormAt('/tta-requests/42', {
+        recipient: RECIPIENT,
+        recipientOptions: [RECIPIENT],
+        regionId: 14,
+      });
+      expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+
+      await act(async () => {
+        jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+      });
+      expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(false);
+
+      userEvent.type(screen.getByLabelText(/add creator notes/i), ' and more');
+
+      await act(async () => {
+        jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+      });
+      await waitFor(() => {
+        expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+      });
+      expect(
+        JSON.parse(fetchMock.lastOptions('/api/tta-requests/42', { method: 'PUT' }).body)
+          .creatorNotes
+      ).toBe('Saved notes and more');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('shows the loading overlay while a draft is saved by hand', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    renderForm({ recipient: RECIPIENT, regionId: 14 });
+
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    expect(await screen.findByText(/draft saved on/i)).toBeVisible();
+    expect(mockSetAppLoadingText).toHaveBeenCalledWith('Saving');
+    expect(mockSetIsAppLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it('disables Save draft while an autosave is running', async () => {
+    let finishCreate;
+    fetchMock.post(
+      '/api/tta-requests',
+      new Promise((resolve) => {
+        finishCreate = () => resolve(SAVED_REQUEST);
+      })
+    );
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await act(async () => {
+        jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+      });
+      expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+      await act(async () => {
+        finishCreate();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+      });
+      // an autosave doesn't cover the page
+      expect(mockSetAppLoadingText).not.toHaveBeenCalledWith('Saving');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("keeps a saved draft's own region over the one in the link", async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 3,
+    });
+
+    expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
+    await waitFor(() => {
+      expect(fetchMock.called('/api/activity-reports/approvers?region=14')).toBe(true);
+    });
+  });
+
+  it('says when a draft cannot be saved', async () => {
+    fetchMock.post('/api/tta-requests', 500);
+    renderForm({ recipient: RECIPIENT, regionId: 14 });
+
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    expect(await screen.findByText(SAVE_ERROR)).toBeVisible();
+    expect(screen.queryByText(/draft saved on/i)).toBeNull();
+  });
+
+  it('asks for a grant before saving a request with no region', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    renderForm({ recipientOptions: [MULTI_GRANT_RECIPIENT] });
+
+    userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    expect(await screen.findByText(NO_REGION_ERROR)).toBeVisible();
+    expect(fetchMock.called('/api/tta-requests')).toBe(false);
+  });
+
+  it('saves itself on an interval once something has been entered', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
     jest.useFakeTimers();
     try {
       renderForm({ recipient: RECIPIENT, regionId: 14 });
 
       expect(screen.queryByText(/autosaved on:/i)).toBeNull();
 
-      act(() => {
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await act(async () => {
         jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
       });
 
-      expect(screen.getByText(/autosaved on:/i)).toBeVisible();
+      expect(await screen.findByText(/autosaved on:/i)).toBeVisible();
+      // the draft saved message is for saving by hand
+      expect(screen.queryByText(/draft saved on/i)).toBeNull();
+      expect(fetchMock.called('/api/tta-requests')).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  // the server's copy of a draft saved with this creator note, as the save endpoints return it
+  const savedWithNote = (creatorNotes) => ({
+    ...SAVED_REQUEST,
+    recipientAware: null,
+    originator: null,
+    context: '',
+    creatorNotes,
+    grants: [GRANT_ONE],
+    goalTemplate: null,
+    reviewer: null,
+  });
+
+  const advanceAutosave = () =>
+    act(async () => {
+      jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+    });
+
+  const saveCalls = () =>
+    fetchMock.calls('/api/tta-requests').length + fetchMock.calls('/api/tta-requests/42').length;
+
+  it('does not autosave again until something changes after a save', async () => {
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note, edited'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      // the form now matches what was saved, so there is nothing to send
+      await advanceAutosave();
+      expect(saveCalls()).toBe(1);
+      expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('A note');
+
+      userEvent.type(screen.getByLabelText(/add creator notes/i), ', edited');
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(2));
+      expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not autosave a draft that was just saved by hand and left unchanged', async () => {
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+      userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      await advanceAutosave();
+      expect(saveCalls()).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('leaves the form alone after an autosave while the cursor is in the rich text editor', async () => {
+    shouldUpdateFormData.mockImplementation((isAutoSave) => !isAutoSave);
+    fetchMock.post('/api/tta-requests', savedWithNote('A note'));
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(1));
+
+      // nothing was reset, so the form still counts as changed and saves again
+      await advanceAutosave();
+      await waitFor(() => expect(saveCalls()).toBe(2));
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps what was typed while an autosave was in flight', async () => {
+    let finishCreate;
+    fetchMock.post(
+      '/api/tta-requests',
+      new Promise((resolve) => {
+        finishCreate = () => resolve(savedWithNote('A note'));
+      })
+    );
+    fetchMock.put('/api/tta-requests/42', savedWithNote('A note, edited'));
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      userEvent.type(screen.getByLabelText(/add creator notes/i), ', edited');
+      await act(async () => {
+        finishCreate();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+      });
+      expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('A note, edited');
+
+      // still unsaved, so the next tick saves it - to the draft the first save created
+      await advanceAutosave();
+      await waitFor(() => {
+        expect(fetchMock.called('/api/tta-requests/42', { method: 'PUT' })).toBe(true);
+      });
+      expect(fetchMock.calls('/api/tta-requests')).toHaveLength(1);
+      expect(
+        JSON.parse(fetchMock.lastOptions('/api/tta-requests/42', { method: 'PUT' }).body)
+          .creatorNotes
+      ).toBe('A note, edited');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps Save draft disabled when an autosave outlasts the next tick', async () => {
+    let finishCreate;
+    fetchMock.post(
+      '/api/tta-requests',
+      new Promise((resolve) => {
+        finishCreate = () => resolve(savedWithNote('A note'));
+      })
+    );
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, recipientOptions: [RECIPIENT], regionId: 14 });
+      userEvent.type(screen.getByLabelText(/add creator notes/i), 'A note');
+
+      await advanceAutosave();
+      expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+      // this tick skips saving, and mustn't release the lock the first save holds
+      await advanceAutosave();
+      expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+
+      await act(async () => {
+        finishCreate();
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Save draft' })).toBeEnabled();
+      });
+      expect(saveCalls()).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not create a draft on the interval when nothing has been entered', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    jest.useFakeTimers();
+    try {
+      renderForm({ recipient: RECIPIENT, regionId: 14 });
+
+      await act(async () => {
+        jest.advanceTimersByTime(AUTOSAVE_INTERVAL);
+      });
+
+      expect(fetchMock.called('/api/tta-requests')).toBe(false);
+      expect(screen.queryByText(/autosaved on:/i)).toBeNull();
     } finally {
       jest.useRealTimers();
     }

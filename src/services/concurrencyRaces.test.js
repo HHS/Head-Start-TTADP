@@ -1,12 +1,14 @@
 import crypto from 'crypto';
 import { GOAL_COLLABORATORS } from '../constants';
+import db from '../models';
 import {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } from '../models/helpers/genericCollaborator';
 import { syncLink } from '../models/hooks/genericLink';
-import db from '../models';
 import { createGrant, createRecipient, createUser, getUniqueId } from '../testUtils';
+import { syncApprovers } from './activityReportApprovers';
+import { lockActivityReport, saveNotes } from './activityReports';
 import { findOrCreateResource, findOrCreateResources } from './resource';
 
 // Creating a Resource enqueues a metadata fetch; keep that off Redis and the network.
@@ -15,13 +17,27 @@ jest.mock('./resourceQueue', () => ({
 }));
 
 const {
-  sequelize, Goal, GoalCollaborator, Grant, MonitoringReviewLink, Recipient, Resource, User,
+  sequelize,
+  ActivityReport,
+  Goal,
+  GoalCollaborator,
+  Grant,
+  MonitoringReviewLink,
+  NextStep,
+  Recipient,
+  Resource,
+  User,
 } = db;
 
-const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+const sleep = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 const deferred = () => {
   let resolve;
-  const promise = new Promise((r) => { resolve = r; });
+  const promise = new Promise((r) => {
+    resolve = r;
+  });
   return { promise, resolve };
 };
 const uniqueUrl = (label) => `https://race-${label}-${getUniqueId()}.test`;
@@ -59,7 +75,9 @@ const holdOpenTransaction = (winnerWork, { rollback = false } = {}) => {
 // prove the call is genuinely blocked on the other transaction (not just racing past it).
 const trackedTransaction = (work) => {
   const state = { settled: false };
-  const done = sequelize.transaction(work).finally(() => { state.settled = true; });
+  const done = sequelize.transaction(work).finally(() => {
+    state.settled = true;
+  });
   return { state, done };
 };
 
@@ -68,6 +86,7 @@ describe('concurrency races (real database)', () => {
   let grant;
   let goals;
   let user;
+  let report;
   const urlsToCleanup = [];
   const reviewIdsToCleanup = [];
 
@@ -79,6 +98,27 @@ describe('concurrency races (real database)', () => {
       Goal.create({ grantId: grant.id, name: 'race test goal 2' }),
     ]);
     user = await createUser();
+    report = await ActivityReport.create({
+      userId: user.id,
+      regionId: 1,
+      submissionStatus: 'draft',
+      numberOfParticipants: 1,
+      deliveryMethod: 'method',
+      duration: 0,
+      endDate: '2000-01-01T12:00:00Z',
+      startDate: '2000-01-01T12:00:00Z',
+      activityRecipientType: 'something',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      reason: ['reason'],
+      participants: ['participants'],
+      topics: ['topics'],
+      ttaType: ['type'],
+      language: ['English'],
+      activityReason: 'reason',
+      version: 2,
+      creatorRole: 'TTAC',
+    });
   });
 
   afterEach(async () => {
@@ -90,28 +130,39 @@ describe('concurrency races (real database)', () => {
   });
 
   afterAll(async () => {
+    await NextStep.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: false,
+      force: true,
+    });
+    await ActivityReport.destroy({ where: { id: report.id }, individualHooks: false, force: true });
     await Resource.destroy({ where: { url: urlsToCleanup }, individualHooks: false, force: true });
     await MonitoringReviewLink.destroy({
       where: { reviewId: reviewIdsToCleanup },
       individualHooks: false,
       force: true,
     });
-    await Goal.destroy({ where: { id: goals.map((g) => g.id) }, individualHooks: false, force: true });
+    await Goal.destroy({
+      where: { id: goals.map((g) => g.id) },
+      individualHooks: false,
+      force: true,
+    });
     await User.destroy({ where: { id: user.id } });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
     await Recipient.destroy({ where: { id: recipient.id }, force: true });
     await sequelize.close();
   });
 
-  const collab = (transaction, goalId, reportIds) => findOrCreateCollaborator(
-    'goal',
-    sequelize,
-    transaction,
-    goalId,
-    user.id,
-    GOAL_COLLABORATORS.LINKER,
-    { activityReportIds: reportIds }
-  );
+  const collab = (transaction, goalId, reportIds) =>
+    findOrCreateCollaborator(
+      'goal',
+      sequelize,
+      transaction,
+      goalId,
+      user.id,
+      GOAL_COLLABORATORS.LINKER,
+      { activityReportIds: reportIds }
+    );
 
   const linkInstance = () => ({
     isNewRecord: true,
@@ -123,7 +174,9 @@ describe('concurrency races (real database)', () => {
       const url = uniqueUrl('fanout');
       urlsToCleanup.push(url);
 
-      const results = await Promise.all(Array.from({ length: 20 }, () => findOrCreateResource(url)));
+      const results = await Promise.all(
+        Array.from({ length: 20 }, () => findOrCreateResource(url))
+      );
 
       expect(new Set(results.map((r) => r.id)).size).toBe(1);
       expect(await Resource.count({ where: { url } })).toBe(1);
@@ -269,17 +322,14 @@ describe('concurrency races (real database)', () => {
 
       // A row lock doesn't separate callers on the same transaction, so this relies on both
       // helpers taking turns via withTransactionLock.
-      await sequelize.transaction((t) => Promise.all([
-        collab(t, goalId, [addMe]),
-        removeCollaboratorsForType(
-          'goal',
-          sequelize,
-          t,
-          goalId,
-          GOAL_COLLABORATORS.LINKER,
-          { activityReportIds: [removeMe] }
-        ),
-      ]));
+      await sequelize.transaction((t) =>
+        Promise.all([
+          collab(t, goalId, [addMe]),
+          removeCollaboratorsForType('goal', sequelize, t, goalId, GOAL_COLLABORATORS.LINKER, {
+            activityReportIds: [removeMe],
+          }),
+        ])
+      );
 
       const rows = await GoalCollaborator.findAll({ where: { goalId, userId: user.id } });
       expect(rows).toHaveLength(1);
@@ -295,14 +345,10 @@ describe('concurrency races (real database)', () => {
       await collab(null, goalId, [keep, removeMe]);
 
       const add = (t) => collab(t, goalId, [addMe]);
-      const remove = (t) => removeCollaboratorsForType(
-        'goal',
-        sequelize,
-        t,
-        goalId,
-        GOAL_COLLABORATORS.LINKER,
-        { activityReportIds: [removeMe] }
-      );
+      const remove = (t) =>
+        removeCollaboratorsForType('goal', sequelize, t, goalId, GOAL_COLLABORATORS.LINKER, {
+          activityReportIds: [removeMe],
+        });
       const [holder, waiter] = first === 'add' ? [add, remove] : [remove, add];
 
       const held = holdOpenTransaction(holder);
@@ -350,9 +396,20 @@ describe('concurrency races (real database)', () => {
       reviewIdsToCleanup.push(reviewId);
       const callback = jest.fn().mockResolvedValue();
 
-      await Promise.all(Array.from({ length: 20 }, () => syncLink(
-        sequelize, linkInstance(), {}, MonitoringReviewLink, 'reviewId', 'reviewId', reviewId, callback
-      )));
+      await Promise.all(
+        Array.from({ length: 20 }, () =>
+          syncLink(
+            sequelize,
+            linkInstance(),
+            {},
+            MonitoringReviewLink,
+            'reviewId',
+            'reviewId',
+            reviewId,
+            callback
+          )
+        )
+      );
 
       expect(await MonitoringReviewLink.count({ where: { reviewId } })).toBe(1);
       expect(callback).toHaveBeenCalledTimes(1);
@@ -362,10 +419,17 @@ describe('concurrency races (real database)', () => {
       const reviewId = `race-held-${getUniqueId()}`;
       reviewIdsToCleanup.push(reviewId);
       const callback = jest.fn().mockResolvedValue();
-      const sync = (t) => syncLink(
-        sequelize, linkInstance(), { transaction: t }, MonitoringReviewLink,
-        'reviewId', 'reviewId', reviewId, callback
-      );
+      const sync = (t) =>
+        syncLink(
+          sequelize,
+          linkInstance(),
+          { transaction: t },
+          MonitoringReviewLink,
+          'reviewId',
+          'reviewId',
+          reviewId,
+          callback
+        );
 
       const winner = holdOpenTransaction(sync);
       await winner.ready;
@@ -382,6 +446,105 @@ describe('concurrency races (real database)', () => {
 
       expect(await loser.done).toBe(1);
       expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Approver sync', () => {
+    // Two overlapping saves of one report, as in prod: the "editor" changes a report column
+    // (UPDATE holds the report row), the "autosave" changes nothing on the report, so it upserts
+    // its next steps first and only asks for the report row in syncApprovers. Without a lock taken
+    // up front, each ends up waiting on the other.
+    const overlappingSaves = async ({ lockFirst }) => {
+      const note = await NextStep.create({
+        activityReportId: report.id,
+        note: 'race note',
+        noteType: 'SPECIALIST',
+      });
+      const notes = [{ id: note.id, note: 'race note edited' }];
+      const editorHoldsReport = deferred();
+      const autosaveHoldsNotes = deferred();
+      const autosaveMaySync = deferred();
+
+      const editor = sequelize.transaction(async () => {
+        if (lockFirst) await lockActivityReport(report.id);
+        await ActivityReport.update(
+          { duration: 5 },
+          {
+            where: { id: report.id },
+            individualHooks: false,
+          }
+        );
+        editorHoldsReport.resolve();
+        await autosaveHoldsNotes.promise;
+        await saveNotes(report.id, notes, false);
+        await syncApprovers(report.id, []);
+      });
+      await editorHoldsReport.promise;
+
+      const autosave = sequelize.transaction(async () => {
+        if (lockFirst) {
+          // It waits here on the editor's lock, so let the editor finish instead of waiting on us.
+          autosaveHoldsNotes.resolve();
+          await lockActivityReport(report.id);
+        }
+        await saveNotes(report.id, notes, false);
+        autosaveHoldsNotes.resolve();
+        await autosaveMaySync.promise;
+        await syncApprovers(report.id, []);
+      });
+      await autosaveHoldsNotes.promise;
+      await sleep(300);
+      autosaveMaySync.resolve();
+
+      return Promise.allSettled([editor, autosave]);
+    };
+
+    it('overlapping saves deadlock when they do not lock the report first', async () => {
+      expectOneDeadlockVictim(await overlappingSaves({ lockFirst: false }));
+    });
+
+    it('overlapping saves that lock the report first queue instead of deadlocking', async () => {
+      const outcomes = await overlappingSaves({ lockFirst: true });
+      expect(outcomes.map((o) => o.status)).toEqual(['fulfilled', 'fulfilled']);
+    });
+
+    it('does not block on a concurrent save that inserted next steps for the same report', async () => {
+      // The NextSteps FK check holds FOR KEY SHARE on the report row. An exclusive FOR UPDATE
+      // lock in syncApprovers would wait on it, and deadlock with the save waiting on our rows.
+      const saver = holdOpenTransaction((t) =>
+        NextStep.create(
+          {
+            activityReportId: report.id,
+            note: 'race note',
+            noteType: 'SPECIALIST',
+          },
+          { transaction: t }
+        )
+      );
+      await saver.ready;
+
+      const sync = trackedTransaction(() => syncApprovers(report.id, []));
+      try {
+        await sleep(300);
+        expect(sync.state.settled).toBe(true);
+      } finally {
+        saver.release();
+        await saver.done;
+      }
+      await sync.done;
+    });
+
+    it('still serializes concurrent approver syncs on the same report', async () => {
+      const first = holdOpenTransaction(() => syncApprovers(report.id, []));
+      await first.ready;
+
+      const second = trackedTransaction(() => syncApprovers(report.id, []));
+      await sleep(300);
+      expect(second.state.settled).toBe(false);
+
+      first.release();
+      await first.done;
+      await second.done;
     });
   });
 
@@ -435,8 +598,14 @@ describe('concurrency races (real database)', () => {
           findOrCreateResources([contestedUrl, freshUrl], t),
           collab(t, goalId, [reportId]),
           syncLink(
-            sequelize, linkInstance(), { transaction: t }, MonitoringReviewLink,
-            'reviewId', 'reviewId', reviewId, callback
+            sequelize,
+            linkInstance(),
+            { transaction: t },
+            MonitoringReviewLink,
+            'reviewId',
+            'reviewId',
+            reviewId,
+            callback
           ),
         ]);
         return Promise.all([

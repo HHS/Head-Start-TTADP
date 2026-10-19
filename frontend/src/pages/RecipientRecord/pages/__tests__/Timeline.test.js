@@ -67,6 +67,10 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(screen.getByRole('heading', { name: 'TTA timeline' })).toBeVisible();
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
     expect(screen.getByRole('button', { name: 'About this data' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Get help using filters' })).toHaveClass(
+      'usa-button--unstyled',
+      'margin-right-3'
+    );
     const sortControl = screen.getByRole('combobox', { name: 'View' });
     const checkbox = screen.getByRole('checkbox', {
       name: 'Hide multi-recipient communications',
@@ -94,7 +98,12 @@ describe('Recipient Record - TTA Timeline', () => {
       undefined,
       true
     );
-    expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).not.toContain('purpose');
+    expect(TIMELINE_FILTER_CONFIG.map(({ id }) => id)).toEqual([
+      'purpose',
+      'date',
+      'standard',
+      'eventType',
+    ]);
     await screen.findByText('No results found.');
   });
 
@@ -117,13 +126,28 @@ describe('Recipient Record - TTA Timeline', () => {
     );
   });
 
+  it('sends the selected date order and resets pagination', async () => {
+    renderTimeline();
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'asc')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ direction: 'asc', offset: 0 })
+      )
+    );
+  });
+
   it('does not render or submit filters removed from the timeline configuration', async () => {
     useFilters.mockReturnValue({
       filters: [
         ...createInitialTimelineFilters(),
         {
-          id: 'stale-purpose-filter',
-          topic: 'purpose',
+          id: 'unsupported-method-filter',
+          topic: 'method',
           condition: 'is',
           query: ['General Check-In'],
         },

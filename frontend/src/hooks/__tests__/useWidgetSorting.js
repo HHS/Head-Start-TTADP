@@ -100,6 +100,36 @@ describe('useWidgetSorting', () => {
     expect(result.current.sortConfig).toEqual({ sortBy: '1', direction: 'asc', activePage: 1 });
   });
 
+  it('sorts by a date that is not in the first cell', () => {
+    const setDataToUse = jest.fn();
+    const row = (id, date) => ({
+      id,
+      data: [
+        { title: 'Recipient', value: `Recipient ${id}` },
+        { title: 'Created date', value: date },
+      ],
+    });
+    const rows = [row(1, '01/15/2026'), row(2, '03/01/2026'), row(3, '02/10/2026')];
+
+    const { result } = renderHook(() =>
+      useWidgetSorting(
+        'testDateSorting',
+        { sortBy: 'Created date', direction: 'desc', activePage: 1 },
+        rows,
+        setDataToUse,
+        [],
+        ['Created date'],
+        []
+      )
+    );
+
+    act(() => {
+      result.current.requestSort('Created date', 'desc');
+    });
+
+    expect(setDataToUse.mock.calls.at(-1)[0].map((r) => r.id)).toEqual([2, 3, 1]);
+  });
+
   it('should sort by key', () => {
     const setDataToUse = jest.fn();
 

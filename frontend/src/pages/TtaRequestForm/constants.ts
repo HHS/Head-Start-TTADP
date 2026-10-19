@@ -1,3 +1,5 @@
+import { TTA_REQUEST_ORIGINATORS } from '@ttahub/common';
+
 /** the form's field names, kept in one place so the sections and their tests agree */
 export const TTA_REQUEST_FIELDS = {
   RECIPIENT: 'recipient',
@@ -16,12 +18,10 @@ export const MONITORING_STANDARD = 'Monitoring';
 
 export const SELECT_PLACEHOLDER = '- Select -';
 
-export const REQUEST_ORIGINATORS = [
-  'Central Office',
-  'Recipient',
-  'Regional Office',
-  'TTA Staff',
-].map((originator) => ({ value: originator, label: originator }));
+export const REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS.map((originator) => ({
+  value: originator,
+  label: originator,
+}));
 
 export const RTTAPA_ALERT =
   "This goal will be added to the recipient's RTTAPA. If it's not already in use, its status will be set to Not started. If it's already on the RTTAPA, its current status won't change.";
@@ -42,3 +42,9 @@ export const defaultValues = {
   [TTA_REQUEST_FIELDS.CREATOR_NOTES]: '',
   [TTA_REQUEST_FIELDS.REVIEWER]: null,
 };
+
+export const SAVE_ERROR = 'There was an error saving the TTA request. Please try again later.';
+
+export const NO_REGION_ERROR = 'Select a recipient grant before saving a draft.';
+
+export const LOAD_ERROR = 'Unable to load the TTA request.';

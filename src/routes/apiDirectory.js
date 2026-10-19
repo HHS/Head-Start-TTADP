@@ -36,6 +36,7 @@ import siteAlertsRouter from './siteAlerts';
 import ssdiRouter from './ssdi';
 import topicsRouter from './topics';
 import transactionWrapper from './transactionWrapper';
+import ttaRequestsRouter from './ttaRequests';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
 
@@ -101,6 +102,7 @@ router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
 router.use('/delivered-reviews', deliveredReviewsRouter);
+router.use('/tta-requests', ttaRequestsRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

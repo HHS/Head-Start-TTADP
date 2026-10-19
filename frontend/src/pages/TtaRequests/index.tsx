@@ -82,7 +82,7 @@ export default function TtaRequests(): React.ReactElement {
               />
             </div>
             {/* these tables span every recipient the user can see, so they name each one */}
-            <ActiveTtaRequestsTable showRecipientColumns />
+            <ActiveTtaRequestsTable showRecipientColumns filters={filters} />
             <div className="margin-top-3">
               <ApprovedTtaRequestsTable showRecipientColumns />
             </div>

@@ -124,7 +124,7 @@ export default function Notifications() {
   return (
     <>
       <Helmet>
-        <title>Notifications {isArchive ? 'Archive' : ''} | TTA Hub</title>
+        <title>Notifications {isArchive ? 'Archive' : ''}</title>
       </Helmet>
       <h1 className="landing margin-0">Notifications</h1>
 
