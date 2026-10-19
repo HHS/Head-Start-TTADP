@@ -433,7 +433,7 @@
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "deployment_config/prod_vars.yml",
-        "note": "app_url in prod_vars.yml records this mapped route. See disposition INV-2026-0004."
+        "note": "app_url in prod_vars.yml records tta-smarthub-prod.app.cloud.gov, which is not the mapped route. See disposition INV-2026-0004."
       }
     },
     {
