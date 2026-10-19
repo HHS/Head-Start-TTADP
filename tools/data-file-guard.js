@@ -1,3 +1,5 @@
+const { execFileSync } = require('node:child_process');
+
 const FORBIDDEN_PATH_PATTERNS = [
   { pattern: /^hses\//, reason: 'HSES data extracts must not be committed (hses/)' },
   { pattern: /(^|\/)hses\.zip$/, reason: 'HSES data extracts must not be committed (hses.zip)' },
@@ -19,14 +21,32 @@ const HSES_EXTRACT_FILE_NAMES = new Set([
 const HSES_FIXTURE_DIRECTORY = 'temp/';
 const MAX_FIXTURE_ADDED_LINES = 1000;
 
+const GIT_MAX_BUFFER = 512 * 1024 * 1024;
+
+const isDataFile = (path) => DATA_FILE_PATTERN.test(path);
+
+// Parses `git diff -z --name-status --no-renames`: NUL separated "status, path" pairs.
+// Paths come through verbatim, so spaces and non ASCII names are not quoted or escaped.
 function parseNameStatus(nameStatusOutput = '') {
-  return nameStatusOutput
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [status, ...pathParts] = line.split('\t');
-      return { status, path: pathParts.join('\t') };
+  const tokens = nameStatusOutput.split('\0').filter((token) => token !== '');
+  const changes = [];
+
+  for (let i = 0; i + 1 < tokens.length; i += 2) {
+    changes.push({ status: tokens[i], path: tokens[i + 1] });
+  }
+
+  return changes;
+}
+
+// Parses `git diff -z --numstat --no-renames`: NUL terminated "added<TAB>deleted<TAB>path".
+function parseNumstat(numstatOutput = '') {
+  return numstatOutput
+    .split('\0')
+    .filter((record) => record !== '')
+    .map((record) => {
+      const [added, , ...pathParts] = record.split('\t');
+      // Binary files report "-"; treat them as zero added lines.
+      return { path: pathParts.join('\t'), addedLines: Number.parseInt(added, 10) || 0 };
     })
     .filter(({ path }) => path);
 }
@@ -40,19 +60,6 @@ function findForbiddenPaths(changes = []) {
         reason,
       }))
     );
-}
-
-function parseNumstat(numstatOutput = '') {
-  return numstatOutput
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [added, , ...pathParts] = line.split('\t');
-      // Binary files report "-"; treat them as zero added lines.
-      return { path: pathParts.join('\t'), addedLines: Number.parseInt(added, 10) || 0 };
-    })
-    .filter(({ path }) => path);
 }
 
 // Flags files named like the ones in the HSES zip when they are outside temp/, or inside
@@ -89,48 +96,46 @@ function findHsesExtractFiles(changes = [], numstatRows = []) {
     });
 }
 
-// Scans a `git diff --unified=0` for added lines in data files that contain real staff
-// email addresses. Matched text is never returned, so CI logs do not repeat personal data.
-function findStaffEmailsInAddedLines(diffText = '') {
+// Scans the `git diff --unified=0` of ONE file for added lines that contain real staff email
+// addresses. The path is supplied by the caller (from NUL delimited git output), so the patch
+// headers are never parsed. Matched text is never returned, so CI logs do not repeat personal data.
+function findStaffEmailsInAddedLines(path, diffText = '') {
   const findings = [];
-  let currentPath = null;
   let currentLine = 0;
-  let inDataFile = false;
+  let inHunk = false;
 
   diffText.split('\n').forEach((line) => {
-    if (line.startsWith('+++ ')) {
-      currentPath = line.slice(4).replace(/^b\//, '');
-      inDataFile = currentPath !== '/dev/null' && DATA_FILE_PATTERN.test(currentPath);
-      return;
-    }
-
     const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
     if (hunk) {
       currentLine = Number(hunk[1]);
+      inHunk = true;
       return;
     }
 
-    if (line.startsWith('+') && !line.startsWith('+++')) {
-      if (inDataFile && STAFF_EMAIL_PATTERN.test(line)) {
-        findings.push({
-          path: currentPath,
-          line: currentLine,
-          reason: 'Added line in a data file contains a staff email address (@acf.hhs.gov)',
-        });
-      }
-      currentLine += 1;
+    // Everything before the first hunk is patch header, not file content.
+    if (!inHunk || !line.startsWith('+')) {
+      return;
     }
+
+    if (STAFF_EMAIL_PATTERN.test(line)) {
+      findings.push({
+        path,
+        line: currentLine,
+        reason: 'Added line in a data file contains a staff email address (@acf.hhs.gov)',
+      });
+    }
+    currentLine += 1;
   });
 
   return findings;
 }
 
-function evaluate({ nameStatusOutput = '', numstatOutput = '', diffText = '' } = {}) {
+function evaluate({ nameStatusOutput = '', numstatOutput = '', fileDiffs = [] } = {}) {
   const changes = parseNameStatus(nameStatusOutput);
   const findings = [
     ...findForbiddenPaths(changes),
     ...findHsesExtractFiles(changes, parseNumstat(numstatOutput)),
-    ...findStaffEmailsInAddedLines(diffText),
+    ...fileDiffs.flatMap(({ path, diffText }) => findStaffEmailsInAddedLines(path, diffText)),
   ];
 
   if (findings.length === 0) {
@@ -148,11 +153,36 @@ function evaluate({ nameStatusOutput = '', numstatOutput = '', diffText = '' } =
   };
 }
 
+// Runs the guard against `baseRef...HEAD` in the git repository at `cwd`.
+function checkRange({ baseRef, cwd = process.cwd() } = {}) {
+  const git = (...args) =>
+    execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER });
+  const range = `${baseRef}...HEAD`;
+  const baseArgs = ['diff', '--no-renames', '--no-ext-diff', '--no-textconv'];
+
+  const nameStatusOutput = git(...baseArgs, '-z', '--name-status', range);
+  const numstatOutput = git(...baseArgs, '-z', '--numstat', range);
+
+  // Data files are chosen here, case insensitively, from verbatim paths. Each gets its own
+  // diff through a literal pathspec, so names with spaces, quotes, or non ASCII characters
+  // are scanned like any other.
+  const fileDiffs = parseNameStatus(nameStatusOutput)
+    .filter(({ status, path }) => !status.startsWith('D') && isDataFile(path))
+    .map(({ path }) => ({
+      path,
+      diffText: git(...baseArgs, '--unified=0', range, '--', `:(literal)${path}`),
+    }));
+
+  return evaluate({ nameStatusOutput, numstatOutput, fileDiffs });
+}
+
 module.exports = {
+  checkRange,
   evaluate,
   findForbiddenPaths,
   findHsesExtractFiles,
   findStaffEmailsInAddedLines,
+  isDataFile,
   parseNameStatus,
   parseNumstat,
 };
