@@ -24,7 +24,13 @@ import {
   unlockReport,
 } from './handlers';
 
-jest.mock('../../services/collabReports');
+jest.mock('../../services/collabReports', () => ({
+  collabReportById: jest.fn(),
+  createOrUpdateReport: jest.fn(),
+  deleteReport: jest.fn(),
+  getCSVReports: jest.fn(),
+  getReports: jest.fn(),
+}));
 jest.mock('../../lib/mailer', () => ({
   collaboratorAssignedNotification: jest.fn(),
 }));
