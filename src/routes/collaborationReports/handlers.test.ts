@@ -25,7 +25,9 @@ import {
 } from './handlers';
 
 jest.mock('../../services/collabReports');
-jest.mock('../../lib/mailer');
+jest.mock('../../lib/mailer', () => ({
+  collaboratorAssignedNotification: jest.fn(),
+}));
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/accessValidation');
