@@ -49,7 +49,7 @@ export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): 
         </div>
         <ActiveTtaRequestsTable recipientId={recipientId} regionId={regionId} />
         <div className="margin-top-3">
-          <ApprovedTtaRequestsTable recipientId={recipientId} regionId={regionId} />
+          <ApprovedTtaRequestsTable />
         </div>
       </div>
     </>
