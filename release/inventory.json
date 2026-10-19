@@ -57,7 +57,7 @@
         "reference": "docs/adr/0017-python-analytics-processing.md",
         "note": "Shown as the Similarity API container in docs/boundary_diagram.md."
       },
-      "notes": "Stopped in production and no longer bound to the production database service. See disposition INV-2026-0001."
+      "notes": "Stopped but still bound to the production database service. See disposition INV-2026-0001."
     },
     {
       "id": "app.automation",
@@ -150,7 +150,7 @@
         "reference": "docs/adr/0006-database.md",
         "note": "Read replica plan authorized by ADR 0016."
       },
-      "notes": "The similarity API binding to the production service was removed. See disposition INV-2026-0001."
+      "notes": "Also bound to tta-similarity-api-((env)). See disposition INV-2026-0001."
     },
     {
       "id": "service.redis",
