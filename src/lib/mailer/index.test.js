@@ -1,7 +1,12 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import Email from 'email-templates';
 import { createTransport } from 'nodemailer';
-import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
+import {
+  DIGEST_SUBJECT_FREQ,
+  EMAIL_ACTIONS,
+  EMAIL_DIGEST_FREQ,
+  USER_SETTINGS,
+} from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import db, {
   ActivityReport,
@@ -9,7 +14,7 @@ import db, {
   ActivityReportCollaborator,
   User,
 } from '../../models';
-import { usersWithSetting } from '../../services/userSettings';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import {
   approvedDigest,
@@ -50,6 +55,7 @@ import {
   trEventComplete,
   trOwnerAdded,
   trSessionCreated,
+  trSessionSubmittedForApproval,
 } from '.';
 
 const { DAILY, WEEKLY, MONTHLY } = DIGEST_SUBJECT_FREQ;
@@ -2269,6 +2275,85 @@ describe('mailer tests', () => {
       expect(logger.info).toHaveBeenCalledWith(
         'Did not send tr session created notification for tr-1234 preferences are not set or marked as "no-send"'
       );
+    });
+
+    describe('trSessionSubmittedForApproval', () => {
+      const mockSubmittedSession = {
+        id: 7,
+        approverId: 8,
+        data: { sessionName: 'Session one' },
+      };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('notifies an opted-in approver', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'approver@test.gov' });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          8,
+          EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            sessionName: 'Session one',
+            emailTo: ['approver@test.gov'],
+            templatePath: 'tr_session_submitted',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/7`,
+          })
+        );
+      });
+
+      it('does not notify an approver who has not opted in', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify an approver opted in to a digest', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          ...immediately,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does nothing when the session has no approver', async () => {
+        await trSessionSubmittedForApproval(mockEvent, {
+          ...mockSubmittedSession,
+          approverId: null,
+        });
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify a no-send approver', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'no-send_approver@test.gov' });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the approver does not exist', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue(null);
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
     });
 
     it('trOwnerAdded returns if process.env.ci is true', async () => {
