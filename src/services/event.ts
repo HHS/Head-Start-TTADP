@@ -17,6 +17,7 @@ import { trEventComplete } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
+import { createNotificationForNewPocs } from './notifications/trainingReport';
 import type {
   CreateEventRequest,
   EventShape,
@@ -120,7 +121,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     throw new Error('Missing required field: data.eventId');
   }
 
-  return EventReportPilot.create({
+  const created = await EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
@@ -128,6 +129,19 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     eventId,
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
+
+  // a notification failure must never fail the save
+  try {
+    const owner = data.owner
+      ? null
+      : await User.findOne({ where: { id: ownerId }, attributes: ['name', 'fullName'] });
+    const authorName = data.owner?.fullName || data.owner?.name || owner?.fullName || owner?.name;
+    await createNotificationForNewPocs(created, [], pocIds, authorName);
+  } catch (err) {
+    auditLogger.error(`Error creating POC added notifications for event ${created.id}:`, err);
+  }
+
+  return created;
 }
 
 /**
@@ -454,6 +468,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   } = (evt.data ?? {}) as Record<string, unknown>;
 
   const persistedData = { ...storedData, ...incomingData };
+  const previousPocIds = event.pocIds ?? [];
 
   await evt.update(
     {
@@ -466,6 +481,18 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     },
     { where: { id }, individualHooks: true }
   );
+
+  // a notification failure must never fail the save
+  try {
+    await createNotificationForNewPocs(
+      { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+      previousPocIds,
+      pocIds,
+      data.owner?.fullName || data.owner?.name
+    );
+  } catch (err) {
+    auditLogger.error(`Error creating POC added notifications for event ${evt.id}:`, err);
+  }
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
