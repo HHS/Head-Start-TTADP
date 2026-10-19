@@ -262,6 +262,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
   },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED]: {
+    textFn: ({ author }) =>
+      `${author} added you as a Regional point of contact on their Training Report.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenAddedAsPocTrainingReport',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,

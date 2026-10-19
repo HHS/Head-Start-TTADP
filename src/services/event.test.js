@@ -25,6 +25,11 @@ import {
   updateEvent,
   validateFields,
 } from './event';
+import { createNotificationForNewPocs } from './notifications/trainingReport';
+
+jest.mock('./notifications/trainingReport', () => ({
+  createNotificationForNewPocs: jest.fn(),
+}));
 
 describe('event service', () => {
   const ownerIds = [98_989, 98_900, 11_111, 11_112, 11_113, 50_500, 50_501];
@@ -92,6 +97,44 @@ describe('event service', () => {
     });
 
   describe('createEvent', () => {
+    beforeEach(() => {
+      createNotificationForNewPocs.mockReset();
+    });
+
+    it('notifies new POCs with an empty previous list and the owner name', async () => {
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [11_111],
+        collaboratorIds: [],
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          owner: { id: 98_989, name: 'Owner Name' },
+        },
+      });
+
+      expect(createNotificationForNewPocs).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [],
+        [11_111],
+        'Owner Name'
+      );
+
+      await destroyEvent(created.id);
+    });
+
+    it('does not throw when the notification helper rejects', async () => {
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      const created = await createAnEvent(98_989);
+      expect(created).toHaveProperty('id');
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('works', async () => {
       const created = await createAnEvent(98_989);
       expect(created).toHaveProperty('id');
@@ -160,6 +203,54 @@ describe('event service', () => {
   });
 
   describe('updateEvent', () => {
+    beforeEach(() => {
+      createNotificationForNewPocs.mockReset();
+    });
+
+    it('notifies new POCs with the previous POCs, new POCs and owner name', async () => {
+      const created = await createAnEvent(98_989);
+      createNotificationForNewPocs.mockClear();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active', owner: { id: 98_989, name: 'test' } },
+      });
+
+      expect(createNotificationForNewPocs).toHaveBeenCalledTimes(1);
+      const [evt, previous, current, authorName] = createNotificationForNewPocs.mock.calls[0];
+      expect(evt).toEqual(
+        expect.objectContaining({ id: created.id, eventId: created.eventId, ownerId: 98_989 })
+      );
+      expect(previous).toEqual([98_989]);
+      expect(current).toEqual([98_989, 11_111]);
+      expect(typeof authorName === 'string' || authorName === undefined).toBe(true);
+
+      await destroyEvent(created.id);
+    });
+
+    it('does not throw when the notification helper rejects', async () => {
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+      const created = await createAnEvent(98_989);
+
+      const updated = await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active' },
+      });
+
+      expect(updated).toHaveProperty('id', created.id);
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('works', async () => {
       const created = await createAnEvent(98_989);
 
