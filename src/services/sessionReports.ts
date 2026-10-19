@@ -4,10 +4,12 @@ import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
+import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
@@ -389,10 +391,35 @@ export async function updateSession(id: number, request) {
     update.submitterId = Number(submitterId);
   }
 
+  // Only a first submission notifies collaborators (TR-3c); resubmissions after
+  // changes were requested are covered by TR-5c.
+  const wasSubmitted = isSessionSubmitted(event, {
+    approverId: session.approverId,
+    data: existingData,
+  } as unknown as SessionShape);
+  const isSubmitted = isSessionSubmitted(event, {
+    approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+    data: newData,
+  } as unknown as SessionShape);
+  const isFirstSubmission =
+    !wasSubmitted && isSubmitted && existingData.status !== REPORT_STATUSES.NEEDS_ACTION;
+
   await SessionReportPilot.update(update, {
     where: { id },
     individualHooks: true,
   });
+
+  if (isFirstSubmission) {
+    // a notification failure must never fail the save
+    try {
+      await createNotificationForSessionSubmittedCollaborators(event, {
+        id,
+        data: newData as { sessionName?: string },
+      });
+    } catch (err) {
+      auditLogger.error(`Error creating session submitted notifications for session ${id}:`, err);
+    }
+  }
 
   if (goalTemplates) {
     await updateSessionReportRelatedModels(
