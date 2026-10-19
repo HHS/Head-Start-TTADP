@@ -45,6 +45,7 @@ import {
   getDownloadableActivityReportsByIds,
   getObjectiveSupportTypeSubmissionError,
   handleSoftDeleteReport,
+  lockActivityReport,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
@@ -832,6 +833,7 @@ export async function submitReport(req, res) {
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
+    await lockActivityReport(activityReportId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
     const isResubmission = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
@@ -1160,6 +1162,8 @@ export async function saveReport(req, res) {
     }
     const userId = await currentUserId(req, res);
     const { activityReportId } = req.params;
+    // Lock before reading, so an overlapping save waits here and then reads fresh data.
+    await lockActivityReport(activityReportId);
     const [report, activityRecipients] = await activityReportAndRecipientsById(activityReportId);
     if (!report) {
       res.sendStatus(404);

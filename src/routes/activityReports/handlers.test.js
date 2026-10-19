@@ -26,6 +26,7 @@ import {
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
   getObjectiveSupportTypeSubmissionError,
+  lockActivityReport,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
@@ -68,6 +69,7 @@ jest.mock('../../services/activityReports', () => ({
   assertApproversAreNotParticipants: jest.fn(),
   activityReportAndRecipientsById: jest.fn(),
   createOrUpdate: jest.fn(),
+  lockActivityReport: jest.fn(),
   possibleRecipients: jest.fn(),
   review: jest.fn(),
   setStatus: jest.fn(),
@@ -1806,6 +1808,10 @@ describe('Activity Report handlers', () => {
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
       const approverUpdate = jest.spyOn(ActivityReportApprover, 'update').mockImplementation();
       await submitReport(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder.at(-1)
+      );
       expect(assertApproversAreNotParticipants).toHaveBeenCalledWith(
         request.body.approverUserIds,
         byIdResponse[0]
@@ -2737,6 +2743,20 @@ describe('Activity Report handlers', () => {
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(expected);
+    });
+
+    it('locks the report before reading it', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({ id: mockUser.id });
+      await saveReport(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder.at(-1)
+      );
     });
 
     it('preserves citations monitoringReferences payload contract for PUT /api/activity-reports/:activityReportId', async () => {
