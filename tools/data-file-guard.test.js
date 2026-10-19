@@ -51,15 +51,20 @@ describe('data file guard', () => {
 
   describe('parseNumstat', () => {
     it('parses NUL delimited git numstat output', () => {
-      expect(parseNumstat(nul('12\t3\ttemp/agency.xml', '-\t-\tsome/file.zip'))).toEqual([
-        { path: 'temp/agency.xml', addedLines: 12 },
-        { path: 'some/file.zip', addedLines: 0 },
+      expect(parseNumstat(nul('12\t3\ttemp/agency.xml'))).toEqual([
+        { path: 'temp/agency.xml', addedLines: 12, binary: false },
+      ]);
+    });
+
+    it('marks binary files, which git reports with "-" instead of a line count', () => {
+      expect(parseNumstat(nul('-\t-\tsome/file.zip'))).toEqual([
+        { path: 'some/file.zip', addedLines: 0, binary: true },
       ]);
     });
 
     it('keeps spaces in paths', () => {
       expect(parseNumstat(nul('4\t0\tdata/staff export.csv'))).toEqual([
-        { path: 'data/staff export.csv', addedLines: 4 },
+        { path: 'data/staff export.csv', addedLines: 4, binary: false },
       ]);
     });
   });
@@ -78,6 +83,17 @@ describe('data file guard', () => {
     it('flags hses.zip at any depth', () => {
       expect(findForbiddenPaths([{ status: 'A', path: 'hses.zip' }])).toHaveLength(1);
       expect(findForbiddenPaths([{ status: 'M', path: 'some/dir/hses.zip' }])).toHaveLength(1);
+    });
+
+    it.each([
+      'HSES.ZIP',
+      'hses.ZIP',
+      'Hses.Zip',
+      'some/dir/HSES.ZIP',
+      'HSES/grant_award.xml',
+      'Hses/x.csv',
+    ])('flags %s regardless of letter case', (name) => {
+      expect(findForbiddenPaths([{ status: 'A', path: name }])).toHaveLength(1);
     });
 
     it('allows deleting forbidden paths', () => {
@@ -102,6 +118,21 @@ describe('data file guard', () => {
       const findings = findHsesExtractFiles([{ status: 'A', path: `data/${name}` }], []);
       expect(findings).toHaveLength(1);
       expect(findings[0].path).toBe(`data/${name}`);
+    });
+
+    it.each(['data/GRANT_AWARD.XML', 'data/Grant_Program.xml', 'Agency.XML'])(
+      'flags %s regardless of letter case',
+      (name) => {
+        expect(findHsesExtractFiles([{ status: 'A', path: name }], [])).toHaveLength(1);
+      }
+    );
+
+    it('flags a binary file with an extract name even in temp/', () => {
+      const changes = [{ status: 'A', path: 'temp/grant_award.xml' }];
+      const numstat = [{ path: 'temp/grant_award.xml', addedLines: 0, binary: true }];
+      const findings = findHsesExtractFiles(changes, numstat);
+      expect(findings).toHaveLength(1);
+      expect(findings[0].reason).toContain('Binary');
     });
 
     it('flags a file at the repo root', () => {
@@ -320,6 +351,35 @@ describe('data file guard', () => {
       writeFile('data/say "hi".csv', emailCsv);
       commitAll('quote');
       expect(checkRange({ baseRef: baseSha, cwd: repoDir }).valid).toBe(false);
+    });
+
+    it.each(['HSES.ZIP', 'hses.ZIP', 'sub/Hses.Zip'])('flags %s in a real commit', (name) => {
+      writeFile(name, 'not really a zip\n');
+      commitAll('zip case');
+      const result = checkRange({ baseRef: baseSha, cwd: repoDir });
+      expect(result.valid).toBe(false);
+      expect(result.findings[0].path).toBe(name);
+    });
+
+    it('flags an uppercase hses directory in a real commit', () => {
+      writeFile('HSES/notes.txt', 'x\n');
+      commitAll('hses dir case');
+      const result = checkRange({ baseRef: baseSha, cwd: repoDir });
+      expect(result.valid).toBe(false);
+      expect(result.findings[0].path).toBe('HSES/notes.txt');
+    });
+
+    it('flags a binary file named like an extract in temp/', () => {
+      fs.mkdirSync(path.join(repoDir, 'temp'), { recursive: true });
+      fs.writeFileSync(
+        path.join(repoDir, 'temp/grant_award.xml'),
+        Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0xff, 0x00, 0x01])
+      );
+      commitAll('binary extract name');
+      const result = checkRange({ baseRef: baseSha, cwd: repoDir });
+      expect(result.valid).toBe(false);
+      expect(result.findings[0]).toMatchObject({ path: 'temp/grant_award.xml' });
+      expect(result.findings[0].reason).toContain('Binary');
     });
 
     it('flags an HSES extract file name outside temp/', () => {

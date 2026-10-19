@@ -1,8 +1,8 @@
 const { execFileSync } = require('node:child_process');
 
 const FORBIDDEN_PATH_PATTERNS = [
-  { pattern: /^hses\//, reason: 'HSES data extracts must not be committed (hses/)' },
-  { pattern: /(^|\/)hses\.zip$/, reason: 'HSES data extracts must not be committed (hses.zip)' },
+  { pattern: /^hses\//i, reason: 'HSES data extracts must not be committed (hses/)' },
+  { pattern: /(^|\/)hses\.zip$/i, reason: 'HSES data extracts must not be committed (hses.zip)' },
 ];
 
 const DATA_FILE_PATTERN = /\.(xml|csv|tsv)$/i;
@@ -45,8 +45,14 @@ function parseNumstat(numstatOutput = '') {
     .filter((record) => record !== '')
     .map((record) => {
       const [added, , ...pathParts] = record.split('\t');
-      // Binary files report "-"; treat them as zero added lines.
-      return { path: pathParts.join('\t'), addedLines: Number.parseInt(added, 10) || 0 };
+      // Binary files report "-" instead of a line count, so mark them rather than treating
+      // them as zero lines, which would let a binary blob slip under the fixture size limit.
+      const binary = added === '-';
+      return {
+        path: pathParts.join('\t'),
+        addedLines: binary ? 0 : Number.parseInt(added, 10) || 0,
+        binary,
+      };
     })
     .filter(({ path }) => path);
 }
@@ -65,13 +71,13 @@ function findForbiddenPaths(changes = []) {
 // Flags files named like the ones in the HSES zip when they are outside temp/, or inside
 // temp/ but too large to be a fixture. Paths already caught by findForbiddenPaths are skipped.
 function findHsesExtractFiles(changes = [], numstatRows = []) {
-  const addedLinesByPath = new Map(numstatRows.map(({ path, addedLines }) => [path, addedLines]));
+  const numstatByPath = new Map(numstatRows.map((row) => [row.path, row]));
   const alreadyForbidden = new Set(findForbiddenPaths(changes).map(({ path }) => path));
 
   return changes
     .filter(({ status }) => !status.startsWith('D'))
     .filter(({ path }) => !alreadyForbidden.has(path))
-    .filter(({ path }) => HSES_EXTRACT_FILE_NAMES.has(path.split('/').pop()))
+    .filter(({ path }) => HSES_EXTRACT_FILE_NAMES.has(path.split('/').pop().toLowerCase()))
     .flatMap(({ path }) => {
       if (!path.startsWith(HSES_FIXTURE_DIRECTORY)) {
         return [
@@ -82,7 +88,17 @@ function findHsesExtractFiles(changes = [], numstatRows = []) {
         ];
       }
 
-      const addedLines = addedLinesByPath.get(path) || 0;
+      const { addedLines = 0, binary = false } = numstatByPath.get(path) || {};
+      if (binary) {
+        return [
+          {
+            path,
+            reason:
+              'Binary file with an HSES extract file name; fixtures in temp/ must be plain text XML',
+          },
+        ];
+      }
+
       if (addedLines > MAX_FIXTURE_ADDED_LINES) {
         return [
           {
