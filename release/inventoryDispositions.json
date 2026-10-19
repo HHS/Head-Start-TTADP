@@ -53,12 +53,12 @@
       "componentName": "tta-smarthub-prod.app.cloud.gov",
       "componentClass": "route",
       "finding": "The route recorded as app_url in deployment_config/prod_vars.yml exists in the space but is mapped to no application. The application actually serves tta-smarthub-prod1.app.cloud.gov.",
-      "status": "deferred",
-      "justification": "The repository configuration names a hostname that no longer routes to the application, which means published configuration disagrees with the deployed state. The numeric suffix on the live route suggests a hostname collision at some point in the past that was worked around rather than resolved.",
+      "status": "resolved",
+      "justification": "Resolved by TTAHUB-5734 on 2026-10-19. The unmapped tta-smarthub-prod.app.cloud.gov route was deleted from the production space (cf delete-route app.cloud.gov --hostname tta-smarthub-prod). Afterward cf routes for ttahub-prod listed only ttahub.ohs.acf.hhs.gov and tta-smarthub-prod1.app.cloud.gov, both mapped to tta-smarthub-prod. app_url in deployment_config/prod_vars.yml now records the mapped tta-smarthub-prod1.app.cloud.gov route, so published configuration matches deployed state. Nothing in CI or manifest.yml consumes app_url, and the public hostname (TTA_SMART_HUB_URI) is unchanged. The suffixed hostname was kept rather than remapped to avoid changing the hostname of a live production application.",
       "owner": "TTA Hub Tech Lead",
-      "trackingTicket": "TTAHUB-5245",
+      "trackingTicket": "TTAHUB-5734",
       "closureTarget": "2026-11-05",
-      "recommendation": "Delete the unmapped route and correct app_url in deployment_config/prod_vars.yml, or remap the intended hostname and retire the suffixed one.",
+      "recommendation": "Closed. The unmapped route was deleted and app_url corrected to the mapped route. No further action is needed.",
       "approval": null
     },
     {
