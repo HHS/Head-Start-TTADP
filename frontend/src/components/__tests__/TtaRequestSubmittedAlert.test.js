@@ -12,13 +12,13 @@ const MESSAGE = {
   status: 'submitted',
 };
 
-const renderAlert = (state) => {
+const renderAlert = (state, props = {}) => {
   const history = createMemoryHistory({
     initialEntries: [{ pathname: '/tta-requests', state }],
   });
   render(
     <Router history={history}>
-      <TtaRequestSubmittedAlert />
+      <TtaRequestSubmittedAlert {...props} />
     </Router>
   );
   return history;
@@ -34,6 +34,18 @@ describe('TtaRequestSubmittedAlert', () => {
     expect(screen.getByRole('link', { name: 'R14-REQ-14322' })).toHaveAttribute(
       'href',
       '/tta-requests/view/14322'
+    );
+  });
+
+  it('links to the view under the list it is shown on', () => {
+    renderAlert(
+      { message: MESSAGE },
+      { requestRoot: '/recipient-tta-records/3/region/14/tta-request' }
+    );
+
+    expect(screen.getByRole('link', { name: 'R14-REQ-14322' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/3/region/14/tta-request/view/14322'
     );
   });
 

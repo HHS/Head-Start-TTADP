@@ -146,6 +146,7 @@ const stateCodes = (request: ActiveTtaRequest) =>
 const toTableRow = (
   request: ActiveTtaRequest,
   requestUrl: (requestId: number) => string,
+  viewUrl: (requestId: number) => string,
   showRecipientColumns: boolean
 ): TtaRequestsTableRow => {
   const status = STATUS_LABELS[request.status] ?? request.status;
@@ -157,7 +158,7 @@ const toTableRow = (
     sortKey: request.displayId,
     isUrl: true,
     isInternalLink: true,
-    link: isDraft ? requestUrl(request.id) : ttaRequestViewPath(request.id),
+    link: isDraft ? requestUrl(request.id) : viewUrl(request.id),
     data: [
       ...(showRecipientColumns
         ? [recipientCell(request), { title: COLUMNS.REGION, value: String(request.regionId) }]
@@ -212,6 +213,10 @@ export default function ActiveTtaRequestsTable({
     (requestId: number) => `${requestRoot}/${requestId}`,
     [requestRoot]
   );
+  const viewUrl = useCallback(
+    (requestId: number) => ttaRequestViewPath(requestId, requestRoot),
+    [requestRoot]
+  );
 
   // across recipients the page's filters pick the regions; a recipient's tab is its own
   const fetcher = useCallback(
@@ -232,9 +237,9 @@ export default function ActiveTtaRequestsTable({
   const rows = useMemo(
     () =>
       (data || NO_REQUESTS).rows.map((request) =>
-        toTableRow(request, requestUrl, showRecipientColumns)
+        toTableRow(request, requestUrl, viewUrl, showRecipientColumns)
       ),
-    [data, requestUrl, showRecipientColumns]
+    [data, requestUrl, viewUrl, showRecipientColumns]
   );
 
   return (

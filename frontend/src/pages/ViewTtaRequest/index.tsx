@@ -33,11 +33,18 @@ const goalLabel = (goalTemplate: TtaRequestResponse['goalTemplate']) => {
 const citationLabel = ({ citation, findingType }: TtaRequestResponse['citations'][number]) =>
   findingType ? `${findingType} - ${citation}` : citation;
 
+interface ViewTtaRequestProps {
+  /** the list the request was opened from, all regions' or a recipient's */
+  backLinkTo?: string;
+}
+
 /**
  * A submitted TTA request, read only. The approver, assigned staff and goals only exist once
  * a request has been approved, so they aren't shown yet.
  */
-export default function ViewTtaRequest(): React.ReactElement | null {
+export default function ViewTtaRequest({
+  backLinkTo = '/tta-requests',
+}: ViewTtaRequestProps): React.ReactElement | null {
   const { ttaRequestId } = useParams<{ ttaRequestId: string }>();
 
   const fetchTtaRequest = useCallback(
@@ -70,7 +77,7 @@ export default function ViewTtaRequest(): React.ReactElement | null {
       <Helmet>
         <title>TTA Request {displayId}</title>
       </Helmet>
-      <BackLink to="/tta-requests">Back to TTA Requests</BackLink>
+      <BackLink to={backLinkTo}>Back to TTA Requests</BackLink>
       <div className="margin-top-2">
         <ApprovedReportSpecialButtons />
       </div>

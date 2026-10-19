@@ -43,7 +43,7 @@ const SUBMITTED_REQUEST = {
   ],
 };
 
-const renderView = () => {
+const renderView = (props = {}) => {
   const history = createMemoryHistory({ initialEntries: ['/tta-requests/view/14322'] });
   render(
     <AppLoadingContext.Provider
@@ -51,7 +51,7 @@ const renderView = () => {
     >
       <Router history={history}>
         <Route path="/tta-requests/view/:ttaRequestId">
-          <ViewTtaRequest />
+          <ViewTtaRequest {...props} />
         </Route>
       </Router>
     </AppLoadingContext.Provider>
@@ -62,6 +62,16 @@ const renderView = () => {
 describe('ViewTtaRequest', () => {
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  it('goes back to the list it was opened from', async () => {
+    fetchMock.get(URL, SUBMITTED_REQUEST);
+    renderView({ backLinkTo: '/recipient-tta-records/3/region/14/tta-request' });
+
+    expect(await screen.findByRole('link', { name: /back to tta requests/i })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/3/region/14/tta-request'
+    );
   });
 
   it('shows the submitted request', async () => {

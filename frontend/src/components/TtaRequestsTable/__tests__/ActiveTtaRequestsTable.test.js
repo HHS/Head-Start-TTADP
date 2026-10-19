@@ -212,7 +212,7 @@ describe('ActiveTtaRequestsTable', () => {
 
     expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
       'href',
-      '/tta-requests/view/101'
+      `${RECIPIENT_PATH}/tta-request/view/101`
     );
     expect(within(firstRow).getByText('Submitted')).toBeVisible();
     expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();

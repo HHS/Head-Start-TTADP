@@ -46,8 +46,12 @@ export const defaultValues = {
 export const SUBMIT_ERROR =
   'There was an error submitting the TTA request. Please try again later.';
 
-/** where a submitted request is shown read only */
-export const ttaRequestViewPath = (ttaRequestId: number) => `/tta-requests/view/${ttaRequestId}`;
+/**
+ * Where a submitted request is shown read only, under the list it was opened from, so the
+ * view's back link can return there
+ */
+export const ttaRequestViewPath = (ttaRequestId: number, requestRoot = '/tta-requests') =>
+  `${requestRoot}/view/${ttaRequestId}`;
 
 export const SAVE_ERROR = 'There was an error saving the TTA request. Please try again later.';
 

@@ -16,12 +16,19 @@ interface LocationState {
   message?: TtaRequestSubmittedMessage | null;
 }
 
+interface TtaRequestSubmittedAlertProps {
+  /** the list the alert is shown on, so the request opens under it */
+  requestRoot?: string;
+}
+
 /**
  * Says a TTA request was submitted, on the page the form returned the user to. The form puts
  * the message in the location's state; it is taken from there once, so it doesn't show again
  * on a refresh or on coming back to the page.
  */
-export default function TtaRequestSubmittedAlert(): React.ReactElement | null {
+export default function TtaRequestSubmittedAlert({
+  requestRoot,
+}: TtaRequestSubmittedAlertProps): React.ReactElement | null {
   const history = useHistory<LocationState>();
   const [message] = useState(history.location.state?.message ?? null);
 
@@ -44,7 +51,8 @@ export default function TtaRequestSubmittedAlert(): React.ReactElement | null {
   return (
     <Alert type="success" headingLevel="h4" slim role="alert" className="margin-bottom-3">
       You submitted request{' '}
-      <Link to={ttaRequestViewPath(message.reportId)}>{message.displayId}</Link> on {message.time}.
+      <Link to={ttaRequestViewPath(message.reportId, requestRoot)}>{message.displayId}</Link> on{' '}
+      {message.time}.
     </Alert>
   );
 }
