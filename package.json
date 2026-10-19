@@ -120,7 +120,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
+    "url": "git+https://github.com/HHS/Head-Start-TTADP.git"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1149.0",
@@ -130,7 +130,7 @@
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^10.6.0",
     "@mesh-kit/core": "^1.0.160",
-    "@ttahub/common": "2.4.10",
+    "@ttahub/common": "2.4.11",
     "adm-zip": "^0.6.1",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
@@ -358,9 +358,8 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
+    "url": "https://github.com/HHS/Head-Start-TTADP/issues"
   },
-  "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
   "nodemonConfig": {
     "ignore": [
       "./reports/",

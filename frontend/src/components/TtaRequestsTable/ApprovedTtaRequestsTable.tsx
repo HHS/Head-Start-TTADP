@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
-import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
-import { APPROVED_TTA_REQUESTS_PLACEHOLDER_DATA, type ApprovedTtaRequest } from './placeholderData';
+import TtaRequestsTable, { type TtaRequestsTableRow } from './index';
 
 const EXPORT_FILE_NAME = 'approved-tta-requests.csv';
 
@@ -46,73 +45,21 @@ const DEFAULT_SORT_CONFIG: WidgetSortConfig = {
   offset: 0,
 };
 
-// a request can be assigned to several people, who are listed one per line
-const staffToValue = (assignedStaff: string[]) => assignedStaff.join('\n');
-
-// see the note in ActiveTtaRequestsTable about where these links point
-const toTableRow = (
-  request: ApprovedTtaRequest,
-  link: string,
-  showRecipientColumns: boolean
-): TtaRequestsTableRow => ({
-  id: request.id,
-  heading: request.requestId,
-  sortKey: request.requestId,
-  isUrl: true,
-  isInternalLink: true,
-  link,
-  data: [
-    ...(showRecipientColumns
-      ? [
-          {
-            title: COLUMNS.RECIPIENT,
-            value: request.recipient,
-            isUrl: true,
-            isInternalLink: true,
-            link: recipientRecordUrl(request.recipientId, request.regionId),
-          },
-          { title: COLUMNS.REGION, value: String(request.regionId) },
-        ]
-      : []),
-    { title: COLUMNS.APPROVED_DATE, value: request.approvedDate },
-    { title: COLUMNS.CREATOR, value: request.creator },
-    {
-      title: COLUMNS.ASSIGNED_STAFF,
-      value: staffToValue(request.assignedStaff),
-      className: 'ttahub-tta-requests-table--multiline',
-    },
-    { title: COLUMNS.GOAL, value: request.goal },
-    // the state the recipient's grant is in
-    ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: request.stateCode }] : []),
-  ],
-});
+/*
+  Requests can't be approved yet - there is no approved status to list - so the table
+  shows its empty state until approving a request is built, which brings the fetch and
+  the approved date and assigned staff it shows.
+*/
+const NO_ROWS: TtaRequestsTableRow[] = [];
 
 interface ApprovedTtaRequestsTableProps {
-  /** the recipient record this table is being viewed from, if any */
-  recipientId?: string | number;
-  regionId?: string | number;
   /** adds the recipient and region columns for the all regions page */
   showRecipientColumns?: boolean;
 }
 
 export default function ApprovedTtaRequestsTable({
-  recipientId,
-  regionId,
   showRecipientColumns = false,
 }: ApprovedTtaRequestsTableProps): React.ReactElement {
-  const link = showRecipientColumns
-    ? '/tta-requests'
-    : `/recipient-tta-records/${recipientId}/region/${regionId}/tta-request`;
-
-  // FOR FRONTEND TESTING ONLY - swap for a fetcher when the API lands.
-  const rows = useMemo(
-    () =>
-      APPROVED_TTA_REQUESTS_PLACEHOLDER_DATA.map((request) =>
-        toTableRow(request, link, showRecipientColumns)
-      ),
-    [link, showRecipientColumns]
-  );
-
   return (
     <TtaRequestsTable
       title="Approved TTA requests"
@@ -128,7 +75,7 @@ export default function ApprovedTtaRequestsTable({
       }
       dateSortColumns={DATE_SORT_COLUMNS}
       defaultSortConfig={DEFAULT_SORT_CONFIG}
-      rows={rows}
+      rows={NO_ROWS}
       emptyState={EMPTY_STATE}
     />
   );
