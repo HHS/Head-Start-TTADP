@@ -516,6 +516,18 @@ const VALIDATION_ALERT_SEVERITY = {
   CRITICAL: 'critical',
 };
 
+// Pages that can host a feedback survey; keys are the pageId each page passes to <FeedbackSurvey>
+const FEEDBACK_SURVEY_PAGES = {
+  'qa-dashboard': 'QA dashboard',
+  'activity-reports-landing': 'Activity reports',
+  'collaboration-reports-landing': 'Collaboration reports',
+};
+
+const FEEDBACK_SURVEY_STATUSES = {
+  ACTIVE: 'active',
+  CLOSED: 'closed',
+};
+
 module.exports = {
   AR_GRANT_END_DATE_GRACE_DAYS,
   FEI_PROD_GOAL_TEMPLATE_ID,
@@ -565,4 +577,6 @@ module.exports = {
   VALIDATION_RUN_STATUS,
   VALIDATION_PROCESS,
   VALIDATION_ALERT_SEVERITY,
+  FEEDBACK_SURVEY_PAGES,
+  FEEDBACK_SURVEY_STATUSES,
 };

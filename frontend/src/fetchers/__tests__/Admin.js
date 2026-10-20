@@ -2,7 +2,9 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 
 import {
+  closeFeedbackSurveyDefinition,
   closeMultiRecipientGoalsFromAdmin,
+  createFeedbackSurveyDefinition,
   createMultiRecipientGoalsFromAdmin,
   createNationalCenter,
   deleteNationalCenter,
@@ -10,12 +12,14 @@ import {
   getCreatorsByRegion,
   getCuratedTemplates,
   getFeatures,
+  getFeedbackSurveyDefinitions,
   getFeedbackSurveys,
   getGroupsByRegion,
   getRecipients,
   getRedisInfo,
   getUsers,
   importCsv,
+  reopenFeedbackSurveyDefinition,
   updateLegacyUsers,
   updateNationalCenter,
   updateUser,
@@ -213,6 +217,41 @@ describe('Admin', () => {
         const deleted = await deleteNationalCenter(1);
         expect(deleted).toEqual(res);
       });
+    });
+  });
+
+  describe('feedback survey definitions', () => {
+    const url = join('/', 'api', 'admin', 'feedback-survey-definitions');
+
+    it('lists surveys', async () => {
+      const payload = { active: [], closed: [], pages: {} };
+      fetchMock.get(url, payload);
+
+      expect(await getFeedbackSurveyDefinitions()).toEqual(payload);
+    });
+
+    it('creates a survey', async () => {
+      const survey = {
+        pageId: 'qa-dashboard', startDate: '2026-10-20', endDate: '2026-11-20', question: 'Q?',
+      };
+      fetchMock.post(url, { id: 1, ...survey });
+
+      expect(await createFeedbackSurveyDefinition(survey)).toEqual({ id: 1, ...survey });
+      expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(survey);
+    });
+
+    it('closes a survey', async () => {
+      fetchMock.put(join(url, '4', 'close'), { id: 4, status: 'closed' });
+
+      expect(await closeFeedbackSurveyDefinition(4)).toEqual({ id: 4, status: 'closed' });
+    });
+
+    it('reopens a survey with dates', async () => {
+      const dates = { startDate: '2026-10-21', endDate: '2026-10-31' };
+      fetchMock.put(join(url, '4', 'reopen'), { id: 4, status: 'active' });
+
+      expect(await reopenFeedbackSurveyDefinition(4, dates)).toEqual({ id: 4, status: 'active' });
+      expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(dates);
     });
   });
 });

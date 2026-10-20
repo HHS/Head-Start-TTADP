@@ -1,0 +1,54 @@
+post:
+  tags:
+    - feedback
+  operationId: submitFeedbackSurvey
+  description: Submits the current user's answers to an active feedback survey. Every question must be answered exactly once.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - surveyId
+            - responses
+          additionalProperties: false
+          properties:
+            surveyId:
+              type: integer
+            timestamp:
+              type: string
+              format: date-time
+            responses:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required:
+                  - questionId
+                  - response
+                properties:
+                  questionId:
+                    type: integer
+                  response:
+                    type: string
+                    enum: [yes, no]
+                  comment:
+                    type: string
+                    maxLength: 140
+  responses:
+    201:
+      description: Feedback saved
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              feedbackIds:
+                type: array
+                items:
+                  type: integer
+    400:
+      description: Invalid body, the survey is not active, or questions were skipped

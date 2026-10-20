@@ -2,7 +2,9 @@ const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
   class FeedbackSurveyCompletion extends Model {
-    static associate() {}
+    static associate(models) {
+      FeedbackSurveyCompletion.belongsTo(models.FeedbackSurveyDefinition, { foreignKey: 'surveyId', as: 'survey' });
+    }
   }
 
   FeedbackSurveyCompletion.init({
@@ -18,6 +20,10 @@ export default (sequelize, DataTypes) => {
     },
     pageId: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    surveyId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     completedAt: {

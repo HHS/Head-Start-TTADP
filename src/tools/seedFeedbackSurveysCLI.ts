@@ -1,17 +1,11 @@
-import db from '../models';
+import { FEEDBACK_SURVEY_PAGES, FEEDBACK_SURVEY_STATUSES } from '../constants';
 import { auditLogger } from '../logger';
+import db from '../models';
 
 const DEFAULT_MONTHS = 6;
 const DEFAULT_ROWS_PER_MONTH = 120;
 
-const PAGE_IDS = [
-  'qa-dashboard',
-  'activity-reports',
-  'recipient-record',
-  'regional-dashboard',
-  'training-reports',
-  'goals-and-objectives',
-];
+const SEED_QUESTION = 'Did you find this page helpful?';
 
 const POSITIVE_COMMENTS = [
   'Very helpful page.',
@@ -76,10 +70,10 @@ function getOptions(): SeedOptions {
 
 async function seedFeedbackSurveys() {
   const { sequelize } = db;
-  const { User, FeedbackSurvey, Role } = sequelize.models;
+  const { User, FeedbackSurvey, FeedbackSurveyDefinition, FeedbackSurveyQuestion, Role } = sequelize.models;
   const { months, rowsPerMonth } = getOptions();
 
-  if (!User || !FeedbackSurvey || !Role) {
+  if (!User || !FeedbackSurvey || !FeedbackSurveyDefinition || !FeedbackSurveyQuestion || !Role) {
     throw new Error('Cannot seed feedback surveys: required models are not loaded.');
   }
 
@@ -101,12 +95,30 @@ async function seedFeedbackSurveys() {
   }
 
   const now = new Date();
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1));
+
+  // One closed seed survey per page covering the seeded window, so responses show in the admin tabs
+  const surveys = await Promise.all(
+    Object.keys(FEEDBACK_SURVEY_PAGES).map(async (pageId) => {
+      const survey = await FeedbackSurveyDefinition.create({
+        pageId,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: now.toISOString().slice(0, 10),
+        status: FEEDBACK_SURVEY_STATUSES.CLOSED,
+        closedAt: now,
+      });
+      const question = await FeedbackSurveyQuestion.create({ surveyId: survey.id, questionText: SEED_QUESTION, order: 1 });
+      return { id: survey.id as number, pageId, questionId: question.id as number };
+    })
+  );
+
   const rows = Array.from({ length: months }).flatMap((_, monthOffset) => {
     const monthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthOffset, 1));
 
     return Array.from({ length: rowsPerMonth }).map(() => {
       const submittedAt = randomDateInMonth(monthDate.getUTCFullYear(), monthDate.getUTCMonth());
       const user = randomItem(users);
+      const survey = randomItem(surveys);
       const response = Math.random() < 0.7 ? 'yes' : 'no';
       const roleNames = (user.roles || [])
         .map((role) => role.fullName || role.name)
@@ -115,7 +127,9 @@ async function seedFeedbackSurveys() {
       return {
         regionId: user.homeRegionId || null,
         userRoles: roleNames,
-        pageId: randomItem(PAGE_IDS),
+        pageId: survey.pageId,
+        surveyId: survey.id,
+        questionId: survey.questionId,
         response,
         comment: response === 'yes' ? randomItem(POSITIVE_COMMENTS) : randomItem(IMPROVEMENT_COMMENTS),
         submittedAt,

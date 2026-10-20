@@ -1,0 +1,32 @@
+get:
+  tags:
+    - feedback
+  operationId: getActiveFeedbackSurvey
+  description: >
+    Gets the feedback survey currently showing on a page (active, with today between its start and end dates)
+    and whether the current user has already completed it.
+  parameters:
+    - in: query
+      name: pageId
+      required: true
+      schema:
+        type: string
+        example: qa-dashboard
+  responses:
+    200:
+      description: The active survey, or null when the page has none
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              pageId:
+                type: string
+              completed:
+                type: boolean
+              survey:
+                nullable: true
+                allOf:
+                  - $ref: '../admin-feedback-surveys/schemas.yaml#/surveyDefinition'
+    400:
+      description: pageId is missing

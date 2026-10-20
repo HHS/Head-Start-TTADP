@@ -2,7 +2,10 @@ const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
   class FeedbackSurvey extends Model {
-    static associate() {}
+    static associate(models) {
+      FeedbackSurvey.belongsTo(models.FeedbackSurveyDefinition, { foreignKey: 'surveyId', as: 'survey' });
+      FeedbackSurvey.belongsTo(models.FeedbackSurveyQuestion, { foreignKey: 'questionId', as: 'question' });
+    }
   }
 
   FeedbackSurvey.init({
@@ -24,6 +27,14 @@ export default (sequelize, DataTypes) => {
     pageId: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    surveyId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    questionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     response: {
       type: DataTypes.ENUM('yes', 'no'),

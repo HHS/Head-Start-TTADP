@@ -1,0 +1,60 @@
+get:
+  tags:
+    - admin
+  operationId: listFeedbackSurveyDefinitions
+  description: Lists feedback surveys split into active (including scheduled) and closed, plus the pages a survey can show on.
+  responses:
+    200:
+      description: Surveys and available pages
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              active:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/surveyDefinition'
+              closed:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/surveyDefinition'
+              pages:
+                type: object
+                additionalProperties:
+                  type: string
+                example:
+                  qa-dashboard: QA dashboard
+post:
+  tags:
+    - admin
+  operationId: createFeedbackSurveyDefinition
+  description: >
+    Creates an active feedback survey with one question, answered with yes/no and an optional comment.
+    Rejected when another active survey on the same page overlaps the dates.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: './schemas.yaml#/dateRange'
+            - type: object
+              required:
+                - pageId
+                - question
+              properties:
+                pageId:
+                  type: string
+                question:
+                  type: string
+                  maxLength: 500
+  responses:
+    201:
+      description: Survey created
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/surveyDefinition'
+    400:
+      description: Invalid body or an overlapping active survey exists

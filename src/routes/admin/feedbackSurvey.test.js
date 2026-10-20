@@ -183,6 +183,24 @@ describe('admin/feedback-surveys', () => {
     });
   });
 
+  it('passes a surveyId filter through as a number', async () => {
+    getFeedbackSurveys.mockResolvedValue({ rows: [], count: 0 });
+
+    await listFeedbackSurveys({ query: { surveyId: '12' } }, mockResponse);
+
+    expect(getFeedbackSurveys).toHaveBeenCalledWith(expect.objectContaining({ surveyId: 12 }));
+  });
+
+  it('rejects invalid surveyId filters', async () => {
+    await listFeedbackSurveys({ query: { surveyId: '-1' } }, mockResponse);
+
+    expect(getFeedbackSurveys).not.toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith({
+      error: 'surveyId must be a positive integer',
+    });
+  });
+
   it('rejects reversed createdAt filters', async () => {
     const req = {
       query: {

@@ -14,12 +14,15 @@ import {
   TextInput,
 } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
-import Container from '../../components/Container';
-import colors from '../../colors';
-import PrintToPDF from '../../components/PrintToPDF';
-import MediaCaptureButton from '../../components/MediaCaptureButton';
-import PaginationCard from '../../components/PaginationCard';
-import { getFeedbackSurveys } from '../../fetchers/Admin';
+import { useLocation } from 'react-router-dom';
+import Container from '../../../components/Container';
+import colors from '../../../colors';
+import PrintToPDF from '../../../components/PrintToPDF';
+import MediaCaptureButton from '../../../components/MediaCaptureButton';
+import PaginationCard from '../../../components/PaginationCard';
+import { getFeedbackSurveyDefinitions, getFeedbackSurveys } from '../../../fetchers/Admin';
+import useFetch from '../../../hooks/useFetch';
+import { pageLabel, toDisplayDate, toDisplayEndDate } from './utils';
 import './FeedbackSurveys.scss';
 
 let Plot = null;
@@ -31,6 +34,7 @@ import('plotly.js-basic-dist')
 
 const DEFAULT_FILTERS = {
   q: '',
+  surveyId: '',
   pageId: '',
   response: '',
   regionId: '',
@@ -48,7 +52,7 @@ const SORTABLE_COLUMNS = {
   submittedAt: 'Submitted',
   regionId: 'Region ID',
   pageId: 'Page ID',
-  response: 'Was this page helpful?',
+  response: 'Response',
 };
 
 const SORT_ICONS = {
@@ -174,7 +178,8 @@ function getCsvColumns() {
     { header: 'Region', value: (row) => formatRegionValue(row.regionId) },
     { header: 'User roles', value: (row) => formatUserRolesValue(row.userRoles) },
     { header: 'Page ID', value: (row) => row.pageId || '' },
-    { header: 'Was this page helpful?', value: (row) => formatResponseValue(row.response) },
+    { header: 'Question', value: (row) => row.question?.questionText || '' },
+    { header: 'Response', value: (row) => formatResponseValue(row.response) },
     { header: 'Comment', value: (row) => row.comment || '--' },
   ];
 }
@@ -194,14 +199,36 @@ function buildCsv(rows) {
   return [header, ...lines].join('\n');
 }
 
+function surveyOptionLabel(survey, pages) {
+  return `${pageLabel(pages, survey.pageId)}: ${toDisplayDate(survey.startDate)} - ${toDisplayEndDate(survey.endDate)}${survey.status === 'closed' ? ' (closed)' : ''}`;
+}
+
 export default function FeedbackSurveys() {
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
   const [allRows, setAllRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  // Manage surveys links here with ?surveyId= to show a single survey's responses
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    surveyId: new URLSearchParams(location.search).get('surveyId') || '',
+  }));
+  const { data: surveyDefinitions } = useFetch(
+    { active: [], closed: [], pages: {} },
+    getFeedbackSurveyDefinitions,
+    [],
+    'There was an error fetching surveys.',
+  );
+  const surveyOptions = useMemo(() => {
+    const { active, closed, pages } = surveyDefinitions;
+    return [...active, ...closed].map((survey) => ({
+      value: String(survey.id),
+      label: surveyOptionLabel(survey, pages),
+    }));
+  }, [surveyDefinitions]);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const responseChartRef = useRef(null);
   const responseByMonthChartRef = useRef(null);
@@ -380,8 +407,12 @@ export default function FeedbackSurveys() {
 
   const appliedFilters = useMemo(() => ([
     { label: 'Search', value: formatFilterValue(filters.q) },
+    {
+      label: 'Survey',
+      value: formatFilterValue(surveyOptions.find((o) => o.value === filters.surveyId)?.label),
+    },
     { label: 'Page ID', value: formatFilterValue(filters.pageId) },
-    { label: 'Was this page helpful?', value: formatResponseFilterValue(filters.response) },
+    { label: 'Response', value: formatResponseFilterValue(filters.response) },
     { label: 'Region ID', value: formatRegionFilterValue(filters.regionId) },
     { label: 'User role', value: formatFilterValue(filters.userRole) },
     { label: 'Created at (from)', value: formatFilterValue(filters.createdAtFrom) },
@@ -389,7 +420,7 @@ export default function FeedbackSurveys() {
     { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
     { label: 'Sort direction', value: formatFilterValue(sort.sortDir) },
     { label: 'Result count', value: `${totalCount}` },
-  ]), [filters, sort.sortBy, sort.sortDir, totalCount]);
+  ]), [filters, sort.sortBy, sort.sortDir, totalCount, surveyOptions]);
 
   const pageIdOptions = useMemo(() => {
     const uniquePageIds = new Set(allRows
@@ -434,7 +465,7 @@ export default function FeedbackSurveys() {
         <title>Feedback Survey Responses</title>
       </Helmet>
       <Container className="feedback-surveys-page">
-        <h1>Feedback Survey Responses</h1>
+        <h2 className="margin-top-0">Feedback Survey Responses</h2>
         <p className="usa-hint no-print">View and filter feedback submitted from in-app surveys.</p>
 
         <section className="print-only margin-bottom-4 feedback-print-summary" aria-label="Applied filters for exported feedback survey report">
@@ -474,6 +505,20 @@ export default function FeedbackSurveys() {
             <p className="usa-hint margin-top-1 margin-bottom-0">Searches comment and page ID.</p>
           </Grid>
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
+            <Label htmlFor="feedback-survey-id">Survey</Label>
+            <Select
+              id="feedback-survey-id"
+              name="surveyId"
+              value={filters.surveyId}
+              onChange={onFilterChange}
+            >
+              <option value="">All</option>
+              {surveyOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Select>
+          </Grid>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-page-id">Page ID</Label>
             <Select
               id="feedback-page-id"
@@ -491,7 +536,7 @@ export default function FeedbackSurveys() {
 
         <Grid row gap className="margin-bottom-3 no-print">
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-response">Was this page helpful?</Label>
+            <Label htmlFor="feedback-response">Response</Label>
             <Select
               id="feedback-response"
               name="response"
@@ -829,6 +874,7 @@ export default function FeedbackSurveys() {
                     </button>
                     <span className="print-only text-bold">{SORTABLE_COLUMNS.pageId}</span>
                   </th>
+                  <th scope="col">Question</th>
                   <th
                     scope="col"
                     aria-sort={getAriaSort(sort, 'response')}
@@ -852,7 +898,8 @@ export default function FeedbackSurveys() {
                     <td data-label="Region">{formatRegionValue(row.regionId)}</td>
                     <td data-label="User roles">{formatUserRolesValue(row.userRoles)}</td>
                     <td data-label="Page ID">{row.pageId}</td>
-                    <td data-label="Was this page helpful?">{formatResponseValue(row.response)}</td>
+                    <td data-label="Question">{row.question?.questionText || '--'}</td>
+                    <td data-label="Response">{formatResponseValue(row.response)}</td>
                     <td data-label="Comment">{row.comment || '--'}</td>
                   </tr>
                 ))}

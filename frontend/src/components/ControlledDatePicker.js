@@ -24,6 +24,7 @@ export default function ControlledDatePicker({
   additionalValidation,
   ariaDescribedBy,
   ariaInvalid,
+  disabled,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -74,6 +75,9 @@ export default function ControlledDatePicker({
 
   // this is our custom validation function we pass to the hook form controller
   function validate(v) {
+    // A disabled picker isn't part of the submission, so it has nothing to validate
+    if (disabled) return true;
+
     const newValue = isValidDate(v);
     if (!newValue) return invalidMessage || 'Enter valid date';
 
@@ -142,6 +146,7 @@ export default function ControlledDatePicker({
       required={required}
       aria-describedby={ariaDescribedBy}
       aria-invalid={ariaInvalid}
+      disabled={disabled}
     />
   );
 }
@@ -169,6 +174,7 @@ ControlledDatePicker.propTypes = {
   additionalValidation: PropTypes.func,
   ariaDescribedBy: PropTypes.string,
   ariaInvalid: PropTypes.bool,
+  disabled: PropTypes.bool,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -187,4 +193,5 @@ ControlledDatePicker.defaultProps = {
   additionalValidation: () => {},
   ariaDescribedBy: undefined,
   ariaInvalid: false,
+  disabled: false,
 };

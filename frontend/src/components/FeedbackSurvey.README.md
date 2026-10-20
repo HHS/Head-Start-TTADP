@@ -1,151 +1,74 @@
 # FeedbackSurvey
 
-A reusable React component for collecting page-level feedback.
+A reusable React component that shows the admin-configured feedback survey for a page.
 
-## Features
+Surveys are created, closed, and reopened by admins at **Admin → Feedback surveys → Manage surveys**
+(`/admin/feedback-surveys/manage`). Each survey targets one page, runs between a start and end date,
+and asks one question, answered with Yes/No plus an optional comment. Questions are stored in their own
+table and the popup and submit API already accept several, so adding multi-question surveys later only needs
+admin create-form and validation changes.
 
-- ✅ Fixed position popup from bottom (20% viewport height)
-- ✅ Light gray background (`$base-lighter` color)
-- ✅ Optional comment section (140 character limit)
-- ✅ Automatic dismissal after successful submission
-- ✅ Fully accessible (ARIA labels, keyboard navigation)
-- ✅ Responsive design
+## Behavior
+
+- On mount, fetches `GET /api/feedback/survey/active?pageId=...`.
+- Renders nothing when the page has no survey running today, or when the user already completed it.
+- Shows a fixed "Was this page helpful?" button in the lower right; it opens a modal with the survey question.
+- Submit is enabled once the question has a Yes/No answer. The comment is optional (140 character limit).
+- After a successful submission the button shows "Submitted" briefly, then hides.
+
+A page can only have one active survey at a time. Active surveys are closed automatically by a nightly
+cron job (`runCloseExpiredFeedbackSurveysJob` in `src/lib/cron.js`) once their end date has passed.
+Admins can instead check **Manually close survey**: the survey opens immediately, has no end date,
+and stays open until an admin closes it.
 
 ## Usage
-
-### Basic Implementation
 
 ```jsx
 import FeedbackSurvey from '../../components/FeedbackSurvey';
 import { submitSurveyFeedback } from '../../fetchers/feedback';
 
-function MyDashboard() {
-  return (
-    <div>
-      {/* Your dashboard content */}
-      
-      <FeedbackSurvey
-        pageId="my-dashboard"
-        onSubmit={submitSurveyFeedback}
-      />
-    </div>
-  );
-}
+<FeedbackSurvey pageId="qa-dashboard" onSubmit={submitSurveyFeedback} />
 ```
 
 ### Props
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
-| `pageId` | string | Yes | Unique identifier for the dashboard page. Used for localStorage key. |
-| `onSubmit` | function | Yes | Async function called when user submits feedback. Receives feedback object. |
+| `pageId` | string | Yes | The page identifier. Must be one of the keys in `FEEDBACK_SURVEY_PAGES` (`src/constants.js`) so admins can target it. |
+| `onSubmit` | function | Yes | Async function called with the submission payload. |
 
-### Feedback Object Structure
+### Adding a new page
 
-```javascript
-{
-  pageId: 'qa-dashboard',
-  response: 'yes',        // 'yes' | 'no'
-  comment: 'Great dashboard!',
-  timestamp: '2026-03-09T15:00:00.000Z',
-  userId: 123             // Added by backend
-}
-```
-
-## Integration Examples
-
-### QA Dashboard
-```jsx
-// frontend/src/pages/QADashboard/index.js
-import FeedbackSurvey from '../../components/FeedbackSurvey';
-import { submitSurveyFeedback } from '../../fetchers/feedback';
-
-export default function QADashboard() {
-  return (
-    <>
-      {/* Dashboard content */}
-      <FeedbackSurvey
-        pageId="qa-dashboard"
-        onSubmit={submitSurveyFeedback}
-      />
-    </>
-  );
-}
-```
-
-### Regional Dashboard
-```jsx
-<FeedbackSurvey
-  pageId="regional-dashboard"
-  onSubmit={submitSurveyFeedback}
-/>
-```
-
-### Resources Dashboard
-```jsx
-<FeedbackSurvey
-  pageId="resources-dashboard"
-  onSubmit={submitSurveyFeedback}
-/>
-```
+1. Add the page id and a display label to `FEEDBACK_SURVEY_PAGES` in `src/constants.js`.
+2. Render `<FeedbackSurvey pageId="<id>" onSubmit={submitSurveyFeedback} />` on the page.
 
 ## Backend API
 
-The component submits feedback to `/api/feedback/survey` endpoint.
+**Submit** `POST /api/feedback/survey`
 
-**Request:**
 ```json
 {
-  "pageId": "qa-dashboard",
-  "response": "yes",
-  "comment": "Very helpful visualization",
+  "surveyId": 7,
+  "responses": [
+    { "questionId": 11, "response": "no", "comment": "Too many charts" }
+  ],
   "timestamp": "2026-03-09T15:00:00.000Z"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "feedbackId": 12345
-}
-```
+Each answer is stored as its own `FeedbackSurveys` row linked to the survey and question.
+Completion is tracked per user and survey in `FeedbackSurveyCompletions`, so a new survey on the
+same page is shown to users again.
 
-## Local Storage
+## Local debug flags
 
-The component uses localStorage to track survey status per page:
-- Key format: `survey-feedback-dismissed-{pageId}`
-- Value: `"completed"` after a successful submission
-
-Users can clear their browser's localStorage (or remove the specific key for a page) to see the survey again.
-
-## Styling
-
-The component uses project colors from `colors.scss`:
-- Background: `$base-lighter` (#dfe1e2)
-- Border: `$base-light`
-- Text: `$base-darkest`
-- Links: `$text-link`
-
-Customize by editing `FeedbackSurvey.scss`.
-
-## Accessibility
-
-- ARIA labels for all interactive elements
-- Keyboard navigation support
-- Screen reader friendly
-- Focus management
+`frontend/src/utils/feedbackSurveyDebug.js` reads two localStorage flags:
+- `ttahub:alwaysShowFeedbackSurvey` shows the survey even if the user completed it (still requires an active survey).
+- `ttahub:forceSurveySubmit500` makes submission fail, to test the error state.
 
 ## Testing
 
-Run tests:
 ```bash
 cd frontend
 TZ=America/New_York yarn test --watchAll=false --testPathPattern=FeedbackSurvey
 ```
-
-## Future Enhancements
-
-- [ ] Add admin analytics dashboard to view feedback
-- [ ] Support custom positioning options
-- [ ] Add animation for show/hide transitions

@@ -5,6 +5,7 @@ import transactionWrapper from '../transactionWrapper';
 import buildInfo from './buildInfo';
 import courseRouter from './course';
 import feedbackSurveyRouter from './feedbackSurvey';
+import feedbackSurveyDefinitionRouter from './feedbackSurveyDefinitions';
 import goalRouter from './goal';
 import groupRouter from './group';
 import getRequestErrors, { getRequestError } from './handlers';
@@ -45,6 +46,7 @@ router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);
 router.use('/courses', courseRouter);
 router.use('/feedback-surveys', feedbackSurveyRouter);
+router.use('/feedback-survey-definitions', feedbackSurveyDefinitionRouter);
 router.use('/ss', ssRouter);
 router.use('/buildInfo', buildInfo);
 

@@ -1,5 +1,6 @@
 import { CronJob } from 'cron';
 import { auditLogger, logger } from '../logger';
+import { closeExpiredSurveyDefinitions } from '../services/feedbackSurveyDefinitions';
 import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
 import { dailyNightSched, lastDayOfMonth, runCronJobs } from './cron';
@@ -28,6 +29,9 @@ jest.mock('./updateGrantsRecipients');
 jest.mock('../tools/dbMaintenance');
 jest.mock('../services/notifications', () => ({
   deleteExpiredArchivedNotifications: jest.fn(),
+}));
+jest.mock('../services/feedbackSurveyDefinitions', () => ({
+  closeExpiredSurveyDefinitions: jest.fn(),
 }));
 jest.mock('./mailer', () => ({
   DIGEST_CONFIG: {
@@ -136,7 +140,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(5);
+      expect(CronJob).toHaveBeenCalledTimes(6);
     });
 
     it('starts all cron jobs in production on instance 0 non-cloud.gov', () => {
@@ -146,7 +150,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(6);
+      expect(CronJob).toHaveBeenCalledTimes(7);
     });
 
     it('runs the updateGrantsRecipients job on schedule', () => {
@@ -329,6 +333,52 @@ describe('cron', () => {
       expect(logger.info).toHaveBeenCalledWith(
         'Completed expired archived notification cleanup (5 deleted)'
       );
+    });
+
+    it('schedules the feedback survey close job on the nightly cron and starts it', () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+
+      runCronJobs();
+      const job = getScheduledJob('runCloseExpiredFeedbackSurveysJob');
+
+      expect(job.schedule).toBe(dailyNightSched);
+      expect(job.start).toHaveBeenCalled();
+    });
+
+    it('runs the feedback survey close job on schedule', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      closeExpiredSurveyDefinitions.mockResolvedValueOnce(2);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runCloseExpiredFeedbackSurveysJob');
+
+      await jobFunction();
+
+      expect(logger.info).toHaveBeenCalledWith('Starting expired feedback survey close');
+      expect(closeExpiredSurveyDefinitions).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith('Completed expired feedback survey close (2 closed)');
+    });
+
+    it('logs feedback survey close errors without throwing', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      const error = new Error('survey close failed');
+      closeExpiredSurveyDefinitions.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runCloseExpiredFeedbackSurveysJob');
+
+      await expect(jobFunction()).resolves.toBeUndefined();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Feedback Survey Close job: survey close failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith('Feedback Survey Close Error: survey close failed');
     });
 
     it('logs audit log cleanup errors with normalized messages and stack details', async () => {

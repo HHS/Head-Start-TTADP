@@ -37,10 +37,13 @@ export async function submitSurveyFeedback(feedbackData) {
   }
 }
 
-export async function getSurveyFeedbackStatus(pageId) {
-  const statusUrl = `${join(feedbackUrl, 'survey', 'completed')}?pageId=${encodeURIComponent(pageId)}`;
-  const response = await get(statusUrl);
+export async function getActiveFeedbackSurvey(pageId) {
+  const activeUrl = `${join(feedbackUrl, 'survey', 'active')}?pageId=${encodeURIComponent(pageId)}`;
+  const response = await get(activeUrl);
   const payload = await response.json();
 
-  return Boolean(payload.completed);
+  return {
+    survey: payload.survey || null,
+    completed: Boolean(payload.completed),
+  };
 }

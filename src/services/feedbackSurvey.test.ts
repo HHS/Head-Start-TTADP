@@ -1,322 +1,263 @@
+import moment from 'moment-timezone';
+import { Op } from 'sequelize';
 import db from '../models';
-import {
-  getFeedbackSurveys,
-  hasCompletedFeedbackSurvey,
-  markFeedbackSurveyCompleted,
-  saveFeedbackSurvey,
-} from './feedbackSurvey';
 import { createUser } from '../testUtils';
+import { getFeedbackSurveys, markFeedbackSurveyCompleted, saveFeedbackSurvey } from './feedbackSurvey';
 
-const { FeedbackSurvey } = db.sequelize.models;
-const { FeedbackSurveyCompletion } = db.sequelize.models;
+const { FeedbackSurvey, FeedbackSurveyCompletion, FeedbackSurveyDefinition, FeedbackSurveyQuestion, User } = db;
+
+const today = moment().tz('America/New_York');
+const dateOnly = (m: moment.Moment) => m.format('YYYY-MM-DD');
 
 describe('Survey feedback service', () => {
+  const suffix = `${Date.now()}`;
+  const pageId = `test-page-${suffix}`;
+  const otherPageId = `test-other-page-${suffix}`;
   let user: { id: number; homeRegionId: number };
   let secondUser: { id: number; homeRegionId: number };
+  let survey: { id: number; pageId: string };
+  let otherSurvey: { id: number };
+  let closedSurvey: { id: number };
+  let questions: Array<{ id: number }>;
+  let otherQuestion: { id: number };
+  let closedQuestion: { id: number };
+
+  const surveyIds = () => [survey.id, otherSurvey.id, closedSurvey.id];
+
+  const answers = (first: 'yes' | 'no', second: 'yes' | 'no', comment = '') => [
+    { questionId: questions[0].id, response: first, comment },
+    { questionId: questions[1].id, response: second },
+  ];
 
   beforeAll(async () => {
-    user = await createUser({ homeRegionId: 5 });
-    secondUser = await createUser({ homeRegionId: 7 });
-  });
+    [user, secondUser] = await Promise.all([
+      createUser({ homeRegionId: 5 }),
+      createUser({ homeRegionId: 7 }),
+    ]);
 
-  afterAll(async () => {
-    await FeedbackSurvey.destroy({ where: {} });
-    await FeedbackSurveyCompletion.destroy({ where: {} });
-    await db.sequelize.close();
+    const window = {
+      startDate: dateOnly(today.clone().subtract(1, 'day')),
+      endDate: dateOnly(today.clone().add(1, 'day')),
+    };
+
+    [survey, otherSurvey, closedSurvey] = await Promise.all([
+      FeedbackSurveyDefinition.create({ pageId, ...window, status: 'active' }),
+      FeedbackSurveyDefinition.create({ pageId: otherPageId, ...window, status: 'active' }),
+      FeedbackSurveyDefinition.create({ pageId, ...window, status: 'closed', closedAt: new Date() }),
+    ]);
+
+    questions = await FeedbackSurveyQuestion.bulkCreate([
+      { surveyId: survey.id, questionText: 'First question?', order: 1 },
+      { surveyId: survey.id, questionText: 'Second question?', order: 2 },
+    ]);
+    [otherQuestion, closedQuestion] = await Promise.all([
+      FeedbackSurveyQuestion.create({ surveyId: otherSurvey.id, questionText: 'Other?', order: 1 }),
+      FeedbackSurveyQuestion.create({ surveyId: closedSurvey.id, questionText: 'Closed?', order: 1 }),
+    ]);
   });
 
   afterEach(async () => {
-    await FeedbackSurvey.destroy({ where: {} });
-    await FeedbackSurveyCompletion.destroy({ where: {} });
+    await Promise.all([
+      FeedbackSurvey.destroy({ where: { surveyId: surveyIds() } }),
+      FeedbackSurveyCompletion.destroy({ where: { surveyId: surveyIds() } }),
+    ]);
   });
 
-  it('persists survey feedback', async () => {
-    const feedback = await saveFeedbackSurvey({
-      pageId: 'qa-dashboard',
-      response: 'yes',
-      comment: 'Useful content',
+  afterAll(async () => {
+    await FeedbackSurveyQuestion.destroy({ where: { surveyId: surveyIds() } });
+    await FeedbackSurveyDefinition.destroy({ where: { id: surveyIds() } });
+    await User.destroy({ where: { id: [user.id, secondUser.id] } });
+    await db.sequelize.close();
+  });
+
+  it('persists one row per answered question', async () => {
+    const { feedback } = await saveFeedbackSurvey({
+      surveyId: survey.id,
+      responses: answers('yes', 'no', 'Useful content'),
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
     });
 
-    expect(feedback).toBeDefined();
+    expect(feedback).toHaveLength(2);
 
-    const storedFeedback = await FeedbackSurvey.findOne({
-      where: { id: feedback.id },
+    const stored = await FeedbackSurvey.findAll({
+      where: { id: feedback.map((f) => f.id) },
+      order: [['questionId', 'ASC']],
     });
 
-    expect(storedFeedback).toBeDefined();
-    expect(storedFeedback.pageId).toBe('qa-dashboard');
-    expect(storedFeedback.response).toBe('yes');
-    expect(storedFeedback.comment).toBe('Useful content');
-    expect(storedFeedback.regionId).toBe(user.homeRegionId);
-    expect(storedFeedback.userRoles).toEqual([]);
-    expect(storedFeedback.submittedAt.toISOString()).toBe('2026-03-12T12:30:00.000Z');
+    expect(stored.map((s) => s.questionId)).toEqual(questions.map((q) => q.id));
+    expect(stored.map((s) => s.response)).toEqual(['yes', 'no']);
+    expect(stored.map((s) => s.comment)).toEqual(['Useful content', '']);
+    stored.forEach((s) => {
+      expect(s.pageId).toBe(pageId);
+      expect(s.surveyId).toBe(survey.id);
+      expect(s.regionId).toBe(user.homeRegionId);
+      expect(s.userRoles).toEqual([]);
+      expect(s.submittedAt.toISOString()).toBe('2026-03-12T12:30:00.000Z');
+    });
   });
 
-  it('defaults comment to empty string and submittedAt to now when missing', async () => {
+  it('defaults submittedAt to now when missing', async () => {
     const before = Date.now();
 
-    const feedback = await saveFeedbackSurvey({
-      pageId: 'activity-reports-landing',
-      response: 'yes',
+    const { feedback } = await saveFeedbackSurvey({
+      surveyId: survey.id,
+      responses: answers('yes', 'yes'),
       userId: user.id,
     });
 
-    const storedFeedback = await FeedbackSurvey.findOne({
-      where: { id: feedback.id },
-    });
-
-    expect(storedFeedback.comment).toBe('');
-    expect(storedFeedback.regionId).toBe(user.homeRegionId);
-    expect(storedFeedback.userRoles).toEqual([]);
-    expect(new Date(storedFeedback.submittedAt).getTime()).toBeGreaterThanOrEqual(before);
+    expect(new Date(feedback[0].submittedAt).getTime()).toBeGreaterThanOrEqual(before);
   });
 
-  it('persists response metadata for feedback submissions', async () => {
-    const feedback = await saveFeedbackSurvey({
-      pageId: 'collaboration-reports-landing',
-      response: 'no',
-      comment: 'This page is confusing',
-      userId: user.id,
-    });
-
-    const storedFeedback = await FeedbackSurvey.findOne({ where: { id: feedback.id } });
-
-    expect(storedFeedback.response).toBe('no');
-    expect(storedFeedback.comment).toBe('This page is confusing');
+  it('rejects submissions for closed surveys', async () => {
+    await expect(
+      saveFeedbackSurvey({
+        surveyId: closedSurvey.id,
+        responses: [{ questionId: closedQuestion.id, response: 'yes' }],
+        userId: user.id,
+      })
+    ).rejects.toThrow('Survey is not currently active');
   });
 
-  it('retrieves and filters feedback survey submissions', async () => {
+  it('rejects submissions that skip a question or answer another survey', async () => {
+    await expect(
+      saveFeedbackSurvey({
+        surveyId: survey.id,
+        responses: [{ questionId: questions[0].id, response: 'yes' }],
+        userId: user.id,
+      })
+    ).rejects.toThrow('Every survey question must be answered exactly once');
+
+    await expect(
+      saveFeedbackSurvey({
+        surveyId: survey.id,
+        responses: [
+          { questionId: questions[0].id, response: 'yes' },
+          { questionId: otherQuestion.id, response: 'yes' },
+        ],
+        userId: user.id,
+      })
+    ).rejects.toThrow('Every survey question must be answered exactly once');
+  });
+
+  it('retrieves and filters feedback by survey, response, and text', async () => {
     await saveFeedbackSurvey({
-      pageId: 'qa-dashboard',
-      response: 'yes',
-      comment: 'Great page',
-      timestamp: '2026-03-12T12:30:00.000Z',
+      surveyId: survey.id,
+      responses: answers('yes', 'no', 'Great page'),
       userId: user.id,
     });
-
     await saveFeedbackSurvey({
-      pageId: 'recipient-record',
-      response: 'no',
-      comment: 'Needs work',
-      timestamp: '2026-03-13T12:30:00.000Z',
+      surveyId: otherSurvey.id,
+      responses: [{ questionId: otherQuestion.id, response: 'yes', comment: 'Great too' }],
       userId: secondUser.id,
     });
 
     const filtered = await getFeedbackSurveys({
-      pageId: 'qa',
+      surveyId: survey.id,
       response: 'yes',
       q: 'Great',
-      sortBy: 'submittedAt',
-      sortDir: 'desc',
     });
 
-    expect(filtered.rows).toHaveLength(1);
     expect(filtered.count).toBe(1);
-    expect(filtered.rows[0].pageId).toBe('qa-dashboard');
-    expect(filtered.rows[0].response).toBe('yes');
+    expect(filtered.rows[0].pageId).toBe(pageId);
+    expect((filtered.rows[0].question as { questionText: string }).questionText).toBe('First question?');
   });
 
-  it('sorts feedback survey submissions by pageId ascending', async () => {
+  it('sorts feedback by response', async () => {
     await saveFeedbackSurvey({
-      pageId: 'page-a',
-      response: 'yes',
-      comment: 'one',
-      timestamp: '2026-03-12T12:30:00.000Z',
+      surveyId: survey.id,
+      responses: answers('no', 'yes'),
       userId: user.id,
     });
 
-    await saveFeedbackSurvey({
-      pageId: 'page-b',
-      response: 'no',
-      comment: 'two',
-      timestamp: '2026-03-13T12:30:00.000Z',
-      userId: secondUser.id,
-    });
-
     const sorted = await getFeedbackSurveys({
-      sortBy: 'pageId',
-      sortDir: 'asc',
-      limit: 10,
-    });
-
-    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
-    expect(sorted.count).toBeGreaterThanOrEqual(2);
-    expect(sorted.rows[0].pageId <= sorted.rows[1].pageId).toBe(true);
-  });
-
-  it('sorts feedback survey submissions by regionId ascending', async () => {
-    await saveFeedbackSurvey({
-      pageId: 'region-sort-a',
-      response: 'yes',
-      comment: 'region one',
-      timestamp: '2026-03-12T12:30:00.000Z',
-      userId: user.id,
-      regionId: 2,
-    });
-
-    await saveFeedbackSurvey({
-      pageId: 'region-sort-b',
-      response: 'no',
-      comment: 'region two',
-      timestamp: '2026-03-13T12:30:00.000Z',
-      userId: secondUser.id,
-      regionId: 9,
-    });
-
-    const sorted = await getFeedbackSurveys({
-      sortBy: 'regionId',
-      sortDir: 'asc',
-      limit: 10,
-    });
-
-    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
-    expect(sorted.count).toBeGreaterThanOrEqual(2);
-    expect((sorted.rows[0].regionId || 0) <= (sorted.rows[1].regionId || 0)).toBe(true);
-  });
-
-  it('sorts feedback survey submissions by response ascending', async () => {
-    await saveFeedbackSurvey({
-      pageId: 'response-sort-a',
-      response: 'yes',
-      comment: 'response one',
-      timestamp: '2026-03-12T12:30:00.000Z',
-      userId: user.id,
-    });
-
-    await saveFeedbackSurvey({
-      pageId: 'response-sort-b',
-      response: 'no',
-      comment: 'response two',
-      timestamp: '2026-03-13T12:30:00.000Z',
-      userId: secondUser.id,
-    });
-
-    const sorted = await getFeedbackSurveys({
+      surveyId: survey.id,
       sortBy: 'response',
       sortDir: 'asc',
-      limit: 10,
     });
 
-    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
-    expect(sorted.count).toBeGreaterThanOrEqual(2);
-    expect(sorted.rows[0].response).toBe('yes');
-    expect(sorted.rows[1].response).toBe('no');
+    expect(sorted.rows.map((r) => r.response)).toEqual(['yes', 'no']);
   });
 
-  it('filters feedback survey submissions by createdAt date range', async () => {
-    const outsideRange = await saveFeedbackSurvey({
-      pageId: 'created-at-a',
-      response: 'yes',
-      comment: 'outside range',
-      timestamp: '2026-03-01T12:00:00.000Z',
+  it('filters feedback by createdAt date range', async () => {
+    const { feedback } = await saveFeedbackSurvey({
+      surveyId: survey.id,
+      responses: answers('yes', 'no'),
       userId: user.id,
-    });
-
-    const insideRange = await saveFeedbackSurvey({
-      pageId: 'created-at-b',
-      response: 'no',
-      comment: 'inside range',
-      timestamp: '2026-03-20T12:00:00.000Z',
-      userId: secondUser.id,
     });
 
     await FeedbackSurvey.update(
       { createdAt: new Date('2026-03-01T12:00:00.000Z') },
-      { where: { id: outsideRange.id } },
+      { where: { id: feedback[0].id } }
     );
-
     await FeedbackSurvey.update(
       { createdAt: new Date('2026-03-20T12:00:00.000Z') },
-      { where: { id: insideRange.id } },
+      { where: { id: feedback[1].id } }
     );
 
     const filtered = await getFeedbackSurveys({
-      pageId: 'created-at-',
+      surveyId: survey.id,
       createdAtFrom: '2026-03-15',
       createdAtTo: '2026-03-25',
-      sortBy: 'submittedAt',
-      sortDir: 'asc',
-      limit: 10,
     });
 
-    expect(filtered.rows).toHaveLength(1);
     expect(filtered.count).toBe(1);
-    expect(filtered.rows[0].pageId).toBe('created-at-b');
+    expect(filtered.rows[0].id).toBe(feedback[1].id);
   });
 
-  it('filters feedback survey submissions by regionId and userRole', async () => {
+  it('filters feedback by regionId and userRole', async () => {
     await saveFeedbackSurvey({
-      pageId: 'region-role-a',
-      response: 'yes',
-      comment: 'should match both filters',
-      timestamp: '2026-03-21T12:00:00.000Z',
+      surveyId: survey.id,
+      responses: answers('yes', 'yes'),
       userId: user.id,
       regionId: 4,
       userRoles: ['Grants Specialist'],
     });
-
     await saveFeedbackSurvey({
-      pageId: 'region-role-b',
-      response: 'no',
-      comment: 'wrong role',
-      timestamp: '2026-03-22T12:00:00.000Z',
+      surveyId: survey.id,
+      responses: answers('no', 'no'),
       userId: secondUser.id,
       regionId: 4,
       userRoles: ['Program Specialist'],
     });
 
     const filtered = await getFeedbackSurveys({
+      surveyId: survey.id,
       regionId: 4,
       userRole: 'Grants Specialist',
-      sortBy: 'submittedAt',
-      sortDir: 'desc',
-      limit: 10,
     });
 
-    expect(filtered.rows).toHaveLength(1);
-    expect(filtered.count).toBe(1);
-    expect(filtered.rows[0].pageId).toBe('region-role-a');
-    expect(filtered.rows[0].regionId).toBe(4);
-    expect(filtered.rows[0].userRoles).toEqual(expect.arrayContaining(['Grants Specialist']));
+    expect(filtered.count).toBe(2);
+    filtered.rows.forEach((row) => {
+      expect(row.userRoles).toEqual(['Grants Specialist']);
+    });
   });
 
-  it('marks completion by user and page without linking to survey response rows', async () => {
+  it('marks completion once per user and survey', async () => {
     await markFeedbackSurveyCompleted({
-      pageId: 'qa-dashboard',
+      surveyId: survey.id,
+      pageId,
       userId: user.id,
       timestamp: '2026-03-31T16:30:00.000Z',
     });
+    await markFeedbackSurveyCompleted({ surveyId: survey.id, pageId, userId: user.id });
 
-    const completion = await FeedbackSurveyCompletion.findOne({
-      where: {
-        pageId: 'qa-dashboard',
-        userId: user.id,
-      },
+    const completions = await FeedbackSurveyCompletion.findAll({
+      where: { surveyId: survey.id, userId: user.id },
     });
 
-    expect(completion).toBeDefined();
-    expect(completion.completedAt.toISOString()).toBe('2026-03-31T16:30:00.000Z');
-    expect(completion).not.toHaveProperty('feedbackSurveyId');
+    expect(completions).toHaveLength(1);
+    expect(completions[0].completedAt.toISOString()).toBe('2026-03-31T16:30:00.000Z');
   });
 
-  it('reports completion status by user and page', async () => {
-    await markFeedbackSurveyCompleted({
-      pageId: 'qa-dashboard',
-      userId: user.id,
+  it('tracks completion separately for surveys on the same page', async () => {
+    await markFeedbackSurveyCompleted({ surveyId: survey.id, pageId, userId: user.id });
+    await markFeedbackSurveyCompleted({ surveyId: closedSurvey.id, pageId, userId: user.id });
+
+    const count = await FeedbackSurveyCompletion.count({
+      where: { pageId, userId: user.id, surveyId: { [Op.in]: [survey.id, closedSurvey.id] } },
     });
 
-    const completedForUser = await hasCompletedFeedbackSurvey({
-      pageId: 'qa-dashboard',
-      userId: user.id,
-    });
-    const completedForOtherUser = await hasCompletedFeedbackSurvey({
-      pageId: 'qa-dashboard',
-      userId: secondUser.id,
-    });
-
-    expect(completedForUser).toBe(true);
-    expect(completedForOtherUser).toBe(false);
+    expect(count).toBe(2);
   });
 });
