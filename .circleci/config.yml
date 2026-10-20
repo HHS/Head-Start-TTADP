@@ -671,9 +671,11 @@ jobs:
   test_e2e_app:
     executor: docker-postgres-executor
     resource_class: large
+    # each node runs its own database and servers, and a timing-balanced share of the spec files
+    parallelism: 2
     steps:
     - run_e2e_test:
-        cmd: yarn test:e2e
+        cmd: ./tools/ci/run-e2e-app-tests-ci.sh
         artifact_path: tests/e2e
 
   test_e2e_api:
@@ -714,15 +716,19 @@ jobs:
     - set_env_vars:
         target_env: staging
     - run:
-        name: Build and start server
-        command: ./bin/prod-style-server
+        name: Start server
+        # dependencies and build output come from build_and_lint via the workspace
+        command: |
+          # dss.ci.yml uses !reset/!override, which need Docker Compose 2.24+
+          docker compose version
+          ./bin/prod-style-server --prebuilt
         background: true
-    - run:
-        name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080 localhost "" 40
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
+    - run:
+        name: Wait for Node.js server to start
+        command: ./bin/ping-server 8080 localhost "" 40
     - run:
         name: Run OWASP ZAP full scan
         command: ./bin/run-owasp-scan --target http://server:8080 --full

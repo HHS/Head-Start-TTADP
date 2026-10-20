@@ -1,14 +1,26 @@
 #!/bin/bash
 # This script sets up the system as run-owasp-scan expects it
+# Usage: prod-style-server [--prebuilt]
+#   --prebuilt  dependencies and build output already exist in the working tree (CI attaches
+#               them from build_and_lint), so skip installing and building
 set -euxo pipefail
+
+compose=(docker compose -f docker/compose/dss.yml)
+prebuilt=false
+if [[ "${1:-}" == "--prebuilt" ]]; then
+  prebuilt=true
+  compose+=(-f docker/compose/dss.ci.yml)
+fi
 
 mkdir -p reports/server
 rm -f reports/server/*
 
-docker compose -f docker/compose/dss.yml down --remove-orphans
-docker compose -f docker/compose/dss.yml run server yarn install 
-docker compose -f docker/compose/dss.yml run server yarn --cwd frontend install
-docker compose -f docker/compose/dss.yml run server yarn build
-docker compose -f docker/compose/dss.yml run server yarn --cwd frontend run build
-docker compose -f docker/compose/dss.yml run server yarn db:migrate:ci
-docker compose -f docker/compose/dss.yml up
+"${compose[@]}" down --remove-orphans
+if [[ "${prebuilt}" == false ]]; then
+  "${compose[@]}" run server yarn install
+  "${compose[@]}" run server yarn --cwd frontend install
+  "${compose[@]}" run server yarn build
+  "${compose[@]}" run server yarn --cwd frontend run build
+fi
+"${compose[@]}" run server yarn db:migrate:ci
+"${compose[@]}" up
