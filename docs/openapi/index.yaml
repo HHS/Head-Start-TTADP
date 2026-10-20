@@ -392,6 +392,229 @@ components:
         - collaboratorIds
         - regionId
         - data
+    ttaRequestInput:
+      type: object
+      description: The fields of a draft TTA request the creator can set. All are optional.
+      properties:
+        recipientId:
+          type: integer
+          nullable: true
+        grantIds:
+          type: array
+          description: The recipient's grants in the request's region
+          items:
+            type: integer
+        recipientAware:
+          type: boolean
+          nullable: true
+        originator:
+          type: string
+          nullable: true
+          enum:
+            - Central Office
+            - Recipient
+            - Regional Office
+            - TTA Staff
+        goalTemplateId:
+          type: integer
+          nullable: true
+        citations:
+          type: array
+          description: Only used with the monitoring goal; unique by citation
+          items:
+            type: object
+            required:
+              - citation
+            properties:
+              citation:
+                type: string
+              findingType:
+                type: string
+                nullable: true
+        context:
+          type: string
+          nullable: true
+          description: Rich text (HTML)
+        creatorNotes:
+          type: string
+          nullable: true
+        reviewerId:
+          type: integer
+          nullable: true
+          description: Must be an approver in the request's region, or it is saved as null
+    ttaRequestListItem:
+      type: object
+      description: A TTA request as the TTA request tables list it
+      properties:
+        id:
+          type: integer
+        displayId:
+          type: string
+          example: R01-REQ-12
+        regionId:
+          type: integer
+        recipientId:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+            - draft
+        createdAt:
+          type: string
+          format: date-time
+        creator:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        reviewer:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        recipient:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        goalTemplate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            templateName:
+              type: string
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              stateCode:
+                type: string
+                nullable: true
+    ttaRequest:
+      type: object
+      description: A TTA request
+      properties:
+        id:
+          type: integer
+        displayId:
+          type: string
+          example: R01-REQ-12
+        status:
+          type: string
+          enum:
+            - draft
+        userId:
+          type: integer
+        lastUpdatedById:
+          type: integer
+        regionId:
+          type: integer
+        recipientId:
+          type: integer
+          nullable: true
+        recipientAware:
+          type: boolean
+          nullable: true
+        originator:
+          type: string
+          nullable: true
+        goalTemplateId:
+          type: integer
+          nullable: true
+        context:
+          type: string
+          nullable: true
+        creatorNotes:
+          type: string
+          nullable: true
+        reviewerId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        creator:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        reviewer:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        recipient:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        goalTemplate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            templateName:
+              type: string
+            standard:
+              type: string
+              nullable: true
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              number:
+                type: string
+              regionId:
+                type: integer
+              recipientId:
+                type: integer
+              status:
+                type: string
+              name:
+                type: string
+              numberWithProgramTypes:
+                type: string
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              citation:
+                type: string
+              findingType:
+                type: string
+                nullable: true
     sessionReport:
       type: object
       description: A session report

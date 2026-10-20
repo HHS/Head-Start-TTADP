@@ -41,6 +41,7 @@ export default function Timeline(props: TimelineProps): React.ReactElement {
 
 function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactElement {
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
+  const filterHelpDrawerRef = useRef<HTMLButtonElement>(null);
   const { user } = useContext(UserContext);
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
@@ -125,6 +126,20 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
           />
         </div>
         <div className="margin-bottom-3">
+          <DrawerTriggerButton drawerTriggerRef={filterHelpDrawerRef} customClass="margin-right-3">
+            Get help using filters
+          </DrawerTriggerButton>
+          <Drawer title="TTA timeline filters" triggerRef={filterHelpDrawerRef}>
+            <p className="usa-prose">
+              Choose filters and select Apply filters to update the timeline. Remove an applied
+              filter using the remove button on its pill, or choose Clear all filters and apply to
+              view all dates.
+            </p>
+            <p className="usa-prose">
+              Use View to change the date order. Select Hide multi-recipient communications to
+              exclude communications associated with more than one recipient.
+            </p>
+          </Drawer>
           <DrawerTriggerButton drawerTriggerRef={aboutDrawerRef} customClass="">
             About this data
           </DrawerTriggerButton>
