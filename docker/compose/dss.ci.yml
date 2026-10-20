@@ -1,0 +1,13 @@
+# CI override for dss.yml, applied by `bin/prod-style-server --prebuilt`.
+# build_and_lint already installed dependencies and built the app into the attached
+# workspace, so run the server on the image those were built with and use them as-is
+# instead of reinstalling and rebuilding inside a fresh container.
+services:
+  server:
+    image: cimg/node:24.21.0
+    build: !reset null
+    # runs as root like the node image dss.yml builds from; migrations write into /workspace
+    user: root
+    entrypoint: !reset []
+    volumes: !override
+      - ../../:/workspace:rw

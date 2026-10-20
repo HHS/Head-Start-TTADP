@@ -51,7 +51,7 @@ export TZ=America/New_York
 export CI=true
 export JEST_JUNIT_OUTPUT_DIR=reports
 export JEST_JUNIT_OUTPUT_NAME="unit-${node_index}.xml"
-export JEST_JUNIT_ADD_FILE_ATTRIBUTE=1
+export JEST_JUNIT_ADD_FILE_ATTRIBUTE=true
 
 cd frontend
 
@@ -62,7 +62,8 @@ mkdir -p coverage
 test_files=()
 while IFS= read -r test_file; do
   test_files+=("${test_file}")
-done < <(node --expose-gc ./node_modules/jest/bin/jest.js --listTests)
+# relative to frontend/ so the paths match the file attribute jest-junit records for timings
+done < <(node --expose-gc ./node_modules/jest/bin/jest.js --listTests | sed "s#^$(pwd)/##")
 
 if [[ "${#test_files[@]}" -eq 0 ]]; then
   echo "No frontend Jest test files found."
@@ -120,7 +121,7 @@ printf "Running %d frontend Jest files on node %s/%s\n" \
 node \
   --expose-gc \
   ./node_modules/jest/bin/jest.js \
-  "${selected_tests[@]}" \
+  --runTestsByPath "${selected_tests[@]}" \
   --coverage \
   --coverageThreshold='{}' \
   --silent \
