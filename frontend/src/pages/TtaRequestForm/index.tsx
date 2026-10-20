@@ -1,11 +1,12 @@
 import { Alert, Button } from '@trussworks/react-uswds';
+import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import { isEqual } from 'lodash';
 import moment from 'moment-timezone';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
@@ -27,6 +28,7 @@ import {
   SAVE_ERROR,
   SUBMIT_ERROR,
   TTA_REQUEST_FIELDS,
+  ttaRequestViewPath,
 } from './constants';
 import { toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
@@ -302,6 +304,12 @@ function TtaRequestFormBody({
         {error}
       </Alert>
     ) : null;
+  }
+
+  // only a draft can be edited; a submitted request is shown read-only, as collaboration
+  // reports do
+  if (savedRequest && savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT) {
+    return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
   }
 
   return (

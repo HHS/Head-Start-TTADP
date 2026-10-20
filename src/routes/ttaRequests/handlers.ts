@@ -9,6 +9,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
+  lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   updateTtaRequest,
@@ -107,6 +108,7 @@ export async function createTtaRequest(req: Request, res: Response) {
 export async function saveTtaRequest(req: Request, res: Response) {
   try {
     const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
     const existing = await ttaRequestById(Number(ttaRequestId));
 
     if (!existing) {
@@ -136,6 +138,7 @@ export async function saveTtaRequest(req: Request, res: Response) {
 export async function submitTtaRequest(req: Request, res: Response) {
   try {
     const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
     const existing = await ttaRequestById(Number(ttaRequestId));
 
     if (!existing) {

@@ -6,6 +6,7 @@ import { createGoalTemplate, createGrant, createRecipient, createUser } from '..
 import {
   createTtaRequest,
   getTtaRequests,
+  lockTtaRequest,
   submitTtaRequest,
   ttaRequestById,
   updateTtaRequest,
@@ -473,6 +474,26 @@ describe('ttaRequests service', () => {
       expect(found.creator.fullName).toBe(`${creator.name}, GS`);
       // the reviewer has no role, so it is just their name
       expect(found.reviewer.fullName).toBe(reviewer.name);
+    });
+  });
+
+  describe('lockTtaRequest', () => {
+    it('holds the row until the transaction ends', async () => {
+      const created = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await db.sequelize.transaction(async () => {
+        await lockTtaRequest(created.id);
+
+        // another transaction can't take the same lock while this one holds it
+        const lockedElsewhere = await db.sequelize.transaction(async (other) =>
+          TtaRequest.findByPk(created.id, {
+            lock: other.LOCK.NO_KEY_UPDATE,
+            skipLocked: true,
+            transaction: other,
+          })
+        );
+        expect(lockedElsewhere).toBeNull();
+      });
     });
   });
 });

@@ -9,6 +9,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
+  lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   updateTtaRequest,
@@ -26,6 +27,7 @@ import {
 jest.mock('../../services/ttaRequests', () => ({
   createTtaRequest: jest.fn(),
   getTtaRequests: jest.fn(),
+  lockTtaRequest: jest.fn(),
   submitTtaRequest: jest.fn(),
   ttaRequestById: jest.fn(),
   updateTtaRequest: jest.fn(),
@@ -227,6 +229,7 @@ describe('TTA request handlers', () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(existing);
       (updateTtaRequest as jest.Mock).mockResolvedValue(saved);
       await saveTtaRequest(req as Request, res as Response);
+      expect(lockTtaRequest).toHaveBeenCalledWith(1);
       expect(updateTtaRequest).toHaveBeenCalledWith(existing, req.body, CREATOR_ID);
       expect(json).toHaveBeenCalledWith(saved);
     });
@@ -272,6 +275,7 @@ describe('TTA request handlers', () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(existing);
       (submitTtaRequestService as jest.Mock).mockResolvedValue(submitted);
       await submitTtaRequest(req as Request, res as Response);
+      expect(lockTtaRequest).toHaveBeenCalledWith(1);
       expect(submitTtaRequestService).toHaveBeenCalledWith(existing, req.body, CREATOR_ID);
       expect(json).toHaveBeenCalledWith(submitted);
     });

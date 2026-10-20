@@ -1,6 +1,6 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
-import { Op, type WhereOptions } from 'sequelize';
+import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
@@ -33,6 +33,18 @@ interface ExistingTtaRequest {
 
 // a request that refers to grants or a recipient it cannot -> 400 rather than 500
 const dataError = (message: string) => serviceError(400, message, { error: message });
+
+/**
+ * Locks the request's row for the rest of the caller's transaction (the ambient CLS
+ * transaction from `transactionWrapper`). Saves and submits take this lock before reading the
+ * request, so one that overlaps a submit sees it submitted instead of saving over it.
+ */
+export async function lockTtaRequest(id: number) {
+  return TtaRequest.findByPk(id, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
+}
 
 export async function ttaRequestById(id: number) {
   return TtaRequest.findOne({

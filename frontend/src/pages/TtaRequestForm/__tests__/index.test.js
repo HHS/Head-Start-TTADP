@@ -389,6 +389,17 @@ describe('TtaRequestForm', () => {
     expect(screen.getByText('Ross Geller')).toBeVisible();
   });
 
+  it('sends a submitted request to its read-only view', async () => {
+    fetchMock.get('/api/tta-requests/42', { ...SAVED_REQUEST, status: 'submitted' });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
+  });
+
   it('saves to the draft in the route after moving from one draft to another', async () => {
     fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
     fetchMock.get('/api/tta-requests/43', {
