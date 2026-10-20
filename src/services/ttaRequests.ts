@@ -1,4 +1,5 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
 import { Op, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
@@ -21,24 +22,8 @@ const {
   User,
 } = db;
 
-export interface TtaRequestCitationData {
-  citation: string;
-  findingType?: string | null;
-}
-
 /** the request body, after src/routes/ttaRequests/middleware.ts has validated it */
-export interface TtaRequestData {
-  regionId?: number;
-  recipientId?: number | null;
-  grantIds?: number[];
-  recipientAware?: boolean | null;
-  originator?: string | null;
-  goalTemplateId?: number | null;
-  citations?: TtaRequestCitationData[];
-  context?: string | null;
-  creatorNotes?: string | null;
-  reviewerId?: number | null;
-}
+export type TtaRequestData = Partial<TtaRequestPayload>;
 
 interface ExistingTtaRequest {
   id: number;

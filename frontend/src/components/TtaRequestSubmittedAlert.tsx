@@ -1,6 +1,6 @@
 import { Alert } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { ttaRequestViewPath } from '../pages/TtaRequestForm/constants';
 
 /** the message the submitting form leaves in the location, shaped as LandingMessage's is */
@@ -29,27 +29,24 @@ interface TtaRequestSubmittedAlertProps {
 export default function TtaRequestSubmittedAlert({
   requestRoot,
 }: TtaRequestSubmittedAlertProps): React.ReactElement | null {
-  const history = useHistory<LocationState>();
-  const [message] = useState(history.location.state?.message ?? null);
+  const location = useLocation<LocationState>();
+  const history = useHistory();
+  const [message] = useState(location.state?.message ?? null);
 
   useEffect(() => {
-    const { state } = history.location;
-    if (!state?.message) {
-      return;
+    if (location.state?.message) {
+      // keep whatever else is in the state; the recipient record reads its own flag from it
+      const { message: _message, ...restState } = location.state;
+      history.replace({ ...location, state: restState });
     }
-    const { message: _message, ...restState } = state;
-    history.replace({
-      ...history.location,
-      state: Object.keys(restState).length ? restState : undefined,
-    });
-  }, [history]);
+  }, [history, location]);
 
   if (!message?.reportId) {
     return null;
   }
 
   return (
-    <Alert type="success" headingLevel="h4" slim role="alert" className="margin-bottom-3">
+    <Alert type="success" headingLevel="h2" slim role="alert" className="margin-bottom-3">
       You submitted request{' '}
       <Link to={ttaRequestViewPath(message.reportId, requestRoot)}>{message.displayId}</Link> on{' '}
       {message.time}.

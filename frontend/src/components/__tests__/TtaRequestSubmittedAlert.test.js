@@ -53,7 +53,7 @@ describe('TtaRequestSubmittedAlert', () => {
     const history = renderAlert({ message: MESSAGE });
 
     expect(screen.getByRole('alert')).toBeVisible();
-    expect(history.location.state).toBeUndefined();
+    expect(history.location.state).toEqual({});
   });
 
   it('leaves the rest of the location state alone', () => {
