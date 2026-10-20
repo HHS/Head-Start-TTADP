@@ -7,7 +7,12 @@ import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import { ttaRequestViewPath } from '../../pages/TtaRequestForm/constants';
 import AddTtaRequestButton from '../AddTtaRequestButton';
-import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
+import TtaRequestsTable, {
+  GOAL_CELL_CLASS,
+  GOAL_TEXT_CLASS,
+  recipientRecordUrl,
+  type TtaRequestsTableRow,
+} from './index';
 
 /** a request as the TTA request list endpoints return it */
 export interface ActiveTtaRequest {
@@ -168,7 +173,12 @@ const toTableRow = (
         value: moment(request.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       ...(showRecipientColumns ? [{ title: COLUMNS.CREATOR, value: request.creator.name }] : []),
-      { title: COLUMNS.GOAL, value: request.goalTemplate?.templateName ?? BLANK },
+      {
+        title: COLUMNS.GOAL,
+        value: request.goalTemplate?.templateName ?? BLANK,
+        className: GOAL_CELL_CLASS,
+        contentClassName: GOAL_TEXT_CLASS,
+      },
       ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: stateCodes(request) }] : []),
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
       { title: COLUMNS.APPROVER, value: BLANK },

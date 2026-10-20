@@ -111,6 +111,16 @@ describe('TableCell', () => {
     expect(elements.length).toBeGreaterThan(0);
   });
 
+  it('wraps the content in a span when the cell asks for one', () => {
+    renderTableCell({
+      data: { title: 'Goal', value: 'A goal name', contentClassName: 'goal-text' },
+    });
+
+    const content = screen.getByText('A goal name');
+    expect(content.tagName).toBe('SPAN');
+    expect(content).toHaveClass('goal-text');
+  });
+
   it('renders suffix content when provided', () => {
     const data = {
       title: 'Test Cell',

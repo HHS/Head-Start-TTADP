@@ -6,6 +6,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { blobToCsvDownload } from '../../../utils';
 import ActiveTtaRequestsTable from '../ActiveTtaRequestsTable';
+import { GOAL_CELL_CLASS, GOAL_TEXT_CLASS } from '../index';
 
 jest.mock('../../../utils', () => ({
   ...jest.requireActual('../../../utils'),
@@ -186,6 +187,16 @@ describe('ActiveTtaRequestsTable', () => {
 
     expect(cells[2]).toHaveTextContent('-');
     expect(cells[3]).toHaveTextContent('-');
+  });
+
+  it('wraps a long goal within its cell instead of letting it spill past the table', async () => {
+    renderTable();
+    await waitForRows();
+
+    const cells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
+
+    expect(cells[2]).toHaveClass(GOAL_CELL_CLASS);
+    expect(within(cells[2]).getByText('Monitoring')).toHaveClass(GOAL_TEXT_CLASS);
   });
 
   it('links the request id and the draft status back into the request', async () => {
