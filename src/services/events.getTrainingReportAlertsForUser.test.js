@@ -401,7 +401,7 @@ describe('getTrainingReportAlertsForUser', () => {
 
       const baseEventData = {
         eventName: faker.string.sample(),
-        eventId: `R0${regionId}-TR-${faker.number.int({ max: 4 })}`,
+        eventId: `R0${regionId}-TR-${uniqueTestId()}`,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         eventSubmitted: true,
         eventOrganizer: 'Regional PD Event (with National Centers)',
@@ -416,7 +416,7 @@ describe('getTrainingReportAlertsForUser', () => {
         eventId: `R0${regionId}-TR-OWN-${faker.string.uuid()}`,
         data: {
           ...baseEventData,
-          eventId: `R0${regionId}-TR-OWN-${faker.number.int({ max: 4 })}`,
+          eventId: `R0${regionId}-TR-OWN-${uniqueTestId()}`,
           startDate: oneMonthAgo(),
           endDate: new Date(),
         },
@@ -445,7 +445,7 @@ describe('getTrainingReportAlertsForUser', () => {
         eventId: `R0${regionId}-TR-COL-${faker.string.uuid()}`,
         data: {
           ...baseEventData,
-          eventId: `R0${regionId}-TR-COL-${faker.number.int({ max: 4 })}`,
+          eventId: `R0${regionId}-TR-COL-${uniqueTestId()}`,
           startDate: oneMonthAgo(),
           endDate: new Date(),
         },
@@ -474,7 +474,7 @@ describe('getTrainingReportAlertsForUser', () => {
         eventId: `R0${regionId}-TR-OK-${faker.string.uuid()}`,
         data: {
           ...baseEventData,
-          eventId: `R0${regionId}-TR-OK-${faker.number.int({ max: 4 })}`,
+          eventId: `R0${regionId}-TR-OK-${uniqueTestId()}`,
           startDate: oneMonthAgo(),
           endDate: new Date(),
         },
@@ -506,7 +506,7 @@ describe('getTrainingReportAlertsForUser', () => {
         eventId: `R0${regionId}-TR-POC-${faker.string.uuid()}`,
         data: {
           ...baseEventData,
-          eventId: `R0${regionId}-TR-POC-${faker.number.int({ max: 4 })}`,
+          eventId: `R0${regionId}-TR-POC-${uniqueTestId()}`,
           startDate: oneMonthAgo(),
           endDate: new Date(),
         },

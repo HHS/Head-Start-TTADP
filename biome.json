@@ -5,6 +5,7 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
+  "plugins": ["./tools/biome/noRandomTestIds.grit"],
   "files": {
     "ignoreUnknown": true,
     "includes": ["**", "!**/*.min.js", "!docs/boundary_diagram.svg"]

@@ -143,36 +143,38 @@ describe('Users DB service', () => {
   });
 
   describe('userByEmail', () => {
+    const ids = [uniqueTestId(), uniqueTestId()];
+
     beforeEach(async () => {
       await User.create({
-        id: 50,
+        id: ids[0],
         name: 'user 50',
-        email: 'user50@test.gov',
-        hsesUsername: 'user50',
-        hsesUserId: '50',
+        email: `user${ids[0]}@test.gov`,
+        hsesUsername: `user${ids[0]}`,
+        hsesUserId: `${ids[0]}`,
         lastLogin: new Date(),
       });
       await User.create({
-        id: 51,
+        id: ids[1],
         name: 'user 51',
-        email: 'user51@test.gov',
-        hsesUsername: 'user51',
-        hsesUserId: '51',
+        email: `user${ids[1]}@test.gov`,
+        hsesUsername: `user${ids[1]}`,
+        hsesUserId: `${ids[1]}`,
         lastLogin: new Date(),
       });
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51] } });
+      await User.destroy({ where: { id: ids } });
     });
 
     it('retrieves the correct user', async () => {
-      const user = await userByEmail('user50@test.gov');
-      expect(user.id).toBe(50);
+      const user = await userByEmail(`user${ids[0]}@test.gov`);
+      expect(user.id).toBe(ids[0]);
     });
     it('retrieves the correct user if case differs', async () => {
-      const user = await userByEmail('User51@Test.Gov');
-      expect(user.id).toBe(51);
+      const user = await userByEmail(`User${ids[1]}@Test.Gov`);
+      expect(user.id).toBe(ids[1]);
     });
   });
 
@@ -276,24 +278,25 @@ describe('Users DB service', () => {
   });
 
   describe('usersWithPermissions', () => {
+    const ids = [uniqueTestId(), uniqueTestId(), uniqueTestId(), uniqueTestId()];
     const users = [
       {
-        id: 50,
+        id: ids[0],
         regionId: 5,
         scopeId: SCOPES.APPROVE_REPORTS,
       },
       {
-        id: 51,
+        id: ids[1],
         regionId: 6,
         scopeId: SCOPES.APPROVE_REPORTS,
       },
       {
-        id: 52,
+        id: ids[2],
         regionId: 7,
         scopeId: SCOPES.APPROVE_REPORTS,
       },
       {
-        id: 53,
+        id: ids[3],
         regionId: 5,
         scopeId: SCOPES.READ_REPORTS,
       },
@@ -324,37 +327,37 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51, 52, 53] } });
+      await User.destroy({ where: { id: ids } });
     });
 
     it("returns a list of users that have permissions on the user's regions", async () => {
       const matchingUsers = await usersWithPermissions([5, 6], [SCOPES.APPROVE_REPORTS]);
-      const foundIds = matchingUsers.map((u) => u.id);
-      expect(foundIds.includes(50)).toBeTruthy();
-      expect(foundIds.includes(51)).toBeTruthy();
-      expect(foundIds.length).toBe(2);
+      // other suites can leave users with these permissions behind, so only look at ours
+      const foundIds = matchingUsers.map((u) => u.id).filter((id) => ids.includes(id));
+      expect(foundIds.sort()).toEqual([ids[0], ids[1]].sort());
     });
   });
 
   describe('setFlag', () => {
+    const ids = [uniqueTestId(), uniqueTestId(), uniqueTestId(), uniqueTestId()];
     const users = [
       {
-        id: 50,
+        id: ids[0],
         regionId: 5,
         scopeId: SCOPES.SITE_ACCESS,
       },
       {
-        id: 51,
+        id: ids[1],
         regionId: 6,
         scopeId: SCOPES.SITE_ACCESS,
       },
       {
-        id: 52,
+        id: ids[2],
         regionId: 7,
         scopeId: SCOPES.SITE_ACCESS,
       },
       {
-        id: 53,
+        id: ids[3],
         regionId: 5,
         scopeId: SCOPES.READ_REPORTS,
       },
@@ -384,25 +387,25 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51, 52, 53] } });
+      await User.destroy({ where: { id: ids } });
     });
 
     it('adds a flag to users that do not have the flag', async () => {
       const result = await setFlag('quality_assurance_dashboard', true);
       expect(result[1] > 3).toEqual(true);
-      const user = await User.findOne({ where: { id: 50 } });
+      const user = await User.findOne({ where: { id: ids[0] } });
       expect(user.flags[0]).toBe('quality_assurance_dashboard');
     });
     it('removes a flag from users that have the flag', async () => {
       await setFlag('quality_assurance_dashboard', true);
       const result = await setFlag('quality_assurance_dashboard', false);
       expect(result[1] > 3).toEqual(true);
-      const user = await User.findOne({ where: { id: 50 } });
+      const user = await User.findOne({ where: { id: ids[0] } });
       expect(user.flags[0]).toBe(undefined);
     });
     it('does not set a flag for users without permissions', async () => {
       await setFlag('quality_assurance_dashboard', true);
-      const user = await User.findOne({ where: { id: 53 } });
+      const user = await User.findOne({ where: { id: ids[3] } });
       expect(user.flags[0]).toBe(undefined);
     });
   });
@@ -496,9 +499,11 @@ describe('Users DB service', () => {
     it('returns a list of users that have permissions on the region', async () => {
       const result = await getTrainingReportUsersByRegion(5);
 
-      const collaboratorIds = result.collaborators.map((u) => u.id);
-      const pointOfContact = result.pointOfContact.map((u) => u.id);
-      const creators = result.creators.map((u) => u.id);
+      // other suites can leave users with these permissions behind, so only look at ours
+      const ours = (list) => list.map((u) => u.id).filter((id) => userIds.includes(id));
+      const collaboratorIds = ours(result.collaborators);
+      const pointOfContact = ours(result.pointOfContact);
+      const creators = ours(result.creators);
 
       expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
       expect(collaboratorIds.length).toBe(1);
@@ -514,9 +519,11 @@ describe('Users DB service', () => {
     it('adds missing creator id when event id is passed', async () => {
       const result = await getTrainingReportUsersByRegion(5, eventDisplayId);
 
-      const collaboratorIds = result.collaborators.map((u) => u.id);
-      const pointOfContact = result.pointOfContact.map((u) => u.id);
-      const creators = result.creators.map((u) => u.id);
+      // other suites can leave users with these permissions behind, so only look at ours
+      const ours = (list) => list.map((u) => u.id).filter((id) => userIds.includes(id));
+      const collaboratorIds = ours(result.collaborators);
+      const pointOfContact = ours(result.pointOfContact);
+      const creators = ours(result.creators);
 
       expect(collaboratorIds.includes(userIds[2])).toBeTruthy();
       expect(collaboratorIds.length).toBe(1);

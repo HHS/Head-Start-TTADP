@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import { uniqueTestId } from '../fakerUnique';
@@ -52,7 +51,7 @@ describe('standardGoals with Data', () => {
     let normalizedCitationOnNonApprovedReport;
 
     beforeAll(async () => {
-      const uniqueUserId = `Test Topics User ${Date.now()}-${faker.number.int({ min: 1000, max: 9999 })}`;
+      const uniqueUserId = `Test Topics User ${Date.now()}-${uniqueTestId()}`;
       user = await User.create({
         id: uniqueTestId(),
         homeRegionId: 1,

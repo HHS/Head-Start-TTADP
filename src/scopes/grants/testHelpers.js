@@ -462,8 +462,17 @@ export async function tearDownSharedTestData() {
     },
   });
 
-  await GoalFieldResponse.destroy({ where: {}, force: true });
-  await Goal.destroy({ where: {}, force: true });
+  // remove goals the tests created on these grants (so the grants can be deleted), but leave
+  // every other goal alone: the database is shared with other suites
+  const goalIds = (
+    await Goal.findAll({
+      attributes: ['id'],
+      where: { grantId: grants.map((g) => g.id) },
+      paranoid: false,
+    })
+  ).map((g) => g.id);
+  await GoalFieldResponse.destroy({ where: { goalId: goalIds }, force: true });
+  await Goal.destroy({ where: { id: goalIds }, force: true });
 
   await Grant.destroy({
     where: {

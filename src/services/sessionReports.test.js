@@ -100,7 +100,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           additionalRegions: ['11', '12'],
         },
       });
@@ -111,7 +111,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
         },
       });
     });
@@ -585,7 +585,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
         },
       });
       sessionBase = await createSession({ eventId: eventBase.id, data: {} });
@@ -597,7 +597,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           additionalRegions: [mockRegionId + 2],
         },
       });
@@ -613,7 +613,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           additionalStates: ['California (CA)', 'Arizona'],
         },
       });
@@ -629,7 +629,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           additionalRegions: [mockRegionId + 2],
           additionalStates: ['California (CA)'],
         },

@@ -1,0 +1,21 @@
+// Flags random faker numbers used as ids (`id`, `...Id`, `...Ids`, `..._ID`). Tests share one
+// database, so random ids collide with rows that sequences hand out or other suites leave
+// behind. Tested by noRandomTestIds.test.js.
+//
+// Biome's GritQL quirks worked around here: `let` snippets never match (the bare `$key = $value`
+// covers declarations instead), and regex groups break matching (hence an `or` of regexes).
+language js
+
+or {
+  `$key: $value`,
+  `$key = $value`,
+  JsAssignmentExpression(left=$key, right=$value),
+  JsFormalParameter(binding=$key, initializer=$value)
+} where {
+  $key <: or { r"id", r"[A-Za-z_]*Ids?", r"[A-Z_]*_IDS?" },
+  $value <: contains `faker.number.int($_)` as $call,
+  register_diagnostic(
+    span=$call,
+    message="Use uniqueTestId() from src/fakerUnique for test ids. Random ids collide with rows other test suites leave in the shared database."
+  )
+}

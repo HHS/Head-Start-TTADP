@@ -163,12 +163,10 @@ describe('File Upload', () => {
       ],
     });
 
-    await Promise.all(
-      files.map(async (file) => {
-        ActivityReportFile.destroy({ where: { fileId: file.id } });
-        File.destroy({ where: { id: file.id } });
-      })
-    );
+    // links before files, and awaited: an unawaited link delete races the file delete below
+    const fileIds = files.map((file) => file.id);
+    await ActivityReportFile.destroy({ where: { fileId: fileIds } });
+    await File.destroy({ where: { id: fileIds } });
 
     // cleanup any leftovers, like from the lonely file test
     const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
