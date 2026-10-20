@@ -1,0 +1,28 @@
+name: PR Data File Guard
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  data_file_guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Block HSES data files and staff emails in data files
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: node ./tools/validate-data-file-guard.js
