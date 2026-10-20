@@ -63,7 +63,9 @@ same page is shown to users again.
 ## Local debug flags
 
 `frontend/src/utils/feedbackSurveyDebug.js` reads two localStorage flags:
-- `ttahub:alwaysShowFeedbackSurvey` shows the survey even if the user completed it (still requires an active survey).
+- `ttahub:alwaysShowFeedbackSurvey` (set by the "Show survey" testing button) shows the survey even if the user
+  completed it (still requires an active survey). It is one-shot: submitting the survey clears it, so the survey
+  stays hidden until the button is clicked again.
 - `ttahub:forceSurveySubmit500` makes submission fail, to test the error state.
 
 ## Testing
