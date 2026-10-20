@@ -1,3 +1,4 @@
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -33,21 +34,21 @@ describe('programType filtersToScopes', () => {
       reportOne = await createReport({
         activityRecipients: [
           {
-            grantId: faker.number.int({ min: 0, max: 99999 }),
+            grantId: uniqueTestId(),
           },
         ],
       });
       reportTwo = await createReport({
         activityRecipients: [
           {
-            grantId: faker.number.int({ min: 0, max: 99999 }),
+            grantId: uniqueTestId(),
           },
         ],
       });
       reportThree = await createReport({
         activityRecipients: [
           {
-            grantId: faker.number.int({ min: 0, max: 99999 }),
+            grantId: uniqueTestId(),
           },
         ],
       });
@@ -96,7 +97,7 @@ describe('programType filtersToScopes', () => {
         ...reportOneRecipients.map(async (recipient) => {
           await Program.create({
             ...dummyProgram,
-            id: faker.number.int({ min: 0, max: 99999 }),
+            id: uniqueTestId(),
             name: faker.person.fullName(),
             grantId: recipient.grantId,
             programType: 'EHS',
@@ -105,7 +106,7 @@ describe('programType filtersToScopes', () => {
         ...reportTwoRecipients.map(async (recipient) => {
           await Program.create({
             ...dummyProgram,
-            id: faker.number.int({ min: 0, max: 99999 }),
+            id: uniqueTestId(),
             name: faker.person.fullName(),
             grantId: recipient.grantId,
             programType: 'EHS',
@@ -114,14 +115,14 @@ describe('programType filtersToScopes', () => {
         ...reportThreeRecipients.map(async (recipient) => {
           await Program.create({
             ...dummyProgram,
-            id: faker.number.int({ min: 0, max: 99999 }),
+            id: uniqueTestId(),
             name: faker.person.fullName(),
             grantId: recipient.grantId,
             programType: 'AIAN HS',
           }).catch((err) => auditLogger.error(err));
           await Program.create({
             ...dummyProgram,
-            id: faker.number.int({ min: 0, max: 99999 }),
+            id: uniqueTestId(),
             name: faker.person.fullName(),
             grantId: recipient.grantId,
             programType: 'AIAN EHS',

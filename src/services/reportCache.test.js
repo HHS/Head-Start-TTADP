@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import { Op, Transaction } from 'sequelize';
 import { GOAL_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
 import {
@@ -383,7 +384,7 @@ describe('activityReportObjectiveCitation', () => {
     nonMonitoringFindingId = faker.string.uuid();
     rtrFindingId = faker.string.uuid();
 
-    const startingMfid = faker.number.int({ min: 100000, max: 999999 });
+    const startingMfid = uniqueTestId();
     await Citation.bulkCreate([
       {
         mfid: startingMfid + 1,
@@ -995,7 +996,7 @@ describe('cacheGoalMetadata', () => {
   let snapShot;
 
   const mockUser = {
-    id: faker.number.int({ min: 0, max: 99999 }),
+    id: uniqueTestId(),
     homeRegionId: 1,
     name: 'user13706689',
     hsesUsername: 'user13706689',
@@ -1008,7 +1009,7 @@ describe('cacheGoalMetadata', () => {
     snapShot = await captureSnapshot();
 
     await User.create(mockUser);
-    const grantId = faker.number.int({ min: 0, max: 99999 });
+    const grantId = uniqueTestId();
 
     activityReport = await createReport({
       activityRecipients: [

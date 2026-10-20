@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 import { faker } from '@faker-js/faker';
+import { uniqueTestId } from '../../fakerUnique';
 
 // Mock user data
 export const mockUser = {
-  id: faker.number.int({ min: 0, max: 99999 }),
+  id: uniqueTestId(),
   homeRegionId: 1,
   name: 'Session Report Test User',
   hsesUsername: faker.string.sample(10),

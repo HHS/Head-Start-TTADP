@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -48,7 +49,7 @@ describe('activityReportGoalResource hooks', () => {
 
   beforeEach(async () => {
     mockUser = await User.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       hsesUsername: faker.string.sample(),
       hsesUserId: faker.string.sample(),

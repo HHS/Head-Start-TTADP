@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import moment from 'moment';
 import { UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
@@ -1511,7 +1512,7 @@ describe('standardGoal service', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: 'Test Param User',
         hsesUsername: 'Test Param User',
@@ -1617,10 +1618,13 @@ describe('standardGoal service', () => {
       });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
       await Recipient.destroy({ where: { id: recipientForParam.id }, force: true });
-      await CollaboratorType.destroy({
-        where: { id: creatorCollabType[0].id },
-        force: true,
-      });
+      // findOrCreate may return the shared migration-seeded row; only remove one this suite made
+      if (creatorCollabType[1]) {
+        await CollaboratorType.destroy({
+          where: { id: creatorCollabType[0].id },
+          force: true,
+        });
+      }
       await User.destroy({ where: { id: user.id }, force: true });
     });
 

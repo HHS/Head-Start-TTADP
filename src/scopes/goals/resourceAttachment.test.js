@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityReportFile,
   ActivityReportGoal,
@@ -35,7 +36,7 @@ describe('goal filtersToScopes', () => {
       reportToInclude = await createReport({
         activityRecipients: [
           {
-            grantId: faker.number.int({ min: 0, max: 99999 }),
+            grantId: uniqueTestId(),
           },
         ],
       });
@@ -89,7 +90,7 @@ describe('goal filtersToScopes', () => {
       reportToExclude = await createReport({
         activityRecipients: [
           {
-            grantId: faker.number.int({ min: 0, max: 99999 }),
+            grantId: uniqueTestId(),
           },
         ],
       });

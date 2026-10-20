@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
-import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
+import { uniqueTestId } from '../fakerUnique';
 import {
   ActivityReport,
   ActivityReportObjective,
@@ -83,7 +83,7 @@ const linkTimestamps = {
 };
 
 const granteeRow = (grantNumber, reviewId, granteeId) => ({
-  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+  id: uniqueTestId(),
   grantNumber,
   reviewId,
   granteeId,
@@ -98,9 +98,9 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario A: Active deficiency, TWO grants on same review
   // ----------------------------------------------------------
-  const recipientIdA = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdA1 = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdA2 = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdA = uniqueTestId();
+  const grantIdA1 = uniqueTestId();
+  const grantIdA2 = uniqueTestId();
   const grantNumberA1 = `UFT-${uuidv4().slice(0, 8)}`;
   const grantNumberA2 = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdA = uuidv4();
@@ -121,8 +121,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
   // ----------------------------------------------------------
-  const recipientIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdB = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdB = uniqueTestId();
+  const grantIdB = uniqueTestId();
   const grantNumberB = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdB1 = uuidv4();
   const reviewIdB2 = uuidv4();
@@ -132,8 +132,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario C: AOC closed by monitoring goal
   // ----------------------------------------------------------
-  const recipientIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdC = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdC = uniqueTestId();
+  const grantIdC = uniqueTestId();
   const grantNumberC = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdC = uuidv4();
   const granteeIdC = uuidv4();
@@ -143,8 +143,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario E: CLASS review with scores, no findings
   // ----------------------------------------------------------
-  const recipientIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdE = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdE = uniqueTestId();
+  const grantIdE = uniqueTestId();
   const grantNumberE = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdE = uuidv4();
   const granteeIdE = uuidv4();
@@ -155,8 +155,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario D: Undelivered current review forces Active
   // ----------------------------------------------------------
-  const recipientIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdD = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdD = uniqueTestId();
+  const grantIdD = uniqueTestId();
   const grantNumberD = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdD1 = uuidv4();
   const reviewIdD2 = uuidv4();
@@ -166,8 +166,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario F: Excluded finding type (Withdrawn) — must not produce any fact table rows
   // ----------------------------------------------------------
-  const recipientIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdF = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdF = uniqueTestId();
+  const grantIdF = uniqueTestId();
   const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdF = uuidv4();
   const granteeIdF = uuidv4();
@@ -176,20 +176,20 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario G: last_tta computed from ActivityReport.endDate
   // ----------------------------------------------------------
-  const userIdG = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const userIdG = uniqueTestId();
   const expectedLastTtaDate = '2026-01-15';
 
   // ----------------------------------------------------------
   // Scenario H: live-value views pick latest endDate; null & tie
   // ----------------------------------------------------------
-  const userIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const userIdH = uniqueTestId();
 
   // ----------------------------------------------------------
   // Scenario H: Elevated Deficiency history status on a Compliant delivered review
   //             → passes through as Elevated Deficiency (no outcome coercion)
   // ----------------------------------------------------------
-  const recipientIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdH = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdH = uniqueTestId();
+  const grantIdH = uniqueTestId();
   const grantNumberH = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdH = uuidv4();
   const granteeIdH = uuidv4();
@@ -198,8 +198,8 @@ describe('updateMonitoringFactTables', () => {
   // ----------------------------------------------------------
   // Scenario I: Elevated Deficiency + Compliant but undelivered → Active
   // ----------------------------------------------------------
-  const recipientIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdI = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdI = uniqueTestId();
+  const grantIdI = uniqueTestId();
   const grantNumberI = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdI1 = uuidv4();
   const reviewIdI2 = uuidv4();
@@ -211,8 +211,8 @@ describe('updateMonitoringFactTables', () => {
   // Must be included because MonitoringClassSummaries scores exist,
   // even though reportDeliveryDate and sourceCreatedAt predate 2025-01-21.
   // ----------------------------------------------------------
-  const recipientIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdJ = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdJ = uniqueTestId();
+  const grantIdJ = uniqueTestId();
   const grantNumberJ = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdJ = uuidv4();
   const granteeIdJ = uuidv4();
@@ -226,8 +226,8 @@ describe('updateMonitoringFactTables', () => {
   // (lower id) to confirm the UPDATE picks by reportDeliveryDate DESC, not
   // insertion order. A CLASS review is also present and must not count.
   // ----------------------------------------------------------
-  const recipientIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
-  const grantIdK = faker.number.int({ min: 70000, max: 70000 + 99999 });
+  const recipientIdK = uniqueTestId();
+  const grantIdK = uniqueTestId();
   const grantNumberK = `UFT-${uuidv4().slice(0, 8)}`;
   const reviewIdK1 = uuidv4(); // created first, older delivery date — must NOT win
   const reviewIdK2 = uuidv4(); // created second, newer delivery date — must win
@@ -835,7 +835,7 @@ describe('updateMonitoringFactTables', () => {
       paranoid: false,
     });
     const goalC = await Goal.create({
-      id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
+      id: uniqueTestId(),
       name: goalTemplate.templateName,
       grantId: grantIdC,
       goalTemplateId: goalTemplate.id,

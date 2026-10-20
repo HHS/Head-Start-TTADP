@@ -1,6 +1,6 @@
-import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import { VALIDATION_ALERT_SEVERITY, VALIDATION_PROCESS, VALIDATION_RUN_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import { prepMigration, setAuditLoggingState } from '../lib/migration';
 import {
   ActivityReport,
@@ -110,9 +110,9 @@ const lastCompleteWeekDate = (dayOffset = 2) => {
 };
 
 describe('validateMonitoringData', () => {
-  const recipientId = faker.number.int({ min: 90000, max: 899999 });
+  const recipientId = uniqueTestId();
   const recipientName = `Recipient VMD ${uuidv4().slice(0, 6)}`;
-  const grantId = faker.number.int({ min: 90000, max: 899999 });
+  const grantId = uniqueTestId();
   const grantNumber = `VMD-${uuidv4().slice(0, 8)}`;
   // A second grant in a different region on the same grantee, so the seeded
   // findings span two regions and the national total must deduplicate them.
@@ -186,29 +186,29 @@ describe('validateMonitoringData', () => {
   // matching recipientId/grantId above, since ZAL rows are never cleaned up:
   // a fixed id would accumulate audit history across every past run of this
   // file and confuse "latest transition" on a re-run.
-  const citationIdFreshLinked = faker.number.int({ min: 900000, max: 89999999 }); // reopened recently, cited on a real AR -> alert
-  const citationIdFreshUnlinked = faker.number.int({ min: 900000, max: 89999999 }); // reopened recently, not cited anywhere -> team_notification
-  const citationIdStale = faker.number.int({ min: 900000, max: 89999999 }); // reopened a while ago -> recorded, not alerted
-  const deliveredReviewIdFresh = faker.number.int({ min: 900000, max: 89999999 }); // complete -> not complete, recently -> team_notification
-  const deliveredReviewIdStale = faker.number.int({ min: 900000, max: 89999999 }); // same, but a while ago -> recorded, not alerted
+  const citationIdFreshLinked = uniqueTestId(); // reopened recently, cited on a real AR -> alert
+  const citationIdFreshUnlinked = uniqueTestId(); // reopened recently, not cited anywhere -> team_notification
+  const citationIdStale = uniqueTestId(); // reopened a while ago -> recorded, not alerted
+  const deliveredReviewIdFresh = uniqueTestId(); // complete -> not complete, recently -> team_notification
+  const deliveredReviewIdStale = uniqueTestId(); // same, but a while ago -> recorded, not alerted
   // Fact-table observations record against MonitoringFindings/MonitoringReviews,
   // not Citations/DeliveredReviews - Citations.mfid and DeliveredReviews.mrid
   // are exactly those ids (see monitoringFactTableObservations.ts), so these
   // are the values ValidationRecords.entity_id actually holds.
-  const mfidFreshLinked = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidFreshUnlinked = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidStale = faker.number.int({ min: 900000, max: 89999999 });
-  const mridFresh = faker.number.int({ min: 900000, max: 89999999 });
-  const mridStale = faker.number.int({ min: 900000, max: 89999999 });
+  const mfidFreshLinked = uniqueTestId();
+  const mfidFreshUnlinked = uniqueTestId();
+  const mfidStale = uniqueTestId();
+  const mridFresh = uniqueTestId();
+  const mridStale = uniqueTestId();
   const citationReopenedStaleAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   // Soft-deleted Citations cited on a real report ->
   // activity_report_citation_source_deleted(_editable). deletedAt is read
   // directly off the row (see monitoringFactTableObservations.ts), so no ZAL
   // backdating is needed here - just set it at creation.
-  const citationIdOrphanedApproved = faker.number.int({ min: 900000, max: 89999999 });
-  const citationIdOrphanedEditable = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidOrphanedApproved = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidOrphanedEditable = faker.number.int({ min: 900000, max: 89999999 });
+  const citationIdOrphanedApproved = uniqueTestId();
+  const citationIdOrphanedEditable = uniqueTestId();
+  const mfidOrphanedApproved = uniqueTestId();
+  const mfidOrphanedEditable = uniqueTestId();
   const citationSourceDeletedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   // citation_review_count / citation_grant_count / citation_days_review_1_to_2 /
   // citation_days_review_2_to_3: anomaly-detection raw material, not alerted
@@ -217,10 +217,10 @@ describe('validateMonitoringData', () => {
   // 2). The first period is closed (review 2 superseded it); the second has
   // no third review, so it's still open - latest_review_end is a far-future
   // placeholder, capped at today by the observation itself.
-  const citationIdTimeline = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidTimeline = faker.number.int({ min: 900000, max: 89999999 });
-  const deliveredReviewIdTimeline1 = faker.number.int({ min: 900000, max: 89999999 });
-  const deliveredReviewIdTimeline2 = faker.number.int({ min: 900000, max: 89999999 });
+  const citationIdTimeline = uniqueTestId();
+  const mfidTimeline = uniqueTestId();
+  const deliveredReviewIdTimeline1 = uniqueTestId();
+  const deliveredReviewIdTimeline2 = uniqueTestId();
   const timelineReview1Start = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000);
   const timelineReview1End = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
   const timelineReview2Start = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
@@ -229,10 +229,10 @@ describe('validateMonitoringData', () => {
   // tie-break against another review on the same citation, so it never
   // became authoritative for any period (null latest_review_start/end) ->
   // team_notification.
-  const citationIdNoWindow = faker.number.int({ min: 900000, max: 89999999 });
-  const mfidNoWindow = faker.number.int({ min: 900000, max: 89999999 });
-  const deliveredReviewIdNoWindowWinner = faker.number.int({ min: 900000, max: 89999999 });
-  const deliveredReviewIdNoWindowLoser = faker.number.int({ min: 900000, max: 89999999 });
+  const citationIdNoWindow = uniqueTestId();
+  const mfidNoWindow = uniqueTestId();
+  const deliveredReviewIdNoWindowWinner = uniqueTestId();
+  const deliveredReviewIdNoWindowLoser = uniqueTestId();
   // Assigned in beforeAll (need generated ids), read in afterAll for cleanup.
   let factTableUser;
   let factTableReport;
@@ -310,7 +310,7 @@ describe('validateMonitoringData', () => {
       ...timestamps,
       sourceCreatedAt: reviewSourceCreatedAt,
     });
-    const reviewGranteeId = faker.number.int({ min: 99999, max: 899999 });
+    const reviewGranteeId = uniqueTestId();
     await MonitoringReviewGrantee.create({
       id: reviewGranteeId,
       grantNumber,
@@ -617,7 +617,7 @@ describe('validateMonitoringData', () => {
       }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: multiGrantGranteeId } }),
     ]);
-    const multiGrantGranteeRowId = faker.number.int({ min: 900000, max: 89999999 });
+    const multiGrantGranteeRowId = uniqueTestId();
     await MonitoringReviewGrantee.bulkCreate(
       [multiGrantNumberA, multiGrantNumberB].map((grantNumberForMulti, i) => ({
         id: multiGrantGranteeRowId + i,
@@ -1181,22 +1181,22 @@ describe('validateMonitoringData', () => {
     await DeliveredReview.bulkCreate([
       {
         id: deliveredReviewIdTimeline1,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        mrid: uniqueTestId(),
         complete: true,
       },
       {
         id: deliveredReviewIdTimeline2,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        mrid: uniqueTestId(),
         complete: true,
       },
       {
         id: deliveredReviewIdNoWindowWinner,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        mrid: uniqueTestId(),
         complete: true,
       },
       {
         id: deliveredReviewIdNoWindowLoser,
-        mrid: faker.number.int({ min: 900000, max: 89999999 }),
+        mrid: uniqueTestId(),
         complete: true,
       },
     ]);

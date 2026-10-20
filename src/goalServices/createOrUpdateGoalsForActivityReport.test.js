@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityReport,
   ActivityReportGoal,
@@ -18,7 +19,7 @@ import { createOrUpdateGoalsForActivityReport } from './goals';
 
 const mockUserUniqueId = faker.string.alphanumeric(12);
 const mockUser = {
-  id: faker.number.int({ min: 10000000, max: 10000000 + 99999 }),
+  id: uniqueTestId(),
   homeRegionId: 1,
   name: `user${mockUserUniqueId}`,
   hsesUsername: `user${mockUserUniqueId}`,
@@ -60,7 +61,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
   let grants = [
     {
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
@@ -68,7 +69,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       endDate: new Date(),
     },
     {
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       number: faker.string.alphanumeric(5),
       cdi: false,
       regionId: 1,
@@ -93,7 +94,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
     recipient = await Recipient.create({
       name: 'recipient',
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       uei: faker.string.sample(12),
     });
 

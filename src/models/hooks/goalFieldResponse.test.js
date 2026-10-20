@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -72,7 +73,7 @@ describe('goalFieldResponseHooks', () => {
 
     beforeAll(async () => {
       mockUser = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -80,17 +81,17 @@ describe('goalFieldResponseHooks', () => {
       });
 
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       recipientToNotUpdate = await Recipient.create({
-        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       grant = await Grant.create({
-        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
@@ -99,7 +100,7 @@ describe('goalFieldResponseHooks', () => {
       });
 
       grantNotToUpdate = await Grant.create({
-        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientToNotUpdate.id,
         regionId: 1,

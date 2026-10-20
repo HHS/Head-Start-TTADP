@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -12,12 +13,12 @@ import {
 import { createReport, destroyReport } from '../testUtils';
 import { activityReportsForCleanup } from './activityReports';
 
-const RECIPIENT_ID = faker.number.int({ min: 900, max: 900 + 99999 });
+const RECIPIENT_ID = uniqueTestId();
 
-const MOCK_AUTHOR_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
-const MOCK_COLLABORATOR_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
-const MOCK_APPROVER_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
-const MOCK_PHANTOM_USER_ID = faker.number.int({ min: 11111111, max: 11111111 + 99999 });
+const MOCK_AUTHOR_ID = uniqueTestId();
+const MOCK_COLLABORATOR_ID = uniqueTestId();
+const MOCK_APPROVER_ID = uniqueTestId();
+const MOCK_PHANTOM_USER_ID = uniqueTestId();
 
 const mockAuthor = {
   id: MOCK_AUTHOR_ID,

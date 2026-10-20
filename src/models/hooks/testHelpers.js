@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 
 export const draftObject = {
   activityRecipientType: 'recipient',
@@ -25,11 +26,7 @@ export const draftObject = {
   version: 2,
 };
 
-export const approverUserIds = () => [
-  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
-  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
-  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
-];
+export const approverUserIds = () => [uniqueTestId(), uniqueTestId(), uniqueTestId()];
 
 export const mockApprovers = (ids) =>
   ids.map((id) => ({

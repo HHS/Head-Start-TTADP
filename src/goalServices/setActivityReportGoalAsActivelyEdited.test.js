@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import { ActivityReport, ActivityReportGoal, Goal, sequelize, User } from '../models';
 import getGoalsForReport from './getGoalsForReport';
 import { setActivityReportGoalAsActivelyEdited } from './goals';
@@ -16,7 +17,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
     const userName = faker.word.sample();
 
     user = await User.create({
-      id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       name: userName,
       hsesUsername: userName,

@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from './constants';
+import { uniqueTestId } from './fakerUnique';
 import { auditLogger } from './logger';
 import {
   ActivityRecipient,
@@ -15,7 +16,6 @@ import {
   SessionReportPilot,
   User,
 } from './models';
-
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
 const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
@@ -54,7 +54,7 @@ function defaultUser() {
   return {
     homeRegionId: 5,
     hsesUsername: faker.internet.email(),
-    hsesUserId: `fake${faker.number.int({ min: 1, max: 100000 })}`,
+    hsesUserId: `fake${uniqueTestId()}`,
     email: faker.internet.email(),
     phoneNumber: faker.phone.number(),
     name: faker.person.fullName(),
@@ -88,7 +88,7 @@ export async function createRegion(region) {
 function defaultGrant() {
   return {
     id: getUniqueId(),
-    number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+    number: `0${uniqueTestId()}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
@@ -322,7 +322,7 @@ export function mockTrainingReportData(data) {
       '\nThe series will have the following five sessions for recipients who have 6-12 months to complete their application.\n1. Grant Application Process & Nuts and Bolts of Strategic Planning \n2. Development of the Community & Self-Assessment\n3. Program and School Readiness Goals\n4. Education & Health Services\n5. Financial Essentials to Create a Fundable Application\n\nWe selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
     creator: faker.internet.email(),
     endDate: '12/11/2023',
-    eventId: `R08-TR-23-${faker.number.int({ min: 1000, max: 9999 })}`,
+    eventId: `R08-TR-23-${uniqueTestId()}`,
     reasons: ['Full Enrollment', 'Ongoing Quality Improvement', 'School Readiness Goals'],
     audience: 'Recipients',
     'IST Name:': faker.hacker.noun(),

@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../../fakerUnique';
 import { EventReportPilot, sequelize, User } from '../../models';
 import filtersToScopes from '../index';
 import { trMyReportsScopes } from './myReports';
@@ -16,7 +17,7 @@ describe('trainingReports/myReports', () => {
 
   beforeAll(async () => {
     me = await User.create({
-      id: faker.number.int({ min: 1000000, max: 9999999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       name: 'tr my reports me',
       hsesUsername: faker.string.sample(12),
@@ -25,7 +26,7 @@ describe('trainingReports/myReports', () => {
     });
 
     other = await User.create({
-      id: faker.number.int({ min: 1000000, max: 9999999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       name: 'tr my reports other',
       hsesUsername: faker.string.sample(12),

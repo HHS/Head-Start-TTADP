@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import { EventReportPilot, SessionReportPilot, User } from '../models';
 import { getTrainingReportAlerts, getTrainingReportAlertsForUser } from './event';
 
@@ -11,9 +12,9 @@ const regionId = 1;
 const CURRENT_DATE = new Date();
 
 async function createEvents({
-  ownerId = faker.number.int({ min: 0, max: 99999 }),
-  collaboratorId = faker.number.int({ min: 0, max: 99999 }),
-  pocId = faker.number.int({ min: 0, max: 99999 }),
+  ownerId = uniqueTestId(),
+  collaboratorId = uniqueTestId(),
+  pocId = uniqueTestId(),
 }) {
   // create some events!!!
   const baseEvent = {
@@ -257,7 +258,7 @@ async function createEvents({
 }
 
 describe('getTrainingReportAlerts', () => {
-  const ownerId = faker.number.int({ min: 0, max: 99999 });
+  const ownerId = uniqueTestId();
 
   describe('getAllAlerts', () => {
     let testData;
@@ -294,8 +295,8 @@ describe('getTrainingReportAlerts', () => {
       // Create event with endDate 20 days ago
       const eventWithOldEndDate = await EventReportPilot.create({
         ownerId,
-        collaboratorIds: [faker.number.int({ min: 0, max: 99999 })],
-        pocIds: [faker.number.int({ min: 0, max: 99999 })],
+        collaboratorIds: [uniqueTestId()],
+        pocIds: [uniqueTestId()],
         regionId: 1,
         eventId: `R01-TR-ENDDATE-${ownerId}`,
         data: {

@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { determineMergeGoalStatus } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-import fakerUnique from '../fakerUnique';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -65,7 +65,7 @@ describe('Goals DB service', () => {
       user = await User.create({
         homeRegionId: 1,
         hsesUsername: faker.internet.email(),
-        hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
+        hsesUserId: `fake${uniqueTestId()}`,
         email: faker.internet.email(),
         phoneNumber: faker.phone.number(),
         name: faker.person.fullName(),
@@ -75,7 +75,7 @@ describe('Goals DB service', () => {
 
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
@@ -83,7 +83,7 @@ describe('Goals DB service', () => {
 
       // Grant.
       grant = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
@@ -92,7 +92,7 @@ describe('Goals DB service', () => {
       });
 
       secondGrant = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
@@ -322,7 +322,7 @@ describe('Goals DB service', () => {
     beforeAll(async () => {
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
@@ -330,7 +330,7 @@ describe('Goals DB service', () => {
 
       // Grant.
       grant = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,

@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Model } from 'sequelize';
+import { uniqueTestId } from '../../fakerUnique';
 import { auditLogger } from '../../logger';
 import db, { User, ZALUser } from '..';
 import { generateAuditModel } from '../auditModelGenerator';
@@ -316,7 +317,7 @@ describe('Audit System', () => {
         {
           name: faker.person.fullName(),
           email: faker.internet.exampleEmail(),
-          hsesUserId: faker.number.int({ min: 0, max: 99999 }),
+          hsesUserId: uniqueTestId(),
           hsesUsername: faker.internet.username(),
           lastLogin: new Date(),
         },

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { CLOSE_SUSPEND_REASONS, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -33,21 +34,21 @@ describe('GoalStatusChange hooks', () => {
     let objective3;
 
     const mockUser = {
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       name: fakeName,
       hsesUsername: fakeName,
-      hsesUserId: faker.number.int({ min: 0, max: 99999 }),
+      hsesUserId: uniqueTestId(),
       lastLogin: new Date(),
     };
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
       grant = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
@@ -246,7 +247,7 @@ describe('GoalStatusChange hooks', () => {
 
     beforeAll(async () => {
       mockUser = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -254,13 +255,13 @@ describe('GoalStatusChange hooks', () => {
       });
 
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 10000, max: 100000 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
-        number: faker.number.int({ min: 10000, max: 100000 }),
+        number: String(uniqueTestId()),
       });
 
       grant = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,

@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../../fakerUnique';
 import db, {
   ActivityReport,
   ActivityReportObjective,
@@ -14,12 +14,12 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { getCourseUrlWidgetData, rollUpCourseUrlData } from './course';
 
-const RECIPIENT_ID = faker.number.int({ min: 9999, max: 9999 + 99999 });
-const GRANT_ID_ONE = faker.number.int({ min: 9999, max: 9999 + 99999 });
+const RECIPIENT_ID = uniqueTestId();
+const GRANT_ID_ONE = uniqueTestId();
 const REGION_ID = 14;
 
 const mockUser = {
-  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+  id: uniqueTestId(),
   homeRegionId: 1,
   name: 'user5426862',
   hsesUsername: 'user5426862',

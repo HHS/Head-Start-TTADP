@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../../../fakerUnique';
 import {
   createRegion,
   createReport,
@@ -177,7 +177,7 @@ describe('purifyFields', () => {
       user = await createUser({ homeRegionId: region.id });
       report = await createReport({
         context: xss,
-        activityRecipients: [{ grantId: faker.number.int({ min: 99_000, max: 99_000 + 99999 }) }],
+        activityRecipients: [{ grantId: uniqueTestId() }],
         userId: user.id,
         regionId: region.id,
       });

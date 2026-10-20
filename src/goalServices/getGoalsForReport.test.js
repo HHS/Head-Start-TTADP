@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -26,7 +27,7 @@ describe('getGoalsForReport', () => {
     const userName = faker.word.sample();
 
     user = await User.create({
-      id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       name: userName,
       hsesUsername: userName,

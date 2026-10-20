@@ -1,12 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import db from '../models';
 import { createReport, destroyReport } from '../testUtils';
 import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 
 const fakeName = faker.person.firstName() + faker.person.lastName();
 const mockUser = {
-  id: faker.number.int({ min: 0, max: 99999 }),
+  id: uniqueTestId(),
   homeRegionId: 1,
   name: fakeName,
   hsesUsername: fakeName,
@@ -31,11 +32,11 @@ describe('changeGoalStatus service', () => {
   beforeAll(async () => {
     user = await db.User.create(mockUser);
     recipient = await db.Recipient.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       name: faker.person.firstName(),
     });
     grant = await db.Grant.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
@@ -74,7 +75,7 @@ describe('changeGoalStatus service', () => {
       status: activeReportGoal.status,
     });
     role = await db.Role.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       name: 'Astronaut',
       isSpecialist: true,
     });

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
-import fakerUnique from '../../fakerUnique';
+import { uniqueTestId } from '../../fakerUnique';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityRecipient,
@@ -33,7 +33,7 @@ describe('saveReport', () => {
   let firstUser;
   let secondUser;
 
-  const grantAndRecipientId = faker.number.int({ min: 999, max: 999 + 99999 });
+  const grantAndRecipientId = uniqueTestId();
 
   let firstGoal;
   let secondGoal;
@@ -54,7 +54,7 @@ describe('saveReport', () => {
     firstUser = await User.create({
       homeRegionId: 1,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       phoneNumber: faker.phone.number(),
       name: faker.person.fullName(),
@@ -65,7 +65,7 @@ describe('saveReport', () => {
     secondUser = await User.create({
       homeRegionId: 1,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       phoneNumber: faker.phone.number(),
       name: faker.person.fullName(),
@@ -101,7 +101,7 @@ describe('saveReport', () => {
       regionId: 1,
     });
 
-    const secondGrantId = faker.number.int({ min: 999, max: 999 + 99999 });
+    const secondGrantId = uniqueTestId();
 
     secondGrant = await Grant.create({
       id: secondGrantId,

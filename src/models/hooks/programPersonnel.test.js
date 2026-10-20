@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { uniqueTestId } from '../../fakerUnique';
 import db from '..';
 
 const { ProgramPersonnel, Grant, Program } = db;
@@ -42,13 +43,13 @@ describe('ProgramPersonnel hooks', () => {
 
     const recipient = {
       name: faker.string.sample(10),
-      id: faker.number.int({ min: 10000, max: 10000 + 99999 }),
+      id: uniqueTestId(),
       uei: faker.string.sample(10),
     };
 
     const grant = {
-      id: faker.number.int({ min: 10000, max: 100000 }),
-      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: uniqueTestId(),
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -74,7 +75,7 @@ describe('ProgramPersonnel hooks', () => {
 
       program = await db.Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 10000, max: 100000 }),
+        id: uniqueTestId(),
       });
 
       await createProgramPersonnel(grant.id, program.id);

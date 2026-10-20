@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { FEATURE_FLAGS } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import handleErrors from '../../lib/apiErrorHandler';
 import db, { Permission, Role, User, UserRole } from '../../models';
 import {
@@ -259,10 +260,10 @@ describe('User route handler', () => {
 
   describe('createUserRoles', () => {
     const mockUserTheFirst = {
-      id: faker.number.int({ min: 10000, max: 99999 }),
+      id: uniqueTestId(),
       name: `${faker.person.firstName()} ${faker.person.lastName()}`,
       phoneNumber: '555-555-554',
-      hsesUserId: `${faker.number.int({ min: 10000, max: 99999 })}`,
+      hsesUserId: `${uniqueTestId()}`,
       hsesUsername: faker.internet.email(),
       hsesAuthorities: ['ROLE_FEDERAL'],
       email: faker.internet.email(),
@@ -275,7 +276,7 @@ describe('User route handler', () => {
     };
 
     const mockRole = {
-      id: faker.number.int({ min: 10000, max: 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alpha(100),
       fullName: faker.person.jobTitle(),
       isSpecialist: false,

@@ -1,12 +1,12 @@
 /* eslint-disable max-len */
 
+import { uniqueTestId } from '../../fakerUnique';
 import { scopeToWhere } from '../utils';
 import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
   draftReport,
-  faker,
   filtersToScopes,
   Op,
   setupSharedTestData,
@@ -37,7 +37,7 @@ describe('myReports filtersToScopes', () => {
 
     beforeAll(async () => {
       collaborator = await User.create({
-        id: faker.number.int({ min: 1000000, max: 9999999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: 'collaboratoruser',
         hsesUsername: 'collaboratoruser',
@@ -46,7 +46,7 @@ describe('myReports filtersToScopes', () => {
       });
 
       approver = await User.create({
-        id: faker.number.int({ min: 1000000, max: 9999999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: 'approveruser',
         hsesUsername: 'approveruser',

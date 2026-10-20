@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../../fakerUnique';
 import { Goal, Grant, Group, GroupCollaborator, GroupGrant, User } from '../../models';
 import { createGoal, createGrant } from '../../testUtils';
 import filtersToScopes from '../index';
@@ -17,7 +18,7 @@ describe('goal filtersToScopes', () => {
     const userName = faker.string.sample(100);
 
     const mockUser = {
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: REGION_ID,
       name: userName,
       hsesUsername: userName,

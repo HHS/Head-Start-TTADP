@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { NOTIFICATION_TYPES } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import db from '../../models';
 import { withUserId } from './userId';
 
@@ -17,7 +18,7 @@ describe('notifications/userId scope', () => {
 
   beforeAll(async () => {
     user1 = await User.create({
-      id: faker.number.int({ min: 300000, max: 349999 }),
+      id: uniqueTestId(),
       name: faker.person.fullName(),
       hsesUsername: faker.internet.username(),
       hsesUserId: faker.string.uuid(),
@@ -27,7 +28,7 @@ describe('notifications/userId scope', () => {
     });
 
     user2 = await User.create({
-      id: faker.number.int({ min: 350000, max: 399999 }),
+      id: uniqueTestId(),
       name: faker.person.fullName(),
       hsesUsername: faker.internet.username(),
       hsesUserId: faker.string.uuid(),
