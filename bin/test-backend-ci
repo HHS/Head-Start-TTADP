@@ -58,6 +58,8 @@ main(){
 
     # Coverage covers the same files as before so the merged report stays comparable.
     # Thresholds are checked on the merged report in tests_done, not per node.
+    # One worker runs the files one at a time and is restarted once its heap passes 1GB;
+    # a single long-lived process grew past 2GB and slowed every node to a crawl.
     touch coverage-expected
     node \
         --expose-gc \
@@ -73,7 +75,8 @@ main(){
         --reporters=default \
         --verbose \
         --testLocationInResults \
-        --runInBand \
+        --maxWorkers=1 \
+        --workerIdleMemoryLimit=1GB \
         --silent \
         --logHeapUsage \
         --forceExit
