@@ -145,7 +145,7 @@ workflows:
 
   deploy_only:
     # job to be triggered manually, will build the app and deploy to target env
-    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger.type == "api"
     jobs:
     - build_and_lint
     - deploy_job:
@@ -174,7 +174,7 @@ workflows:
 
   import_data_manual:
     # for manual testing of the data import workflow
-    when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "import_data" and pipeline.trigger.type == "api"
     jobs:
     - run_import_job:
         serial-group: import-data/<< pipeline.parameters.target_env >>
@@ -199,7 +199,7 @@ workflows:
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
-    when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger.type == "api"
     jobs:
     - run_validation_watchdog:
         target_env: "<< pipeline.parameters.target_env >>"
@@ -312,7 +312,7 @@ workflows:
 
   backup_prod_manual:
     # backup prod db, process(anonymize) it, then backup the processed db
-    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger.type == "api"
     jobs:
     - backup_prod_db:
         serial-group: "tta-automation-lock"
@@ -332,14 +332,14 @@ workflows:
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger.type == "api"
     jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
   clear_build_cache:
-    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger.type == "api"
     jobs:
     - clear_cache_job
 
@@ -2092,7 +2092,8 @@ commands:
     - run:
         name: Clone Repository
         command: |
-          git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+          REPO_URL="<< pipeline.git.repo_url >>"
+          git clone --no-checkout --filter=blob:none "${REPO_URL%.git}.git" .
     - run:
         name: Sparse Checkout
         environment:
