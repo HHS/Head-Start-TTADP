@@ -419,7 +419,11 @@ const getResourceMetaDataJob = async (job) => {
     // Check if the MIME type is unparsable.
     // Unsupported formats (PDFs, images, etc.) are skipped on purpose, so this
     // is logged at info and flagged with skipReason rather than treated as a failure.
-    if (mimeType && unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))) {
+    if (
+      statusCode === httpCodes.OK &&
+      mimeType &&
+      unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))
+    ) {
       logger.info(
         `Resource Queue: Warning, unable to process resource '${resourceUrl}', received status code '${statusCode}'.`
       );
