@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
-import moment from 'moment';
 import { CREATION_METHOD, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -103,7 +103,7 @@ describe('Goals by Recipient Test', () => {
     grantSpecialistName: 'Glen',
   };
 
-  const userKey = faker.number.int({ min: 7500, max: 7500 + 99999 });
+  const userKey = uniqueTestId();
   const mockGoalUser = {
     id: userKey,
     homeRegionId: 1,

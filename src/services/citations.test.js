@@ -3,8 +3,9 @@
 
 import { faker } from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
+import { uniqueTestId } from '../fakerUnique';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
-import db, {
+import {
   Goal,
   GoalStatusChange,
   GoalTemplate,
@@ -41,7 +42,7 @@ const createMonitoringData = async (
   // MonitoringReviewGrantee.
   await MonitoringReviewGrantee.create(
     {
-      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      id: uniqueTestId(),
       grantNumber: grantNUmber,
       reviewId,
       granteeId,
@@ -91,7 +92,7 @@ const createMonitoringData = async (
     citationsArray.map(async (citation) => {
       const sourceDeletedAt = citation.sourceDeletedAt || null;
       const findingId = citation.findingId || uuidv4();
-      const findingStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+      const findingStatusId = uniqueTestId();
       await MonitoringFindingHistory.create(
         {
           reviewId,
@@ -168,7 +169,7 @@ const createMonitoringData = async (
       );
 
       // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
-      const standardId = citation.standardId ?? faker.number.int({ min: 9999, max: 9999 + 99999 });
+      const standardId = citation.standardId ?? uniqueTestId();
       const citable = faker.number.int({ min: 1, max: 10 });
       await MonitoringFindingStandard.create(
         {
@@ -244,34 +245,34 @@ describe('citations service', () => {
 
     // Recipients 1.
     recipient1 = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
     // Recipients 2.
     recipient2 = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
     // FollowUpRecipient.
     followUpRecipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
     multiReviewRecipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
     suppressedRecipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
     reopenedRecipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
 
@@ -279,7 +280,7 @@ describe('citations service', () => {
     const grants = await Grant.bulkCreate([
       {
         // Grant 1 for Recipient 1.
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: grantNumber1,
         recipientId: recipient1.id,
         regionId: 1,
@@ -289,7 +290,7 @@ describe('citations service', () => {
       },
       {
         // Grant 1a for Recipient 1.
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: grantNumber1a,
         recipientId: recipient1.id,
         regionId: 1,
@@ -299,7 +300,7 @@ describe('citations service', () => {
       },
       {
         // Grant 2 for Recipient 2.
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: grantNumber2,
         recipientId: recipient2.id,
         regionId: 1,
@@ -309,7 +310,7 @@ describe('citations service', () => {
       },
       {
         // Grant 3 for Recipient 2 (Inactive).
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: grantNumber3,
         recipientId: recipient2.id,
         regionId: 1,
@@ -319,7 +320,7 @@ describe('citations service', () => {
       },
       // FollowUp Grant for FollowUp Recipient.
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: followUpGrantNumber,
         recipientId: followUpRecipient.id,
         regionId: 1,
@@ -329,7 +330,7 @@ describe('citations service', () => {
       },
       // Multi-review grant: tests that the correct review is selected based on reportStartDate.
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: multiReviewGrantNumber,
         recipientId: multiReviewRecipient.id,
         regionId: 1,
@@ -339,7 +340,7 @@ describe('citations service', () => {
       },
       // Suppressed grant: tests that citations are hidden when last_closed_goal > latest delivery.
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: suppressedGrantNumber,
         recipientId: suppressedRecipient.id,
         regionId: 1,
@@ -349,7 +350,7 @@ describe('citations service', () => {
       },
       // Reopened grant: tests that citations reappear when a new open goal is created after closure.
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: reopenedGrantNumber,
         recipientId: reopenedRecipient.id,
         regionId: 1,
@@ -644,7 +645,7 @@ describe('citations service', () => {
     // will have a fractionally later sourceCreatedAt and a higher id
     await MonitoringReviewGrantee.create(
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         grantNumber: followUpGrant.number,
         reviewId: followUpReviewId,
         granteeId: followUpGranteeId,
@@ -688,7 +689,7 @@ describe('citations service', () => {
     );
 
     // Link the Corrected Finding to the new review
-    const followUpHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const followUpHistoryStatusId = uniqueTestId();
     await MonitoringFindingHistory.create(
       {
         reviewId: followUpReviewId,
@@ -745,7 +746,7 @@ describe('citations service', () => {
 
     await MonitoringReviewGrantee.create(
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         grantNumber: multiReviewGrant.number,
         reviewId: multiReviewId2,
         granteeId: multiReviewGranteeId,
@@ -787,7 +788,7 @@ describe('citations service', () => {
       { individualHooks: true }
     );
 
-    const multiReviewHistoryStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const multiReviewHistoryStatusId = uniqueTestId();
     await MonitoringFindingHistory.create(
       {
         reviewId: multiReviewId2,
@@ -857,14 +858,14 @@ describe('citations service', () => {
     // crossGrantOtherGrant. The GrantDeliveredReviews join in the service should exclude
     // the citation when querying crossGrant.
     const crossGrantRecipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.string.alphanumeric(6),
     });
     const crossGrantNumber = faker.string.sample(8);
     const crossGrantOtherGrantNumber = faker.string.sample(8);
     [crossGrant, crossGrantOtherGrant] = await Grant.bulkCreate([
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: crossGrantNumber,
         recipientId: crossGrantRecipient.id,
         regionId: 1,
@@ -873,7 +874,7 @@ describe('citations service', () => {
         status: 'Active',
       },
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         number: crossGrantOtherGrantNumber,
         recipientId: crossGrantRecipient.id,
         regionId: 1,
@@ -899,10 +900,10 @@ describe('citations service', () => {
     const crossGrantStubReviewId = uuidv4();
     const crossGrantOtherDeliveredReviewId = uuidv4();
     const crossGrantFindingId = uuidv4();
-    const crossGrantStubStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
-    const crossGrantOtherStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
-    const crossGrantFindingStatusId = faker.number.int({ min: 9999, max: 9999 + 99999 });
-    const crossGrantStandardId = faker.number.int({ min: 9999, max: 9999 + 99999 });
+    const crossGrantStubStatusId = uniqueTestId();
+    const crossGrantOtherStatusId = uniqueTestId();
+    const crossGrantFindingStatusId = uniqueTestId();
+    const crossGrantStandardId = uniqueTestId();
 
     // Stub review for crossGrant — exists only to satisfy the FK in MonitoringReviewGrantee
     // and give the fact table an entry that links crossGrantGranteeId to crossGrantNumber.
@@ -934,7 +935,7 @@ describe('citations service', () => {
     );
     await MonitoringReviewGrantee.create(
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         grantNumber: crossGrantNumber,
         reviewId: crossGrantStubReviewId,
         granteeId: crossGrantGranteeId,
@@ -978,7 +979,7 @@ describe('citations service', () => {
     );
     await MonitoringReviewGrantee.create(
       {
-        id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+        id: uniqueTestId(),
         grantNumber: crossGrantOtherGrantNumber,
         reviewId: crossGrantOtherDeliveredReviewId,
         granteeId: crossGrantOtherGranteeId,
@@ -1077,14 +1078,6 @@ describe('citations service', () => {
   });
 
   afterAll(async () => {
-    // NOTE: rollbackToSnapshot processes ZAL audit entries in reverse timestamp order.
-    // When parent link-table rows (e.g. MonitoringFindingStatusLinks, MonitoringStandardLinks)
-    // share a millisecond timestamp with the child rows that reference them, the deletion
-    // order is not guaranteed, causing FK constraint violations on cleanup.
-    // All test assertions pass; only the afterAll teardown fails.
-    // The real fix belongs in programmaticTransaction.ts — revertAllChanges should
-    // catch SequelizeForeignKeyConstraintError and defer those deletions to a retry pass
-    // rather than aborting immediately.
     await rollbackToSnapshot(snapShot);
   });
 

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { NOTIFICATION_TYPES } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import db from '../../models';
 import {
   NOTIFICATION_TYPE_MAP,
@@ -179,7 +180,7 @@ describe('notifications/notificationType scope', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.number.int({ min: 400000, max: 449999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         hsesUsername: faker.internet.username(),
         hsesUserId: faker.string.uuid(),
@@ -307,7 +308,7 @@ describe('notifications/notificationType scope', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.number.int({ min: 450000, max: 499999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         hsesUsername: faker.internet.username(),
         hsesUserId: faker.string.uuid(),

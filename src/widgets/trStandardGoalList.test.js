@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import fakerUnique from '../fakerUnique';
+import { uniqueTestId } from '../fakerUnique';
 import {
   EventReportPilot,
   GoalTemplate,
@@ -17,11 +17,11 @@ const mockUser = {
   homeRegionId: 1,
   name: faker.person.fullName(),
   hsesUsername: faker.internet.email(),
-  hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
+  hsesUserId: `fake${uniqueTestId()}`,
   lastLogin: new Date(),
 };
 
-const testEventLongId = `R99-TRSG-${fakerUnique(() => faker.number.int({ min: 10000, max: 99999 }))}`;
+const testEventLongId = `R99-TRSG-${uniqueTestId()}`;
 
 describe('trStandardGoalList', () => {
   let user;

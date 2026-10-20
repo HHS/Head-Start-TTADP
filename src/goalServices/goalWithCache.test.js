@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import { CURATED_CREATION } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
@@ -13,12 +14,11 @@ import db, {
   Recipient,
   User,
 } from '../models';
-import goal from '../models/goal';
 import { saveStandardGoalsForReport } from '../services/standardGoals';
 import { createReport, destroyReport } from '../testUtils';
 
 const mockUser = {
-  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+  id: uniqueTestId(),
   homeRegionId: 1,
   name: 'user942571',
   hsesUsername: 'user942571',
@@ -70,20 +70,20 @@ describe('saveGoalsForReport multi recipient', () => {
 
     // Create recipients.
     multiRecipientRecipientA = await Recipient.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     multiRecipientRecipientB = await Recipient.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     // Create grants.
     multiRecipientGrantOneA = await Grant.create({
-      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: multiRecipientRecipientA.id,
       regionId: 1,
@@ -93,7 +93,7 @@ describe('saveGoalsForReport multi recipient', () => {
     });
 
     multiRecipientGrantOneB = await Grant.create({
-      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: multiRecipientRecipientA.id,
       regionId: 1,
@@ -103,7 +103,7 @@ describe('saveGoalsForReport multi recipient', () => {
     });
 
     multiRecipientGrantTwo = await Grant.create({
-      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: multiRecipientRecipientB.id,
       regionId: 1,

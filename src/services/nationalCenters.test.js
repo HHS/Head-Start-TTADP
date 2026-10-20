@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import { auditLogger } from '../logger';
 import db from '../models';
 import { create, deleteById, findAll, updateById } from './nationalCenters';
@@ -49,7 +50,7 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
@@ -105,7 +106,7 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create first mock users.
       firstCenterUser = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
@@ -114,7 +115,7 @@ describe('nationalCenters service', () => {
       });
       // Create second mock users.
       secondCenterUser = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
@@ -231,9 +232,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
-        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        eventId: `R01-PD-${uniqueTestId()}`,
         data: {
-          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -244,9 +245,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
-        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        eventId: `R01-PD-${uniqueTestId()}`,
         data: {
-          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -321,7 +322,7 @@ describe('nationalCenters service', () => {
     beforeAll(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),

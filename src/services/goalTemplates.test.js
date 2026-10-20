@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db from '../models';
 import {
   getCuratedTemplates,
@@ -45,12 +46,12 @@ describe('goalTemplates services', () => {
     beforeAll(async () => {
       // Create recipient.
       monitoringRecipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       regularRecipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
@@ -58,7 +59,7 @@ describe('goalTemplates services', () => {
       monitoringGrant = await Grant.create({
         regionId: 1,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: monitoringRecipient.id,
       });
@@ -66,7 +67,7 @@ describe('goalTemplates services', () => {
       regularGrant = await Grant.create({
         regionId: 1,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: regularRecipient.id,
       });
@@ -154,14 +155,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -169,7 +170,7 @@ describe('goalTemplates services', () => {
       grantTwo = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -177,7 +178,7 @@ describe('goalTemplates services', () => {
       grantThree = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -273,14 +274,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -315,14 +316,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -451,14 +452,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -576,14 +577,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });
@@ -730,14 +731,14 @@ describe('goalTemplates services', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(20),
       });
 
       grant = await Grant.create({
         regionId: 2,
         status: 'Active',
-        id: faker.number.int({ min: 56000, max: 56000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(255),
         recipientId: recipient.id,
       });

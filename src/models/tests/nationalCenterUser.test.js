@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { uniqueTestId } from '../../fakerUnique';
 import db, { NationalCenter, NationalCenterUser, User } from '..';
 
 describe('NationalCenterUser', () => {
@@ -10,7 +11,7 @@ describe('NationalCenterUser', () => {
   beforeAll(async () => {
     // Create mock user.
     user = await User.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       hsesUsername: faker.string.sample(),
       hsesUserId: faker.string.sample(),
@@ -19,7 +20,7 @@ describe('NationalCenterUser', () => {
 
     // create mock updated user.
     updatedUser = await User.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       hsesUsername: faker.string.sample(),
       hsesUserId: faker.string.sample(),
@@ -28,13 +29,13 @@ describe('NationalCenterUser', () => {
 
     // Create mock national center.
     nationalCenter = await NationalCenter.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
     });
 
     // create mock updated national center.
     updatedNationalCenter = await NationalCenter.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
     });
 

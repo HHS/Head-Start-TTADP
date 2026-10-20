@@ -4,6 +4,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -1374,7 +1375,7 @@ describe('save standard goals for report', () => {
 
       monitoringFindingId = faker.string.uuid();
       monitoringCitation = await Citation.create({
-        mfid: faker.number.int({ min: 1000000, max: 9999999 }),
+        mfid: uniqueTestId(),
         finding_uuid: monitoringFindingId,
         citation: 'Citation 1',
       });

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { GROUP_SHARED_WITH } from '@ttahub/common';
 import { GROUP_COLLABORATORS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import {
   CollaboratorType,
@@ -146,13 +147,13 @@ describe('Groups service', () => {
     });
 
     recipient = await Recipient.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       name: faker.person.firstName(),
     });
 
     // create a first grant
     grantOne = await Grant.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
@@ -162,7 +163,7 @@ describe('Groups service', () => {
 
     // create a second grant
     grantTwo = await Grant.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
@@ -744,7 +745,7 @@ describe('Groups service', () => {
     beforeAll(async () => {
       // Create a user.
       groupUser = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: 'user1474265161',
         hsesUsername: 'user1474265161',
@@ -760,19 +761,19 @@ describe('Groups service', () => {
 
       // Create a recipient 1.
       const recipientOne = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       // Create a recipient 2.
       const recipientTwo = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       // Create a recipient 3.
       const recipientThree = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
@@ -781,7 +782,7 @@ describe('Groups service', () => {
 
       // Create a grant for region 1.
       const g1 = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientOne.id,
         regionId: 1,
@@ -791,7 +792,7 @@ describe('Groups service', () => {
 
       // Create a second grant for region 1.
       const g2 = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientTwo.id,
         regionId: 1,
@@ -801,7 +802,7 @@ describe('Groups service', () => {
 
       // Create a third grant for region 2.
       const g3 = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientThree.id,
         regionId: 2,
@@ -937,7 +938,7 @@ describe('Groups service', () => {
     });
 
     it('get a public user groups for report region', async () => {
-      const result = await groupsByRegion(1, faker.number.int({ min: 0, max: 99999 }));
+      const result = await groupsByRegion(1, uniqueTestId());
 
       // From result get all the groups with ids in groupIds.
       const groupsToCheck = result.filter((g) => groupIds.includes(g.id));
@@ -954,7 +955,7 @@ describe('Groups service', () => {
     beforeAll(async () => {
       // Create a group.
       existingGroup = await Group.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: 'This group name is taken',
         isPublic: false,
       });
@@ -1000,7 +1001,7 @@ describe('Groups service', () => {
 
       // Create saved group.Group.create(
       savedGroup = await Group.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: 'This is a saved group with an ID',
         isPublic: false,
       });
@@ -1300,7 +1301,7 @@ describe('Groups service', () => {
 
       // Create saved group.Group.create(
       savedGroup = await Group.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: 'This is a saved group with an ID',
         isPublic: false,
       });
@@ -1360,22 +1361,22 @@ describe('Groups service', () => {
 
       // Create recipients.
       recipientOne = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       recipientTwo = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       recipientThree = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       recipientFour = await Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
@@ -1386,7 +1387,7 @@ describe('Groups service', () => {
 
       // Create grants.
       grantForGroupOne = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientOne.id,
         regionId: 1,
@@ -1396,7 +1397,7 @@ describe('Groups service', () => {
       });
 
       grantForGroupTwo = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientTwo.id,
         regionId: 2,
@@ -1406,7 +1407,7 @@ describe('Groups service', () => {
       });
 
       grantForGroupThree = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientThree.id,
         regionId: 3,
@@ -1417,7 +1418,7 @@ describe('Groups service', () => {
 
       // Linked to GrantGroup (should be excluded).
       grantForGroupFour = await Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipientFour.id,
         regionId: 1,
@@ -1435,7 +1436,7 @@ describe('Groups service', () => {
       // Create a programs.
       programOne = await Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         grantId: grantForGroupOne.id,
         programType: 'EHS',
@@ -1443,7 +1444,7 @@ describe('Groups service', () => {
 
       programTwo = await Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         grantId: grantForGroupTwo.id,
         programType: 'EHS',
@@ -1451,7 +1452,7 @@ describe('Groups service', () => {
 
       programThree = await Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         grantId: grantForGroupThree.id,
         programType: 'EHS',
@@ -1459,7 +1460,7 @@ describe('Groups service', () => {
 
       programFour = await Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.fullName(),
         grantId: grantForGroupFour.id,
         programType: 'EHS',

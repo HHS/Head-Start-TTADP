@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { NOTIFICATION_TYPES } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import db from '../../models';
 import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createdAt';
 
@@ -15,7 +16,7 @@ describe('notifications/createdAt scopes', () => {
 
   beforeAll(async () => {
     user = await User.create({
-      id: faker.number.int({ min: 200000, max: 299999 }),
+      id: uniqueTestId(),
       name: faker.person.fullName(),
       hsesUsername: faker.internet.username(),
       hsesUserId: faker.string.uuid(),

@@ -2,6 +2,7 @@
 import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../fakerUnique';
 import { EventReportPilot, SessionReportPilot, sequelize, User } from '../models';
 import { getTrainingReportAlertsForUser } from './event';
 
@@ -10,9 +11,9 @@ jest.mock('bull');
 const regionId = 1;
 
 async function createEvents({
-  ownerId = faker.number.int({ min: 0, max: 99999 }),
-  collaboratorId = faker.number.int({ min: 0, max: 99999 }),
-  pocId = faker.number.int({ min: 0, max: 99999 }),
+  ownerId = uniqueTestId(),
+  collaboratorId = uniqueTestId(),
+  pocId = uniqueTestId(),
 }) {
   // create some events!!!
   const baseEvent = {
@@ -238,7 +239,7 @@ describe('getTrainingReportAlertsForUser', () => {
   });
 
   describe('event owner', () => {
-    const ownerId = faker.number.int({ min: 0, max: 99999 });
+    const ownerId = uniqueTestId();
     let testData;
     beforeAll(async () => {
       await User.create({
@@ -274,7 +275,7 @@ describe('getTrainingReportAlertsForUser', () => {
   });
 
   describe('event collaborator', () => {
-    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
+    const collaboratorId = uniqueTestId();
     let testData;
     beforeAll(async () => {
       await User.create({
@@ -315,7 +316,7 @@ describe('getTrainingReportAlertsForUser', () => {
     });
   });
   describe('event poc', () => {
-    const pocId = faker.number.int({ min: 0, max: 99999 });
+    const pocId = uniqueTestId();
     let testData;
     beforeAll(async () => {
       await User.create({
@@ -351,9 +352,9 @@ describe('getTrainingReportAlertsForUser', () => {
   });
 
   describe('national center facilitation flow (Regional PD w/ NC + facilitation = national_center)', () => {
-    const ownerId = faker.number.int({ min: 0, max: 99999 });
-    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
-    const pocId = faker.number.int({ min: 0, max: 99999 });
+    const ownerId = uniqueTestId();
+    const collaboratorId = uniqueTestId();
+    const pocId = uniqueTestId();
 
     let eventOwnerMissing;
     let eventCollabMissing;

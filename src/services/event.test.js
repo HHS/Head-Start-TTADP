@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../fakerUnique';
 import * as mailer from '../lib/mailer';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
@@ -655,13 +656,13 @@ describe('event service', () => {
     let buffer;
     let created;
 
-    const userId = faker.number.int({ min: 0, max: 99999 });
-    const ncUserId = faker.number.int({ min: 0, max: 99999 });
-    const regionalUserId = faker.number.int({ min: 0, max: 99999 });
-    const ncWithoutScopeUserId = faker.number.int({ min: 0, max: 99999 });
-    const pocId = faker.number.int({ min: 0, max: 99999 });
+    const userId = uniqueTestId();
+    const ncUserId = uniqueTestId();
+    const regionalUserId = uniqueTestId();
+    const ncWithoutScopeUserId = uniqueTestId();
+    const pocId = uniqueTestId();
     let poc;
-    const collaboratorId = faker.number.int({ min: 0, max: 99999 });
+    const collaboratorId = uniqueTestId();
     let collaborator;
     let ncRole;
     let regionalRole;

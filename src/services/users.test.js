@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { uniqueTestId } from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import db, { EventReportPilot, Permission, Role, User, UserRole } from '../models';
 import {
@@ -183,7 +184,7 @@ describe('Users DB service', () => {
     beforeAll(async () => {
       // User 1.
       user1 = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
@@ -199,7 +200,7 @@ describe('Users DB service', () => {
 
       // User 2.
       user2 = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 2,
         hsesUsername: faker.string.sample(),
@@ -215,7 +216,7 @@ describe('Users DB service', () => {
 
       // User 3.
       user3 = await db.User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         homeRegionId: 3,
         hsesUsername: faker.string.sample(),
@@ -408,12 +409,12 @@ describe('Users DB service', () => {
 
   describe('getTrainingReportUsersByRegion', () => {
     const userIds = [
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
-      faker.number.int({ min: 25000, max: 25000 + 99999 }),
+      uniqueTestId(),
+      uniqueTestId(),
+      uniqueTestId(),
+      uniqueTestId(),
+      uniqueTestId(),
+      uniqueTestId(),
     ];
     const users = [
       {
@@ -448,7 +449,7 @@ describe('Users DB service', () => {
       },
     ];
 
-    const eventReportPilotId = faker.number.int({ min: 25000, max: 25000 + 99999 });
+    const eventReportPilotId = uniqueTestId();
     const eventDisplayId = `R01-PD-25-${eventReportPilotId}`;
 
     beforeAll(async () => {
@@ -534,10 +535,10 @@ describe('Users DB service', () => {
 
       beforeAll(async () => {
         dualPermUser = await User.create({
-          id: faker.number.int({ min: 25000, max: 25000 + 99999 }),
+          id: uniqueTestId(),
           name: 'dual-perm-user',
           hsesUsername: `dual-perm-${faker.number.int({ min: 25000, max: 25000 + 99999 })}`,
-          hsesUserId: `dual-perm-${faker.number.int({ min: 25000, max: 25000 + 99999 })}`,
+          hsesUserId: `dual-perm-${uniqueTestId()}`,
           lastLogin: new Date(),
         });
         await Permission.bulkCreate([
@@ -573,14 +574,14 @@ describe('Users DB service', () => {
     beforeAll(async () => {
       // Create roles with high IDs to avoid conflicts
       role1 = await Role.create({
-        id: faker.number.int({ min: 40000, max: 40000 + 99999 }),
+        id: uniqueTestId(),
         name: 'Wiggler',
         fullName: 'Wiggler',
         isSpecialist: true,
       });
 
       role2 = await Role.create({
-        id: faker.number.int({ min: 40000, max: 40000 + 99999 }),
+        id: uniqueTestId(),
         name: 'Waggler',
         fullName: 'Waggler',
         isSpecialist: true,
@@ -588,7 +589,7 @@ describe('Users DB service', () => {
 
       // User 1 - Health Specialist in region 1
       user1 = await User.create({
-        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+        id: uniqueTestId(),
         name: 'user1',
         email: 'user1@test.gov',
         homeRegionId: 1,
@@ -604,7 +605,7 @@ describe('Users DB service', () => {
 
       // User 2 - Health Specialist in region 2
       user2 = await User.create({
-        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+        id: uniqueTestId(),
         name: 'user2',
         email: 'user2@test.gov',
         homeRegionId: 2,
@@ -620,7 +621,7 @@ describe('Users DB service', () => {
 
       // User 3 - Early Childhood Specialist in region 1
       user3 = await User.create({
-        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+        id: uniqueTestId(),
         name: 'user3',
         email: 'user3@test.gov',
         homeRegionId: 1,
@@ -636,7 +637,7 @@ describe('Users DB service', () => {
 
       // User 4 - Early Childhood Specialist in region 2
       user4 = await User.create({
-        id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+        id: uniqueTestId(),
         name: 'user4',
         email: 'user4@test.gov',
         homeRegionId: 2,

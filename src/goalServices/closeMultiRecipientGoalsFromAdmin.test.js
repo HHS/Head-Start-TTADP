@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { CLOSE_SUSPEND_REASONS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db, { Goal, Grant, Objective, Recipient, Region } from '../models';
 import { closeGoalsFromAdmin } from '../routes/admin/goal';
 import transactionWrapper from '../routes/transactionWrapper';
@@ -20,7 +21,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
   let objectiveNotOnApprovedAr;
 
   beforeAll(async () => {
-    const regionId = faker.number.int({ min: 999, max: 999 + 99999 });
+    const regionId = uniqueTestId();
     region = await Region.create({
       id: regionId,
       name: `Region ${regionId}`,

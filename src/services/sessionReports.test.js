@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   Grant,
   Recipient,
@@ -94,23 +95,23 @@ describe('session reports service', () => {
 
     beforeAll(async () => {
       createdEvent = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
-        regionId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
+        regionId: uniqueTestId(),
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
           additionalRegions: ['11', '12'],
         },
       });
 
       createdEventWithoutAdditionalRegions = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
-        regionId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
+        regionId: uniqueTestId(),
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
         },
       });
     });
@@ -224,7 +225,7 @@ describe('session reports service', () => {
   describe('updateSession facilitation changes', () => {
     let ncEvent;
     let approver;
-    const ncEventId = `R01-PD-${faker.number.int({ min: 900_000, max: 999_999 })}`;
+    const ncEventId = `R01-PD-${uniqueTestId()}`;
     const completeData = {
       ownerComplete: true,
       ownerCompleteId: 1,
@@ -237,7 +238,7 @@ describe('session reports service', () => {
     beforeAll(async () => {
       [ncEvent, approver] = await Promise.all([
         createEvent({
-          ownerId: faker.number.int({ min: 0, max: 99999 }),
+          ownerId: uniqueTestId(),
           regionId: 1,
           pocIds: [],
           collaboratorIds: [],
@@ -454,7 +455,7 @@ describe('session reports service', () => {
   });
 
   describe('getPossibleSessionParticipants', () => {
-    const mockRegionId = faker.number.int({ min: 20, max: 20 + 99999 });
+    const mockRegionId = uniqueTestId();
 
     let program;
     let program2;
@@ -486,24 +487,24 @@ describe('session reports service', () => {
       });
 
       recipient = await db.Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
       alternateRecipient = await db.Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
       additionalRegionRecipient = await db.Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
       arizonaGrantRecipient = await db.Recipient.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.person.firstName(),
       });
 
       const grant = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
@@ -511,7 +512,7 @@ describe('session reports service', () => {
       });
 
       await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: alternateRecipient.id,
         regionId: mockRegionId + 1,
@@ -520,7 +521,7 @@ describe('session reports service', () => {
       });
 
       const additionalRegionGrant = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: additionalRegionRecipient.id,
         regionId: mockRegionId + 2,
@@ -528,7 +529,7 @@ describe('session reports service', () => {
       });
 
       const oldGrant = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
@@ -536,7 +537,7 @@ describe('session reports service', () => {
       });
 
       await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: arizonaGrantRecipient.id,
         regionId: mockRegionId + 2,
@@ -545,7 +546,7 @@ describe('session reports service', () => {
       });
 
       program = await db.Program.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.company.name() + faker.company.buzzVerb(),
         grantId: grant.id,
         programType: 'HS',
@@ -556,7 +557,7 @@ describe('session reports service', () => {
       });
 
       program2 = await db.Program.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.company.name() + faker.company.buzzVerb(),
         grantId: oldGrant.id,
         programType: 'HS',
@@ -567,7 +568,7 @@ describe('session reports service', () => {
       });
 
       program3 = await db.Program.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         name: faker.company.name() + faker.company.buzzVerb(),
         grantId: additionalRegionGrant.id,
         programType: 'HS',
@@ -579,24 +580,24 @@ describe('session reports service', () => {
 
       // Event: base region only
       eventBase = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: mockRegionId,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
         },
       });
       sessionBase = await createSession({ eventId: eventBase.id, data: {} });
 
       // Event: base region + additionalRegions
       eventWithAdditionalRegion = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: mockRegionId,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
           additionalRegions: [mockRegionId + 2],
         },
       });
@@ -607,12 +608,12 @@ describe('session reports service', () => {
 
       // Event: base region + additionalStates (state code parsed from "Name (CA)" format)
       eventWithAdditionalState = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: mockRegionId,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
           additionalStates: ['California (CA)', 'Arizona'],
         },
       });
@@ -623,12 +624,12 @@ describe('session reports service', () => {
 
       // Event: base region + additionalRegions + additionalStates
       eventWithBoth = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: mockRegionId,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${uniqueTestId()}`,
           additionalRegions: [mockRegionId + 2],
           additionalStates: ['California (CA)'],
         },
@@ -726,7 +727,7 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R01-PD-${uniqueTestId()}`,
         },
       };
       createdEvent = await createEvent(eventData);
@@ -1866,7 +1867,7 @@ describe('session reports service', () => {
       });
 
       recipientGrantInRegion1 = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
@@ -1874,7 +1875,7 @@ describe('session reports service', () => {
       });
 
       recipientGrantInRegion2 = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 2,
@@ -1882,7 +1883,7 @@ describe('session reports service', () => {
       });
 
       otherRecipientGrant = await db.Grant.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: otherRecipient.id,
         regionId: 2,
@@ -1890,24 +1891,24 @@ describe('session reports service', () => {
       });
 
       regionOneEvent = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: 1,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R01-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R01-PD-RECIPIENT-${uniqueTestId()}`,
           eventName: 'Recipient Filter Region 1',
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
       });
 
       regionTwoEvent = await createEvent({
-        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        ownerId: uniqueTestId(),
         regionId: 2,
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId: `R02-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventId: `R02-PD-RECIPIENT-${uniqueTestId()}`,
           eventName: 'Recipient Filter Region 2',
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },

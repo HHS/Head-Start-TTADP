@@ -59,6 +59,7 @@ const fetchMaxIds = async (includeDDL = false): Promise<MaxIdRecord[]> =>
   );
 
 interface ChangeRecord {
+  id?: number | string;
   source_table: string;
   dml_type: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,12 +91,97 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
     )
   ).flat();
 
-  // Sort changes in reverse chronological order to ensure correct order for reversion
+  // Sort changes in reverse chronological order to ensure correct order for reversion.
+  // dml_timestamp is the transaction start time, so every change made in one transaction ties;
+  // within a single audit table the audit row id still gives the exact order.
   allChanges.sort(
-    (a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime()
+    (a, b) =>
+      new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime() ||
+      (a.source_table === b.source_table ? Number(b.id) - Number(a.id) : 0)
   );
 
   return allChanges;
+};
+
+const applyRevert = async (change: ChangeRecord): Promise<void> => {
+  const tableName = change.source_table.replace('ZAL', '');
+  const generateReplacements = (delta) =>
+    Object.entries(delta.old_row_data).reduce(
+      (acc, [key, value]) => {
+        let parsedValue;
+
+        // Try to parse the value as JSON
+        try {
+          // @ts-expect-error
+          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+          parsedValue = JSON.parse(value);
+        } catch (error) {
+          parsedValue = value; // If parsing fails, use the original value
+        }
+
+        return {
+          ...acc,
+          [key]: Array.isArray(parsedValue)
+            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+            : parsedValue,
+        };
+      },
+      { id: delta.data_id }
+    );
+
+  switch (change.dml_type) {
+    case 'INSERT':
+      // Use parameterized query to safely delete
+      await sequelize.query(
+        /* sql */ `
+        DELETE FROM "${tableName}"
+        WHERE id = :id;
+      `,
+        { replacements: { id: change.data_id } }
+      );
+      break;
+    case 'DELETE':
+      // Insert with parameterized query
+      {
+        const columns = Object.keys(change.old_row_data)
+          .map((key) => `"${key}"`)
+          .join(', ');
+
+        const replacements = generateReplacements(change);
+
+        await sequelize.query(
+          /* sql */ `
+          INSERT INTO "${tableName}" (${columns})
+          VALUES (${Object.keys(replacements)
+            .map((key) => `:${key}`)
+            .join(', ')});
+        `,
+          { replacements }
+        );
+      }
+      break;
+    case 'UPDATE':
+      // Update with parameterized query
+      {
+        const setClause = Object.keys(change.old_row_data)
+          .map((key) => `"${key}" = :${key}`)
+          .join(', ');
+
+        const replacements = generateReplacements(change);
+
+        await sequelize.query(
+          /* sql */ `
+          UPDATE "${tableName}"
+          SET ${setClause}
+          WHERE id = :id;
+        `,
+          { replacements }
+        );
+      }
+      break;
+    default:
+      throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
+  }
 };
 
 const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
@@ -104,91 +190,53 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
     auditLogger.log('info', 'All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion
   }
-  const tableName = change.source_table.replace('ZAL', '');
   try {
-    const generateReplacements = (delta) =>
-      Object.entries(delta.old_row_data).reduce(
-        (acc, [key, value]) => {
-          let parsedValue;
-
-          // Try to parse the value as JSON
-          try {
-            // @ts-expect-error
-            // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
-            parsedValue = JSON.parse(value);
-          } catch (error) {
-            parsedValue = value; // If parsing fails, use the original value
-          }
-
-          return {
-            ...acc,
-            [key]: Array.isArray(parsedValue)
-              ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
-              : parsedValue,
-          };
-        },
-        { id: delta.data_id }
-      );
-
-    switch (change.dml_type) {
-      case 'INSERT':
-        // Use parameterized query to safely delete
-        await sequelize.query(
-          /* sql */ `
-          DELETE FROM "${tableName}"
-          WHERE id = :id;
-        `,
-          { replacements: { id: change.data_id } }
-        );
-        break;
-      case 'DELETE':
-        // Insert with parameterized query
-        {
-          const columns = Object.keys(change.old_row_data)
-            .map((key) => `"${key}"`)
-            .join(', ');
-
-          const replacements = generateReplacements(change);
-
-          await sequelize.query(
-            /* sql */ `
-            INSERT INTO "${tableName}" (${columns})
-            VALUES (${Object.keys(replacements)
-              .map((key) => `:${key}`)
-              .join(', ')});
-          `,
-            { replacements }
-          );
-        }
-        break;
-      case 'UPDATE':
-        // Update with parameterized query
-        {
-          const setClause = Object.keys(change.old_row_data)
-            .map((key) => `"${key}" = :${key}`)
-            .join(', ');
-
-          const replacements = generateReplacements(change);
-
-          await sequelize.query(
-            /* sql */ `
-            UPDATE "${tableName}"
-            SET ${setClause}
-            WHERE id = :id;
-          `,
-            { replacements }
-          );
-        }
-        break;
-      default:
-        throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
-    }
+    await applyRevert(change);
     // Recursively call revertChange to process the next change
     await revertChange(changes);
   } catch (err) {
     auditLogger.error('Error during reversion of a change:', err);
     throw err; // Rethrow the error to exit the recursion and handle it in the caller
   }
+};
+
+const isForeignKeyViolation = (err): boolean =>
+  err?.name === 'SequelizeForeignKeyConstraintError' || err?.parent?.code === '23503';
+
+// Revert changes newest first. Changes from one transaction share a timestamp, so their order
+// across tables is unknown and a revert can trip a foreign key (a parent deleted before its
+// child, or a child restored before its parent). Those are retried after the rest of the pass;
+// later changes to the same row wait with them so each row is still reverted in order.
+const revertChangesWithRetry = async (changes: ChangeRecord[]): Promise<void> => {
+  let pending = changes;
+  while (pending.length > 0) {
+    const deferred: ChangeRecord[] = [];
+    const deferredRows = new Set<string>();
+    let lastError;
+    for (const change of pending) {
+      const rowKey = `${change.source_table}:${change.data_id}`;
+      if (deferredRows.has(rowKey)) {
+        deferred.push(change);
+      } else {
+        try {
+          await applyRevert(change);
+        } catch (err) {
+          if (!isForeignKeyViolation(err)) {
+            throw err;
+          }
+          deferred.push(change);
+          deferredRows.add(rowKey);
+          lastError = err;
+        }
+      }
+    }
+    if (deferred.length === pending.length) {
+      // no progress this pass, so retrying cannot help
+      throw lastError;
+    }
+    pending = deferred;
+  }
+  auditLogger.log('info', 'All changes have been successfully reverted.');
 };
 
 // Revert all changes based on the aggregated change records
@@ -199,7 +247,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
-    await revertChange(allChanges);
+    await revertChangesWithRetry(allChanges);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);
     throw err;
@@ -292,5 +340,6 @@ export {
   type MaxIdRecord,
   revertAllChanges,
   revertChange,
+  revertChangesWithRetry,
   rollbackToSnapshot,
 };

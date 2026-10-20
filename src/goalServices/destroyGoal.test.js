@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { FILE_STATUSES } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import { auditLogger } from '../logger';
 import db, { ActivityReport, File, Goal, Grant, Objective, Recipient, Resource } from '../models';
 import { destroyGoal } from './goals';
@@ -13,7 +14,7 @@ describe('destroyGoal handler', () => {
   let file;
 
   let grant = {
-    id: faker.number.int({ min: 67000, max: 68000 }),
+    id: uniqueTestId(),
     number: faker.string.alphanumeric(10),
     cdi: false,
     regionId: 1,
@@ -24,7 +25,7 @@ describe('destroyGoal handler', () => {
   beforeAll(async () => {
     recipient = await Recipient.create({
       name: `recipient${faker.number.int({ min: 0, max: 99999 })}`,
-      id: faker.number.int({ min: 67000, max: 68000 }),
+      id: uniqueTestId(),
       uei: faker.string.sample(12),
     });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });

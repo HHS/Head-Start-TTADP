@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../../fakerUnique';
 import { ActivityReport, NextStep, NextStepResource, Resource, sequelize, User } from '..';
 import { draftObject } from './testHelpers';
 
@@ -14,7 +15,7 @@ describe('nextStepResource hooks', () => {
   beforeAll(async () => {
     // Create user.
     mockUser = await User.create({
-      id: faker.number.int({ min: 0, max: 99999 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       hsesUsername: faker.string.sample(),
       hsesUserId: faker.string.sample(),

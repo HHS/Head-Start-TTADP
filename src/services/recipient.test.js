@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import moment from 'moment';
 import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION, CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
   ActivityReportApprover,
@@ -437,12 +438,12 @@ describe('Recipient DB service', () => {
 
     it('returns missing standard goals if only one of the grants for the recipient has goals', async () => {
       multiGrantRecipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       grant4 = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '3423423',
@@ -454,7 +455,7 @@ describe('Recipient DB service', () => {
       });
 
       grant5 = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '4234666',
@@ -517,12 +518,12 @@ describe('Recipient DB service', () => {
 
     it('does not count templates as missing when each grant uses a template that shares a name', async () => {
       recipientWithTemplatesWithSameName = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       duplicateGrantOne = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
         number: faker.string.sample(),
@@ -534,7 +535,7 @@ describe('Recipient DB service', () => {
       });
 
       duplicateGrantTwo = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
         number: faker.string.sample(),
@@ -634,12 +635,12 @@ describe('Recipient DB service', () => {
 
     it('returns an empty array when no standard goals are missing', async () => {
       recipient1 = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       grant1 = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipient1.id,
         regionId: 1,
         number: '234234',
@@ -680,12 +681,12 @@ describe('Recipient DB service', () => {
 
     it('returns an array of missing standard goals', async () => {
       recipient2 = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       grant2 = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipient2.id,
         regionId: 1,
         number: '323456',
@@ -704,12 +705,12 @@ describe('Recipient DB service', () => {
 
     it('returns some of the goal templates when some are missing', async () => {
       recipient3 = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       grant3 = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipient3.id,
         regionId: 1,
         number: '323457',
@@ -745,13 +746,13 @@ describe('Recipient DB service', () => {
     it('does not count inactive grants or Monitoring standard templates as missing goals', async () => {
       // Create recipient with inactive grant
       recipientWithInactiveGrant = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       // Create an inactive grant
       inactiveGrant = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipientWithInactiveGrant.id,
         regionId: 1,
         number: '323458',
@@ -764,13 +765,13 @@ describe('Recipient DB service', () => {
 
       // Create recipient with active grant for monitoring goal
       recipientWithMonitoringGoal = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
       });
 
       // Create an active grant
       monitoringGrant = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipientWithMonitoringGoal.id,
         regionId: 1,
         number: '323459',
@@ -1239,55 +1240,55 @@ describe('Recipient DB service', () => {
       ]);
 
       readOnlyRecipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: 'Test Recipient 202',
       });
 
       await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: readOnlyRecipient.id,
         regionId: readOnlyRegion.id,
-        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        number: String(uniqueTestId()),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       firstRecipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: 'Test Recipient 200',
       });
 
       secondRecipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: 'Test Recipient 201',
       });
 
       await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: firstRecipient.id,
         regionId: region.id,
-        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        number: String(uniqueTestId()),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        number: String(uniqueTestId()),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        number: String(uniqueTestId()),
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
@@ -1347,7 +1348,7 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         uei: faker.string.sample(),
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       });
@@ -1365,7 +1366,7 @@ describe('Recipient DB service', () => {
       grant = await Grant.create({
         status: 'Active',
         regionId: region,
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         number: faker.string.sample(),
         recipientId: recipient.id,
         startDate: '2019-01-01',
@@ -2489,12 +2490,12 @@ describe('Recipient DB service', () => {
 
     const recipient = {
       name: faker.string.sample(10),
-      id: faker.number.int({ min: 10000, max: 10000 + 99999 }),
+      id: uniqueTestId(),
       uei: faker.string.sample(10),
     };
     const grant = {
-      id: faker.number.int({ min: 10000, max: 100000 }),
-      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: uniqueTestId(),
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2503,8 +2504,8 @@ describe('Recipient DB service', () => {
     };
 
     const grant2 = {
-      id: faker.number.int({ min: 10000, max: 100000 }),
-      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: uniqueTestId(),
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2513,8 +2514,8 @@ describe('Recipient DB service', () => {
     };
 
     const irrelevantGrant = {
-      id: faker.number.int({ min: 10000, max: 100000 }),
-      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: uniqueTestId(),
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID + 1,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2542,20 +2543,20 @@ describe('Recipient DB service', () => {
 
       const program1 = await db.Program.create({
         ...dummyProgram,
-        id: faker.number.int({ min: 10000, max: 100000 }),
+        id: uniqueTestId(),
       });
 
       const program2 = await db.Program.create({
         ...dummyProgram,
         grantId: grant2.id,
         programType: 'EHS',
-        id: faker.number.int({ min: 10000, max: 100000 }),
+        id: uniqueTestId(),
       });
 
       const irrelevantProgram = await db.Program.create({
         ...dummyProgram,
         grantId: irrelevantGrant.id,
-        id: faker.number.int({ min: 10000, max: 100000 }),
+        id: uniqueTestId(),
       });
 
       // Program personnel to ignore
@@ -2684,13 +2685,13 @@ describe('Recipient DB service', () => {
       });
 
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.sample(),
         uei: faker.string.sample(),
       });
 
       grant = await Grant.create({
-        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        id: uniqueTestId(),
         recipientId: recipient.id,
         regionId: 1,
         number: faker.string.sample(),

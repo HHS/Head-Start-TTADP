@@ -5,6 +5,7 @@ import {
   COMMUNICATION_RESULTS,
 } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { uniqueTestId } from '../../fakerUnique';
 import db from '../../models';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { createRecipient, createUser } from '../../testUtils';
@@ -21,7 +22,7 @@ describe('communicationLog filtersToScopes', () => {
   let secondUser;
   let recipient;
   let ignoredRecipient;
-  const regionId = faker.number.int({ min: 10000, max: 100000 });
+  const regionId = uniqueTestId();
   let region;
   let userRole;
   let secondUserRole;
@@ -453,7 +454,7 @@ describe('communicationLog filtersToScopes', () => {
       targetRecipient = await createRecipient();
 
       groupedGrant = await db.Grant.create({
-        id: faker.number.int({ min: 100000, max: 999999 }),
+        id: uniqueTestId(),
         number: `group-${faker.number.int({ min: 1000, max: 9999 })}`,
         recipientId: groupedRecipient.id,
         regionId,
@@ -462,7 +463,7 @@ describe('communicationLog filtersToScopes', () => {
       });
 
       notGroupedGrant = await db.Grant.create({
-        id: faker.number.int({ min: 100000, max: 999999 }),
+        id: uniqueTestId(),
         number: `group2-${faker.number.int({ min: 1000, max: 9999 })}`,
         recipientId: notGroupedRecipient.id,
         regionId,

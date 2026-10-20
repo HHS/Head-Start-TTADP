@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { GRANT_PERSONNEL_ROLES } from '../../constants';
+import { uniqueTestId } from '../../fakerUnique';
 import db, { Grant, Program, ProgramPersonnel, Recipient } from '..';
 
 describe('ProgramPersonnel', () => {
@@ -27,14 +28,14 @@ describe('ProgramPersonnel', () => {
   beforeAll(async () => {
     // Recipient.
     recipient = await Recipient.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: 'BNA5N2FDWGN2',
     });
 
     // Grant.
     grant = await Grant.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       status: 'Active',
       regionId: 1,
       number: '43CDFW001',
@@ -45,7 +46,7 @@ describe('ProgramPersonnel', () => {
 
     // Program.
     program = await Program.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       grantId: grant.id,
       name: 'Sample Program Personnel',
       programType: 'HS',
@@ -56,7 +57,7 @@ describe('ProgramPersonnel', () => {
     });
 
     ehsProgram = await Program.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       grantId: grant.id,
       name: 'Sample Program Personnel ehs',
       programType: 'EHS',
@@ -67,7 +68,7 @@ describe('ProgramPersonnel', () => {
     });
 
     weirdProgram = await Program.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       grantId: grant.id,
       name: 'Sample Program Personnel weird',
       programType: 'something-weird',

@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityReport,
   ActivityReportObjective,
@@ -62,7 +64,7 @@ describe('topic filtersToScopes', () => {
 
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+        id: uniqueTestId(),
         name: faker.string.alphanumeric(6),
         uei: faker.string.sample(12),
       });
@@ -73,7 +75,7 @@ describe('topic filtersToScopes', () => {
         recipientId: recipient.id,
         programSpecialistName: faker.person.firstName(),
         regionId: 1,
-        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+        id: uniqueTestId(),
       });
 
       // Goal.
@@ -83,7 +85,7 @@ describe('topic filtersToScopes', () => {
         timeframe: '12 months',
         grantId: grant.id,
         isFromSmartsheetTtaPlan: false,
-        id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+        id: uniqueTestId(),
       });
 
       // Objective.

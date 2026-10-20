@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-import fakerUnique from '../fakerUnique';
+import { uniqueTestId } from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { createReport, destroyReport } from '../testUtils';
@@ -40,43 +40,43 @@ describe('createOrUpdate', () => {
   beforeAll(async () => {
     report = await createReport({
       version: 2,
-      userId: faker.number.int({ min: 666, max: 666 + 99999 }),
+      userId: uniqueTestId(),
       activityRecipients: [
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
         {
-          grantId: faker.number.int({ min: 666, max: 666 + 99999 }),
+          grantId: uniqueTestId(),
         },
       ],
     });
@@ -354,7 +354,7 @@ describe('createOrUpdate', () => {
       homeRegionId: report.regionId,
       name: faker.person.fullName(),
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 1000000 }))}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       phoneNumber: '555-123-4567',
       lastLogin: new Date(),
@@ -364,7 +364,7 @@ describe('createOrUpdate', () => {
       homeRegionId: report.regionId,
       name: faker.person.fullName(),
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 1000000 }))}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       phoneNumber: '555-987-6543',
       lastLogin: new Date(),

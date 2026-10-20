@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
@@ -53,7 +54,7 @@ describe('standardGoals with Data', () => {
     beforeAll(async () => {
       const uniqueUserId = `Test Topics User ${Date.now()}-${faker.number.int({ min: 1000, max: 9999 })}`;
       user = await User.create({
-        id: faker.number.int({ min: 2000000, max: 2999999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: uniqueUserId,
         hsesUsername: uniqueUserId,
@@ -162,7 +163,7 @@ describe('standardGoals with Data', () => {
       });
 
       normalizedCitationOnApprovedReport = await Citation.create({
-        mfid: faker.number.int({ min: 100000, max: 999999 }),
+        mfid: uniqueTestId(),
         finding_uuid: `approved-finding-${Date.now()}`,
         citation: 'Citation on approved report',
         raw_finding_type: 'Type 1',
@@ -170,7 +171,7 @@ describe('standardGoals with Data', () => {
       });
 
       normalizedCitationOnNonApprovedReport = await Citation.create({
-        mfid: faker.number.int({ min: 1000000, max: 1999999 }),
+        mfid: uniqueTestId(),
         finding_uuid: `non-approved-finding-${Date.now()}`,
         citation: 'Citation on non-approved report',
         raw_finding_type: 'Type 2',
@@ -374,7 +375,8 @@ describe('standardGoals with Data', () => {
         await Recipient.destroy({ where: { id: recipientForTopics.id }, force: true });
       }
 
-      if (creatorCollabType?.[0]?.id) {
+      // findOrCreate may return the shared migration-seeded row; only remove one this suite made
+      if (creatorCollabType?.[1]) {
         await CollaboratorType.destroy({
           where: { id: creatorCollabType[0].id },
           force: true,
@@ -486,7 +488,7 @@ describe('standardGoals with Data', () => {
       // Create test user with unique hsesUserId
       const uniqueUserId = `Test Objective User ${Date.now()}`;
       user = await User.create({
-        id: faker.number.int({ min: 3000, max: 3000 + 99999 }),
+        id: uniqueTestId(),
         homeRegionId: 1,
         name: uniqueUserId,
         hsesUsername: uniqueUserId,
@@ -593,10 +595,13 @@ describe('standardGoals with Data', () => {
         force: true,
       });
 
-      await CollaboratorType.destroy({
-        where: { id: creatorCollabType[0].id },
-        force: true,
-      });
+      // findOrCreate may return the shared migration-seeded row; only remove one this suite made
+      if (creatorCollabType[1]) {
+        await CollaboratorType.destroy({
+          where: { id: creatorCollabType[0].id },
+          force: true,
+        });
+      }
 
       await User.destroy({
         where: { id: user.id },

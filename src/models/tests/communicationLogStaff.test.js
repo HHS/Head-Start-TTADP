@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { uniqueTestId } from '../../fakerUnique';
 import db, { CommunicationLog, CommunicationLogStaff, User } from '..';
 
 describe('CommunicationLogStaff', () => {
@@ -9,7 +10,7 @@ describe('CommunicationLogStaff', () => {
 
   const createMockUser = () =>
     User.create({
-      id: faker.number.int({ min: 10000, max: 100000 }),
+      id: uniqueTestId(),
       homeRegionId: 1,
       hsesUsername: faker.internet.username(),
       hsesUserId: faker.string.uuid(),

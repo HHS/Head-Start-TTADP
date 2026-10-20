@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import { auditLogger } from '../logger';
 import db, {
   ActivityReport,
@@ -272,7 +273,7 @@ describe('Programmatic Transaction', () => {
     }
 
     let grant = {
-      id: faker.number.int({ min: 97000, max: 98000 }),
+      id: uniqueTestId(),
       number: faker.string.alphanumeric(10),
       cdi: false,
       regionId: 1,
@@ -281,7 +282,7 @@ describe('Programmatic Transaction', () => {
     };
     const recipient = await Recipient.create({
       name: `recipient${faker.number.int({ min: 0, max: 99999 })}`,
-      id: faker.number.int({ min: 67000, max: 68000 }),
+      id: uniqueTestId(),
       uei: faker.string.sample(12),
     });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
@@ -319,7 +320,7 @@ describe('Programmatic Transaction', () => {
 
     await expect(
       GoalFieldResponse.create({
-        goalId: faker.number.int({ min: 0, max: 99999 }),
+        goalId: uniqueTestId(),
         goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
         response: malformedJsonString,
       })
@@ -335,6 +336,82 @@ describe('Programmatic Transaction', () => {
 
     querySpy.mockRestore();
     auditLogger.error.mockRestore();
+  });
+
+  describe('revertChangesWithRetry', () => {
+    it('reverts rows written in one transaction even when a parent comes before its child', async () => {
+      const snapshot = await transactionModule.captureSnapshot();
+      const recipientId = uniqueTestId();
+      const grantId = uniqueTestId();
+
+      // both rows share a dml_timestamp because they are written in one transaction
+      await sequelize.transaction(async (transaction) => {
+        await Recipient.create(
+          { id: recipientId, name: faker.company.name(), uei: 'NNA5N2KHMGN2' },
+          { transaction }
+        );
+        await Grant.create(
+          {
+            id: grantId,
+            number: `0${grantId}`,
+            recipientId,
+            regionId: 1,
+            status: 'Active',
+          },
+          { transaction }
+        );
+      });
+
+      // put the recipient first so deleting it trips the grant's foreign key
+      const changes = await transactionModule.fetchAndAggregateChanges(snapshot);
+      const parentFirst = [...changes].sort(
+        (a, b) =>
+          Number(b.source_table === 'ZALRecipients') - Number(a.source_table === 'ZALRecipients')
+      );
+      expect(parentFirst[0].source_table).toBe('ZALRecipients');
+
+      await transactionModule.revertChangesWithRetry(parentFirst);
+
+      expect(await Grant.findByPk(grantId)).toBeNull();
+      expect(await Recipient.findByPk(recipientId)).toBeNull();
+    });
+
+    it('rethrows errors that are not foreign key violations', async () => {
+      const fakeChange = {
+        source_table: 'ZALTopics',
+        dml_type: 'INVALID_TYPE',
+        old_row_data: { id: 1 },
+        new_row_data: { id: 1 },
+        dml_timestamp: new Date().toISOString(),
+        data_id: 1,
+      };
+
+      await expect(transactionModule.revertChangesWithRetry([fakeChange])).rejects.toThrow(
+        'Unknown dml_type(INVALID_TYPE) for table: Topics'
+      );
+    });
+
+    it('throws once a pass makes no progress on foreign key violations', async () => {
+      const fkError = Object.assign(new Error('fk violation'), {
+        name: 'SequelizeForeignKeyConstraintError',
+      });
+      const querySpy = jest.spyOn(sequelize, 'query').mockRejectedValue(fkError);
+      const fakeChange = {
+        source_table: 'ZALTopics',
+        dml_type: 'INSERT',
+        old_row_data: null,
+        new_row_data: { id: 1 },
+        dml_timestamp: new Date().toISOString(),
+        data_id: 1,
+      };
+
+      await expect(transactionModule.revertChangesWithRetry([fakeChange])).rejects.toThrow(
+        'fk violation'
+      );
+      expect(querySpy).toHaveBeenCalledTimes(1);
+
+      querySpy.mockRestore();
+    });
   });
 
   describe('hasModifiedData', () => {

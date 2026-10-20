@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniqueTestId } from '../fakerUnique';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -29,13 +30,13 @@ describe('removeRemovedRecipientsGoals', () => {
 
   beforeAll(async () => {
     const recipientOne = await Recipient.create({
-      id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: faker.string.sample(12),
     });
 
     const recipientTwo = await Recipient.create({
-      id: faker.number.int({ min: 90000, max: 90000 + 99999 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: faker.string.sample(12),
     });
@@ -44,14 +45,14 @@ describe('removeRemovedRecipientsGoals', () => {
 
     grantOne = await Grant.create({
       id: recipientOne.id,
-      number: faker.number.int({ min: 90000, max: 90000 + 99999 }),
+      number: String(uniqueTestId()),
       recipientId: recipientOne.id,
       startDate: new Date(),
       endDate: new Date(),
     });
     grantTwo = await Grant.create({
       id: recipientTwo.id,
-      number: faker.number.int({ min: 90000, max: 90000 + 99999 }),
+      number: String(uniqueTestId()),
       recipientId: recipientTwo.id,
       startDate: new Date(),
       endDate: new Date(),

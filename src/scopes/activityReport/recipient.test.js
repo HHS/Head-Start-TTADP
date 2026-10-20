@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+
+import { uniqueTestId } from '../../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -272,26 +274,26 @@ describe('recipient filtersToScopes', () => {
       beforeAll(async () => {
         // Recipients.
         multiRecipient1 = await Recipient.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           name: faker.string.alphanumeric(6),
         });
         multiRecipient2 = await Recipient.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           name: faker.string.alphanumeric(6),
           uei: faker.string.sample(12),
         });
         singleRecipient = await Recipient.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           name: faker.string.alphanumeric(6),
           uei: 'sample-single-recipient-same-uei',
         });
         singleRecipient2 = await Recipient.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           name: faker.string.alphanumeric(6),
           uei: 'sample-single-recipient-same-uei',
         });
         excludedRecipient = await Recipient.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           name: faker.string.alphanumeric(6),
           uei: faker.string.sample(12),
         });
@@ -306,31 +308,31 @@ describe('recipient filtersToScopes', () => {
 
         // Grants.
         multiRecipientGrant1 = await Grant.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           number: faker.string.sample(6),
           uei: faker.string.sample(12),
           recipientId: multiRecipient1.id,
         });
         multiRecipientGrant2 = await Grant.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           number: faker.string.sample(6),
           uei: faker.string.sample(12),
           recipientId: multiRecipient2.id,
         });
         singleRecipientGrant = await Grant.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           number: faker.string.sample(6),
           uei: faker.string.sample(12),
           recipientId: singleRecipient.id,
         });
         singleRecipientGrant2 = await Grant.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           number: faker.string.sample(6),
           uei: faker.string.sample(12),
           recipientId: singleRecipient2.id,
         });
         excludedGrant = await Grant.create({
-          id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+          id: uniqueTestId(),
           number: faker.string.sample(6),
           uei: faker.string.sample(12),
           recipientId: excludedRecipient.id,

@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import httpContext from 'express-http-context';
+import { uniqueTestId } from '../fakerUnique';
 import SCOPES from '../middleware/scopeConstants';
 import db, {
   ActivityReport,
@@ -56,7 +57,7 @@ describe('getGoalHistory (database-backed)', () => {
     user = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.number.int({ min: 1, max: 100000 })}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       name: faker.person.fullName(),
       role: ['Grants Specialist'],
@@ -73,14 +74,14 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     recipient = await Recipient.create({
-      id: faker.number.int({ min: 10000, max: 99999 }),
+      id: uniqueTestId(),
       name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     grant = await Grant.create({
       id: getUniqueId(),
-      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -200,7 +201,7 @@ describe('getGoalHistory (database-backed)', () => {
     collaboratorUser = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.number.int({ min: 100001, max: 200000 })}`,
+      hsesUserId: `fake${uniqueTestId()}`,
       email: faker.internet.email(),
       name: faker.person.fullName(),
       role: ['Health Specialist'],
@@ -530,7 +531,7 @@ describe('getGoalHistory (database-backed)', () => {
     // one non-Closed goal per (grantId, goalTemplateId).
     const isolatedGrant = await Grant.create({
       id: getUniqueId(),
-      number: `0${faker.number.int({ min: 10000, max: 99999 })}${faker.animal.type()}`,
+      number: `0${uniqueTestId()}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),

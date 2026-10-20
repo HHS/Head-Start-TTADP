@@ -22,89 +22,74 @@ describe('role filtersToScopes', () => {
   });
 
   describe('role', () => {
-    const possibleIds = [
-      faker.number.int({ min: 0, max: 99999 }),
-      faker.number.int({ min: 0, max: 99999 }),
-      faker.number.int({ min: 0, max: 99999 }),
-    ];
+    // ids are assigned by the database; explicit random ids collide with rows from other suites
+    const possibleIds = [];
+    const userIds = [];
+    let collaboratorId;
 
     beforeAll(async () => {
       const granteeSpecialist = sharedTestData.roles['Grantee Specialist'];
       const systemSpecialist = sharedTestData.roles['System Specialist'];
       const grantsSpecialist = sharedTestData.roles['Grants Specialist'];
 
-      await User.create({
-        id: possibleIds[0],
-        name: 'u777',
-        hsesUsername: 'u777',
-        hsesUserId: '777',
-        lastLogin: new Date(),
-      });
+      const users = await Promise.all(
+        [0, 1, 2].map(() => {
+          const username = faker.string.uuid();
+          return User.create({
+            name: username,
+            hsesUsername: username,
+            hsesUserId: username,
+            lastLogin: new Date(),
+          });
+        })
+      );
+      userIds.push(...users.map((u) => u.id));
 
       await UserRole.create({
-        userId: possibleIds[0],
+        userId: userIds[0],
         roleId: granteeSpecialist.id,
       });
 
       await UserRole.create({
-        userId: possibleIds[0],
+        userId: userIds[0],
         roleId: systemSpecialist.id,
       });
 
-      await User.create({
-        id: possibleIds[1],
-        name: 'u778',
-        hsesUsername: 'u778',
-        hsesUserId: '778',
-        role: ['Grantee Specialist'],
-        lastLogin: new Date(),
-      });
-
       await UserRole.create({
-        userId: possibleIds[1],
+        userId: userIds[1],
         roleId: granteeSpecialist.id,
       });
 
-      await User.create({
-        id: possibleIds[2],
-        name: 'u779',
-        hsesUsername: 'u779',
-        hsesUserId: '779',
-        role: ['Grants Specialist'],
-        lastLogin: new Date(),
-      });
-
       await UserRole.create({
-        userId: possibleIds[2],
+        userId: userIds[2],
         roleId: grantsSpecialist.id,
       });
 
-      await ActivityReport.create({
+      const report0 = await ActivityReport.create({
         ...approvedReport,
-        id: possibleIds[0],
-        userId: possibleIds[0],
+        userId: userIds[0],
       });
-      await ActivityReport.create({
+      const report1 = await ActivityReport.create({
         ...approvedReport,
-        id: possibleIds[1],
-        userId: possibleIds[1],
+        userId: userIds[1],
       });
-      await ActivityReport.create({
+      const report2 = await ActivityReport.create({
         ...approvedReport,
-        id: possibleIds[2],
-        userId: possibleIds[2],
+        userId: userIds[2],
       });
-      await ActivityReportCollaborator.create({
-        id: possibleIds[0],
-        activityReportId: possibleIds[1],
-        userId: possibleIds[1],
+      possibleIds.push(report0.id, report1.id, report2.id);
+
+      const collaborator = await ActivityReportCollaborator.create({
+        activityReportId: report1.id,
+        userId: userIds[1],
       });
+      collaboratorId = collaborator.id;
     });
 
     afterAll(async () => {
       await ActivityReportCollaborator.destroy({
         where: {
-          id: possibleIds,
+          id: collaboratorId,
         },
       });
       await ActivityReport.destroy({
@@ -115,13 +100,13 @@ describe('role filtersToScopes', () => {
 
       await UserRole.destroy({
         where: {
-          userId: possibleIds,
+          userId: userIds,
         },
       });
 
       await User.destroy({
         where: {
-          id: possibleIds,
+          id: userIds,
         },
       });
     });
@@ -181,95 +166,40 @@ describe('role filtersToScopes', () => {
   });
 
   describe('newly added specialist roles', () => {
-    const newRoleIds = [
-      faker.number.int({ min: 0, max: 99999 }),
-      faker.number.int({ min: 0, max: 99999 }),
-      faker.number.int({ min: 0, max: 99999 }),
-      faker.number.int({ min: 0, max: 99999 }),
-    ];
+    const newRoleIds = [];
+    const newRoleUserIds = [];
 
     beforeAll(async () => {
       const earlyChildhoodManager = sharedTestData.roles['Early Childhood Manager'];
       const granteeSpecialistManager = sharedTestData.roles['Grantee Specialist Manager'];
       const ttac = sharedTestData.roles.TTAC;
 
-      await User.create({
-        id: newRoleIds[0],
-        name: 'u780',
-        hsesUsername: 'u780',
-        hsesUserId: '780',
-        lastLogin: new Date(),
-      });
+      // the second author has no matching role, used to confirm filtering
+      const authorRoles = [earlyChildhoodManager, null, granteeSpecialistManager, ttac];
 
-      await UserRole.create({
-        userId: newRoleIds[0],
-        roleId: earlyChildhoodManager.id,
-      });
+      for (const role of authorRoles) {
+        const username = faker.string.uuid();
+        const user = await User.create({
+          name: username,
+          hsesUsername: username,
+          hsesUserId: username,
+          lastLogin: new Date(),
+        });
+        newRoleUserIds.push(user.id);
 
-      await ActivityReport.create({
-        ...approvedReport,
-        id: newRoleIds[0],
-        userId: newRoleIds[0],
-      });
+        if (role) {
+          await UserRole.create({ userId: user.id, roleId: role.id });
+        }
 
-      // a report whose author has no matching role, used to confirm filtering
-      await User.create({
-        id: newRoleIds[1],
-        name: 'u781',
-        hsesUsername: 'u781',
-        hsesUserId: '781',
-        lastLogin: new Date(),
-      });
-
-      await ActivityReport.create({
-        ...approvedReport,
-        id: newRoleIds[1],
-        userId: newRoleIds[1],
-      });
-
-      await User.create({
-        id: newRoleIds[2],
-        name: 'u782',
-        hsesUsername: 'u782',
-        hsesUserId: '782',
-        lastLogin: new Date(),
-      });
-
-      await UserRole.create({
-        userId: newRoleIds[2],
-        roleId: granteeSpecialistManager.id,
-      });
-
-      await ActivityReport.create({
-        ...approvedReport,
-        id: newRoleIds[2],
-        userId: newRoleIds[2],
-      });
-
-      await User.create({
-        id: newRoleIds[3],
-        name: 'u783',
-        hsesUsername: 'u783',
-        hsesUserId: '783',
-        lastLogin: new Date(),
-      });
-
-      await UserRole.create({
-        userId: newRoleIds[3],
-        roleId: ttac.id,
-      });
-
-      await ActivityReport.create({
-        ...approvedReport,
-        id: newRoleIds[3],
-        userId: newRoleIds[3],
-      });
+        const report = await ActivityReport.create({ ...approvedReport, userId: user.id });
+        newRoleIds.push(report.id);
+      }
     });
 
     afterAll(async () => {
       await ActivityReport.destroy({ where: { id: newRoleIds } });
-      await UserRole.destroy({ where: { userId: newRoleIds } });
-      await User.destroy({ where: { id: newRoleIds } });
+      await UserRole.destroy({ where: { userId: newRoleUserIds } });
+      await User.destroy({ where: { id: newRoleUserIds } });
     });
 
     it('finds reports for a newly added specialist role', async () => {
