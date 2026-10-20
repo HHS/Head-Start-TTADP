@@ -52,6 +52,7 @@ import { groupsByRegion } from '../../services/groups';
 import {
   archiveApproverApprovedNotificationForUser,
   archiveApproverApprovedNotifications,
+  archiveApproverSubmittedNotificationsForUser,
   archiveNeedsActionNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
@@ -620,6 +621,8 @@ export async function reviewReport(req, res) {
       // The acting approver just approved, so their own approver-approved notification is
       // archived rather than re-created.
       await archiveApproverApprovedNotificationForUser(reviewedReport.id, userId);
+      // The acting approver has reviewed the report, so their "submitted for approval" CTA is stale.
+      await archiveApproverSubmittedNotificationsForUser(reviewedReport.id, userId);
 
       if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
         // Clear earlier approver-approved notifications before creating the final-approval ones,
@@ -658,6 +661,8 @@ export async function reviewReport(req, res) {
       await archiveResubmittedNotifications(reviewedReport.id);
       // Clear earlier approval notifications, including the acting approver's stale CTA.
       await archiveApproverApprovedNotifications(reviewedReport.id);
+      // The acting approver has reviewed the report, so their "submitted for approval" CTA is stale.
+      await archiveApproverSubmittedNotificationsForUser(reviewedReport.id, userId);
 
       // add in-app notification
       // - for creator
