@@ -11,7 +11,7 @@ Thank you for your interest in contributing to the Office of Head Start TTA Smar
 
 ## Code Style
 
-We prefer TypeScript for new backend files and follow existing patterns in the surrounding code. All changes must pass lint checks (`yarn lint:all`).
+We prefer TypeScript for new backend files and follow existing patterns in the surrounding code. All changes must pass lint checks (`yarn lint` from the repository root and `yarn --cwd frontend lint`).
 
 For the full guide — including frontend CSS conventions, Sequelize patterns, error handling, and WYSIWYG editor notes — see [Best Practices](./best_practices.md).
 

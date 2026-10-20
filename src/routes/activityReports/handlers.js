@@ -8,6 +8,7 @@ import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goa
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   approverAssignedNotification,
+  approverReportApprovedNotification,
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorReportSubmittedForReviewNotification,
@@ -37,18 +38,23 @@ import {
   activityReportByLegacyId,
   activityReports,
   activityReportsForCleanup,
+  assertApproversAreNotParticipants,
   createOrUpdate,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
   getObjectiveSupportTypeSubmissionError,
   handleSoftDeleteReport,
+  lockActivityReport,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
+  archiveApproverApprovedNotificationForUser,
+  archiveApproverApprovedNotifications,
+  archiveApproverSubmittedNotificationsForUser,
   archiveNeedsActionNotifications,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
@@ -57,6 +63,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -410,7 +417,9 @@ export async function getGroups(req, res) {
  */
 async function checkEmailSettings(report, setting) {
   const { author, activityReportCollaborators, approvers } = report;
-  const shouldCheckApprovers = setting === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+  const shouldCheckApprovers =
+    setting === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED ||
+    setting === USER_SETTINGS.EMAIL.KEYS.APPROVAL;
 
   const settingForAuthor = author ? await userSettingOverridesById(author.id, setting) : null;
 
@@ -544,22 +553,25 @@ export async function reviewReport(req, res) {
       );
     }
 
+    const approverName = savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
+
     // Notify the author and collaborators every time an approver approves the report,
     // naming the approver who just acted. The acting approver is excluded so they don't
     // email themselves.
     if (status === REPORT_STATUSES.APPROVED) {
-      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
-        reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.APPROVAL
-      );
+      const [authorWithSetting, collabsWithSettings, , approversWithSettings] =
+        await checkEmailSettings(reviewedReport, USER_SETTINGS.EMAIL.KEYS.APPROVAL);
 
       const recipientAuthor =
         authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null;
       const recipientCollabs = collabsWithSettings.filter((c) => c.userId !== userId);
-      const approverName =
-        savedApprover && savedApprover.user ? savedApprover.user.name : undefined;
 
       reportApprovedNotification(reviewedReport, recipientAuthor, recipientCollabs, approverName);
+
+      // TTAHUB-5583: notify the report's other approvers (excluding the acting approver)
+      // that an approver has approved the report.
+      const recipientApprovers = approversWithSettings.filter((a) => a.user.id !== userId);
+      approverReportApprovedNotification(reviewedReport, recipientApprovers, approverName);
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
@@ -569,32 +581,48 @@ export async function reviewReport(req, res) {
       changesRequestedNotification(
         reviewedReport,
         savedApprover,
-        authorWithSetting,
-        collabsWithSettings,
+        // author, unless they are the approver who triggered this workflow
+        authorWithSetting && authorWithSetting.id !== userId ? authorWithSetting : null,
+        // collaborators, minus the approver whose review triggered this workflow
+        collabsWithSettings.filter((c) => c.userId !== userId),
         // approvers, minus the approver whose review triggered this workflow
         approversWithSettings.filter((a) => a.user.id !== userId)
       );
     }
 
     if (status === REPORT_STATUSES.APPROVED) {
-      await createReportApprovedNotification(
-        reviewedReport.author.id,
-        {
-          ...reviewedReport.toJSON(),
-          activityRecipients,
-        },
-        user.name
+      const approverIds = new Set(
+        (reviewedReport.approvers || []).map((approver) => approver.user?.id ?? approver.userId)
       );
 
-      // Notify collaborators (excluding the acting approver and the author, who is
-      // already notified above) that an approver has approved the report.
+      // An author who is also one of the report's other approvers gets the approver-specific
+      // notification below instead — both types render identical text but competing CTAs, and the
+      // service dedup keys on type, so sending both leaves two rows for the same event. Mirrors
+      // the collaborator rule below.
+      const suppressAuthorApprovedNotification =
+        reviewedReport.author.id !== userId && approverIds.has(reviewedReport.author.id);
+
+      if (!suppressAuthorApprovedNotification) {
+        await createReportApprovedNotification(
+          reviewedReport.author.id,
+          {
+            ...reviewedReport.toJSON(),
+            activityRecipients,
+          },
+          approverName
+        );
+      }
+
+      // Approvers receive their role-specific notification, even when collaborating.
+      // The author is already notified above.
       const collaboratorsToNotify = (reviewedReport.activityReportCollaborators || [])
         .map((collab) => ({ userId: collab.user?.id ?? collab.userId }))
         .filter(
           ({ userId: collabUserId }) =>
             typeof collabUserId === 'number' &&
             collabUserId !== userId &&
-            collabUserId !== reviewedReport.author.id
+            collabUserId !== reviewedReport.author.id &&
+            !approverIds.has(collabUserId)
         );
 
       await createReportApprovedNotificationForCollaborators(
@@ -603,23 +631,55 @@ export async function reviewReport(req, res) {
           ...reviewedReport.toJSON(),
           activityRecipients,
         },
-        user.name
+        approverName
       );
-    }
 
-    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // A resubmission notification is obsolete once the report is fully approved.
-      await archiveResubmittedNotifications(Number(activityReportId));
-      // Needs-action notifications (creator/collaborator/approver) are obsolete once the
-      // report is fully approved (TTAHUB-5683 archival: AR approved).
-      await archiveNeedsActionNotifications(Number(activityReportId));
+      // TTAHUB-5581: notify the report's other approvers that an approver approved it.
+      // The acting approver just approved, so their own approver-approved notification is
+      // archived rather than re-created.
+      await archiveApproverApprovedNotificationForUser(reviewedReport.id, userId);
+      // The acting approver has reviewed the report, so their "submitted for approval" CTA is stale.
+      await archiveApproverSubmittedNotificationsForUser(reviewedReport.id, userId);
+
+      if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+        // Clear earlier approver-approved notifications before creating the final-approval ones,
+        // so the final-approval notifications stay active until the recipient dismisses them.
+        await archiveApproverApprovedNotifications(reviewedReport.id);
+      }
+
+      // Notify other approvers on every approval, including the final one. The CTA is
+      // informational once the recipient has approved or requested changes.
+      const otherApproversToNotify = (reviewedReport.approvers || [])
+        .map((approver) => ({
+          userId: approver.user?.id ?? approver.userId,
+          hasApproved:
+            approver.status === APPROVER_STATUSES.APPROVED ||
+            approver.status === APPROVER_STATUSES.NEEDS_ACTION,
+        }))
+        .filter(
+          ({ userId: approverUserId }) =>
+            typeof approverUserId === 'number' && approverUserId !== userId
+        );
+
+      await createReportApprovedNotificationForApprovers(
+        otherApproversToNotify,
+        {
+          ...reviewedReport.toJSON(),
+          activityRecipients,
+        },
+        approverName
+      );
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
       const { author, activityReportCollaborators, approvers } = reviewedReport;
 
       // A resubmission notification is obsolete once changes are requested.
-      await archiveResubmittedNotifications(Number(activityReportId));
+      await archiveResubmittedNotifications(reviewedReport.id);
+      // Clear earlier approval notifications, including the acting approver's stale CTA.
+      await archiveApproverApprovedNotifications(reviewedReport.id);
+      // The acting approver has reviewed the report, so their "submitted for approval" CTA is stale.
+      await archiveApproverSubmittedNotificationsForUser(reviewedReport.id, userId);
 
       // add in-app notification
       // - for creator
@@ -778,6 +838,7 @@ export async function submitReport(req, res) {
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
+    await lockActivityReport(activityReportId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
     const isResubmission = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
@@ -786,6 +847,8 @@ export async function submitReport(req, res) {
       res.sendStatus(403);
       return;
     }
+
+    assertApproversAreNotParticipants(approverUserIds, report);
 
     const supportTypeError = await getObjectiveSupportTypeSubmissionError(activityReportId);
     if (supportTypeError) {
@@ -831,6 +894,8 @@ export async function submitReport(req, res) {
     // On resubmission, approvers receive the "revised report" notification (Take action)
     // instead of the standard submitted one.
     if (isResubmission) {
+      // A new approval cycle must not reuse an earlier, possibly read notification.
+      await archiveApproverApprovedNotifications(savedReport.id);
       await createResubmittedNotificationForApprovers(approversToNotify, savedReport);
     } else {
       await createApproverSubmittedNotification(approversToNotify, savedReport);
@@ -1102,6 +1167,8 @@ export async function saveReport(req, res) {
     }
     const userId = await currentUserId(req, res);
     const { activityReportId } = req.params;
+    // Lock before reading, so an overlapping save waits here and then reads fresh data.
+    await lockActivityReport(activityReportId);
     const [report, activityRecipients] = await activityReportAndRecipientsById(activityReportId);
     if (!report) {
       res.sendStatus(404);

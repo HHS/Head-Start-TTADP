@@ -1,4 +1,5 @@
 import join from 'url-join';
+import { notifyDataUpdates } from '../hooks/useDataUpdates';
 import { filtersToQueryString } from '../utils';
 import { get, put } from './index';
 import { getSortConfigParams } from './utils';
@@ -10,6 +11,11 @@ export const fetchNotifications = async ({ sortConfig = {} } = {}, filters = [])
   const filterParams = filters ? filtersToQueryString(filters) : '';
   const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
   const response = await get(`${notificationsUrl}?${qs}`);
+  return response.json();
+};
+
+export const fetchNotificationsCount = async (filters = []) => {
+  const response = await get(`${notificationsUrl}/count?${filtersToQueryString(filters)}`);
   return response.json();
 };
 
@@ -26,12 +32,16 @@ export const archiveNotification = async (notificationId) => {
     archivedAt: new Date().toISOString(),
     viewedAt: new Date().toISOString(),
   });
-  return response.json();
+  const state = await response.json();
+  notifyDataUpdates('notifications');
+  return state;
 };
 
 export const viewNotification = async (notificationId) => {
   const response = await put(join(notificationsUrl, notificationId), {
     viewedAt: new Date().toISOString(),
   });
-  return response.json();
+  const state = await response.json();
+  notifyDataUpdates('notifications');
+  return state;
 };

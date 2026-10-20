@@ -2,7 +2,7 @@ import httpContext from 'express-http-context';
 import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
 import handleErrors from '../lib/apiErrorHandler';
-import { auditLogger, logger } from '../logger';
+import { auditLogger, hashForLogging, logger } from '../logger';
 import { validateUserAuthForAdmin } from './accessValidation';
 import findOrCreateUser from './findOrCreateUser';
 
@@ -29,7 +29,7 @@ const logContext = {
  */
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
-   if (req.session && req.session.userId) {
+    if (req.session && req.session.userId) {
       httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
     }
@@ -123,14 +123,26 @@ export async function currentUserId(req, res) {
  * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
 export async function retrieveUserDetails(data) {
-  logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
-
   const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null;
 
   const email = data?.email ? data.email.toString() : null;
   const hsesUsername = data?.sub ? data.sub.toString() : null;
   const hsesUserId = data?.userId ? data.userId.toString() : null;
   const hsesAuthorities = data?.roles || [];
+
+  // Log shape/presence only; data carries PII (email, name, sub) that should never hit logs.
+  // subHash correlates this line with the authMiddleware login-flow logs for the same user,
+  // without logging hsesUsername (the sub/email) itself.
+  logger.debug(
+    `User details response received: ${JSON.stringify({
+      hasName: Boolean(name),
+      hasEmail: Boolean(email),
+      hasHsesUsername: Boolean(hsesUsername),
+      hasHsesUserId: Boolean(hsesUserId),
+      roleCount: hsesAuthorities.length,
+      subHash: hashForLogging(hsesUsername),
+    })}`
+  );
   if (!hsesUsername) {
     auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
     throw new Error(

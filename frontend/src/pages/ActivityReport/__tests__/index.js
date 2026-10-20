@@ -1,10 +1,11 @@
 /* eslint-disable max-len */
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import reactSelectEvent from 'react-select-event';
 import { HTTPError } from '../../../fetchers';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
@@ -14,6 +15,7 @@ import {
   formData,
   history,
   mockGoalsAndObjectives,
+  ReportComponent,
   recipients,
   renderActivityReport,
 } from '../testHelpers';
@@ -84,6 +86,27 @@ describe('ActivityReport', () => {
   });
 
   describe('allow approvers to edit', () => {
+    it.each([
+      ['creator', { userId: 3 }],
+      ['collaborator', { activityReportCollaborators: [{ userId: 3 }] }],
+    ])(
+      'shows the resubmission form when the %s is also an approver',
+      async (_participant, reportUpdates) => {
+        const data = {
+          ...formData(),
+          ...reportUpdates,
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approvers: [{ status: null, user: { id: 3 } }],
+        };
+        fetchMock.get('/api/activity-reports/1', data);
+
+        renderActivityReport(1, 'review', null, 3);
+
+        expect(await screen.findByRole('button', { name: 'Update report' })).toBeVisible();
+      }
+    );
+
     it('does not allow approvers to navigate and change the report if the report is not submitted', async () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', {
@@ -338,6 +361,77 @@ describe('ActivityReport', () => {
         expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy()
       );
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
+    });
+
+    it('does not offer the report creator or collaborators as approvers', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityReportCollaborators: [{ userId: 2 }],
+        approvers: [],
+      });
+      fetchMock.get(
+        '/api/activity-reports/approvers?region=1',
+        [
+          { id: 1, name: 'Report Creator' },
+          { id: 2, name: 'Report Collaborator' },
+          { id: 3, name: 'Eligible Approver' },
+        ],
+        { overwriteRoutes: true }
+      );
+
+      renderActivityReport('1', 'review');
+
+      const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+      await userEvent.click(approverSelect);
+
+      expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+      expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Report Collaborator' })).not.toBeInTheDocument();
+    });
+
+    it('updates approver options when collaborators change', async () => {
+      const data = formData();
+      const collaborators = [
+        { id: 2, name: 'New Collaborator', roles: [{ fullName: 'Specialist' }] },
+      ];
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityReportCollaborators: [],
+      });
+      fetchMock.get('/api/users/collaborators?region=1', collaborators, { overwriteRoutes: true });
+      fetchMock.get(
+        '/api/activity-reports/approvers?region=1',
+        [
+          { id: 1, name: 'Report Creator' },
+          { id: 2, name: 'New Collaborator' },
+          { id: 3, name: 'Eligible Approver' },
+        ],
+        { overwriteRoutes: true }
+      );
+      fetchMock.put('/api/activity-reports/1', (url, opts) => ({
+        ...data,
+        ...JSON.parse(opts.body),
+      }));
+
+      const { rerender } = render(<ReportComponent id="1" currentPage="activity-summary" />);
+
+      const collaboratorSelect = await screen.findByRole('combobox', {
+        name: /collaborating specialists/i,
+      });
+      await reactSelectEvent.select(collaboratorSelect, ['New Collaborator']);
+
+      const reviewButton = await screen.findByRole('button', { name: /review and submit/i });
+      await userEvent.click(reviewButton);
+      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports/1/review'));
+      rerender(<ReportComponent id="1" currentPage="review" />);
+
+      const approverSelect = await screen.findByRole('combobox', { name: /approving manager/i });
+      await userEvent.click(approverSelect);
+
+      expect(await screen.findByRole('option', { name: 'Eligible Approver' })).toBeVisible();
+      expect(screen.queryByRole('option', { name: 'Report Creator' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'New Collaborator' })).not.toBeInTheDocument();
     });
 
     it('finds whats changed', () => {

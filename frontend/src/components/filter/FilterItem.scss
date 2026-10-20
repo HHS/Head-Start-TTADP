@@ -5,6 +5,10 @@
     gap: 1em;
 }
 
+.ttahub-filter-menu-item .usa-select:disabled{
+    background: transparent;
+}
+
 .ttahub-filter-menu-item [name="topic"] {
     width: 240px;
 }

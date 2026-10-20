@@ -2,8 +2,6 @@ import { Alert } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import './IncompletePages.css';
-
 const IncompletePages = ({ type, incompletePages }) => (
   <Alert className="smart-hub--incomplete-notice" validation noIcon slim type="error">
     <b>{`Incomplete ${type}`}</b>

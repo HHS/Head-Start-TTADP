@@ -1,8 +1,10 @@
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import { type Model, Op } from 'sequelize';
+import syncJoinRows from '../lib/syncJoinRows';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
+import { assertApproversAreNotParticipants } from './activityReports';
 import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
@@ -91,67 +93,8 @@ async function create(report) {
   return CollabReport.create(report);
 }
 
-async function saveCollabReportAssociation(
-  collabReportId: number,
-  model: typeof CollabReportActivityState | typeof CollabReportActivityState,
-  associationKey: 'reasonId' | 'activityStateCode',
-  data: { id: number | string }[]
-) {
-  if (data.length) {
-    // Make a handy lookup object for the findOrCreate that comes next
-    const lookup = data.map((d) => ({
-      collabReportId,
-      [associationKey]: d.id,
-    }));
-
-    const lookupIds = lookup.map((l) => l[associationKey]);
-
-    const existing = await model.findAll({
-      attributes: ['collabReportId', associationKey],
-      where: {
-        collabReportId,
-        [associationKey]: lookupIds,
-      },
-    });
-
-    const existingLookup = existing.map((l) => l[associationKey]);
-
-    const toCreate = [] as { collabReportId: number; [associationKey]: string | number }[];
-    lookup.forEach((l) => {
-      if (!existingLookup.includes(l[associationKey])) {
-        toCreate.push({
-          collabReportId,
-          [associationKey]: l[associationKey],
-        });
-      }
-    });
-
-    await model.bulkCreate(toCreate);
-    await model.destroy({
-      where: {
-        collabReportId,
-        [associationKey]: {
-          [Op.notIn]: lookupIds,
-        },
-      },
-    });
-  } else {
-    // If no reasons, destroy any existing reason objects in the DB
-    await model.destroy({
-      where: {
-        collabReportId,
-      },
-    });
-  }
-}
-
 async function saveReportReasons(collabReportId: number, reasons: string[]) {
-  await saveCollabReportAssociation(
-    collabReportId,
-    CollabReportReason,
-    'reasonId',
-    reasons.map((reasonId) => ({ id: reasonId }))
-  );
+  await syncJoinRows(CollabReportReason, { collabReportId }, 'reasonId', reasons);
 }
 
 async function saveReportSteps(collabReportId: number, steps: Model[]) {
@@ -233,11 +176,11 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
 }
 
 async function saveReportActivityStates(collabReportId: number, activityStates: string[]) {
-  await saveCollabReportAssociation(
-    collabReportId,
+  await syncJoinRows(
     CollabReportActivityState,
+    { collabReportId },
     'activityStateCode',
-    activityStates.map((state) => ({ id: state }))
+    activityStates
   );
 }
 
@@ -391,6 +334,14 @@ export async function collabReportById(crId: string) {
 // todo: create proper typescript interface for the collab report
 export async function createOrUpdateReport(newReport, oldReport): Promise<ICollabReport> {
   let savedReport;
+
+  assertApproversAreNotParticipants(
+    (newReport.approvers ?? oldReport?.approvers ?? []).map(({ user }) => user?.id),
+    { userId: newReport.userId ?? oldReport?.userId },
+    (newReport.collabReportSpecialists ?? oldReport?.collabReportSpecialists ?? []).map(
+      ({ specialistId }) => ({ userId: specialistId })
+    )
+  );
 
   const {
     id,

@@ -106,15 +106,9 @@ export default function FeedPreview() {
             <td>ttahub-drawer--objective-topics-guidance</td>
           </tr>
           <tr>
-            <td>Class review first section</td>
+            <td>Class review</td>
             <td>ttahub-class-thresholds</td>
-            <td>div:nth-child(3)</td>
-            <td>ttahub-class-feed-article</td>
-          </tr>
-          <tr>
-            <td>Class review second section</td>
-            <td>ttahub-class-thresholds</td>
-            <td>div:nth-child(4)</td>
+            <td />
             <td>ttahub-class-feed-article</td>
           </tr>
         </tbody>

@@ -425,13 +425,35 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   // eventId is an immutable identifier stored in the dedicated `eventId` column,
   // which is the single source of truth. Reject any attempt to change it, and
   // never persist it back into the JSONB `data`.
-  const { eventId: requestedEventId, ...dataWithoutEventId } = data as {
+  const { eventId: requestedEventId, ...incomingData } = data as {
     eventId?: string;
   } & Record<string, unknown>;
 
   if (requestedEventId && requestedEventId !== evt.eventId) {
     throw new Error('eventId is immutable and cannot be changed');
   }
+
+  // checkUpdateEventBody has already narrowed the request to the schema
+  // allowlist, and the TR form round-trips the whole blob back to us
+  // (resetFormData spreads `data` into the form, onSave sends getValues() back),
+  // so writing the request straight into the column would permanently drop any
+  // stored key the allowlist does not declare. Merge over what is stored
+  // instead, the same way updateSession does, and drop the hydrated/derived
+  // keys that saves predating the schema may have persisted — the strip list in
+  // src/routes/events/middleware.ts keeps them out of new requests, but not out
+  // of rows already written.
+  const {
+    sessionReports: _sessionReports,
+    id: _storedId,
+    version: _version,
+    region: _region,
+    updatedAt: _storedUpdatedAt,
+    createdAt: _storedCreatedAt,
+    eventId: _storedEventId,
+    ...storedData
+  } = (evt.data ?? {}) as Record<string, unknown>;
+
+  const persistedData = { ...storedData, ...incomingData };
 
   await evt.update(
     {
@@ -440,7 +462,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       collaboratorIds,
       regionId,
       eventId: evt.eventId,
-      data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
+      data: cast(JSON.stringify(persistedData), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
   );
@@ -505,7 +527,7 @@ export {
   REGIONAL_PD_WITH_NATIONAL_CENTERS,
 } from './eventFlow';
 
-import { isNationalCenterFacilitator } from './eventFlow';
+import { isNationalCenterFacilitator, isSessionSubmitted } from './eventFlow';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -736,8 +758,8 @@ export async function getTrainingReportAlerts(
       if (session.data.status === TRS.COMPLETE) return;
 
       // Check for waitingForApproval - session submitted and awaiting approver review
-      // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
-      const isSubmitted = session.submitted;
+      // Use the policy's submission rule so stale flags from another workflow don't count
+      const isSubmitted = isSessionSubmitted(event, session);
 
       if (isSubmitted && ![REPORT_STATUSES.NEEDS_ACTION].includes(session.data.status)) {
         const isSubmitter = session.submitterId === userId;

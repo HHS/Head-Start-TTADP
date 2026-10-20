@@ -10,8 +10,8 @@ export default function FilterSelect({
   options,
   selectedValues,
   mapByValue,
-  labelProp,
-  valueProp,
+  labelProp = 'label',
+  valueProp = 'value',
 }) {
   const key = mapByValue ? valueProp : labelProp;
 

@@ -12,6 +12,9 @@ const childProcess = require('node:child_process');
 const {
   DEFAULT_TIMEOUT_SECONDS,
   LOG_FLUSH_WAIT_MS,
+  LOG_STREAM_RESTART_DELAY_MS,
+  MAX_LOG_STREAM_RESTARTS,
+  RECENT_LOGS_TIMEOUT_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
   filterLogChunk,
@@ -290,29 +293,264 @@ id   name          state
     expect(child.kill).toHaveBeenCalledWith('SIGTERM');
   });
 
-  it('returns non-zero when cf logs exits unexpectedly before task completion', async () => {
-    const completion = Promise.resolve({ code: 1, signal: null, expected: false });
-    const stop = jest.fn().mockResolvedValue();
+  describe('when cf logs exits unexpectedly', () => {
+    const config = {
+      appName: 'tta-smarthub-prod',
+      cfArgs: ['--command', 'yarn cli:import-system process 1', '--name', 'import-process-prod'],
+      command: 'yarn cli:import-system process 1',
+      taskName: 'import-process-prod',
+      timeoutSeconds: 30,
+    };
+    const droppedStream = () => ({
+      stop: jest.fn().mockResolvedValue(),
+      completion: Promise.resolve({ code: 1, signal: null, expected: false }),
+    });
+    const healthyStream = () => ({
+      stop: jest.fn().mockResolvedValue(),
+      completion: new Promise(() => {}),
+    });
+    // Resolves after every pending restart (promise callbacks) has run.
+    const afterRestarts = (status) => () =>
+      new Promise((resolve) => {
+        setImmediate(() => resolve(status));
+      });
 
-    const result = await runTask(
-      {
-        appName: 'tta-smarthub-prod',
-        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
-        command: 'yarn db:migrate:prod',
-        taskName: 'migrate-prod',
-        timeoutSeconds: 30,
-      },
-      {
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      console.warn.mockRestore();
+      console.error.mockRestore();
+    });
+
+    it('restarts the log stream and succeeds when the task succeeds', async () => {
+      const first = droppedStream();
+      const second = healthyStream();
+      const startLogStreamImpl = jest.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+      const sleepImpl = jest.fn().mockResolvedValue();
+
+      const result = await runTask(config, {
         logFlushWaitMs: 0,
         runCfCommandImpl: jest.fn(),
-        startLogStreamImpl: jest.fn(() => ({ stop, completion })),
-        waitForTaskImpl: jest.fn(() => new Promise(() => {})),
-      }
-    );
+        sleepImpl,
+        startLogStreamImpl,
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
 
-    expect(result.exitCode).toBe(1);
-    expect(result.status).toBe('FAILED');
-    expect(stop).toHaveBeenCalled();
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe('SUCCEEDED');
+      expect(startLogStreamImpl).toHaveBeenCalledTimes(2);
+      expect(sleepImpl).toHaveBeenCalledWith(LOG_STREAM_RESTART_DELAY_MS);
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'cf logs exited unexpectedly while waiting for task import-process-prod; restarting (attempt 1/'
+        )
+      );
+      expect(second.stop).toHaveBeenCalled();
+    });
+
+    it('still fails when the task fails', async () => {
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl: jest.fn(),
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl: jest
+          .fn()
+          .mockReturnValueOnce(droppedStream())
+          .mockReturnValueOnce(healthyStream()),
+        waitForTaskImpl: jest.fn(afterRestarts('FAILED')),
+      });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.status).toBe('FAILED');
+    });
+
+    it('stops restarting after the retry limit and keeps polling', async () => {
+      const startLogStreamImpl = jest.fn(droppedStream);
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl: jest.fn(),
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl,
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe('SUCCEEDED');
+      expect(startLogStreamImpl).toHaveBeenCalledTimes(MAX_LOG_STREAM_RESTARTS + 1);
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining(`giving up after ${MAX_LOG_STREAM_RESTARTS} restarts`)
+      );
+    });
+
+    it('treats a log stream that fails to spawn the same as one that exits', async () => {
+      const startLogStreamImpl = jest
+        .fn()
+        .mockReturnValueOnce({
+          stop: jest.fn().mockResolvedValue(),
+          completion: Promise.reject(new Error('spawn cf ENOENT')),
+        })
+        .mockReturnValueOnce(healthyStream());
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl: jest.fn(),
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl,
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(startLogStreamImpl).toHaveBeenCalledTimes(2);
+    });
+
+    it('recovers output missed during the disconnect without duplicating streamed lines', async () => {
+      const line = (text) =>
+        `   2026-10-15T13:30:00.00+0000 [APP/TASK/import-process-prod/0] OUT ${text}`;
+      const beforeDrop = line('Validating monitoring data');
+      const duringDrop = line('Monitoring Gate: {"status":"success","criticalCount":1}');
+      const afterRestart = line('Done in 42.00s.');
+      const writeStdout = jest.fn();
+      const startLogStreamImpl = jest
+        .fn()
+        .mockImplementationOnce((_app, _task, out) => {
+          out(`${beforeDrop}\n`);
+          return droppedStream();
+        })
+        .mockImplementationOnce((_app, _task, out) => {
+          out(`${afterRestart}\n`);
+          return healthyStream();
+        });
+      const runCfCommandImpl = jest.fn((args) =>
+        args[0] === 'logs'
+          ? [
+              'Retrieving logs for app tta-smarthub-prod...',
+              beforeDrop,
+              line('').replace('import-process-prod', 'other-task'),
+              duringDrop,
+              afterRestart,
+            ].join('\n')
+          : undefined
+      );
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl,
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl,
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+        writeStdout,
+        writeStderr: jest.fn(),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.logsRecovered).toBe(true);
+      expect(runCfCommandImpl).toHaveBeenCalledWith(['logs', 'tta-smarthub-prod', '--recent'], {
+        timeout: RECENT_LOGS_TIMEOUT_MS,
+        killSignal: 'SIGKILL',
+      });
+      expect(writeStdout.mock.calls.map(([written]) => written)).toEqual([
+        `${beforeDrop}\n`,
+        `${afterRestart}\n`,
+        `${duringDrop}\n`,
+      ]);
+    });
+
+    it('still succeeds when recovering missed output fails', async () => {
+      const runCfCommandImpl = jest.fn((args) => {
+        if (args[0] === 'logs') {
+          throw new Error('cf logs --recent timed out');
+        }
+      });
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl,
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl: jest
+          .fn()
+          .mockReturnValueOnce(droppedStream())
+          .mockReturnValueOnce(healthyStream()),
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe('SUCCEEDED');
+      expect(console.error).toHaveBeenCalledWith(
+        'Unable to fetch recent logs for import-process-prod: cf logs --recent timed out'
+      );
+    });
+
+    it('keeps the task result when fetching recent logs times out', async () => {
+      const runCfCommandImpl = jest.fn((args) => {
+        if (args[0] === 'logs') {
+          const error = new Error('spawnSync cf ETIMEDOUT');
+          error.code = 'ETIMEDOUT';
+          throw error;
+        }
+      });
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl,
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl: jest
+          .fn()
+          .mockReturnValueOnce(droppedStream())
+          .mockReturnValueOnce(healthyStream()),
+        waitForTaskImpl: jest.fn(afterRestarts('SUCCEEDED')),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe('SUCCEEDED');
+      expect(console.warn).toHaveBeenCalledWith(
+        `Gave up fetching recent logs for import-process-prod after ${RECENT_LOGS_TIMEOUT_MS / 1000} seconds; continuing without them`
+      );
+    });
+
+    it('does not fetch recent logs when the stream never dropped', async () => {
+      const runCfCommandImpl = jest.fn();
+
+      const result = await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl,
+        startLogStreamImpl: jest.fn(healthyStream),
+        waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
+      });
+
+      expect(result.logsRecovered).toBeUndefined();
+      expect(runCfCommandImpl).not.toHaveBeenCalledWith(expect.arrayContaining(['--recent']));
+    });
+
+    it('does not restart the log stream once the task has finished', async () => {
+      let endStream;
+      const startLogStreamImpl = jest.fn(() => ({
+        stop: jest.fn(() => {
+          endStream({ code: 1, signal: null, expected: false });
+          return Promise.resolve();
+        }),
+        completion: new Promise((resolve) => {
+          endStream = resolve;
+        }),
+      }));
+
+      await runTask(config, {
+        logFlushWaitMs: 0,
+        runCfCommandImpl: jest.fn(),
+        sleepImpl: jest.fn().mockResolvedValue(),
+        startLogStreamImpl,
+        waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
+      });
+      await new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+
+      expect(startLogStreamImpl).toHaveBeenCalledTimes(1);
+      expect(console.warn).not.toHaveBeenCalled();
+    });
   });
 
   it('creates a missing status file and appends a task run record', () => {

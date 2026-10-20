@@ -155,6 +155,8 @@ export default (sequelize, DataTypes) => {
         {
           unique: true,
           fields: ['userId', 'groupId', 'collaboratorTypeId'],
+          name: 'GroupCollaborators_groupId_userId_collaboratorTypeId_active',
+          where: { deletedAt: null },
         },
       ],
     }

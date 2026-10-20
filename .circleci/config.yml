@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:24.19.0-browsers
+    - image: cimg/node:24.21.0-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:24.19.0-browsers
+    - image: cimg/node:24.21.0-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -145,7 +145,7 @@ workflows:
 
   deploy_only:
     # job to be triggered manually, will build the app and deploy to target env
-    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger.type == "api"
     jobs:
     - build_and_lint
     - deploy_job:
@@ -170,10 +170,11 @@ workflows:
         target_env: "prod"
         slack_channel: acf-head-start-alerts
         ohs_channel: acf-ohs-ttahub--contractor-customer-team
+        team_notification_channel: acf-head-start-alerts-lower
 
   import_data_manual:
     # for manual testing of the data import workflow
-    when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "import_data" and pipeline.trigger.type == "api"
     jobs:
     - run_import_job:
         serial-group: import-data/<< pipeline.parameters.target_env >>
@@ -194,11 +195,11 @@ workflows:
     jobs:
     - run_validation_watchdog:
         target_env: "prod"
-        slack_channel: acf-head-start-alerts
+        slack_channel_failure: acf-head-start-alerts
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
-    when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger.type == "api"
     jobs:
     - run_validation_watchdog:
         target_env: "<< pipeline.parameters.target_env >>"
@@ -311,7 +312,7 @@ workflows:
 
   backup_prod_manual:
     # backup prod db, process(anonymize) it, then backup the processed db
-    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger.type == "api"
     jobs:
     - backup_prod_db:
         serial-group: "tta-automation-lock"
@@ -331,14 +332,14 @@ workflows:
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger.type == "api"
     jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
   clear_build_cache:
-    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger.type == "api"
     jobs:
     - clear_cache_job
 
@@ -494,7 +495,10 @@ jobs:
     - run:
         name: Run lint
         command: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
           yarn lint:ci
+          yarn lint:shell
           cat reports/lint.json
     - run:
         name: Audit frontend packages
@@ -1608,6 +1612,9 @@ jobs:
       ohs_channel:
         type: string
         default: ""
+      team_notification_channel:
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1714,7 +1721,8 @@ jobs:
         command: |
           chmod +x ./.circleci/scripts/build_import_summary.sh
           ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
-            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt
+            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt \
+            monitoring-validation-team-notifications.txt
     - notify_slack:
         step_when: always
         message_text_file: monitoring-updates.txt
@@ -1731,6 +1739,16 @@ jobs:
         message_text_file: monitoring-ohs-updates.txt
         slack_channel: << parameters.ohs_channel >>
         best_effort: true
+    - notify_slack:
+        step_when: always
+        # team_notification-severity content, kept out of monitoring-updates.txt
+        # entirely - its own channel, its own message. Empty
+        # team_notification_channel on non-prod invocations makes this a no-op
+        # (same idiom as ohs_channel above). best_effort: same reasoning as the
+        # OHS post. See docs/monitoring-data-validation.md (Channels).
+        message_text_file: monitoring-validation-team-notifications.txt
+        slack_channel: << parameters.team_notification_channel >>
+        best_effort: true
     - store_artifacts:
         when: always
         path: import-artifacts
@@ -1746,6 +1764,9 @@ jobs:
     - store_artifacts:
         when: always
         path: monitoring-ohs-updates.txt
+    - store_artifacts:
+        when: always
+        path: monitoring-validation-team-notifications.txt
     - run:
         when: always
         name: Fail if any import phase failed
@@ -1775,8 +1796,13 @@ jobs:
       target_env:
         type: string
       slack_channel:
+        description: "Channel that always gets the watchdog result, success or failure."
         type: string
         default: acf-head-start-alerts-lower
+      slack_channel_failure:
+        description: "Extra channel that gets the result only on failure (ok:false, or no result at all) - so it isn't cluttered with routine 'everything's fine' confirmations. Empty = skip, same as notify_slack's ohs_channel."
+        type: string
+        default: ""
     steps:
     - checkout
     - install_cf_tools
@@ -1838,14 +1864,32 @@ jobs:
           result=$(grep -o "Monitoring Validation Watchdog: .*" "${LOG_FILE}" 2>/dev/null | tail -n 1 || true)
           if [[ -n "${result}" ]]; then
             echo "${result}" > "${SUMMARY_FILE}"
+            ok=$(echo "${result#*: }" | jq -r '.ok // false' 2>/dev/null || echo false)
           else
             echo "Monitoring Validation Watchdog: no result (task failed to run)" > "${SUMMARY_FILE}"
+            ok=false
           fi
           cat "${SUMMARY_FILE}"
+
+          # slack_channel_failure only gets posted to on a real failure - resolved
+          # here, not as a step-level `when`, since notify_slack's slack_channel
+          # parameter is substituted at config-compile time, not from this job's
+          # runtime output. Empty channel = notify_slack's own no-op skip (same
+          # idiom as ohs_channel).
+          if [[ "${ok}" == "true" ]]; then
+            echo "export WATCHDOG_FAILURE_CHANNEL=" >> "$BASH_ENV"
+          else
+            echo "export WATCHDOG_FAILURE_CHANNEL=<< parameters.slack_channel_failure >>" >> "$BASH_ENV"
+          fi
     - notify_slack:
         step_when: always
         message_text_file: watchdog-summary.txt
         slack_channel: << parameters.slack_channel >>
+    - notify_slack:
+        step_when: always
+        message_text_file: watchdog-summary.txt
+        slack_channel: "${WATCHDOG_FAILURE_CHANNEL}"
+        best_effort: true
     - store_artifacts:
         when: always
         path: watchdog-artifacts
@@ -1954,7 +1998,7 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
   run_e2e_test:
     parameters:
@@ -2048,7 +2092,8 @@ commands:
     - run:
         name: Clone Repository
         command: |
-          git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+          REPO_URL="<< pipeline.git.repo_url >>"
+          git clone --no-checkout --filter=blob:none "${REPO_URL%.git}.git" .
     - run:
         name: Sparse Checkout
         environment:
@@ -2406,7 +2451,7 @@ commands:
             done
           }
 
-          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"

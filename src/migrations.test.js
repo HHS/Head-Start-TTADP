@@ -1,4 +1,4 @@
-const simpleGit = require('simple-git');
+const { simpleGit } = require('simple-git');
 const path = require('node:path');
 
 function getRenameCommand(file, date) {

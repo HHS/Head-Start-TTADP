@@ -1,6 +1,0 @@
-require_relative "lib/attachment"
-
-desc "Transfer attachments by region"
-task :run, [:region] do |task, args|
-  Attachment.new(args[:region]).call
-end

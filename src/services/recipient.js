@@ -8,6 +8,7 @@ import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { ensureArray } from '../lib/utils';
+import SCOPES from '../middleware/scopeConstants';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -79,6 +80,8 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
 }
 
 /**
+ * Recipients with active grants in the regions the user can write in, so anything
+ * picked from the list can be saved against its grant's region
  *
  * @param {number} userId
  * @returns {Promise<Model>} recipient results
@@ -101,7 +104,13 @@ export async function recipientsByUserId(userId) {
     return [];
   }
 
-  const regions = user.permissions.map((p) => p.regionId);
+  const regions = user.permissions
+    .filter((p) => p.scopeId === SCOPES.READ_WRITE_REPORTS)
+    .map((p) => p.regionId);
+
+  if (!regions.length) {
+    return [];
+  }
 
   return Recipient.findAll({
     order: [['name', 'ASC']],

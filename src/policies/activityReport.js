@@ -23,7 +23,12 @@ export default class ActivityReport {
 
   canReview() {
     // Ability to review is meant to be independent of report status per acceptance criteria
-    return this.isApprovingManager() && this.canApproveInRegion();
+    return (
+      !this.isAuthor() &&
+      !this.isCollaborator() &&
+      this.isApprovingManager() &&
+      this.canApproveInRegion()
+    );
   }
 
   canCreate() {

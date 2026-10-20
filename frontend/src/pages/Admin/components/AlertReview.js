@@ -12,6 +12,7 @@ import Req from '../../../components/Req';
 import SiteAlert from '../../../components/SiteAlert';
 import { createSiteAlert, saveSiteAlert } from '../../../fetchers/Admin';
 import { getEditorState } from '../../../utils';
+import editorLinkCallback from '../../../utils/editorLinkCallback';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -235,6 +236,9 @@ export default function AlertReview({ alert, onDelete }) {
                 options: ['inline', 'list', 'link'],
                 inline: {
                   options: ['bold', 'italic'],
+                },
+                link: {
+                  linkCallback: editorLinkCallback,
                 },
               }}
             />

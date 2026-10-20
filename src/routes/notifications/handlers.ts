@@ -4,6 +4,7 @@ import { ADMIN_BROADCASTABLE_NOTIFICATION_TYPES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db from '../../models';
 import NotificationsPolicy from '../../policies/notifications';
+import { notificationFiltersToScopes } from '../../scopes/notifications';
 import { currentUserId } from '../../services/currentUser';
 import {
   createGlobalNotification,
@@ -52,6 +53,38 @@ export async function getNotificationsHandler(req: Request, res: Response) {
       sortDir: typeof sortDir === 'string' ? sortDir : undefined,
       offset: offset ? Number(offset) : undefined,
     });
+
+    res.status(StatusCodes.OK).json(notifications);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getNotificationsCountHandler(req: Request, res: Response) {
+  try {
+    const { limit, sortBy, sortDir, offset, ...filters } = req.query;
+    for (const name of ['viewed.in', 'archived.in']) {
+      const value = filters[name];
+      const values = Array.isArray(value) ? value : [value];
+      if (
+        value !== undefined &&
+        (values.length !== 1 || !['true', 'false'].includes(values[0] as string))
+      ) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: `${name} requires one true or false value`,
+        });
+      }
+    }
+    const userId = await currentUserId(req, res);
+    const scopes = notificationFiltersToScopes(filters, {}, userId, undefined);
+    const notifications = await getNotifications(
+      userId,
+      scopes,
+      {
+        archived: [filters['archived.in']].flat()[0] === 'true',
+      },
+      true
+    );
 
     res.status(StatusCodes.OK).json(notifications);
   } catch (error) {

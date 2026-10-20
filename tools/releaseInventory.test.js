@@ -81,7 +81,6 @@ const productionSpaceState = {
     { guid: 'svc-12', name: 'ttahub-dev-red', planName: 'micro-psql' },
     { guid: 'svc-13', name: 'domain-prod', planName: 'domain' },
     { guid: 'svc-14', name: 'prod-app-deployer', planName: 'space-deployer' },
-    { guid: 'svc-15', name: 'adam.levin', planName: 'space-deployer' },
   ],
   routes: [
     { guid: 'route-1', url: 'ttahub.ohs.acf.hhs.gov', destinations: [{ app: { guid: 'app-1' } }] },
@@ -106,13 +105,12 @@ const productionSpaceState = {
       destinations: [{ app: { guid: 'app-3' } }],
     },
     { guid: 'route-6', url: 'tta-smarthub-prod.app.cloud.gov', destinations: [] },
-    { guid: 'route-7', url: 'tta-automation.app.cloud.gov', destinations: [] },
   ],
   droplets: [
     {
       appName: 'tta-smarthub-prod',
       stack: 'cflinuxfs4',
-      buildpacks: [{ name: 'nodejs-buildpack', version: '1.9.4' }],
+      buildpacks: [{ name: 'nodejs-buildpack', version: '1.9.5' }],
     },
   ],
 };
@@ -519,7 +517,7 @@ describe('deriveSpaceComponents', () => {
   it('records the staged buildpack version', () => {
     const buildpack = observed.find((c) => c.locator.type === 'cloudFoundryBuildpack');
 
-    expect(buildpack.locator.value).toBe('1.9.4');
+    expect(buildpack.locator.value).toBe('1.9.5');
   });
 
   it('records a route destination app name and GUID in their corresponding fields', () => {
@@ -767,7 +765,7 @@ describe('reconcile', () => {
         class: 'platformRuntime',
         name: 'nodejs-buildpack',
         tier: 'reconciled',
-        locator: { type: 'cloudFoundryBuildpack', value: '1.9.4' },
+        locator: { type: 'cloudFoundryBuildpack', value: '1.9.5' },
       },
     ];
     const observed = [
@@ -803,23 +801,29 @@ describe('reconcile', () => {
 
   it('suppresses a finding covered by an active disposition but still records it', () => {
     const observed = [
-      {
-        class: 'service',
-        name: 'adam.levin',
-        locator: { type: 'cloudFoundryService', value: 'adam.levin' },
-      },
+      { class: 'service', name: 'svc', locator: { type: 'cloudFoundryService', value: 'svc' } },
     ];
+    const active = {
+      dispositions: [
+        {
+          id: 'INV-X',
+          componentClass: 'service',
+          componentName: 'svc',
+          status: 'deferred',
+        },
+      ],
+    };
 
     const result = reconcile({
       declared: [],
       observed,
-      dispositions,
+      dispositions: active,
       environment,
     });
 
     expect(result.undocumented).toEqual([]);
     expect(result.suppressed).toHaveLength(1);
-    expect(result.suppressed[0].dispositionId).toBe('INV-2026-0007');
+    expect(result.suppressed[0].dispositionId).toBe('INV-X');
   });
 
   it('does not suppress a finding whose disposition is resolved', () => {
@@ -1235,11 +1239,7 @@ describe('the committed inventory against the recorded production space', () => 
   });
 
   it('suppresses only the findings the first reconciliation raised', () => {
-    expect(result.suppressed.map((s) => s.dispositionId).sort()).toEqual([
-      'INV-2026-0003',
-      'INV-2026-0004',
-      'INV-2026-0007',
-    ]);
+    expect(result.suppressed.map((s) => s.dispositionId).sort()).toEqual(['INV-2026-0004']);
   });
 
   /**

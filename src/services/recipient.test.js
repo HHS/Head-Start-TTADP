@@ -29,7 +29,7 @@ import db, {
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { createGrant, createRecipient, createReport, destroyReport } from '../testUtils';
+import { createGrant, createRecipient, createReport, destroyReport, getUniqueId } from '../testUtils';
 import {
   allArUserIdsByRecipientAndRegion,
   allRecipients,
@@ -1149,28 +1149,108 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
+
+    describe('with a goal category (standard) filter applied', () => {
+      let templateFEI;
+      let feiGoal;
+
+      async function standardToScope(condition, standards) {
+        const query = { [`standard.${condition}`]: standards };
+        const { grant } = await filtersToScopes(query);
+        return grant;
+      }
+
+      beforeAll(async () => {
+        templateFEI = await GoalTemplate.findOne({ where: { standard: 'FEI' } });
+        feiGoal = await Goal.create({
+          name: 'FEI goal for recipient search standard filter',
+          status: 'Not Started',
+          timeframe: '12 months',
+          grantId: 50,
+          goalTemplateId: templateFEI.id,
+          createdVia: 'rtr',
+        });
+      });
+
+      afterAll(async () => {
+        await Goal.destroy({
+          where: { id: feiGoal.id },
+          force: true,
+          individualHooks: true,
+        });
+      });
+
+      it('does not error and includes matching recipients with "is"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('in', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
+      });
+
+      it('does not error and excludes matching recipients with "is not"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('nin', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).not.toContain(63);
+      });
+    });
   });
 
   describe('recipientsByUserId', () => {
     let region;
+    let readOnlyRegion;
     let user;
+    let readOnlyUser;
     let firstRecipient;
     let secondRecipient;
+    let readOnlyRecipient;
 
     beforeAll(async () => {
-      region = await Region.create({ name: 'Test Region 200', id: 200 });
-      user = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
-        homeRegionId: 1,
-        hsesUsername: faker.string.sample(),
-        hsesUserId: faker.string.sample(),
-        lastLogin: new Date(),
+      [region, readOnlyRegion] = await Promise.all([
+        Region.create({ name: 'Test Region 200', id: 200 }),
+        Region.create({ name: 'Test Region 201', id: 201 }),
+      ]);
+      [user, readOnlyUser] = await Promise.all(
+        [0, 1].map(() =>
+          User.create({
+            id: getUniqueId(),
+            homeRegionId: 1,
+            hsesUsername: faker.string.sample(),
+            hsesUserId: faker.string.sample(),
+            lastLogin: new Date(),
+          })
+        )
+      );
+
+      await Permission.bulkCreate([
+        { userId: user.id, regionId: region.id, scopeId: SCOPES.READ_WRITE_REPORTS },
+        { userId: user.id, regionId: readOnlyRegion.id, scopeId: SCOPES.READ_REPORTS },
+        { userId: readOnlyUser.id, regionId: region.id, scopeId: SCOPES.READ_REPORTS },
+      ]);
+
+      readOnlyRecipient = await Recipient.create({
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: 'Test Recipient 202',
       });
 
-      await Permission.create({
-        userId: user.id,
-        regionId: region.id,
-        scopeId: SCOPES.READ_REPORTS,
+      await Grant.create({
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        recipientId: readOnlyRecipient.id,
+        regionId: readOnlyRegion.id,
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       firstRecipient = await Recipient.create({
@@ -1215,14 +1295,16 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
+      const recipientIds = [firstRecipient.id, secondRecipient.id, readOnlyRecipient.id];
+      const userIds = [user.id, readOnlyUser.id];
       await Grant.destroy({
-        where: { recipientId: [firstRecipient.id, secondRecipient.id] },
+        where: { recipientId: recipientIds },
         individualHooks: true,
       });
-      await Recipient.destroy({ where: { id: [firstRecipient.id, secondRecipient.id] } });
-      await Permission.destroy({ where: { userId: user.id } });
-      await User.destroy({ where: { id: user.id } });
-      await Region.destroy({ where: { id: region.id } });
+      await Recipient.destroy({ where: { id: recipientIds } });
+      await Permission.destroy({ where: { userId: userIds } });
+      await User.destroy({ where: { id: userIds } });
+      await Region.destroy({ where: { id: [region.id, readOnlyRegion.id] } });
     });
 
     it('finds grants for the user', async () => {
@@ -1236,6 +1318,16 @@ describe('Recipient DB service', () => {
 
       const grants = [...first.grants, ...second.grants];
       expect(grants.length).toBe(2);
+    });
+
+    it('excludes recipients in regions the user can only read', async () => {
+      const foundRecipients = await recipientsByUserId(user.id);
+      expect(foundRecipients.map((r) => r.id)).not.toContain(readOnlyRecipient.id);
+    });
+
+    it('returns an empty array if the user has no write regions', async () => {
+      const foundRecipients = await recipientsByUserId(readOnlyUser.id);
+      expect(foundRecipients.length).toBe(0);
     });
 
     it('returns an empty array if the user is not found', async () => {
@@ -2544,7 +2636,7 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       author = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2552,7 +2644,7 @@ describe('Recipient DB service', () => {
       });
 
       collaboratorOne = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2560,7 +2652,7 @@ describe('Recipient DB service', () => {
       });
 
       collaboratorTwo = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2568,7 +2660,7 @@ describe('Recipient DB service', () => {
       });
 
       approverOne = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2576,7 +2668,7 @@ describe('Recipient DB service', () => {
       });
 
       approverTwo = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),
@@ -2584,7 +2676,7 @@ describe('Recipient DB service', () => {
       });
 
       dummyUser = await User.create({
-        id: faker.number.int({ min: 0, max: 99999 }),
+        id: getUniqueId(),
         homeRegionId: 1,
         hsesUsername: faker.string.sample(),
         hsesUserId: faker.string.sample(),

@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
 import httpContext from 'express-http-context';
 import httpCodes from 'http-codes';
-import { auditLogger } from '../logger';
+import { auditLogger, hashForLogging, logger } from '../logger';
 import { validateUserAuthForAdmin } from './accessValidation';
 import { currentUserId, retrieveUserDetails } from './currentUser';
 import findOrCreateUser from './findOrCreateUser';
@@ -12,6 +12,7 @@ jest.mock('./accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn(),
 }));
 jest.mock('../logger', () => ({
+  ...jest.requireActual('../logger'),
   logger: {
     debug: jest.fn(),
   },
@@ -388,6 +389,32 @@ describe('currentUser', () => {
       );
 
       expect(findOrCreateUser).not.toHaveBeenCalled();
+    });
+
+    test('does not log PII from the HSES response', async () => {
+      const data = {
+        given_name: 'Joe',
+        family_name: 'Smith',
+        email: 'ada@example.com',
+        sub: 'ada.smith',
+        roles: ['ROLE_USER'],
+        userId: 42,
+      };
+
+      await retrieveUserDetails(data);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        `User details response received: ${JSON.stringify({
+          hasName: true,
+          hasEmail: true,
+          hasHsesUsername: true,
+          hasHsesUserId: true,
+          roleCount: 1,
+          subHash: hashForLogging('ada.smith'),
+        })}`
+      );
+      const loggedValues = logger.debug.mock.calls.map((call) => JSON.stringify(call));
+      expect(loggedValues.join('\n')).not.toMatch(/ada@example\.com|ada\.smith|Joe|Smith/);
     });
   });
 });

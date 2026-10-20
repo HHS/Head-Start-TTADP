@@ -177,6 +177,7 @@ When importing events from CSV:
 | Regional PD (With National Centers) | `regional_tta_staff` | Regional Trainers only |
 | Regional PD (With National Centers) | `national_center` | National Center Trainers only |
 | Regional PD (With National Centers) | `both` | Both Regional and NC (grouped) |
+| Regional PD (With National Centers) | Blank or unrecognized | No trainer candidates |
 
 ### Common Requirements
 
@@ -190,7 +191,7 @@ When importing events from CSV:
 
 **Location**: Session Form (`Submit.js`)
 
-**Data Source**: `useEventAndSessionStaff` hook, then filtered by manager roles
+**Data Source**: `useSessionApprovers`, using `useEventAndSessionStaff` for the base candidates
 
 ### Selection Criteria
 
@@ -198,7 +199,8 @@ The approving manager list starts with the same base data as "Who Provided the T
 
 | Filter | Description |
 |--------|-------------|
-| **Role Filter** | Must have ECM, GSM, or TTAC role |
+| **Role Filter** | Regional candidates must have ECM, GSM, or TTAC; National Center-only facilitation has no additional manager-role filter |
+| **Owner Exclusion** | The event owner is always excluded, including for admins |
 | **Self-Exclusion** | Non-admin users cannot select themselves |
 | **Regional Filter** | See table below based on event configuration |
 
@@ -206,10 +208,11 @@ The approving manager list starts with the same base data as "Who Provided the T
 
 | Event Organizer | Facilitation | Approvers Available |
 |-----------------|--------------|---------------------|
-| Regional TTA (No National Centers) | Any | All users with ECM/GSM/TTAC roles |
-| Regional PD (With National Centers) | `regional_tta_staff` | All trainers with ECM/GSM/TTAC roles |
+| Regional TTA (No National Centers) | Any | Regional trainers with ECM/GSM/TTAC roles |
+| Regional PD (With National Centers) | `regional_tta_staff` | Regional trainers with ECM/GSM/TTAC roles |
 | Regional PD (With National Centers) | `both` | **Regional trainers only** with ECM/GSM/TTAC roles |
-| Regional PD (With National Centers) | `national_center` | National Center users with manager roles |
+| Regional PD (With National Centers) | `national_center` | National Center users (no additional manager-role requirement) |
+| Regional PD (With National Centers) | Blank or unrecognized | No candidates |
 
 ### Who Can Select an Approver?
 
@@ -218,12 +221,22 @@ The `canSelectApprover` permission determines whether a user can choose an appro
 | User Role | Can Select Approver When |
 |-----------|-------------------------|
 | POC (Point of Contact) | Facilitation is `regional_tta_staff` or `both` |
-| Event Owner | Always |
+| Regional/non-NC owner | Except `national_center`; also subject to POC restrictions if a POC |
+| NC owner | Unless also a POC and blocked by the POC rule |
+| Collaborator-only (neither owner nor POC) | Always passes the dropdown check |
 | Admin | Always |
+
+These are dropdown visibility rules, subject to session edit access and the current workflow view. In Regional PD with National Centers and regional/both facilitation, owner-only and collaborator-only users cannot normally edit; the POC selects the approver. See [session permissions](session-permissions.md#approver-selection-rules).
+
+### Missing Facilitation and Admin Corrections
+
+New sessions for Regional PD events with National Centers require a facilitation choice. Alert and direct creation links resolve the event organizer and redirect to the facilitation page before creating a session; the creation API rejects missing or invalid choices. This routing applies regardless of whether an owner, collaborator, POC, or admin is creating the session.
+
+For Regional PD events with National Centers, blank or unrecognized session `facilitation` leaves the candidate list empty, even if the regional and National Center trainer endpoints return users. Admins can correct this on **Session summary → Training facilitation**, immediately after **Session name**, then save. Non-admin users cannot edit this field on an existing session. See [editing training facilitation](session-permissions.md#editing-training-facilitation) for access, save behavior, and the effect on existing assignments.
 
 ### Self-Exclusion Rule
 
-Non-admin users are excluded from selecting themselves as the approving manager. This ensures proper separation of duties in the approval workflow.
+Non-admin users are excluded from selecting themselves as the approving manager. Admins may select themselves if otherwise eligible, but the event owner is always excluded. A regional list containing only the owner and the current non-admin user will therefore be empty.
 
 ---
 
@@ -232,8 +245,10 @@ Non-admin users are excluded from selecting themselves as the approving manager.
 | Component | File Location |
 |-----------|---------------|
 | Event Collaborators | `frontend/src/pages/TrainingReportForm/pages/eventSummary.js` |
-| Who Provided the TTA? | `frontend/src/pages/SessionForm/components/sessionSummary.js` |
+| Who Provided the TTA? | `frontend/src/pages/SessionForm/pages/sessionSummary.js` |
 | Approving Manager | `frontend/src/pages/SessionForm/components/Submit.js` |
+| Approver Visibility | `frontend/src/hooks/useCanSelectApprover.js` |
+| Approver Candidates | `frontend/src/hooks/useSessionApprovers.ts` |
 | Hook Logic | `frontend/src/hooks/useEventAndSessionStaff.js` |
 | Backend Handler | `src/routes/users/handlers.js` |
 | User Service | `src/services/users.js` |
@@ -244,14 +259,14 @@ Non-admin users are excluded from selecting themselves as the approving manager.
 
 ### Regional Trainers Query
 
-The `usersWithRegionalTrainerRoles` function in `src/services/users.js` retrieves users with:
-- Any of the regional trainer roles (HS, SS, ECS, GS, FES, TTAC, ECM, GSM)
+`getTrainingReportTrainersByRegion` in `src/routes/users/handlers.js` calls `usersByRoles` in `src/services/users.js` to retrieve users with:
+- Any of the regional trainer roles (HS, SS, ECS, GS, FES, TTAC, ECM, GSM, AA)
 - SITE_ACCESS permission
 - `homeRegionId` matching the specified region
 
 ### National Center Trainers Query
 
-The `usersWithNationalCenterTrainerRoles` function retrieves users with:
+`getTrainingReportNationalCenterUsers` calls `usersByRoles(['NC'])` to retrieve users with:
 - NC (National Center) role
 - SITE_ACCESS permission
 - No region filtering (available across all regions)

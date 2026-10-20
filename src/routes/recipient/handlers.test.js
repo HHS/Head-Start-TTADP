@@ -16,6 +16,7 @@ import {
 } from '../../services/recipient';
 import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
+import { userById } from '../../services/users';
 import {
   getGoalsByIdandRecipient,
   getGoalsByRecipient,
@@ -415,19 +416,40 @@ describe('getRecipientTimeline', () => {
     currentUserId.mockResolvedValue(1000);
     recipientById.mockResolvedValue({ id: 100000 });
     getUserReadRegions.mockResolvedValue([1]);
+    userById.mockResolvedValue(mockUserById);
     getRecipientTimelineService.mockResolvedValue(responseBody);
   });
 
   it('returns the stable empty timeline contract for an authorized user', async () => {
     await getRecipientTimeline(req, mockResponse);
 
-    expect(getRecipientTimelineService).toHaveBeenCalledWith({
-      recipientId: 100000,
-      regionId: 1,
-      ...timelineQuery,
-    });
+    expect(getRecipientTimelineService).toHaveBeenCalledWith(
+      { recipientId: 100000, regionId: 1, ...timelineQuery },
+      { canReadCommunicationLogs: true }
+    );
     expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
   });
+
+  it.each([
+    [SCOPES.APPROVE_REPORTS, 1, false],
+    [SCOPES.READ_REPORTS, 2, false],
+    [SCOPES.READ_REPORTS, 1, true],
+    [SCOPES.READ_WRITE_REPORTS, 1, true],
+    [SCOPES.ADMIN, 14, true],
+  ])(
+    'applies communication log policy for scope %s in region %s',
+    async (scopeId, regionId, allowed) => {
+      userById.mockResolvedValue({ id: 1000, permissions: [{ scopeId, regionId }] });
+
+      await getRecipientTimeline(req, mockResponse);
+
+      expect(getRecipientTimelineService).toHaveBeenCalledWith(
+        { recipientId: 100000, regionId: 1, ...timelineQuery },
+        { canReadCommunicationLogs: allowed }
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
+    }
+  );
 
   it('rejects users without access to the requested region', async () => {
     getUserReadRegions.mockResolvedValue([2]);

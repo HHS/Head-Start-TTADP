@@ -186,3 +186,129 @@ describe('logger callsite helpers', () => {
     expect(info.err.stack).toContain('Error: boom');
   });
 });
+
+describe('requestLogger header masking', () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+    jest.restoreAllMocks();
+  });
+
+  it('redacts cookie, authorization, and proxy-authorization (any case) and leaves other headers intact', () => {
+    const { maskHeaders } = loadTesting();
+    expect(
+      maskHeaders({
+        Cookie: 'session=s%3Asecret',
+        authorization: 'Bearer secret',
+        'Proxy-Authorization': 'Basic secret',
+        'x-forwarded-for': '1.2.3.4',
+        'user-agent': 'jest',
+      })
+    ).toEqual({
+      Cookie: '[REDACTED]',
+      authorization: '[REDACTED]',
+      'Proxy-Authorization': '[REDACTED]',
+      'x-forwarded-for': '1.2.3.4',
+      'user-agent': 'jest',
+    });
+  });
+
+  it('does not mutate the original request headers', () => {
+    const { requestFilter } = loadTesting();
+    const req = { headers: { cookie: 'session=secret' } };
+    requestFilter(req, 'headers');
+    expect(req.headers.cookie).toBe('session=secret');
+  });
+
+  it('writes a request log entry with cookie and authorization redacted', async () => {
+    const { EventEmitter } = require('events');
+    const { requestLogger } = loadLogger();
+    const writes = [];
+    const capture = (chunk) => {
+      writes.push(String(chunk));
+      return true;
+    };
+    jest.spyOn(process.stdout, 'write').mockImplementation(capture);
+    if (console._stdout) {
+      jest.spyOn(console._stdout, 'write').mockImplementation(capture);
+    }
+    const req = {
+      method: 'GET',
+      url: '/api/test',
+      originalUrl: '/api/test',
+      headers: {
+        cookie: 'session=s%3Asecret',
+        authorization: 'Bearer secret-token',
+        'auth-impersonation-id': '7',
+        referer: 'https://example.com',
+      },
+      connection: {},
+    };
+    const res = new EventEmitter();
+    res.statusCode = 200;
+    res.locals = {};
+    res.end = () => {};
+    await new Promise((resolve) => {
+      requestLogger(req, res, () => {
+        res.end();
+        setImmediate(resolve);
+      });
+    });
+    jest.restoreAllMocks();
+    const output = writes.join('');
+    expect(output).toContain('/api/test');
+    expect(output).toContain('[REDACTED]');
+    expect(output).toContain('https://example.com');
+    expect(output).not.toContain('secret');
+  });
+});
+
+describe('hashForLogging', () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it('returns the same hash for the same value and secret', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).toBe(hashForLogging('user@example.com'));
+  });
+
+  it('never reveals the original value', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).not.toMatch(/user@example\.com/);
+  });
+
+  it('produces a different hash under a different secret (not a bare/guessable hash)', () => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'secret-one' };
+    const hashOne = loadLogger().hashForLogging('user@example.com');
+
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'secret-two' };
+    const hashTwo = loadLogger().hashForLogging('user@example.com');
+
+    expect(hashOne).not.toBe(hashTwo);
+  });
+
+  it('returns undefined when no SESSION_SECRET is configured, rather than hashing with a known key', () => {
+    // Set (not delete): envParser re-runs dotenv.config() on every resetModules()+require,
+    // and dotenv only fills in keys that are absent from process.env, so deleting the key
+    // here would just have dotenv silently refill it from .env on the next require.
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: '' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging('user@example.com')).toBeUndefined();
+  });
+
+  it.each([undefined, null, ''])('returns undefined for %p', (value) => {
+    process.env = { ...ORIGINAL_ENV, SESSION_SECRET: 'test-secret' };
+    const { hashForLogging } = loadLogger();
+
+    expect(hashForLogging(value)).toBeUndefined();
+  });
+});

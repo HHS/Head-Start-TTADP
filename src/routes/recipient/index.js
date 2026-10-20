@@ -1,4 +1,5 @@
 import express from 'express';
+import { Transaction } from 'sequelize';
 import { checkRecipientIdParam, checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
 import {
@@ -37,7 +38,10 @@ router.get(
   checkRecipientIdParam,
   checkRegionIdParam,
   checkRecipientTimelineQuery,
-  transactionWrapper(getRecipientTimeline)
+  // The index and every source's population queries must observe the same snapshot.
+  transactionWrapper(getRecipientTimeline, '', false, {
+    isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ,
+  })
 );
 
 export default router;

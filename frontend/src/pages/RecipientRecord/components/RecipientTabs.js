@@ -11,7 +11,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
     },
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/tta-request`,
-      label: 'TTA Request',
+      label: 'TTA Requests',
       featureFlag: RECIPIENT_TTA_REQUEST_FEATURE_FLAG,
     },
     {

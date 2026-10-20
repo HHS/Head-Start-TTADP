@@ -179,8 +179,18 @@ body {
   font-weight: bold;
 }
 
-.flex-gap-1 {
-  gap: 0.5em;
+/* ========== generic styles for header elements ========== */
+
+.ttahub-header-indicator {
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+@media all and (min-width: 64em){
+  .ttahub-header-indicator {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
 }
 
 /* ========== a new breakpoint for display-flex reset ========== */
@@ -197,8 +207,14 @@ body {
 }
 
 
+.flex-gap-1 {
+  gap: 0.5em;
+  /* 8px */
+}
+
 .flex-gap-2 {
   gap: 1em;
+  /* 16px */
 }
 
 .flex-gap-3 {

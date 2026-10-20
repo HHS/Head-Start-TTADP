@@ -7,6 +7,7 @@ import type {
   NotificationModel,
   NotificationScope,
   NotificationType,
+  NotificationUserStateAttributes,
   NotificationUserStateModel,
   NotificationWithState,
 } from '../types/notifications';
@@ -105,14 +106,19 @@ async function createNotification(
     ? notificationConfig.linkFn(metadata)
     : undefined;
   const notificationLinkText = notificationConfig.linkText
-    ? notificationConfig.linkText()
+    ? notificationConfig.linkText(metadata)
     : undefined;
 
   const displayId = notificationConfig.displayId
     ? notificationConfig.displayId(metadata)
     : undefined;
 
-  const actionable = Boolean(notificationConfig.actionable);
+  // `actionable` may be a static boolean or a metadata-driven function (e.g. a CTA that
+  // depends on whether the recipient has already approved the report). (TTAHUB-5581)
+  const actionable =
+    typeof notificationConfig.actionable === 'function'
+      ? Boolean(notificationConfig.actionable(metadata))
+      : Boolean(notificationConfig.actionable);
 
   const skipArchived = skipExisting === 'archived';
 
@@ -523,7 +529,8 @@ async function getNotifications(
     sortBy = 'action_needed',
     sortDir = 'DESC',
     archived = false,
-  } = {}
+  } = {},
+  countOnly = false
 ): Promise<{ count: number; rows: NotificationWithState[] }> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField)
     ? (sortBy as AllowedSortField)
@@ -537,7 +544,7 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  const { rows, count } = await Notification.findAndCountAll({
+  const query = {
     where: {
       [Op.and]: [
         {
@@ -562,6 +569,15 @@ async function getNotifications(
       },
     ],
     subQuery: false,
+  };
+
+  if (countOnly) {
+    const count = await Notification.count({ ...query, distinct: true, col: 'id' });
+    return { count, rows: [] };
+  }
+
+  const { count, rows } = await Notification.findAndCountAll({
+    ...query,
     order: buildOrder(sort, direction),
     limit: limitValue,
     offset: offsetValue,
@@ -577,7 +593,7 @@ async function getNotifications(
 
       const plain = notification.get({ plain: true }) as NotificationWithState;
       plain.userState = userState
-        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        ? (userState.get({ plain: true }) as NotificationUserStateAttributes)
         : null;
       plain.viewedAt = userState?.viewedAt ?? null;
       plain.archivedAt = userState?.archivedAt ?? null;

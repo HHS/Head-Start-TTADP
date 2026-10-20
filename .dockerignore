@@ -28,3 +28,7 @@ tmp
 .env
 .cache
 .nyc_output
+
+# HSES import data
+hses
+hses.zip

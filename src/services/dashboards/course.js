@@ -21,6 +21,7 @@ export async function rollUpCourseUrlData(data) {
       return [
         ...accumulator,
         {
+          id: accumulator.length,
           heading: c.course,
           url: c.course,
           course: c.course,

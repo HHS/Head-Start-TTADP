@@ -1,6 +1,10 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
+  archiveApproverApprovedNotificationForUser,
+  archiveApproverApprovedNotifications,
+  archiveApproverSubmittedNotificationsForUser,
   archiveNeedsActionNotifications,
+  archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
@@ -8,6 +12,7 @@ import {
   createCreatorSubmittedNotification,
   createNotificationForCollaborators,
   createReportApprovedNotification,
+  createReportApprovedNotificationForApprovers,
   createReportApprovedNotificationForCollaborators,
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
@@ -288,6 +293,110 @@ describe('activityReport notification helpers', () => {
       );
       expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createReportApprovedNotificationForApprovers', () => {
+    it('notifies each other approver with the ACTIVITY_REPORT_APPROVED_APPROVER type and hasApproved flag', async () => {
+      const otherApprovers = [
+        { userId: 20, hasApproved: true },
+        { userId: 21, hasApproved: false },
+      ];
+      await createReportApprovedNotificationForApprovers(
+        otherApprovers,
+        reportBase,
+        'Approver Two'
+      );
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        20,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Two',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        21,
+        reportBase.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: reportBase.id,
+            displayId: reportBase.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Two',
+            hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('does not create a notification when there is no recipient name', async () => {
+      await createReportApprovedNotificationForApprovers(
+        [{ userId: 20, hasApproved: false }],
+        { ...reportBase, activityRecipients: [] },
+        'Approver Two'
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+
+    it('returns an empty array and makes no calls when passed no approvers', async () => {
+      const result = await createReportApprovedNotificationForApprovers(
+        [],
+        reportBase,
+        'Approver Two'
+      );
+      expect(result).toEqual([]);
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveApproverApprovedNotifications', () => {
+    it('archives the approver-approved notification type for the report', async () => {
+      await archiveApproverApprovedNotifications(77);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(77, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+    });
+  });
+
+  describe('archiveApproverApprovedNotificationForUser', () => {
+    it('archives the approver-approved notification for a single user', async () => {
+      await archiveApproverApprovedNotificationForUser(77, 99);
+
+      expect(mockArchiveByUser).toHaveBeenCalledTimes(1);
+      expect(mockArchiveByUser).toHaveBeenCalledWith(
+        77,
+        99,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+    });
+  });
+
+  describe('archiveApproverSubmittedNotificationsForUser', () => {
+    it('archives the submitted and resubmitted approver notifications for a single user', async () => {
+      await archiveApproverSubmittedNotificationsForUser(77, 99);
+
+      expect(mockArchiveByUser).toHaveBeenCalledTimes(1);
+      expect(mockArchiveByUser).toHaveBeenCalledWith(77, 99, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
     });
   });
 
@@ -598,6 +707,34 @@ describe('activityReport notification helpers', () => {
       });
 
       expect(mockArchiveByUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveNotificationsOnActivityReportApproved', () => {
+    it('archives exactly the ten notification types made obsolete by full approval', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+      ]);
+    });
+
+    it('does not include ACTIVITY_REPORT_APPROVED or ACTIVITY_REPORT_APPROVED_APPROVER', async () => {
+      await archiveNotificationsOnActivityReportApproved(42);
+
+      const [, types] = mockArchiveNotifications.mock.calls[0];
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED);
+      expect(types).not.toContain(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER);
     });
   });
 

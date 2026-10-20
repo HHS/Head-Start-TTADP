@@ -28,6 +28,7 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 - `yarn test:ci` — backend tests via CI script (`./bin/test-backend-ci`)
 - `yarn lint` — Biome lint for backend (`src/`)
 - `yarn lint:fix` — Biome autofix for backend
+- Single file while iterating: `npx jest src/path/to/file.test.js --runInBand --forceExit` (see "Backend jest does not exit on its own" below)
 
 **Frontend:**
 - `cd frontend && yarn test --watchAll=false` — run frontend tests (Jest via craco, requires `TZ=America/New_York`)
@@ -75,6 +76,20 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 - Frontend local dev uses Vite on port 3000 and proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
 
 ## Traps to Avoid
+
+### Backend jest does not exit on its own
+
+Backend tests hold open database handles, so `jest` finishes the run and then sits there
+indefinitely instead of exiting, eventually printing "Jest did not exit one second after the
+test run has completed" and returning exit code 1 **even when every test passed**.
+
+This is easy to misread as a hung or failing test — a run whose tests completed in two seconds
+can sit for hours at near-zero CPU, and the nonzero exit code makes it look like a failure.
+
+- Pass `--forceExit` so the process exits as soon as the run finishes and the exit code is meaningful.
+- Judge a run by its pass/fail counts, not by its exit status, if you did not pass `--forceExit`.
+- If a run has been going for more than 10-15 minutes, it is stalled or already finished — kill it
+  and check the captured output rather than waiting.
 
 ### Sequelize enum arrays
 Don't use them. Use a joined table instead — there is a Sequelize bug that intermittently returns the wrong data type from enum arrays.

@@ -25,6 +25,15 @@ describe('setConnectionActiveWithError', () => {
     expect(connection).toBe(true);
   });
 
+  it('returns if the error is 400', async () => {
+    const e = new HTTPError(400, 'bad request');
+    const setConnectionActive = jest.fn();
+
+    const connection = setConnectionActiveWithError(e, setConnectionActive);
+
+    expect(connection).toBe(true);
+  });
+
   describe('return false otherwise', () => {
     it('if HTTPError 500', async () => {
       const e = new HTTPError(500, 'server error');

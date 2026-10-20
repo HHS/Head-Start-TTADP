@@ -1,0 +1,16 @@
+a:has(.ttahub-notification-bell__with-unread) {
+  position: relative;
+}
+
+a:has(.ttahub-notification-bell__with-unread):after {
+  background-color: var(--success);
+  border: 1px solid white;
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 12px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 12px;
+}

@@ -7,7 +7,6 @@ import {
   deleteGoal,
   getGoalHistory,
   getMissingDataForActivityReport,
-  reopenGoal,
   retrieveObjectiveOptionsByGoalTemplate,
 } from './handlers';
 
@@ -22,8 +21,6 @@ router.get(
   checkRegionIdParam,
   transactionWrapper(getMissingDataForActivityReport)
 );
-
-router.put('/reopen', transactionWrapper(reopenGoal));
 
 router.get('/:goalId/history', transactionWrapper(getGoalHistory));
 

@@ -913,7 +913,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
           { individualHooks: true }
         )
       : Promise.resolve(),
-    // Add new group co-owners
+    // Add new group co-owners.
     addCoOwners && addCoOwners.length > 0
       ? GroupCollaborator.bulkCreate(
           addCoOwners.map((userId) => ({
@@ -921,7 +921,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
             userId,
             collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
           })),
-          { validate: true, individualHooks: true }
+          { validate: true, ignoreDuplicates: true }
         )
       : Promise.resolve(),
     // Remove existing group co-owners
@@ -937,7 +937,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
           { individualHooks: true }
         )
       : Promise.resolve(),
-    // Add new group shareWiths
+    // Add new group shareWiths (see the addCoOwners comment above re: ignoreDuplicates).
     addShareWiths && addShareWiths.length > 0
       ? GroupCollaborator.bulkCreate(
           addShareWiths.map((userId) => ({
@@ -945,7 +945,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
             userId,
             collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
           })),
-          { validate: true, individualHooks: true }
+          { validate: true, ignoreDuplicates: true }
         )
       : Promise.resolve(),
     // Remove existing group shareWiths
@@ -1025,7 +1025,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
             userId: coOwnerUserId,
             collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
           })),
-          { validate: true, individualHooks: true }
+          { validate: true, ignoreDuplicates: true }
         )
       : Promise.resolve(),
     // If there are shareWiths, create group collaborators with shareWith role
@@ -1036,7 +1036,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
             userId: sharedWithUserId,
             collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
           })),
-          { validate: true, individualHooks: true }
+          { validate: true, ignoreDuplicates: true }
         )
       : Promise.resolve(),
   ]);

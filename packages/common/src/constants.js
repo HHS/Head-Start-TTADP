@@ -178,6 +178,16 @@ const EVENT_REPORT_STATUSES = {
 
 exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
+const TTA_REQUEST_STATUSES = {
+  DRAFT: 'draft',
+};
+
+exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
+
+const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
+
+exports.TTA_REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS;
+
 const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
 
 exports.TIMELINE_FILTER_TOPICS = TIMELINE_FILTER_TOPICS;

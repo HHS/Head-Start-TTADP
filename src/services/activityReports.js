@@ -3,8 +3,12 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
-import { Op } from 'sequelize';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
+import { Op, Transaction } from 'sequelize';
+import {
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  AR_GRANT_END_DATE_GRACE_DAYS,
+  REPORTS_PER_PAGE,
+} from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
@@ -51,6 +55,33 @@ import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } fro
 import { usersWithPermissions } from './users';
 
 const namespace = 'SERVICE:ACTIVITY_REPORTS';
+
+export function assertApproversAreNotParticipants(approverUserIds, report, collaborators) {
+  const participantIds = new Set(
+    [
+      report?.userId ?? report?.dataValues?.userId,
+      ...(collaborators || report?.activityReportCollaborators || []).map(
+        (collaborator) => collaborator?.userId ?? collaborator?.user?.id
+      ),
+    ]
+      .map(Number)
+      .filter(Number.isFinite)
+  );
+  const participantApproverIds = approverUserIds
+    .map(Number)
+    .filter(
+      (approverUserId) => Number.isFinite(approverUserId) && participantIds.has(approverUserId)
+    );
+
+  if (participantApproverIds.length) {
+    const error = new Error(
+      'The report creator and collaborators cannot be assigned as approvers.'
+    );
+    error.statusCode = 400;
+    error.responseBody = { error: error.message };
+    throw error;
+  }
+}
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -312,6 +343,21 @@ export function activityReportByLegacyId(legacyId) {
         ],
       },
     ],
+  });
+}
+
+/**
+ * Locks the activity report row for the rest of the caller's transaction (the ambient CLS
+ * transaction from `transactionWrapper`). Saves must take this lock before touching anything
+ * else on the report, so overlapping saves queue on the row instead of locking child rows
+ * (NextSteps, approvers) in different orders and deadlocking.
+ *
+ * @param {number|string} activityReportId
+ */
+export async function lockActivityReport(activityReportId) {
+  return ActivityReport.findByPk(activityReportId, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
   });
 }
 
@@ -975,6 +1021,14 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
+  if (approverUserIds) {
+    assertApproversAreNotParticipants(
+      approverUserIds,
+      report || allFields,
+      activityReportCollaborators
+    );
+  }
+
   const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
@@ -1299,6 +1353,15 @@ export async function possibleRecipients(regionId, activityReportId = null) {
           '$grants.inactivationDate$': {
             [Op.gte]: sequelize.literal(
               `date_trunc('day', NOW()) - interval '${inactiveDayDuration} days'`
+            ),
+          },
+        },
+        {
+          '$grants.status$': 'Inactive',
+          '$grants.inactivationDate$': null,
+          '$grants.endDate$': {
+            [Op.gte]: sequelize.literal(
+              `date_trunc('day', NOW()) - interval '${AR_GRANT_END_DATE_GRACE_DAYS} days'`
             ),
           },
         },

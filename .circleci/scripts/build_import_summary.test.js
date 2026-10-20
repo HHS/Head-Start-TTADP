@@ -9,15 +9,28 @@ function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6', env = {
   const goalFile = path.join(artifactDir, 'monitoring-goal-updates.txt');
   const alertsFile = path.join(artifactDir, 'monitoring-validation-alerts.txt');
   const ohsFile = path.join(artifactDir, 'monitoring-ohs-updates.txt');
+  const teamNotificationsFile = path.join(
+    artifactDir,
+    'monitoring-validation-team-notifications.txt'
+  );
   execFileSync(
     'bash',
-    [SCRIPT_PATH, artifactDir, summaryFile, expectedTasks, goalFile, alertsFile, ohsFile],
+    [
+      SCRIPT_PATH,
+      artifactDir,
+      summaryFile,
+      expectedTasks,
+      goalFile,
+      alertsFile,
+      ohsFile,
+      teamNotificationsFile,
+    ],
     {
       encoding: 'utf-8',
       env: { ...process.env, ...env },
     }
   );
-  return { goalFile, alertsFile, ohsFile };
+  return { goalFile, alertsFile, ohsFile, teamNotificationsFile };
 }
 
 describe('build_import_summary.sh', () => {
@@ -232,6 +245,62 @@ describe('build_import_summary.sh', () => {
     expect(fs.readFileSync(ohsFile, 'utf-8')).toContain('Monitoring Validation Alerts');
   });
 
+  it('keeps team_notification alerts entirely out of the base summary and the OHS file, even when OHS_MONITORING_ALERTS_ENABLED is true', () => {
+    const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-team-notif-'));
+    const logDir = path.join(artifactDir, 'logs');
+    const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+    fs.mkdirSync(logDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(artifactDir, 'import-status.json'),
+      JSON.stringify(
+        {
+          metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+          taskRuns: [
+            {
+              taskName: 'import-download-prod-1',
+              status: 'SUCCEEDED',
+              exitCode: 0,
+              logFile: path.join(logDir, 'phase-download.log'),
+            },
+          ],
+        },
+        null,
+        2
+      )
+    );
+    fs.writeFileSync(
+      path.join(logDir, 'phase-validate_monitoring_data.log'),
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+        '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
+        '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
+        ']}\n'
+    );
+
+    const { ohsFile, teamNotificationsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
+      OHS_MONITORING_ALERTS_ENABLED: 'true',
+    });
+
+    const summary = fs.readFileSync(summaryFile, 'utf-8');
+    const ohs = fs.readFileSync(ohsFile, 'utf-8');
+    const teamNotifications = fs.readFileSync(teamNotificationsFile, 'utf-8');
+
+    expect(summary).toContain(
+      '16 finding(s) are attached to a grant not on any of their own reviews'
+    );
+    // team_notification content gets its own independent file/channel now -
+    // never mixed into the base summary.
+    expect(summary).not.toContain('Team Notifications');
+    expect(summary).not.toContain('4 finding(s) on delivered reviews have no category');
+
+    // Nor into the OHS channel, switch on or off.
+    expect(ohs).toContain('16 finding(s) are attached to a grant not on any of their own reviews');
+    expect(ohs).not.toContain('Team Notifications');
+    expect(ohs).not.toContain('4 finding(s) on delivered reviews have no category');
+
+    expect(teamNotifications).toContain('4 finding(s) on delivered reviews have no category');
+  });
+
   it('writes a concise failure message from the failed phase log', () => {
     const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-failure-'));
     const logDir = path.join(artifactDir, 'logs');
@@ -318,6 +387,98 @@ describe('build_import_summary.sh', () => {
 
     const summary = fs.readFileSync(summaryFile, 'utf-8');
     expect(summary).toBe('Monitoring job failure: ```\nPhase failed: process\n```');
+  });
+
+  describe('Node process warnings in the failed phase log', () => {
+    const taskPrefix = '   2026-10-15T13:23:39.53+0000 [APP/TASK/import-process-prod-1/0]';
+    const deprecationWarning = `${taskPrefix} ERR (node:7) [DEP0169] DeprecationWarning: \`url.parse()\` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for \`url.parse()\` vulnerabilities.`;
+    const traceHint = `${taskPrefix} ERR (Use \`node --trace-deprecation ...\` to show where the warning was created)`;
+
+    function runWithProcessLog(processLog) {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-warning-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: {
+              targetEnv: 'prod',
+              startedAt: '2026-10-15T13:09:00Z',
+            },
+            taskRuns: [
+              {
+                taskName: 'import-process-prod-1',
+                status: 'FAILED',
+                exitCode: 1,
+                startedAt: '2026-10-15T13:23:30Z',
+                finishedAt: '2026-10-15T13:26:00Z',
+                logFile: path.join(logDir, 'phase-process.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(path.join(logDir, 'phase-process.log'), processLog);
+
+      runSummaryScript(artifactDir, summaryFile, '6');
+
+      return fs.readFileSync(summaryFile, 'utf-8');
+    }
+
+    it('reports the real error instead of a later deprecation warning', () => {
+      const summary = runWithProcessLog(
+        [
+          'Task import-process-prod-1 status: RUNNING',
+          `${taskPrefix} ERR Error: downstream system unavailable`,
+          deprecationWarning,
+          traceHint,
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe(
+        `Monitoring job failure: \`\`\`\n${taskPrefix.trim()} ERR Error: downstream system unavailable\n\`\`\``
+      );
+    });
+
+    it('falls back to the phase name when the log only contains warnings', () => {
+      const summary = runWithProcessLog(
+        [
+          'Starting task import-process-prod-1 on tta-smarthub-prod',
+          deprecationWarning,
+          traceHint,
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe('Monitoring job failure: ```\nPhase failed: process\n```');
+    });
+
+    it('reports the last non-warning line when no line matches an error keyword', () => {
+      const summary = runWithProcessLog(
+        [
+          'Task import-process-prod-1 status: RUNNING',
+          `${taskPrefix} OUT yarn run v1.22.22`,
+          deprecationWarning,
+          traceHint,
+          `${taskPrefix} OUT $ bin/run-tool src/tools/importSystemCLI.ts process 1`,
+          'cf logs exited unexpectedly while waiting for task import-process-prod-1',
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe(
+        'Monitoring job failure: ```\ncf logs exited unexpectedly while waiting for task import-process-prod-1\n```'
+      );
+    });
   });
 
   it('reports login failure when no task runs were recorded', () => {

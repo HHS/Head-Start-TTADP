@@ -35,6 +35,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'goalTemplateId',
         as: 'collabReportGoals',
       });
+      GoalTemplate.hasMany(models.TtaRequest, {
+        foreignKey: 'goalTemplateId',
+        as: 'ttaRequests',
+      });
       // Session Report Pilot Goal Templates.
       GoalTemplate.hasMany(models.SessionReportPilotGoalTemplate, {
         foreignKey: 'goalTemplateId',

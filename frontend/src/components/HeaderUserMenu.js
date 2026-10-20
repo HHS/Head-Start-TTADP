@@ -8,13 +8,22 @@ import Avatar from './Avatar';
 import AvatarGroup from './AvatarGroup';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
-import { SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
+import { IS, SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
 import colors from '../colors';
+import { fetchNotificationsCount } from '../fetchers/notifications';
 import { storageAvailable } from '../hooks/helpers';
+import useDataUpdates from '../hooks/useDataUpdates';
+import useFetch from '../hooks/useFetch';
 import isAdmin, { canSeeBehindFeatureFlag } from '../permissions';
 import UserContext from '../UserContext';
 import NavLink from './NavLink';
+import NotificationBell from './NotificationBell';
 import Pill from './Pill';
+
+const UNREAD_FILTERS = [
+  { topic: 'viewed', condition: IS, query: 'false' },
+  { topic: 'archived', condition: IS, query: 'false' },
+];
 
 function UserMenuNav({ items }) {
   return (
@@ -62,6 +71,19 @@ function HeaderUserMenu({
   }, []);
 
   const location = useLocation();
+  const notificationsEnabled = canSeeBehindFeatureFlag(user, 'actionable_notifications');
+  const revision = useDataUpdates('notifications');
+  const userId = user?.id;
+  const { data: notificationCount } = useFetch(
+    { count: 0, userId: null },
+    async () => ({
+      count: notificationsEnabled ? (await fetchNotificationsCount(UNREAD_FILTERS)).count : 0,
+      userId,
+    }),
+    [userId, notificationsEnabled, location, revision]
+  );
+  const hasUnreadNotifications =
+    notificationsEnabled && notificationCount.userId === userId && notificationCount.count > 0;
 
   const menuItems = useMemo(
     () =>
@@ -72,6 +94,11 @@ function HeaderUserMenu({
           label: 'Notifications',
           to: `/notifications`,
           featureFlag: 'actionable_notifications',
+          badge: hasUnreadNotifications ? (
+            <Pill type="success" className="margin-left-1">
+              new
+            </Pill>
+          ) : null,
         },
         {
           key: 3,
@@ -208,6 +235,7 @@ function HeaderUserMenu({
         .filter(Boolean),
     [
       areThereUnreadWhatsNewNotifications,
+      hasUnreadNotifications,
       location.pathname,
       setAreThereUnreadWhatsNewNotifications,
       userIsAdmin,
@@ -263,26 +291,29 @@ function HeaderUserMenu({
   };
 
   return (
-    <DropdownMenu
-      Trigger={Av}
-      onApply={() => {}}
-      buttonText={user.name}
-      showApplyButton={false}
-      direction="left"
-      className="no-print"
-    >
-      <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
-        <AvatarGroup userName={user.name} />
-        {isImpersonating && (
-          <div className="display-flex flex-justify-center margin-top-2">
-            <Button type="button" onClick={stopImpersonating}>
-              Stop impersonating
-            </Button>
-          </div>
-        )}
-        <UserMenuNav items={menuItems} />
-      </div>
-    </DropdownMenu>
+    <div className="display-flex flex-gap-2">
+      <NotificationBell unreadCount={hasUnreadNotifications ? notificationCount.count : 0} />
+      <DropdownMenu
+        Trigger={Av}
+        onApply={() => {}}
+        buttonText={user.name}
+        showApplyButton={false}
+        direction="left"
+        className="no-print"
+      >
+        <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
+          <AvatarGroup userName={user.name} />
+          {isImpersonating && (
+            <div className="display-flex flex-justify-center margin-top-2">
+              <Button type="button" onClick={stopImpersonating}>
+                Stop impersonating
+              </Button>
+            </div>
+          )}
+          <UserMenuNav items={menuItems} />
+        </div>
+      </DropdownMenu>
+    </div>
   );
 }
 
