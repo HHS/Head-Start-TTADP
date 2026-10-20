@@ -8,21 +8,30 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       // add persistsOnUpload to the Courses table
-      await queryInterface.addColumn('Courses', 'persistsOnUpload', {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Courses',
+        'persistsOnUpload',
+        {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        { transaction }
+      );
 
       // insert an "other" course
-      await queryInterface.bulkInsert('Courses', [
-        {
-          name: 'Other',
-          persistsOnUpload: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ], { transaction });
+      await queryInterface.bulkInsert(
+        'Courses',
+        [
+          {
+            name: 'Other',
+            persistsOnUpload: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        { transaction }
+      );
     });
   },
 

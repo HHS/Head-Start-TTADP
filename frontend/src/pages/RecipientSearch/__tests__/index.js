@@ -1,22 +1,17 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
-import { act } from 'react-dom/test-utils';
 import { SCOPE_IDS } from '@ttahub/common';
-import RecipientSearch, { determineDefaultSort } from '../index';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+import { Router } from 'react-router';
+import join from 'url-join';
+import AppLoadingContext from '../../../AppLoadingContext';
 import { mockWindowProperty } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
-import AppLoadingContext from '../../../AppLoadingContext';
+import RecipientSearch, { determineDefaultSort } from '../index';
 
 const query = 'ground control';
 
@@ -122,7 +117,7 @@ const res = {
 const recipientUrl = join('/', 'api', 'recipient');
 
 const renderRecipientSearch = (user) => {
-  render((
+  render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user }}>
@@ -130,7 +125,7 @@ const renderRecipientSearch = (user) => {
         </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>
-  ));
+  );
 };
 
 describe('the recipient search page', () => {
@@ -243,7 +238,10 @@ describe('the recipient search page', () => {
     });
 
     fetchMock.restore();
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=2&sortBy=name&direction=asc&offset=0');
+    const url = join(
+      recipientUrl,
+      'search?s=ground%20control&region.in[]=2&sortBy=name&direction=asc&offset=0'
+    );
     fetchMock.get(url, res);
 
     const applyFiltersButton = await screen.findByTestId('apply-filters-test-id');
@@ -255,10 +253,15 @@ describe('the recipient search page', () => {
     expect(fetchMock.called(url)).toBeTruthy();
     fetchMock.restore();
 
-    const urlWithNoFilters = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    const urlWithNoFilters = join(
+      recipientUrl,
+      'search?s=ground%20control&sortBy=name&direction=asc&offset=0'
+    );
     fetchMock.get(urlWithNoFilters, res);
 
-    const removeFilterButton = await screen.findByRole('button', { name: /This button removes the filter: Region is 2/i });
+    const removeFilterButton = await screen.findByRole('button', {
+      name: /This button removes the filter: Region is 2/i,
+    });
     act(() => {
       userEvent.click(removeFilterButton);
     });
@@ -271,7 +274,10 @@ describe('the recipient search page', () => {
     renderRecipientSearch(user);
 
     fetchMock.restore();
-    fetchMock.get('/api/recipient/search?s=ground%20control&region=1&sortBy=name&direction=asc&offset=0', 404);
+    fetchMock.get(
+      '/api/recipient/search?s=ground%20control&region=1&sortBy=name&direction=asc&offset=0',
+      404
+    );
 
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching recipients/i });
@@ -294,7 +300,10 @@ describe('the recipient search page', () => {
 
     await waitFor(() => expect(button).not.toBeDisabled());
 
-    const urlWithQuery = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    const urlWithQuery = join(
+      recipientUrl,
+      'search?s=ground%20control&sortBy=name&direction=asc&offset=0'
+    );
     fetchMock.get(urlWithQuery, res);
 
     act(() => {
@@ -304,8 +313,13 @@ describe('the recipient search page', () => {
 
     await waitFor(() => expect(fetchMock.called(urlWithQuery)).toBeTruthy());
 
-    const changeDirection = await screen.findByRole('button', { name: /recipient name\. activate to sort descending/i });
-    const urlWithQueryAndNewDirection = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=desc&offset=0');
+    const changeDirection = await screen.findByRole('button', {
+      name: /recipient name\. activate to sort descending/i,
+    });
+    const urlWithQueryAndNewDirection = join(
+      recipientUrl,
+      'search?s=ground%20control&sortBy=name&direction=desc&offset=0'
+    );
     fetchMock.get(urlWithQueryAndNewDirection, res);
 
     await waitFor(() => expect(changeDirection).not.toBeDisabled());
@@ -318,8 +332,13 @@ describe('the recipient search page', () => {
 
     fetchMock.restore();
 
-    const changeDirectionBack = await screen.findByRole('button', { name: /recipient name\. activate to sort ascending/i });
-    const urlWithQueryAndOldDirection = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    const changeDirectionBack = await screen.findByRole('button', {
+      name: /recipient name\. activate to sort ascending/i,
+    });
+    const urlWithQueryAndOldDirection = join(
+      recipientUrl,
+      'search?s=ground%20control&sortBy=name&direction=asc&offset=0'
+    );
     fetchMock.get(urlWithQueryAndOldDirection, res);
 
     await waitFor(() => expect(changeDirectionBack).not.toBeDisabled());
@@ -330,12 +349,14 @@ describe('the recipient search page', () => {
 
     await waitFor(() => expect(fetchMock.called(urlWithQueryAndOldDirection)).toBeTruthy());
 
-    const changeSort = await screen.findByRole('button', { name: /program specialist\. activate to sort ascending/i });
+    const changeSort = await screen.findByRole('button', {
+      name: /program specialist\. activate to sort ascending/i,
+    });
     const changeSortUrl = join(
       recipientUrl,
       'search',
       `?s=${encodeURIComponent(`${query}`)}`,
-      '&sortBy=programSpecialist&direction=asc&offset=0',
+      '&sortBy=programSpecialist&direction=asc&offset=0'
     );
 
     fetchMock.get(changeSortUrl, res);
@@ -353,7 +374,12 @@ describe('the recipient search page', () => {
     const user = { ...userBluePrint };
     renderRecipientSearch(user);
 
-    const url = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=0');
+    const url = join(
+      recipientUrl,
+      'search',
+      `?s=${encodeURIComponent(query)}`,
+      '&sortBy=name&direction=asc&offset=0'
+    );
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -367,20 +393,24 @@ describe('the recipient search page', () => {
     });
 
     const [next] = await screen.findAllByRole('button', { name: /page 2/i });
-    const nextUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=12');
+    const nextUrl = join(
+      recipientUrl,
+      'search',
+      `?s=${encodeURIComponent(query)}`,
+      '&sortBy=name&direction=asc&offset=12'
+    );
 
-    fetchMock.get(nextUrl,
-      {
-        count: 13,
-        rows: [
-          {
-            id: 14,
-            name: 'major barack',
-            regionId: 1,
-            specialists: ['someone else'],
-          },
-        ],
-      });
+    fetchMock.get(nextUrl, {
+      count: 13,
+      rows: [
+        {
+          id: 14,
+          name: 'major barack',
+          regionId: 1,
+          specialists: ['someone else'],
+        },
+      ],
+    });
 
     await waitFor(() => expect(next).not.toBeDisabled());
 

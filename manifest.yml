@@ -4,7 +4,7 @@ applications:
     strategy: rolling
     stack: cflinuxfs4
     buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack.git
+      - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.5
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
@@ -13,6 +13,7 @@ applications:
       BUILD_BRANCH: ((BUILD_BRANCH))
       BUILD_COMMIT: ((BUILD_COMMIT))
       BUILD_NUMBER: ((BUILD_NUMBER))
+      BUILD_RELEASE_TAG: ((BUILD_RELEASE_TAG))
       BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
       CLAMAV_ENDPOINT: ((CLAMAV_ENDPOINT))
       ENABLE_MONITORING_GOAL_CREATION: ((ENABLE_MONITORING_GOAL_CREATION))
@@ -28,6 +29,7 @@ applications:
       JWT_SECRET: ((JWT_SECRET))
       LOG_JSON_FORMAT: "true"
       LOG_LEVEL: ((LOG_LEVEL))
+      MONITORING_GATE_HALT_CHECKS: ((MONITORING_GATE_HALT_CHECKS))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production
@@ -53,6 +55,7 @@ applications:
       SMTP_USER: ((SMTP_USER))
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       TTA_SMART_HUB_URI: ((TTA_SMART_HUB_URI))
+      FONTAWESOME_NPM_AUTH_TOKEN: ((FONTAWESOME_NPM_AUTH_TOKEN))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
@@ -60,10 +63,10 @@ applications:
     processes:
       - type: web
         instances: ((web_instances))
-        command: yarn start:web
+        command: yarn start:be
         memory: ((web_memory))
         disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
-        command: yarn start:worker
+        command: WORKER_CONCURRENCY=((worker_concurrency)) node --max-old-space-size=((worker_max_old_space_size)) ./build/server/src/worker.js
         memory: ((worker_memory))

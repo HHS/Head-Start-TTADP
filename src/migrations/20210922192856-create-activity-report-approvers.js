@@ -1,7 +1,4 @@
-const approverStatuses = [
-  'needs_action',
-  'approved',
-];
+const approverStatuses = ['needs_action', 'approved'];
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {

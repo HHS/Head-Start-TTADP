@@ -1,9 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import SpecialistTags from '../components/SpecialistTags';
 
 jest.mock('../../../../../components/Tooltip', () => ({
@@ -49,9 +46,7 @@ describe('SpecialistTags', () => {
   });
 
   it('handles specialists with multiple roles', () => {
-    const specialists = [
-      { name: 'Multi Role', roles: ['Role 1', 'Role 2'] },
-    ];
+    const specialists = [{ name: 'Multi Role', roles: ['Role 1', 'Role 2'] }];
     renderSpecialistTags(specialists);
 
     expect(screen.getByText('Role 1')).toBeInTheDocument();
@@ -81,9 +76,7 @@ describe('SpecialistTags', () => {
   });
 
   it('handles roles array containing non-string values gracefully', () => {
-    const specialists = [
-      { name: 'Mixed Roles', roles: ['Role A', null, undefined, 'Role B'] },
-    ];
+    const specialists = [{ name: 'Mixed Roles', roles: ['Role A', null, undefined, 'Role B'] }];
     renderSpecialistTags(specialists);
 
     expect(screen.getByText('Role A')).toBeInTheDocument();

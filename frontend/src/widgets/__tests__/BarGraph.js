@@ -1,25 +1,22 @@
 import '@testing-library/jest-dom';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
-import {
-  render,
-  waitFor,
-  act,
-  screen,
-} from '@testing-library/react';
 import BarGraph from '../BarGraph';
 
-const TEST_DATA = [{
-  category: 'one',
-  count: 1,
-},
-{
-  category: 'two / two and a half',
-  count: 2,
-},
-{
-  category: 'three is the number than comes after two and with that we think about it',
-  count: 0,
-}];
+const TEST_DATA = [
+  {
+    category: 'one',
+    count: 1,
+  },
+  {
+    category: 'two / two and a half',
+    count: 2,
+  },
+  {
+    category: 'three is the number than comes after two and with that we think about it',
+    count: 0,
+  },
+];
 
 const renderBarGraph = (data = TEST_DATA) => {
   act(() => {

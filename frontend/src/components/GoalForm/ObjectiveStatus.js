@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
+import { Dropdown, FormGroup, Label } from '@trussworks/react-uswds';
 import { uniqueId } from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import useValidObjectiveStatuses from '../../hooks/useValidObjectiveStatuses';
 
 export default function ObjectiveStatus({
@@ -17,7 +17,7 @@ export default function ObjectiveStatus({
   const [statusOptions, hideDropdown] = useValidObjectiveStatuses(
     goalStatus,
     userCanEdit,
-    initialStatus.current,
+    initialStatus.current
   );
 
   const options = statusOptions.map((option) => (
@@ -34,9 +34,7 @@ export default function ObjectiveStatus({
   if (!hideDropdown) {
     return (
       <FormGroup>
-        <Label htmlFor={inputName}>
-          Objective status
-        </Label>
+        <Label htmlFor={inputName}>Objective status</Label>
         <Dropdown
           name={inputName}
           onChange={onChange}

@@ -1,9 +1,6 @@
-import Semaphore from '../../lib/semaphore';
+import { EmptyResultError } from 'sequelize';
 
-import {
-  syncLink,
-  syncGrantNumberLink,
-} from './genericLink';
+import { syncGrantNumberLink, syncLink } from './genericLink';
 
 describe('syncLink', () => {
   const sequelize = {};
@@ -16,31 +13,9 @@ describe('syncLink', () => {
 
   const entityId = 'entityId';
   const onCreateCallbackWhileHoldingLock = jest.fn().mockResolvedValue(true);
-  const acquireMock = jest.spyOn(Semaphore.prototype, 'acquire');
-  const releaseMock = jest.spyOn(Semaphore.prototype, 'release');
-  acquireMock.mockImplementation(() => {});
-  releaseMock.mockImplementation(() => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should acquire and release a semaphore lock', async () => {
-    model.findAll = jest.fn().mockResolvedValueOnce([{}]);
-
-    await syncLink(
-      sequelize,
-      instance,
-      options,
-      model,
-      sourceEntityName,
-      targetEntityName,
-      entityId,
-      onCreateCallbackWhileHoldingLock,
-    );
-
-    expect(acquireMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
-    expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
   });
 
   it('should create a new record if one does not exist', async () => {
@@ -55,12 +30,12 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(model.create).toHaveBeenCalledWith(
       { [targetEntityName]: entityId },
-      { transaction: options.transaction },
+      { transaction: options.transaction, ignoreDuplicates: true }
     );
   });
 
@@ -76,7 +51,7 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(onCreateCallbackWhileHoldingLock).toHaveBeenCalledWith(
@@ -85,7 +60,7 @@ describe('syncLink', () => {
       options,
       model,
       targetEntityName,
-      entityId,
+      entityId
     );
   });
 
@@ -101,10 +76,71 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(model.create).not.toHaveBeenCalled();
+  });
+
+  it('propagates non-uniqueness errors from create', async () => {
+    const error = new Error('some other database error');
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(error);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).rejects.toThrow(error);
+  });
+
+  it('treats an insert skipped by a conflict on the target column as a lost race, not a failure', async () => {
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped'));
+    model.findOne = jest.fn().mockResolvedValueOnce({ [targetEntityName]: entityId });
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).resolves.not.toThrow();
+
+    // Only the caller that actually wins the create race should trigger side effects.
+    expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces an insert skipped by a conflict on some other constraint instead of masking it', async () => {
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped'));
+    model.findOne = jest.fn().mockResolvedValueOnce(null);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).rejects.toThrow('no matching row was found');
+    expect(onCreateCallbackWhileHoldingLock).not.toHaveBeenCalled();
   });
 
   // Add more tests to cover error handling, different scenarios, etc.
@@ -134,11 +170,7 @@ describe('syncGrantNumberLink', () => {
       transaction: {},
     };
 
-    await syncGrantNumberLink(
-      sequelize,
-      instance,
-      options,
-    );
+    await syncGrantNumberLink(sequelize, instance, options);
 
     expect(sequelize.models.GrantNumberLink.findAll).toHaveBeenCalledWith({
       attributes: ['grantNumber'],
@@ -158,7 +190,7 @@ describe('syncGrantNumberLink', () => {
         where: { grantNumber: '12345' },
         transaction: options.transaction,
         individualHooks: true,
-      },
+      }
     );
   });
 
@@ -184,11 +216,7 @@ describe('syncGrantNumberLink', () => {
       transaction: {},
     };
 
-    await syncGrantNumberLink(
-      sequelize,
-      instance,
-      options,
-    );
+    await syncGrantNumberLink(sequelize, instance, options);
 
     expect(sequelize.models.GrantNumberLink.create).toHaveBeenCalledTimes(1);
     expect(sequelize.models.Grant.findOne).toHaveBeenCalledWith({

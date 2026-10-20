@@ -1,10 +1,11 @@
 import httpCodes from 'http-codes';
+import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger } from '../logger';
 
 const errorMessage = 'Received malformed request params';
 
 function canBeInt(str) {
-  return Number.isInteger(Number(str)) && Number(str) > 0;
+  return parsePositiveInteger(str) !== null;
 }
 
 /**
@@ -46,6 +47,25 @@ export function checkCollabReportIdParam(req, res, next) {
 }
 
 /**
+ *  Check ttaRequestId req param
+ *
+ * This middleware validates that the TTA request id supplied
+ * by the ttaRequestId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkTtaRequestIdParam(req, res, next) {
+  if (req.params && req.params.ttaRequestId && canBeInt(req.params.ttaRequestId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: ttaRequestId ${String(req?.params?.ttaRequestId)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
  *  Check fileId req param
  *
  * This middleware validates that the File id supplied
@@ -55,11 +75,7 @@ export function checkCollabReportIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkFileIdParam(req, res, next) {
-  if (
-    req.params
-    && req.params.fileId
-    && canBeInt(req.params.fileId)
-  ) {
+  if (req.params && req.params.fileId && canBeInt(req.params.fileId)) {
     return next();
   }
 
@@ -135,7 +151,11 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkGroupIdParam(req, res, next) {
-  if (req.params && req.params.groupId && (req.params.groupId === 'new' || canBeInt(req.params.groupId))) {
+  if (
+    req.params &&
+    req.params.groupId &&
+    (req.params.groupId === 'new' || canBeInt(req.params.groupId))
+  ) {
     return next();
   }
 
@@ -202,11 +222,17 @@ export function checkGoalTemplateIdParam(req, res, next) {
 }
 
 export function checkIdParam(req, res, next, paramName) {
-  if (req.params && req.params[paramName] && canBeInt(req.params[paramName])) {
+  const parsedParam = parsePositiveInteger(req.params?.[paramName]);
+  if (parsedParam !== null) {
+    res.locals = res.locals || {};
+    res.locals.validatedParams = {
+      ...res.locals.validatedParams,
+      [paramName]: parsedParam,
+    };
     return next();
   }
 
-  const msg = `${errorMessage}: ${paramName} ${req.params ? (req.params[paramName] || 'undefined') : 'undefined'}`;
+  const msg = `${errorMessage}: ${paramName} ${req.params ? req.params[paramName] || 'undefined' : 'undefined'}`;
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
@@ -237,4 +263,53 @@ export function checkGoalGroupIdParam(req, res, next) {
 
 export function checkIdIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'id');
+}
+
+export function checkGrantNumberParam(req, res, next) {
+  if (
+    req.params &&
+    req.params.grantNumber &&
+    typeof req.params.grantNumber === 'string' &&
+    req.params.grantNumber.trim() !== ''
+  ) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: grantNumber ${String(req?.params?.grantNumber)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check grantId query param (optional)
+ *
+ * This middleware validates the grantId supplied via req.query.grantId.
+ * If absent or empty, sets req.query.parsedGrantId = null and proceeds.
+ * If present but invalid, returns 400.
+ * If valid, sets req.query.parsedGrantId to the parsed integer and proceeds.
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGrantIdQueryParam(req, res, next) {
+  const { grantId } = req.query || {};
+
+  if (grantId === undefined || grantId === null || grantId === '') {
+    req.query.parsedGrantId = null;
+    return next();
+  }
+
+  const parsed = parsePositiveInteger(grantId);
+  if (parsed === null) {
+    const msg = `${errorMessage}: grantId ${String(grantId)}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  req.query.parsedGrantId = parsed;
+  return next();
+}
+
+export function checkNotificationIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'notificationId');
 }

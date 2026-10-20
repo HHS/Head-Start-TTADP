@@ -1,35 +1,23 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  FormGroup, Label, Button, Textarea, ErrorMessage,
-} from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useFormContext, useFieldArray } from 'react-hook-form';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, ErrorMessage, FormGroup, Label, Textarea } from '@trussworks/react-uswds';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
-import Req from '../../../../components/Req';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
+import Req from '../../../../components/Req';
 import { isValidDate } from '../../../../utils';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
-export default function NextStepsRepeater({
-  name,
-  ariaName,
-  recipientType,
-  required,
-}) {
+export default function NextStepsRepeater({ name, ariaName, recipientType, required, afterDate }) {
   const [heights, setHeights] = useState([]);
 
-  const {
-    register,
-    control,
-    getValues,
-    errors,
-    setError,
-  } = useFormContext();
+  const { register, control, getValues, errors, setError } = useFormContext();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -72,10 +60,7 @@ export default function NextStepsRepeater({
         setError(`${name}[${index}].completeDate`, { message: 'Please enter a valid date' });
       }
 
-      const isValid = !(
-        errors[name]?.[index]?.note
-        || errors[name]?.[index]?.completeDate
-      );
+      const isValid = !(errors[name]?.[index]?.note || errors[name]?.[index]?.completeDate);
 
       return isValid;
     });
@@ -87,9 +72,10 @@ export default function NextStepsRepeater({
   const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
   const recipientLabel = recipientType === 'recipient' ? 'recipient' : 'other entity';
 
-  const dateLabel = (index) => (stepType === 'recipient'
-    ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
-    : `When do you anticipate completing step ${index + 1}?`);
+  const dateLabel = (index) =>
+    stepType === 'recipient'
+      ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
+      : `When do you anticipate completing step ${index + 1}?`;
 
   const textareaRegister = (() => {
     if (required) {
@@ -99,96 +85,122 @@ export default function NextStepsRepeater({
   })();
 
   const showCompleteDateError = (errorsObj, fieldName, idx) => {
-    const hasCompleteDateError = (
-      errorsObj[fieldName]
-      && errorsObj[fieldName][idx]
-      && errorsObj[fieldName][idx].completeDate
-    );
+    const hasCompleteDateError =
+      errorsObj[fieldName] && errorsObj[fieldName][idx] && errorsObj[fieldName][idx].completeDate;
 
-    return required ? hasCompleteDateError : hasCompleteDateError && errorsObj[fieldName][idx].completeDate?.ref?.value !== '';
+    return required
+      ? hasCompleteDateError
+      : hasCompleteDateError && errorsObj[fieldName][idx].completeDate?.ref?.value !== '';
   };
 
   return (
     <>
       <div className="ttahub-next-steps-repeater">
-        {fields.map((item, index) => (
-          <div key={item.key}>
-            <FormGroup
-              className="margin-top-2 margin-bottom-2"
-              error={(errors[name] && errors[name][index]
-                && errors[name][index].note)}
-            >
-              <Label
-                htmlFor={`${stepType}-next-step-${index + 1}`}
+        {fields.map((item, index) => {
+          const dateInputId = `${stepType}-next-step-date-${index + 1}`;
+          const dateErrorId = `${dateInputId}-error`;
+          const hasDateError = Boolean(showCompleteDateError(errors, name, index));
+
+          return (
+            <div key={item.key}>
+              <FormGroup
+                className="margin-top-2 margin-bottom-2"
+                error={errors[name] && errors[name][index] && errors[name][index].note}
               >
-                {`Step ${index + 1}`}
-                {required && (<Req />)}
-              </Label>
-              {(errors[name]
-                && errors[name][index] && errors[name][index].note)
-                ? <ErrorMessage>Enter a next step</ErrorMessage>
-                : null}
-              <div
-                className={`display-flex ${(errors[name] && errors[name][index]
-                    && errors[name][index].note) ? 'blank-next-step' : ''}`}
-              >
-                <Textarea
-                  id={`${stepType}-next-step-${index + 1}`}
-                  className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-                  name={`${name}[${index}].note`}
-                  defaultValue={item.note}
-                  inputRef={textareaRegister}
-                  data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
-                  style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
-                  onChange={(e) => onStepTextChanged(e, index)}
-                  required={required}
-                />
-                {canDelete ? (
-                  <Button
-                    className="margin-top-0"
-                    unstyled
-                    type="button"
-                    aria-label={`remove ${ariaName} ${index + 1}`}
-                    onClick={() => onRemoveStep(index)}
-                  >
-                    <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
-                    <span className="usa-sr-only">
-                      remove step
-                      {' '}
-                      {index + 1}
-                    </span>
-                  </Button>
+                <Label htmlFor={`${stepType}-next-step-${index + 1}`}>
+                  {`Step ${index + 1}`}
+                  {required && <Req />}
+                </Label>
+                {errors[name] && errors[name][index] && errors[name][index].note ? (
+                  <ErrorMessage>Enter a next step</ErrorMessage>
                 ) : null}
-              </div>
-            </FormGroup>
-            <FormGroup
-              className="margin-top-1 margin-bottom-2"
-              error={showCompleteDateError(errors, name, index)}
-            >
-              <Label
-                htmlFor={`${stepType}-next-step-date-${index + 1}`}
+                <div
+                  className={`display-flex ${
+                    errors[name] && errors[name][index] && errors[name][index].note
+                      ? 'blank-next-step'
+                      : ''
+                  }`}
+                >
+                  <Textarea
+                    id={`${stepType}-next-step-${index + 1}`}
+                    className="height-10 minh-5 smart-hub--text-area__resize-vertical"
+                    name={`${name}[${index}].note`}
+                    defaultValue={item.note}
+                    inputRef={textareaRegister}
+                    data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
+                    style={{
+                      height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index],
+                    }}
+                    onChange={(e) => onStepTextChanged(e, index)}
+                    required={required}
+                  />
+                  {canDelete ? (
+                    <Button
+                      className="margin-top-0"
+                      unstyled
+                      type="button"
+                      aria-label={`remove ${ariaName} ${index + 1}`}
+                      onClick={() => onRemoveStep(index)}
+                    >
+                      <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
+                      <span className="usa-sr-only">remove step {index + 1}</span>
+                    </Button>
+                  ) : null}
+                </div>
+              </FormGroup>
+              <FormGroup
+                className="margin-top-1 margin-bottom-2"
+                error={showCompleteDateError(errors, name, index)}
               >
-                {dateLabel(index)}
-                {required && (<Req announce />)}
-              </Label>
-              {showCompleteDateError(errors, name, index)
-                ? <ErrorMessage>Enter a valid date</ErrorMessage>
-                : null}
-              <div
-                className={showCompleteDateError(errors, name, index) ? 'blank-next-step-date maxw-mobile' : 'maxw-mobile'}
-              >
-                <ControlledDatePicker
-                  inputId={`${stepType}-next-step-date-${index + 1}`}
-                  control={control}
-                  name={`${name}[${index}].completeDate`}
-                  value={item.completeDate}
-                  dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
-                  required={required}
-                />
-              </div>
-            </FormGroup>
-          </div>
-        ))}
+                <Label htmlFor={`${stepType}-next-step-date-${index + 1}`}>
+                  {dateLabel(index)}
+                  {required && <Req announce />}
+                </Label>
+                {hasDateError && (
+                  <ErrorMessage id={dateErrorId}>
+                    {errors[name][index].completeDate.message}
+                  </ErrorMessage>
+                )}
+                <div
+                  className={
+                    showCompleteDateError(errors, name, index)
+                      ? 'blank-next-step-date maxw-mobile'
+                      : 'maxw-mobile'
+                  }
+                >
+                  <ControlledDatePicker
+                    inputId={dateInputId}
+                    control={control}
+                    name={`${name}[${index}].completeDate`}
+                    value={item.completeDate}
+                    minDate={
+                      afterDate
+                        ? moment(afterDate, 'MM/DD/YYYY').add(1, 'day').format('MM/DD/YYYY')
+                        : undefined
+                    }
+                    customValidationMessages={{
+                      afterMessage: 'Next step date must be after the session start date',
+                    }}
+                    ariaDescribedBy={hasDateError ? dateErrorId : undefined}
+                    ariaInvalid={hasDateError}
+                    dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
+                    required={required}
+                    additionalValidation={(completeDate) => {
+                      if (!afterDate) {
+                        return '';
+                      }
+
+                      return (
+                        completeDate.isAfter(moment(afterDate, 'MM/DD/YYYY')) ||
+                        'Next step date must be after the session start date'
+                      );
+                    }}
+                  />
+                </div>
+              </FormGroup>
+            </div>
+          );
+        })}
       </div>
 
       <PlusButton
@@ -206,9 +218,11 @@ NextStepsRepeater.propTypes = {
   ariaName: PropTypes.string.isRequired,
   recipientType: PropTypes.string,
   required: PropTypes.bool,
+  afterDate: PropTypes.string,
 };
 
 NextStepsRepeater.defaultProps = {
   recipientType: '',
   required: true,
+  afterDate: '',
 };

@@ -1,0 +1,10 @@
+{
+  "baselineDate": "2026-10-16",
+  "generatedAt": "2026-10-16T21:01:28.567Z",
+  "scope": "backend",
+  "scanner": {
+    "name": "yarn-audit",
+    "sourceFile": "yarn-audit-known-issues"
+  },
+  "findings": []
+}

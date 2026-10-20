@@ -1,7 +1,7 @@
-import { Button, Alert } from '@trussworks/react-uswds';
+import { Alert, Button } from '@trussworks/react-uswds';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import Container from '../../components/Container';
 import { deleteSiteAlert, getSiteAlerts } from '../../fetchers/Admin';
 import AlertReview from './components/AlertReview';
@@ -64,22 +64,20 @@ export default function SiteAlerts() {
       <Container>
         <header className="display-flex flex-align-center flex-justify">
           <h1>Site alerts</h1>
-          <Button type="button" onClick={createNewAlert}>Create new alert</Button>
+          <Button type="button" onClick={createNewAlert}>
+            Create new alert
+          </Button>
         </header>
 
         <main>
-          {(notification && notification.message) && (
+          {notification && notification.message && (
             <Alert type={notification.state} role="alert">
               {notification.message}
             </Alert>
           )}
           <div>
             {alerts.map((alert) => (
-              <AlertReview
-                alert={alert}
-                key={alert.id}
-                onDelete={onDelete}
-              />
+              <AlertReview alert={alert} key={alert.id} onDelete={onDelete} />
             ))}
           </div>
         </main>

@@ -12,6 +12,8 @@ WHERE "Grants"."recipientId"`;
 
 export function withRecipientId(ids) {
   return {
-    [Op.or]: sequelize.literal(`"Goal"."id" IN (${recipientQuery} in (${ids.map((id) => sequelize.escape(id)).join(',')}))`),
+    [Op.or]: sequelize.literal(
+      `"Goal"."id" IN (${recipientQuery} in (${ids.map((id) => sequelize.escape(id)).join(',')}))`
+    ),
   };
 }

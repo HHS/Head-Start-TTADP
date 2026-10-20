@@ -1,31 +1,32 @@
+import path from 'node:path';
 import fs from 'fs';
-import path from 'path';
 import { QueryTypes } from 'sequelize';
 import db from '../models';
-import {
-  cache,
-  sanitizeFilename,
-  checkFolderPermissions,
-  isFile,
-  safeResolvePath,
-  isValidJsonHeader,
-  readJsonHeaderFromFile,
-  createQueryFile,
-  checkDirectoryExists,
-  listQueryFiles,
-  applyFilterOptions,
-  generateConditions,
-  processFilters,
-  generateArtificialFilters,
-  readFiltersFromFile,
-  readFilesRecursively,
-  validateType,
-  preprocessAndValidateFilters,
-  setFilters,
-  generateFilterString,
-  executeQuery,
-} from './ssdi';
 import UserPolicy from '../policies/user';
+import {
+  applyFilterOptions,
+  BASE_DIRECTORY,
+  cache,
+  checkDirectoryExists,
+  checkFolderPermissions,
+  createQueryFile,
+  executeQuery,
+  generateArtificialFilters,
+  generateConditions,
+  generateFilterString,
+  isFile,
+  isValidJsonHeader,
+  listQueryFiles,
+  preprocessAndValidateFilters,
+  processFilters,
+  readFilesRecursively,
+  readFiltersFromFile,
+  readJsonHeaderFromFile,
+  safeResolvePath,
+  sanitizeFilename,
+  setFilters,
+  validateType,
+} from './ssdi';
 
 // Mock fs and db
 jest.mock('fs', () => ({
@@ -73,12 +74,12 @@ describe('ssdi', () => {
   describe('safeResolvePath', () => {
     it('should resolve the path safely within BASE_DIRECTORY', () => {
       const result = safeResolvePath('test/path.sql');
-      expect(result.endsWith('/app/src/queries/test/path.sql')).toBe(true);
+      expect(result).toBe(path.resolve(BASE_DIRECTORY, 'test/path.sql'));
     });
 
     it('should throw an error if the resolved path is outside BASE_DIRECTORY', () => {
       expect(() => safeResolvePath('../../outside/path.sql')).toThrow(
-        'Attempted to access a file outside the allowed directory.',
+        'Attempted to access a file outside the allowed directory.'
       );
     });
   });
@@ -334,9 +335,7 @@ describe('ssdi', () => {
           { name: 'file1.sql', isDirectory: () => false },
           { name: 'subfolder', isDirectory: () => true },
         ])
-        .mockResolvedValueOnce([
-          { name: 'file2.sql', isDirectory: () => false },
-        ]);
+        .mockResolvedValueOnce([{ name: 'file2.sql', isDirectory: () => false }]);
 
       const result = await readFilesRecursively('test/path');
       expect(result).toEqual(['test/path/file1.sql', 'test/path/subfolder/file2.sql']);
@@ -383,9 +382,11 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.sql', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
-        ? { isDirectory: () => true, isFile: () => false }
-        : { isFile: () => true }));
+      fs.promises.stat.mockImplementation((filePath) =>
+        !filePath.endsWith('sql')
+          ? { isDirectory: () => true, isFile: () => false }
+          : { isFile: () => true }
+      );
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
@@ -436,14 +437,14 @@ describe('ssdi', () => {
         1,
         expect.stringContaining('file1.sql'), // Check if the path contains 'file1.sql'
         ['dataRequests/ohs', 'dataRequests/internal'], // Exact array for permissions
-        'ssdi_restricted', // The restriction string
+        'ssdi_restricted' // The restriction string
       );
 
       expect(checkFolderPermissionsMock).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('file2.sql'), // Check if the path contains 'file2.sql'
         ['dataRequests/ohs', 'dataRequests/internal'], // Exact array for permissions
-        'ssdi_restricted', // The restriction string
+        'ssdi_restricted' // The restriction string
       );
     });
 
@@ -453,9 +454,11 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.text', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
-        ? { isDirectory: () => true, isFile: () => false }
-        : { isFile: () => true }));
+      fs.promises.stat.mockImplementation((filePath) =>
+        !filePath.endsWith('sql')
+          ? { isDirectory: () => true, isFile: () => false }
+          : { isFile: () => true }
+      );
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
@@ -510,9 +513,11 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.sql', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
-        ? { isDirectory: () => true, isFile: () => false }
-        : { isFile: () => true }));
+      fs.promises.stat.mockImplementation((filePath) =>
+        !filePath.endsWith('sql')
+          ? { isDirectory: () => true, isFile: () => false }
+          : { isFile: () => true }
+      );
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
@@ -548,11 +553,9 @@ describe('ssdi', () => {
       // Mock the permission check to return false for one file
       const checkFolderPermissionsMock = jest
         .spyOn(UserPolicy.prototype, 'checkPermissions')
-        .mockImplementation((
-          targetString,
-          _matchStrings,
-          _featureFlag,
-        ) => targetString.includes('file1.sql'));
+        .mockImplementation((targetString, _matchStrings, _featureFlag) =>
+          targetString.includes('file1.sql')
+        );
 
       const result = await listQueryFiles('test/path', mockUser);
 
@@ -698,9 +701,7 @@ describe('ssdi', () => {
   describe('readFiltersFromFile', () => {
     it('should read and process filters from a file', async () => {
       // Mock the file system and permissions
-      fs.promises.readdir.mockResolvedValue([
-        { name: 'file1.sql', isDirectory: () => false },
-      ]);
+      fs.promises.readdir.mockResolvedValue([{ name: 'file1.sql', isDirectory: () => false }]);
       fs.promises.stat.mockResolvedValue({ isFile: () => true, mtime: new Date() });
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
@@ -735,9 +736,7 @@ describe('ssdi', () => {
     SELECT * FROM test;`);
 
       // Mock the permission check to always return true
-      const checkFolderPermissionsMock = jest
-        .spyOn(UserPolicy.prototype, 'checkPermissions')
-        .mockResolvedValue(true);
+      jest.spyOn(UserPolicy.prototype, 'checkPermissions').mockResolvedValue(true);
 
       const result = await readFiltersFromFile('file1.sql', 1);
       expect(result).toEqual({
@@ -802,9 +801,11 @@ describe('ssdi', () => {
 
     it('should return errors for invalid filters and types', () => {
       const input = { flag1: [1, 'two', 3], invalidFlag: [1, 2, 3] };
-      const { result, errors } = preprocessAndValidateFilters(filters, input);
+      const { errors } = preprocessAndValidateFilters(filters, input);
       expect(errors.invalidFilters).toEqual(['Invalid filter: invalidFlag']);
-      expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[] received 1,two,3']);
+      expect(errors.invalidTypes).toEqual([
+        'Invalid type for filter flag1: expected integer[] received 1,two,3',
+      ]);
     });
 
     it('should preprocess date array filters with separator correctly', () => {
@@ -912,9 +913,7 @@ describe('ssdi', () => {
 
   describe('executeQuery', () => {
     const mockQuery = jest.fn();
-    let pathResolveSpy;
-    let fsReadFileSpy;
-    let fsStatSpy;
+    const resolvedPathFor = (fileName) => path.resolve(BASE_DIRECTORY, fileName);
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -922,43 +921,36 @@ describe('ssdi', () => {
       cache.clear();
     });
 
-    afterEach(() => {
-      // Restore the original implementations after each test
-      if (pathResolveSpy) pathResolveSpy.mockRestore();
-      if (fsReadFileSpy) fsReadFileSpy.mockRestore();
-      if (fsStatSpy) fsStatSpy.mockRestore();
-    });
-
     it('should throw an error if the file path is not a string', async () => {
       await expect(executeQuery(123)).rejects.toThrow(
-        'The "paths[1]" argument must be of type string. Received type number (123)',
+        'The "paths[1]" argument must be of type string. Received type number (123)'
       );
     });
 
     it('should resolve the file path correctly using safeResolvePath', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/test.sql';
-      // Spy on path.resolve to mock it only for this test
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
+      const mockResolvedPath = resolvedPathFor('test.sql');
 
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
-      fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
+      fs.promises.readFile.mockResolvedValue(
+        '/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;'
+      );
 
       await executeQuery('test.sql');
 
-      expect(path.resolve).toHaveBeenCalledWith(expect.anything(), 'test.sql');
       const cachedFile = cache.get(mockResolvedPath);
       expect(cachedFile).toBeDefined();
       expect(cachedFile?.query).toEqual('SELECT * FROM test;');
     });
 
     it('should cache the query after reading the file', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/test.sql';
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
+      const mockResolvedPath = resolvedPathFor('test.sql');
 
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
-      fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
+      fs.promises.readFile.mockResolvedValue(
+        '/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;'
+      );
 
       await executeQuery('test.sql');
 
@@ -967,25 +959,23 @@ describe('ssdi', () => {
     });
 
     it('should throw an error if the JSON header cannot be read from the file', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/invalid.sql';
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
+      const mockResolvedPath = resolvedPathFor('invalid.sql');
 
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('INVALID CONTENT');
 
       await expect(executeQuery('invalid.sql')).rejects.toThrow(
-        `Unable to read and parse the JSON header from file: ${mockResolvedPath}`,
+        `Unable to read and parse the JSON header from file: ${mockResolvedPath}`
       );
     });
 
     it('should execute the query and return the result', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/valid.sql';
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
-      fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
+      fs.promises.readFile.mockResolvedValue(
+        '/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;'
+      );
       mockQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
 
       const result = await executeQuery('valid.sql');
@@ -995,20 +985,18 @@ describe('ssdi', () => {
     });
 
     it('should throw an error if the query execution fails', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/valid.sql';
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
-      fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
+      fs.promises.readFile.mockResolvedValue(
+        '/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;'
+      );
       mockQuery.mockRejectedValue(new Error('Database error'));
 
       await expect(executeQuery('valid.sql')).rejects.toThrow('Query failed: Database error');
     });
 
     it('should use the cached result if the file has been cached', async () => {
-      const mockResolvedPath = '/app/src/queries/resolved/path/to/cached.sql';
-      pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
+      const mockResolvedPath = resolvedPathFor('cached.sql');
 
       cache.set(mockResolvedPath, {
         jsonHeader: { name: 'test', filters: [] },

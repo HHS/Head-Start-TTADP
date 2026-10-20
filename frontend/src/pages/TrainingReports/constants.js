@@ -1,13 +1,19 @@
 import PropTypes from 'prop-types';
 
 import {
-  startDateFilter,
-  regionFilter,
+  startDateFilter as baseStartDateFilter,
   collaboratorsFilter,
   creatorFilter,
   eventIdFilter,
   goalCategoryFilter,
+  regionFilter,
 } from '../../components/filter/trainingReportFilters';
+
+// Create page-specific filter with "Event start date" label
+const startDateFilter = {
+  ...baseStartDateFilter,
+  display: 'Event start date',
+};
 
 const TRAINING_REPORT_FILTER_CONFIG = [
   startDateFilter,
@@ -41,6 +47,7 @@ export const eventPropTypes = PropTypes.shape({
   pocIds: PropTypes.arrayOf(PropTypes.number),
   collaboratorIds: PropTypes.arrayOf(PropTypes.number),
   regionId: PropTypes.number,
+  eventId: PropTypes.string,
   data: dataPropTypes,
 });
 

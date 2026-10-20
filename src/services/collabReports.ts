@@ -1,8 +1,10 @@
-import _ from 'lodash';
-import { Model, Op } from 'sequelize';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import _ from 'lodash';
+import { type Model, Op } from 'sequelize';
+import syncJoinRows from '../lib/syncJoinRows';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
+import { assertApproversAreNotParticipants } from './activityReports';
 import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
@@ -12,7 +14,7 @@ interface ICollabReport {
     user: {
       id: number;
       email: string;
-    }
+    };
   }[];
 }
 
@@ -40,9 +42,13 @@ export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') =>
     Created_date: 'createdAt',
     Last_saved: 'updatedAt',
     Creator: sequelize.literal('"_1"'),
-    Collaborators: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'),
+    Collaborators: sequelize.literal(
+      '(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'
+    ),
     Status: 'calculatedStatus',
-    Approvers: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportApprovers" INNER JOIN "Users" ON "Users"."id" = "CollabReportApprovers"."userId" WHERE "CollabReportApprovers"."collabReportId" = "CollabReport"."id" AND "CollabReportApprovers"."deletedAt" IS NULL)'),
+    Approvers: sequelize.literal(
+      '(SELECT MIN("Users"."name") FROM "CollabReportApprovers" INNER JOIN "Users" ON "Users"."id" = "CollabReportApprovers"."userId" WHERE "CollabReportApprovers"."collabReportId" = "CollabReport"."id" AND "CollabReportApprovers"."deletedAt" IS NULL)'
+    ),
   };
 
   return [[SORT_KEY[sortBy] || 'updatedAt', sortDir]];
@@ -61,12 +67,16 @@ export const collabReportScopes = async (filters, userId, status) => {
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT crs."collabReportId" FROM "CollabReportSpecialists" crs WHERE crs."specialistId" = ${userId})`),
+          [Op.in]: sequelize.literal(
+            `(SELECT crs."collabReportId" FROM "CollabReportSpecialists" crs WHERE crs."specialistId" = ${userId})`
+          ),
         },
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" IN ('${REPORT_STATUSES.SUBMITTED}', '${REPORT_STATUSES.NEEDS_ACTION}') AND cr."deletedAt" IS NULL)`),
+          [Op.in]: sequelize.literal(
+            `(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" IN ('${REPORT_STATUSES.SUBMITTED}', '${REPORT_STATUSES.NEEDS_ACTION}') AND cr."deletedAt" IS NULL)`
+          ),
         },
       },
     ];
@@ -83,70 +93,8 @@ async function create(report) {
   return CollabReport.create(report);
 }
 
-async function saveCollabReportAssociation(
-  collabReportId: number,
-  model: typeof CollabReportActivityState | typeof CollabReportActivityState,
-  associationKey: 'reasonId' | 'activityStateCode',
-  data: { id: number | string }[],
-) {
-  if (data.length) {
-  // Make a handy lookup object for the findOrCreate that comes next
-    const lookup = data.map((d) => ({
-      collabReportId,
-      [associationKey]: d.id,
-    }));
-
-    const lookupIds = lookup.map((l) => l[associationKey]);
-
-    const existing = await model.findAll({
-      attributes: [
-        'collabReportId',
-        associationKey,
-      ],
-      where: {
-        collabReportId,
-        [associationKey]: lookupIds,
-      },
-    });
-
-    const existingLookup = existing.map((l) => l[associationKey]);
-
-    const toCreate = [] as { collabReportId: number, [associationKey]: string | number }[];
-    lookup.forEach((l) => {
-      if (!existingLookup.includes(l[associationKey])) {
-        toCreate.push({
-          collabReportId,
-          [associationKey]: l[associationKey],
-        });
-      }
-    });
-
-    await model.bulkCreate(toCreate);
-    await model.destroy({
-      where: {
-        collabReportId,
-        [associationKey]: {
-          [Op.notIn]: lookupIds,
-        },
-      },
-    });
-  } else {
-    // If no reasons, destroy any existing reason objects in the DB
-    await model.destroy({
-      where: {
-        collabReportId,
-      },
-    });
-  }
-}
-
 async function saveReportReasons(collabReportId: number, reasons: string[]) {
-  await saveCollabReportAssociation(
-    collabReportId,
-    CollabReportReason,
-    'reasonId',
-    reasons.map((reasonId) => ({ id: reasonId })),
-  );
+  await syncJoinRows(CollabReportReason, { collabReportId }, 'reasonId', reasons);
 }
 
 async function saveReportSteps(collabReportId: number, steps: Model[]) {
@@ -159,23 +107,24 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
 
   // Then create new steps if any are provided
   if (steps && steps.length > 0) {
-    const newSteps = steps.map((step: Model) => {
-      // @ts-ignore - This and the below ignores are because we're accessing specific props
-      if (step.collabStepDetail) {
-        // @ts-ignore
-        const rawDate = step.collabStepCompleteDate;
-        const normalizedDate = rawDate || null;
-        return ({
-          ...step,
-          collabReportId,
-          // @ts-ignore
-          collabStepDetail: step.collabStepDetail,
-          // @ts-ignore
-          collabStepCompleteDate: normalizedDate,
-        });
-      }
-      return null;
-    }).filter((s) => s !== null);
+    const newSteps = steps
+      .map((step: Model) => {
+        // @ts-expect-error - This and the below ignores are because we're accessing specific props
+        if (step.collabStepDetail) {
+          // @ts-expect-error
+          const rawDate = step.collabStepCompleteDate;
+          const normalizedDate = rawDate || null;
+          return {
+            ...step,
+            collabReportId,
+            // @ts-expect-error
+            collabStepDetail: step.collabStepDetail,
+            collabStepCompleteDate: normalizedDate,
+          };
+        }
+        return null;
+      })
+      .filter((s) => s !== null);
 
     if (newSteps) {
       await CollabReportStep.bulkCreate(newSteps);
@@ -227,11 +176,11 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
 }
 
 async function saveReportActivityStates(collabReportId: number, activityStates: string[]) {
-  await saveCollabReportAssociation(
-    collabReportId,
+  await syncJoinRows(
     CollabReportActivityState,
+    { collabReportId },
     'activityStateCode',
-    activityStates.map((state) => ({ id: state })),
+    activityStates
   );
 }
 
@@ -245,19 +194,17 @@ async function saveReportSpecialists(collabReportId: number, specialists: number
 
   // Create and/or delete CR specialists
   if (newSpecialists.length > 0) {
-    await Promise.all(newSpecialists.map((where) => (
-      CollabReportSpecialist.findOrCreate({ where })
-    )));
-    await CollabReportSpecialist.destroy(
-      {
-        where: {
-          collabReportId,
-          specialistId: {
-            [Op.notIn]: specialists,
-          },
+    await Promise.all(
+      newSpecialists.map((where) => CollabReportSpecialist.findOrCreate({ where }))
+    );
+    await CollabReportSpecialist.destroy({
+      where: {
+        collabReportId,
+        specialistId: {
+          [Op.notIn]: specialists,
         },
       },
-    );
+    });
   } else {
     await CollabReportSpecialist.destroy({
       where: {
@@ -355,10 +302,7 @@ export async function collabReportById(crId: string) {
         model: CollabReportStep,
         as: 'steps',
         required: false,
-        attributes: [
-          'collabStepCompleteDate',
-          'collabStepDetail',
-        ],
+        attributes: ['collabStepCompleteDate', 'collabStepDetail'],
       },
       {
         model: CollabReportApprover,
@@ -390,6 +334,14 @@ export async function collabReportById(crId: string) {
 // todo: create proper typescript interface for the collab report
 export async function createOrUpdateReport(newReport, oldReport): Promise<ICollabReport> {
   let savedReport;
+
+  assertApproversAreNotParticipants(
+    (newReport.approvers ?? oldReport?.approvers ?? []).map(({ user }) => user?.id),
+    { userId: newReport.userId ?? oldReport?.userId },
+    (newReport.collabReportSpecialists ?? oldReport?.collabReportSpecialists ?? []).map(
+      ({ specialistId }) => ({ userId: specialistId })
+    )
+  );
 
   const {
     id,
@@ -442,14 +394,17 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   // If there are specialists, those need to be saved separately
   if (collabReportSpecialists) {
     const specialists = collabReportSpecialists.map(
-      (c: { specialistId: number }) => c.specialistId,
+      (c: { specialistId: number }) => c.specialistId
     );
     await saveReportSpecialists(reportId, specialists);
   }
 
   // Sync the approvers, if an empty array they get removed
   if (approvers) {
-    await syncCRApprovers(savedReport.id, approvers.map(({ user }) => user.id));
+    await syncCRApprovers(
+      savedReport.id,
+      approvers.map(({ user }) => user.id)
+    );
   }
 
   // Finally, fetch a new copy of the saved report from the DB
@@ -461,29 +416,24 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   return report.toJSON();
 }
 
-export async function getCSVReports(
-  {
-    sortBy = 'updatedAt',
-    sortDir = 'desc',
-    offset = '0',
-    limit = String(REPORTS_PER_PAGE),
-    status = REPORT_STATUSES.APPROVED,
-    userId,
-    ...filters
-  }: {
-    sortBy?: string;
-    sortDir?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    userId?: number;
-    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
-  } = {},
-) {
+export async function getCSVReports({
+  sortBy = 'updatedAt',
+  sortDir = 'desc',
+  offset = '0',
+  limit = 'all',
+  status = REPORT_STATUSES.APPROVED,
+  userId,
+  ...filters
+}: {
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+  offset?: string;
+  limit?: string;
+  userId?: number;
+  status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
+} = {}) {
   const order = orderCollabReportsBy(sortBy, sortDir);
-  const {
-    standardScopes,
-    customScopes,
-  } = await collabReportScopes(filters, userId, status);
+  const { standardScopes, customScopes } = await collabReportScopes(filters, userId, status);
 
   return CollabReport.findAll({
     attributes: {
@@ -499,20 +449,12 @@ export async function getCSVReports(
           'reportReasons',
         ],
       ],
-      exclude: [
-        'calculatedStatus',
-        'submissionStatus',
-        'lastUpdatedById',
-      ],
+      exclude: ['calculatedStatus', 'submissionStatus', 'lastUpdatedById'],
     },
     where: {
-      [Op.and]: [
-        standardScopes,
-        customScopes,
-      ],
+      [Op.and]: [standardScopes, customScopes],
     },
     include: [
-
       {
         model: User,
         as: 'author',
@@ -540,11 +482,7 @@ export async function getCSVReports(
       },
       {
         model: CollabReportApprover,
-        attributes: [
-          'id',
-          'status',
-          'note',
-        ],
+        attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
         include: [
@@ -566,10 +504,7 @@ export async function getCSVReports(
         model: CollabReportStep,
         as: 'steps',
         required: false,
-        attributes: [
-          'collabStepCompleteDate',
-          'collabStepDetail',
-        ],
+        attributes: ['collabStepCompleteDate', 'collabStepDetail'],
       },
     ],
     limit: limit === 'all' ? null : Number(limit),
@@ -577,29 +512,24 @@ export async function getCSVReports(
   });
 }
 
-export async function getReports(
-  {
-    sortBy = 'updatedAt',
-    sortDir = 'desc',
-    offset = '0',
-    limit = String(REPORTS_PER_PAGE),
-    status = REPORT_STATUSES.APPROVED,
-    userId,
-    ...filters
-  }: {
-    sortBy?: string;
-    sortDir?: 'asc' | 'desc';
-    offset?: string;
-    limit?: string;
-    userId?: number;
-    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
-  } = {},
-) {
+export async function getReports({
+  sortBy = 'updatedAt',
+  sortDir = 'desc',
+  offset = '0',
+  limit = String(REPORTS_PER_PAGE),
+  status = REPORT_STATUSES.APPROVED,
+  userId,
+  ...filters
+}: {
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+  offset?: string;
+  limit?: string;
+  userId?: number;
+  status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
+} = {}) {
   const order = orderCollabReportsBy(sortBy, sortDir);
-  const {
-    standardScopes,
-    customScopes,
-  } = await collabReportScopes(filters, userId, status);
+  const { standardScopes, customScopes } = await collabReportScopes(filters, userId, status);
 
   return CollabReport.findAndCountAll({
     attributes: [
@@ -615,10 +545,7 @@ export async function getReports(
       'submissionStatus',
     ],
     where: {
-      [Op.and]: [
-        standardScopes,
-        customScopes,
-      ],
+      [Op.and]: [standardScopes, customScopes],
     },
     include: [
       {
@@ -648,11 +575,7 @@ export async function getReports(
       },
       {
         model: CollabReportApprover,
-        attributes: [
-          'id',
-          'status',
-          'note',
-        ],
+        attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
         include: [
@@ -673,6 +596,8 @@ export async function getReports(
     ],
     limit: limit === 'all' ? null : Number(limit),
     order,
+    offset: Number(offset),
+    distinct: true,
   });
 }
 

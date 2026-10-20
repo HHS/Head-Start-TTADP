@@ -1,0 +1,31 @@
+get:
+  tags:
+    - monitoring
+  summary: Retrieve TTA activity grouped by review
+  operationId: getTtaByReview
+  parameters:
+    - in: path
+      name: recipientId
+      required: true
+      schema:
+        type: integer
+      description: Recipient identifier
+    - in: path
+      name: regionId
+      required: true
+      schema:
+        type: integer
+      description: Region identifier
+  responses:
+    200:
+      description: Monitoring reviews with associated findings and TTA activity
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../index.yaml#/components/schemas/monitoringTtaByReview'
+    403:
+      description: User does not have read access to the requested region
+    404:
+      description: Recipient not found

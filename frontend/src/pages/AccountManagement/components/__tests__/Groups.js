@@ -1,18 +1,13 @@
-import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import { GROUP_SHARED_WITH } from '@ttahub/common';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
-import Groups from '../Groups';
-import UserContext from '../../../../UserContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import MyGroupsProvider from '../../../../components/MyGroupsProvider';
+import UserContext from '../../../../UserContext';
+import Groups from '../Groups';
 
 describe('Groups', () => {
   const renderGroups = () => {
@@ -25,7 +20,7 @@ describe('Groups', () => {
             </UserContext.Provider>
           </AppLoadingContext.Provider>
         </MyGroupsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 
@@ -225,20 +220,21 @@ describe('Groups', () => {
   });
 
   it('you can delete a group', async () => {
-    fetchMock.get('/api/groups', [{
-      id: 1,
-      name: 'group1',
-      userId: 1,
-      isPublic: false,
-      groupCollaborators: [],
-      coOwners: [],
-      individuals: [],
-      sharedWith: null,
-      creator: {
-        name: 'Tim User',
+    fetchMock.get('/api/groups', [
+      {
         id: 1,
+        name: 'group1',
+        userId: 1,
+        isPublic: false,
+        groupCollaborators: [],
+        coOwners: [],
+        individuals: [],
+        sharedWith: null,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
-    },
     ]);
     fetchMock.delete('/api/groups/1', {});
 

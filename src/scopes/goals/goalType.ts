@@ -1,13 +1,12 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 
 const ENUM = {
   RTTAPA: 'Yes',
   'Non-RTTAPA': 'No',
 };
 
-const filterQuery = (query: string[]): string[] => query
-  .filter((q) => q && ENUM[q])
-  .map((q) => ENUM[q]);
+const filterQuery = (query: string[]): string[] =>
+  query.filter((q) => q && ENUM[q]).map((q) => ENUM[q]);
 
 export function withGoalType(query: string[]): WhereOptions {
   const filteredQuery = filterQuery(query);

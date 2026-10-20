@@ -1,36 +1,37 @@
-import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
+import { Op, Transaction } from 'sequelize';
+import { GOAL_STATUS } from '../constants';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
+import { auditLogger } from '../logger';
 import {
-  User,
+  ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  ActivityReportObjectiveCourse,
+  ActivityReportObjectiveFile,
+  ActivityReportObjectiveTopic,
+  Citation,
+  Course,
+  File,
   Goal,
   GoalFieldResponse,
-  Objective,
-  ActivityReportGoal,
-  ActivityReportObjective,
-  ActivityReportObjectiveCourse,
-  ActivityReportObjectiveCitation,
-  ActivityReportGoalFieldResponse,
+  GoalTemplate,
   GoalTemplateFieldPrompt,
+  Objective,
+  sequelize,
   Topic,
-  Course,
-  ActivityReportObjectiveTopic,
+  User,
 } from '../models';
+import { createGoal, createGrant, createRecipient, createReport } from '../testUtils';
 import {
-  cacheGoalMetadata,
-  cacheCourses,
   cacheCitations,
+  cacheCourses,
+  cacheFiles,
+  cacheGoalMetadata,
   cacheTopics,
 } from './reportCache';
-import {
-  createReport,
-  createGrant,
-  createRecipient,
-  createGoal,
-} from '../testUtils';
-import { GOAL_STATUS } from '../constants';
-import { auditLogger } from '../logger';
-import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -62,16 +63,16 @@ describe('cacheCourses', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
     courseOne = await Course.create({
-      name: faker.datatype.string(200),
+      name: faker.string.sample(200),
     });
 
     courseTwo = await Course.create({
-      name: faker.datatype.string(200),
+      name: faker.string.sample(200),
     });
 
     aro = await ActivityReportObjective.create({
@@ -103,6 +104,80 @@ describe('cacheCourses', () => {
   });
 });
 
+describe('cacheFiles', () => {
+  let activityReport;
+  let grant;
+  let recipient;
+  let goal;
+  let objective;
+  let aro;
+  let file;
+  let snapShot;
+  let mockAuditLoggerInfo;
+
+  beforeAll(async () => {
+    snapShot = await captureSnapshot();
+    mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+
+    recipient = await createRecipient({});
+    grant = await createGrant({ recipientId: recipient.id });
+    activityReport = await createReport({ activityRecipients: [{ grantId: grant.id }] });
+    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+    objective = await Objective.create({
+      goalId: goal.id,
+      title: faker.string.sample(200),
+      status: 'Not Started',
+    });
+    aro = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: activityReport.id,
+    });
+    file = await File.create({
+      originalFileName: 'cache-files-test.pdf',
+      key: `${faker.string.uuid()}.pdf`,
+      status: 'APPROVED',
+      fileSize: 1234,
+    });
+  });
+
+  afterAll(async () => {
+    mockAuditLoggerInfo.mockRestore();
+    await rollbackToSnapshot(snapShot);
+  });
+
+  it('skips file ids that no longer exist instead of violating the FK', async () => {
+    const missingFileId = file.id + 999999;
+
+    await expect(
+      cacheFiles(objective.id, aro.id, [{ id: file.id }, { id: missingFileId }])
+    ).resolves.toBeDefined();
+
+    const aroFiles = await ActivityReportObjectiveFile.findAll({
+      where: { activityReportObjectiveId: aro.id },
+    });
+
+    expect(aroFiles.map((f) => f.fileId)).toEqual([file.id]);
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining(`${missingFileId}`));
+  });
+
+  it('locks the files it links so a concurrent delete cannot remove them first', async () => {
+    const newFile = await File.create({
+      originalFileName: 'cache-files-lock.pdf',
+      key: `${faker.string.uuid()}.pdf`,
+      status: 'APPROVED',
+      fileSize: 1234,
+    });
+    const findAllSpy = jest.spyOn(File, 'findAll');
+
+    await cacheFiles(objective.id, aro.id, [{ id: file.id }, { id: newFile.id }]);
+
+    expect(findAllSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ lock: Transaction.LOCK.KEY_SHARE })
+    );
+    findAllSpy.mockRestore();
+  });
+});
+
 describe('cacheTopics', () => {
   let mockAuditLoggerError;
   let mockAuditLoggerInfo;
@@ -115,11 +190,11 @@ describe('cacheTopics', () => {
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
     mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
 
-    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([
-      { id: 101, name: 'Topic 1' },
-    ]);
+    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([{ id: 101, name: 'Topic 1' }]);
 
-    mockFindAllAROTopics = jest.spyOn(ActivityReportObjectiveTopic, 'findAll').mockResolvedValue([]);
+    mockFindAllAROTopics = jest
+      .spyOn(ActivityReportObjectiveTopic, 'findAll')
+      .mockResolvedValue([]);
 
     mockCreate = jest.spyOn(ActivityReportObjectiveTopic, 'create').mockResolvedValue({});
     mockDestroy = jest.spyOn(ActivityReportObjectiveTopic, 'destroy').mockResolvedValue(1);
@@ -134,7 +209,9 @@ describe('cacheTopics', () => {
 
     await cacheTopics(1, 1, topics);
 
-    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining('Some topics were missing IDs'));
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(
+      expect.stringContaining('Some topics were missing IDs')
+    );
     expect(mockFindAll).toHaveBeenCalledWith({ where: { name: ['Topic 1'] } });
     expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
   });
@@ -146,7 +223,7 @@ describe('cacheTopics', () => {
     await cacheTopics(42, 99, topics);
 
     expect(mockAuditLoggerError).toHaveBeenCalledWith(
-      expect.stringContaining('Could not resolve topic names: Unknown Topic'),
+      expect.stringContaining('Could not resolve topic names: Unknown Topic')
     );
   });
 
@@ -161,10 +238,7 @@ describe('cacheTopics', () => {
   });
 
   it('adds and removes topics correctly', async () => {
-    mockFindAllAROTopics.mockResolvedValue([
-      { topicId: 200 },
-      { topicId: 300 },
-    ]);
+    mockFindAllAROTopics.mockResolvedValue([{ topicId: 200 }, { topicId: 300 }]);
 
     const topics = [{ id: 101, name: 'Topic 1' }];
     await cacheTopics(1, 1, topics);
@@ -191,8 +265,43 @@ describe('activityReportObjectiveCitation', () => {
   let nonMonitoringObjective;
   let aro;
   let nonMonitoringAro;
-  const citationIds = [];
+  let rtrObjective;
+  let rtrAro;
+  let rtrFindingId;
+  let findingIdOne;
+  let findingIdTwo;
+  let findingIdThree;
+  let nonMonitoringFindingId;
   let snapShot;
+  const buildMonitoringReference = ({
+    grantId,
+    findingId,
+    reviewName,
+    standardId,
+    grantNumber,
+    name = 'Test monitoring citation',
+    citation = name,
+    findingType = 'Noncompliance',
+    findingSource = 'Monitoring',
+    acro = 'TST',
+    severity = 2,
+    reportDeliveryDate = '2025-02-16T05:00:00+00:00',
+    monitoringFindingStatusName = 'Active',
+  }) => ({
+    grantId,
+    findingId,
+    reviewName,
+    standardId,
+    grantNumber,
+    name,
+    citation,
+    findingType,
+    findingSource,
+    acro,
+    severity,
+    reportDeliveryDate,
+    monitoringFindingStatusName,
+  });
 
   beforeAll(async () => {
     // Create a snapshot of the database so we can rollback after the tests.
@@ -210,6 +319,12 @@ describe('activityReportObjectiveCitation', () => {
       ],
     });
 
+    const monitoringTemplate = await GoalTemplate.findOne({
+      where: {
+        standard: 'Monitoring',
+      },
+    });
+
     goal = await Goal.create({
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.NOT_STARTED,
@@ -217,6 +332,7 @@ describe('activityReportObjectiveCitation', () => {
       onApprovedAR: false,
       grantId: grant.id,
       createdVia: 'monitoring',
+      goalTemplateId: monitoringTemplate.id,
     });
 
     nonMonitoringGoal = await Goal.create({
@@ -230,13 +346,19 @@ describe('activityReportObjectiveCitation', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
     nonMonitoringObjective = await Objective.create({
       goalId: nonMonitoringGoal.id,
-      title: faker.datatype.string(200),
+      title: faker.string.sample(200),
+      status: 'Not Started',
+    });
+
+    rtrObjective = await Objective.create({
+      goalId: goal.id,
+      title: faker.string.sample(200),
       status: 'Not Started',
     });
 
@@ -250,16 +372,74 @@ describe('activityReportObjectiveCitation', () => {
       activityReportId: activityReport.id,
     });
 
-    const nonMonitoringCitation = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: nonMonitoringAro.id,
-      citation: 'Non Monitoring Citation 1',
-      monitoringReferences: [{
-        grantId: grant.id,
-        findingId: 1,
-        reviewName: 'Review 1',
-      }],
+    rtrAro = await ActivityReportObjective.create({
+      objectiveId: rtrObjective.id,
+      activityReportId: activityReport.id,
     });
-    citationIds.push(nonMonitoringCitation.id);
+
+    findingIdOne = faker.string.uuid();
+    findingIdTwo = faker.string.uuid();
+    findingIdThree = faker.string.uuid();
+    nonMonitoringFindingId = faker.string.uuid();
+    rtrFindingId = faker.string.uuid();
+
+    const startingMfid = faker.number.int({ min: 100000, max: 999999 });
+    await Citation.bulkCreate([
+      {
+        mfid: startingMfid + 1,
+        finding_uuid: findingIdOne,
+        citation: 'Citation 1',
+      },
+      {
+        mfid: startingMfid + 2,
+        finding_uuid: findingIdTwo,
+        citation: 'Citation 1 Updated',
+      },
+      {
+        mfid: startingMfid + 3,
+        finding_uuid: findingIdThree,
+        citation: 'Citation 3',
+      },
+    ]);
+
+    const nonMonitoringCitationLink = await Citation.create({
+      mfid: startingMfid + 4,
+      finding_uuid: nonMonitoringFindingId,
+      citation: 'Non Monitoring Citation 1',
+    });
+
+    await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: nonMonitoringAro.id,
+      citationId: nonMonitoringCitationLink.id,
+      citation: 'Non Monitoring Citation 1',
+      monitoringReferences: [
+        buildMonitoringReference({
+          grantId: grant.id,
+          findingId: nonMonitoringFindingId,
+          reviewName: 'Review 1',
+          standardId: 200041,
+          grantNumber: grant.number,
+        }),
+      ],
+      findingId: nonMonitoringFindingId,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: 'Review 1',
+      standardId: 200041,
+      findingType: 'Noncompliance',
+      findingSource: 'Monitoring',
+      acro: 'TST',
+      name: 'Non Monitoring Citation 1',
+      severity: 2,
+      reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+      monitoringFindingStatusName: 'Active',
+    });
+
+    await Citation.create({
+      mfid: startingMfid + 5,
+      finding_uuid: rtrFindingId,
+      citation: 'RTR Citation 1',
+    });
   });
 
   afterAll(async () => {
@@ -276,11 +456,17 @@ describe('activityReportObjectiveCitation', () => {
     const citationsToCreate = [
       {
         citation: 'Citation 1',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-        }],
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 200001,
+            grantNumber: grant.number,
+            name: 'Citation 1',
+            citation: 'Citation 1',
+          }),
+        ],
       },
     ];
 
@@ -296,27 +482,34 @@ describe('activityReportObjectiveCitation', () => {
       },
     });
 
-    const citation1Id = createdAroCitations[0].id;
-    citationIds.push(citation1Id);
-
     expect(createdAroCitations).toHaveLength(1);
     expect(createdAroCitations[0].citation).toEqual('Citation 1');
-    expect(createdAroCitations[0].monitoringReferences).toEqual([{
-      grantId: grant.id,
-      findingId: 1,
-      reviewName: 'Review 1',
-    }]);
+    expect(createdAroCitations[0].grantId).toEqual(grant.id);
+    expect(createdAroCitations[0].findingId).toEqual(findingIdOne);
+    expect(createdAroCitations[0].reviewName).toEqual('Review 1');
+
+    const firstCitation = await Citation.findOne({
+      where: {
+        finding_uuid: findingIdOne,
+      },
+    });
+    expect(firstCitation).toBeTruthy();
+    expect(createdAroCitations[0].citationId).toBe(firstCitation.id);
 
     // Update the ActivityReportObjectiveCitation.
     const citationsToUpdate = [
       {
-        id: citation1Id,
         citation: 'Citation 1 Updated',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1 Updated',
-        }],
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdTwo,
+            reviewName: 'Review 1 Updated',
+            standardId: 200002,
+            grantNumber: grant.number,
+            name: 'Citation 1 Updated',
+          }),
+        ],
       },
     ];
 
@@ -333,11 +526,17 @@ describe('activityReportObjectiveCitation', () => {
 
     expect(updatedAroCitations).toHaveLength(1);
     expect(updatedAroCitations[0].citation).toEqual('Citation 1 Updated');
-    expect(updatedAroCitations[0].monitoringReferences).toEqual([{
-      grantId: grant.id,
-      findingId: 1,
-      reviewName: 'Review 1 Updated',
-    }]);
+    expect(updatedAroCitations[0].grantId).toEqual(grant.id);
+    expect(updatedAroCitations[0].findingId).toEqual(findingIdTwo);
+    expect(updatedAroCitations[0].reviewName).toEqual('Review 1 Updated');
+
+    const updatedCitation = await Citation.findOne({
+      where: {
+        finding_uuid: findingIdTwo,
+      },
+    });
+    expect(updatedCitation).toBeTruthy();
+    expect(updatedAroCitations[0].citationId).toBe(updatedCitation.id);
 
     // Delete the ActivityReportObjectiveCitation.
     result = await cacheCitations(objective.id, aro.id, []);
@@ -354,84 +553,231 @@ describe('activityReportObjectiveCitation', () => {
     expect(deletedAroCitations).toHaveLength(0);
   });
 
-  it('should only return one citation if there is more than one with the same standard id', async () => {
-    const citationsToCreate = [{
-      citation: 'Citation 1',
-      standardId: 200039,
-      monitoringReferences: [{
-        acro: 'TST',
-        grantId: grant.id,
-        citation: '78',
-        severity: 2,
-        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
-        reviewName: '247691FUA',
-        findingType: 'Noncompliance',
-        grantNumber: '02CH010989',
-        findingSource: ' Test Infrastructure Citation',
-        originalGrantId: grant.id,
-        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
-        monitoringFindingStatusName: 'Active',
-        standardId: 200039,
-        name: 'TST - 78 -  Test Infrastructure Citation',
-      },
+  it('should only return one citation if there is more than one with the same finding, grant, review, and standard', async () => {
+    const citationsToCreate = [
       {
-        acro: 'TST',
-        grantId: grant.id,
-        citation: '78',
-        severity: 2,
-        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
-        reviewName: '247691FUA',
-        findingType: 'Noncompliance',
-        grantNumber: '02CH012742',
-        findingSource: 'Test Infrastructure Citation',
-        originalGrantId: grant.id,
-        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
-        monitoringFindingStatusName: 'Active',
+        citation: 'Citation 1',
         standardId: 200039,
-        name: 'TST - 78 - Test Infrastructure Citation',
+        monitoringReferences: [
+          {
+            acro: 'TST',
+            grantId: grant.id,
+            citation: '78',
+            severity: 2,
+            findingId: findingIdOne,
+            reviewName: '247691FUA',
+            findingType: 'Noncompliance',
+            grantNumber: '02CH010989',
+            findingSource: ' Test Infrastructure Citation',
+            originalGrantId: grant.id,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+            standardId: 200039,
+            name: 'TST - 78 -  Test Infrastructure Citation',
+          },
+          {
+            acro: 'TST',
+            grantId: grant.id,
+            citation: '78',
+            severity: 2,
+            findingId: findingIdOne,
+            reviewName: '247691FUA',
+            findingType: 'Noncompliance',
+            grantNumber: '02CH012742',
+            findingSource: 'Test Infrastructure Citation',
+            originalGrantId: grant.id,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+            standardId: 200039,
+            name: 'TST - 78 - Test Infrastructure Citation',
+          },
+        ],
       },
-      ],
-    }];
+    ];
 
     const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
 
     expect(result).toHaveLength(1);
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+    expect(savedCitation).toBeDefined();
+    expect(savedCitation.standardId).toBe(200039);
+    expect(savedCitation.findingId).toBe(findingIdOne);
+    expect(savedCitation.reviewName).toBe('247691FUA');
   });
+
+  it('normalizes saved citation name from acro, citation, and nullable findingSource', async () => {
+    const citationsToCreate = [
+      {
+        citation: '78',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 200039,
+            grantNumber: grant.number,
+            acro: 'ANC',
+            citation: '78',
+            findingSource: null,
+            name: 'ANC - 78 - null',
+          }),
+        ],
+      },
+    ];
+
+    await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitation.name).toBe('ANC - 78');
+    expect(savedCitation.findingSource).toBeNull();
+    expect(savedCitation.monitoringReferences[0].name).toBe('ANC - 78');
+  });
+
+  it('trims findingSource before persisting monitoring citations', async () => {
+    const citationsToCreate = [
+      {
+        citation: '78',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 200039,
+            grantNumber: grant.number,
+            acro: 'ANC',
+            citation: '78',
+            findingSource: '  Monitoring Source  ',
+            name: 'stale name',
+          }),
+        ],
+      },
+    ];
+
+    await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitation.findingSource).toBe('Monitoring Source');
+    expect(savedCitation.name).toBe('ANC - 78 - Monitoring Source');
+  });
+
+  it('preserves citations that share a standard id across different findings or reviews', async () => {
+    const citationsToCreate = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 200039,
+            grantNumber: grant.number,
+          }),
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdTwo,
+            reviewName: 'Review 1',
+            standardId: 200039,
+            grantNumber: grant.number,
+          }),
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdTwo,
+            reviewName: 'Review 2',
+            standardId: 200039,
+            grantNumber: grant.number,
+          }),
+        ],
+      },
+    ];
+
+    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    expect(result).toHaveLength(3);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitations).toHaveLength(3);
+    expect(
+      savedCitations.map((savedCitation) => [
+        savedCitation.findingId,
+        savedCitation.reviewName,
+        savedCitation.standardId,
+      ])
+    ).toEqual(
+      expect.arrayContaining([
+        [findingIdOne, 'Review 1', 200039],
+        [findingIdTwo, 'Review 1', 200039],
+        [findingIdTwo, 'Review 2', 200039],
+      ])
+    );
+  });
+
   it('correctly saves aro citations per grant', async () => {
     const multiGrantCitations = [
       {
         citation: 'Citation 1',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-          standardId: 1,
-        }],
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review 1',
+            standardId: 1,
+            grantNumber: grant.number,
+            citation: 'Citation 1',
+          }),
+        ],
       },
       {
         citation: 'Citation 2',
-        monitoringReferences: [{
-          grantId: 2,
-          findingId: 1,
-          reviewName: 'Review 2',
-          standardId: 2,
-        }],
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: 2,
+            findingId: findingIdTwo,
+            reviewName: 'Review 2',
+            standardId: 2,
+            grantNumber: '99CH000002',
+            citation: 'Citation 2',
+          }),
+        ],
       },
       {
         citation: 'Citation 3',
         monitoringReferences: [
-          {
+          buildMonitoringReference({
             grantId: 3,
-            findingId: 1,
+            findingId: findingIdTwo,
             reviewName: 'Review 3',
             standardId: 3,
-          },
-          {
+            grantNumber: '99CH000003',
+            citation: 'Citation 3',
+          }),
+          buildMonitoringReference({
             grantId: grant.id,
-            findingId: 1,
+            findingId: findingIdThree,
             reviewName: 'Review 4',
             standardId: 4,
-          }],
+            grantNumber: grant.number,
+            citation: 'Citation 3',
+          }),
+        ],
       },
     ];
 
@@ -444,18 +790,150 @@ describe('activityReportObjectiveCitation', () => {
       },
     });
 
+    const sortedAroCitations = aroCitations.sort((a, b) => a.citation.localeCompare(b.citation));
     expect(aroCitations).toHaveLength(2);
-    citationIds.push(aroCitations[0].id);
-    citationIds.push(aroCitations[1].id);
 
     // Assert citations are saved correctly.
-    expect(aroCitations[0].citation).toEqual('Citation 1');
-    expect(aroCitations[0].monitoringReferences.length).toEqual(1);
-    expect(aroCitations[0].monitoringReferences[0].grantId).toBe(grant.id);
+    expect(sortedAroCitations[0].citation).toEqual('Citation 1');
+    expect(sortedAroCitations[0].grantId).toBe(grant.id);
 
-    expect(aroCitations[1].citation).toEqual('Citation 3');
-    expect(aroCitations[1].monitoringReferences.length).toEqual(1);
-    expect(aroCitations[1].monitoringReferences[0].grantId).toBe(grant.id);
+    expect(sortedAroCitations[1].citation).toEqual('Citation 3');
+    expect(sortedAroCitations[1].grantId).toBe(grant.id);
+    expect(sortedAroCitations.map((citation) => citation.findingId).sort()).toEqual(
+      [findingIdOne, findingIdThree].sort()
+    );
+    expect(sortedAroCitations[0].citationId).toBeTruthy();
+    expect(sortedAroCitations[1].citationId).toBeTruthy();
+  });
+
+  it('throws when a citation findingId cannot be resolved to a Citation record', async () => {
+    const missingFindingId = faker.string.uuid();
+    const citationsToCreate = [
+      {
+        citation: 'Citation with unresolved finding',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: missingFindingId,
+            reviewName: 'Review Missing',
+            standardId: 200112,
+            grantNumber: grant.number,
+            citation: 'Citation with unresolved finding',
+          }),
+        ],
+      },
+    ];
+
+    await expect(cacheCitations(objective.id, aro.id, citationsToCreate)).rejects.toThrow(
+      `No Citation record found for finding IDs: ${missingFindingId}`
+    );
+  });
+
+  it('rolls back citation changes when unresolved findingIds are encountered in a transaction', async () => {
+    const originalCitations = [
+      {
+        citation: 'Persisted citation',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdOne,
+            reviewName: 'Review Original',
+            standardId: 200113,
+            grantNumber: grant.number,
+            citation: 'Persisted citation',
+          }),
+        ],
+      },
+    ];
+
+    await cacheCitations(objective.id, aro.id, originalCitations);
+
+    const missingFindingId = faker.string.uuid();
+    const unresolvedCitations = [
+      {
+        citation: 'Resolved citation update',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: findingIdTwo,
+            reviewName: 'Review Updated',
+            standardId: 200114,
+            grantNumber: grant.number,
+            citation: 'Resolved citation update',
+          }),
+        ],
+      },
+      {
+        citation: 'Unresolved citation update',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: missingFindingId,
+            reviewName: 'Review Missing',
+            citation: 'Unresolved citation update',
+            standardId: 200115,
+            grantNumber: grant.number,
+          }),
+        ],
+      },
+    ];
+
+    await expect(
+      sequelize.transaction(async () => {
+        await cacheCitations(objective.id, aro.id, unresolvedCitations);
+      })
+    ).rejects.toThrow(`No Citation record found for finding IDs: ${missingFindingId}`);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitations).toHaveLength(1);
+    expect(savedCitations[0].citation).toBe('Persisted citation');
+    expect(savedCitations[0].findingId).toBe(findingIdOne);
+  });
+
+  it('persists citations for monitoring-template goals created via rtr', async () => {
+    await goal.update({
+      createdVia: 'rtr',
+    });
+
+    const citationsToCreate = [
+      {
+        citation: 'RTR Citation 1',
+        monitoringReferences: [
+          buildMonitoringReference({
+            grantId: grant.id,
+            findingId: rtrFindingId,
+            reviewName: 'Review RTR',
+            standardId: 200051,
+            grantNumber: grant.number,
+            name: 'RTR Citation 1',
+            citation: 'RTR Citation 1',
+          }),
+        ],
+      },
+    ];
+
+    const result = await cacheCitations(rtrObjective.id, rtrAro.id, citationsToCreate);
+
+    expect(result).toBeDefined();
+    expect(result.length).toBeGreaterThan(0);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: { activityReportObjectiveId: rtrAro.id },
+    });
+
+    expect(savedCitations).toHaveLength(1);
+    expect(savedCitations[0].citation).toEqual('RTR Citation 1');
+    expect(savedCitations[0].grantId).toEqual(grant.id);
+    expect(savedCitations[0].findingId).toEqual(rtrFindingId);
+
+    await goal.update({
+      createdVia: 'monitoring',
+    });
   });
 
   it('correctly removes and prevents the saving of citations for non-monitoring goals', async () => {
@@ -470,11 +948,22 @@ describe('activityReportObjectiveCitation', () => {
     const citationsToCreate = [
       {
         citation: 'Non-monitoring Citation to add',
-        monitoringReferences: JSON.stringify([{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-        }]),
+        monitoringReferences: JSON.stringify([
+          {
+            grantId: grant.id,
+            findingId: nonMonitoringFindingId,
+            reviewName: 'Review 1',
+            standardId: 200041,
+            grantNumber: grant.number,
+            findingType: 'Noncompliance',
+            acro: 'TST',
+            severity: 2,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+            name: 'Non-monitoring Citation to add',
+            citation: 'Non-monitoring Citation to add',
+          },
+        ]),
       },
     ];
 
@@ -482,7 +971,7 @@ describe('activityReportObjectiveCitation', () => {
     const result = await cacheCitations(
       nonMonitoringObjective.id,
       nonMonitoringAro.id,
-      citationsToCreate,
+      citationsToCreate
     );
 
     // Assert created.
@@ -506,7 +995,7 @@ describe('cacheGoalMetadata', () => {
   let snapShot;
 
   const mockUser = {
-    id: faker.datatype.number(),
+    id: faker.number.int({ min: 0, max: 99999 }),
     homeRegionId: 1,
     name: 'user13706689',
     hsesUsername: 'user13706689',
@@ -519,7 +1008,7 @@ describe('cacheGoalMetadata', () => {
     snapShot = await captureSnapshot();
 
     await User.create(mockUser);
-    const grantId = faker.datatype.number();
+    const grantId = faker.number.int({ min: 0, max: 99999 });
 
     activityReport = await createReport({
       activityRecipients: [
@@ -647,7 +1136,7 @@ describe('cacheGoalMetadata', () => {
       multiRecipientActivityReport.id,
       false,
       [], // Don't pass prompts should come from goal.
-      true,
+      true
     );
 
     arg = await ActivityReportGoal.findAll({
@@ -667,23 +1156,30 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(fieldResponses).toHaveLength(1);
-    expect(fieldResponses[0].dataValues.response).toEqual(['Family Circumstance', 'Facilities', 'Other ECE Care Options']);
+    expect(fieldResponses[0].dataValues.response).toEqual([
+      'Family Circumstance',
+      'Facilities',
+      'Other ECE Care Options',
+    ]);
 
     // Update goal field reposone for the goal..
-    await GoalFieldResponse.update({
-      response: ['Family Circumstance UPDATED', 'New Response'],
-    }, {
-      where: {
-        goalId: multiRecipientGoal.id,
+    await GoalFieldResponse.update(
+      {
+        response: ['Family Circumstance UPDATED', 'New Response'],
       },
-    });
+      {
+        where: {
+          goalId: multiRecipientGoal.id,
+        },
+      }
+    );
 
     await cacheGoalMetadata(
       multiRecipientGoal,
       multiRecipientActivityReport.id,
       false,
       [], // Don't pass prompts should come from goal.
-      true,
+      true
     );
 
     arg = await ActivityReportGoal.findAll({
@@ -701,6 +1197,9 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(updatedFieldResponses).toHaveLength(1);
-    expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual([
+      'Family Circumstance UPDATED',
+      'New Response',
+    ]);
   });
 });

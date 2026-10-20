@@ -1,26 +1,26 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import NationalCenters from '../NationalCenters';
 
 describe('National Centers page', () => {
   const nationalCenterUrl = join('api', 'national-center');
   const nationalCenterAdminUrl = join('api', 'admin', 'national-center');
   beforeEach(() => {
-    fetchMock.get(nationalCenterUrl,
-      {
-        centers: [
-          { id: 1, name: 'DTL', users: [] },
-          { id: 2, name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
-          { id: 3, name: 'PFCE', users: [] },
-          { id: 4, name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
-        ],
-        users: [{
+    fetchMock.get(nationalCenterUrl, {
+      centers: [
+        { id: 1, name: 'DTL', users: [] },
+        { id: 2, name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
+        { id: 3, name: 'PFCE', users: [] },
+        { id: 4, name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
+      ],
+      users: [
+        {
           id: 1,
           name: 'User 1',
         },
@@ -35,8 +35,9 @@ describe('National Centers page', () => {
         {
           id: 4,
           name: 'User 4',
-        }],
-      });
+        },
+      ],
+    });
   });
 
   afterEach(() => {
@@ -44,25 +45,41 @@ describe('National Centers page', () => {
   });
   it('renders without nationalCenterId match param', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: {}, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: {}, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
   });
   it('renders with nationalCenterId match param', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
   });
   it('can fail to fetch centers', async () => {
     fetchMock.restore();
     fetchMock.get(nationalCenterUrl, 500);
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: {}, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: {}, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/Error fetching national centers/i)).toBeVisible();
   });
 
   it('can create a new national center', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.post(nationalCenterAdminUrl, { name: 'New Center', id: 5 });
@@ -82,9 +99,13 @@ describe('National Centers page', () => {
     expect(await screen.findByText('Center created successfully')).toBeVisible();
   });
 
-  it('can\'t create a new national center without a user', async () => {
+  it("can't create a new national center without a user", async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.post(nationalCenterAdminUrl, { name: 'New Center', id: 5 });
@@ -105,9 +126,13 @@ describe('National Centers page', () => {
     expect(await screen.findByText('Center created successfully')).toBeVisible();
   });
 
-  it('can\'t update an existing national center without a user', async () => {
+  it("can't update an existing national center without a user", async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.put(join(nationalCenterAdminUrl, '1'), { name: 'New Center', id: 5 });
@@ -131,7 +156,11 @@ describe('National Centers page', () => {
 
   it('creating a new national center with a user updates the list', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: 'new' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.post(nationalCenterAdminUrl, { name: 'New Center', id: 5 });
@@ -142,7 +171,8 @@ describe('National Centers page', () => {
     expect(screen.getByText('User 2')).toBeVisible();
 
     // fetch mock get once for the initial render, and once for the update
-    fetchMock.get(nationalCenterUrl,
+    fetchMock.get(
+      nationalCenterUrl,
       {
         centers: [
           { id: '1', name: 'DTL', users: [] },
@@ -151,23 +181,27 @@ describe('National Centers page', () => {
           { id: '4', name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
           { id: '5', name: 'New Center', users: [{ id: 2, name: 'User 2' }] },
         ],
-        users: [{
-          id: 1,
-          name: 'User 1',
-        },
-        {
-          id: 2,
-          name: 'User 2',
-        },
-        {
-          id: 3,
-          name: 'User 3',
-        },
-        {
-          id: 4,
-          name: 'User 4',
-        }],
-      }, { overwriteRoutes: true });
+        users: [
+          {
+            id: 1,
+            name: 'User 1',
+          },
+          {
+            id: 2,
+            name: 'User 2',
+          },
+          {
+            id: 3,
+            name: 'User 3',
+          },
+          {
+            id: 4,
+            name: 'User 4',
+          },
+        ],
+      },
+      { overwriteRoutes: true }
+    );
 
     // Save with updated response.
     userEvent.click(screen.getByText(/Save/i));
@@ -187,7 +221,11 @@ describe('National Centers page', () => {
 
   it('can update an existing national center', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.put(join(nationalCenterAdminUrl, '1'), { name: 'New Center', id: 5 });
@@ -208,7 +246,11 @@ describe('National Centers page', () => {
 
   it('handles an error to create or update a national center', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.put(join(nationalCenterAdminUrl, '1'), 500);
@@ -225,7 +267,11 @@ describe('National Centers page', () => {
 
   it('you can delete a national center', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.delete(join(nationalCenterAdminUrl, '1'), { message: 'Center deleted successfully' });
@@ -238,7 +284,11 @@ describe('National Centers page', () => {
 
   it('handles an error to delete a national center', async () => {
     const history = createMemoryHistory();
-    render(<Router history={history}><NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} /></Router>);
+    render(
+      <Router history={history}>
+        <NationalCenters match={{ params: { nationalCenterId: '1' }, path: '', url: '' }} />
+      </Router>
+    );
     expect(await screen.findByText(/National Centers/i)).toBeVisible();
 
     fetchMock.delete(join(nationalCenterAdminUrl, '1'), 500);

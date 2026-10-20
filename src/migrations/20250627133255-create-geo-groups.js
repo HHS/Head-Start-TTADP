@@ -20,10 +20,14 @@ module.exports = {
         `,
         {
           replacements: {
-            id: CREATOR_ID, name: 'Heather', hsesUserId: '55174', hsesUsername: 'heather@example.com', email: 'heather@example.com',
+            id: CREATOR_ID,
+            name: 'Heather',
+            hsesUserId: '55174',
+            hsesUsername: 'heather@example.com',
+            email: 'heather@example.com',
           },
           transaction,
-        },
+        }
       );
 
       await queryInterface.sequelize.query(
@@ -34,10 +38,14 @@ module.exports = {
         `,
         {
           replacements: {
-            id: COLLABORATOR_ID, name: 'Tammy', hsesUserId: '53719', hsesUsername: 'tammy@example.com', email: 'tammy@example.com',
+            id: COLLABORATOR_ID,
+            name: 'Tammy',
+            hsesUserId: '53719',
+            hsesUsername: 'tammy@example.com',
+            email: 'tammy@example.com',
           },
           transaction,
-        },
+        }
       );
 
       // Lookup collaborator type IDs from database
@@ -52,7 +60,7 @@ module.exports = {
         {
           type: Sequelize.QueryTypes.SELECT,
           transaction,
-        },
+        }
       );
 
       // Extract collaborator type IDs
@@ -65,19 +73,21 @@ module.exports = {
 
       // Insert Groups, returning ids
       const insertedGroupResults = await Promise.all(
-        REGIONS.map((region) => queryInterface.sequelize.query(
-          `
+        REGIONS.map((region) =>
+          queryInterface.sequelize.query(
+            `
             INSERT INTO "Groups" ("name", "isPublic", "createdAt", "updatedAt")
             VALUES (:name, true, NOW(), NOW())
             ON CONFLICT ("name") DO UPDATE SET "isPublic" = EXCLUDED."isPublic"
             RETURNING "id";
             `,
-          {
-            replacements: { name: region },
-            type: Sequelize.QueryTypes.SELECT,
-            transaction,
-          },
-        )),
+            {
+              replacements: { name: region },
+              type: Sequelize.QueryTypes.SELECT,
+              transaction,
+            }
+          )
+        )
       );
 
       // Extract ids
@@ -122,13 +132,17 @@ module.exports = {
         {
           replacements: { regions: REGIONS },
           transaction,
-        },
+        }
       );
 
       // Remove the groups
-      await queryInterface.bulkDelete('Groups', {
-        name: { [Sequelize.Op.in]: REGIONS },
-      }, { transaction });
+      await queryInterface.bulkDelete(
+        'Groups',
+        {
+          name: { [Sequelize.Op.in]: REGIONS },
+        },
+        { transaction }
+      );
     });
   },
 };

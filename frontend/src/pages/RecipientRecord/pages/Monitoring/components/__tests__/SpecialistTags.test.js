@@ -7,22 +7,26 @@ import SpecialistTags from '../SpecialistTags';
 
 // Mock Tag and Tooltip so tests can inspect props easily
 jest.mock('../../../../../../components/Tag', () => ({ clickable, children }) => (
-  <div data-testid="tag" data-clickable={clickable}>{children}</div>
-));
-
-jest.mock('../../../../../../components/Tooltip', () => ({
-  displayText, tooltipText, buttonLabel, className,
-}) => (
-  <div
-    data-testid="tooltip"
-    data-displaytext={displayText}
-    data-tooltiptext={tooltipText}
-    data-buttonlabel={buttonLabel}
-    data-classname={className}
-  >
-    {displayText}
+  <div data-testid="tag" data-clickable={clickable}>
+    {children}
   </div>
 ));
+
+jest.mock(
+  '../../../../../../components/Tooltip',
+  () =>
+    ({ displayText, tooltipText, buttonLabel, className }) => (
+      <div
+        data-testid="tooltip"
+        data-displaytext={displayText}
+        data-tooltiptext={tooltipText}
+        data-buttonlabel={buttonLabel}
+        data-classname={className}
+      >
+        {displayText}
+      </div>
+    )
+);
 
 describe('SpecialistTags', () => {
   it('renders Unavailable when no specialists provided', () => {

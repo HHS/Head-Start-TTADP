@@ -1,13 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import {
   Button,
-  Modal as TrussWorksModal,
-  ModalHeading,
-  ModalFooter,
   ButtonGroup,
+  ModalFooter,
+  ModalHeading,
   ModalToggleButton,
+  Modal as TrussWorksModal,
 } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import './Modal.css';
 
 const ModalWithCancel = ({
@@ -53,9 +53,7 @@ const ModalWithCancel = ({
         </ModalHeading>
       </div>
 
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
 
       <ModalFooter>
         <ButtonGroup>

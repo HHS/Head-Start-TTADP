@@ -1,28 +1,27 @@
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
-import filtersToScopes from '../index';
-
 import {
-  User,
   EventReportPilot,
-  NationalCenterUser,
-  NationalCenter,
   EventReportPilotNationalCenterUser,
+  NationalCenter,
+  NationalCenterUser,
   sequelize,
+  User,
 } from '../../models';
+import filtersToScopes from '../index';
 
 // Mock user data
 export const mockUser = {
-  id: faker.datatype.number(),
+  id: faker.number.int({ min: 0, max: 99999 }),
   homeRegionId: 1,
   name: 'John Smith',
-  hsesUsername: faker.datatype.string(10),
-  hsesUserId: faker.datatype.string(10),
+  hsesUsername: faker.string.sample(10),
+  hsesUserId: faker.string.sample(10),
   lastLogin: new Date(),
 };
 
 export const mockCollaboratorUser = {
-  id: faker.datatype.number(),
+  id: faker.number.int({ min: 0, max: 99999 }),
   homeRegionId: 1,
   name: 'Bill Jones',
   hsesUsername: 'collabUser13874748',
@@ -32,13 +31,13 @@ export const mockCollaboratorUser = {
 
 // Re-export common imports for convenience
 export {
-  Op,
+  EventReportPilot,
+  EventReportPilotNationalCenterUser,
   faker,
   filtersToScopes,
-  User,
-  EventReportPilot,
-  NationalCenterUser,
   NationalCenter,
-  EventReportPilotNationalCenterUser,
+  NationalCenterUser,
+  Op,
   sequelize,
+  User,
 };

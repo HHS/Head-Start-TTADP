@@ -1,13 +1,11 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
-import {
-  render, screen, act, fireEvent,
-} from '@testing-library/react';
-import { useForm } from 'react-hook-form';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Grid } from '@trussworks/react-uswds';
+import moment from 'moment';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ControlledDatePicker from '../ControlledDatePicker';
 
@@ -20,9 +18,7 @@ const defaultValidation = {
 describe('Controlled Date Picker', () => {
   // eslint-disable-next-line react/prop-types
   const TestDatePicker = ({ setEndDate, customValidationMessages = defaultValidation }) => {
-    const {
-      control, errors, handleSubmit, watch,
-    } = useForm({
+    const { control, errors, handleSubmit, watch } = useForm({
       defaultValues: { name: [] },
       mode: 'all',
     });
@@ -37,9 +33,7 @@ describe('Controlled Date Picker', () => {
         <Grid row>
           <Grid col={8}>
             {errors.startDate ? errors.startDate.message : ''}
-            <label htmlFor="startDate">
-              Start date
-            </label>
+            <label htmlFor="startDate">Start date</label>
             <ControlledDatePicker
               customValidationMessages={customValidationMessages}
               control={control}
@@ -101,14 +95,16 @@ describe('Controlled Date Picker', () => {
 
   it('displays custom validation messages', async () => {
     const setEndDate = jest.fn();
-    render(<TestDatePicker
-      setEndDate={setEndDate}
-      customValidationMessages={{
-        beforeMessage: 'Before message',
-        afterMessage: 'After message',
-        invalidMessage: 'Invalid message',
-      }}
-    />);
+    render(
+      <TestDatePicker
+        setEndDate={setEndDate}
+        customValidationMessages={{
+          beforeMessage: 'Before message',
+          afterMessage: 'After message',
+          invalidMessage: 'Invalid message',
+        }}
+      />
+    );
 
     const ed = await screen.findByRole('textbox', { name: /end date/i });
     const sd = await screen.findByRole('textbox', { name: /start date/i });

@@ -1,34 +1,34 @@
-import { Request, Response } from 'express';
 import { DECIMAL_BASE } from '@ttahub/common';
+import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { GROUP_COLLABORATORS } from '../../constants';
-import db from '../../models';
 import { auditLogger } from '../../logger';
-import { userById } from '../../services/users';
+import db from '../../models';
+import GroupPolicy from '../../policies/group';
 import { currentUserId } from '../../services/currentUser';
 import {
-  group,
-  groups,
-  editGroup,
+  checkGroupNameAvailable,
   createNewGroup,
   destroyGroup,
+  editGroup,
+  type GroupResponse,
+  group,
+  groups,
   potentialGroupUsers,
   potentialRecipientGrants,
-  checkGroupNameAvailable,
-  type GroupResponse,
 } from '../../services/groups';
-import GroupPolicy from '../../policies/group';
+import { userById } from '../../services/users';
 
 const NAMESPACE = 'GROUPS';
-const {
-  Grant,
-} = db;
+const { Grant } = db;
 
 const GROUP_ERRORS = {
   ALREADY_EXISTS: 'This group name already exists, please use a different name',
   ERROR_SAVING: 'There was an error saving your group',
-  CO_OWNER_PERMISSIONS: 'All co-owners must have permissions matching the owner, and access to all grants within the group',
-  SHARED_WITH_PERMISSIONS: 'All sharedWith must have permissions matching the owner, and access to all grants within the group',
+  CO_OWNER_PERMISSIONS:
+    'All co-owners must have permissions matching the owner, and access to all grants within the group',
+  SHARED_WITH_PERMISSIONS:
+    'All sharedWith must have permissions matching the owner, and access to all grants within the group',
 };
 
 /**
@@ -43,16 +43,16 @@ const GROUP_ERRORS = {
 function checkBulkPermissions(
   method: string, // The method to check permissions for
   // An array of user data objects with their permissions
-  userDatas: { id: number, permissions: { regionId: number, scopeId: number }[] }[],
+  userDatas: { id: number; permissions: { regionId: number; scopeId: number }[] }[],
   // An array of grants
-  grants: { id: number, regionId: number, recipientId?: number, status?: string }[],
+  grants: { id: number; regionId: number; recipientId?: number; status?: string }[],
   // An optional group object
-  groupData?: { id: number, isPublic: boolean, grants?, groupCollaborators? },
+  groupData?: { id: number; isPublic: boolean; grants?; groupCollaborators? }
 ): boolean {
   // Negate the result of the following expression
   const resultz = userDatas
     // Map over the userDatas array and create a new GroupPolicy instance for each userData
-    .map((userData) => (new GroupPolicy(userData, grants, groupData))[method]())
+    .map((userData) => new GroupPolicy(userData, grants, groupData)[method]())
     // Check if every result is false
     .every((result) => result);
   return resultz;
@@ -81,16 +81,15 @@ export async function getEligibleUsersForGroup(req: Request, res: Response) {
 
     // If the group isn't saved yet, create a group to check permissions.
     const unsavedGroup = {
-      groupCollaborators: [{
-        user: { id: userId },
-        collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
-      }],
+      groupCollaborators: [
+        {
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        },
+      ],
     };
     // Fetch the group data and the potential co-owners asynchronously.
-    const [
-      groupData,
-      optionsForCoOwners,
-    ] = await Promise.all([
+    const [groupData, optionsForCoOwners] = await Promise.all([
       groupId !== null ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
       potentialGroupUsers(groupId, userId),
     ]);
@@ -136,17 +135,16 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
 
     // If the group isn't saved yet, create a group to check permissions.
     const unsavedGroup = {
-      groupCollaborators: [{
-        user: { id: userId },
-        collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
-      }],
+      groupCollaborators: [
+        {
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        },
+      ],
     };
 
     // Retrieve the group data and potential recipient grants in parallel
-    const [
-      groupData,
-      optionsForRecipientGrants,
-    ] = await Promise.all([
+    const [groupData, optionsForRecipientGrants] = await Promise.all([
       groupId !== null ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
       potentialRecipientGrants({ groupId, userId }),
     ]);
@@ -214,10 +212,7 @@ export async function getGroup(req: Request, res: Response) {
     // Extract the 'groupId' from the request parameters
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
-    const [
-      userId,
-      groupResponse,
-    ] = await Promise.all([
+    const [userId, groupResponse] = await Promise.all([
       // Get the current user's ID asynchronously
       currentUserId(req, res),
       // Get the group response by calling the 'group' function with the parsed 'groupId'
@@ -229,11 +224,7 @@ export async function getGroup(req: Request, res: Response) {
 
     // Create a new GroupPolicy instance with the current user's ID, an empty array of permissions,
     // and the group response
-    const policy = new GroupPolicy(
-      user,
-      groupResponse.grants,
-      groupResponse,
-    );
+    const policy = new GroupPolicy(user, groupResponse.grants, groupResponse);
 
     // Check if the current user can use the group
     if (!policy.canUseGroup()) {
@@ -274,11 +265,7 @@ export async function createGroup(req: Request, res: Response) {
     // cast isPublic to boolean
     const isPublic = isPublicRaw === 'true' || isPublicRaw === true;
     // Fetch the current user ID and related data in parallel
-    const [
-      userId,
-      coOwners,
-      individuals,
-    ] = await Promise.all([
+    const [userId, coOwners, individuals] = await Promise.all([
       currentUserId(req, res),
       coOwnerIds.length
         ? Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId)))
@@ -289,11 +276,7 @@ export async function createGroup(req: Request, res: Response) {
     ]);
 
     // Fetch the user data for the current user
-    const [
-      user,
-      grants,
-      nameAvailable,
-    ] = await Promise.all([
+    const [user, grants, nameAvailable] = await Promise.all([
       userById(userId),
       potentialRecipientGrants({ userId }),
       checkGroupNameAvailable(name),
@@ -392,13 +375,9 @@ export async function updateGroup(req: Request, res: Response) {
       // Call the currentUserId function with req and res parameters and await its result
       currentUserId(req, res),
       group(groupId), // Call the group function with groupId parameter and await its result
-      Grant.findAll({ // Call the findAll method on the Grant model
-        attributes: [
-          'id',
-          'regionId',
-          'recipientId',
-          'status',
-        ],
+      Grant.findAll({
+        // Call the findAll method on the Grant model
+        attributes: ['id', 'regionId', 'recipientId', 'status'],
         where: {
           id: grantIds,
           status: 'Active',
@@ -437,7 +416,7 @@ export async function updateGroup(req: Request, res: Response) {
     }
 
     // Check if the new group name is available
-    if (!await checkGroupNameAvailable(name, groupId)) {
+    if (!(await checkGroupNameAvailable(name, groupId))) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'new-group-name',
         message: GROUP_ERRORS.ALREADY_EXISTS,
@@ -473,10 +452,7 @@ export async function deleteGroup(req: Request, res: Response) {
   try {
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
-    const [
-      userId,
-      groupData,
-    ] = await Promise.all([
+    const [userId, groupData] = await Promise.all([
       currentUserId(req, res),
       group(groupId), // Retrieve the group data using the groupId
     ]);

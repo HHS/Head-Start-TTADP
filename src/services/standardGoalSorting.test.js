@@ -1,17 +1,9 @@
 import { GOAL_STATUS } from '../constants';
-import { standardGoalsForRecipient } from './standardGoals';
 import db from '../models';
-import { createRecipient, createGrant } from '../testUtils';
+import { createGrant, createRecipient } from '../testUtils';
+import { standardGoalsForRecipient } from './standardGoals';
 
-const {
-  Goal,
-  GoalTemplate,
-  CollaboratorType,
-  GoalCollaborator,
-  User,
-  Grant,
-  ValidFor,
-} = db;
+const { Goal, GoalTemplate, CollaboratorType, GoalCollaborator, User, Grant, ValidFor } = db;
 
 describe('standardGoalsForRecipient sorting tests', () => {
   let recipient;
@@ -127,13 +119,13 @@ describe('standardGoalsForRecipient sorting tests', () => {
 
     if (goalIds.length > 0 && user?.id && creatorType?.id) {
       await Promise.all(
-        goalIds.map((goalId) => (
+        goalIds.map((goalId) =>
           GoalCollaborator.create({
             goalId,
             userId: user.id,
             collaboratorTypeId: creatorType.id,
           })
-        )),
+        )
       );
     }
   });
@@ -141,12 +133,7 @@ describe('standardGoalsForRecipient sorting tests', () => {
   afterAll(async () => {
     await GoalCollaborator.destroy({
       where: {
-        goalId: [
-          notStartedGoal.id,
-          inProgressGoal.id,
-          suspendedGoal.id,
-          closedGoal.id,
-        ],
+        goalId: [notStartedGoal.id, inProgressGoal.id, suspendedGoal.id, closedGoal.id],
       },
       force: true,
     });
@@ -154,12 +141,7 @@ describe('standardGoalsForRecipient sorting tests', () => {
     // Clean up goals
     await Goal.destroy({
       where: {
-        id: [
-          notStartedGoal.id,
-          inProgressGoal.id,
-          suspendedGoal.id,
-          closedGoal.id,
-        ],
+        id: [notStartedGoal.id, inProgressGoal.id, suspendedGoal.id, closedGoal.id],
       },
       individualHooks: true,
       force: true,
@@ -168,11 +150,7 @@ describe('standardGoalsForRecipient sorting tests', () => {
     // Clean up goal template if it was created
     await GoalTemplate.destroy({
       where: {
-        id: [
-          templateNotStarted.id,
-          templateInProgress.id,
-          templateSuspended.id,
-          templateClosed.id],
+        id: [templateNotStarted.id, templateInProgress.id, templateSuspended.id, templateClosed.id],
       },
       individualHooks: true,
       force: true,
@@ -190,11 +168,10 @@ describe('standardGoalsForRecipient sorting tests', () => {
 
   it('sorts goals by status with ASC direction showing Not Started first', async () => {
     // Call the function with the recipient and region from the grant
-    const result = await standardGoalsForRecipient(
-      recipient.id,
-      grant.regionId,
-      { sortBy: 'goalStatus', sortDir: 'asc' },
-    );
+    const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+      sortBy: 'goalStatus',
+      sortDir: 'asc',
+    });
 
     // Verify we have goals in the result
     expect(result.goalRows.length).toBe(4);

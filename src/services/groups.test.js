@@ -1,30 +1,30 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { GROUP_SHARED_WITH } from '@ttahub/common';
 import { GROUP_COLLABORATORS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
-  User,
+  CollaboratorType,
+  Grant,
   Group,
+  GroupCollaborator,
   GroupGrant,
   Permission,
-  Recipient,
-  GroupCollaborator,
-  Grant,
-  ValidFor,
-  CollaboratorType,
-  sequelize,
-  Role,
-  UserRole,
   Program,
+  Recipient,
+  Role,
+  sequelize,
+  User,
+  UserRole,
+  ValidFor,
 } from '../models';
 import {
-  groupsByRegion,
-  groups,
-  group,
-  createNewGroup,
-  editGroup,
-  destroyGroup,
   checkGroupNameAvailable,
+  createNewGroup,
+  destroyGroup,
+  editGroup,
+  group,
+  groups,
+  groupsByRegion,
   potentialGroupUsers,
   potentialRecipientGrants,
 } from './groups';
@@ -86,7 +86,7 @@ describe('Groups service', () => {
     });
 
     mockUser = await User.create({
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
@@ -95,7 +95,7 @@ describe('Groups service', () => {
     });
 
     mockUserTwo = await User.create({
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
@@ -104,7 +104,7 @@ describe('Groups service', () => {
     });
 
     mockUserThree = await User.create({
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
@@ -113,7 +113,7 @@ describe('Groups service', () => {
     });
 
     mockUserFour = await User.create({
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       password: faker.internet.password(),
       hsesUserId: faker.internet.email(),
@@ -146,14 +146,14 @@ describe('Groups service', () => {
     });
 
     recipient = await Recipient.create({
-      id: faker.datatype.number(),
-      name: faker.name.firstName(),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      name: faker.person.firstName(),
     });
 
     // create a first grant
     grantOne = await Grant.create({
-      id: faker.datatype.number(),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
       startDate: new Date(),
@@ -162,8 +162,8 @@ describe('Groups service', () => {
 
     // create a second grant
     grantTwo = await Grant.create({
-      id: faker.datatype.number(),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 0, max: 99999 }),
+      number: faker.string.sample(),
       recipientId: recipient.id,
       regionId: 1,
       startDate: new Date(),
@@ -370,12 +370,7 @@ describe('Groups service', () => {
 
     await User.destroy({
       where: {
-        id: [
-          mockUser.id,
-          mockUserTwo.id,
-          mockUserThree.id,
-          mockUserFour.id,
-        ],
+        id: [mockUser.id, mockUserTwo.id, mockUserThree.id, mockUserFour.id],
       },
     });
 
@@ -569,7 +564,7 @@ describe('Groups service', () => {
       expect(result.groupCollaborators).toHaveLength(3);
 
       const sharedWithCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'SharedWith',
+        (gc) => gc.collaboratorType.name === 'SharedWith'
       );
       expect(sharedWithCollab).toHaveLength(2);
       const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
@@ -577,7 +572,7 @@ describe('Groups service', () => {
       expect(sharedWithsharedWithCollabIds).toContain(mockUserThree.id);
 
       const coOwnersCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'Co-Owner',
+        (gc) => gc.collaboratorType.name === 'Co-Owner'
       );
       expect(coOwnersCollab).toHaveLength(1);
       const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
@@ -652,19 +647,21 @@ describe('Groups service', () => {
 
       // Assert result.groupCollaborators.
       expect(result.groupCollaborators).toHaveLength(4);
-      const creatorCollab = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      const creatorCollab = result.groupCollaborators.find(
+        (gc) => gc.collaboratorType.name === 'Creator'
+      );
       expect(creatorCollab).toBeDefined();
       expect(creatorCollab.userId).toBe(mockUser.id);
 
       const sharedWithCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'SharedWith',
+        (gc) => gc.collaboratorType.name === 'SharedWith'
       );
       expect(sharedWithCollab).toHaveLength(1);
       const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
       expect(sharedWithsharedWithCollabIds).toContain(mockUserTwo.id);
 
       const coOwnersCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'Co-Owner',
+        (gc) => gc.collaboratorType.name === 'Co-Owner'
       );
       expect(coOwnersCollab).toHaveLength(2);
       const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
@@ -694,7 +691,9 @@ describe('Groups service', () => {
 
       // Assert result.groupCollaborators.
       expect(result.groupCollaborators).toHaveLength(1);
-      const creatorCollabAfterEdit = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      const creatorCollabAfterEdit = result.groupCollaborators.find(
+        (gc) => gc.collaboratorType.name === 'Creator'
+      );
       expect(creatorCollabAfterEdit).toBeDefined();
       expect(creatorCollabAfterEdit.userId).toBe(mockUser.id);
       expect(result.sharedWith).toBe(GROUP_SHARED_WITH.EVERYONE);
@@ -745,7 +744,7 @@ describe('Groups service', () => {
     beforeAll(async () => {
       // Create a user.
       groupUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
         name: 'user1474265161',
         hsesUsername: 'user1474265161',
@@ -761,20 +760,20 @@ describe('Groups service', () => {
 
       // Create a recipient 1.
       const recipientOne = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       // Create a recipient 2.
       const recipientTwo = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       // Create a recipient 3.
       const recipientThree = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       // Set the recipient ids.
@@ -782,8 +781,8 @@ describe('Groups service', () => {
 
       // Create a grant for region 1.
       const g1 = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientOne.id,
         regionId: 1,
         startDate: new Date(),
@@ -792,8 +791,8 @@ describe('Groups service', () => {
 
       // Create a second grant for region 1.
       const g2 = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientTwo.id,
         regionId: 1,
         startDate: new Date(),
@@ -802,8 +801,8 @@ describe('Groups service', () => {
 
       // Create a third grant for region 2.
       const g3 = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientThree.id,
         regionId: 2,
         startDate: new Date(),
@@ -853,11 +852,7 @@ describe('Groups service', () => {
       });
 
       // Set the group ids.
-      groupIds = [
-        publicGroupRegion1.id,
-        privateGroupRegion1.id,
-        publicGroupRegion2.id,
-      ];
+      groupIds = [publicGroupRegion1.id, privateGroupRegion1.id, publicGroupRegion2.id];
 
       // Add the grants to the groups.
       await GroupGrant.create({
@@ -942,7 +937,7 @@ describe('Groups service', () => {
     });
 
     it('get a public user groups for report region', async () => {
-      const result = await groupsByRegion(1, faker.datatype.number());
+      const result = await groupsByRegion(1, faker.number.int({ min: 0, max: 99999 }));
 
       // From result get all the groups with ids in groupIds.
       const groupsToCheck = result.filter((g) => groupIds.includes(g.id));
@@ -959,7 +954,7 @@ describe('Groups service', () => {
     beforeAll(async () => {
       // Create a group.
       existingGroup = await Group.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         name: 'This group name is taken',
         isPublic: false,
       });
@@ -1005,14 +1000,14 @@ describe('Groups service', () => {
 
       // Create saved group.Group.create(
       savedGroup = await Group.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         name: 'This is a saved group with an ID',
         isPublic: false,
       });
 
       // Creator users.
       creatorUser = await User.create({
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         name: 'TEST creator',
         email: faker.internet.email(),
         password: faker.internet.password(),
@@ -1056,7 +1051,7 @@ describe('Groups service', () => {
 
       // Potential co-owners.
       potentialCoOwner1 = await User.create({
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         name: 'TEST potentialCoOwner1',
         email: faker.internet.email(),
         password: faker.internet.password(),
@@ -1093,7 +1088,7 @@ describe('Groups service', () => {
 
       potentialCoOwner2 = await User.create({
         name: 'TEST potentialCoOwner2',
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         email: faker.internet.email(),
         password: faker.internet.password(),
         hsesUserId: faker.internet.email(),
@@ -1130,7 +1125,7 @@ describe('Groups service', () => {
       // Invalid co-owner.
       invalidCoowner = await User.create({
         name: 'TEST invalidCoowner',
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         email: faker.internet.email(),
         password: faker.internet.password(),
         hsesUserId: faker.internet.email(),
@@ -1160,7 +1155,7 @@ describe('Groups service', () => {
       // Invalid co-owner permissions.
       invalidCoownerPermissions = await User.create({
         name: 'TEST invalidCoowner permissions',
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         email: faker.internet.email(),
         password: faker.internet.password(),
         hsesUserId: faker.internet.email(),
@@ -1305,14 +1300,14 @@ describe('Groups service', () => {
 
       // Create saved group.Group.create(
       savedGroup = await Group.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         name: 'This is a saved group with an ID',
         isPublic: false,
       });
 
       // Creator users.
       creatorUser = await User.create({
-        // name: faker.name.findName(),
+        // name: faker.person.fullName(),
         name: 'TEST creator',
         email: faker.internet.email(),
         password: faker.internet.password(),
@@ -1361,29 +1356,27 @@ describe('Groups service', () => {
         collaboratorTypeId: creatorCollaboratorType.id,
       });
 
-      usersToCleanup = [
-        creatorUser.id,
-      ];
+      usersToCleanup = [creatorUser.id];
 
       // Create recipients.
       recipientOne = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientTwo = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientThree = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientFour = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientIdsToClean.push(recipientOne.id);
@@ -1393,8 +1386,8 @@ describe('Groups service', () => {
 
       // Create grants.
       grantForGroupOne = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientOne.id,
         regionId: 1,
         startDate: new Date(),
@@ -1403,8 +1396,8 @@ describe('Groups service', () => {
       });
 
       grantForGroupTwo = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientTwo.id,
         regionId: 2,
         startDate: new Date(),
@@ -1413,8 +1406,8 @@ describe('Groups service', () => {
       });
 
       grantForGroupThree = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientThree.id,
         regionId: 3,
         startDate: new Date(),
@@ -1424,8 +1417,8 @@ describe('Groups service', () => {
 
       // Linked to GrantGroup (should be excluded).
       grantForGroupFour = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientFour.id,
         regionId: 1,
         startDate: new Date(),
@@ -1442,32 +1435,32 @@ describe('Groups service', () => {
       // Create a programs.
       programOne = await Program.create({
         ...dummyProgram,
-        id: faker.datatype.number(),
-        name: faker.name.findName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.fullName(),
         grantId: grantForGroupOne.id,
         programType: 'EHS',
       });
 
       programTwo = await Program.create({
         ...dummyProgram,
-        id: faker.datatype.number(),
-        name: faker.name.findName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.fullName(),
         grantId: grantForGroupTwo.id,
         programType: 'EHS',
       });
 
       programThree = await Program.create({
         ...dummyProgram,
-        id: faker.datatype.number(),
-        name: faker.name.findName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.fullName(),
         grantId: grantForGroupThree.id,
         programType: 'EHS',
       });
 
       programFour = await Program.create({
         ...dummyProgram,
-        id: faker.datatype.number(),
-        name: faker.name.findName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.fullName(),
         grantId: grantForGroupFour.id,
         programType: 'EHS',
       });
@@ -1548,13 +1541,12 @@ describe('Groups service', () => {
     });
     it('get potential recipients for saved group', async () => {
       const result = await potentialRecipientGrants({
-        groupId: savedGroup.id, userId: creatorUser.id,
+        groupId: savedGroup.id,
+        userId: creatorUser.id,
       });
-      const grantsToCheck = result.filter((g) => [
-        grantForGroupOne.id,
-        grantForGroupTwo.id,
-        grantForGroupThree.id,
-      ].includes(g.grantId));
+      const grantsToCheck = result.filter((g) =>
+        [grantForGroupOne.id, grantForGroupTwo.id, grantForGroupThree.id].includes(g.grantId)
+      );
 
       expect(grantsToCheck).toHaveLength(2);
       const grantIds = grantsToCheck.map((g) => g.grantId);
@@ -1563,13 +1555,12 @@ describe('Groups service', () => {
     });
     it('get potential recipients without having a saved group', async () => {
       const result = await potentialRecipientGrants({
-        groupId: null, userId: creatorUser.id,
+        groupId: null,
+        userId: creatorUser.id,
       });
-      const grantsToCheck = result.filter((g) => [
-        grantForGroupOne.id,
-        grantForGroupTwo.id,
-        grantForGroupThree.id,
-      ].includes(g.grantId));
+      const grantsToCheck = result.filter((g) =>
+        [grantForGroupOne.id, grantForGroupTwo.id, grantForGroupThree.id].includes(g.grantId)
+      );
 
       expect(grantsToCheck).toHaveLength(2);
       const grantIds = grantsToCheck.map((g) => g.grantId);

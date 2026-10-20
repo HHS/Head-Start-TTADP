@@ -1,5 +1,5 @@
-import sanitizeRequestBody from './sanitizeRequestBody';
 import * as loggerModule from '../logger';
+import sanitizeRequestBody from './sanitizeRequestBody';
 
 jest.mock('../logger');
 
@@ -52,10 +52,7 @@ describe('sanitizeRequestBody middleware', () => {
 
   it('should sanitize array items recursively', () => {
     req.body = {
-      recipients: [
-        { name: '<b>Recipient 1</b>' },
-        { name: 'Recipient 2' },
-      ],
+      recipients: [{ name: '<b>Recipient 1</b>' }, { name: 'Recipient 2' }],
     };
 
     middleware(req, res, next);
@@ -130,11 +127,7 @@ describe('sanitizeRequestBody middleware', () => {
 
   it('should handle arrays of strings', () => {
     req.body = {
-      tags: [
-        '<script>alert("XSS")</script>',
-        'normal-tag',
-        '<img src="x" onerror="alert()" />',
-      ],
+      tags: ['<script>alert("XSS")</script>', 'normal-tag', '<img src="x" onerror="alert()" />'],
     };
 
     middleware(req, res, next);
@@ -239,7 +232,8 @@ describe('sanitizeRequestBody middleware', () => {
   });
 
   it('should retain rich text formatting in context property', () => {
-    const richTextContent = '<h3><strong>Some</strong> <em>rich</em> <ins>text</ins> <del>that</del> is formatted.</h3>\n<ol>\n<li>Item A</li>\n<li>Item B</li>\n<li>Item C</li>\n</ol>\n<p>Second List</p>\n<ul>\n<li>Bullet Item A</li>\n<li>Bullet Item B</li>\n</ul>\n';
+    const richTextContent =
+      '<h3><strong>Some</strong> <em>rich</em> <ins>text</ins> <del>that</del> is formatted.</h3>\n<ol>\n<li>Item A</li>\n<li>Item B</li>\n<li>Item C</li>\n</ol>\n<p>Second List</p>\n<ul>\n<li>Bullet Item A</li>\n<li>Bullet Item B</li>\n</ul>\n';
 
     req.body = {
       context: richTextContent,
@@ -267,11 +261,14 @@ describe('sanitizeRequestBody middleware', () => {
 
   it('should handle errors and log them with winston logger', () => {
     // Create an object that throws when trying to iterate over keys
-    req.body = new Proxy({}, {
-      ownKeys() {
-        throw new Error('Test error');
-      },
-    });
+    req.body = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw new Error('Test error');
+        },
+      }
+    );
 
     middleware(req, res, next);
 
@@ -280,7 +277,7 @@ describe('sanitizeRequestBody middleware', () => {
       expect.objectContaining({
         error: 'Test error',
         stack: expect.any(String),
-      }),
+      })
     );
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
@@ -303,7 +300,7 @@ describe('sanitizeRequestBody middleware', () => {
       });
       expect(loggerModule.logger.warn).toHaveBeenCalledWith(
         'Request body exceeds maximum size',
-        expect.objectContaining({ size: expect.any(Number), maxSize: 1000000 }),
+        expect.objectContaining({ size: expect.any(Number), maxSize: 1000000 })
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -365,7 +362,7 @@ describe('sanitizeRequestBody middleware', () => {
         'Error sanitizing request body:',
         expect.objectContaining({
           error: 'Sanitization depth limit exceeded: maximum depth is 3',
-        }),
+        })
       );
       expect(next).not.toHaveBeenCalled();
     });
@@ -388,15 +385,7 @@ describe('sanitizeRequestBody middleware', () => {
       const customMiddleware = sanitizeRequestBody(1000000, 2); // Depth limit of 2
 
       req.body = {
-        arr: [
-          [
-            [
-              [
-                'too deep',
-              ],
-            ],
-          ],
-        ],
+        arr: [[[['too deep']]]],
       };
 
       customMiddleware(req, res, next);

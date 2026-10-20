@@ -1,8 +1,5 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import MyGroup from '../MyGroup';
 
@@ -31,7 +28,7 @@ describe('MyGroup', () => {
           isCoOwner={isCoOwner}
         />
         ,
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 

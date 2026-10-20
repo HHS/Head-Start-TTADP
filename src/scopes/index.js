@@ -1,10 +1,16 @@
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
-import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { citationFiltersToScopes as citation } from './citation';
 import { collabReportFiltersToScopes as collabReport } from './collabReports';
-import { grantsFiltersToScopes as grant } from './grants';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
 import { goalsFiltersToScopes as goal } from './goals';
+import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
+import { grantsFiltersToScopes as grant } from './grants';
+import { notificationFiltersToScopes as notification } from './notifications';
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
+import { ttaRequestFiltersToScopes as ttaRequest } from './ttaRequests';
 import { getValidTopicsSet } from './utils';
 
 const models = {
@@ -14,6 +20,12 @@ const models = {
   trainingReport,
   communicationLog,
   collabReport,
+  sessionReport,
+  deliveredReview,
+  citation,
+  grantCitation,
+  notification,
+  ttaRequest,
 };
 
 /**
@@ -58,13 +70,13 @@ export default async function filtersToScopes(filters, options = {}) {
     validTopics = await getValidTopicsSet();
   }
 
-  return Object.keys(models).reduce((scopes, model) => {
-    // we make em an object like so
-    Object.assign(scopes, {
-      [model]: models[model](filters, options[model], options.userId, validTopics),
-    });
-    return scopes;
-  }, {});
+  const entries = await Promise.all(
+    Object.keys(models).map(async (model) => [
+      model,
+      await models[model](filters, options[model], options.userId, validTopics),
+    ])
+  );
+  return Object.fromEntries(entries);
 }
 
 /**
@@ -77,7 +89,7 @@ export default async function filtersToScopes(filters, options = {}) {
  * @returns {Array} - The merged array of includes.
  */
 export const mergeIncludes = (includes, requiredIncludes) => {
-  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+  if (!includes?.length || includes.filter(Boolean).length < 1) {
     return requiredIncludes;
   }
 

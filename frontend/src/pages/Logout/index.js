@@ -1,4 +1,4 @@
-import { useEffect, useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import UserContext from '../../UserContext';
 
 function Logout() {

@@ -1,12 +1,10 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Container from '../../../components/Container';
 import './RecipientSummary.css';
 import { getDistinctSortedArray } from '../../../utils';
 
-function RecipientInformationSection({
-  heading, grants, property, distinct,
-}) {
+function RecipientInformationSection({ heading, grants, property, distinct }) {
   let valueList = grants.map((p) => p[property]).filter((v) => v);
   if (distinct) {
     valueList = getDistinctSortedArray(valueList);
@@ -14,14 +12,14 @@ function RecipientInformationSection({
 
   return (
     <div className="margin-bottom-2">
-      <p className="margin-y-1"><strong>{heading}</strong></p>
-      {
-        valueList.map((item) => (
-          <p className="margin-y-1" key={`${item}_${property}`}>
-            {item}
-          </p>
-        ))
-      }
+      <p className="margin-y-1">
+        <strong>{heading}</strong>
+      </p>
+      {valueList.map((item) => (
+        <p className="margin-y-1" key={`${item}_${property}`}>
+          {item}
+        </p>
+      ))}
     </div>
   );
 }
@@ -30,12 +28,14 @@ RecipientInformationSection.propTypes = {
   heading: PropTypes.string.isRequired,
   property: PropTypes.string.isRequired,
   distinct: PropTypes.bool,
-  grants: PropTypes.arrayOf(PropTypes.shape({
-    number: PropTypes.string,
-    status: PropTypes.string,
-    endDate: PropTypes.string,
-    id: PropTypes.number,
-  })).isRequired,
+  grants: PropTypes.arrayOf(
+    PropTypes.shape({
+      number: PropTypes.string,
+      status: PropTypes.string,
+      endDate: PropTypes.string,
+      id: PropTypes.number,
+    })
+  ).isRequired,
 };
 
 RecipientInformationSection.defaultProps = {
@@ -50,18 +50,21 @@ export default function RecipientSummary({ summary }) {
   return (
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
-        <h2 className="margin-0 padding-0">Recipient summary</h2>
+        <h2 className="ttahub-card-header-title margin-0 padding-0">Recipient summary</h2>
       </div>
       <div className="padding-x-3 padding-bottom-3">
         <div className="margin-bottom-2">
-          <p className="margin-y-1"><strong>Recipient ID</strong></p>
           <p className="margin-y-1">
-            {summary.uei}
+            <strong>Recipient ID</strong>
           </p>
+          <p className="margin-y-1">{summary.uei}</p>
         </div>
-        <RecipientInformationSection heading="Recipient type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
+        <RecipientInformationSection
+          heading="Recipient type"
+          property="recipientType"
+          grants={[{ recipientType: summary.recipientType }]}
+        />
       </div>
-
     </Container>
   );
 }
@@ -77,7 +80,7 @@ RecipientSummary.propTypes = {
         status: PropTypes.string,
         endDate: PropTypes.string,
         id: PropTypes.number,
-      }),
+      })
     ),
   }),
 };

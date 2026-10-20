@@ -1,21 +1,45 @@
 // @ts-check
+
+import { URL } from 'node:url';
 import {} from 'dotenv/config';
 import * as openidClient from 'openid-client';
-import { URL } from 'node:url';
-import { auditLogger } from '../logger';
+import handleErrors from '../lib/apiErrorHandler';
+import { auditLogger, hashForLogging } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
-import handleErrors from '../lib/apiErrorHandler';
 import { getPrivateJwk } from './jwkKeyManager';
 
 const namespace = 'MIDDLEWARE:AUTH';
+
+// ID token claims we're comfortable auditing. Everything else (sub, sid, nonce, jti, and any
+// PII HSES may add later) is left out of logs by default rather than denylisted.
+const SAFE_ID_TOKEN_CLAIM_KEYS = ['aal', 'acr', 'aud', 'auth_time', 'azp', 'exp', 'iat', 'iss'];
+
+function pickSafeClaims(claims = {}) {
+  return SAFE_ID_TOKEN_CLAIM_KEYS.reduce((safe, key) => {
+    if (key in claims) safe[key] = claims[key];
+    return safe;
+  }, {});
+}
+
+// openid-client/oauth4webapi error classes (ResponseBodyError, WWWAuthenticateChallengeError)
+// carry `cause`/`response` properties holding the IdP's raw response. Winston spreads an
+// error's own enumerable properties into the log line, so passing the error directly would
+// leak that response. Log an explicit allowlist instead.
+function safeErrorForLogging(err) {
+  if (!(err instanceof Error)) {
+    return { message: String(err) };
+  }
+  return { name: err.name, message: err.message, stack: err.stack };
+}
 
 let cachedClient = null;
 let issuerConfig = null;
 const CODE_CHALLENGE_METHOD = 'S256';
 const AUTH_METHOD = (process.env.OIDC_AUTH_METHOD || 'pkce').toLowerCase(); // 'pkce' or 'private_key_jwt'
-const USE_PKCE = AUTH_METHOD === 'pkce'
-  || (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
+const USE_PKCE =
+  AUTH_METHOD === 'pkce' ||
+  (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
 
 async function getOidcClient() {
   if (cachedClient) return cachedClient;
@@ -40,9 +64,7 @@ async function getOidcClient() {
    * @type {import('openid-client').DiscoveryRequestOptions}
    */
   const discoveryRequestOptions = {
-    execute: issuerUrl.protocol === 'https:' ? [] : [
-      openidClient.allowInsecureRequests,
-    ],
+    execute: issuerUrl.protocol === 'https:' ? [] : [openidClient.allowInsecureRequests],
   };
 
   // https://developers.login.gov/oidc/getting-started/#choosing-an-authentication-method
@@ -55,7 +77,7 @@ async function getOidcClient() {
     process.env.AUTH_CLIENT_ID,
     USE_PKCE ? clientMetadataPKCE : clientMetadataPrivateKeyJwt,
     USE_PKCE ? undefined : openidClient.PrivateKeyJwt(await getPrivateJwk()),
-    discoveryRequestOptions,
+    discoveryRequestOptions
   );
 
   cachedClient = openidClient;
@@ -112,7 +134,7 @@ export async function login(req, res) {
 
     res.redirect(redirectTo.href);
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to start login`, err);
+    auditLogger.error(`${namespace} Failed to start login`, safeErrorForLogging(err));
     res.status(500).send('Failed to start login');
   }
 }
@@ -169,10 +191,22 @@ export async function getAccessToken(req) {
     // The authorization server compares the challenge with the one it associated with the
     // authorization code from the previous step. If the two code challenges and verifier
     // match, the authorization server knows that the same client sent both requests.
-    auditLogger.info('Token Endpoint Response', tokens);
+    // Never log the tokens object itself: it carries the raw access_token/id_token bearer
+    // credentials.
+    auditLogger.info('Token Endpoint Response received', {
+      token_type: tokens.token_type,
+      expires_in: tokens.expires_in,
+      scope: tokens.scope,
+    });
 
     const claims = tokens.claims();
-    auditLogger.info('ID Token Claims', claims);
+    // subHash lets separate audit log lines for this login be correlated without logging the
+    // actual sub (email). The same hash is independently derived in getUserInfo and
+    // findOrCreateUser from the same sub/hsesUsername value, so no extra plumbing is needed.
+    auditLogger.info('ID Token Claims', {
+      ...pickSafeClaims(claims),
+      subHash: hashForLogging(claims?.sub),
+    });
 
     req.session.claims = claims;
     // store raw id_token for RP-initiated logout (id_token_hint)
@@ -182,7 +216,7 @@ export async function getAccessToken(req) {
     const accessToken = tokens.access_token;
     return accessToken;
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to get access token:`, err);
+    auditLogger.error(`${namespace} Failed to get access token:`, safeErrorForLogging(err));
     return undefined;
   }
 }
@@ -196,11 +230,12 @@ export async function getUserInfo(accessToken, subject) {
     const client = await getOidcClient();
     const userInfo = await client.fetchUserInfo(issuerConfig, accessToken, subject);
 
-    auditLogger.info('UserInfo Response', userInfo);
+    // userInfo carries PII (email, name); only confirm receipt, don't log its contents.
+    auditLogger.info('UserInfo Response received', { subHash: hashForLogging(subject) });
 
     return userInfo;
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to get user info:`, err);
+    auditLogger.error(`${namespace} Failed to get user info:`, safeErrorForLogging(err));
     return undefined;
   }
 }
@@ -248,15 +283,19 @@ export default async function authMiddleware(req, res, next) {
 function destroyLocalSession(req, res) {
   const secure = process.env.NODE_ENV === 'production';
 
-  const clearCookie = () => res.clearCookie('session', {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure,
-  });
+  const clearCookie = () =>
+    res.clearCookie('session', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+    });
 
   return new Promise((resolve) => {
-    const finish = () => { clearCookie(); resolve(); };
+    const finish = () => {
+      clearCookie();
+      resolve();
+    };
 
     if (req.session && typeof req.session.destroy === 'function') {
       const sid = req.sessionID;
@@ -304,7 +343,10 @@ export async function logoutOidc(req, res) {
     res.redirect(redirectTo.href);
   } catch (err) {
     // If end-session is unavailable, fall back to local logout
-    auditLogger.warn(`${namespace} RP-initiated logout unavailable, falling back`, err);
+    auditLogger.warn(
+      `${namespace} RP-initiated logout unavailable, falling back`,
+      safeErrorForLogging(err)
+    );
     await destroyLocalSession(req, res);
     if (!res.headersSent) {
       res.redirect('/logout');

@@ -1,12 +1,10 @@
-import ZipStream, { FileInfo as ZipFileInfo } from '../stream/zip';
-import {
-  setImportDataFileStatusByPath,
-  updateAvailableDataFileMetadata,
-} from './record';
 import { IMPORT_DATA_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
+import type ZipStream from '../stream/zip';
+import type { FileInfo as ZipFileInfo } from '../stream/zip';
 import processFile from './processFile';
-import { ProcessDefinition } from './types';
+import { setImportDataFileStatusByPath, updateAvailableDataFileMetadata } from './record';
+import type { ProcessDefinition } from './types';
 
 /**
  * Processes the files using the provided ZipStream object and the array of files to process.
@@ -21,8 +19,8 @@ import { ProcessDefinition } from './types';
 const processFilesFromZip = async (
   importFileId, // The ID of the import file
   zipClient: ZipStream, // The client for working with ZIP files
-  filesToProcess: (ZipFileInfo)[], // An array of files to process
-  processDefinitions: ProcessDefinition[], // An array of process definitions
+  filesToProcess: ZipFileInfo[], // An array of files to process
+  processDefinitions: ProcessDefinition[] // An array of process definitions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
   // If there are no more files to process, exit the function
@@ -33,14 +31,15 @@ const processFilesFromZip = async (
 
   try {
     const fileInfoToProcess = filesToProcess
-    // Find the ZipFileInfo object that matches the next file to process
+      // Find the ZipFileInfo object that matches the next file to process
       .find(({ name }) => name === nextToProcess.fileName);
 
-    if (fileInfoToProcess) { // If the file to process is found
+    if (fileInfoToProcess) {
+      // If the file to process is found
       await setImportDataFileStatusByPath(
         importFileId,
         fileInfoToProcess,
-        IMPORT_DATA_STATUSES.PROCESSING,
+        IMPORT_DATA_STATUSES.PROCESSING
       );
       // Get the file stream for the file to process from the zipClient
       const fileStream = await zipClient.getFileStream(fileInfoToProcess.name);
@@ -51,7 +50,7 @@ const processFilesFromZip = async (
       const processingData = await processFile(
         nextToProcess, // Pass the name of the file to process
         fileInfoToProcess, // Pass the ZipFileInfo object of the file to process
-        fileStream, // Pass the file stream of the file to process
+        fileStream // Pass the file stream of the file to process
       );
 
       const {
@@ -103,7 +102,7 @@ const processFilesFromZip = async (
             deletes: deleteCount,
             errors: errorCounts,
           },
-        },
+        }
       );
     } else {
       // save/log file not processed
@@ -111,7 +110,7 @@ const processFilesFromZip = async (
         importFileId, // Pass the import file ID
         fileInfoToProcess, // Pass the ZipFileInfo object of the unprocessed file
         IMPORT_DATA_STATUSES.PROCESSING_FAILED,
-        {},
+        {}
       );
     }
   } catch (err) {
@@ -127,7 +126,7 @@ const processFilesFromZip = async (
             [err.message]: 1, // Add the error message to the error count object
           },
         },
-      },
+      }
     );
     auditLogger.log('error', ` processFilesFromZip ${err.message}`, err);
   }
@@ -137,7 +136,7 @@ const processFilesFromZip = async (
     importFileId, // Pass the import file ID
     zipClient, // Pass the zip client
     filesToProcess, // Pass the array of files to process
-    processDefinitions, // Pass the array of process definitions
+    processDefinitions // Pass the array of process definitions
   );
 };
 

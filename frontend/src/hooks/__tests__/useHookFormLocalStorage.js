@@ -1,9 +1,9 @@
 import { waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { REPORT_STATUSES } from '@ttahub/common';
-import useHookFormLocalStorage from '../useHookFormLocalStorage';
 import { LOCAL_STORAGE_AR_DATA_KEY } from '../../Constants';
 import * as helpers from '../helpers';
+import useHookFormLocalStorage from '../useHookFormLocalStorage';
 
 // Mock the helpers module
 jest.mock('../helpers');
@@ -120,7 +120,7 @@ describe('useHookFormLocalStorage', () => {
       // eslint-disable-next-line no-console
       expect(console.error).toHaveBeenCalledWith(
         'Error loading createdInLocalStorage timestamp:',
-        expect.any(Error),
+        expect.any(Error)
       );
     });
 
@@ -271,7 +271,7 @@ describe('useHookFormLocalStorage', () => {
         // eslint-disable-next-line no-console
         expect(console.error).toHaveBeenCalledWith(
           'Error saving to localStorage:',
-          expect.any(Error),
+          expect.any(Error)
         );
       });
     });
@@ -392,7 +392,9 @@ describe('useHookFormLocalStorage', () => {
   describe('debouncing', () => {
     it('should accept custom debounce delay option', () => {
       const customDelay = 1000;
-      const { result } = renderHook(() => useHookFormLocalStorage('test-key', mockHookForm, { debounceDelay: customDelay }));
+      const { result } = renderHook(() =>
+        useHookFormLocalStorage('test-key', mockHookForm, { debounceDelay: customDelay })
+      );
 
       expect(result.current).toBe(true);
     });
@@ -426,10 +428,7 @@ describe('useHookFormLocalStorage', () => {
       }
 
       await waitFor(() => {
-        expect(localStorageMock.setItem).toHaveBeenCalledWith(
-          storageKey,
-          expect.any(String),
-        );
+        expect(localStorageMock.setItem).toHaveBeenCalledWith(storageKey, expect.any(String));
       });
     });
 

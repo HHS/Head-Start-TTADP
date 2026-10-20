@@ -1,16 +1,8 @@
-import faker from '@faker-js/faker';
-import { destroyGoal } from './goals';
-import db, {
-  Goal,
-  Grant,
-  Recipient,
-  Objective,
-  ActivityReport,
-  Resource,
-  File,
-} from '../models';
-import { auditLogger } from '../logger';
+import { faker } from '@faker-js/faker';
 import { FILE_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
+import db, { ActivityReport, File, Goal, Grant, Objective, Recipient, Resource } from '../models';
+import { destroyGoal } from './goals';
 
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
@@ -21,8 +13,8 @@ describe('destroyGoal handler', () => {
   let file;
 
   let grant = {
-    id: faker.datatype.number({ min: 67000, max: 68000 }),
-    number: faker.random.alphaNumeric(10),
+    id: faker.number.int({ min: 67000, max: 68000 }),
+    number: faker.string.alphanumeric(10),
     cdi: false,
     regionId: 1,
     startDate: new Date(),
@@ -30,7 +22,11 @@ describe('destroyGoal handler', () => {
   };
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
+    recipient = await Recipient.create({
+      name: `recipient${faker.number.int({ min: 0, max: 99999 })}`,
+      id: faker.number.int({ min: 67000, max: 68000 }),
+      uei: faker.string.sample(12),
+    });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
       name: 'This is some serious goal text',
@@ -154,7 +150,7 @@ describe('destroyGoal handler', () => {
 
     expect(result).toBe(0);
     expect(spy).toHaveBeenCalledWith(
-      'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
+      "SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can't be deleted"
     );
     ActivityReport.findAll = oldFindAll;
   });

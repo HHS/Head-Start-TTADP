@@ -1,11 +1,14 @@
 // Function to get the column definitions for enum columns in a Sequelize model
-const getEnumColumnDefinitions = (sequelize, model) => Object
-  .entries(model.rawAttributes)
-  .filter(([name, value]) => value.type.key === sequelize.constructor.DataTypes.ENUM.key)
-  .reduce((columns, [columnName, columnDef]) => ({
-    ...columns,
-    [columnName]: columnDef,
-  }), {});
+const getEnumColumnDefinitions = (sequelize, model) =>
+  Object.entries(model.rawAttributes)
+    .filter(([name, value]) => value.type.key === sequelize.constructor.DataTypes.ENUM.key)
+    .reduce(
+      (columns, [columnName, columnDef]) => ({
+        ...columns,
+        [columnName]: columnDef,
+      }),
+      {}
+    );
 
 // Function to get the valid values for an enum column definition
 const getValidValues = (columnDef) => [
@@ -14,9 +17,7 @@ const getValidValues = (columnDef) => [
 ];
 
 // This function checks if a given column is an enum column
-const isEnumColumn = (enumColumns) => (change) => Object
-  .keys(enumColumns)
-  .includes(change);
+const isEnumColumn = (enumColumns) => (change) => Object.keys(enumColumns).includes(change);
 
 // This function sets a valid value for a given column or throws an error if the value is invalid
 const setValidValueOrThrowError = (instance, enumColumns) => (change) => {

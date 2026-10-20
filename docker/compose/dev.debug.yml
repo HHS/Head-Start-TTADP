@@ -1,0 +1,5 @@
+services:
+  backend:
+    command: ["yarn", "start:debug"]
+    ports:
+      - "9229:9229"

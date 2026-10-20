@@ -1,14 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Router } from 'react-router';
 import UserContext from '../../../../../../UserContext';
 import Approver from '../index';
 
@@ -23,25 +21,37 @@ const user = {
   ],
 };
 
-const defaultApprover = [{
-  id: 1, status: null, note: '', user: { id: 1, fullName: 'name' },
-}];
+const defaultApprover = [
+  {
+    id: 1,
+    status: null,
+    note: '',
+    user: { id: 1, fullName: 'name' },
+  },
+];
 
-const defaultPages = [{
-  label: 'label',
-  state: 'Complete',
-  review: false,
-}];
+const defaultPages = [
+  {
+    label: 'label',
+    state: 'Complete',
+    review: false,
+  },
+];
 
-const incompletePages = [{
-  label: 'incomplete',
-  state: 'In progress',
-  review: false,
-}];
+const incompletePages = [
+  {
+    label: 'incomplete',
+    state: 'In progress',
+    review: false,
+  },
+];
 
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
-  onFormReview, reviewed, formData, pages,
+  onFormReview,
+  reviewed,
+  formData,
+  pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -57,9 +67,7 @@ const RenderApprover = ({
         pages={pages}
         availableApprovers={[{ id: 1, name: 'Approver 1' }]}
       >
-        <div>
-          test
-        </div>
+        <div>test</div>
       </Approver>
     </FormProvider>
   );
@@ -71,7 +79,7 @@ const renderReview = (
   reviewed,
   approvers = defaultApprover,
   pages = defaultPages,
-  extraFormData = {},
+  extraFormData = {}
 ) => {
   const formData = {
     author: { name: 'user', id: 4 },
@@ -92,7 +100,7 @@ const renderReview = (
           pages={pages}
         />
       </UserContext.Provider>
-    </Router>,
+    </Router>
   );
 
   return history;
@@ -101,7 +109,7 @@ const renderReview = (
 describe('Approver review page', () => {
   describe('when the report is submitted', () => {
     it('displays the submit review component', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, false);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, false);
       expect(await screen.findByText('Review and approve')).toBeVisible();
     });
 
@@ -116,45 +124,56 @@ describe('Approver review page', () => {
     });
 
     it('approver viewing approved report, user is redirected', async () => {
-      const history = renderReview(REPORT_STATUSES.APPROVED, () => { }, true);
+      const history = renderReview(REPORT_STATUSES.APPROVED, () => {}, true);
       await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
     });
 
     it('handles empty notes', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true);
       const notes = await screen.findByLabelText('additionalNotes');
       expect(notes.textContent).toContain('No creator notes');
     });
 
     it('shows date submitted', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, defaultApprover, defaultPages, { submittedDate: '2023-03-03' });
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true, defaultApprover, defaultPages, {
+        submittedDate: '2023-03-03',
+      });
       expect(await screen.findByText(/date submitted/i)).toBeVisible();
       expect(await screen.findByText('03/03/2023')).toBeVisible();
     });
 
     it('hides date submitted if missing', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED,
-        () => { },
-        true,
-        defaultApprover,
-        defaultPages,
-        { submittedDate: null });
+      renderReview(REPORT_STATUSES.SUBMITTED, () => {}, true, defaultApprover, defaultPages, {
+        submittedDate: null,
+      });
       expect(screen.queryAllByText(/date submitted/i).length).toBe(0);
     });
 
     it('handles approver reviewing needs action', async () => {
       const approverWithNotes = [
         {
-          id: 1, status: REPORT_STATUSES.APPROVED, note: '<p>These are my approved notes 1.</p>\n', user: { id: 1, fullName: 'approver 1' },
+          id: 1,
+          status: REPORT_STATUSES.APPROVED,
+          note: '<p>These are my approved notes 1.</p>\n',
+          user: { id: 1, fullName: 'approver 1' },
         },
         {
-          id: 2, status: REPORT_STATUSES.NEEDS_ACTION, note: '<p>These are my needs action notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
+          id: 2,
+          status: REPORT_STATUSES.NEEDS_ACTION,
+          note: '<p>These are my needs action notes 2.</p>\n',
+          user: { id: 2, fullName: 'approver 2' },
         },
         {
-          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
+          id: 3,
+          status: null,
+          note: null,
+          user: { id: 1, fullName: 'approver 3' },
         },
         {
-          id: 4, status: REPORT_STATUSES.APPROVED, note: null, user: { id: 4, fullName: 'approver 4' },
+          id: 4,
+          status: REPORT_STATUSES.APPROVED,
+          note: null,
+          user: { id: 4, fullName: 'approver 4' },
         },
       ];
 
@@ -171,11 +190,9 @@ describe('Approver review page', () => {
       expect(statuses.length).toBe(1);
     });
 
-    it('a report can\'t be submitted with incomplete pages', async () => {
+    it("a report can't be submitted with incomplete pages", async () => {
       const mockSubmit = jest.fn();
-      renderReview(
-        REPORT_STATUSES.SUBMITTED, mockSubmit, true, defaultApprover, incompletePages,
-      );
+      renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true, defaultApprover, incompletePages);
       const button = await screen.findByRole('button');
       expect(button).toBeDisabled();
     });
@@ -188,13 +205,14 @@ describe('Approver review page', () => {
       const reviewed = false;
       const approvers = [
         {
-          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
+          id: 1,
+          status: null,
+          note: '',
+          user: { id: 4, fullName: 'name' },
         },
       ];
       const pages = defaultPages;
-      renderReview(
-        calculatedStatus, onFormReview, reviewed, approvers, pages,
-      );
+      renderReview(calculatedStatus, onFormReview, reviewed, approvers, pages);
 
       const alert = document.querySelector('.usa-alert');
       expect(alert).toBe(null);
@@ -206,13 +224,14 @@ describe('Approver review page', () => {
       const reviewed = false;
       const approvers = [
         {
-          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
+          id: 1,
+          status: null,
+          note: '',
+          user: { id: 4, fullName: 'name' },
         },
       ];
       const pages = defaultPages;
-      renderReview(
-        calculatedStatus, onFormReview, reviewed, approvers, pages,
-      );
+      renderReview(calculatedStatus, onFormReview, reviewed, approvers, pages);
 
       const statuses = screen.queryAllByLabelText('Choose approval status (Required)');
       expect(statuses.length).toBe(0);

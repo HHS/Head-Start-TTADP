@@ -1,12 +1,7 @@
 /* eslint-disable no-console */
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-} from 'react';
+
 import useInterval from '@use-it/interval';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const THIRTY_SECONDS = 30000;
 
@@ -16,16 +11,22 @@ export function publishLocation(socket, socketPath, user, lastSaveTime) {
   // we have to check to see if the socket is open before we send a message
   // since the interval could be called while the socket is open but is about to close
   if (socket && socket.readyState === socket.OPEN) {
-    socket.send(JSON.stringify({
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath,
-    }));
+    socket.send(
+      JSON.stringify({
+        user: user.name,
+        lastSaveTime,
+        channel: socketPath,
+      })
+    );
   }
 }
 
 export function usePublishWebsocketLocationOnInterval(
-  socket, socketPath, user, lastSaveTime, interval = THIRTY_SECONDS,
+  socket,
+  socketPath,
+  user,
+  lastSaveTime,
+  interval = THIRTY_SECONDS
 ) {
   useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), interval);
 }
@@ -42,12 +43,15 @@ export default function useSocket(user) {
 
   const path = useMemo(() => `${WS_URL}${socketPath}`, [socketPath]);
 
-  const setSocketPathWithCheck = useCallback((newPath) => {
-    if (socketPath === newPath) {
-      return;
-    }
-    setSocketPath(newPath);
-  }, [socketPath]);
+  const setSocketPathWithCheck = useCallback(
+    (newPath) => {
+      if (socketPath === newPath) {
+        return;
+      }
+      setSocketPath(newPath);
+    },
+    [socketPath]
+  );
 
   const clearStore = useCallback(() => {
     setMessageStore();
@@ -79,11 +83,13 @@ export default function useSocket(user) {
         clearStore();
 
         if (user) {
-          socket.current.send(JSON.stringify({
-            user: user.name || 'Anonymous user',
-            lastSaveTime: null,
-            channel: socketPath,
-          }));
+          socket.current.send(
+            JSON.stringify({
+              user: user.name || 'Anonymous user',
+              lastSaveTime: null,
+              channel: socketPath,
+            })
+          );
         }
       });
 

@@ -1,0 +1,14 @@
+
+@use '../../../colors.scss' as *;
+
+.ttahub--indicator-counter {
+  max-width: 400px;
+}
+
+.ttahub--indicator-box-filled {
+  background-color: $ttahub-medium-blue;
+}
+
+.ttahub--indicator-box-empty {
+  background-color: $base-lighter;
+}

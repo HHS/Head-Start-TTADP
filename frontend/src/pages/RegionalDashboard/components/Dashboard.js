@@ -1,10 +1,17 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
+import { expandFilters, expandMonitoringFilters } from '../../../utils';
 import ActivityReportDashboard from './ActivityReportDashboard';
-import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
-import { expandFilters } from '../../../utils';
+import MonitoringReportDashboard from './MonitoringReportDashboard';
+import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
+import TrainingReportDashboard from './TrainingReportDashboard';
+
+const EXPANSION_FUNCTION = {
+  monitoring: expandMonitoringFilters,
+  default: expandFilters,
+};
 
 export default function Dashboard({
   reportType,
@@ -12,8 +19,12 @@ export default function Dashboard({
   resetPagination,
   setResetPagination,
   filterKey,
+  userHasOnlyOneRegion,
 }) {
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+  const filtersToApply = useMemo(() => {
+    const expandFunction = EXPANSION_FUNCTION[reportType] || EXPANSION_FUNCTION.default;
+    return expandFunction(filters);
+  }, [filters, reportType]);
 
   let DashboardComponent = ActivityReportDashboard;
   switch (reportType) {
@@ -22,6 +33,12 @@ export default function Dashboard({
       break;
     case 'all-reports':
       DashboardComponent = AllReports;
+      break;
+    case 'recipient-spotlight':
+      DashboardComponent = RecipientSpotlightDashboard;
+      break;
+    case 'monitoring':
+      DashboardComponent = MonitoringReportDashboard;
       break;
     default:
       break;
@@ -34,6 +51,7 @@ export default function Dashboard({
         resetPagination={resetPagination}
         setResetPagination={setResetPagination}
         filterKey={filterKey}
+        userHasOnlyOneRegion={userHasOnlyOneRegion}
       />
     </GridContainer>
   );
@@ -45,6 +63,7 @@ Dashboard.propTypes = {
   setResetPagination: PropTypes.func.isRequired,
   filterKey: PropTypes.string.isRequired,
   reportType: PropTypes.string,
+  userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };
 
 Dashboard.defaultProps = {

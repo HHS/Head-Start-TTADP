@@ -1,14 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
-import Joi from '@hapi/joi';
-import { root, validateSchema } from './common';
+import Joi from 'joi';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
+import { root, validateSchema } from './common';
 
 test('get /goals?reportId&goalTemplateId', async ({ request }) => {
-  const response = await request.get(
-    `${root}/goals?reportId=10000&goalTemplateId=1`,
-    { headers: { 'playwright-user-id': '1' } },
-  );
+  const response = await request.get(`${root}/goals?reportId=10000&goalTemplateId=1`, {
+    headers: { 'playwright-user-id': '1' },
+  });
 
   expect(response.status()).toBe(200);
 
@@ -55,102 +54,104 @@ test('get /goals?reportId&goalTemplateId', async ({ request }) => {
     geographicRegion: Joi.string().allow(null),
   });
 
-  const schema = Joi.array().items(Joi.object({
-    endDate: Joi.string().allow(null).allow(''),
-    status: Joi.string(),
-    value: Joi.number(),
-    label: Joi.string(),
-    id: Joi.number(),
-    name: Joi.string(),
-    grant: grantSchema,
-    objectives: Joi.array(),
-    goalNumber: Joi.string(),
-    goalNumbers: Joi.array().items(Joi.string()),
-    goalIds: Joi.array().items(Joi.number()),
-    grants: Joi.array().items(grantSchema),
-    grantId: Joi.number(),
-    grantIds: Joi.array().items(Joi.number()),
-    isNew: Joi.boolean(),
-    collaborators: Joi.array().items(Joi.any().allow(null)),
-    prompts: Joi.object(),
-    promptsForReview: Joi.array().items(Joi.object({
-      key: Joi.string(),
-      recipients: Joi.array().items(Joi.object({
-        id: Joi.number(),
-        name: Joi.string(),
-      })),
-      responses: Joi.array().items(Joi.string()),
-    })),
-    source: Joi.any(),
-    onApprovedAR: Joi.boolean(),
-    isSourceEditable: Joi.boolean(),
-    statusChanges: Joi.array().items(Joi.object({
-      oldStatus: Joi.string(),
-      newStatus: Joi.string(),
-    })),
-    isReopenedGoal: Joi.boolean(),
-    regionId: Joi.number(),
-    recipientId: Joi.number(),
-  }));
+  const schema = Joi.array().items(
+    Joi.object({
+      endDate: Joi.string().allow(null).allow(''),
+      status: Joi.string(),
+      value: Joi.number(),
+      label: Joi.string(),
+      id: Joi.number(),
+      name: Joi.string(),
+      grant: grantSchema,
+      objectives: Joi.array(),
+      goalNumber: Joi.string(),
+      goalNumbers: Joi.array().items(Joi.string()),
+      goalIds: Joi.array().items(Joi.number()),
+      grants: Joi.array().items(grantSchema),
+      grantId: Joi.number(),
+      grantIds: Joi.array().items(Joi.number()),
+      isNew: Joi.boolean(),
+      collaborators: Joi.array().items(Joi.any().allow(null)),
+      prompts: Joi.object(),
+      promptsForReview: Joi.array().items(
+        Joi.object({
+          key: Joi.string(),
+          recipients: Joi.array().items(
+            Joi.object({
+              id: Joi.number(),
+              name: Joi.string(),
+            })
+          ),
+          responses: Joi.array().items(Joi.string()),
+        })
+      ),
+      source: Joi.any(),
+      onApprovedAR: Joi.boolean(),
+      isSourceEditable: Joi.boolean(),
+      statusChanges: Joi.array().items(
+        Joi.object({
+          oldStatus: Joi.string(),
+          newStatus: Joi.string(),
+        })
+      ),
+      isReopenedGoal: Joi.boolean(),
+      regionId: Joi.number(),
+      recipientId: Joi.number(),
+    })
+  );
 
   await validateSchema(response, schema, expect);
 });
 
 test('put /goals/changeStatus', async ({ request }) => {
-  const response = await request.put(
-    `${root}/goals/changeStatus`,
-    {
-      data: {
-        goalIds: [3],
-        oldStatus: GOAL_STATUS.NOT_STARTED,
-        newStatus: GOAL_STATUS.CLOSED,
-        closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
-        closeSuspendContext: 'Just because',
-      },
-      headers: { 'playwright-user-id': '1' }
+  const response = await request.put(`${root}/goals/changeStatus`, {
+    data: {
+      goalIds: [3],
+      oldStatus: GOAL_STATUS.NOT_STARTED,
+      newStatus: GOAL_STATUS.CLOSED,
+      closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
+      closeSuspendContext: 'Just because',
     },
-  );
+    headers: { 'playwright-user-id': '1' },
+  });
 
   expect(response.status()).toBe(200);
 });
 
 test('post /', async ({ request }) => {
-  const response = await request.post(
-    `${root}/goals`,
-    {
-      data: {
-        goals: [
-          {
-            name: 'New Goal',
-            recipientId: 1,
-            grantId: 1,
-            regionId: 14,
-            status: GOAL_STATUS.NOT_STARTED,
-            endDate: '2021-12-31',
-            objectives: [
-              {
-                id: 'new-999',
-                resources: [],
-                topics: [],
-                title: 'New objective',
-                files: [],
-                status: OBJECTIVE_STATUS.DRAFT,
-                ttaProvided: "",
-                isNew: true,
-                supportType: null,
-              }
-            ],
-            goalNumbers: [],
-            goalIds: [],
-            grants: [],
-            grantIds: [],
-            isNew: true,
-          },
-        ],
-      },
-      headers: { 'playwright-user-id': '1' }
+  const response = await request.post(`${root}/goals`, {
+    data: {
+      goals: [
+        {
+          name: 'New Goal',
+          recipientId: 1,
+          grantId: 1,
+          regionId: 14,
+          status: GOAL_STATUS.NOT_STARTED,
+          endDate: '2021-12-31',
+          objectives: [
+            {
+              id: 'new-999',
+              resources: [],
+              topics: [],
+              title: 'New objective',
+              files: [],
+              status: OBJECTIVE_STATUS.DRAFT,
+              ttaProvided: '',
+              isNew: true,
+              supportType: null,
+            },
+          ],
+          goalNumbers: [],
+          goalIds: [],
+          grants: [],
+          grantIds: [],
+          isNew: true,
+        },
+      ],
     },
-  );
+    headers: { 'playwright-user-id': '1' },
+  });
 
   expect(response.status()).toBe(200);
 });

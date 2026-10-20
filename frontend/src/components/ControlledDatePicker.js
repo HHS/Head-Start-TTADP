@@ -1,14 +1,11 @@
-import React, { useMemo, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import { DatePicker } from '@trussworks/react-uswds';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useCallback, useMemo } from 'react';
 import { useController } from 'react-hook-form';
-import {
-  DatePicker,
-} from '@trussworks/react-uswds';
-import { isValidDate } from '../utils';
-
 // this is the format used in every place we see
 import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../Constants';
+import { isValidDate } from '../utils';
 
 // the only props we **need** to provide are name and control
 // (control being necessary to implement this component within react hook form)
@@ -25,43 +22,55 @@ export default function ControlledDatePicker({
   customValidationMessages,
   required,
   additionalValidation,
+  ariaDescribedBy,
+  ariaInvalid,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
    * especially on renders where the underlying dependency doesn't change
    */
-  const max = useMemo(() => (isStartDate ? {
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
-  } : {
-    display: maxDate,
-    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(maxDate, DATE_DISPLAY_FORMAT),
-  }), [isStartDate, maxDate]);
+  const max = useMemo(
+    () =>
+      isStartDate
+        ? {
+            display: moment().format(DATE_DISPLAY_FORMAT),
+            moment: moment(maxDate, DATE_DISPLAY_FORMAT),
+            datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+            compare: moment(maxDate, DATE_DISPLAY_FORMAT),
+          }
+        : {
+            display: maxDate,
+            moment: moment(maxDate, DATE_DISPLAY_FORMAT),
+            datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+            compare: moment(maxDate, DATE_DISPLAY_FORMAT),
+          },
+    [isStartDate, maxDate]
+  );
 
-  const endDateMax = useMemo(() => ({
-    display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(endDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-    compare: moment(endDate, DATE_DISPLAY_FORMAT),
-  }), [endDate]);
+  const endDateMax = useMemo(
+    () => ({
+      display: moment().format(DATE_DISPLAY_FORMAT),
+      moment: moment(endDate, DATE_DISPLAY_FORMAT),
+      datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+      compare: moment(endDate, DATE_DISPLAY_FORMAT),
+    }),
+    [endDate]
+  );
 
-  const min = useMemo(() => ({
-    display: minDate,
-    moment: moment(minDate, DATE_DISPLAY_FORMAT),
-    datePicker: moment(minDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
-  }), [minDate]);
+  const min = useMemo(
+    () => ({
+      display: minDate,
+      moment: moment(minDate, DATE_DISPLAY_FORMAT),
+      datePicker: moment(minDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+    }),
+    [minDate]
+  );
 
-  const formattedValue = value ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT) : '';
+  const formattedValue = value
+    ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT)
+    : '';
 
-  const {
-    beforeMessage,
-    afterMessage,
-    invalidMessage,
-  } = customValidationMessages;
+  const { beforeMessage, afterMessage, invalidMessage } = customValidationMessages;
 
   // this is our custom validation function we pass to the hook form controller
   function validate(v) {
@@ -77,7 +86,7 @@ export default function ControlledDatePicker({
     }
 
     // Call any additional validation logic.
-    const customValidationMsg = additionalValidation();
+    const customValidationMsg = additionalValidation(newValue);
     if (customValidationMsg) {
       return customValidationMsg;
     }
@@ -94,16 +103,19 @@ export default function ControlledDatePicker({
     defaultValue: formattedValue,
   });
 
-  const handleOnBlur = useCallback((e) => {
-    if (e.nativeEvent && e.nativeEvent.relatedTarget) {
-      // we don't want blur to trigger on the date picker itself, including the calendar icon
-      if (e.nativeEvent.relatedTarget.matches('.usa-date-picker__button')) {
-        return;
+  const handleOnBlur = useCallback(
+    (e) => {
+      if (e.nativeEvent && e.nativeEvent.relatedTarget) {
+        // we don't want blur to trigger on the date picker itself, including the calendar icon
+        if (e.nativeEvent.relatedTarget.matches('.usa-date-picker__button')) {
+          return;
+        }
       }
-    }
 
-    onFieldBlur(e);
-  }, [onFieldBlur]);
+      onFieldBlur(e);
+    },
+    [onFieldBlur]
+  );
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
@@ -128,6 +140,8 @@ export default function ControlledDatePicker({
       maxDate={max.datePicker}
       onBlur={(e) => handleOnBlur(e)}
       required={required}
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid}
     />
   );
 }
@@ -153,6 +167,8 @@ ControlledDatePicker.propTypes = {
     invalidMessage: PropTypes.string,
   }),
   additionalValidation: PropTypes.func,
+  ariaDescribedBy: PropTypes.string,
+  ariaInvalid: PropTypes.bool,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -169,4 +185,6 @@ ControlledDatePicker.defaultProps = {
     invalidMessage: '',
   },
   additionalValidation: () => {},
+  ariaDescribedBy: undefined,
+  ariaInvalid: false,
 };

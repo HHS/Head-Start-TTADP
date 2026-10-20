@@ -4,10 +4,14 @@ if (!global.crypto || !global.crypto.subtle) {
   global.crypto = webcrypto;
 }
 
-jest.mock('jose', () => ({
-  calculateJwkThumbprint: jest.fn().mockResolvedValue('thumb-123'),
-  importJWK: jest.fn().mockResolvedValue({ __cryptoKey: true }),
-}), { virtual: true });
+jest.mock(
+  'jose',
+  () => ({
+    calculateJwkThumbprint: jest.fn().mockResolvedValue('thumb-123'),
+    importJWK: jest.fn().mockResolvedValue({ __cryptoKey: true }),
+  }),
+  { virtual: true }
+);
 
 const jose = require('jose');
 
@@ -25,9 +29,7 @@ const FAKE_PRIV_JWK = {
   alg: 'RS256',
   use: 'sig',
 };
-const BASE64_ENV = Buffer.from(JSON.stringify(FAKE_PRIV_JWK)).toString(
-  'base64',
-);
+const BASE64_ENV = Buffer.from(JSON.stringify(FAKE_PRIV_JWK)).toString('base64');
 process.env.PRIVATE_JWK_64 = BASE64_ENV;
 
 const mgr = require('./jwkKeyManager');
@@ -84,8 +86,8 @@ describe('jwkKeyManager', () => {
     const k2 = extractJwk(priv2);
 
     // To keep the linter happy
-    const isKey1 = Boolean(k1 && Object.prototype.hasOwnProperty.call(k1, '__cryptoKey'));
-    const isKey2 = Boolean(k2 && Object.prototype.hasOwnProperty.call(k2, '__cryptoKey'));
+    const isKey1 = Boolean(k1 && Object.hasOwn(k1, '__cryptoKey'));
+    const isKey2 = Boolean(k2 && Object.hasOwn(k2, '__cryptoKey'));
 
     // Impl must be consistent across calls (both key or both JWK)
     expect(isKey1).toBe(isKey2);
@@ -97,14 +99,12 @@ describe('jwkKeyManager', () => {
     // If JWK, it should have the expected shape;
     const jwkShapeOk = isKey1
       ? true
-      : (
-        k1.kty === 'RSA'
-          && k1.n === 'test-n'
-          && k1.e === 'AQAB'
-          && k1.d === 'test-d'
-          && k1.alg === 'RS256'
-          && k1.use === 'sig'
-      );
+      : k1.kty === 'RSA' &&
+        k1.n === 'test-n' &&
+        k1.e === 'AQAB' &&
+        k1.d === 'test-d' &&
+        k1.alg === 'RS256' &&
+        k1.use === 'sig';
     expect(jwkShapeOk).toBe(true);
 
     // Mutation shouldn’t leak for JWK; for CryptoKey, the next call should still be the same key
@@ -144,9 +144,7 @@ describe('jwkKeyManager (env errors)', () => {
     require('jose');
     const underTest = require('./jwkKeyManager');
 
-    await expect(underTest.getPublicJwk()).rejects.toThrow(
-      /PRIVATE_JWK_64|jwk/i,
-    );
+    await expect(underTest.getPublicJwk()).rejects.toThrow(/PRIVATE_JWK_64|jwk/i);
   });
 
   test('throws on invalid base64/JSON in PRIVATE_JWK_64', async () => {
@@ -175,7 +173,7 @@ describe('jwkKeyManager (signing key caching, isolated)', () => {
         d: 'test-d',
         alg: 'RS256',
         use: 'sig',
-      }),
+      })
     ).toString('base64');
 
     const freshMgr = require('./jwkKeyManager');

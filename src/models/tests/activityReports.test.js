@@ -1,6 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import db, { User, ActivityReport } from '..';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
+import db, { ActivityReport, User } from '..';
 
 describe('Activity Reports model', () => {
   afterAll(async () => {
@@ -79,13 +79,15 @@ describe('Activity Reports model', () => {
       user = await User.create(mockUser);
 
       await Promise.all(
-        reports.map((r) => ActivityReport.create({
-          ...sampleReport,
-          id: r.id,
-          userId: user.id,
-          author: { name: 'abc 123' },
-          creatorRole: r.creatorRole,
-        })),
+        reports.map((r) =>
+          ActivityReport.create({
+            ...sampleReport,
+            id: r.id,
+            userId: user.id,
+            author: { name: 'abc 123' },
+            creatorRole: r.creatorRole,
+          })
+        )
       );
     });
 

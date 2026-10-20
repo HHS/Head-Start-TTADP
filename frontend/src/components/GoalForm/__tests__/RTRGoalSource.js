@@ -1,10 +1,10 @@
-import React from 'react';
-import { GOAL_SOURCES, GOAL_STATUS } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import RTRGoalSource from '../RTRGoalSource';
+import { GOAL_SOURCES, GOAL_STATUS } from '@ttahub/common';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
 import FormFieldThatIsSometimesReadOnly from '../FormFieldThatIsSometimesReadOnly';
+import RTRGoalSource from '../RTRGoalSource';
 
 describe('RTRGoalSource', () => {
   const source = {
@@ -23,11 +23,7 @@ describe('RTRGoalSource', () => {
 
   it('should render the component', async () => {
     const { getByLabelText } = render(
-      <FormFieldThatIsSometimesReadOnly
-        label="Goal source"
-        value={source}
-        permissions={[true]}
-      >
+      <FormFieldThatIsSometimesReadOnly label="Goal source" value={source} permissions={[true]}>
         <RTRGoalSource
           source={source}
           onChangeGoalSource={setSource}
@@ -38,18 +34,22 @@ describe('RTRGoalSource', () => {
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
           createdVia={createdVia}
-          selectedGrants={[{
-            id: 1,
-            numberWithProgramTypes: '1234',
-          }, {
-            id: 2,
-            numberWithProgramTypes: '5678',
-          }, {
-            id: 3,
-            numberWithProgramTypes: '91011',
-          }]}
+          selectedGrants={[
+            {
+              id: 1,
+              numberWithProgramTypes: '1234',
+            },
+            {
+              id: 2,
+              numberWithProgramTypes: '5678',
+            },
+            {
+              id: 3,
+              numberWithProgramTypes: '91011',
+            },
+          ]}
         />
-      </FormFieldThatIsSometimesReadOnly>,
+      </FormFieldThatIsSometimesReadOnly>
     );
 
     expect(getByLabelText(/Do all recipient grants have the same source/i)).toBeInTheDocument();
@@ -58,11 +58,7 @@ describe('RTRGoalSource', () => {
 
   it('should update sources individually', async () => {
     const { getByLabelText } = render(
-      <FormFieldThatIsSometimesReadOnly
-        label="Goal source"
-        value={source}
-        permissions={[true]}
-      >
+      <FormFieldThatIsSometimesReadOnly label="Goal source" value={source} permissions={[true]}>
         <RTRGoalSource
           source={source}
           onChangeGoalSource={setSource}
@@ -73,18 +69,22 @@ describe('RTRGoalSource', () => {
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
           createdVia={createdVia}
-          selectedGrants={[{
-            id: 1,
-            numberWithProgramTypes: '1234',
-          }, {
-            id: 2,
-            numberWithProgramTypes: '5678',
-          }, {
-            id: 3,
-            numberWithProgramTypes: '91011',
-          }]}
+          selectedGrants={[
+            {
+              id: 1,
+              numberWithProgramTypes: '1234',
+            },
+            {
+              id: 2,
+              numberWithProgramTypes: '5678',
+            },
+            {
+              id: 3,
+              numberWithProgramTypes: '91011',
+            },
+          ]}
         />
-      </FormFieldThatIsSometimesReadOnly>,
+      </FormFieldThatIsSometimesReadOnly>
     );
 
     act(() => {
@@ -106,11 +106,7 @@ describe('RTRGoalSource', () => {
 
   it('Updates all sources at once', async () => {
     render(
-      <FormFieldThatIsSometimesReadOnly
-        label="Goal source"
-        value={source}
-        permissions={[true]}
-      >
+      <FormFieldThatIsSometimesReadOnly label="Goal source" value={source} permissions={[true]}>
         <RTRGoalSource
           source={source}
           onChangeGoalSource={setSource}
@@ -121,18 +117,22 @@ describe('RTRGoalSource', () => {
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
           createdVia={createdVia}
-          selectedGrants={[{
-            id: 1,
-            numberWithProgramTypes: '1234',
-          }, {
-            id: 2,
-            numberWithProgramTypes: '5678',
-          }, {
-            id: 3,
-            numberWithProgramTypes: '91011',
-          }]}
+          selectedGrants={[
+            {
+              id: 1,
+              numberWithProgramTypes: '1234',
+            },
+            {
+              id: 2,
+              numberWithProgramTypes: '5678',
+            },
+            {
+              id: 3,
+              numberWithProgramTypes: '91011',
+            },
+          ]}
         />
-      </FormFieldThatIsSometimesReadOnly>,
+      </FormFieldThatIsSometimesReadOnly>
     );
 
     const dropdown = await screen.findByRole('combobox');

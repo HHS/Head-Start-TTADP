@@ -9,12 +9,22 @@ describe('usePossibleGrants', () => {
   });
 
   it('handles active grants', async () => {
-    const { result } = renderHook(() => usePossibleGrants({ id: 1, grants: [{ id: 1, status: 'Active' }] }));
+    const { result } = renderHook(() =>
+      usePossibleGrants({ id: 1, grants: [{ id: 1, status: 'Active' }] })
+    );
     expect(result.current).toEqual([{ id: 1, status: 'Active' }]);
   });
 
   it('filters inactive grants', async () => {
-    const { result } = renderHook(() => usePossibleGrants({ id: 1, grants: [{ id: 1, status: 'Active' }, { id: 2, status: 'Inactive' }] }));
+    const { result } = renderHook(() =>
+      usePossibleGrants({
+        id: 1,
+        grants: [
+          { id: 1, status: 'Active' },
+          { id: 2, status: 'Inactive' },
+        ],
+      })
+    );
     expect(result.current).toEqual([{ id: 1, status: 'Active' }]);
   });
 });

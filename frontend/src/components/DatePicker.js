@@ -1,10 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  DatePicker as RawDatePicker,
-} from '@trussworks/react-uswds';
+
+import { DatePicker as RawDatePicker } from '@trussworks/react-uswds';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import { DATE_DISPLAY_FORMAT } from '../Constants';
 import './DatePicker.scss';
 
@@ -13,33 +12,34 @@ export const DATE_PICKER_DATE_FORMAT = 'YYYY-MM-DD';
 // this is just a pass through component to simplify the date formats not
 // matching and the way the USDWS is weird about the change/values not all matching
 // we are also doing a little of our validation on the side
-export default function DatePicker(
-  {
-    onChange,
-    defaultValue,
-    minDate,
-    maxDate,
-    datePickerKey,
-    error,
-    setError,
-    ...props
-  },
-) {
+export default function DatePicker({
+  onChange,
+  defaultValue,
+  minDate,
+  maxDate,
+  datePickerKey,
+  error,
+  setError,
+  ...props
+}) {
   const [currentDate, setCurrentDate] = useState('');
   const today = useMemo(() => moment().format(DATE_PICKER_DATE_FORMAT), []);
 
-  const formattedDefaultValue = moment(
-    defaultValue, DATE_DISPLAY_FORMAT,
-  ).format(DATE_PICKER_DATE_FORMAT);
+  const formattedDefaultValue = moment(defaultValue, DATE_DISPLAY_FORMAT).format(
+    DATE_PICKER_DATE_FORMAT
+  );
 
   const formattedMaxDate = maxDate
-    ? moment(maxDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT) : today;
+    ? moment(maxDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT)
+    : today;
   const formattedMinDate = moment(minDate, DATE_DISPLAY_FORMAT).format(DATE_PICKER_DATE_FORMAT);
 
   const onBlur = () => {
     const dateAsMoment = moment(currentDate, DATE_DISPLAY_FORMAT);
     const minDateAsMoment = moment(minDate, DATE_DISPLAY_FORMAT);
-    const maxDateAsMoment = maxDate ? moment(maxDate, DATE_DISPLAY_FORMAT) : moment().add(1, 'days');
+    const maxDateAsMoment = maxDate
+      ? moment(maxDate, DATE_DISPLAY_FORMAT)
+      : moment().add(1, 'days');
 
     if (!dateAsMoment.isValid()) {
       setError(`Please enter a valid date before ${maxDate || 'today'} and after ${minDate}`);

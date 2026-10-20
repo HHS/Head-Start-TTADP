@@ -1,10 +1,5 @@
-import { Op } from 'sequelize';
-import {
-  sequelize,
-  GoalTemplate,
-  Goal,
-} from '../models';
 import { auditLogger } from '../logger';
+import { Goal, GoalTemplate, sequelize } from '../models';
 
 const createMonitoringGoals = async () => {
   // This section is here to temporarily disable monitoring goal creation
@@ -16,7 +11,6 @@ const createMonitoringGoals = async () => {
   }
 
   try {
-    const cutOffDate = '2025-01-21';
     // Verify that the monitoring goal template exists.
     const monitoringGoalTemplate = await GoalTemplate.findOne({
       where: {
@@ -33,55 +27,58 @@ const createMonitoringGoals = async () => {
     // 1. Create monitoring goals for grants that need them.
     let goals = [];
     await sequelize.transaction(async (transaction) => {
-      [goals] = await sequelize.query(`
+      [goals] = await sequelize.query(
+        `
       WITH
+      -- Get the monitoring Goal template ID. Having this here makes
+      -- most of the logic run anywhere without changes
+      monitoring_template AS (
+      SELECT DISTINCT ON (standard) id monitoring_gtid
+      FROM "GoalTemplates"
+      WHERE standard = 'Monitoring'
+        AND "deletedAt" IS NULL
+      ORDER BY standard, id DESC
+      ),
+      -- Citations.active encodes the full open-citation status: raw Active/Elevated
+      -- Deficiency status and undelivered-current-review forcing Active. We also need
+      -- citations_live_values to catch the case where a monitoring goal was closed
+      -- after latest_report_delivery_date, because we assume Monitoring Goal closure
+      -- means all TTA for existing reviews for that grant is complete.
       grants_needing_goal AS (
-        SELECT
-          grta."activeGrantId" "grantId"
-        FROM "Grants" gr
-        JOIN "GrantRelationshipToActive" grta
-        ON gr.id = grta."grantId"
-        AND grta."activeGrantId" IS NOT NULL
-        JOIN "MonitoringReviewGrantees" mrg
-        ON gr.number = mrg."grantNumber"
-        JOIN "MonitoringReviews" mr
-        ON mrg."reviewId" = mr."reviewId"
-        JOIN "MonitoringReviewStatuses" mrs
-        ON mr."statusId" = mrs."statusId"
-        JOIN "MonitoringFindingHistories" mfh
-        ON mr."reviewId" = mfh."reviewId"
-        JOIN "MonitoringFindings" mf
-        ON mfh."findingId" = mf."findingId"
-        JOIN "MonitoringFindingStatuses" mfs
-        ON mf."statusId" = mfs."statusId"
-        JOIN "MonitoringFindingGrants" mfg
-        ON mf."findingId" = mfg."findingId"
-        AND mrg."granteeId" = mfg."granteeId"
-        LEFT JOIN "Goals" g
-        ON (grta."grantId" = g."grantId"
-        OR grta."activeGrantId" = g."grantId")
-        AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
-
+      SELECT
+        gc."grantId"
+      FROM "Citations" c
+      JOIN citations_live_values clv
+        ON clv.id = c.id
+      JOIN "GrantCitations" gc
+        ON gc."citationId" = c.id
+      JOIN "Grants" gr
+        ON gr.id = gc."grantId"
+      JOIN "DeliveredReviewCitations" drc
+        ON drc."citationId" = c.id
+      JOIN "DeliveredReviews" dr
+        ON dr.id = drc."deliveredReviewId"
+        AND dr."deletedAt" IS NULL
+      LEFT JOIN "Goals" g
+        ON g."grantId" = gr.id
+        AND g."goalTemplateId" = (SELECT monitoring_gtid FROM monitoring_template)
         AND g."deletedAt" IS NULL
         AND g.status != 'Closed'
-
-        JOIN "Grants" gr2
-        ON grta."activeGrantId" = gr2.id
-        AND gr."recipientId" = gr2."recipientId"
-        WHERE NOT gr2.cdi
-        AND mrs."name" = 'Complete'
-        AND mfs."name" = 'Active'
-        AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
-        AND mr."reviewType" IN (
+      WHERE c."deletedAt" IS NULL
+        AND c.active
+        AND NOT gr.cdi
+        AND g.id IS NULL
+        AND dr.review_type IN (
           'AIAN-DEF',
           'RAN',
           'Follow-up',
-          'FA-1', 'FA1-FR',
-          'FA-2', 'FA2-CR',
-          'Special'
+          'FA-1', 'FA1-FR', 'FA1-PSR',
+          'FA-2', 'FA2-CR', 'FA2-CSR',
+          'Special', 'Comprehensive Review'
         )
-        AND g.id IS NULL
-        GROUP BY 1
+        AND (clv.last_closed_goal IS NULL
+          OR clv.last_closed_goal <= c.latest_report_delivery_date)
+      GROUP BY 1
       ),
       new_goals AS (
         SELECT
@@ -99,13 +96,16 @@ const createMonitoringGoals = async () => {
           FALSE "onAR",
           'Federal monitoring issues, including CLASS and RANs'::"enum_Goals_source" "source"
         FROM "GoalTemplates" gt
+        JOIN monitoring_template
+          ON gt.id = monitoring_gtid
         CROSS JOIN grants_needing_goal gng
-        WHERE gt.id = ${monitoringGoalTemplate.id}
       )
       SELECT
         "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
       FROM new_goals;
-    `, { transaction });
+    `,
+        { transaction }
+      );
 
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
@@ -222,7 +222,8 @@ const createMonitoringGoals = async () => {
       //    where follow-up TTA is being performed beyond the initial review, which will usually
       //    be recorded on the currently active grant anyway.
       auditLogger.info('Marking monitoring goals for follow-up TTA eligibility');
-      await sequelize.query(`
+      await sequelize.query(
+        `
       WITH eligible_grants AS (
       SELECT DISTINCT
         gr."replacingGrantId" grid
@@ -251,7 +252,9 @@ const createMonitoringGoals = async () => {
       FROM goals_to_update
       WHERE id = gid
       ;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   } catch (error) {
     // eslint-disable-next-line no-console

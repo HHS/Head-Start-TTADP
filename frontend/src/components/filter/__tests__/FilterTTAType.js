@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import FilterTTAType, { displayTtaTypeQuery } from '../FilterTTAType';
 
 const { findByRole } = screen;
@@ -19,7 +16,9 @@ describe('displayTtaTypeQuery', () => {
   });
 
   it('returns the correct string for both', () => {
-    expect(displayTtaTypeQuery('training,technical-assistance')).toEqual('Training and technical assistance');
+    expect(displayTtaTypeQuery('training,technical-assistance')).toEqual(
+      'Training and technical assistance'
+    );
   });
 
   it('returns an empty string for an empty string', () => {
@@ -28,14 +27,8 @@ describe('displayTtaTypeQuery', () => {
 });
 
 describe('FilterTTAType', () => {
-  const renderTTATypeSelect = (appliedType, onApply) => (
-    render(
-      <FilterTTAType
-        onApply={onApply}
-        inputId="curly"
-        appliedTTAType={appliedType}
-      />,
-    ));
+  const renderTTATypeSelect = (appliedType, onApply) =>
+    render(<FilterTTAType onApply={onApply} inputId="curly" appliedTTAType={appliedType} />);
 
   it('calls the onapply handler', async () => {
     const onApply = jest.fn();

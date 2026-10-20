@@ -1,8 +1,6 @@
-import goalStatusGraph, { GOAL_STATUS } from './goalStatusByGoalName';
 import db, { Grant, Recipient } from '../models';
-import {
-  createGoal, destroyGoal, createGrant, createRecipient,
-} from '../testUtils';
+import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
+import goalStatusGraph, { GOAL_STATUS } from './goalStatusByGoalName';
 
 describe('goalStatusByGoalName', () => {
   const goals = [];
@@ -17,57 +15,73 @@ describe('goalStatusByGoalName', () => {
       grant = await createGrant({ recipientId });
       const grantId = grant.id;
 
-      goals.push(await createGoal({
-        status: GOAL_STATUS.NOT_STARTED,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
-      goals.push(await createGoal({
-        status: GOAL_STATUS.NOT_STARTED,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
 
-      goals.push(await createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
-      goals.push(await createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
-      goals.push(await createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
 
-      goals.push(await createGoal({
-        status: GOAL_STATUS.CLOSED,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
-      goals.push(await createGoal({
-        status: GOAL_STATUS.CLOSED,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.CLOSED,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.CLOSED,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
 
-      goals.push(await createGoal({
-        status: GOAL_STATUS.DRAFT,
-        grantId,
-        recipientId,
-        onApprovedAR: true,
-      }));
+      goals.push(
+        await createGoal({
+          status: GOAL_STATUS.DRAFT,
+          grantId,
+          recipientId,
+          onApprovedAR: true,
+        })
+      );
       response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
     } catch (error) {
       // eslint-disable-next-line no-console

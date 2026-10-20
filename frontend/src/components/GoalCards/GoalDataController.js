@@ -1,26 +1,21 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useContext,
-  memo,
-} from 'react';
+
+import { Grid } from '@trussworks/react-uswds';
+import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
+import React, { memo, useContext, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
+import { GOALS_PER_PAGE } from '../../Constants';
 import { filtersToQueryString } from '../../utils';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
-import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
-import { getRecipientGoals } from '../../fetchers/recipient';
 import AppLoadingContext from '../../AppLoadingContext';
-import { getCommunicationLogsByRecipientId } from '../../fetchers/communicationLog';
-import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
+import { getCommunicationLogsByRecipientId } from '../../fetchers/communicationLog';
+import { getRecipientGoals } from '../../fetchers/recipient';
+import useSessionSort from '../../hooks/useSessionSort';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
 import RttapaUpdates from '../../widgets/RttapaUpdates';
 import GoalCards from './GoalCards';
@@ -81,22 +76,29 @@ function GoalDataController({
 
   const history = useHistory();
 
-  const defaultSort = useMemo(() => (showNewGoals
-    ? {
-      sortBy: 'createdOn',
-      direction: 'desc',
-    }
-    : {
-      sortBy: 'goalStatus',
-      direction: 'asc',
-    }), [showNewGoals]);
+  const defaultSort = useMemo(
+    () =>
+      showNewGoals
+        ? {
+            sortBy: 'createdOn',
+            direction: 'desc',
+          }
+        : {
+            sortBy: 'goalStatus',
+            direction: 'asc',
+          },
+    [showNewGoals]
+  );
 
   // Grid and Paging.
-  const [sortConfig, setSortConfig] = useSessionSort({
-    ...defaultSort,
-    activePage: 1,
-    offset: 0,
-  }, `goalsTable/${recipientId}/${regionId}`);
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      ...defaultSort,
+      activePage: 1,
+      offset: 0,
+    },
+    `goalsTable/${recipientId}/${regionId}`
+  );
 
   useEffect(() => {
     async function fetchLogs() {
@@ -110,7 +112,7 @@ function GoalDataController({
           COMMUNCATION_SORT.direction,
           COMMUNCATION_SORT.offset,
           COMMUNCATION_SORT.limit,
-          LOG_FILTERS,
+          LOG_FILTERS
         );
 
         setLogs(rows);
@@ -121,11 +123,7 @@ function GoalDataController({
       }
     }
     fetchLogs();
-  }, [
-    recipientId,
-    regionId,
-    setIsAppLoading,
-  ]);
+  }, [recipientId, regionId, setIsAppLoading]);
 
   useDeepCompareEffect(() => {
     async function fetchGoals(query) {
@@ -141,7 +139,7 @@ function GoalDataController({
           sortConfig.offset,
           goalsPerPage,
           query,
-          [],
+          []
         );
 
         const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
@@ -183,14 +181,20 @@ function GoalDataController({
   const handlePageChange = (pageNumber) => {
     setCardsAreLoaded(true);
     setSortConfig({
-      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * goalsPerPage,
+      ...sortConfig,
+      activePage: pageNumber,
+      offset: (pageNumber - 1) * goalsPerPage,
     });
   };
 
   const requestSort = (sortBy, direction) => {
     setCardsAreLoaded(true);
     setSortConfig({
-      ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
+      ...sortConfig,
+      sortBy,
+      direction,
+      activePage: 1,
+      offset: 0,
     });
   };
 
@@ -205,9 +209,10 @@ function GoalDataController({
     setGoalsPerPage(perPageValue);
   };
 
-  const displayGoals = useMemo(() => (
-    data.goalRows && data.goalRows.length ? data.goalRows : []),
-  [data.goalRows]);
+  const displayGoals = useMemo(
+    () => (data.goalRows && data.goalRows.length ? data.goalRows : []),
+    [data.goalRows]
+  );
 
   return (
     <div>
@@ -216,11 +221,7 @@ function GoalDataController({
           <Graph data={data.statuses} />
         </Grid>
         <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
-          <RttapaUpdates
-            recipientId={recipientId}
-            regionId={regionId}
-            logs={logs}
-          />
+          <RttapaUpdates recipientId={recipientId} regionId={regionId} logs={logs} />
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
@@ -244,7 +245,6 @@ function GoalDataController({
         />
       </FilterContext.Provider>
     </div>
-
   );
 }
 GoalDataController.propTypes = {
@@ -256,7 +256,7 @@ GoalDataController.propTypes = {
       id: PropTypes.string,
       query: PropTypes.string,
       topic: PropTypes.string,
-    }),
+    })
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
   hasMissingStandardGoals: PropTypes.bool.isRequired,

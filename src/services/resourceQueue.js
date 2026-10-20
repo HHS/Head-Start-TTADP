@@ -1,9 +1,9 @@
-import newQueue, { increaseListeners } from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
-import { logger, auditLogger } from '../logger';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { getResourceMetaDataJob } from '../lib/resource';
-import transactionQueueWrapper from '../workers/transactionWrapper';
+import { auditLogger, logger } from '../logger';
 import referenceData from '../workers/referenceData';
+import transactionQueueWrapper from '../workers/transactionWrapper';
 
 const resourceQueue = newQueue('resource');
 
@@ -21,24 +21,31 @@ const addGetResourceMetadataToQueue = async (id, url) => {
     key: RESOURCE_ACTIONS.GET_METADATA,
     ...referenceData(),
   };
-  return resourceQueue.add(
-    RESOURCE_ACTIONS.GET_METADATA,
-    data,
-    {
-      attempts: retries,
-      backoff: backOffOpts,
-      removeOnComplete: true,
-      removeOnFail: true,
-    },
-  );
+  return resourceQueue.add(RESOURCE_ACTIONS.GET_METADATA, data, {
+    attempts: retries,
+    backoff: backOffOpts,
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 };
 
-const onFailedResourceQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+const onFailedResourceQueue = (job, error) =>
+  auditLogger.alertError(
+    `job ${job.data.key} failed with error ${error}`,
+    'queue_job_failed',
+    error
+  );
 const onCompletedResourceQueue = (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    logger.info(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`
+    );
   } else {
-    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    auditLogger.alertError(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+      'queue_job_non_success_status',
+      result
+    );
   }
 };
 const processResourceQueue = () => {
@@ -50,17 +57,14 @@ const processResourceQueue = () => {
   // Get resource metadata.
   resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
-    transactionQueueWrapper(
-      getResourceMetaDataJob,
-      RESOURCE_ACTIONS.GET_METADATA,
-    ),
+    transactionQueueWrapper(getResourceMetaDataJob, RESOURCE_ACTIONS.GET_METADATA)
   );
 };
 
 export {
-  resourceQueue,
   addGetResourceMetadataToQueue,
-  onFailedResourceQueue,
   onCompletedResourceQueue,
+  onFailedResourceQueue,
   processResourceQueue,
+  resourceQueue,
 };

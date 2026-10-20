@@ -1,6 +1,6 @@
 import join from 'url-join';
-import { get } from './index';
 import { filtersToQueryString } from '../utils';
+import { get } from './index';
 
 const ssdiUrl = join('/', 'api', 'ssdi');
 
@@ -15,6 +15,7 @@ const allowedTopicsForQuery = {
   'recipients-with-no-tta': [
     'recipient',
     'grantNumber',
+    'grantStatus',
     'programType',
     'stateCode',
     'region',

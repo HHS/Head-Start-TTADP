@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import { isInternalGovernmentLink, isValidURL } from '../utils';
 import Modal from './Modal';
-import { isValidURL, isInternalGovernmentLink } from '../utils';
 
 const ExternalLink = ({ to, children }) => {
   const modalRef = useRef(null);
@@ -36,16 +36,12 @@ const ExternalLink = ({ to, children }) => {
         okButtonAriaLabel="This button will redirect you to content that is outside of any OHS-led system."
       >
         <Alert role="alert" type="warning">
-          <b>Note:</b>
-          {' '}
-          This link is hosted outside of an OHS-led system.
-          OHS does not have responsibility for external content or
-          the privacy policies of non-government websites.
+          <b>Note:</b> This link is hosted outside of an OHS-led system. OHS does not have
+          responsibility for external content or the privacy policies of non-government websites.
         </Alert>
       </Modal>
       <a href={to} onClick={onLinkClick}>
-        {children}
-        {' '}
+        {children}{' '}
       </a>
     </>
   );

@@ -1,19 +1,16 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, fireEvent, waitFor, act,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import fetchMock from 'fetch-mock';
-
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import UserContext from '../../../UserContext';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { MemoryRouter } from 'react-router';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../../fetchers/helpers';
+import { convertToResponse, mockWindowProperty } from '../../../testHelpers';
+import UserContext from '../../../UserContext';
 import ActivityReportsTable from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports } from '../mocks';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../../fetchers/helpers';
-import { mockWindowProperty, convertToResponse } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers', () => ({
   ...jest.requireActual('../../../fetchers/helpers'),
@@ -47,14 +44,16 @@ const TableMock = ({ user, dateTime }) => {
             Reset pagination
           </button>
           <ActivityReportsTable
-            filters={[{
-              id: '1',
-              topic: 'region',
-              condition: 'is',
-              query: '1',
-            }]}
+            filters={[
+              {
+                id: '1',
+                topic: 'region',
+                condition: 'is',
+                query: '1',
+              },
+            ]}
             showFilter
-            onUpdateFilters={() => { }}
+            onUpdateFilters={() => {}}
             tableCaption="Activity Reports"
             dateTime={dateTime}
             exportIdPrefix="activity-reports-"
@@ -96,7 +95,7 @@ describe('ActivityReportsTable', () => {
         fetchMock.reset();
         fetchMock.get(
           defaultBaseUrlWithRegionOne,
-          convertToResponse(generateXFakeReports(10, ['approved'])),
+          convertToResponse(generateXFakeReports(10, ['approved']))
         );
         const user = {
           name: 'test@test.com',
@@ -129,7 +128,9 @@ describe('ActivityReportsTable', () => {
       });
 
       it('can trigger an activity report download', async () => {
-        const contextMenus = await screen.findAllByRole('button', { name: /actions for activity report /i });
+        const contextMenus = await screen.findAllByRole('button', {
+          name: /actions for activity report /i,
+        });
 
         await waitFor(() => {
           expect(contextMenus.length).not.toBe(0);
@@ -162,10 +163,7 @@ describe('ActivityReportsTable', () => {
 
       beforeEach(async () => {
         fetchMock.reset();
-        fetchMock.get(
-          defaultBaseUrlWithRegionOne,
-          convertToResponse(generateXFakeReports(10)),
-        );
+        fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(generateXFakeReports(10)));
         const user = {
           name: 'test@test.com',
           homeRegionId: 14,
@@ -201,10 +199,7 @@ describe('ActivityReportsTable', () => {
 
       beforeEach(async () => {
         fetchMock.reset();
-        fetchMock.get(
-          defaultBaseUrlWithRegionOne,
-          convertToResponse(generateXFakeReports(10)),
-        );
+        fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(generateXFakeReports(10)));
         const user = {
           name: 'test@test.com',
           homeRegionId: 14,
@@ -256,10 +251,7 @@ describe('ActivityReportsTable', () => {
     describe('Selected count badge', () => {
       it('can de-select all reports', async () => {
         fetchMock.reset();
-        fetchMock.get(
-          defaultBaseUrlWithRegionOne,
-          convertToResponse(generateXFakeReports(10)),
-        );
+        fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(generateXFakeReports(10)));
 
         const user = {
           name: 'test@test.com',
@@ -299,10 +291,7 @@ describe('ActivityReportsTable', () => {
 
       beforeAll(async () => {
         fetchMock.reset();
-        fetchMock.get(
-          defaultBaseUrlWithRegionOne,
-          { count: 10, rows: [], recipients: [] },
-        );
+        fetchMock.get(defaultBaseUrlWithRegionOne, { count: 10, rows: [], recipients: [] });
       });
 
       it('downloads all reports', async () => {
@@ -340,7 +329,9 @@ describe('ActivityReportsTable', () => {
       renderTable(user);
       const reportMenu = await screen.findByLabelText(/reports menu/i);
       userEvent.click(reportMenu);
-      expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+      expect(
+        await screen.findByRole('menuitem', { name: /export table data/i })
+      ).not.toBeDisabled();
       const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
       userEvent.click(downloadButton);
       expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
@@ -378,12 +369,16 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       fireEvent.click(columnHeader);
-      await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/02\/04\/2021/i));
-      await waitFor(() => expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/02\/05\/2021/i));
+      await waitFor(() =>
+        expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/02\/04\/2021/i)
+      );
+      await waitFor(() =>
+        expect(screen.getAllByRole('cell')[17]).toHaveTextContent(/02\/05\/2021/i)
+      );
     });
 
     it('clicking Collaborators column header will sort by collaborators', async () => {
@@ -391,10 +386,16 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
-      await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
-      await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
+      await waitFor(() =>
+        expect(screen.getAllByRole('cell')[16]).toHaveTextContent(
+          'Cucumber User, GS Hermione Granger, SS'
+        )
+      );
+      await waitFor(() =>
+        expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Orange, GS Hermione Granger, SS')
+      );
 
       act(() => fireEvent.click(columnHeader));
     });
@@ -404,11 +405,15 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       act(() => fireEvent.click(columnHeader));
-      await waitFor(() => expect(screen.getAllByRole('cell')[15]).toHaveTextContent('Behavioral / Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1Behavioral / Mental HealthCLASS: Instructional Support'));
+      await waitFor(() =>
+        expect(screen.getAllByRole('cell')[15]).toHaveTextContent(
+          'Behavioral / Mental Health CLASS: Instructional Support click to visually reveal the topics for R14-AR-1Behavioral / Mental HealthCLASS: Instructional Support'
+        )
+      );
     });
 
     it('clicking Creator column header will sort by author', async () => {
@@ -416,7 +421,7 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       fireEvent.click(columnHeader);
@@ -429,7 +434,7 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       fireEvent.click(columnHeader);
@@ -446,7 +451,7 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       expect(fetchMock.called()).toBe(false);
@@ -459,7 +464,7 @@ describe('ActivityReportsTable', () => {
       fetchMock.restore();
       fetchMock.get(
         '/api/activity-reports?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(activityReportsSorted, false, 17),
+        convertToResponse(activityReportsSorted, false, 17)
       );
 
       expect(fetchMock.called()).toBe(false);
@@ -472,10 +477,7 @@ describe('ActivityReportsTable', () => {
         name: /page 1/i,
       });
       fetchMock.reset();
-      fetchMock.get(
-        defaultBaseUrlWithRegionOne,
-        convertToResponse(activityReportsSorted),
-      );
+      fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(activityReportsSorted));
 
       fireEvent.click(pageOne);
       const cells = await screen.findAllByRole('cell');
@@ -487,7 +489,7 @@ describe('ActivityReportsTable', () => {
       fetchMock.reset();
       fetchMock.get(
         defaultBaseUrlWithRegionOne,
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
       const user = {
         name: 'test@test.com',
@@ -508,7 +510,7 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&region.in[]=1',
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
 
       fireEvent.click(pageTwo);
@@ -519,7 +521,7 @@ describe('ActivityReportsTable', () => {
       fetchMock.reset();
       fetchMock.get(
         defaultBaseUrlWithRegionOne,
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
       const user = {
         name: 'test@test.com',
@@ -540,7 +542,7 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&region.in[]=1',
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
 
       fireEvent.click(pageTwo);
@@ -553,12 +555,12 @@ describe('ActivityReportsTable', () => {
 
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&region.in[]=1',
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
 
       fetchMock.get(
         '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1',
-        convertToResponse(generateXFakeReports(10), false, 17),
+        convertToResponse(generateXFakeReports(10), false, 17)
       );
 
       act(() => fireEvent.click(resetButton));

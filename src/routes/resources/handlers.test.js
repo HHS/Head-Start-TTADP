@@ -1,6 +1,6 @@
-import { getResourcesDashboardData, getFlatResourcesDataWithCache } from './handlers';
-import { resourceDashboardPhase1, resourceDashboardFlat } from '../../services/dashboards/resource';
 import { getUserReadRegions } from '../../services/accessValidation';
+import { resourceDashboardFlat, resourceDashboardPhase1 } from '../../services/dashboards/resource';
+import { getFlatResourcesDataWithCache, getResourcesDashboardData } from './handlers';
 
 jest.mock('../../services/dashboards/resource', () => ({
   resourceDashboardPhase1: jest.fn(),

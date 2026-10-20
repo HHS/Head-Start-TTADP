@@ -1,32 +1,34 @@
+import { FEATURE_FLAGS } from '../../constants';
+import SCOPES from '../../middleware/scopeConstants';
+import db, { Grant } from '../../models';
+import User from '../../policies/user';
+import activeUsers from '../../services/activeUsers';
+import { currentUserId } from '../../services/currentUser';
+import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import {
-  getPossibleCollaborators,
-  getPossibleStateCodes,
-  requestVerificationEmail,
-  verifyEmailToken,
-  getActiveUsers,
-  setFeatureFlag,
-  getFeatureFlags,
-  getTrainingReportUsers,
-  getTrainingReportTrainersByRegion,
-  getTrainingReportTrainersByRegionAndNationalCenter,
-  getTrainingReportNationalCenterUsers,
-  getNamesByIds,
-} from './handlers';
-import {
-  userById,
-  usersWithPermissions,
-  setFlag,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
+  setFlag,
+  userById,
   usersByRoles,
+  usersWithPermissions,
 } from '../../services/users';
-import User from '../../policies/user';
-import db, { Grant } from '../../models';
-import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
-import { currentUserId } from '../../services/currentUser';
-import SCOPES from '../../middleware/scopeConstants';
-import { FEATURE_FLAGS } from '../../constants';
+import {
+  getActiveUsers,
+  getFeatureFlags,
+  getNamesByIds,
+  getPossibleCollaborators,
+  getPossibleStateCodes,
+  getTrainingReportNationalCenterUsers,
+  getTrainingReportTrainersByRegion,
+  getTrainingReportTrainersByRegionAndNationalCenter,
+  getTrainingReportUsers,
+  requestVerificationEmail,
+  setFeatureFlag,
+  verifyEmailToken,
+} from './handlers';
 
+jest.mock('../../services/activeUsers');
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
@@ -91,7 +93,13 @@ describe('User handlers', () => {
     it('returns state codes', async () => {
       const response = ['NM', 'NV', 'AZ', 'OK', 'MN'];
       Grant.findAll = jest.fn();
-      Grant.findAll.mockResolvedValue([{ stateCode: 'NM' }, { stateCode: 'NV' }, { stateCode: 'AZ' }, { stateCode: 'OK' }, { stateCode: 'MN' }]);
+      Grant.findAll.mockResolvedValue([
+        { stateCode: 'NM' },
+        { stateCode: 'NV' },
+        { stateCode: 'AZ' },
+        { stateCode: 'OK' },
+        { stateCode: 'MN' },
+      ]);
       userById.mockResolvedValue({
         permissions: [
           {
@@ -108,7 +116,13 @@ describe('User handlers', () => {
 
     it('handles errors', async () => {
       Grant.findAll = jest.fn();
-      Grant.findAll.mockResolvedValue([{ stateCode: 'NM' }, { stateCode: 'NV' }, { stateCode: 'AZ' }, { stateCode: 'OK' }, { stateCode: 'MN' }]);
+      Grant.findAll.mockResolvedValue([
+        { stateCode: 'NM' },
+        { stateCode: 'NV' },
+        { stateCode: 'AZ' },
+        { stateCode: 'OK' },
+        { stateCode: 'MN' },
+      ]);
       userById.mockResolvedValue({
         permissions: [
           {
@@ -258,9 +272,15 @@ describe('User handlers', () => {
       const request = {
         ...mockRequest,
       };
+      const stream = {
+        on: jest.fn((e, cb) => cb()),
+        pipe: jest.fn(),
+      };
+      activeUsers.mockResolvedValue(stream);
+      userById.mockResolvedValue({ id: 1, name: 'user' });
       User.prototype.isAdmin = jest.fn().mockReturnValue(true);
       await getActiveUsers(request, mockResponse);
-      expect(mockResponse.on).toHaveBeenCalled();
+      expect(stream.pipe).toHaveBeenCalledWith(mockResponse);
       expect(mockResponse.writeHead).toHaveBeenCalled();
       expect(mockResponse.error).not.toHaveBeenCalled();
     });
@@ -396,7 +416,7 @@ describe('User handlers', () => {
     const req = {
       query: {
         regionId: '1',
-        eventId: '1',
+        eventId: 'R01-PD-25-25010',
       },
     };
 
@@ -440,7 +460,7 @@ describe('User handlers', () => {
       await getTrainingReportUsers(req, res);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1, 1);
+      expect(getTrainingReportUsersByRegion).toHaveBeenCalledWith(1, 'R01-PD-25-25010');
       expect(res.json).toHaveBeenCalledWith([]);
     });
     it('should handle errors', async () => {
@@ -545,10 +565,40 @@ describe('User handlers', () => {
       userById.mockResolvedValueOnce(mockUserWithoutTRPermissions);
       currentUserId.mockResolvedValueOnce(1);
 
-      await getTrainingReportTrainersByRegion(unauthorizedReq, res);
+      // Create a local res object for this specific test case.
+      const localRes = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({ end: jest.fn() })),
+        headersSent: false,
+      };
+
+      // Simulate that headers are sent after the first call to sendStatus.
+      localRes.sendStatus.mockImplementationOnce((code) => {
+        localRes.headersSent = true;
+        return localRes;
+      });
+
+      await getTrainingReportTrainersByRegion(unauthorizedReq, localRes);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledTimes(1);
+      expect(localRes.sendStatus).toHaveBeenCalledTimes(1);
+      expect(localRes.sendStatus).toHaveBeenCalledWith(403);
+      expect(usersByRoles).not.toHaveBeenCalled();
+      expect(localRes.json).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 if user requests a region they do not have permission for', async () => {
+      const unauthorizedRegionReq = {
+        params: { regionId: '4' }, // User only has permission for region 1
+      };
+      userById.mockResolvedValueOnce(mockUser); // Has TR permission for region 1 only
+      currentUserId.mockResolvedValueOnce(1);
+
+      await getTrainingReportTrainersByRegion(unauthorizedRegionReq, res);
+
+      expect(userById).toHaveBeenCalledTimes(1);
+      expect(currentUserId).toHaveBeenCalledTimes(1);
       expect(res.sendStatus).toHaveBeenCalledWith(403);
       expect(usersByRoles).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
@@ -567,16 +617,11 @@ describe('User handlers', () => {
       await getTrainingReportTrainersByRegion(req, res);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(usersByRoles).toHaveBeenNthCalledWith(1, [
-        'HS',
-        'SS',
-        'ECS',
-        'GS',
-        'FES',
-        'TTAC',
-        'ECM',
-        'GSM',
-      ], [1]);
+      expect(usersByRoles).toHaveBeenNthCalledWith(
+        1,
+        ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM', 'AA'],
+        1
+      );
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers]);
     });
 
@@ -646,13 +691,27 @@ describe('User handlers', () => {
       userById.mockResolvedValueOnce(mockUserWithoutTRPermissions);
       currentUserId.mockResolvedValueOnce(1);
 
-      await getTrainingReportTrainersByRegionAndNationalCenter(unauthorizedReq, res);
+      // Create a local res object for this specific test case.
+      const localRes = {
+        sendStatus: jest.fn(),
+        json: jest.fn(),
+        status: jest.fn(() => ({ end: jest.fn() })),
+        headersSent: false,
+      };
+
+      // Simulate that headers are sent after the first call to sendStatus.
+      localRes.sendStatus.mockImplementationOnce((code) => {
+        localRes.headersSent = true;
+        return localRes;
+      });
+
+      await getTrainingReportTrainersByRegionAndNationalCenter(unauthorizedReq, localRes);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledTimes(1);
-      expect(res.sendStatus).toHaveBeenCalledWith(403);
+      expect(localRes.sendStatus).toHaveBeenCalledTimes(1);
+      expect(localRes.sendStatus).toHaveBeenCalledWith(403);
       expect(usersByRoles).not.toHaveBeenCalled();
-      expect(res.json).not.toHaveBeenCalled();
+      expect(localRes.json).not.toHaveBeenCalled();
     });
 
     it('should return a list of trainers by region with correct roles', async () => {
@@ -660,9 +719,7 @@ describe('User handlers', () => {
         { id: 1, name: 'Trainer 1', email: 'trainer1@test.gov' },
         { id: 2, name: 'Trainer 2', email: 'trainer2@test.gov' },
       ];
-      const mockNCTrainers = [
-        { id: 3, name: 'NC User 1', email: 'nc1@test.gov' },
-      ];
+      const mockNCTrainers = [{ id: 3, name: 'NC User 1', email: 'nc1@test.gov' }];
       userById.mockResolvedValueOnce(mockUser);
       currentUserId.mockResolvedValueOnce(1);
       usersByRoles.mockResolvedValueOnce(mockRegionalTrainers);
@@ -671,16 +728,11 @@ describe('User handlers', () => {
       await getTrainingReportTrainersByRegionAndNationalCenter(req, res);
       expect(userById).toHaveBeenCalledTimes(1);
       expect(currentUserId).toHaveBeenCalledTimes(1);
-      expect(usersByRoles).toHaveBeenNthCalledWith(1, [
-        'HS',
-        'SS',
-        'ECS',
-        'GS',
-        'FES',
-        'TTAC',
-        'ECM',
-        'GSM',
-      ], [1]);
+      expect(usersByRoles).toHaveBeenNthCalledWith(
+        1,
+        ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM', 'AA'],
+        [1]
+      );
       expect(usersByRoles).toHaveBeenNthCalledWith(2, ['NC']);
       expect(res.json).toHaveBeenCalledWith([...mockRegionalTrainers, ...mockNCTrainers]);
     });

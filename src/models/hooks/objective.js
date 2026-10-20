@@ -1,12 +1,10 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
-import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS, GOAL_STATUS } from '../../constants';
+import { GOAL_STATUS, OBJECTIVE_COLLABORATORS, OBJECTIVE_STATUS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
-import {
-  currentUserPopulateCollaboratorForType,
-} from '../helpers/genericCollaborator';
+import { currentUserPopulateCollaboratorForType } from '../helpers/genericCollaborator';
 
 // Find or create templates for each of the distinct titles.
 // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
@@ -19,7 +17,7 @@ const findOrCreateObjectiveTemplate = async (
   transaction,
   regionId,
   title,
-  createdAt,
+  createdAt
 ) => {
   const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
     where: {
@@ -39,8 +37,7 @@ const findOrCreateObjectiveTemplate = async (
 
 const autoPopulateOnAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (instance.onAR === undefined
-    || instance.onAR === null) {
+  if (instance.onAR === undefined || instance.onAR === null) {
     instance.set('onAR', false);
     if (!options.fields.includes('onAR')) {
       options.fields.push('onAR');
@@ -50,8 +47,7 @@ const autoPopulateOnAR = (sequelize, instance, options) => {
 
 const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (instance.onApprovedAR === undefined
-    || instance.onApprovedAR === null) {
+  if (instance.onApprovedAR === undefined || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
     if (!options.fields.includes('onApprovedAR')) {
       options.fields.push('onApprovedAR');
@@ -62,10 +58,10 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
 const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
-    if (instance.id !== null
-        && Array.isArray(changed)
-        && changed.includes('title')) {
-      throw new Error('Objective title change not allowed for objectives on approved activity reports.');
+    if (instance.id !== null && Array.isArray(changed) && changed.includes('title')) {
+      throw new Error(
+        'Objective title change not allowed for objectives on approved activity reports.'
+      );
     }
   }
 };
@@ -78,8 +74,7 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
       case OBJECTIVE_STATUS.DRAFT:
         break;
       case OBJECTIVE_STATUS.NOT_STARTED:
-        if (instance.firstNotStartedAt === null
-          || instance.firstNotStartedAt === undefined) {
+        if (instance.firstNotStartedAt === null || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
           if (!options.fields.includes('firstNotStartedAt')) {
             options.fields.push('firstNotStartedAt');
@@ -91,8 +86,7 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         }
         break;
       case OBJECTIVE_STATUS.IN_PROGRESS:
-        if (instance.firstInProgressAt === null
-          || instance.firstInProgressAt === undefined) {
+        if (instance.firstInProgressAt === null || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
           if (!options.fields.includes('firstInProgressAt')) {
             options.fields.push('firstInProgressAt');
@@ -104,8 +98,7 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         }
         break;
       case OBJECTIVE_STATUS.SUSPENDED:
-        if (instance.firstSuspendedAt === null
-          || instance.firstSuspendedAt === undefined) {
+        if (instance.firstSuspendedAt === null || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
           if (!options.fields.includes('firstSuspendedAt')) {
             options.fields.push('firstSuspendedAt');
@@ -117,8 +110,7 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         }
         break;
       case OBJECTIVE_STATUS.COMPLETE:
-        if (instance.firstCompleteAt === null
-          || instance.firstCompleteAt === undefined) {
+        if (instance.firstCompleteAt === null || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
           if (!options.fields.includes('firstCompleteAt')) {
             options.fields.push('firstCompleteAt');
@@ -143,11 +135,14 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
 // NOTE: Determine what to do here when we implement the objective changes.
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (instance.goalId !== undefined
-    && instance.goalId !== null
-    && instance.objectiveTemplateId !== undefined
-    && instance.objectiveTemplateId !== null
-    && Array.isArray(changed) && changed.includes('objectiveTemplateId')) {
+  if (
+    instance.goalId !== undefined &&
+    instance.goalId !== null &&
+    instance.objectiveTemplateId !== undefined &&
+    instance.objectiveTemplateId !== null &&
+    Array.isArray(changed) &&
+    changed.includes('objectiveTemplateId')
+  ) {
     const goal = await sequelize.models.Goal.findOne({
       attributes: ['goalTemplateId'],
       where: { id: instance.goalId },
@@ -172,7 +167,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
         where: { id: gtot.id },
         transaction: options.transaction,
         individualHooks: true,
-      },
+      }
     );
   }
 };
@@ -195,7 +190,7 @@ const propagateTitle = async (sequelize, instance, options) => {
         },
         transaction: options.transaction,
         individualHooks: true,
-      },
+      }
     );
   }
 };
@@ -208,22 +203,24 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
     sequelize,
     options.transaction,
     goalId,
-    OBJECTIVE_COLLABORATORS.CREATOR,
+    OBJECTIVE_COLLABORATORS.CREATOR
   );
 };
 
 const autoPopulateEditor = async (sequelize, instance, options) => {
   const { id: goalId } = instance;
   const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('title')
-    && instance.previous('title') !== instance.title) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('title') &&
+    instance.previous('title') !== instance.title
+  ) {
     return currentUserPopulateCollaboratorForType(
       'objective',
       sequelize,
       options.transaction,
       goalId,
-      OBJECTIVE_COLLABORATORS.EDITOR,
+      OBJECTIVE_COLLABORATORS.EDITOR
     );
   }
   return Promise.resolve();
@@ -249,10 +246,7 @@ const propagateSupportTypeToActivityReportObjective = async (sequelize, instance
         as: 'activityReport',
         where: {
           calculatedStatus: {
-            [Op.notIn]: [
-              REPORT_STATUSES.APPROVED,
-              REPORT_STATUSES.DELETED,
-            ],
+            [Op.notIn]: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.DELETED],
           },
         },
         required: true,
@@ -260,11 +254,18 @@ const propagateSupportTypeToActivityReportObjective = async (sequelize, instance
     ],
     transaction: options.transaction,
   });
-  await Promise.all(activityReportObjectives.map(async (aro) => aro.update({
-    supportType,
-  }, {
-    transaction: options.transaction,
-  })));
+  await Promise.all(
+    activityReportObjectives.map(async (aro) =>
+      aro.update(
+        {
+          supportType,
+        },
+        {
+          transaction: options.transaction,
+        }
+      )
+    )
+  );
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
@@ -295,13 +296,13 @@ const afterCreate = async (sequelize, instance, options) => {
 };
 
 export {
-  findOrCreateObjectiveTemplate,
-  autoPopulateOnApprovedAR,
-  preventTitleChangeWhenOnApprovedAR,
-  linkObjectiveGoalTemplates,
-  propagateTitle,
-  beforeValidate,
-  beforeUpdate,
-  afterUpdate,
   afterCreate,
+  afterUpdate,
+  autoPopulateOnApprovedAR,
+  beforeUpdate,
+  beforeValidate,
+  findOrCreateObjectiveTemplate,
+  linkObjectiveGoalTemplates,
+  preventTitleChangeWhenOnApprovedAR,
+  propagateTitle,
 };

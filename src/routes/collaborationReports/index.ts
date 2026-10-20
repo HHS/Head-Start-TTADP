@@ -1,4 +1,7 @@
 import express from 'express';
+import { checkCollabReportIdParam } from '../../middleware/checkIdParamMiddleware';
+import { nameTransactionByBase } from '../../middleware/newRelicMiddleware';
+import transactionWrapper from '../transactionWrapper';
 import {
   createReport,
   downloadReports,
@@ -9,10 +12,8 @@ import {
   saveReport,
   softDeleteReport,
   submitReport,
+  unlockReport,
 } from './handlers';
-import transactionWrapper from '../transactionWrapper';
-import { checkCollabReportIdParam } from '../../middleware/checkIdParamMiddleware';
-import { nameTransactionByBase } from '../../middleware/newRelicMiddleware';
 
 const router = express.Router();
 
@@ -25,11 +26,7 @@ const router = express.Router();
 router.post('/', transactionWrapper(createReport));
 
 // deleteReport
-router.delete(
-  '/:collabReportId',
-  checkCollabReportIdParam,
-  transactionWrapper(softDeleteReport),
-);
+router.delete('/:collabReportId', checkCollabReportIdParam, transactionWrapper(softDeleteReport));
 
 // getAlerts
 router.get('/alerts', transactionWrapper(getAlerts));
@@ -38,20 +35,24 @@ router.get('/alerts', transactionWrapper(getAlerts));
 router.get('/csv', transactionWrapper(downloadReports));
 
 // getReport
-router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, transactionWrapper(getReport));
+router.get(
+  '/:collabReportId',
+  nameTransactionByBase,
+  checkCollabReportIdParam,
+  transactionWrapper(getReport)
+);
 
 // getReports
 router.get('/', transactionWrapper(getReports));
 
 // reviewReport
-router.put(
-  '/:collabReportId/review',
-  checkCollabReportIdParam,
-  transactionWrapper(reviewReport),
-);
+router.put('/:collabReportId/review', checkCollabReportIdParam, transactionWrapper(reviewReport));
 
 // submitReport
 router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));
+
+// unlockReport
+router.put('/:collabReportId/unlock', checkCollabReportIdParam, transactionWrapper(unlockReport));
 
 // saveReport
 router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));

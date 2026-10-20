@@ -1,54 +1,52 @@
 /* eslint-disable max-len */
-import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
+
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db, {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
-  ActivityReportObjectiveCourse,
   ActivityReportObjectiveCitation,
-  ActivityRecipient,
+  ActivityReportObjectiveCourse,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportGoalFieldResponse,
+  ActivityReportObjectiveTopic,
+  Citation,
+  Course,
+  File,
+  Goal,
+  GoalFieldResponse,
   GoalTemplate,
   GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-  Goal,
-  Objective,
   Grant,
+  Objective,
   Recipient,
-  File,
-  Topic,
-  Course,
   Resource,
+  Topic,
 } from '../models';
-import {
-  saveStandardGoalsForReport,
-} from './standardGoals';
-import {
-  createGrant,
-  createRecipient,
-  createGoalTemplate,
-  createReport,
-} from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { createGoalTemplate, createGrant, createRecipient, createReport } from '../testUtils';
+import { saveStandardGoalsForReport } from './standardGoals';
 
-const mockFiles = [{
-  id: 140000048,
-  originalFileName: 'Test Standard Goal1.pdf',
-  key: '508bdc9e-8dec-4d64-b83d-59a72a4f4335.pdf',
-  status: 'APPROVED',
-  fileSize: 54417,
-}, {
-  id: 140000049,
-  originalFileName: 'Test Standard Goal 2.pdf',
-  key: '508bdc9e-8dec-4d64-b83d-59a72a4f5487.pdf',
-  status: 'APPROVED',
-  fileSize: 54417,
-}];
+const mockFiles = [
+  {
+    id: 140000048,
+    originalFileName: 'Test Standard Goal1.pdf',
+    key: '508bdc9e-8dec-4d64-b83d-59a72a4f4335.pdf',
+    status: 'APPROVED',
+    fileSize: 54417,
+  },
+  {
+    id: 140000049,
+    originalFileName: 'Test Standard Goal 2.pdf',
+    key: '508bdc9e-8dec-4d64-b83d-59a72a4f5487.pdf',
+    status: 'APPROVED',
+    fileSize: 54417,
+  },
+];
 
 describe('save standard goals for report', () => {
   let recipient1;
@@ -62,148 +60,237 @@ describe('save standard goals for report', () => {
     topics = [],
     courses = [],
     files = [],
-    resources = [],
+    resources = []
   ) => {
-    // Get all ARO ids.
-    const activityReportObjectives = await ActivityReportObjective.findAll({
-      where: {
-        activityReportId: reportIdToClean,
-      },
-    });
-    const activityReportObjectiveIds = activityReportObjectives.map(
-      (activityReportObjective) => activityReportObjective.id,
-    );
-    // Clean up the ActivityReportObjectiveTopics.
-    await ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIds,
-      },
-    });
-    // Clean up ActivityReportObjectiveCourses.
-    await ActivityReportObjectiveCourse.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIds,
-      },
-    });
-    // Clean up ActivityReportObjectiveFiles.
-    await ActivityReportObjectiveFile.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIds,
-      },
-    });
-    // Clean all ActivityReportObjectiveCitations.
-    await ActivityReportObjectiveCitation.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIds,
-      },
-    });
-    // Destroy the ActivityReportObjectives.
-    await ActivityReportObjective.destroy({
-      where: {
-        id: activityReportObjectiveIds,
-      },
-    });
-    const activityReportGoals = await ActivityReportGoal.findAll({
-      where: {
-        activityReportId: reportIdToClean,
-      },
-    });
-    const goalIds = activityReportGoals.map((g) => g.goalId);
+    let cleanupStep = 'initialize';
 
-    // Destroy the objectives.
-    await Objective.destroy({
-      where: {
-        [Op.or]: [
-          { goalId: goalIds },
-          { createdViaActivityReportId: reportIdToClean },
-        ],
-      },
-      force: true,
-    });
+    try {
+      cleanupStep = 'fetch activity report objectives';
+      const activityReportObjectives = await ActivityReportObjective.findAll({
+        where: {
+          activityReportId: reportIdToClean,
+        },
+      });
+      const activityReportObjectiveIds = activityReportObjectives.map(
+        (activityReportObjective) => activityReportObjective.id
+      );
 
-    // Destroy any ActivityReportGoalFieldResponses.
-    await ActivityReportGoalFieldResponse.destroy({
-      where: {
-        activityReportGoalId: activityReportGoals.map((g) => g.id),
-      },
-    });
+      cleanupStep = 'destroy activity report objective topics';
+      await ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIds,
+        },
+      });
 
-    await GoalFieldResponse.destroy({
-      where: {
-        goalId: goalIds,
-      },
-    });
-    // Destroy the ActivityReportGoals.
-    await ActivityReportGoal.destroy({
-      where: {
-        activityReportId: reportIdToClean,
-      },
-    });
-    // Destroy the goals.
-    await Goal.destroy({
-      where: {
-        grantId: grantIdsToClean,
-      },
-      force: true,
-    });
-    // Destroy the report and grant.
-    await ActivityRecipient.destroy({
-      where: {
-        activityReportId: reportIdToClean,
-      },
-    });
+      cleanupStep = 'destroy activity report objective courses';
+      await ActivityReportObjectiveCourse.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIds,
+        },
+      });
 
-    await ActivityReport.destroy({
-      where: {
-        id: reportIdToClean,
-      },
-    });
+      cleanupStep = 'destroy activity report objective files';
+      await ActivityReportObjectiveFile.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIds,
+        },
+      });
 
-    // Destroy any GoalFieldResponses.
-    await GoalFieldResponse.destroy({
-      where: {
-        goalId: goalIds,
-      },
-    });
+      cleanupStep = 'destroy activity report objective resources';
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIds,
+        },
+      });
 
-    // Destroy any GoalTemplateFieldPrompts.
-    await GoalTemplateFieldPrompt.destroy({
-      where: {
-        goalTemplateId: templateIdToClean,
-      },
-    });
+      cleanupStep = 'destroy activity report objective citations';
+      await ActivityReportObjectiveCitation.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIds,
+        },
+      });
 
-    // Destroy any Grant.
-    await Grant.destroy({
-      where: {
-        id: grantIdsToClean,
-      },
-      individualHooks: true,
-      force: true,
-    });
-    // Destroy the topics, courses, files.
-    await Topic.destroy({ where: { id: topics.map((topic) => topic.id) } });
-    await Promise.all(courses.map((course) => Course.destroy({ where: { id: course.id } })));
-    await Promise.all(files.map((file) => File.destroy({ where: { id: file.id } })));
-    await Promise.all(resources.map(
-      (resource) => Resource.destroy({ where: { url: resource.url } }),
-    ));
-    // Destroy the goal template.
-    await GoalTemplate.destroy({
-      where: {
-        id: templateIdToClean,
-      },
-      individualHooks: true,
-      force: true,
-    });
+      cleanupStep = 'destroy activity report objectives';
+      await ActivityReportObjective.destroy({
+        where: {
+          id: activityReportObjectiveIds,
+        },
+      });
+
+      cleanupStep = 'fetch activity report goals';
+      const activityReportGoals = await ActivityReportGoal.findAll({
+        where: {
+          activityReportId: reportIdToClean,
+        },
+      });
+      const goalIds = activityReportGoals.map((g) => g.goalId);
+
+      cleanupStep = 'destroy objectives';
+      await Objective.destroy({
+        where: {
+          [Op.or]: [{ goalId: goalIds }, { createdViaActivityReportId: reportIdToClean }],
+        },
+        force: true,
+      });
+
+      cleanupStep = 'destroy activity report goal field responses';
+      await ActivityReportGoalFieldResponse.destroy({
+        where: {
+          activityReportGoalId: activityReportGoals.map((g) => g.id),
+        },
+      });
+
+      cleanupStep = 'destroy goal field responses by goal';
+      await GoalFieldResponse.destroy({
+        where: {
+          goalId: goalIds,
+        },
+      });
+
+      cleanupStep = 'destroy activity report goals';
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: reportIdToClean,
+        },
+      });
+
+      cleanupStep = 'destroy goals';
+      await Goal.destroy({
+        where: {
+          grantId: grantIdsToClean,
+        },
+        force: true,
+      });
+
+      cleanupStep = 'destroy activity recipients';
+      await ActivityRecipient.destroy({
+        where: {
+          activityReportId: reportIdToClean,
+        },
+      });
+
+      cleanupStep = 'destroy activity report';
+      await ActivityReport.destroy({
+        where: {
+          id: reportIdToClean,
+        },
+      });
+
+      cleanupStep = 'destroy goal field responses second pass';
+      await GoalFieldResponse.destroy({
+        where: {
+          goalId: goalIds,
+        },
+      });
+
+      cleanupStep = 'destroy goal template field prompts';
+      await GoalTemplateFieldPrompt.destroy({
+        where: {
+          goalTemplateId: templateIdToClean,
+        },
+      });
+
+      cleanupStep = 'destroy grants';
+      await Grant.destroy({
+        where: {
+          id: grantIdsToClean,
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      cleanupStep = 'destroy topics';
+      const topicIds = topics.map((topic) => topic.id).filter(Boolean);
+      if (topicIds.length) {
+        await Topic.destroy({ where: { id: topicIds } });
+      }
+
+      cleanupStep = 'destroy courses';
+      const courseIds = courses.map((course) => course.id).filter(Boolean);
+      if (courseIds.length) {
+        await Course.destroy({ where: { id: courseIds } });
+      }
+
+      cleanupStep = 'destroy files';
+      const fileIds = files.map((file) => file.id).filter(Boolean);
+      if (fileIds.length) {
+        await File.destroy({ where: { id: fileIds } });
+      }
+
+      cleanupStep = 'destroy resources';
+      const resourceIds = resources.map((resource) => resource.id).filter(Boolean);
+      if (resourceIds.length) {
+        cleanupStep = 'destroy activity report objective resources by resource id';
+        await ActivityReportObjectiveResource.destroy({
+          where: {
+            resourceId: resourceIds,
+          },
+        });
+        cleanupStep = 'destroy resource records by id';
+        await Resource.destroy({ where: { id: resourceIds } });
+      } else {
+        const resourceUrls = resources.map((resource) => resource.url).filter(Boolean);
+        if (resourceUrls.length) {
+          const resourcesByUrl = await Resource.findAll({
+            attributes: ['id'],
+            where: {
+              url: resourceUrls,
+            },
+          });
+          const resourceIdsByUrl = resourcesByUrl.map((resource) => resource.id).filter(Boolean);
+          if (resourceIdsByUrl.length) {
+            cleanupStep = 'destroy activity report objective resources by resource url';
+            await ActivityReportObjectiveResource.destroy({
+              where: {
+                resourceId: resourceIdsByUrl,
+              },
+            });
+          }
+          cleanupStep = 'destroy resource records by url';
+          await Resource.destroy({ where: { url: resourceUrls } });
+        }
+      }
+
+      cleanupStep = 'destroy goal template';
+      await GoalTemplate.destroy({
+        where: {
+          id: templateIdToClean,
+        },
+        individualHooks: true,
+        force: true,
+      });
+    } catch (error) {
+      throw new Error(
+        `cleanUpGoalAndAllAssociations failed during "${cleanupStep}": ${error.message}`
+      );
+    }
   };
 
   afterAll(async () => {
-    await Recipient.destroy({
-      where: {
-        id: [recipient1.id, recipient2.id, recipient3.id],
-      },
-    });
+    const recipientIds = [recipient1?.id, recipient2?.id, recipient3?.id].filter(Boolean);
+    try {
+      await Grant.destroy({
+        where: {
+          recipientId: recipientIds,
+        },
+        individualHooks: true,
+        force: true,
+      });
+    } catch (error) {
+      throw new Error(`failed to clean up grants for recipients: ${error.message}`);
+    }
+
+    try {
+      await Recipient.destroy({
+        where: {
+          id: recipientIds,
+        },
+        force: true,
+      });
+    } catch (error) {
+      throw new Error(`failed to clean up recipients: ${error.message}`);
+    }
+
     await db.sequelize.close();
   });
   beforeAll(async () => {
@@ -250,24 +337,29 @@ describe('save standard goals for report', () => {
           status: REPORT_STATUSES.IN_PROGRESS,
         });
 
-        await Promise.all(mockFiles.map(
-          async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
-        ));
-        files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
+        await Promise.all(
+          mockFiles.map(async (mockFile) => File.findOrCreate({ where: { ...mockFile } }))
+        );
+        files = await File.findAll({
+          where: { id: mockFiles.map((mockFile) => mockFile.id) },
+          order: ['id'],
+        });
 
         const courseOne = await Course.create({
-          name: faker.datatype.string(200),
+          name: faker.string.sample(200),
         });
 
         const courseTwo = await Course.create({
-          name: faker.datatype.string(200),
+          name: faker.string.sample(200),
         });
 
         courses = [courseOne, courseTwo];
 
         const [topic1] = await Topic.findOrCreate({ where: { name: 'Coaching' } });
         const [topic2] = await Topic.findOrCreate({ where: { name: 'Communication' } });
-        const [topics2] = await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } });
+        const [topics2] = await Topic.findOrCreate({
+          where: { name: 'Community and Self-Assessment' },
+        });
 
         topics = [
           { id: topic1.id, name: topic1.name },
@@ -299,11 +391,16 @@ describe('save standard goals for report', () => {
           topics,
           courses,
           files,
-          resources,
+          resources
         );
       });
 
-      const assertStandardGoal = async (goalToAssert, objecitveTitle, objectiveTta, goalStatus = 'Not Started') => {
+      const assertStandardGoal = async (
+        goalToAssert,
+        objecitveTitle,
+        objectiveTta,
+        goalStatus = 'Not Started'
+      ) => {
         // We need to assert all goal values.
         expect(goalToAssert.name).toEqual(goalTemplate.templateName);
         expect(goalToAssert.goalTemplateId).toEqual(goalTemplate.id);
@@ -427,7 +524,7 @@ describe('save standard goals for report', () => {
           },
         ];
         // Retrieve the goal we created from the template.
-        await saveStandardGoalsForReport(goals, 1, report);
+        await saveStandardGoalsForReport(goals, report);
 
         let savedGoals = await Goal.findAll({
           where: {
@@ -439,7 +536,11 @@ describe('save standard goals for report', () => {
         // Assert the goals were created.
         expect(savedGoals.length).toBe(1);
 
-        await assertStandardGoal(savedGoals[0], 'objective for a standard goal', 'tta for a standard goal objective');
+        await assertStandardGoal(
+          savedGoals[0],
+          'objective for a standard goal',
+          'tta for a standard goal objective'
+        );
         const savedGoal = savedGoals[0];
 
         const savedObjective = await Objective.findOne({
@@ -480,7 +581,7 @@ describe('save standard goals for report', () => {
         ];
 
         // Save again with some updates ensure we don't create duplicates.
-        await saveStandardGoalsForReport(updatedGoal, 1, report);
+        await saveStandardGoalsForReport(updatedGoal, report);
 
         savedGoals = await Goal.findAll({
           where: {
@@ -491,7 +592,11 @@ describe('save standard goals for report', () => {
 
         // Assert the goals were created.
         expect(savedGoals.length).toBe(1);
-        await assertStandardGoal(savedGoals[0], 'objective for a standard goal updated', 'tta for a standard goal objective updated');
+        await assertStandardGoal(
+          savedGoals[0],
+          'objective for a standard goal updated',
+          'tta for a standard goal objective updated'
+        );
       });
 
       /*
@@ -530,7 +635,7 @@ describe('save standard goals for report', () => {
         ];
 
         // Retrieve the goal we created from the template.
-        await saveStandardGoalsForReport(goals, 1, report);
+        await saveStandardGoalsForReport(goals, report);
 
         const savedGoals = await Goal.findAll({
           where: {
@@ -543,7 +648,12 @@ describe('save standard goals for report', () => {
         // Assert the goals were created.
         expect(savedGoals.length).toBe(1);
 
-        await assertStandardGoal(savedGoals[0], 'objective for a suspended goal', 'tta for a suspended goal objective', GOAL_STATUS.SUSPENDED);
+        await assertStandardGoal(
+          savedGoals[0],
+          'objective for a suspended goal',
+          'tta for a suspended goal objective',
+          GOAL_STATUS.SUSPENDED
+        );
       });
     });
   });
@@ -570,11 +680,7 @@ describe('save standard goals for report', () => {
     });
 
     afterAll(async () => {
-      await cleanUpGoalAndAllAssociations(
-        goalTemplate.id,
-        report.id,
-        [grant.id],
-      );
+      await cleanUpGoalAndAllAssociations(goalTemplate.id, report.id, [grant.id]);
       await ActivityReport.destroy({ where: { id: report.id } });
       await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
       await Grant.destroy({ where: { id: grant.id } });
@@ -614,7 +720,7 @@ describe('save standard goals for report', () => {
         },
       ];
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
@@ -622,6 +728,385 @@ describe('save standard goals for report', () => {
 
       expect(aro.useIpdCourses).toBe(true);
       expect(aro.useFiles).toBe(true);
+    });
+  });
+
+  describe('stale objective deleted in another tab', () => {
+    let grant;
+    let goalTemplate;
+    let report;
+    let file;
+    const resourceUrl = `https://${faker.internet.domainName()}/stale-objective`;
+    const objectiveTitle = 'stale objective deleted in another tab';
+
+    const goalPayload = (objectives) => [
+      {
+        goalIds: [],
+        grantIds: [grant.id],
+        goalTemplateId: goalTemplate.id,
+        name: goalTemplate.templateName,
+        status: GOAL_STATUS.NOT_STARTED,
+        timeframe: null,
+        source: [],
+        prompts: [],
+        objectives,
+      },
+    ];
+
+    const objectivePayload = (overrides = {}) => ({
+      id: null,
+      isNew: true,
+      ttaProvided: 'tta',
+      title: objectiveTitle,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+      topics: [],
+      resources: [{ key: faker.string.uuid(), value: resourceUrl }],
+      files: [{ id: file.id }],
+      courses: [],
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      supportType: 'Implementing',
+      goalId: null,
+      createdHere: true,
+      ...overrides,
+    });
+
+    beforeAll(async () => {
+      grant = await createGrant({ recipientId: recipient1.id });
+      goalTemplate = await createGoalTemplate({
+        name: 'Stale objective template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+      report = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+      file = await File.create({
+        originalFileName: 'stale-objective.pdf',
+        key: `${faker.string.uuid()}.pdf`,
+        status: 'APPROVED',
+        fileSize: 1234,
+      });
+    });
+
+    afterAll(async () => {
+      await cleanUpGoalAndAllAssociations(
+        goalTemplate.id,
+        report.id,
+        [grant.id],
+        [],
+        [],
+        [file],
+        [{ url: resourceUrl }]
+      );
+    });
+
+    it('drops the stale objective instead of throwing a FK constraint error', async () => {
+      // Tab 1: save the report with an objective that has a resource and a file.
+      await saveStandardGoalsForReport(goalPayload([objectivePayload()]), report);
+
+      const savedObjective = await Objective.findOne({ where: { title: objectiveTitle } });
+      expect(savedObjective).toBeTruthy();
+      const savedAro = await ActivityReportObjective.findOne({
+        where: { activityReportId: report.id, objectiveId: savedObjective.id },
+      });
+      expect(
+        await ActivityReportObjectiveFile.count({
+          where: { activityReportObjectiveId: savedAro.id },
+        })
+      ).toBe(1);
+
+      // Tab 2: delete the objective and save.
+      await saveStandardGoalsForReport(goalPayload([]), report);
+      expect(await Objective.findByPk(savedObjective.id)).toBeNull();
+
+      // Tab 1: save the stale form data that still references the deleted objective.
+      const staleObjective = objectivePayload({
+        id: savedObjective.id,
+        ids: [savedObjective.id],
+        isNew: false,
+        goalId: savedObjective.goalId,
+      });
+      await expect(
+        saveStandardGoalsForReport(goalPayload([staleObjective]), report)
+      ).resolves.toBeDefined();
+
+      const recreated = await Objective.findAll({ where: { title: objectiveTitle } });
+      expect(recreated).toHaveLength(0);
+      expect(await ActivityReportObjective.count({ where: { activityReportId: report.id } })).toBe(
+        0
+      );
+    });
+  });
+
+  describe('reused objectives on activity reports', () => {
+    let grant;
+    let goalTemplate;
+    let report;
+    let sourceReport;
+    let existingGoal;
+    let existingObjective;
+
+    beforeAll(async () => {
+      grant = await createGrant({
+        recipientId: recipient1.id,
+      });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Reuse objective template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      report = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+
+      sourceReport = await ActivityReport.create({
+        activityRecipientType: 'recipient',
+        regionId: 1,
+        ECLKCResourcesUsed: ['test'],
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 0,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        version: 2,
+      });
+
+      existingGoal = await Goal.create({
+        name: goalTemplate.templateName,
+        status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        goalTemplateId: goalTemplate.id,
+        createdVia: 'rtr',
+      });
+
+      existingObjective = await Objective.create({
+        title: 'existing objective reused by title',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: existingGoal.id,
+        createdVia: 'activityReport',
+        createdViaActivityReportId: sourceReport.id,
+      });
+    });
+
+    afterAll(async () => {
+      await cleanUpGoalAndAllAssociations(goalTemplate.id, report.id, [grant.id]);
+      await ActivityReport.destroy({ where: { id: sourceReport.id } });
+    });
+
+    it('uses existing objective status when a new objective payload matches an existing objective by title', async () => {
+      const goals = [
+        {
+          goalIds: [existingGoal.id],
+          grantIds: [grant.id],
+          goalTemplateId: goalTemplate.id,
+          name: goalTemplate.templateName,
+          status: GOAL_STATUS.IN_PROGRESS,
+          timeframe: null,
+          source: [],
+          prompts: [],
+          objectives: [
+            {
+              id: null,
+              isNew: true,
+              ttaProvided: 'tta for reused objective',
+              title: existingObjective.title,
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              closeSuspendReason: null,
+              closeSuspendContext: null,
+              supportType: 'Implementing',
+              goalId: existingGoal.id,
+              createdHere: true,
+            },
+          ],
+        },
+      ];
+
+      await saveStandardGoalsForReport(goals, report);
+
+      const reusedObjectives = await Objective.findAll({
+        where: {
+          goalId: existingGoal.id,
+          title: existingObjective.title,
+        },
+      });
+      expect(reusedObjectives).toHaveLength(1);
+
+      const aro = await ActivityReportObjective.findOne({
+        where: {
+          activityReportId: report.id,
+          objectiveId: existingObjective.id,
+        },
+      });
+
+      expect(aro).toBeTruthy();
+      expect(aro.status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(aro.objectiveCreatedHere).toBe(false);
+      expect(aro.ttaProvided).toBe('tta for reused objective');
+      expect(aro.supportType).toBe('Implementing');
+
+      const staleFormGoals = [
+        {
+          ...goals[0],
+          objectives: [
+            {
+              ...goals[0].objectives[0],
+              id: existingObjective.id,
+              ids: [existingObjective.id],
+              isNew: false,
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              createdHere: true,
+              ttaProvided: 'updated tta for reused objective',
+            },
+          ],
+        },
+      ];
+
+      await saveStandardGoalsForReport(staleFormGoals, report);
+
+      const updatedAro = await ActivityReportObjective.findOne({
+        where: {
+          activityReportId: report.id,
+          objectiveId: existingObjective.id,
+        },
+      });
+
+      expect(updatedAro.status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(updatedAro.objectiveCreatedHere).toBe(false);
+      expect(updatedAro.ttaProvided).toBe('updated tta for reused objective');
+    });
+
+    it('honors submitted status when a new objective payload matches an existing objective by title', async () => {
+      const intentionalStatusReport = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+
+      try {
+        const goals = [
+          {
+            goalIds: [existingGoal.id],
+            grantIds: [grant.id],
+            goalTemplateId: goalTemplate.id,
+            name: goalTemplate.templateName,
+            status: GOAL_STATUS.IN_PROGRESS,
+            timeframe: null,
+            source: [],
+            prompts: [],
+            objectives: [
+              {
+                id: null,
+                isNew: true,
+                ttaProvided: 'tta for reused objective with intentional status',
+                title: existingObjective.title,
+                status: OBJECTIVE_STATUS.COMPLETE,
+                topics: [],
+                resources: [],
+                files: [],
+                courses: [],
+                closeSuspendReason: null,
+                closeSuspendContext: null,
+                supportType: 'Implementing',
+                goalId: existingGoal.id,
+                createdHere: true,
+              },
+            ],
+          },
+        ];
+
+        await saveStandardGoalsForReport(goals, intentionalStatusReport);
+
+        const aro = await ActivityReportObjective.findOne({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+            objectiveId: existingObjective.id,
+          },
+        });
+
+        expect(aro).toBeTruthy();
+        expect(aro.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+        expect(aro.objectiveCreatedHere).toBe(false);
+        expect(aro.ttaProvided).toBe('tta for reused objective with intentional status');
+      } finally {
+        const activityReportObjectives = await ActivityReportObjective.findAll({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        const activityReportObjectiveIds = activityReportObjectives.map(
+          (activityReportObjective) => activityReportObjective.id
+        );
+        const activityReportGoals = await ActivityReportGoal.findAll({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+
+        await ActivityReportObjectiveTopic.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveCourse.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveFile.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveResource.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjectiveCitation.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportObjective.destroy({
+          where: {
+            id: activityReportObjectiveIds,
+          },
+        });
+        await ActivityReportGoalFieldResponse.destroy({
+          where: {
+            activityReportGoalId: activityReportGoals.map((g) => g.id),
+          },
+        });
+        await ActivityReportGoal.destroy({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        await ActivityRecipient.destroy({
+          where: {
+            activityReportId: intentionalStatusReport.id,
+          },
+        });
+        await ActivityReport.destroy({
+          where: {
+            id: intentionalStatusReport.id,
+          },
+        });
+      }
     });
   });
 
@@ -658,11 +1143,7 @@ describe('save standard goals for report', () => {
     });
 
     afterAll(async () => {
-      await cleanUpGoalAndAllAssociations(
-        goalTemplate.id,
-        report.id,
-        [grant.id],
-      );
+      await cleanUpGoalAndAllAssociations(goalTemplate.id, report.id, [grant.id]);
     });
 
     /*
@@ -708,10 +1189,12 @@ describe('save standard goals for report', () => {
         },
       ];
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
       const savedGoals = await Goal.findAll({
         where: {
           name: goalTemplate.templateName,
+          grantId: grant.id,
+          goalTemplateId: goalTemplate.id,
         },
       });
 
@@ -786,7 +1269,7 @@ describe('save standard goals for report', () => {
         },
       ];
 
-      await saveStandardGoalsForReport(updatedGoals, 1, report);
+      await saveStandardGoalsForReport(updatedGoals, report);
 
       // Get the updated goal.
       const updatedGoal = await Goal.findOne({
@@ -814,14 +1297,18 @@ describe('save standard goals for report', () => {
       });
 
       // Assert the ActivityReportGoalFieldResponses was updated.
-      const updatedActivityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll({
-        where: {
-          activityReportGoalId: updatedActivityReportGoals.map((g) => g.id),
-        },
-      });
+      const updatedActivityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll(
+        {
+          where: {
+            activityReportGoalId: updatedActivityReportGoals.map((g) => g.id),
+          },
+        }
+      );
 
       expect(updatedActivityReportGoalFieldResponses.length).toBe(1);
-      expect(updatedActivityReportGoalFieldResponses[0].goalTemplateFieldPromptId).toEqual(prompt.id);
+      expect(updatedActivityReportGoalFieldResponses[0].goalTemplateFieldPromptId).toEqual(
+        prompt.id
+      );
       expect(updatedActivityReportGoalFieldResponses[0].response).toEqual(['option 1']);
     });
   });
@@ -834,6 +1321,8 @@ describe('save standard goals for report', () => {
     let regularGoalTemplate;
     let report;
     let monitoringGoal;
+    let monitoringCitation;
+    let monitoringFindingId;
 
     beforeAll(async () => {
       grantWithMonitoringGoal = await createGrant({
@@ -861,15 +1350,17 @@ describe('save standard goals for report', () => {
       });
 
       report = await createReport({
-        activityRecipients: [{
-          grantId: grantWithMonitoringGoal.id,
-        },
-        {
-          grantId: grantWithoutMonitoringGoal.id,
-        },
-        {
-          grantId: grantWithClosedMonitoringGoal.id,
-        }],
+        activityRecipients: [
+          {
+            grantId: grantWithMonitoringGoal.id,
+          },
+          {
+            grantId: grantWithoutMonitoringGoal.id,
+          },
+          {
+            grantId: grantWithClosedMonitoringGoal.id,
+          },
+        ],
         status: REPORT_STATUSES.IN_PROGRESS,
       });
 
@@ -881,6 +1372,13 @@ describe('save standard goals for report', () => {
         createdVia: 'monitoring',
       });
 
+      monitoringFindingId = faker.string.uuid();
+      monitoringCitation = await Citation.create({
+        mfid: faker.number.int({ min: 1000000, max: 9999999 }),
+        finding_uuid: monitoringFindingId,
+        citation: 'Citation 1',
+      });
+
       await Goal.create({
         name: monitoringTemplate.templateName,
         goalTemplateId: monitoringTemplate.id,
@@ -890,15 +1388,19 @@ describe('save standard goals for report', () => {
     });
 
     afterAll(async () => {
-      await cleanUpGoalAndAllAssociations(
-        regularGoalTemplate.id,
-        report.id,
-        [
-          grantWithMonitoringGoal.id,
-          grantWithoutMonitoringGoal.id,
-          grantWithClosedMonitoringGoal.id,
-        ],
-      );
+      await cleanUpGoalAndAllAssociations(regularGoalTemplate.id, report.id, [
+        grantWithMonitoringGoal.id,
+        grantWithoutMonitoringGoal.id,
+        grantWithClosedMonitoringGoal.id,
+      ]);
+      if (monitoringCitation) {
+        await Citation.destroy({
+          where: {
+            id: monitoringCitation.id,
+          },
+          force: true,
+        });
+      }
     });
 
     /*
@@ -935,11 +1437,23 @@ describe('save standard goals for report', () => {
               citations: [
                 {
                   citation: 'Citation 1',
-                  monitoringReferences: [{
-                    grantId: grantWithMonitoringGoal.id,
-                    findingId: 1,
-                    reviewName: 'Review 1',
-                  }],
+                  monitoringReferences: [
+                    {
+                      grantId: grantWithMonitoringGoal.id,
+                      findingId: monitoringFindingId,
+                      reviewName: 'Review 1',
+                      standardId: 200001,
+                      grantNumber: grantWithMonitoringGoal.number,
+                      findingType: 'Noncompliance',
+                      findingSource: 'Monitoring',
+                      acro: 'TST',
+                      severity: 2,
+                      reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+                      monitoringFindingStatusName: 'Active',
+                      name: 'Citation 1',
+                      citation: 'Citation 1',
+                    },
+                  ],
                 },
               ],
               closeSuspendReason: null,
@@ -986,7 +1500,7 @@ describe('save standard goals for report', () => {
         },
       ];
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
       const savedGoals = await Goal.findAll({
         where: {
@@ -1039,7 +1553,9 @@ describe('save standard goals for report', () => {
       expect(savedActivityReportObjectives.length).toBe(1);
 
       expect(savedActivityReportObjectives[0].objectiveId).toBe(savedObjectives[0].id);
-      expect(savedActivityReportObjectives[0].ttaProvided).toEqual('tta for a monitoring goal objective');
+      expect(savedActivityReportObjectives[0].ttaProvided).toEqual(
+        'tta for a monitoring goal objective'
+      );
 
       const savedCitations = await ActivityReportObjectiveCitation.findAll({
         where: {
@@ -1049,6 +1565,17 @@ describe('save standard goals for report', () => {
 
       expect(savedCitations.length).toBe(1);
       expect(savedCitations[0].citation).toEqual('Citation 1');
+      expect(savedCitations[0].grantId).toEqual(grantWithMonitoringGoal.id);
+      expect(savedCitations[0].findingId).toEqual(monitoringFindingId);
+      expect(savedCitations[0].reviewName).toEqual('Review 1');
+
+      const linkedCitation = await Citation.findOne({
+        where: {
+          finding_uuid: monitoringFindingId,
+        },
+      });
+      expect(linkedCitation).toBeTruthy();
+      expect(savedCitations[0].citationId).toBe(linkedCitation.id);
 
       // Assert all grants had the regular standard goals created.
       const savedRegularGoals = await Goal.findAll({

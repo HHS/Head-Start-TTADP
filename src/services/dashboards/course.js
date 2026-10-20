@@ -1,11 +1,9 @@
 /* eslint-disable max-len */
-import { Op, QueryTypes } from 'sequelize';
-import moment from 'moment';
+
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  ActivityReport,
-  sequelize,
-} from '../../models';
+import moment from 'moment';
+import { Op, QueryTypes } from 'sequelize';
+import { ActivityReport, sequelize } from '../../models';
 
 export async function rollUpCourseUrlData(data) {
   const cutOffDate = new Date('2024-03-07');
@@ -23,6 +21,7 @@ export async function rollUpCourseUrlData(data) {
       return [
         ...accumulator,
         {
+          id: accumulator.length,
           heading: c.course,
           url: c.course,
           course: c.course,
@@ -72,9 +71,7 @@ export async function getCourseUrlWidgetData(scopes) {
   // Get report ids using the scopes.
   // TODO: We could speed this up by using utils.scopeToWhere to get the where clause.
   const reportIds = await ActivityReport.findAll({
-    attributes: [
-      'id',
-    ],
+    attributes: ['id'],
     where: {
       [Op.and]: [
         scopes.activityReport,
@@ -148,12 +145,9 @@ export async function getCourseUrlWidgetData(scopes) {
   `;
 
   // Execute the query.
-  const courseData = await sequelize.query(
-    flatCourseSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  const courseData = await sequelize.query(flatCourseSql, {
+    type: QueryTypes.SELECT,
+  });
 
   // Return rollup.
   return {

@@ -6,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ---------- The steps -------------------------------------------------
         -- 1: Collect all monitoring goals opened from Oct 2025 on, marking
         --    any that have TTA activity or which OHS tells us to keep.
@@ -97,7 +98,9 @@ module.exports = {
         LEFT JOIN deleted_gsc
           ON gid = gcd_gid
         ;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 

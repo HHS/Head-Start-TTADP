@@ -39,8 +39,8 @@ const TOPICS = [
 ];
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       // delete all existing active topics
       await queryInterface.bulkDelete('Topics', {}, { transaction });
 
@@ -55,14 +55,19 @@ module.exports = {
         transaction,
       });
 
-      return queryInterface.addColumn('Topics', 'deletedAt', {
-        allowNull: true,
-        type: Sequelize.DATE,
-      }, { transaction });
-    },
-  ),
+      return queryInterface.addColumn(
+        'Topics',
+        'deletedAt',
+        {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        { transaction }
+      );
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => queryInterface.removeColumn('Topics', 'deletedAt', { transaction }),
-  ),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) =>
+      queryInterface.removeColumn('Topics', 'deletedAt', { transaction })
+    ),
 };

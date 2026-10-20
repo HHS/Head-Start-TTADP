@@ -1,13 +1,14 @@
 import '@testing-library/jest-dom';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
 import ResourceUseSparklineGraph from '../ResourceUseSparklineGraph';
 
 const testData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
   resources: [
     {
-      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading:
+        'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       url: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       isUrl: true,
       data: [
@@ -30,7 +31,8 @@ const testData = {
       ],
     },
     {
-      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading:
+        'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       title: 'ECLKC Sample Title Test',
       isUrl: true,
       data: [
@@ -53,7 +55,8 @@ const testData = {
       ],
     },
     {
-      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading:
+        'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       url: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       title: 'ECLKC Sample Title Test',
       isUrl: true,
@@ -125,11 +128,7 @@ const testData = {
 };
 
 const renderResourceUseSparklineGraph = (data) => {
-  render(
-    <ResourceUseSparklineGraph
-      data={data}
-    />,
-  );
+  render(<ResourceUseSparklineGraph data={data} />);
 };
 
 describe('ResourceUseSparklineGraph', () => {

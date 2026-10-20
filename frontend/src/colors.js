@@ -10,12 +10,29 @@ const colors = {
   ttahubMediumBlue: '#336A90',
   ttahubBlueLight: '#e2eff7',
   ttahubBlueLighter: '#eceef1',
-  ttahubMediumDeepTeal: '#407972',
+  ttahubMediumDeepTeal: '#5b7fa6',
   ttahubDeepTealLight: '#EEF2EB',
   ttahubMagenta: '#A12854',
   ttahubMagentaLight: '#ffe8f0',
   ttahubOrange: '#e29f4d',
   ttahubOrangeLight: '#fff1e0',
+  ttahubOrangeMedium: '#e8b271',
+
+  ttahubGrayBlue: '#516e83',
+  ttahubSteelBlue: '#5c88a6',
+  ttahubTeal: '#65948e',
+  ttahubTealDark: '#407972',
+  ttahubMagentaMedium: '#b45376',
+
+  // Sankey-specific colors (independent from shared palette vars)
+  ttahubSankeyDarkBlue: '#264a64',
+  ttahubSankeyMediumBlue: '#336b90',
+  ttahubSankeyOrange: '#e29f4c',
+  ttahubSankeyMagenta: '#a12854',
+  ttahubSankeyGreen: '#2e8540',
+  ttahubSankeyGreenDark: '#196b28',
+  ttahubSankeyRed: '#9b2335',
+  ttahubSankeyRedDark: '#7b1028',
 
   baseDarkest: '#1b1b1b',
   baseDark: '#565c65',
@@ -42,7 +59,6 @@ const colors = {
   textInk: '#1b1b1b',
   textLink: '#46789B',
   textVisited: '#8C39DB',
-  responseCode: '#71767A',
 };
 
-module.exports = colors;
+export default colors;

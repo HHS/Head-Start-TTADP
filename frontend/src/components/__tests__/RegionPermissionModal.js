@@ -1,13 +1,11 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { v4 as uuidv4 } from 'uuid';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import RegionPermissionModal from '../RegionPermissionModal';
+import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { formatDateRange } from '../../utils';
+import RegionPermissionModal from '../RegionPermissionModal';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -29,20 +27,20 @@ const defaultUser = {
   ],
 };
 
-const defaultFilters = [{
-  id: uuidv4(),
-  topic: 'startDate',
-  condition: 'is within',
-  query: defaultDate,
-}];
-
-const PermissionModal = (
+const defaultFilters = [
   {
-    filters = defaultFilters,
-    user = defaultUser,
-    showFilterWithMyRegions = () => { },
+    id: uuidv4(),
+    topic: 'startDate',
+    condition: 'is within',
+    query: defaultDate,
   },
-) => (
+];
+
+const PermissionModal = ({
+  filters = defaultFilters,
+  user = defaultUser,
+  showFilterWithMyRegions = () => {},
+}) => (
   <div>
     <RegionPermissionModal
       filters={filters}
@@ -134,7 +132,10 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
 
     // Click show filters with my regions.
-    const showFiltersBtn = await screen.findByRole('button', { name: /show filter with my regions/i, hidden: true });
+    const showFiltersBtn = await screen.findByRole('button', {
+      name: /show filter with my regions/i,
+      hidden: true,
+    });
     userEvent.click(showFiltersBtn);
     expect(showFiltersFn).toHaveBeenCalled();
 
@@ -170,7 +171,10 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
 
     // Click show filters with my regions.
-    const showFiltersBtn = await screen.findByRole('link', { name: /request access via smartsheet/i, hidden: true });
+    const showFiltersBtn = await screen.findByRole('link', {
+      name: /request access via smartsheet/i,
+      hidden: true,
+    });
     userEvent.click(showFiltersBtn);
     expect(showFiltersFn).toHaveBeenCalled();
 
@@ -217,7 +221,12 @@ describe('Region Permission Modal', () => {
 
     render(<PermissionModal filters={filtersToPass} />);
 
-    expect(await screen.findByRole('heading', { name: /you need permission to access region 3/i, hidden: true })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', {
+        name: /you need permission to access region 3/i,
+        hidden: true,
+      })
+    ).toBeVisible();
   });
 
   it('correctly shows the header with multiple denied regions', async () => {
@@ -245,6 +254,11 @@ describe('Region Permission Modal', () => {
 
     render(<PermissionModal filters={filtersToPass} />);
 
-    expect(await screen.findByRole('heading', { name: /you need permission to access regions 3, 10/i, hidden: true })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', {
+        name: /you need permission to access regions 3, 10/i,
+        hidden: true,
+      })
+    ).toBeVisible();
   });
 });

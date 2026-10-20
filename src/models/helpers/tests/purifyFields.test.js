@@ -1,20 +1,16 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { APPROVER_STATUSES } from '@ttahub/common';
-import db from '../..';
 import {
+  createRegion,
   createReport,
   createTrainingReport,
-  createRegion,
   createUser,
   destroyReport,
 } from '../../../testUtils';
-import { purifyFields, purifyDataFields } from '../purifyFields';
+import db from '../..';
+import { purifyDataFields, purifyFields } from '../purifyFields';
 
-const {
-  ActivityReportApprover,
-  ActivityReport,
-  EventReportPilot,
-} = db;
+const { ActivityReportApprover, ActivityReport, EventReportPilot } = db;
 
 const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerror=alert(1)//>';
 const safe = '<a href="//google.com"><img src="x"></a>';
@@ -181,17 +177,20 @@ describe('purifyFields', () => {
       user = await createUser({ homeRegionId: region.id });
       report = await createReport({
         context: xss,
-        activityRecipients: [{ grantId: faker.datatype.number({ min: 99_000 }) }],
+        activityRecipients: [{ grantId: faker.number.int({ min: 99_000, max: 99_000 + 99999 }) }],
         userId: user.id,
         regionId: region.id,
       });
 
-      approver = await ActivityReportApprover.create({
-        activityReportId: report.id,
-        userId: user.id,
-        status: APPROVER_STATUSES.PENDING,
-        note: xss,
-      }, { individualHooks: true });
+      approver = await ActivityReportApprover.create(
+        {
+          activityReportId: report.id,
+          userId: user.id,
+          status: APPROVER_STATUSES.PENDING,
+          note: xss,
+        },
+        { individualHooks: true }
+      );
 
       event = await createTrainingReport({
         regionId: region.id,
@@ -211,15 +210,15 @@ describe('purifyFields', () => {
 
       await ActivityReport.update(
         { context: xss },
-        { where: { id: report.id }, individualHooks: true },
+        { where: { id: report.id }, individualHooks: true }
       );
       await ActivityReportApprover.update(
         { note: xss },
-        { where: { id: approver.id }, individualHooks: true },
+        { where: { id: approver.id }, individualHooks: true }
       );
       await EventReportPilot.update(
         { data: { ...event.data, eventName: xss } },
-        { where: { id: event.id }, individualHooks: true },
+        { where: { id: event.id }, individualHooks: true }
       );
 
       await report.reload();

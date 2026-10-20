@@ -1,31 +1,40 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
 import React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { REPORT_STATUSES } from '@ttahub/common';
-import Review from '../Review';
 import UserContext from '../../../../../UserContext';
+import Review from '../Review';
 
 // Mock child components
-jest.mock('../ApproverReview', () => function MockApproverReview() {
-  return <div data-testid="approver-review">ApproverReview Component</div>;
-});
+jest.mock(
+  '../ApproverReview',
+  () =>
+    function MockApproverReview() {
+      return <div data-testid="approver-review">ApproverReview Component</div>;
+    }
+);
 
-jest.mock('../CreatorSubmit', () => function MockCreatorSubmit() {
-  return <div data-testid="creator-submit">CreatorSubmit Component</div>;
-});
+jest.mock(
+  '../CreatorSubmit',
+  () =>
+    function MockCreatorSubmit() {
+      return <div data-testid="creator-submit">CreatorSubmit Component</div>;
+    }
+);
 
 jest.mock('../../../../../components/Accordion', () => ({
   Accordion: function MockAccordion({ items }) {
     return (
       <div data-testid="accordion">
-        {items && items.map((item) => (
-          <div key={item.id} data-testid={`accordion-item-${item.id}`}>
-            {item.title}
-          </div>
-        ))}
+        {items &&
+          items.map((item) => (
+            <div key={item.id} data-testid={`accordion-item-${item.id}`}>
+              {item.title}
+            </div>
+          ))}
       </div>
     );
   },
@@ -45,10 +54,16 @@ describe('Review Component', () => {
     dateSubmitted: '2024-01-15',
     pages: [
       {
-        state: 'Complete', review: false, label: 'Page 1', position: '1',
+        state: 'Complete',
+        review: false,
+        label: 'Page 1',
+        position: '1',
       },
       {
-        state: 'In Progress', review: false, label: 'Page 2', position: '2',
+        state: 'In Progress',
+        review: false,
+        label: 'Page 2',
+        position: '2',
       },
     ],
     availableApprovers: [
@@ -164,7 +179,6 @@ describe('Review Component', () => {
             status: null,
             user: { fullName: 'Approver One' },
           },
-
         ],
       });
 
@@ -190,8 +204,14 @@ describe('Review Component', () => {
         approvers: needsActionApprovers,
       });
 
-      expect(screen.getByText(/Manager One and Manager Two are requesting changes to this Collaboration Report/)).toBeInTheDocument();
-      expect(screen.getByText(/Please review any manager notes below and resubmit for approval/)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Manager One and Manager Two are requesting changes to this Collaboration Report/
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Please review any manager notes below and resubmit for approval/)
+      ).toBeInTheDocument();
     });
 
     it('does not display TopAlert when isSubmitted is false', () => {
@@ -283,13 +303,13 @@ describe('Review Component', () => {
         approvers: [],
       });
 
-      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Changes have been requested for the Collaboration Report/)
+      ).toBeInTheDocument();
     });
 
     it('handles approvers without user property', () => {
-      const incompleteApprovers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION },
-      ];
+      const incompleteApprovers = [{ status: REPORT_STATUSES.NEEDS_ACTION }];
 
       renderTest({
         isSubmitted: true,
@@ -299,7 +319,9 @@ describe('Review Component', () => {
       });
 
       // Should still render the alert even if some approvers don't have user data
-      expect(screen.getByText(/Changes have been requested for this Collaboration Report/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Changes have been requested for this Collaboration Report/)
+      ).toBeInTheDocument();
     });
   });
 
@@ -335,7 +357,9 @@ describe('Review Component', () => {
         approvers,
       });
 
-      expect(screen.getByText(/Single Manager is requesting changes to this Collaboration Report/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Single Manager is requesting changes to this Collaboration Report/)
+      ).toBeInTheDocument();
     });
   });
 });

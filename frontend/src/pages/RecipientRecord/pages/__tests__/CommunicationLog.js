@@ -1,23 +1,24 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import {
-  render, screen, act, waitFor, cleanup,
-} from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
-import { Router } from 'react-router';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import CommunicationLog from '../CommunicationLog';
+import React from 'react';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../AppLoadingContext';
-import UserContext from '../../../../UserContext';
 import AriaLiveContext from '../../../../AriaLiveContext';
+import UserContext from '../../../../UserContext';
+import CommunicationLog from '../CommunicationLog';
 
 const fakeResponse = {
   rows: [
     {
       data: {
-        goals: [{ label: 'First goal', value: '16' }, { label: 'Second goal', value: '10' }],
+        goals: [
+          { label: 'First goal', value: '16' },
+          { label: 'Second goal', value: '10' },
+        ],
         notes: '',
         method: 'Phone',
         result: '',
@@ -62,7 +63,7 @@ describe('CommunicationLog', () => {
             </Router>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </AriaLiveContext.Provider>,
+      </AriaLiveContext.Provider>
     );
   };
 
@@ -72,7 +73,10 @@ describe('CommunicationLog', () => {
   });
 
   it('renders the communication log appropriately', async () => {
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', fakeResponse);
+    fetchMock.get(
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
+      fakeResponse
+    );
     await act(() => waitFor(() => renderTest()));
     const tableCells = screen.getAllByRole('cell');
     const tableCellContents = tableCells.map((cell) => cell.textContent).join('');
@@ -80,10 +84,13 @@ describe('CommunicationLog', () => {
   });
 
   it('formats the log correctly', async () => {
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', {
-      rows: [],
-      count: 0,
-    });
+    fetchMock.get(
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
+      {
+        rows: [],
+        count: 0,
+      }
+    );
     await act(() => waitFor(() => renderTest()));
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
@@ -94,7 +101,10 @@ describe('CommunicationLog', () => {
       rows: [],
       count: 0,
     };
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', response);
+    fetchMock.get(
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
+      response
+    );
     renderTest();
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
@@ -112,9 +122,12 @@ describe('CommunicationLog', () => {
     const select = await screen.findByText(/Select result to filter by/i);
     await selectEvent.select(select, ['RTTAPA declined']);
 
-    const filteredUrl = '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&result.in[]=RTTAPA%20declined';
+    const filteredUrl =
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&result.in[]=RTTAPA%20declined';
     fetchMock.get(filteredUrl, response);
-    const apply = await screen.findByRole('button', { name: /apply filters on communication logs/i });
+    const apply = await screen.findByRole('button', {
+      name: /apply filters on communication logs/i,
+    });
     act(() => userEvent.click(apply));
 
     await waitFor(() => expect(fetchMock.called(filteredUrl)).toBe(true));

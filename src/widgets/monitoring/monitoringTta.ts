@@ -1,0 +1,1134 @@
+/* eslint-disable max-len */
+import { REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
+import { type FindAttributeOptions, Op, type OrderItem } from 'sequelize';
+import { formatDate, uniqueStrings } from '../../lib/utils';
+import db from '../../models';
+import type {
+  ITTAByCitationResponse,
+  ITTAByCitationReview,
+  ITTAByReviewObjective,
+} from '../../services/types/monitoring';
+import type { IScopes } from '../types';
+
+const {
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  ActivityReportObjectiveTopic,
+  ActivityReportCollaborator,
+  Citation,
+  DeliveredReviewCitation,
+  DeliveredReview,
+  Grant,
+  GrantCitation,
+  GrantDeliveredReview,
+  Program,
+  Objective,
+  User,
+  Role,
+  Topic,
+} = db;
+
+type MonitoringTTAData = ITTAByCitationResponse & {
+  id: string;
+  recipientName: string;
+  recipientId: number;
+  regionId: number;
+};
+
+type MonitoringTtaCsvResponse = {
+  recipientId: number;
+  recipientName: string;
+  citation: string; // citation.citation
+  status: string; // citation.calculated_status
+  findingType: string; // citation.calculated_finding_type
+  category: string; // citation.calculated_category
+  grantNumbers: string; // separated by newline
+  lastTTADate: string | null;
+};
+
+type MonitoringTtaSortBy =
+  | 'finding_type'
+  | 'last_tta'
+  | 'recipient_citation'
+  | 'finding'
+  | 'citation';
+type MonitoringTtaDirection = 'asc' | 'desc';
+
+type Specialist = {
+  name: string;
+  roles: string[];
+};
+
+const PAGE_SIZE = 10;
+const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'citation';
+const DEFAULT_DIRECTION: MonitoringTtaDirection = 'asc';
+
+type CitationQueryResult = {
+  id: number;
+  citation: string | null;
+  calculated_status: string | null;
+  calculated_finding_type: string | null;
+  calculated_category: string | null;
+  grantCitations: {
+    grantId: number;
+    recipient_id: number | null;
+    recipient_name: string | null;
+    grant: {
+      id: number;
+      number: string | null;
+      numberWithProgramTypes: string | null;
+      programs:
+        | {
+            id: number;
+            programType: string | null;
+          }[]
+        | null;
+    };
+  }[];
+  deliveredReviewCitations: {
+    deliveredReview: {
+      id: number;
+      review_name: string | null;
+      review_type: string | null;
+      outcome: string | null;
+      report_delivery_date: string | null;
+      review_status: string | null;
+      grantDeliveredReviews: {
+        grantId: number;
+        recipient_id: number;
+        recipient_name: string;
+        region_id: number;
+      }[];
+    };
+  }[];
+  activityReportObjectiveCitations: {
+    grantId: number;
+    grantNumber: string;
+    reviewName: string;
+    activityReportObjective?: {
+      id: number;
+      activityReportObjectiveTopics?: {
+        topic?: {
+          name: string | null;
+        } | null;
+      }[];
+      activityReport?: {
+        id: number;
+        displayId: string | null;
+        endDate: string | null;
+        participants: string[] | null;
+        author?: {
+          fullName: string | null;
+          roles?: {
+            name: string | null;
+          }[];
+        } | null;
+        activityReportCollaborators?: {
+          user?: {
+            fullName: string | null;
+            roles?: {
+              name: string | null;
+            }[];
+          } | null;
+        }[];
+      } | null;
+      objective?: {
+        title: string;
+        status: string;
+        id: number;
+      } | null;
+    } | null;
+  }[];
+};
+
+type RecipientCitationCard = {
+  id: string;
+  citationId: number;
+  recipientId: number;
+  recipientName: string;
+  regionId: number;
+};
+
+type CardDeliveredReview = {
+  review_name?: string | null;
+  review_type: string | null;
+  outcome: string | null;
+  report_delivery_date: string | null;
+  review_status: string | null;
+};
+
+export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
+  const specialistsByName = new Map<string, Set<string>>();
+
+  specialists.forEach(({ name, roles }) => {
+    if (!name) {
+      return;
+    }
+
+    const existingRoles = specialistsByName.get(name) || new Set<string>();
+    roles.forEach((role) => {
+      if (role) {
+        existingRoles.add(role);
+      }
+    });
+    specialistsByName.set(name, existingRoles);
+  });
+
+  return [...specialistsByName.entries()]
+    .map(([name, roles]) => ({
+      name,
+      roles: [...roles].sort(),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const CITATION_NUMBER_MAJOR_SQL = `
+  COALESCE(
+    NULLIF(regexp_replace(split_part(COALESCE("citation"."citation", ''), '.', 1), '\\D', '', 'g'), ''),
+    '0'
+  )::bigint
+`;
+
+const CITATION_NUMBER_MINOR_SQL = `
+  COALESCE(
+    NULLIF((regexp_match(split_part(COALESCE("citation"."citation", ''), '.', 2), '^\\d+'))[1], ''),
+    '0'
+  )::bigint
+`;
+
+const RECIPIENT_SORT_KEY_SQL = `
+  MIN(COALESCE("GrantCitation"."recipient_name", ''))
+`;
+
+const RECIPIENT_SORT_TEXT_SQL = `
+  LOWER(regexp_replace(${RECIPIENT_SORT_KEY_SQL}, '\\d+', '', 'g'))
+`;
+
+const RECIPIENT_SORT_NUMBER_SQL = `
+  COALESCE(NULLIF((regexp_match(${RECIPIENT_SORT_KEY_SQL}, '\\d+'))[1], ''), '0')::bigint
+`;
+
+const RECIPIENT_SORT_FALLBACK_SQL = `
+  LOWER(${RECIPIENT_SORT_KEY_SQL})
+`;
+
+// Business-logic priority order for finding types.
+const FINDING_TYPE_ORDER: Record<string, number> = {
+  'Area of Concern': 1,
+  Noncompliance: 2,
+  Deficiency: 3,
+};
+
+const FINDING_SORT_SQL = `
+  CASE LOWER(COALESCE("citation"."calculated_finding_type", ''))
+    WHEN 'area of concern' THEN 1
+    WHEN 'noncompliance' THEN 2
+    WHEN 'deficiency' THEN 3
+    ELSE 4
+  END
+`;
+
+const CATEGORY_SORT_SQL = `
+  LOWER(COALESCE("citation"."calculated_category", ''))
+`;
+
+const CITATION_SORT_FALLBACK_SQL = `
+  LOWER(COALESCE("citation"."citation", ''))
+`;
+
+const LAST_TTA_SORT_SQL = `
+  (
+    SELECT MAX(ar."endDate")
+    FROM "ActivityReportObjectiveCitations" aroc
+    JOIN "ActivityReportObjectives" aro ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+    JOIN "GrantCitations" gc_sort
+      ON gc_sort."grantId" = aroc."grantId"
+      AND gc_sort."citationId" = aroc."citationId"
+      AND gc_sort."region_id" = "GrantCitation"."region_id"
+    WHERE ar."calculatedStatus" = 'approved'
+      AND aroc."citationId" = "citation"."id"
+      AND gc_sort."recipient_id" = "GrantCitation"."recipient_id"
+  )
+`;
+
+function compareFormattedDatesDesc(aDate: string, bDate: string): number {
+  const aMoment = moment(aDate, 'MM/DD/YYYY', true);
+  const bMoment = moment(bDate, 'MM/DD/YYYY', true);
+  const aValid = aMoment.isValid();
+  const bValid = bMoment.isValid();
+
+  if (aValid && bValid) {
+    return bMoment.diff(aMoment);
+  }
+
+  if (aValid !== bValid) {
+    return aValid ? -1 : 1;
+  }
+
+  return 0;
+}
+
+export function specialistsFromCitation(citation: CitationQueryResult): Specialist[] {
+  const specialists = citation.activityReportObjectiveCitations.flatMap((reference) => {
+    const activityReport = reference.activityReportObjective?.activityReport;
+    if (!activityReport) {
+      return [];
+    }
+
+    const author = activityReport.author?.fullName
+      ? [
+          {
+            name: activityReport.author.fullName,
+            roles: uniqueStrings(activityReport.author.roles?.map((role) => role.name) || []),
+          },
+        ]
+      : [];
+
+    const collaborators = (activityReport.activityReportCollaborators || []).flatMap(
+      (collaborator) => {
+        const collaboratorName = collaborator.user?.fullName;
+        if (!collaboratorName) {
+          return [];
+        }
+
+        return [
+          {
+            name: collaboratorName,
+            roles: uniqueStrings(collaborator.user?.roles?.map((role) => role.name) || []),
+          },
+        ];
+      }
+    );
+
+    return [...author, ...collaborators];
+  });
+
+  return mergeSpecialists(specialists);
+}
+
+export function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
+  type ObjectiveEntry = ITTAByReviewObjective & { arEndDates: Map<number, string> };
+  const objectivesByObjectiveId = new Map<number | string, ObjectiveEntry>();
+
+  citation.activityReportObjectiveCitations.forEach((reference) => {
+    const { activityReportObjective } = reference;
+    const activityReport = activityReportObjective?.activityReport;
+    const objective = activityReportObjective?.objective;
+
+    if (!activityReportObjective || !activityReport || !objective) {
+      return;
+    }
+
+    const newTopics = uniqueStrings(
+      (activityReportObjective.activityReportObjectiveTopics || []).map(
+        (topicReference) => topicReference.topic?.name
+      )
+    );
+
+    const newParticipants = uniqueStrings(activityReport.participants || []);
+    const formattedEndDate = formatDate(activityReport.endDate) || '';
+    const arEntry = { id: activityReport.id, displayId: activityReport.displayId || '' };
+
+    // When objective.id is present, deduplicate by it; otherwise use ARO id as a unique key.
+    const mapKey: number | string =
+      objective.id != null ? objective.id : `aro:${activityReportObjective.id}`;
+
+    const existing = objectivesByObjectiveId.get(mapKey);
+
+    if (existing) {
+      // Merge activity reports, deduplicating by AR id
+      const arIds = new Set(existing.activityReports.map((ar) => ar.id));
+      if (!arIds.has(activityReport.id)) {
+        existing.activityReports.push(arEntry);
+        existing.arEndDates.set(activityReport.id, formattedEndDate);
+      }
+
+      // Keep the most recent endDate at the objective level
+      if (compareFormattedDatesDesc(formattedEndDate, existing.endDate) < 0) {
+        existing.endDate = formattedEndDate;
+      }
+
+      // Union topics and participants
+      existing.topics = uniqueStrings([...existing.topics, ...newTopics]).sort((a, b) =>
+        a.localeCompare(b)
+      );
+      const mergedParticipants = uniqueStrings([
+        ...(existing.participants || []),
+        ...newParticipants,
+      ]);
+      if (mergedParticipants.length > 0) {
+        existing.participants = mergedParticipants;
+      }
+    } else {
+      const entryArEndDates = new Map<number, string>();
+      entryArEndDates.set(activityReport.id, formattedEndDate);
+      objectivesByObjectiveId.set(mapKey, {
+        id: objective.id,
+        title: objective.title || '',
+        activityReports: [arEntry],
+        endDate: formattedEndDate,
+        topics: newTopics.sort((a, b) => a.localeCompare(b)),
+        status: objective.status || '',
+        ...(newParticipants.length > 0 ? { participants: newParticipants } : {}),
+        arEndDates: entryArEndDates,
+      });
+    }
+  });
+
+  return [...objectivesByObjectiveId.values()]
+    .map(({ arEndDates: endDateMap, ...obj }) => {
+      // Sort activity reports within this objective by endDate descending
+      const sortedReports = [...obj.activityReports].sort((a, b) =>
+        compareFormattedDatesDesc(endDateMap.get(a.id) || '', endDateMap.get(b.id) || '')
+      );
+      return { ...obj, activityReports: sortedReports };
+    })
+    .sort((a, b) => {
+      const endDateComparison = compareFormattedDatesDesc(a.endDate, b.endDate);
+      if (endDateComparison !== 0) {
+        return endDateComparison;
+      }
+
+      return a.title.localeCompare(b.title);
+    });
+}
+
+export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): number {
+  const dateComparison = compareFormattedDatesDesc(a.reviewReceived, b.reviewReceived);
+  if (dateComparison !== 0) {
+    return dateComparison;
+  }
+
+  return a.reviewType.localeCompare(b.reviewType);
+}
+
+export function lastTtaDateMomentForReviews(
+  objectives: ITTAByReviewObjective[]
+): moment.Moment | null {
+  return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
+    const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
+    if (!objectiveEndDate.isValid()) {
+      return latestObjectiveEndDate;
+    }
+
+    if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
+      return objectiveEndDate;
+    }
+
+    return latestObjectiveEndDate;
+  }, null);
+}
+
+function compareText(a: string | null | undefined, b: string | null | undefined): number {
+  return (a || '').localeCompare(b || '', undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
+function findingTypeRank(value: string | null | undefined): number {
+  return FINDING_TYPE_ORDER[(value || '').trim()] ?? 5;
+}
+
+function compareFindingType(a: string | null | undefined, b: string | null | undefined): number {
+  return findingTypeRank(a) - findingTypeRank(b);
+}
+
+function sortDirection(direction: MonitoringTtaDirection): 'ASC' | 'DESC' {
+  return direction === 'desc' ? 'DESC' : 'ASC';
+}
+
+export function compareMonitoringTta(
+  a: MonitoringTTAData,
+  b: MonitoringTTAData,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection
+): number {
+  const recipientComparison = compareText(a.recipientName, b.recipientName);
+  const findingTypeComparison = compareFindingType(a.findingType, b.findingType);
+  const citationComparison = compareText(a.citationNumber, b.citationNumber);
+  const categoryComparison = compareText(a.category, b.category);
+
+  switch (sortBy) {
+    case 'recipient_citation':
+      return (
+        (direction === 'desc' ? recipientComparison * -1 : recipientComparison) ||
+        citationComparison ||
+        findingTypeComparison ||
+        categoryComparison
+      );
+    case 'finding':
+      return (
+        (direction === 'desc' ? categoryComparison * -1 : categoryComparison) ||
+        citationComparison ||
+        recipientComparison ||
+        findingTypeComparison
+      );
+
+    case 'last_tta': {
+      const aLastTTADate = a.lastTTADate || '';
+      const bLastTTADate = b.lastTTADate || '';
+      const aHasValidDate =
+        !!aLastTTADate && moment(aLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+      const bHasValidDate =
+        !!bLastTTADate && moment(bLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+
+      let directedDate = 0;
+
+      if (aHasValidDate && !bHasValidDate) {
+        directedDate = -1;
+      } else if (!aHasValidDate && bHasValidDate) {
+        directedDate = 1;
+      } else if (aHasValidDate && bHasValidDate) {
+        // compareFormattedDatesDesc returns negative when a is more recent.
+        const dateComparison = compareFormattedDatesDesc(aLastTTADate, bLastTTADate);
+        // For 'asc' (oldest first) reverse only valid-vs-valid comparisons.
+        directedDate = direction === 'asc' ? dateComparison * -1 : dateComparison;
+      }
+
+      return directedDate || recipientComparison || citationComparison || findingTypeComparison;
+    }
+    case 'citation':
+      return (
+        (direction === 'desc' ? citationComparison * -1 : citationComparison) ||
+        recipientComparison ||
+        findingTypeComparison ||
+        categoryComparison
+      );
+    // leaving the default cause spelled out for clarity
+    case 'finding_type':
+    default:
+      return (
+        (direction === 'desc' ? findingTypeComparison * -1 : findingTypeComparison) ||
+        recipientComparison ||
+        citationComparison ||
+        categoryComparison
+      );
+  }
+}
+
+function literalOrder(expression: string, direction: 'ASC' | 'DESC'): OrderItem {
+  return [db.sequelize.literal(expression), direction];
+}
+
+function recipientOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
+  return [
+    literalOrder(RECIPIENT_SORT_TEXT_SQL, direction),
+    literalOrder(RECIPIENT_SORT_NUMBER_SQL, direction),
+    literalOrder(RECIPIENT_SORT_FALLBACK_SQL, direction),
+  ];
+}
+
+function citationOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
+  return [
+    literalOrder(CITATION_NUMBER_MAJOR_SQL, direction),
+    literalOrder(CITATION_NUMBER_MINOR_SQL, direction),
+    literalOrder(CITATION_SORT_FALLBACK_SQL, direction),
+  ];
+}
+
+function monitoringTtaOrder(
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection
+): OrderItem[] {
+  const primaryDirection = sortDirection(direction);
+  const ascending = 'ASC' as const;
+
+  switch (sortBy) {
+    case 'recipient_citation':
+      return [
+        ...recipientOrder(primaryDirection),
+        ...citationOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    case 'finding':
+      return [
+        literalOrder(CATEGORY_SORT_SQL, primaryDirection),
+        ...citationOrder(ascending),
+        ...recipientOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    case 'finding_type':
+      return [
+        literalOrder(FINDING_SORT_SQL, primaryDirection),
+        ...recipientOrder(ascending),
+        ...citationOrder(ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    case 'last_tta':
+      return [
+        literalOrder(`CASE WHEN ${LAST_TTA_SORT_SQL} IS NULL THEN 1 ELSE 0 END`, 'ASC'),
+        literalOrder(LAST_TTA_SORT_SQL, primaryDirection),
+        ...recipientOrder(ascending),
+        ...citationOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    // case 'citation' is the default sort
+    default:
+      return [
+        ...citationOrder(primaryDirection),
+        ...recipientOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+  }
+}
+
+const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
+  [db.sequelize.col('GrantCitation.citationId'), 'citationId'],
+  [db.sequelize.col('GrantCitation.recipient_id'), 'recipientId'],
+  [db.sequelize.col('GrantCitation.region_id'), 'regionId'],
+  [db.sequelize.col('GrantCitation.recipient_name'), 'recipientName'],
+] as FindAttributeOptions[];
+
+type PagedRecipientCitationCardsResult = {
+  cards: RecipientCitationCard[];
+  total: number;
+};
+
+type PagedRecipientCitationRow = {
+  citationId: number;
+  recipientId: number;
+  recipientName: string;
+  regionId: number;
+};
+
+function recipientCitationCardInclude(scopes: IScopes) {
+  return [
+    {
+      model: Grant.unscoped(),
+      as: 'grant',
+      required: true,
+      attributes: [],
+    },
+    {
+      model: Citation,
+      as: 'citation',
+      required: true,
+      attributes: [],
+      where: {
+        calculated_finding_type: {
+          [Op.in]: ['Area of Concern', 'Noncompliance', 'Deficiency'],
+        },
+      },
+      include: [
+        {
+          model: DeliveredReviewCitation,
+          as: 'deliveredReviewCitations',
+          required: true,
+          attributes: [],
+          include: [
+            {
+              model: DeliveredReview,
+              as: 'deliveredReview',
+              required: true,
+              attributes: [],
+              where: {
+                [Op.and]: [...scopes.deliveredReview],
+              },
+              include: [
+                {
+                  model: GrantDeliveredReview,
+                  as: 'grantDeliveredReviews',
+                  required: true,
+                  attributes: [],
+                  where: {
+                    grantId: {
+                      [Op.eq]: db.sequelize.col('GrantCitation.grantId'),
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+function cardsFromRows(rows: PagedRecipientCitationRow[]): RecipientCitationCard[] {
+  return rows.map((row) => ({
+    id: `${row.citationId}:${row.recipientId}:${row.regionId}`,
+    citationId: row.citationId,
+    recipientId: row.recipientId,
+    recipientName: row.recipientName,
+    regionId: row.regionId,
+  }));
+}
+
+async function countRecipientCitationCards(scopes: IScopes): Promise<number> {
+  const [result] = (await GrantCitation.findAll({
+    attributes: [
+      [
+        db.sequelize.literal(
+          'COUNT(DISTINCT ("GrantCitation"."citationId", "GrantCitation"."recipient_id", "GrantCitation"."recipient_name", "GrantCitation"."region_id"))'
+        ),
+        'total',
+      ],
+    ],
+    logging: false,
+    where: [...scopes.grantCitation],
+    include: recipientCitationCardInclude(scopes),
+    raw: true,
+    subQuery: false,
+  })) as { total: string | number }[];
+
+  return Number(result?.total || 0);
+}
+
+async function findRecipientCitationCardsPage(
+  scopes: IScopes,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+  offset: number,
+  perPage: number = PAGE_SIZE
+): Promise<RecipientCitationCard[]> {
+  const rows = (await GrantCitation.findAll({
+    attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
+    logging: false,
+    where: [...scopes.grantCitation],
+    include: recipientCitationCardInclude(scopes),
+    group: [
+      'GrantCitation.citationId',
+      'GrantCitation.recipient_id',
+      'GrantCitation.recipient_name',
+      'GrantCitation.region_id',
+      'citation.id',
+      'citation.citation',
+      'citation.calculated_finding_type',
+      'citation.calculated_category',
+    ],
+    order: monitoringTtaOrder(sortBy, direction),
+    limit: perPage,
+    offset,
+    raw: true,
+    subQuery: false,
+  })) as PagedRecipientCitationRow[];
+
+  return cardsFromRows(rows);
+}
+
+async function findPagedRecipientCitationCards(
+  scopes: IScopes,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+  offset: number,
+  perPage: number = PAGE_SIZE
+): Promise<PagedRecipientCitationCardsResult> {
+  const [cards, total] = await Promise.all([
+    findRecipientCitationCardsPage(scopes, sortBy, direction, offset, perPage),
+    countRecipientCitationCards(scopes),
+  ]);
+
+  return { cards, total };
+}
+
+async function findCitationsByIds(
+  scopes: IScopes,
+  citationIds: number[]
+): Promise<CitationQueryResult[]> {
+  if (citationIds.length === 0) {
+    return [];
+  }
+
+  return Citation.findAll({
+    where: {
+      id: {
+        [Op.in]: citationIds,
+      },
+    },
+    attributes: [
+      'id',
+      'citation',
+      'calculated_status',
+      'calculated_finding_type',
+      'calculated_category',
+    ],
+    include: [
+      {
+        model: GrantCitation,
+        as: 'grantCitations',
+        required: true,
+        attributes: ['grantId', 'recipient_id', 'recipient_name', 'region_id'],
+        include: [
+          {
+            model: Grant,
+            required: true,
+            as: 'grant',
+            attributes: ['id', 'number', 'numberWithProgramTypes'],
+            include: [
+              {
+                model: Program,
+                attributes: ['id', 'programType'],
+                as: 'programs',
+                separate: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: DeliveredReviewCitation,
+        as: 'deliveredReviewCitations',
+        required: true,
+        attributes: ['citationId', 'deliveredReviewId'],
+        include: [
+          {
+            model: DeliveredReview,
+            as: 'deliveredReview',
+            required: true,
+            where: {
+              [Op.and]: [...scopes.deliveredReview],
+            },
+            attributes: [
+              'id',
+              'review_name',
+              'review_type',
+              'outcome',
+              'report_delivery_date',
+              'review_status',
+            ],
+            include: [
+              {
+                model: GrantDeliveredReview,
+                as: 'grantDeliveredReviews',
+                required: true,
+                attributes: ['grantId', 'recipient_id'],
+                include: [
+                  {
+                    model: Grant,
+                    as: 'grant',
+                    required: true,
+                    attributes: [],
+                  },
+                ],
+                separate: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: ActivityReportObjectiveCitation,
+        as: 'activityReportObjectiveCitations',
+        required: false,
+        attributes: ['id', 'grantId', 'grantNumber', 'reviewName'],
+        separate: true,
+        include: [
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjective',
+            required: true,
+            attributes: ['id'],
+            include: [
+              {
+                model: ActivityReportObjectiveTopic,
+                as: 'activityReportObjectiveTopics',
+                attributes: ['activityReportObjectiveId', 'topicId'],
+                include: [
+                  {
+                    attributes: ['id', 'name'],
+                    model: Topic,
+                    as: 'topic',
+                  },
+                ],
+                separate: true,
+              },
+              {
+                model: ActivityReport,
+                as: 'activityReport',
+                required: true,
+                attributes: ['id', 'displayId', 'endDate', 'participants'],
+                where: {
+                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
+                },
+                include: [
+                  {
+                    model: ActivityReportCollaborator,
+                    as: 'activityReportCollaborators',
+                    attributes: ['id', 'activityReportId', 'userId'],
+                    include: [
+                      {
+                        model: User,
+                        as: 'user',
+                        attributes: ['id', 'name', 'fullName'],
+                        include: [
+                          {
+                            model: Role,
+                            as: 'roles',
+                          },
+                        ],
+                      },
+                    ],
+                    separate: true,
+                  },
+                  {
+                    model: User,
+                    attributes: ['id', 'name', 'fullName'],
+                    as: 'author',
+                    include: [
+                      {
+                        model: Role,
+                        as: 'roles',
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                model: Objective,
+                as: 'objective',
+                attributes: ['title', 'status', 'id'],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }) as Promise<CitationQueryResult[]>;
+}
+
+function grantsForRecipientCitationCard(
+  citation: CitationQueryResult,
+  card: RecipientCitationCard
+) {
+  const grantsById = new Map<number, CitationQueryResult['grantCitations'][number]['grant']>();
+
+  citation.grantCitations.forEach((grantCitation) => {
+    if (grantCitation.recipient_id !== card.recipientId) {
+      return;
+    }
+
+    grantsById.set(grantCitation.grant.id, grantCitation.grant);
+  });
+
+  return [...grantsById.values()];
+}
+
+function deliveredReviewsForRecipientCitationCard(
+  citation: CitationQueryResult,
+  grantIds: Set<number>
+): CardDeliveredReview[] {
+  const reviewsById = new Map<number, CardDeliveredReview>();
+
+  citation.deliveredReviewCitations.forEach(({ deliveredReview }) => {
+    const appliesToRecipient = deliveredReview.grantDeliveredReviews.some(
+      ({ grantId }) => grantId !== null && grantIds.has(grantId)
+    );
+
+    if (!appliesToRecipient) {
+      return;
+    }
+
+    reviewsById.set(deliveredReview.id, {
+      review_name: deliveredReview.review_name,
+      review_type: deliveredReview.review_type,
+      outcome: deliveredReview.outcome,
+      report_delivery_date: deliveredReview.report_delivery_date,
+      review_status: deliveredReview.review_status,
+    });
+  });
+
+  return [...reviewsById.values()];
+}
+
+function referencesForRecipientCitationCard(
+  citation: CitationQueryResult,
+  grantIds: Set<number>
+): CitationQueryResult['activityReportObjectiveCitations'] {
+  return citation.activityReportObjectiveCitations.filter((reference) =>
+    grantIds.has(reference.grantId)
+  );
+}
+
+function monitoringTtaDataForRecipientCitationCard(
+  citation: CitationQueryResult,
+  card: RecipientCitationCard
+): MonitoringTTAData | null {
+  const grants = grantsForRecipientCitationCard(citation, card);
+  const grantIds = new Set(grants.map((grant) => grant.id));
+  if (grantIds.size === 0) {
+    return null;
+  }
+
+  const recipientName = card.recipientName || '';
+  const activityReportObjectiveCitations = referencesForRecipientCitationCard(citation, grantIds);
+  const scopedCitation = {
+    ...citation,
+    activityReportObjectiveCitations,
+  };
+  const objectives = objectivesFromCitation(scopedCitation);
+  const specialists = specialistsFromCitation(scopedCitation);
+  const deliveredReviews = deliveredReviewsForRecipientCitationCard(citation, grantIds);
+  if (deliveredReviews.length === 0) {
+    return null;
+  }
+
+  const lastTTADateMoment = lastTtaDateMomentForReviews(objectives);
+
+  const reviews = deliveredReviews
+    .map((review) => {
+      const reviewReceived = formatDate(review.report_delivery_date) || '';
+
+      return {
+        name: review.review_name || '',
+        reviewType: review.review_type || '',
+        reviewReceived,
+        outcome: review.outcome || '',
+        findingStatus: review.review_status || undefined,
+        specialists,
+        objectives,
+      };
+    })
+    .sort(compareReviews);
+
+  return {
+    id: card.id,
+    recipientName,
+    recipientId: card.recipientId,
+    regionId: card.regionId,
+    citationId: card.citationId,
+    citationNumber: citation.citation || '',
+    findingType: citation.calculated_finding_type || '',
+    status: citation.calculated_status || '',
+    category: citation.calculated_category || '',
+    grantNumbers: uniqueStrings(grants.map((grant) => grant.numberWithProgramTypes)).sort(),
+    lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
+    reviews,
+  };
+}
+
+const MAX_PAGE_SIZE = 500;
+
+const parseQuery = (
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    offset?: number;
+    perPage?: number;
+  } = {}
+) => {
+  const sortBy = query.sortBy || DEFAULT_SORT_BY;
+  const direction = query.direction || DEFAULT_DIRECTION;
+  const parsedPerPage = Number(query.perPage);
+  const perPage =
+    Number.isInteger(parsedPerPage) && parsedPerPage > 0
+      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+      : PAGE_SIZE;
+
+  const offset = Number(query.offset) || 0;
+
+  return { sortBy, direction, perPage, offset };
+};
+
+export async function* monitoringTtaCsvGenerator(
+  scopes: IScopes,
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    perPage?: number;
+  } = {}
+): AsyncGenerator<MonitoringTtaCsvResponse> {
+  const { sortBy, direction } = parseQuery({
+    sortBy: query.sortBy,
+    direction: query.direction,
+  });
+  const parsedExportPerPage = Number(query.perPage);
+  const exportPageSize =
+    Number.isInteger(parsedExportPerPage) && parsedExportPerPage > 0
+      ? Math.min(parsedExportPerPage, MAX_PAGE_SIZE)
+      : MAX_PAGE_SIZE;
+  const total = await countRecipientCitationCards(scopes);
+  let offset = 0;
+
+  while (offset < total) {
+    // eslint-disable-next-line no-await-in-loop
+    const cards = await findRecipientCitationCardsPage(
+      scopes,
+      sortBy,
+      direction,
+      offset,
+      exportPageSize
+    );
+    // eslint-disable-next-line no-await-in-loop
+    const data = await monitoringTtaDataForCards(scopes, cards);
+
+    if (cards.length === 0) {
+      break;
+    }
+
+    offset += exportPageSize;
+
+    for (const item of data) {
+      yield {
+        recipientId: item.recipientId,
+        recipientName: item.recipientName,
+        citation: item.citationNumber,
+        status: item.status,
+        findingType: item.findingType,
+        category: item.category,
+        grantNumbers: item.grantNumbers.join('\n'),
+        lastTTADate: item.lastTTADate,
+      };
+    }
+  }
+}
+
+async function monitoringTtaDataForCards(
+  scopes: IScopes,
+  cards: RecipientCitationCard[]
+): Promise<MonitoringTTAData[]> {
+  if (cards.length === 0) {
+    return [];
+  }
+
+  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId))).map(
+    (citationId) => Number(citationId)
+  );
+  const citations = await findCitationsByIds(scopes, citationIds);
+  const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
+
+  return cards
+    .map((card) => {
+      const citation = citationsById.get(card.citationId);
+      if (!citation) {
+        return null;
+      }
+      return monitoringTtaDataForRecipientCitationCard(citation, card);
+    })
+    .filter((d): d is MonitoringTTAData => d !== null);
+}
+
+export default async function monitoringTta(
+  scopes: IScopes,
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    offset?: number;
+    perPage?: number;
+  } = {}
+): Promise<{ data: MonitoringTTAData[]; total: number }> {
+  const { sortBy, direction, perPage, offset } = parseQuery(query);
+  const { cards, total } = await findPagedRecipientCitationCards(
+    scopes,
+    sortBy,
+    direction,
+    offset,
+    perPage
+  );
+
+  const data = await monitoringTtaDataForCards(scopes, cards);
+
+  return { data, total };
+}

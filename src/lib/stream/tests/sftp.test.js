@@ -95,12 +95,12 @@ import SftpClient from '../sftp';
 
 jest.mock('stream');
 
-const mockClient = ({
+const mockClient = {
   connect: jest.fn(),
   on: jest.fn(),
   end: jest.fn(),
   sftp: jest.fn(),
-});
+};
 
 jest.mock('ssh2', () => ({
   Client: jest.fn().mockImplementation(() => mockClient),
@@ -118,6 +118,12 @@ describe('SftpClient', () => {
     username: 'user',
     password: 'password',
   };
+  const defaultServerHostKeyAlgorithms = [
+    'ssh-ed25519',
+    'ecdsa-sha2-nistp256',
+    'rsa-sha2-512',
+    'rsa-sha2-256',
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -148,13 +154,35 @@ describe('SftpClient', () => {
 
   describe('connect', () => {
     it('should resolve if already connected', async () => {
-      (sftpClient).connected = true;
+      sftpClient.connected = true;
       await expect(sftpClient.connect()).resolves.toBeUndefined();
     });
 
     it('should connect and set connected to true', async () => {
       await expect(sftpClient.connect()).resolves.toBeUndefined();
       expect(sftpClient.isConnected()).toBe(true);
+    });
+
+    it('should connect with expected default serverHostKey algorithms', async () => {
+      await expect(sftpClient.connect()).resolves.toBeUndefined();
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      const [connectConfig] = mockClient.connect.mock.calls[0];
+      expect(connectConfig.algorithms.serverHostKey).toEqual(defaultServerHostKeyAlgorithms);
+    });
+
+    it('should use supplied serverHostKey algorithms', async () => {
+      const customAlgorithms = ['ssh-rsa'];
+      sftpClient = new SftpClient({
+        ...connectionSettings,
+        algorithms: {
+          serverHostKey: customAlgorithms,
+        },
+      });
+
+      await expect(sftpClient.connect()).resolves.toBeUndefined();
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      const [connectConfig] = mockClient.connect.mock.calls[0];
+      expect(connectConfig.algorithms.serverHostKey).toEqual(customAlgorithms);
     });
 
     it('should reject on connection error', async () => {
@@ -186,7 +214,7 @@ describe('SftpClient', () => {
 
   describe('disconnect', () => {
     it('should end the connection if connected', () => {
-      (sftpClient).connected = true;
+      sftpClient.connected = true;
 
       // Mock the end method to be a jest function
       mockClient.end = jest.fn();
@@ -197,7 +225,7 @@ describe('SftpClient', () => {
     });
 
     it('should not end the connection if not connected', () => {
-      (sftpClient).connected = false;
+      sftpClient.connected = false;
       sftpClient.disconnect();
       expect(mockClient.end).not.toHaveBeenCalled();
     });
@@ -273,7 +301,9 @@ describe('SftpClient', () => {
       mockClient.sftp.mockImplementationOnce((callback) => {
         process.nextTick(() => callback(error));
       });
-      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow('Create read stream error');
+      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow(
+        'Create read stream error'
+      );
     });
   });
 });

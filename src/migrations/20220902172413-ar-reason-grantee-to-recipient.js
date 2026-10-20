@@ -1,6 +1,6 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
         const loggedUser = '0';
         // const transactionId = '';
@@ -12,11 +12,11 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
 
       // Disable logging while doing mass updates
@@ -25,18 +25,21 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         UPDATE "ActivityReports"
           SET "reason" = ARRAY_REPLACE("reason", 'New Grantee', 'New Recipient')
           WHERE "reason" @> '{"New Grantee"}';
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
       // Enable logging after mass updates
       try {
@@ -44,22 +47,23 @@ module.exports = {
           `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
-    },
-  ),
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
-      await queryInterface.sequelize.query(`
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.sequelize.query(
+        `
         UPDATE "ActivityReports"
           SET "reason" = ARRAY_REPLACE("reason", 'New Recipient', 'New Grantee')
           WHERE "reason" @> '{"New Recipient"}';
-      `, { transaction });
-    },
-  ),
+      `,
+        { transaction }
+      );
+    }),
 };

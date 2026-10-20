@@ -1,13 +1,10 @@
-import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { GOAL_STATUS } from '../constants';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 describe('wasGoalPreviouslyClosed', () => {
   it('returns true if the goal was previously closed', () => {
     const goal = {
-      statusChanges: [
-        { oldStatus: GOAL_STATUS.IN_PROGRESS },
-        { oldStatus: GOAL_STATUS.CLOSED },
-      ],
+      statusChanges: [{ oldStatus: GOAL_STATUS.IN_PROGRESS }, { oldStatus: GOAL_STATUS.CLOSED }],
     };
     expect(wasGoalPreviouslyClosed(goal)).toBe(true);
   });
@@ -29,10 +26,7 @@ describe('wasGoalPreviouslyClosed', () => {
 
   it('returns false if status changes do not contain closed status', () => {
     const goal = {
-      statusChanges: [
-        { oldStatus: 'Archived' },
-        { oldStatus: 'Completed' },
-      ],
+      statusChanges: [{ oldStatus: 'Archived' }, { oldStatus: 'Completed' }],
     };
     expect(wasGoalPreviouslyClosed(goal)).toBe(false);
   });

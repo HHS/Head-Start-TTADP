@@ -1,24 +1,19 @@
-import React, {
-  useRef, useEffect, useState,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { EMPTY_ARRAY } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
-import HorizontalTableWidget from './HorizontalTableWidget';
+import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import useMediaCapture from '../hooks/useMediaCapture';
-import useWidgetSorting from '../hooks/useWidgetSorting';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
-import { EMPTY_ARRAY } from '../Constants';
+import useWidgetSorting from '../hooks/useWidgetSorting';
+import HorizontalTableWidget from './HorizontalTableWidget';
 import VBarGraph from './VBarGraph';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
 
 const FIRST_COLUMN = 'Specialist role';
 
-const TABLE_HEADINGS = [
-  'Number of activity reports',
-  'Percentage of activity reports',
-];
+const TABLE_HEADINGS = ['Number of activity reports', 'Percentage of activity reports'];
 
 const DEFAULT_SORT_CONFIG = {
   sortBy: 'Specialist_role',
@@ -47,17 +42,14 @@ export default function PercentageActivityReportByRole({ data }) {
 
   const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
 
-  const {
-    requestSort,
-    sortConfig,
-  } = useWidgetSorting(
+  const { requestSort, sortConfig } = useWidgetSorting(
     'qa-dashboard-percentage-ars-by-role', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
     ['Specialist_role'], // stringColumns
     EMPTY_ARRAY, // dateColumns
-    EMPTY_ARRAY, // keyColumns
+    EMPTY_ARRAY // keyColumns
   );
 
   const { exportRows } = useWidgetExport(
@@ -65,7 +57,7 @@ export default function PercentageActivityReportByRole({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   // records is an array of objects
@@ -137,7 +129,7 @@ export default function PercentageActivityReportByRole({ data }) {
     setShowTabularData,
     capture,
     checkboxes,
-    exportRows,
+    exportRows
   );
 
   if (!data) return null;
@@ -209,7 +201,7 @@ PercentageActivityReportByRole.propTypes = {
         role_name: PropTypes.string,
         role_count: PropTypes.number,
         percentage: PropTypes.number,
-      }),
+      })
     ),
   }),
 };

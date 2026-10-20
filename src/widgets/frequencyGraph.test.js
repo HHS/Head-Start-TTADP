@@ -1,4 +1,3 @@
-import frequencyGraph from './frequencyGraph';
 import db, {
   ActivityReportGoal,
   ActivityReportObjective,
@@ -9,8 +8,9 @@ import db, {
   Recipient,
   Topic,
 } from '../models';
-import { createReport, destroyReport } from '../testUtils';
 import filtersToScopes from '../scopes';
+import { createReport, destroyReport } from '../testUtils';
+import frequencyGraph from './frequencyGraph';
 
 describe('frequency graph widget', () => {
   let reportOne;
@@ -102,28 +102,26 @@ describe('frequency graph widget', () => {
       status: goal.status,
     });
 
-    await ActivityReportGoal.bulkCreate([
-      reportOne.id, reportTwo.id, reportThree.id, reportFour.id,
-    ].map((id) => ({
-      activityReportId: id,
-      goalId: olderGoal.id,
-    })));
+    await ActivityReportGoal.bulkCreate(
+      [reportOne.id, reportTwo.id, reportThree.id, reportFour.id].map((id) => ({
+        activityReportId: id,
+        goalId: olderGoal.id,
+      }))
+    );
 
-    await ActivityReportObjective.bulkCreate([
-      reportOne.id, reportTwo.id, reportThree.id, reportFour.id,
-    ].map((id) => ({
-      activityReportId: id,
-      objectiveId: olderObjective.id,
-    })));
+    await ActivityReportObjective.bulkCreate(
+      [reportOne.id, reportTwo.id, reportThree.id, reportFour.id].map((id) => ({
+        activityReportId: id,
+        objectiveId: olderObjective.id,
+      }))
+    );
 
     await ActivityReportObjectiveTopic.create({
       activityReportObjectiveId: aro.id,
       topicId: topic.id,
     });
 
-    const reportIds = [
-      reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id,
-    ];
+    const reportIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id];
 
     const baseScopes = await filtersToScopes({
       'recipientId.ctn': [recipientId],

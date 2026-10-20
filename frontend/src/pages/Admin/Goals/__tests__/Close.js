@@ -1,17 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import selectEvent from 'react-select-event';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import Close from '../Close';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import Close from '../Close';
 
 const REGION_ID = 1;
 
@@ -27,7 +25,7 @@ describe('Close', () => {
         <Router history={history}>
           <Close />
         </Router>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -53,24 +51,28 @@ describe('Close', () => {
       {
         id: 1,
         name: 'Group 1',
-        grants: [{
-          id: 1,
-          name: 'Grant 1',
-        }],
+        grants: [
+          {
+            id: 1,
+            name: 'Grant 1',
+          },
+        ],
       },
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
 
@@ -101,24 +103,28 @@ describe('Close', () => {
       {
         id: 1,
         name: 'Group 1',
-        grants: [{
-          id: 1,
-          name: 'Grant 1',
-        }],
+        grants: [
+          {
+            id: 1,
+            name: 'Grant 1',
+          },
+        ],
       },
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
 
@@ -149,24 +155,28 @@ describe('Close', () => {
       {
         id: 1,
         name: 'Group 1',
-        grants: [{
-          id: 1,
-          name: 'Grant 1',
-        }],
+        grants: [
+          {
+            id: 1,
+            name: 'Grant 1',
+          },
+        ],
       },
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
 
@@ -179,22 +189,26 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey',
-      goalIds: [1],
-      grantIds: [2],
-    }, {
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey',
-      goalIds: [2],
-      grantIds: [4],
-    }, {
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey 2',
-      goalIds: [3],
-      grantIds: [4],
-    }]);
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey',
+        goalIds: [1],
+        grantIds: [2],
+      },
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey',
+        goalIds: [2],
+        grantIds: [4],
+      },
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey 2',
+        goalIds: [3],
+        grantIds: [4],
+      },
+    ]);
 
     const groupSelector = await screen.findByLabelText(/Recipient group/i);
     act(() => {
@@ -243,24 +257,28 @@ describe('Close', () => {
       {
         id: 1,
         name: 'Group 1',
-        grants: [{
-          id: 1,
-          name: 'Grant 1',
-        }],
+        grants: [
+          {
+            id: 1,
+            name: 'Grant 1',
+          },
+        ],
       },
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
 
@@ -273,22 +291,26 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey',
-      goalIds: [1],
-      grantIds: [2],
-    }, {
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey',
-      goalIds: [2],
-      grantIds: [4],
-    }, {
-      status: GOAL_STATUS.IN_PROGRESS,
-      name: 'Hey hey hey hey hey 2',
-      goalIds: [3],
-      grantIds: [4],
-    }]);
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey',
+        goalIds: [1],
+        grantIds: [2],
+      },
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey',
+        goalIds: [2],
+        grantIds: [4],
+      },
+      {
+        status: GOAL_STATUS.IN_PROGRESS,
+        name: 'Hey hey hey hey hey 2',
+        goalIds: [3],
+        grantIds: [4],
+      },
+    ]);
 
     const groupSelector = await screen.findByLabelText(/Recipient group/i);
     act(() => {

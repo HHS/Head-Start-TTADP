@@ -3,24 +3,18 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React, {
-  useState,
-  useEffect,
-} from 'react';
+
+import { Alert, Button, Tag } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
-import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
-import Sticky from 'react-stickynode';
-import {
-  Button, Tag, Alert,
-} from '@trussworks/react-uswds';
-import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
+import Sticky from 'react-stickynode';
 import Container from '../../Container';
 import './SideNav.scss';
-import {
-  NOT_STARTED, IN_PROGRESS, COMPLETE,
-} from '../constants';
+import { COMPLETE, IN_PROGRESS, NOT_STARTED } from '../constants';
 
 const tagClass = (state) => {
   switch (state) {
@@ -59,26 +53,30 @@ function SideNav({
   const NavTag = deadNavigation ? 'span' : Button;
 
   const isMobile = useMediaQuery({ maxWidth: 1023 });
-  const navItems = () => pages.map((page) => (
-    <li key={page.label} id={`activityReportSideNav-${page.label.replace(/ /g, '-').toLowerCase()}`} className="smart-hub--navigator-item">
-      <NavTag
-        onClick={deadNavigation ? null : page.onNavigation}
-        unstyled
-        className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
-        role="button"
+  const navItems = () =>
+    pages.map((page) => (
+      <li
+        key={page.label}
+        id={`activityReportSideNav-${page.label.replace(/ /g, '-').toLowerCase()}`}
+        className="smart-hub--navigator-item"
       >
-        <span className="page-label margin-left-2">{page.label}</span>
-        <span className="page-state margin-left-auto margin-right-2">
-          {page.state !== REPORT_STATUSES.DRAFT
-            && (
+        <NavTag
+          onClick={deadNavigation ? null : page.onNavigation}
+          unstyled
+          className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
+          role="button"
+        >
+          <span className="page-label margin-left-2">{page.label}</span>
+          <span className="page-state margin-left-auto margin-right-2">
+            {page.state !== REPORT_STATUSES.DRAFT && (
               <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
                 {startCase(page.state)}
               </Tag>
             )}
-        </span>
-      </NavTag>
-    </li>
-  ));
+          </span>
+        </NavTag>
+      </li>
+    ));
 
   const onAnimationEnd = () => updateFade(false);
   const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
@@ -86,49 +84,47 @@ function SideNav({
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
       <Container paddingX={0} paddingY={0}>
-        <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
-        <ul className="smart-hub--navigator-list">
-          {navItems()}
-        </ul>
+        <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>
+          {skipToMessage}
+        </a>
+        <ul className="smart-hub--navigator-list">{navItems()}</ul>
       </Container>
-      {errorMessage
-        && (
-          <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
-            {errorMessage}
-          </Alert>
-        )}
-      {(lastSaveTime || savedToStorageTime) && !errorMessage
-        && (
-          <Alert
-            onAnimationEnd={onAnimationEnd}
-            aria-atomic
-            aria-live="polite"
-            type="success"
-            slim
-            noIcon
-            className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
-          >
-            Autosaved on:
-            <br />
-              {lastSaveTime && (
-                <>
-                  <span>
-                    • our network at
-                    {' '}
-                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-                  </span>
-                  <br />
-                </>
-              )}
-              { savedToStorageTime && (
-              <span>
-                • your computer at
-                {' '}
-                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
-              </span>
-              )}
-          </Alert>
-        )}
+      {errorMessage && (
+        <Alert
+          type="error"
+          onAnimationEnd={onAnimationEnd}
+          slim
+          noIcon
+          className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}
+        >
+          {errorMessage}
+        </Alert>
+      )}
+      {(lastSaveTime || savedToStorageTime) && !errorMessage && (
+        <Alert
+          onAnimationEnd={onAnimationEnd}
+          aria-atomic
+          aria-live="polite"
+          type="success"
+          slim
+          noIcon
+          className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
+        >
+          Autosaved on:
+          <br />
+          {lastSaveTime && (
+            <>
+              <span>• our network at {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}</span>
+              <br />
+            </>
+          )}
+          {savedToStorageTime && (
+            <span>
+              • your computer at {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+            </span>
+          )}
+        </Alert>
+      )}
     </Sticky>
   );
 }
@@ -140,7 +136,7 @@ SideNav.propTypes = {
       state: PropTypes.string,
       current: PropTypes.bool.isRequired,
       onNavigation: PropTypes.func.isRequired,
-    }),
+    })
   ).isRequired,
   skipTo: PropTypes.string.isRequired,
   skipToMessage: PropTypes.string.isRequired,

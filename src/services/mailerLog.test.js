@@ -1,8 +1,6 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EMAIL_ACTIONS } from '../constants';
-import db, {
-  MailerLogs,
-} from '../models';
+import db, { MailerLogs } from '../models';
 import { createMailerLog } from './mailerLog';
 
 describe('MailerLog DB service', () => {
@@ -13,7 +11,12 @@ describe('MailerLog DB service', () => {
   const activityReports = [1234];
   const success = false;
   const result = {
-    errno: -4078, code: 'ESOCKET', syscall: 'connect', address: '127.0.0.1', port: 1025, command: 'CONN',
+    errno: -4078,
+    code: 'ESOCKET',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 1025,
+    command: 'CONN',
   };
 
   afterAll(async () => {
@@ -77,6 +80,25 @@ describe('MailerLog DB service', () => {
       expect(retrievedMailerLog.updatedAt).toBeDefined();
       await MailerLogs.destroy({ where: { id: mailerLog.id } });
     });
+
+    it.each(Object.values(EMAIL_ACTIONS))(
+      'persists a mailer log entry for action %s',
+      async (emailAction) => {
+        const mailerLog = await createMailerLog({
+          jobId,
+          emailTo,
+          action: emailAction,
+          subject,
+          activityReports,
+          success,
+          result,
+        });
+        expect(mailerLog).not.toBeNull();
+        const retrievedMailerLog = await MailerLogs.findByPk(mailerLog.id);
+        expect(retrievedMailerLog.action).toEqual(emailAction);
+        await MailerLogs.destroy({ where: { id: mailerLog.id } });
+      }
+    );
 
     it('returns null on error', async () => {
       const mailerLog = await createMailerLog({

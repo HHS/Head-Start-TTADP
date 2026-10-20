@@ -1,29 +1,30 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import { APPROVER_STATUSES, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
-import { APPROVER_STATUSES, REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
+import { auditLogger } from '../../logger';
+import ActivityReportPolicy from '../../policies/activityReport';
+import { unlockReport } from '../../routes/activityReports/handlers';
 import db, {
-  ActivityReport,
-  ActivityReportGoal,
-  ActivityReportApprover,
   ActivityRecipient,
+  ActivityReport,
+  ActivityReportApprover,
+  ActivityReportGoal,
   ActivityReportObjective,
   Goal,
-  Objective,
-  Recipient,
+  GoalStatusChange,
+  GoalTemplate,
   Grant,
   GrantNumberLink,
+  Objective,
+  Recipient,
   User,
-  GoalTemplate,
 } from '..';
-import { unlockReport } from '../../routes/activityReports/handlers';
-import ActivityReportPolicy from '../../policies/activityReport';
 import {
   moveDraftGoalsToNotStartedOnSubmission,
   propagateSubmissionStatus,
   revisionBump,
 } from './activityReport';
-import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
@@ -81,6 +82,195 @@ describe('activity report model hooks', () => {
     let submittedNewGoal;
     let submittedNewObjective;
 
+    const createSubmittedReportLinkedToClosedGoal = async ({ closeBeforeSelection }) => {
+      const selectedAt = moment.utc('2026-01-20T12:00:00Z');
+      const goalCreatedAt = selectedAt.clone().subtract(2, 'hours');
+      const closedAt = closeBeforeSelection
+        ? selectedAt.clone().subtract(1, 'hour')
+        : selectedAt.clone().add(1, 'hour');
+      const templateName = faker.lorem.sentence(5);
+      const hash = crypto.createHmac('md5', 'secret').update(templateName).digest('hex');
+
+      const goalTemplate = await GoalTemplate.create({
+        hash,
+        templateName,
+        creationMethod: 'Automatic',
+      });
+
+      const selectedGoal = await Goal.create({
+        name: goalTemplate.templateName,
+        status: GOAL_STATUS.IN_PROGRESS,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+        goalTemplateId: goalTemplate.id,
+        createdAt: goalCreatedAt.toDate(),
+        updatedAt: goalCreatedAt.toDate(),
+      });
+
+      const initialStatusChange = await GoalStatusChange.findOne({
+        where: {
+          goalId: selectedGoal.id,
+          context: 'Creation',
+        },
+      });
+      await initialStatusChange.update(
+        {
+          performedAt: goalCreatedAt.toDate(),
+          createdAt: goalCreatedAt.toDate(),
+          updatedAt: goalCreatedAt.toDate(),
+        },
+        { silent: true }
+      );
+
+      const selectedObjective = await Objective.create({
+        title: `${goalTemplate.templateName} objective`,
+        goalId: selectedGoal.id,
+        status: 'Complete',
+        onApprovedAR: false,
+      });
+
+      const reportForSelectedGoal = await ActivityReport.create({
+        userId: mockUser.id,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        version: 2,
+        language: ['English'],
+        activityReason: 'recipient reason',
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: reportForSelectedGoal.id,
+        grantId: grant.id,
+      });
+
+      const closeGoal = () =>
+        GoalStatusChange.create({
+          goalId: selectedGoal.id,
+          userId: mockUser.id,
+          userName: mockUser.name,
+          userRoles: [],
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.CLOSED,
+          reason: 'Testing close timing',
+          context: 'RTR',
+          performedAt: closedAt.toDate(),
+          createdAt: closedAt.toDate(),
+          updatedAt: closedAt.toDate(),
+        });
+
+      if (closeBeforeSelection) {
+        await closeGoal();
+      }
+
+      await ActivityReportGoal.create({
+        activityReportId: reportForSelectedGoal.id,
+        goalId: selectedGoal.id,
+        status: GOAL_STATUS.IN_PROGRESS,
+        createdAt: selectedAt.toDate(),
+        updatedAt: selectedAt.toDate(),
+      });
+
+      await ActivityReportObjective.create({
+        activityReportId: reportForSelectedGoal.id,
+        status: 'In Progress',
+        objectiveId: selectedObjective.id,
+        createdAt: selectedAt.toDate(),
+        updatedAt: selectedAt.toDate(),
+      });
+
+      if (!closeBeforeSelection) {
+        await closeGoal();
+      }
+
+      return {
+        goalTemplate,
+        report: reportForSelectedGoal,
+        selectedGoal,
+        selectedObjective,
+      };
+    };
+
+    const cleanUpSubmittedReportLinkedToClosedGoal = async ({
+      goalTemplate,
+      report,
+      selectedGoal,
+    }) => {
+      await ActivityReportApprover.destroy({
+        where: { activityReportId: report.id },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({
+        where: { activityReportId: report.id },
+      });
+      await ActivityReportGoal.destroy({
+        where: { activityReportId: report.id },
+      });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: report.id },
+      });
+
+      const goalsForTemplate = await Goal.findAll({
+        where: {
+          grantId: grant.id,
+          goalTemplateId: goalTemplate.id,
+        },
+        paranoid: false,
+      });
+
+      await Objective.destroy({
+        where: {
+          [db.Sequelize.Op.or]: [
+            {
+              goalId: goalsForTemplate.map((goalForTemplate) => goalForTemplate.id),
+            },
+            {
+              createdViaActivityReportId: report.id,
+            },
+          ],
+        },
+        force: true,
+      });
+      await ActivityReport.destroy({
+        where: { id: report.id },
+      });
+      await GoalStatusChange.destroy({
+        where: {
+          goalId: [
+            selectedGoal.id,
+            ...goalsForTemplate.map((goalForTemplate) => goalForTemplate.id),
+          ],
+        },
+      });
+      await Goal.destroy({
+        where: {
+          id: goalsForTemplate.map((goalForTemplate) => goalForTemplate.id),
+        },
+        force: true,
+      });
+      await GoalTemplate.destroy({
+        where: {
+          id: goalTemplate.id,
+        },
+        force: true,
+      });
+    };
+
     beforeAll(async () => {
       const n = faker.lorem.sentence(5);
       const n2 = faker.lorem.sentence(5);
@@ -89,30 +279,15 @@ describe('activity report model hooks', () => {
       const n5 = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
-      const hash2 = crypto
-        .createHmac('md5', secret)
-        .update(n2)
-        .digest('hex');
+      const hash2 = crypto.createHmac('md5', secret).update(n2).digest('hex');
 
-      const hash3 = crypto
-        .createHmac('md5', secret)
-        .update(n3)
-        .digest('hex');
+      const hash3 = crypto.createHmac('md5', secret).update(n3).digest('hex');
 
-      const hash4 = crypto
-        .createHmac('md5', secret)
-        .update(n4)
-        .digest('hex');
+      const hash4 = crypto.createHmac('md5', secret).update(n4).digest('hex');
 
-      const hash5 = crypto
-        .createHmac('md5', secret)
-        .update(n5)
-        .digest('hex');
+      const hash5 = crypto.createHmac('md5', secret).update(n5).digest('hex');
 
       closedGoalTemplate = await GoalTemplate.create({
         hash,
@@ -146,29 +321,29 @@ describe('activity report model hooks', () => {
 
       auditLogger.info('Creating recipient, user, and grant');
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       mockUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       mockApprover = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -450,30 +625,35 @@ describe('activity report model hooks', () => {
         activityReportId: reportForClosedGoalTest.id,
         status: 'In Progress',
         objectiveId: closedObjectiveForClosedGoalTest.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: reportForClosedGoalTest.id,
         status: 'In Progress',
         objectiveId: inProgressObjectiveForClosedGoalTest.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: submittedReportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: submittedReportClosedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: reportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: closedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjective.create({
         activityReportId: approvedReportWithClosedGoal.id,
         status: 'In Progress',
         objectiveId: approvedReportClosedObjective.id,
+        supportType: 'Planning',
       });
 
       await ActivityRecipient.create({
@@ -603,7 +783,9 @@ describe('activity report model hooks', () => {
       await Objective.destroy({
         where: {
           goalId: {
-            [db.Sequelize.Op.in]: db.Sequelize.literal(`(SELECT id FROM "Goals" WHERE "grantId" = ${grant.id})`),
+            [db.Sequelize.Op.in]: db.Sequelize.literal(
+              `(SELECT id FROM "Goals" WHERE "grantId" = ${grant.id})`
+            ),
           },
         },
         force: true,
@@ -715,59 +897,306 @@ describe('activity report model hooks', () => {
       expect(activityReportObjectives[0].status).toBe('In Progress');
     });
 
-    it('starts a new goal life cycle when the report being approved is linked to a closed goal', async () => {
-      const testReport = await ActivityReport.findByPk(reportWithClosedGoal.id);
-      expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
-
-      await ActivityReportApprover.create({
-        activityReportId: reportWithClosedGoal.id,
-        userId: mockApprover.id,
-        status: APPROVER_STATUSES.APPROVED,
+    it('keeps the selected goal when the report selected it before it was closed', async () => {
+      const fixture = await createSubmittedReportLinkedToClosedGoal({
+        closeBeforeSelection: false,
       });
 
-      // Ensure old goal is still closed.
-      const testGoal = await Goal.findByPk(closedGoal.id);
-      expect(testGoal.status).toEqual('Closed');
+      try {
+        expect(fixture.report.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
-      // Find the new goal with same grantId and goalTemplateId that is NOT closed.
-      newGoal = await Goal.findOne({
-        where: {
-          goalTemplateId: closedGoal.goalTemplateId,
-          grantId: closedGoal.grantId,
-          status: GOAL_STATUS.NOT_STARTED,
-        },
-      });
-      expect(newGoal).toBeDefined();
+        await ActivityReportApprover.create({
+          activityReportId: fixture.report.id,
+          userId: mockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
 
-      // Get the ActivityReportGoals for the report.
-      const activityReportGoals = await ActivityReportGoal.findAll({
-        where: {
-          activityReportId: reportWithClosedGoal.id,
-        },
-      });
-        // Assert its using the new goal.
-      expect(activityReportGoals.length).toBe(1);
-      expect(activityReportGoals[0].goalId).toBe(newGoal.id);
-      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
+        const goalsForTemplate = await Goal.findAll({
+          where: {
+            goalTemplateId: fixture.goalTemplate.id,
+            grantId: grant.id,
+          },
+        });
+        expect(goalsForTemplate).toHaveLength(1);
 
-      // Get the objective for the new goal.
-      newObjective = await Objective.findOne({
-        where: {
-          goalId: newGoal.id,
-        },
-      });
-      // Assert its using the new goal.
-      expect(newObjective.status).toBe('Not Started');
+        const activityReportGoals = await ActivityReportGoal.findAll({
+          where: {
+            activityReportId: fixture.report.id,
+          },
+        });
+        expect(activityReportGoals).toHaveLength(1);
+        expect(activityReportGoals[0].goalId).toBe(fixture.selectedGoal.id);
+        expect(activityReportGoals[0].status).toBe(GOAL_STATUS.CLOSED);
 
-      // Get the ActivityReportObjective for the closed objective.
-      const activityReportObjectives = await ActivityReportObjective.findAll({
-        where: {
-          activityReportId: reportWithClosedGoal.id,
-        },
+        const selectedGoalAfterApproval = await Goal.findByPk(fixture.selectedGoal.id);
+        expect(selectedGoalAfterApproval.status).toBe(GOAL_STATUS.CLOSED);
+        expect(selectedGoalAfterApproval.onApprovedAR).toBe(true);
+
+        const selectedObjectiveAfterApproval = await Objective.findByPk(
+          fixture.selectedObjective.id
+        );
+        expect(selectedObjectiveAfterApproval.onApprovedAR).toBe(true);
+
+        const activityReportObjectives = await ActivityReportObjective.findAll({
+          where: {
+            activityReportId: fixture.report.id,
+          },
+        });
+        expect(activityReportObjectives).toHaveLength(1);
+        expect(activityReportObjectives[0].objectiveId).toBe(fixture.selectedObjective.id);
+      } finally {
+        await cleanUpSubmittedReportLinkedToClosedGoal(fixture);
+      }
+    });
+
+    it('keeps a retained closed goal objective complete when the submitted report needs action', async () => {
+      const fixture = await createSubmittedReportLinkedToClosedGoal({
+        closeBeforeSelection: false,
       });
-      expect(activityReportObjectives.length).toBe(1);
-      expect(activityReportObjectives[0].objectiveId).toBe(newObjective.id);
-      expect(activityReportObjectives[0].status).toBe('In Progress');
+
+      try {
+        await ActivityReportObjective.update(
+          { status: 'Complete' },
+          {
+            where: {
+              activityReportId: fixture.report.id,
+              objectiveId: fixture.selectedObjective.id,
+            },
+          }
+        );
+
+        await ActivityReportApprover.create({
+          activityReportId: fixture.report.id,
+          userId: mockApprover.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+        });
+
+        const reportAfterRejection = await ActivityReport.findByPk(fixture.report.id);
+        expect(reportAfterRejection.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
+
+        const retainedGoal = await Goal.findByPk(fixture.selectedGoal.id);
+        expect(retainedGoal.status).toBe(GOAL_STATUS.CLOSED);
+
+        const retainedObjective = await Objective.findByPk(fixture.selectedObjective.id);
+        expect(retainedObjective.status).toBe('Complete');
+
+        const activityReportObjective = await ActivityReportObjective.findOne({
+          where: {
+            activityReportId: fixture.report.id,
+            objectiveId: fixture.selectedObjective.id,
+          },
+        });
+        expect(activityReportObjective.status).toBe('Complete');
+      } finally {
+        await cleanUpSubmittedReportLinkedToClosedGoal(fixture);
+      }
+    });
+
+    it('creates an approved replacement when the report selected a goal after it was closed', async () => {
+      const fixture = await createSubmittedReportLinkedToClosedGoal({
+        closeBeforeSelection: true,
+      });
+
+      try {
+        expect(fixture.report.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+
+        await ActivityReportApprover.create({
+          activityReportId: fixture.report.id,
+          userId: mockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const activityReportGoals = await ActivityReportGoal.findAll({
+          where: {
+            activityReportId: fixture.report.id,
+          },
+        });
+        expect(activityReportGoals).toHaveLength(1);
+        expect(activityReportGoals[0].goalId).not.toBe(fixture.selectedGoal.id);
+        expect(activityReportGoals[0].status).toBe(GOAL_STATUS.IN_PROGRESS);
+
+        const replacementGoal = await Goal.findByPk(activityReportGoals[0].goalId);
+        expect(replacementGoal.goalTemplateId).toBe(fixture.goalTemplate.id);
+        expect(replacementGoal.grantId).toBe(grant.id);
+        expect(replacementGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
+        expect(replacementGoal.onApprovedAR).toBe(true);
+
+        const selectedGoalAfterApproval = await Goal.findByPk(fixture.selectedGoal.id);
+        expect(selectedGoalAfterApproval.status).toBe(GOAL_STATUS.CLOSED);
+        expect(selectedGoalAfterApproval.onApprovedAR).toBe(false);
+
+        const replacementObjective = await Objective.findOne({
+          where: {
+            goalId: replacementGoal.id,
+          },
+        });
+        expect(replacementObjective).toBeDefined();
+        expect(replacementObjective.onApprovedAR).toBe(true);
+
+        const activityReportObjectives = await ActivityReportObjective.findAll({
+          where: {
+            activityReportId: fixture.report.id,
+          },
+        });
+        expect(activityReportObjectives).toHaveLength(1);
+        expect(activityReportObjectives[0].objectiveId).toBe(replacementObjective.id);
+      } finally {
+        await cleanUpSubmittedReportLinkedToClosedGoal(fixture);
+      }
+    });
+
+    it('handles retained and replacement goals independently on a multi-grant report', async () => {
+      const fixture = await createSubmittedReportLinkedToClosedGoal({
+        closeBeforeSelection: false,
+      });
+      const selectedAt = moment.utc('2026-01-20T12:00:00Z');
+      const goalCreatedAt = selectedAt.clone().subtract(2, 'hours');
+      const closedAt = selectedAt.clone().subtract(1, 'hour');
+      const secondGrant = await Grant.create({
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+      const closedBeforeSelectionGoal = await Goal.create({
+        name: fixture.goalTemplate.templateName,
+        status: GOAL_STATUS.IN_PROGRESS,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: secondGrant.id,
+        createdVia: 'rtr',
+        goalTemplateId: fixture.goalTemplate.id,
+        createdAt: goalCreatedAt.toDate(),
+        updatedAt: goalCreatedAt.toDate(),
+      });
+      let secondGrantGoalIds = [closedBeforeSelectionGoal.id];
+
+      try {
+        const initialStatusChange = await GoalStatusChange.findOne({
+          where: {
+            goalId: closedBeforeSelectionGoal.id,
+            context: 'Creation',
+          },
+        });
+        await initialStatusChange.update(
+          {
+            performedAt: goalCreatedAt.toDate(),
+            createdAt: goalCreatedAt.toDate(),
+            updatedAt: goalCreatedAt.toDate(),
+          },
+          { silent: true }
+        );
+
+        const closedBeforeSelectionObjective = await Objective.create({
+          title: `${fixture.goalTemplate.templateName} second grant objective`,
+          goalId: closedBeforeSelectionGoal.id,
+          status: 'Complete',
+          onApprovedAR: false,
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: fixture.report.id,
+          grantId: secondGrant.id,
+        });
+        await GoalStatusChange.create({
+          goalId: closedBeforeSelectionGoal.id,
+          userId: mockUser.id,
+          userName: mockUser.name,
+          userRoles: [],
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.CLOSED,
+          reason: 'Testing close timing',
+          context: 'RTR',
+          performedAt: closedAt.toDate(),
+          createdAt: closedAt.toDate(),
+          updatedAt: closedAt.toDate(),
+        });
+        await ActivityReportGoal.create({
+          activityReportId: fixture.report.id,
+          goalId: closedBeforeSelectionGoal.id,
+          status: GOAL_STATUS.IN_PROGRESS,
+          createdAt: selectedAt.toDate(),
+          updatedAt: selectedAt.toDate(),
+        });
+        await ActivityReportObjective.create({
+          activityReportId: fixture.report.id,
+          status: 'In Progress',
+          objectiveId: closedBeforeSelectionObjective.id,
+          createdAt: selectedAt.toDate(),
+          updatedAt: selectedAt.toDate(),
+        });
+
+        await ActivityReportApprover.create({
+          activityReportId: fixture.report.id,
+          userId: mockApprover.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const secondGrantGoals = await Goal.findAll({
+          where: {
+            grantId: secondGrant.id,
+            goalTemplateId: fixture.goalTemplate.id,
+          },
+        });
+        secondGrantGoalIds = secondGrantGoals.map((secondGrantGoal) => secondGrantGoal.id);
+        expect(secondGrantGoals).toHaveLength(2);
+
+        const replacementGoal = secondGrantGoals.find(
+          (secondGrantGoal) => secondGrantGoal.id !== closedBeforeSelectionGoal.id
+        );
+        expect(replacementGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
+        expect(replacementGoal.onApprovedAR).toBe(true);
+
+        const reportGoals = await ActivityReportGoal.findAll({
+          where: {
+            activityReportId: fixture.report.id,
+          },
+        });
+        expect(reportGoals).toHaveLength(2);
+
+        const retainedReportGoal = reportGoals.find(
+          (reportGoal) => reportGoal.goalId === fixture.selectedGoal.id
+        );
+        expect(retainedReportGoal.status).toBe(GOAL_STATUS.CLOSED);
+
+        const replacementReportGoal = reportGoals.find(
+          (reportGoal) => reportGoal.goalId === replacementGoal.id
+        );
+        expect(replacementReportGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
+
+        const retainedGoal = await Goal.findByPk(fixture.selectedGoal.id);
+        expect(retainedGoal.status).toBe(GOAL_STATUS.CLOSED);
+        expect(retainedGoal.onApprovedAR).toBe(true);
+
+        const originallyClosedGoal = await Goal.findByPk(closedBeforeSelectionGoal.id);
+        expect(originallyClosedGoal.status).toBe(GOAL_STATUS.CLOSED);
+        expect(originallyClosedGoal.onApprovedAR).toBe(false);
+      } finally {
+        await ActivityReportObjective.destroy({
+          where: { activityReportId: fixture.report.id },
+        });
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: fixture.report.id },
+        });
+        await ActivityRecipient.destroy({
+          where: { activityReportId: fixture.report.id },
+        });
+        await Objective.destroy({
+          where: { goalId: secondGrantGoalIds },
+          force: true,
+        });
+        await GoalStatusChange.destroy({
+          where: { goalId: secondGrantGoalIds },
+        });
+        await Goal.destroy({
+          where: { id: secondGrantGoalIds },
+          force: true,
+        });
+        await secondGrant.destroy();
+        await cleanUpSubmittedReportLinkedToClosedGoal(fixture);
+      }
     });
 
     it('starts a new goal life cycle when the approved report is being unlocked to needs action', async () => {
@@ -780,7 +1209,7 @@ describe('activity report model hooks', () => {
         },
         {
           validate: false,
-        },
+        }
       );
 
       await ActivityReportApprover.create({
@@ -809,7 +1238,7 @@ describe('activity report model hooks', () => {
           activityReportId: approvedReportWithClosedGoal.id,
         },
       });
-        // Assert its using the new goal.
+      // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(approvedNewGoal.id);
       expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
@@ -845,6 +1274,7 @@ describe('activity report model hooks', () => {
         activityReportId: report.id,
         status: 'In Progress',
         objectiveId: objective.id,
+        supportType: 'Planning',
       });
 
       const testGoal = await Goal.findByPk(goal.id);
@@ -899,8 +1329,12 @@ describe('activity report model hooks', () => {
 
       testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('In Progress');
-      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
-      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(
+        testReport.endDate
+      );
+      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(
+        testReport.endDate
+      );
     });
 
     it('setting a status to something other than in progress from not started does not skip metadata', async () => {
@@ -916,6 +1350,7 @@ describe('activity report model hooks', () => {
         objectiveId: objective2.id,
         closeSuspendReason: 'Recipient request',
         closeSuspendContext: 'It was a request from the recipient',
+        supportType: 'Planning',
       });
 
       let testGoal = await Goal.findByPk(goal.id);
@@ -991,12 +1426,15 @@ describe('activity report model hooks', () => {
       expect(testReport.submissionStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       // Directly update the report status to trigger the hook that will reset objective statuses
-      await testReport.update({
-        submissionStatus: REPORT_STATUSES.NEEDS_ACTION,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      }, {
-        validate: false, // Skip validation since we're only testing the hook behavior
-      });
+      await testReport.update(
+        {
+          submissionStatus: REPORT_STATUSES.NEEDS_ACTION,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
+        {
+          validate: false, // Skip validation since we're only testing the hook behavior
+        }
+      );
 
       // Create the approver record with NEEDS_ACTION status to complete the unlock process
       await ActivityReportApprover.create({
@@ -1011,9 +1449,7 @@ describe('activity report model hooks', () => {
       expect(completeObjective.status).toEqual('Complete');
 
       // In progress goal's objective should be reset to Not Started
-      const inProgressObjective = await Objective.findByPk(
-        inProgressObjectiveForClosedGoalTest.id,
-      );
+      const inProgressObjective = await Objective.findByPk(inProgressObjectiveForClosedGoalTest.id);
       expect(inProgressObjective.status).toEqual('Not Started');
     });
 
@@ -1114,21 +1550,21 @@ describe('activity report model hooks', () => {
 
       beforeAll(async () => {
         objStatusUser = await User.create({
-          id: faker.datatype.number(),
+          id: faker.number.int({ min: 0, max: 99999 }),
           homeRegionId: 1,
-          hsesUsername: faker.datatype.string(),
-          hsesUserId: faker.datatype.string(),
+          hsesUsername: faker.string.sample(),
+          hsesUserId: faker.string.sample(),
           lastLogin: new Date(),
         });
 
         objStatusRecipient = await Recipient.create({
-          id: faker.datatype.number(),
-          name: faker.name.firstName(),
+          id: faker.number.int({ min: 0, max: 99999 }),
+          name: faker.person.firstName(),
         });
 
         objStatusGrant = await Grant.create({
-          id: faker.datatype.number({ min: 133434 }),
-          number: faker.datatype.string(),
+          id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+          number: faker.string.sample(),
           recipientId: objStatusRecipient.id,
           regionId: 1,
           startDate: new Date(),
@@ -1256,7 +1692,6 @@ describe('activity report model hooks', () => {
             id: objStatusGoal.id,
           },
           force: true, // force to ensure deletion
-
         });
         await ActivityRecipient.destroy({
           where: {
@@ -1293,15 +1728,18 @@ describe('activity report model hooks', () => {
       it('correctly sets the objective status to in progress when the existing objective status is suspended and the lastInProgressAt is defined', async () => {
         // Update the objective status to suspended with lastInProgressAt defined
         const firstInProgressAt = new Date('2025-01-01');
-        await Objective.update({
-          status: 'Suspended',
-          firstInProgressAt,
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            status: 'Suspended',
+            firstInProgressAt,
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
 
         // Verify initial state
         const testObjective = await Objective.findByPk(objStatusObjective.id);
@@ -1317,7 +1755,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
 
         const testReport = await ActivityReport.findByPk(existingReport.id);
@@ -1334,26 +1772,32 @@ describe('activity report model hooks', () => {
         expect(updatedTestObjective.status).toEqual('In Progress');
 
         // Set the firstInProgressAt to null
-        await Objective.update({
-          firstInProgressAt: null,
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            firstInProgressAt: null,
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
       });
 
       it('correctly sets the objective status to suspended when the existing objective status is suspended and the lastInProgressAt is not defined', async () => {
-        await Objective.update({
-          status: 'Suspended',
-          firstInProgressAt: null, // Never was in progress.
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            status: 'Suspended',
+            firstInProgressAt: null, // Never was in progress.
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
 
         // Verify initial state
         const testObjective = await Objective.findByPk(objStatusObjective.id);
@@ -1369,7 +1813,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
 
         const testReport = await ActivityReport.findByPk(existingReport.id);
@@ -1388,12 +1832,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to in progress when the existing objective status is in progress', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'In Progress' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'In Progress' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('In Progress');
 
@@ -1411,12 +1858,15 @@ describe('activity report model hooks', () => {
       });
       it('correctly sets the objective status to complete when the existing objective status is complete', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'Complete' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'Complete' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('Complete');
         await ActivityReportObjective.update(
@@ -1427,7 +1877,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1444,12 +1894,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to in progress when the existing objective status is not started', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'In Progress' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'In Progress' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('In Progress');
 
@@ -1461,7 +1914,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1478,12 +1931,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to suspended when the existing objective status is not started', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'Suspended' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'Suspended' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('Suspended');
 
@@ -1495,7 +1951,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1517,7 +1973,9 @@ describe('activity report model hooks', () => {
       const mockSequelize = {
         models: {
           Goal: {
-            findAll: jest.fn(() => { throw new Error('test error'); }),
+            findAll: jest.fn(() => {
+              throw new Error('test error');
+            }),
           },
           ActivityReport: {},
         },
@@ -1557,13 +2015,15 @@ describe('activity report model hooks', () => {
             update: jest.fn(),
           },
           Goal: {
-            findAll: jest.fn(() => [{
-              id: 1,
-              name: 'name',
-              createdAt: new Date(),
-              goalTemplateId: 1,
-              updatedAt: new Date(),
-            }]),
+            findAll: jest.fn(() => [
+              {
+                id: 1,
+                name: 'name',
+                createdAt: new Date(),
+                goalTemplateId: 1,
+                updatedAt: new Date(),
+              },
+            ]),
             update: jest.fn(() => {
               throw new Error('test error');
             }),

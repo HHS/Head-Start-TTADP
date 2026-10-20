@@ -1,6 +1,5 @@
 /* eslint-disable indent */
 /* eslint-disable no-console */
-const fs = require('node:fs');
 const { promises: fsPromises } = require('node:fs');
 const crypto = require('node:crypto');
 const colors = require('../frontend/src/colors');
@@ -46,7 +45,7 @@ function getPropName(key) {
 
 async function makeColors() {
   try {
-    const entries = Object.entries(colors);
+    const entries = Object.entries(colors.default);
 
     const propNames = entries.map(([key]) => getPropName(key));
     const values = entries.map(([, value]) => value);
@@ -63,9 +62,7 @@ async function makeColors() {
 // https://www.figma.com/file/5Fr0NKQf9MQ5WGd8BWxA6i/TTA_SmartHub-Library-09132021?node-id=0%3A14
 
 // scss vars
-${
-  propNames.map((name, index) => `$${name}: ${values[index]};`).join('\n')
-}
+${propNames.map((name, index) => `$${name}: ${values[index]};`).join('\n')}
 
 // css custom properties
 :root {

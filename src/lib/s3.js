@@ -1,12 +1,12 @@
 import {
-  S3Client,
-  GetBucketVersioningCommand,
-  PutBucketVersioningCommand,
-  GetObjectCommand,
   DeleteObjectCommand,
+  GetBucketVersioningCommand,
+  GetObjectCommand,
+  PutBucketVersioningCommand,
+  S3Client,
 } from '@aws-sdk/client-s3';
-import { sign } from 'aws4';
 import { Upload } from '@aws-sdk/lib-storage';
+import { sign } from 'aws4';
 import { auditLogger, errorLogger } from '../logger';
 
 const DEFAULT_REGION = 'us-gov-west-1';
@@ -36,11 +36,7 @@ const generateS3Config = () => {
   }
 
   // Check for the presence of S3-related environment variables
-  const {
-    S3_BUCKET,
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-  } = process.env;
+  const { S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
@@ -80,15 +76,15 @@ const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
 };
 
 const deleteFileFromS3Job = async (job, client = s3Client) => {
-  const {
-    fileId, fileKey, bucket,
-  } = job.data;
+  const { fileId, fileKey, bucket } = job.data;
   let res;
   try {
     res = await deleteFileFromS3(fileKey, bucket, client);
-    return ({ status: 200, data: { fileId, fileKey, res } });
+    return { status: 200, data: { fileId, fileKey, res } };
   } catch (error) {
-    auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
+    auditLogger.error(
+      `S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`
+    );
     return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
   }
 };
@@ -106,7 +102,7 @@ const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
   };
 
   const data = await client.send(new GetBucketVersioningCommand(params));
-  if (!(data) || data.Status !== 'Enabled') {
+  if (!data || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
@@ -132,6 +128,18 @@ const downloadFile = async (key, client = s3Client, bucket = s3Bucket) => {
   return res;
 };
 
+// The backend may reach MinIO by its Docker-internal name (http://minio:9000), which a browser
+// cannot resolve. Use S3_PUBLIC_ENDPOINT if set; otherwise map the internal "minio" host to
+// localhost so existing .env files keep working.
+const getPublicEndpoint = () => {
+  const { S3_PUBLIC_ENDPOINT, S3_ENDPOINT } = process.env;
+  if (S3_PUBLIC_ENDPOINT) return S3_PUBLIC_ENDPOINT;
+  if (!S3_ENDPOINT) return null;
+  const endpoint = new URL(S3_ENDPOINT);
+  if (endpoint.hostname === 'minio') endpoint.hostname = 'localhost';
+  return endpoint.origin;
+};
+
 const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires = 360) => {
   const url = { url: null, error: null };
   if (!client || !bucket) {
@@ -144,14 +152,17 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     secretAccessKey: s3Config.credentials.secretAccessKey,
   };
 
-  const host = process.env.S3_ENDPOINT
-    ? new URL(process.env.S3_ENDPOINT).host
-    : `${s3Bucket}.s3.${s3Config.region}.amazonaws.com`;
+  // When using a custom endpoint (local MinIO), links are path-style and must point at an
+  // address the browser can reach.
+  const customEndpoint = getPublicEndpoint();
+  const { protocol, host } = customEndpoint
+    ? new URL(customEndpoint)
+    : { protocol: 'https:', host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com` };
 
   const opts = {
     service: 's3',
     host,
-    path: `/${key}`,
+    path: customEndpoint ? `/${bucket}/${key}` : `/${key}`,
     region: s3Config.region,
     expires,
     signQuery: true,
@@ -159,7 +170,7 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
 
   try {
     const result = sign(opts, creds);
-    url.url = `https://${result.host}${result.path}`;
+    url.url = `${protocol}//${result.host}${result.path}`;
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
     auditLogger.error(`Failed to generate: ${error.message}`);
@@ -188,12 +199,12 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
 };
 
 export {
-  s3Client,
-  downloadFile,
-  getSignedDownloadUrl,
-  uploadFile,
-  generateS3Config,
-  verifyVersioning,
   deleteFileFromS3,
   deleteFileFromS3Job,
+  downloadFile,
+  generateS3Config,
+  getSignedDownloadUrl,
+  s3Client,
+  uploadFile,
+  verifyVersioning,
 };

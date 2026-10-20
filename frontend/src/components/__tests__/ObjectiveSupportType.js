@@ -1,8 +1,8 @@
-import React from 'react';
+import { fireEvent, render } from '@testing-library/react';
 import { SUPPORT_TYPES } from '@ttahub/common';
-import { render, fireEvent } from '@testing-library/react';
-import ObjectiveSupportType from '../ObjectiveSupportType';
+import React from 'react';
 import UserContext from '../../UserContext';
+import ObjectiveSupportType from '../ObjectiveSupportType';
 
 describe('ObjectiveSupportType', () => {
   const supportType = 'test support type';
@@ -11,17 +11,18 @@ describe('ObjectiveSupportType', () => {
   const inputName = 'testInput';
   const error = <div>Error message</div>;
 
-  const renderTest = () => render(
-    <UserContext.Provider value={{ user: { flags: [] } }}>
-      <ObjectiveSupportType
-        supportType={supportType}
-        onChangeSupportType={onChangeSupportType}
-        onBlurSupportType={onBlurSupportType}
-        inputName={inputName}
-        error={error}
-      />
-    </UserContext.Provider>,
-  );
+  const renderTest = () =>
+    render(
+      <UserContext.Provider value={{ user: { flags: [] } }}>
+        <ObjectiveSupportType
+          supportType={supportType}
+          onChangeSupportType={onChangeSupportType}
+          onBlurSupportType={onBlurSupportType}
+          inputName={inputName}
+          error={error}
+        />
+      </UserContext.Provider>
+    );
 
   it('calls onChangeSupportType when support type is changed', () => {
     const { getByRole } = renderTest();

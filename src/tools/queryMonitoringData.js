@@ -73,7 +73,7 @@ const queryMonitoringData = async () => {
       cnt
     FROM newclass
     ORDER BY 2,1;`,
-    { raw: true },
+    { raw: true }
   );
   console.info(`Recent Monitoring Updates: ${JSON.stringify(result[0])}`);
 };

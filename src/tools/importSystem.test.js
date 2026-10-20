@@ -1,8 +1,8 @@
-import manuallyTriggerImportSystem from './importSystem';
+import { MAINTENANCE_TYPE } from '../constants';
 import * as importSystem from '../lib/importSystem';
 import * as maintenanceLib from '../lib/maintenance/import';
-import { MAINTENANCE_TYPE } from '../constants';
 import { auditLogger } from '../logger';
+import manuallyTriggerImportSystem from './importSystem';
 
 jest.mock('../lib/importSystem', () => ({
   download: jest.fn(),
@@ -67,18 +67,24 @@ describe('manuallyTriggerImportSystem', () => {
   it('should throw an error for an unknown action', async () => {
     const action = 'unknown';
     const importIdStr = '789';
-    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(`Unknown action: '${action}'`);
+    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(
+      `Unknown action: '${action}'`
+    );
   });
 
   it('should throw an error for a non-numeric importId', async () => {
     const action = 'download';
     const importIdStr = 'not-a-number';
-    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(`Bad or missing importId: '${importIdStr}'`);
+    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(
+      `Bad or missing importId: '${importIdStr}'`
+    );
   });
 
   it('should throw an error for an empty importId', async () => {
     const action = 'process';
     const importIdStr = '';
-    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(`Bad or missing importId: '${importIdStr}'`);
+    await expect(manuallyTriggerImportSystem(action, importIdStr)).rejects.toThrow(
+      `Bad or missing importId: '${importIdStr}'`
+    );
   });
 });

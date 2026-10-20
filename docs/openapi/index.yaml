@@ -9,7 +9,6 @@ info:
 servers:
   - url: http://localhost:8080
   - url: http://backend:8080
-  - url: https://tta-smarthub-sandbox.app.cloud.gov
   - url: https://tta-smarthub-dev.app.cloud.gov
   - url: https://tta-smarthub-staging.app.cloud.gov
 paths:
@@ -393,6 +392,229 @@ components:
         - collaboratorIds
         - regionId
         - data
+    ttaRequestInput:
+      type: object
+      description: The fields of a draft TTA request the creator can set. All are optional.
+      properties:
+        recipientId:
+          type: integer
+          nullable: true
+        grantIds:
+          type: array
+          description: The recipient's grants in the request's region
+          items:
+            type: integer
+        recipientAware:
+          type: boolean
+          nullable: true
+        originator:
+          type: string
+          nullable: true
+          enum:
+            - Central Office
+            - Recipient
+            - Regional Office
+            - TTA Staff
+        goalTemplateId:
+          type: integer
+          nullable: true
+        citations:
+          type: array
+          description: Only used with the monitoring goal; unique by citation
+          items:
+            type: object
+            required:
+              - citation
+            properties:
+              citation:
+                type: string
+              findingType:
+                type: string
+                nullable: true
+        context:
+          type: string
+          nullable: true
+          description: Rich text (HTML)
+        creatorNotes:
+          type: string
+          nullable: true
+        reviewerId:
+          type: integer
+          nullable: true
+          description: Must be an approver in the request's region, or it is saved as null
+    ttaRequestListItem:
+      type: object
+      description: A TTA request as the TTA request tables list it
+      properties:
+        id:
+          type: integer
+        displayId:
+          type: string
+          example: R01-REQ-12
+        regionId:
+          type: integer
+        recipientId:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+            - draft
+        createdAt:
+          type: string
+          format: date-time
+        creator:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        reviewer:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        recipient:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        goalTemplate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            templateName:
+              type: string
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              stateCode:
+                type: string
+                nullable: true
+    ttaRequest:
+      type: object
+      description: A TTA request
+      properties:
+        id:
+          type: integer
+        displayId:
+          type: string
+          example: R01-REQ-12
+        status:
+          type: string
+          enum:
+            - draft
+        userId:
+          type: integer
+        lastUpdatedById:
+          type: integer
+        regionId:
+          type: integer
+        recipientId:
+          type: integer
+          nullable: true
+        recipientAware:
+          type: boolean
+          nullable: true
+        originator:
+          type: string
+          nullable: true
+        goalTemplateId:
+          type: integer
+          nullable: true
+        context:
+          type: string
+          nullable: true
+        creatorNotes:
+          type: string
+          nullable: true
+        reviewerId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        creator:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        reviewer:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        recipient:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        goalTemplate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            templateName:
+              type: string
+            standard:
+              type: string
+              nullable: true
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              number:
+                type: string
+              regionId:
+                type: integer
+              recipientId:
+                type: integer
+              status:
+                type: string
+              name:
+                type: string
+              numberWithProgramTypes:
+                type: string
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              citation:
+                type: string
+              findingType:
+                type: string
+                nullable: true
     sessionReport:
       type: object
       description: A session report
@@ -436,6 +658,13 @@ components:
           items:
             type: string
           nullable: true
+        goalTemplates:
+          type: array
+          items:
+            type: object
+            properties:
+              standard:
+                type: string
     sessionReportsResponse:
       type: object
       description: Response object for get session reports endpoint
@@ -448,6 +677,308 @@ components:
           description: Array of session report rows
           items:
             $ref: '#/components/schemas/sessionReportTableRow'
+    monitoringSpecialist:
+      type: object
+      description: TTA specialist associated with a monitoring objective or review.
+      properties:
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - roles
+    monitoringActivityReportReference:
+      type: object
+      description: Activity report linked to a monitoring objective.
+      properties:
+        id:
+          type: number
+        displayId:
+          type: string
+      required:
+        - id
+        - displayId
+    monitoringCitationObjective:
+      type: object
+      description: >
+        Objective data associated to one or more citations. `findingIds`, `reviewNames`, and
+        `grantNumber` are derived by aggregating flattened
+        `ActivityReportObjectiveCitations` row fields (`findingId`, `reviewName`,
+        `grantNumber`) per objective.
+      properties:
+        title:
+          type: string
+        activityReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringActivityReportReference'
+        endDate:
+          type: string
+          nullable: true
+          description: End date formatted as MM/DD/YYYY.
+        topics:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        findingIds:
+          type: array
+          description: Monitoring finding UUIDs associated to this objective.
+          items:
+            type: string
+        reviewNames:
+          type: array
+          description: Monitoring review names associated to this objective.
+          items:
+            type: string
+        grantNumber:
+          type: string
+          description: >
+            Grant number tied to the citation objective. Multiple grants are represented as a
+            newline-delimited string.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+      required:
+        - title
+        - activityReports
+        - endDate
+        - topics
+        - status
+        - findingIds
+        - reviewNames
+        - grantNumber
+        - specialists
+    monitoringTtaByCitationReview:
+      type: object
+      description: Review data nested under a citation card.
+      properties:
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY.
+        outcome:
+          type: string
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringCitationObjective'
+      required:
+        - name
+        - reviewType
+        - reviewReceived
+        - outcome
+        - specialists
+        - objectives
+    monitoringTtaByCitation:
+      type: object
+      description: Response item returned by monitoring citation endpoint.
+      properties:
+        citationNumber:
+          type: string
+        findingType:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        grantNumbers:
+          type: array
+          items:
+            type: string
+        lastTTADate:
+          type: string
+          description: Most recent objective end date (MM/DD/YYYY), or empty string.
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringTtaByCitationReview'
+      required:
+        - citationNumber
+        - findingType
+        - status
+        - category
+        - grantNumbers
+        - lastTTADate
+        - reviews
+    monitoringWidgetTtaObjective:
+      type: object
+      description: Objective data nested under a monitoring TTA widget review.
+      properties:
+        title:
+          type: string
+        activityReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringActivityReportReference'
+        endDate:
+          type: string
+          description: Activity report end date formatted as MM/DD/YYYY.
+        topics:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - activityReports
+        - endDate
+        - topics
+        - status
+    monitoringWidgetTtaReview:
+      type: object
+      description: Review data nested under a recipient-scoped monitoring TTA widget card.
+      properties:
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY when available.
+        outcome:
+          type: string
+        findingStatus:
+          type: string
+          description: Finding status for this citation in the review when available.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringWidgetTtaObjective'
+      required:
+        - name
+        - reviewType
+        - reviewReceived
+        - outcome
+        - specialists
+        - objectives
+    monitoringWidgetTtaCitation:
+      type: object
+      description: Response item returned by the monitoring TTA widget for a single recipient+citation card.
+      properties:
+        recipientName:
+          type: string
+        citationNumber:
+          type: string
+        findingType:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        grantNumbers:
+          type: array
+          items:
+            type: string
+        lastTTADate:
+          type: string
+            description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringWidgetTtaReview'
+      required:
+        - recipientName
+        - citationNumber
+        - findingType
+        - status
+        - category
+        - grantNumbers
+        - lastTTADate
+        - reviews
+    monitoringTtaByReviewFinding:
+      type: object
+      description: Finding details nested under a monitoring review.
+      properties:
+        citation:
+          type: string
+        status:
+          type: string
+        findingType:
+          type: string
+          description: Finding type as recorded on this specific review.
+        category:
+          type: string
+        correctionDeadline:
+          type: string
+          description: Correction deadline formatted as MM/DD/YYYY, or empty string.
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringCitationObjective'
+      required:
+        - citation
+        - status
+        - findingType
+        - category
+        - correctionDeadline
+        - objectives
+    monitoringTtaByReview:
+      type: object
+      description: Response item returned by monitoring review endpoint.
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY.
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringTtaByReviewFinding'
+        grants:
+          type: array
+          items:
+            type: string
+        outcome:
+          type: string
+        lastTTADate:
+          type: string
+          description: Most recent objective end date (MM/DD/YYYY), or empty string.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+      required:
+        - id
+        - name
+        - reviewType
+        - reviewReceived
+        - findings
+        - grants
+        - outcome
+        - lastTTADate
+        - specialists
+    monitoringFindingCategoriesResponse:
+      type: array
+      description: Alphabetically sorted monitoring finding category names.
+      items:
+        type: string
 
   parameters:
     reportId.in:

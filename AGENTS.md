@@ -1,0 +1,132 @@
+# AGENTS.md
+
+This file provides baseline guidance to all agentic coding assistants.
+Instructions here may be overridden by other files or specific instructions from the user.
+
+<!--
+User Notes
+
+* Personal Customization *
+For personal instructions or modifications specific to Claude, create a `CLAUDE-mine.md` file in the repository root. That file is gitignored and will be automatically included by Claude Code.
+-->
+
+## Project Overview
+
+Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React SPA, Bull/Redis worker) for managing Training and Technical Assistance activities across Head Start programs.
+
+## Working Rules
+- Ask before starting work when acceptance criteria are missing, scope is ambiguous, or constraints are unclear.
+- Pause and ask before making broad refactors or touching many files.
+- When presenting choices, provide a recommended option with reasoning.
+- Ensure changes pass lint checks after work is complete.
+- Follow coding standards in `best_practices.md`.
+
+## Commands
+
+**Backend:**
+- `yarn test` — build then run backend tests (`jest --runInBand`)
+- `yarn test:ci` — backend tests via CI script (`./bin/test-backend-ci`)
+- `yarn lint` — Biome lint for backend (`src/`)
+- `yarn lint:fix` — Biome autofix for backend
+- Single file while iterating: `npx jest src/path/to/file.test.js --runInBand --forceExit` (see "Backend jest does not exit on its own" below)
+
+**Frontend:**
+- `cd frontend && yarn test --watchAll=false` — run frontend tests (Jest via craco, requires `TZ=America/New_York`)
+- `cd frontend && yarn lint` — Biome lint for frontend
+- `cd frontend && yarn lint:fix` — Biome autofix for frontend
+
+**Database:**
+- `yarn db:migrate` — run migrations (also runs logical data model update)
+- `yarn db:migrate:undo` — revert last migration
+- `yarn db:migrate:create -- --name verb_object_table` — generate new migration file
+- `yarn db:seed` / `yarn db:seed:undo` — seed or unseed data
+
+**Docker (matches CI more closely):**
+- `yarn docker:start` — full stack
+- `yarn docker:test:be` — backend tests in Docker
+- `yarn docker:db:migrate` — migrations in Docker
+
+## Architecture at a Glance
+
+Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/worker.ts`).
+
+**Backend layered pattern:** Routes → Services → Models.
+- `routes/`: API endpoints organized by domain. Call services, never contain business logic directly.
+- `services/`: Business logic. Interact with models and handle associated-data updates.
+- `models/`: Sequelize database models. Subdirectories for hooks and model validation schemas
+- `policies/`: Authorization and access control. Routes check policies before proceeding.
+- `scopes/`: Reusable Sequelize query filters.
+- `middleware/`: Express middleware (auth, sessions, logging). Routes use `transactionWrapper.js` when needed.
+- `migrations/`, `seeders/`, `lib/`, `tools/`, `widgets/`, `workers/`: Supporting directories.
+
+**Frontend:** `pages/` → `components/` with `fetchers/` for API calls and `hooks/` for shared logic. Uses React Hook Form and `@trussworks/react-uswds`.
+
+**Worker:** Bull queues backed by Redis — Scan (ClamAV), Resource, S3, Notification, Maintenance. Uses `throng` for horizontal scaling.
+
+**Shared packages:**
+- `packages/common` (`@ttahub/common`): Runtime constants and utilities shared between BE and FE, published to npm; requires version bump + publish on changes. Shared TypeScript types also live here as `.d.ts` files, consumed via `import type` from `@ttahub/common` (or a deep path). These come in two forms: overlay `.d.ts` files that sit next to a runtime `.js` file and must be kept in sync with it (e.g. `constants.d.ts` ↔ `constants.js`), and standalone types-only `.d.ts` modules with no runtime counterpart (e.g. `notifications.d.ts`, consumed via `@ttahub/common/src/notifications`). See `docs/adr/0028-shared-types-package.md`.
+
+**Auth:** OAuth2 via HSES, session management with `express-session` + Redis, authorization enforced by policies.
+
+**Database:** Sequelize v6, config at `.sequelizerc` and `config/config.js`.
+
+## Non-obvious Architecture
+- **Only worker instance 0 runs cron jobs** — never duplicate cron registration.
+- `yarn db:migrate` also runs the logical data model CLI (`yarn ldm`) — don't skip this.
+- Frontend local dev uses Vite on port 3000 and proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
+
+## Traps to Avoid
+
+### Backend jest does not exit on its own
+
+Backend tests hold open database handles, so `jest` finishes the run and then sits there
+indefinitely instead of exiting, eventually printing "Jest did not exit one second after the
+test run has completed" and returning exit code 1 **even when every test passed**.
+
+This is easy to misread as a hung or failing test — a run whose tests completed in two seconds
+can sit for hours at near-zero CPU, and the nonzero exit code makes it look like a failure.
+
+- Pass `--forceExit` so the process exits as soon as the run finishes and the exit code is meaningful.
+- Judge a run by its pass/fail counts, not by its exit status, if you did not pass `--forceExit`.
+- If a run has been going for more than 10-15 minutes, it is stalled or already finished — kill it
+  and check the captured output rather than waiting.
+
+### Sequelize enum arrays
+Don't use them. Use a joined table instead — there is a Sequelize bug that intermittently returns the wrong data type from enum arrays.
+
+### Sequelize hooks that write data
+Never do database writes in model hooks. Validation in hooks (e.g., `beforeUpdate`) is fine. For updating associated data, do it explicitly in services. Hooks that write obfuscate operations and lead to unexpected states.
+
+### SQL injection in filters
+Filters are derived from URLs. `sequelize.escape` alone is insufficient — independently validate expected types (e.g., confirm all region IDs are numbers) before using them in queries.
+
+### WYSIWYG + autosave interaction
+Disable autosave on forms containing React Draft WYSIWYG editors. Autosave triggers `reset()` which destroys cursor position and in-progress text. See `frontend/src/utils/formRichTextEditorHelper.js` for the guard pattern.
+
+### Shared test database
+All tests run against the same database instance. Never rely on seed data — create and destroy test data within each test using `beforeAll`/`afterAll`. Use transactions where appropriate and `Promise.all()` for parallel async setup.
+
+### Avoid raw SQL
+Use Sequelize scopes and models. Raw SQL should be a last resort.
+
+## Common Workflows
+
+### Adding a New API Endpoint
+1. Create/update route handler in `src/routes/<domain>/`
+2. Add business logic in `src/services/<domain>.js`
+3. Add authorization policy in `src/policies/` if needed
+4. Write tests alongside implementation
+5. Update OpenAPI spec in `docs/openapi/`
+
+### Creating a New Migration
+1. Run `yarn db:migrate:create -- --name add_new_field_to_table`
+2. Edit the generated file in `src/migrations/`
+3. Run `yarn db:migrate`
+
+## Documentation
+- `docs/guides/testing.md`: Testing strategy and database state management
+- `docs/guides/dev-setup.md`: Local development setup
+- `docs/guides/infrastructure.md`: Cloud.gov, CI/CD, deployment
+- `docs/adr/`: Architecture Decision Records
+- `docs/openapi/`: OpenAPI specs (served via Redoc at localhost:5003)
+- `best_practices.md`: Code authoring and review standards

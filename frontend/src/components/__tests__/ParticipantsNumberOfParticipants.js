@@ -1,10 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
+import { render, screen } from '@testing-library/react';
 import PropTypes from 'prop-types';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import ParticipantsNumberOfParticipants from '../ParticipantsNumberOfParticipants';
 
 describe('ParticipantsNumberOfParticipants', () => {
@@ -30,14 +29,10 @@ describe('ParticipantsNumberOfParticipants', () => {
     isDeliveryMethodSelected: PropTypes.bool.isRequired,
   };
 
-  const renderTest = (
-    isHybrid,
-    isDeliveryMethodSelected,
-  ) => {
-    render(<TestComponent
-      isHybrid={isHybrid}
-      isDeliveryMethodSelected={isDeliveryMethodSelected}
-    />);
+  const renderTest = (isHybrid, isDeliveryMethodSelected) => {
+    render(
+      <TestComponent isHybrid={isHybrid} isDeliveryMethodSelected={isDeliveryMethodSelected} />
+    );
   };
 
   it('renders nothing is "isDeliveryMethodSelected" is false', () => {

@@ -1,29 +1,23 @@
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
+import { Goal, Grant, Group, GroupCollaborator, GroupGrant, User } from '../../models';
 import { createGoal, createGrant } from '../../testUtils';
 import filtersToScopes from '../index';
-import {
-  Goal,
-  Grant,
-  Group,
-  GroupGrant,
-  User,
-  GroupCollaborator,
-} from '../../models';
 
 const REGION_ID = 10;
 
 describe('goal filtersToScopes', () => {
   describe('groups', () => {
     let group;
+    let group2;
     let grantForGroups;
     let goalForGroups;
     const possibleGoalIds = [];
 
-    const userName = faker.datatype.string(100);
+    const userName = faker.string.sample(100);
 
     const mockUser = {
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: REGION_ID,
       name: userName,
       hsesUsername: userName,
@@ -32,12 +26,19 @@ describe('goal filtersToScopes', () => {
 
     beforeAll(async () => {
       grantForGroups = await createGrant({
-        regionId: REGION_ID, number: faker.datatype.string(100),
+        regionId: REGION_ID,
+        number: faker.string.sample(100),
       });
       await User.create(mockUser);
 
       group = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
+        userId: mockUser.id,
+        isPublic: false,
+      });
+
+      group2 = await Group.create({
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         userId: mockUser.id,
         isPublic: false,
       });
@@ -104,8 +105,26 @@ describe('goal filtersToScopes', () => {
       });
     });
 
-    it('within', async () => {
-      const filters = { 'group.in': group.id };
+    it('within single', async () => {
+      const filters = { 'group.in': String(group.id) };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((g) => g.name)).toContain(goalForGroups.name);
+    });
+
+    it('within multiple', async () => {
+      const filters = { 'group.in': [String(group.id), String(group2.id)] };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {
@@ -123,7 +142,25 @@ describe('goal filtersToScopes', () => {
     });
 
     it('without', async () => {
-      const filters = { 'group.nin': group.id };
+      const filters = { 'group.nin': String(group.id) };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(possibleGoalIds.length);
+      expect(found.map((g) => g.id)).not.toContain(goalForGroups.id);
+    });
+
+    it('without multiple', async () => {
+      const filters = { 'group.nin': [String(group.id), String(group2.id)] };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {

@@ -1,13 +1,8 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
-import {
-  findAll,
-  create,
-  updateById,
-  deleteById,
-} from './nationalCenters';
 import { auditLogger } from '../logger';
+import db from '../models';
+import { create, deleteById, findAll, updateById } from './nationalCenters';
 
 jest.spyOn(auditLogger, 'info');
 jest.mock('../models/hooks/sessionReportPilot');
@@ -54,11 +49,11 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
     });
@@ -110,20 +105,20 @@ describe('nationalCenters service', () => {
     beforeEach(async () => {
       // Create first mock users.
       firstCenterUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
       // Create second mock users.
       secondCenterUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
@@ -178,30 +173,27 @@ describe('nationalCenters service', () => {
         },
       });
       center = await updateById(center.id, {
-        name: originalCenterName, userId: secondCenterUser.id,
+        name: originalCenterName,
+        userId: secondCenterUser.id,
       });
       ids.push(center.id);
       expect(center.name).toBe(originalCenterName);
-      expect(auditLogger.info).toHaveBeenCalledWith(
-        `Name ${center.name} has not changed`,
-      );
+      expect(auditLogger.info).toHaveBeenCalledWith(`Name ${center.name} has not changed`);
       expect(center.users.length).toBe(1);
       expect(center.users[0].id).toBe(secondCenterUser.id);
       expect(center.users[0].name).toBe(secondCenterUser.name);
     });
 
-    it('doesn\'t update if name hasn\'t changed', async () => {
+    it("doesn't update if name hasn't changed", async () => {
       center = await updateById(center.id, {
         name: originalCenterName,
         userId: firstCenterUser.id,
       });
       ids.push(center.id);
       expect(center.name).toBe(originalCenterName);
+      expect(auditLogger.info).toHaveBeenCalledWith(`Name ${center.name} has not changed`);
       expect(auditLogger.info).toHaveBeenCalledWith(
-        `Name ${center.name} has not changed`,
-      );
-      expect(auditLogger.info).toHaveBeenCalledWith(
-        `Name ${center.name} has not changed the national center user`,
+        `Name ${center.name} has not changed the national center user`
       );
     });
     it('destroy user if removed', async () => {
@@ -211,9 +203,7 @@ describe('nationalCenters service', () => {
       });
       ids.push(center.id);
       expect(center.name).toBe(originalCenterName);
-      expect(auditLogger.info).toHaveBeenCalledWith(
-        `Name ${center.name} has not changed`,
-      );
+      expect(auditLogger.info).toHaveBeenCalledWith(`Name ${center.name} has not changed`);
       expect(center.users.length).toBe(0);
     });
   });
@@ -241,7 +231,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         data: {
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -252,7 +244,9 @@ describe('nationalCenters service', () => {
         pocIds: [2],
         collaboratorIds: [3, 4],
         regionId: [1],
+        eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         data: {
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
         },
         imported: {},
@@ -308,14 +302,14 @@ describe('nationalCenters service', () => {
       expect(center1.name).toBe(newCenterName);
 
       const updatedSessionReport = await db.SessionReportPilot.findByPk(sessionReport.id);
-      expect(
-        updatedSessionReport.data.objectiveTrainers.sort(),
-      ).toEqual([newCenterName, center2.name].sort());
+      expect(updatedSessionReport.data.objectiveTrainers.sort()).toEqual(
+        [newCenterName, center2.name].sort()
+      );
 
       const reportNotUpdated = await db.SessionReportPilot.findByPk(sessionReport2.id);
-      expect(
-        reportNotUpdated.data.objectiveTrainers.sort(),
-      ).toEqual([centerOneName, center2.name, center3.name].sort());
+      expect(reportNotUpdated.data.objectiveTrainers.sort()).toEqual(
+        [centerOneName, center2.name, center3.name].sort()
+      );
     });
   });
   describe('deleteById', () => {
@@ -327,11 +321,11 @@ describe('nationalCenters service', () => {
     beforeAll(async () => {
       // Create mock user.
       mockNcUser = await db.User.create({
-        id: faker.datatype.number(),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.string.sample(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 

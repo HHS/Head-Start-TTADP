@@ -1,8 +1,8 @@
-import React, { useRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import Select from 'react-select';
-import { useController } from 'react-hook-form';
 import _ from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useMemo, useRef } from 'react';
+import { useController } from 'react-hook-form';
+import Select from 'react-select';
 import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect';
 import useExistingApprovers from '../../../../../../hooks/useExistingApprovers';
 
@@ -25,11 +25,7 @@ function ApproverSelect({
   }
 
   const {
-    field: {
-      onChange: onSelect,
-      value: selectValue,
-      onBlur: onBlurSelect,
-    },
+    field: { onChange: onSelect, value: selectValue, onBlur: onBlurSelect },
   } = useController({
     name,
     rules,
@@ -111,10 +107,7 @@ function ApproverSelect({
   );
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 
 ApproverSelect.propTypes = {
   name: PropTypes.string.isRequired,
@@ -128,10 +121,10 @@ ApproverSelect.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   required: PropTypes.bool,
 };

@@ -1,25 +1,30 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
+import { MY_CL_REPORT_ROLES, MY_REPORT_ROLES, TTA_HISTORY_REPORT_ROLES } from '../../Constants';
 import FilterSelect from './FilterSelect';
-import { MY_REPORT_ROLES } from '../../Constants';
 
 const MY_REPORTS_OPTIONS = MY_REPORT_ROLES.map((label, value) => ({ value, label }));
+const MY_CL_REPORTS_OPTIONS = MY_CL_REPORT_ROLES.map((label, value) => ({ value, label }));
+const TTA_HISTORY_REPORTS_OPTIONS = TTA_HISTORY_REPORT_ROLES.map((label, value) => ({
+  value,
+  label,
+}));
 
-export default function MyReportsSelect({
-  onApply,
-  inputId,
-  query,
-}) {
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+const optionsFor = {
+  myReports: MY_REPORTS_OPTIONS,
+  commLog: MY_CL_REPORTS_OPTIONS,
+  ttaHistory: TTA_HISTORY_REPORTS_OPTIONS,
+};
+
+export default function MyReportsSelect({ onApply, inputId, query, isFor }) {
+  const options = optionsFor[isFor] || optionsFor.myReports;
 
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select report roles to filter by"
-      options={MY_REPORTS_OPTIONS}
+      options={options}
       selectedValues={query}
     />
   );
@@ -28,8 +33,10 @@ export default function MyReportsSelect({
 MyReportsSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
+  isFor: PropTypes.oneOf(Object.keys(optionsFor)),
+};
+
+MyReportsSelect.defaultProps = {
+  isFor: 'myReports',
 };

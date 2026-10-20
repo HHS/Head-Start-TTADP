@@ -8,7 +8,27 @@ const DOMPurify = createDOMPurify(window);
 // Configuration for sanitization (allows safe formatting tags from Draft.js and rich text editors)
 // Removes dangerous tags and attributes while preserving legitimate HTML formatting
 const purifyConfig = {
-  ALLOWED_TAGS: ['b', 'i', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'ol', 'ul', 'li', 'strong', 'em', 'ins', 'del'],
+  ALLOWED_TAGS: [
+    'b',
+    'i',
+    'u',
+    's',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'p',
+    'br',
+    'ol',
+    'ul',
+    'li',
+    'strong',
+    'em',
+    'ins',
+    'del',
+  ],
   ALLOWED_ATTR: [],
 };
 
@@ -76,36 +96,38 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 100) => {
  * @param {number} maxDepth - Maximum allowed recursion depth (default: 100)
  * @returns {function} Express middleware function
  */
-const sanitizeRequestBody = (maxBodySize = 1000000, maxDepth = 100) => (req, res, next) => {
-  try {
-    // Only sanitize if there is a body and it's an object (not for file uploads, etc.)
-    if (req.body && typeof req.body === 'object') {
-      // Check payload size
-      const bodyString = JSON.stringify(req.body);
-      if (bodyString.length > maxBodySize) {
-        logger.warn('Request body exceeds maximum size', {
-          size: bodyString.length,
-          maxSize: maxBodySize,
-        });
-        res.status(413).json({
-          error: 'Payload Too Large',
-          message: `Request body exceeds maximum size of ${maxBodySize} bytes`,
-        });
-        return;
+const sanitizeRequestBody =
+  (maxBodySize = 1000000, maxDepth = 100) =>
+  (req, res, next) => {
+    try {
+      // Only sanitize if there is a body and it's an object (not for file uploads, etc.)
+      if (req.body && typeof req.body === 'object') {
+        // Check payload size
+        const bodyString = JSON.stringify(req.body);
+        if (bodyString.length > maxBodySize) {
+          logger.warn('Request body exceeds maximum size', {
+            size: bodyString.length,
+            maxSize: maxBodySize,
+          });
+          res.status(413).json({
+            error: 'Payload Too Large',
+            message: `Request body exceeds maximum size of ${maxBodySize} bytes`,
+          });
+          return;
+        }
+
+        // Sanitize with depth limit
+        req.body = sanitizeObject(req.body, 0, maxDepth);
       }
 
-      // Sanitize with depth limit
-      req.body = sanitizeObject(req.body, 0, maxDepth);
+      next();
+    } catch (e) {
+      logger.error('Error sanitizing request body:', { error: e.message, stack: e.stack });
+      res.status(400).json({
+        error: 'Bad Request',
+        message: e.message,
+      });
     }
-
-    next();
-  } catch (e) {
-    logger.error('Error sanitizing request body:', { error: e.message, stack: e.stack });
-    res.status(400).json({
-      error: 'Bad Request',
-      message: e.message,
-    });
-  }
-};
+  };
 
 export default sanitizeRequestBody;

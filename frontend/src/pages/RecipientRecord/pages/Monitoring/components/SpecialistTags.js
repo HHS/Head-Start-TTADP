@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Tag from '../../../../../components/Tag';
 import Tooltip from '../../../../../components/Tooltip';
 
@@ -19,7 +19,7 @@ export default function SpecialistTags({ specialists }) {
           buttonClassName="display-flex"
           className="ttahub-goal-card__entered-by-tooltip"
         />
-      </Tag>,
+      </Tag>
     );
   } else {
     specialists.forEach((specialist) => {
@@ -38,7 +38,7 @@ export default function SpecialistTags({ specialists }) {
               buttonClassName="display-flex"
               className="ttahub-goal-card__entered-by-tooltip"
             />
-          </Tag>,
+          </Tag>
         );
         return;
       }
@@ -48,11 +48,11 @@ export default function SpecialistTags({ specialists }) {
         // convert string roles to array if needed
         const roleArray = Array.isArray(specialist.roles)
           ? specialist.roles.flatMap((role) => {
-            if (typeof role === 'string' && role.includes(',')) {
-              return role.split(',').map((r) => r.trim());
-            }
-            return role;
-          })
+              if (typeof role === 'string' && role.includes(',')) {
+                return role.split(',').map((r) => r.trim());
+              }
+              return role;
+            })
           : specialist.roles.split(',').map((role) => role.trim());
 
         // separate tag for each role
@@ -70,7 +70,7 @@ export default function SpecialistTags({ specialists }) {
                 buttonClassName="display-flex"
                 className="ttahub-goal-card__entered-by-tooltip"
               />
-            </Tag>,
+            </Tag>
           );
         });
       } else {
@@ -86,7 +86,7 @@ export default function SpecialistTags({ specialists }) {
               buttonClassName="display-flex"
               className="ttahub-goal-card__entered-by-tooltip"
             />
-          </Tag>,
+          </Tag>
         );
       }
     });
@@ -100,7 +100,7 @@ SpecialistTags.propTypes = {
     PropTypes.shape({
       name: PropTypes.string,
       roles: PropTypes.arrayOf(PropTypes.string),
-    }),
+    })
   ),
 };
 

@@ -16,10 +16,7 @@ const RECIPIENT_PARTICIPANTS = [
 ];
 exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
-const LANGUAGES = [
-  'English',
-  'Spanish',
-];
+const LANGUAGES = ['English', 'Spanish'];
 exports.LANGUAGES = LANGUAGES;
 
 const OTHER_ENTITY_PARTICIPANTS = [
@@ -35,10 +32,7 @@ const OTHER_ENTITY_PARTICIPANTS = [
 ];
 exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
 
-const ALL_PARTICIPANTS = [
-  ...RECIPIENT_PARTICIPANTS,
-  ...OTHER_ENTITY_PARTICIPANTS,
-];
+const ALL_PARTICIPANTS = [...RECIPIENT_PARTICIPANTS, ...OTHER_ENTITY_PARTICIPANTS];
 exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
 
 const TOPICS = [
@@ -107,11 +101,42 @@ const REASONS = [
 ];
 exports.REASONS = REASONS;
 
-const DEPRECATED_REASONS = [
-  'COVID-19 response'
-];
+const DEPRECATED_REASONS = ['COVID-19 response'];
 
 exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
+
+const PRIORITY_INDICATORS = [
+  'Child incidents',
+  'Deficiency',
+  'DRS',
+  'FEI',
+  'New recipient',
+  'New staff',
+  'No TTA',
+  'Underenrolled',
+];
+
+exports.PRIORITY_INDICATORS = PRIORITY_INDICATORS;
+
+// Possible values for a grant's fei_hs_status, imported from HSES grant_award.xml.
+const FEI_HS_STATUSES = [
+  'Fully Enrolled',
+  'DCU Month X of 6 Month DCU Evaluation',
+  'Month X of 12 Month Period',
+  'Month X of 6 Month Evaluation Period',
+  'Underenrolled less than 4 Months',
+  'Underenrolled',
+  'Central Office Review',
+  'Not Reported',
+  'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+  'Appealed OHS Initiated Reduction',
+  'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+  'DCU + OHS Initiated Reduction (X days left to Appeal Reduction)',
+  'Notified of 12 Month Period',
+  'Undetermined',
+];
+
+exports.FEI_HS_STATUSES = FEI_HS_STATUSES;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -149,9 +174,48 @@ exports.TRAINING_REPORT_STATUSES_URL_PARAMS = TRAINING_REPORT_STATUSES_URL_PARAM
 const EVENT_REPORT_STATUSES = {
   IN_PROGRESS: 'In progress',
   COMPLETE: 'Complete',
-}
+};
 
 exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
+
+const TTA_REQUEST_STATUSES = {
+  DRAFT: 'draft',
+};
+
+exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
+
+const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
+
+exports.TTA_REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS;
+
+const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
+
+exports.TIMELINE_FILTER_TOPICS = TIMELINE_FILTER_TOPICS;
+
+const TIMELINE_DATE_FILTER_CONDITIONS = ['is', 'is within', 'is on or after', 'is on or before'];
+
+exports.TIMELINE_DATE_FILTER_CONDITIONS = TIMELINE_DATE_FILTER_CONDITIONS;
+
+const TIMELINE_SELECT_FILTER_CONDITIONS = ['is', 'is not'];
+
+exports.TIMELINE_SELECT_FILTER_CONDITIONS = TIMELINE_SELECT_FILTER_CONDITIONS;
+
+const TIMELINE_EVENT_TYPES = [
+  'Email communication',
+  'Phone communication',
+  'In person communication',
+  'Virtual communication',
+  'TTA activity',
+  'Training session',
+  'Goal added',
+  'Goal suspended',
+  'Goal closed',
+  'Goal reopened',
+  'TTA request',
+  'Monitoring report received',
+];
+
+exports.TIMELINE_EVENT_TYPES = TIMELINE_EVENT_TYPES;
 
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
@@ -212,11 +276,7 @@ const CLOSE_SUSPEND_REASONS = [
 
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
-const GOAL_CLOSE_REASONS = [
-  'Recipient request',
-  'Regional Office request',
-  'TTA complete',
-];
+const GOAL_CLOSE_REASONS = ['Recipient request', 'Regional Office request', 'TTA complete'];
 exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
 
 const GOAL_SUSPEND_REASONS = [
@@ -269,30 +329,50 @@ const DECIMAL_BASE = 10;
 exports.DECIMAL_BASE = DECIMAL_BASE;
 
 const ALERT_STATUSES = {
-    UNPUBLISHED: 'Unpublished',
-    PUBLISHED: 'Published'
+  UNPUBLISHED: 'Unpublished',
+  PUBLISHED: 'Published',
 };
 exports.ALERT_STATUSES = ALERT_STATUSES;
 
 const ALERT_VARIANTS = {
-    INFO: 'info',
-    EMERGENCY: 'emergency'
+  INFO: 'info',
+  EMERGENCY: 'emergency',
 };
 exports.ALERT_VARIANTS = ALERT_VARIANTS;
 
 const ALERT_SIZES = {
-    STANDARD: 'standard',
-    SLIM: 'slim',
-    LARGE: 'large'
+  STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
 };
 exports.ALERT_SIZES = ALERT_SIZES;
 
-const COMMUNICATION_METHODS = [
-  'Email',
-  'Phone',
-  'In person',
-  'Virtual',
+const COMMUNICATION_GOALS = [
+  'Child Safety',
+  'CLASS Monitoring',
+  'CQI and Data',
+  'Development and Learning',
+  'Disaster Recovery',
+  'ERSEA',
+  'Family Engagement',
+  'Family Support',
+  'FEI',
+  'Fiscal Management',
+  'Governance',
+  'Mental Health',
+  'Monitoring',
+  'New Leaders',
+  'Physical Health',
+  'Professional Development',
+  'Program Structure',
+  'RAN investigation',
+  'Teaching Practices',
+  'Workforce Development',
 ];
+
+exports.COMMUNICATION_GOALS = COMMUNICATION_GOALS;
+
+const COMMUNICATION_METHODS = ['Email', 'Phone', 'In person', 'Virtual'];
 
 exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
 
@@ -300,8 +380,8 @@ const COMMUNICATION_PURPOSES = [
   'General Check-In',
   'New TTA request',
   'Program Specialist or Regional Office meeting',
-  'Program Specialist\'s Monthly contact',
-  'Program Specialist\'s site visit',
+  "Program Specialist's Monthly contact",
+  "Program Specialist's site visit",
   'Recipient question/feedback',
   'RTTAPA updates',
   'RTTAPA Initial Plan / New Recipient',
@@ -329,19 +409,11 @@ const GOAL_STATUS = {
 
 exports.GOAL_STATUS = GOAL_STATUS;
 
-const SUPPORT_TYPES = [
-  'Introducing',
-  'Planning',
-  'Implementing',
-  'Maintaining',
-];
+const SUPPORT_TYPES = ['Introducing', 'Planning', 'Implementing', 'Maintaining'];
 
 exports.SUPPORT_TYPES = SUPPORT_TYPES;
 
-const EVENT_AUDIENCE = [
-  'Recipients',
-  'Regional office/TTA',
-];
+const EVENT_AUDIENCE = ['Recipients', 'Regional office/TTA'];
 
 exports.EVENT_AUDIENCE = EVENT_AUDIENCE;
 
@@ -383,82 +455,111 @@ const REOPEN_REASONS = {
 
 exports.REOPEN_REASONS = REOPEN_REASONS;
 
-const DISALLOWED_URLS = [{
-  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-},{
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-},{
-  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.headstart.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}
+const DISALLOWED_URLS = [
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
 ];
 
 exports.DISALLOWED_URLS = DISALLOWED_URLS;
 
-const VALID_URL_REGEX = /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._\+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[\/](?<path>[-a-zA-Z0-9'@:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_\+.~#&\/=()]*))*)/ig;
+const VALID_URL_REGEX =
+  /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[/](?<path>[-a-zA-Z0-9'@:%_+.,~#&/=()]*[-a-zA-Z0-9@:%_+.~#&/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_+.~#&/=()]*))*)/gi;
 exports.VALID_URL_REGEX = VALID_URL_REGEX;
 
-const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
+const TRACE_IDS = {
   TRAINING: 'training',
   TECHNICAL_ASSISTANCE: 'technical-assistance',
   BOTH: 'both',
+  ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
+  ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
+  ACTIVE_AREAS_OF_NONCOMPLIANCE_WITH_TTA_SUPPORT: 'active-areas-of-noncompliance-with-tta-support',
+  ALL_ACTIVE_AREAS_OF_NONCOMPLIANCE: 'all-active-areas-of-noncompliance',
 };
- exports.TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS;
 
+exports.TRACE_IDS = TRACE_IDS;
 
- const COLLAB_REPORT_PARTICIPANTS = [
-  "Child Care and Development Fund",
-  "Child care licensing",
-  "Child Care Training and Technical Assistance Network",
-  "DOE/State PreK",
-  "Head Start Collaboration Office",
-  "Head Start Recipients",
-  "Health department/WIC",
-  "Office of Child Care",
-  "Quality Rating and Improvement System",
-  "State and territory adminstrators",
-  "Regional HSA",
-  "Regional Office staff",
-  "State HSA",
-  "State environmental health and safety systems",
-  "State family engagement systems",
-  "State health and wellness systems",
-  "State homelessness agency/McKinney Vento liason",
-  "State Professional development system",
-  "TTA staff",
-  "Other",
- ];
+const COLLAB_REPORT_PARTICIPANTS = [
+  'Child Care and Development Fund',
+  'Child care licensing',
+  'Child Care Training and Technical Assistance Network',
+  'DOE/State PreK',
+  'Head Start Collaboration Office',
+  'Head Start Recipients',
+  'Health department/WIC',
+  'Office of Child Care',
+  'Quality Rating and Improvement System',
+  'State and territory adminstrators',
+  'Regional HSA',
+  'Regional Office staff',
+  'State HSA',
+  'State environmental health and safety systems',
+  'State family engagement systems',
+  'State health and wellness systems',
+  'State homelessness agency/McKinney Vento liason',
+  'State Professional development system',
+  'TTA staff',
+  'Other',
+];
 
- exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
+exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
 
 // List of states, by region
 // see: https://www.acf.hhs.gov/oro/regional-offices
@@ -558,3 +659,205 @@ exports.ALL_STATES = ALL_STATES;
 
 const ALL_STATES_FLATTENED = ALL_STATES.flat();
 exports.ALL_STATES_FLATTENED = ALL_STATES_FLATTENED;
+
+// ─── Notification constants ──────────────────────────────────────────────────
+// Canonical runtime source for notification-related literals. The matching
+// TypeScript unions live in packages/common/src/notifications.d.ts and are
+// derived from these objects via `typeof`, so each list is maintained in
+// exactly one place. See packages/common/src/constants.d.ts for the
+// literal-type overlay.
+
+const NOTIFICATION_TYPES = {
+  // ── Activity Report ──────────────────────────────────────────────────────────
+  // AR-1: Creator adds collaborator (existing)
+  ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned',
+  // AR-6/8: Approver requests changes (existing)
+  ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
+  // AR-8 (TTAHUB-5683): Approver 1 notified when a second+ approver requests changes
+  ACTIVITY_REPORT_NEEDS_ACTION_APPROVER: 'changesRequestedApprover',
+  // AR-2/3: Creator or collaborator submits report for approval (existing)
+  ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
+  //
+  ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator',
+  // AR-3c: Collaborator submits report that creator created (new)
+  ACTIVITY_REPORT_SUBMITTED_CREATOR: 'approverAssignedCreator',
+  // AR-7/9: Approver approves report (existing)
+  ACTIVITY_REPORT_APPROVED: 'reportApproved',
+  // TTAHUB-5581: Approver notified when another approver approves the report
+  ACTIVITY_REPORT_APPROVED_APPROVER: 'reportApprovedApprover',
+  // Recipient notified when their AR is approved (existing)
+  ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
+  // AR-4/5: Creator or collaborator re-submits a report for approval
+  ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
+  // AR-4a/5a: Approver notified when a report is re-submitted for approval
+  ACTIVITY_REPORT_RESUBMITTED_APPROVER: 'activityReportResubmittedApprover',
+  // AR-4b: Creator notified when a collaborator re-submits a report for approval
+  ACTIVITY_REPORT_RESUBMITTED_CREATOR: 'activityReportResubmittedCreator',
+
+  // ── Collaborative Report ──────────────────────────────────────────────────────
+  // CR-1: Creator adds collaborator
+  COLLAB_REPORT_COLLABORATOR_ADDED: 'collabReportCollaboratorAdded',
+  // CR-2/3: Creator or collaborator submits report for approval
+  COLLAB_REPORT_SUBMITTED: 'collabReportSubmitted',
+  // CR-4/5: Creator or collaborator re-submits report for approval
+  COLLAB_REPORT_RESUBMITTED: 'collabReportResubmitted',
+  // CR-6/8: Approver requests changes
+  COLLAB_REPORT_NEEDS_ACTION: 'collabReportNeedsAction',
+  // CR-7/9: Approver approves report
+  COLLAB_REPORT_APPROVED: 'collabReportApproved',
+
+  // ── Training Report ───────────────────────────────────────────────────────────
+  // TR-1: Creator adds a regional POC
+  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
+  // TR-2: Creator adds collaborator (existing)
+  TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
+  // Session created on an event (existing)
+  TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  // TR-3: Creator submits a session for approval
+  TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  // TR-4: Approver requests changes to a session
+  TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
+  // TR-5/6: Creator or collaborator re-submits a session for review
+  TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted',
+  // Event completed (existing)
+  TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
+  // Cron umbrella for task-due reminders (existing)
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  // Event imported from HSES (existing)
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+  // TR-5/7 (Paused): event info missing 20 days past event start date
+  TRAINING_REPORT_EVENT_INFO_MISSING: 'trainingReportEventInfoMissing',
+  // TR-6/8 (Paused): event info still missing 20 days past previous reminder
+  TRAINING_REPORT_EVENT_INFO_PAST_DUE: 'trainingReportEventInfoPastDue',
+  // TR-9/10/11 (Paused): session info missing 20 days past session start date
+  TRAINING_REPORT_SESSION_INFO_MISSING: 'trainingReportSessionInfoMissing',
+  // TR-10c/12 (Paused): session info still missing 20 days past previous reminder
+  TRAINING_REPORT_SESSION_INFO_PAST_DUE: 'trainingReportSessionInfoPastDue',
+  // TR-13/15 (Paused): no sessions created 20 days past event end date
+  TRAINING_REPORT_NO_SESSIONS_CREATED: 'trainingReportNoSessionsCreated',
+  // TR-14/16 (Paused): still no sessions 20 days past previous reminder
+  TRAINING_REPORT_NO_SESSIONS_PAST_DUE: 'trainingReportNoSessionsPastDue',
+  // TR-17 (Paused): event not completed 20 days past event end date
+  TRAINING_REPORT_EVENT_NOT_COMPLETED: 'trainingReportEventNotCompleted',
+  // TR-18 (Paused): event not completed 20 days past previous reminder
+  TRAINING_REPORT_EVENT_NOT_COMPLETED_PAST_DUE: 'trainingReportEventNotCompletedPastDue',
+
+  // ── Communication Log ─────────────────────────────────────────────────────────
+  // CL-1: Creator adds TTA staff to a comm log
+  COMMUNICATION_LOG_TTA_STAFF_ADDED: 'communicationLogTtaStaffAdded',
+  // CL-2: Comm log entered for a recipient in a program specialist's group
+  COMMUNICATION_LOG_RECIPIENT_IN_GROUP: 'communicationLogRecipientInGroup',
+
+  // ── Monitoring / Group / System ───────────────────────────────────────────────
+  // Misc-1 (Draft): monitoring goal added/opened for recipients in a region
+  MONITORING_GOAL_ADDED: 'monitoringGoalAdded',
+  // Misc-1b: new monitoring data received for recipients in a region
+  MONITORING_DATA_RECEIVED: 'monitoringDataReceived',
+  // Misc-2: group co-owner added
+  GROUP_CO_OWNER_ADDED: 'groupCoOwnerAdded',
+  // Misc-3: group shared with user
+  GROUP_SHARED: 'groupShared',
+  // Misc-4: TTA Hub planned outage notification
+  SYSTEM_PLANNED_OUTAGE: 'systemPlannedOutage',
+  // Misc-5: TTA Hub unplanned outage notification
+  SYSTEM_UNPLANNED_OUTAGE: 'systemUnplannedOutage',
+};
+exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;
+
+const USER_SETTINGS = {
+  EMAIL: {
+    KEYS: {
+      // Email you when an activity report is submitted for your approval.
+      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
+      // Email you when an activity report you created or are a collaborator on needs an action.
+      CHANGE_REQUESTED: 'emailWhenChangeRequested',
+      // Email you when an activity report you created or are a collaborator on is approved.
+      APPROVAL: 'emailWhenReportApproval',
+      // Email you when you are added as a collaborator to an activity report.
+      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+      // As a Program Specialist, email you when an AR for one of your grants is approved.
+      RECIPIENT_APPROVAL: 'emailWhenRecipientReportApprovedProgramSpecialist',
+    },
+    VALUES: {
+      NEVER: 'never',
+      IMMEDIATELY: 'immediately',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
+    },
+  },
+};
+exports.USER_SETTINGS = USER_SETTINGS;
+
+// Canonical list of email notification setting keys.
+// Includes legacy Activity Report keys and all newer event-specific email keys.
+// Adding a new email notification setting requires both a migration and an
+// entry here.
+const EMAIL_NOTIFICATION_SETTING_KEYS = [
+  ...Object.values(USER_SETTINGS.EMAIL.KEYS),
+  'emailWhenCollaboratorReportSubmittedForReview',
+  'emailWhenCreatorReportSubmittedForReview',
+  'emailWhenCollabReportSubmittedForReview',
+  'emailWhenCollaborationReportSubmittedForReview',
+  'emailWhenCollaborationReportCollaboratorSubmitted',
+  'emailWhenCollaborationChangeRequested',
+  'emailWhenCollaborationReportApproved',
+  'emailWhenAddedAsCollaborationCollaborator',
+  'emailWhenAddedAsTTAStaffCommLog',
+  'emailWhenAddedAsRecipientCommLog',
+  'emailWhenAddedAsPocTrainingReport',
+  'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionReviewRequestedTrainingReport',
+  'emailWhenSessionChangesRequestedTrainingReport',
+  'emailWhenSessionDetails20DaysCreatorCollaborator',
+  'emailWhenSessionDetails20DaysPoc',
+  'emailWhenNoSessionsCreatorCollaborator',
+  'emailWhenNoSessionsPoc',
+  'emailWhenEventDetails20DaysCreatorCollaborator',
+  'emailWhenEventNotCompleted',
+  'emailWhenPlannedOutage',
+  'emailWhenUnplannedOutage',
+  'emailWhenMonitoringDetailsAdded',
+  'emailWhenAddedAsCoOwner',
+  'emailWhenSharedMyGroup',
+];
+exports.EMAIL_NOTIFICATION_SETTING_KEYS = EMAIL_NOTIFICATION_SETTING_KEYS;
+
+// Canonical list of in-app notification setting keys.
+// Mirrors `inApp*` rows seeded by
+// src/migrations/20260625133410-add-new-user-settings-for-in-app-notifications.js.
+// Adding a new in-app notification setting requires both a migration and an
+// entry here.
+const IN_APP_NOTIFICATION_SETTING_KEYS = [
+  'inAppWhenReportSubmittedForReview',
+  'inAppWhenChangeRequested',
+  'inAppWhenReportApproval',
+  'inAppWhenAppointedCollaborator',
+  'inAppWhenRecipientReportApprovedProgramSpecialist',
+  'inAppWhenCollaboratorReportSubmittedForReview',
+  'inAppWhenCreatorReportSubmittedForReview',
+  'inAppWhenCollabReportSubmittedForReview',
+  'inAppWhenCollaborationReportSubmittedForReview',
+  'inAppWhenCollaborationReportCollaboratorSubmitted',
+  'inAppWhenCollaborationChangeRequested',
+  'inAppWhenCollaborationReportApproved',
+  'inAppWhenAddedAsCollaborationCollaborator',
+  'inAppWhenAddedAsTTAStaffCommLog',
+  'inAppWhenAddedAsRecipientCommLog',
+  'inAppWhenAddedAsPocTrainingReport',
+  'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionReviewRequestedTrainingReport',
+  'inAppWhenSessionChangesRequestedTrainingReport',
+  'inAppWhenSessionDetails20DaysCreatorCollaborator',
+  'inAppWhenSessionDetails20DaysPoc',
+  'inAppWhenNoSessionsCreatorCollaborator',
+  'inAppWhenNoSessionsPoc',
+  'inAppWhenEventDetails20DaysCreatorCollaborator',
+  'inAppWhenEventNotCompleted',
+  'inAppWhenPlannedOutage',
+  'inAppWhenMonitoringDetailsAdded',
+  'inAppWhenAddedAsCoOwner',
+  'inAppWhenSharedMyGroup',
+];
+exports.IN_APP_NOTIFICATION_SETTING_KEYS = IN_APP_NOTIFICATION_SETTING_KEYS;

@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -18,7 +16,7 @@ module.exports = {
           ON aro."activityReportId" = ar.id
           AND ar.version = 1
         WHERE arot."activityReportObjectiveId" = aro.id;`,
-        { transaction },
+        { transaction }
       );
     });
   },

@@ -1,9 +1,10 @@
 const { prepMigration } = require('../lib/migration');
 
-const goalText = '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
+const goalText =
+  '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
       // Add monitor goal template.
       await queryInterface.sequelize.query(
@@ -26,21 +27,19 @@ module.exports = {
           NULL,
           current_timestamp
         );`,
-        { transaction },
+        { transaction }
       );
-    },
-  ),
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
       await queryInterface.sequelize.query(
         `DELETE FROM "GoalTemplates"
         WHERE hash = MD5(TRIM('${goalText}'))
         AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod";
         `,
-        { transaction },
+        { transaction }
       );
-    },
-  ),
+    }),
 };

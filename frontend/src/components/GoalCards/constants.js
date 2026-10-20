@@ -20,12 +20,15 @@ export const goalPropTypes = PropTypes.shape({
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
   onAR: PropTypes.bool,
+  hasActiveActivityReports: PropTypes.bool,
   grant: PropTypes.shape({
     number: PropTypes.string,
   }),
-  statusChanges: PropTypes.arrayOf(PropTypes.shape({
-    oldStatus: PropTypes.string,
-    newStatus: PropTypes.string,
-  })),
+  statusChanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      oldStatus: PropTypes.string,
+      newStatus: PropTypes.string,
+    })
+  ),
   isReopened: PropTypes.bool,
 });

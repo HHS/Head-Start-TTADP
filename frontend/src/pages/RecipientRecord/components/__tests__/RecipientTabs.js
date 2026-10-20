@@ -1,9 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { SCOPE_IDS } from '@ttahub/common';
-import RecipientTabs from '../RecipientTabs';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import UserContext from '../../../../UserContext';
+import RecipientTabs from '../RecipientTabs';
 
 const DEFAULT_USER = {
   name: 'test@test.com',
@@ -22,13 +22,9 @@ describe('RecipientTabs', () => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <RecipientTabs
-            region="1"
-            recipientId="1"
-            backLink={backLink}
-          />
+          <RecipientTabs region="1" recipientId="1" backLink={backLink} />
         </UserContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 
@@ -45,5 +41,43 @@ describe('RecipientTabs', () => {
   it('shows the icon if the backlink is a <Link>', () => {
     renderRecipientTabs(<a href="/">Back</a>);
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
+  });
+
+  it('hides the TTA Requests tab without the feature flag', () => {
+    renderRecipientTabs();
+
+    expect(screen.queryByRole('link', { name: 'TTA Requests' })).not.toBeInTheDocument();
+  });
+
+  it('shows the TTA Requests tab second with the feature flag', () => {
+    renderRecipientTabs(null, { ...DEFAULT_USER, flags: ['recipient_tta_request'] });
+
+    const ttaRequest = screen.getByRole('link', { name: 'TTA Requests' });
+    expect(ttaRequest).toHaveAttribute('href', '/recipient-tta-records/1/region/1/tta-request');
+
+    const tabLabels = screen.getAllByRole('link').map((link) => link.textContent);
+    expect(tabLabels).toEqual([
+      'Profile',
+      'TTA Requests',
+      'RTTAPA',
+      'Communication',
+      'TTA History',
+      'Monitoring',
+    ]);
+  });
+
+  it('hides the TTA Timeline tab without the feature flag', () => {
+    renderRecipientTabs();
+
+    expect(screen.queryByRole('link', { name: 'TTA Timeline' })).not.toBeInTheDocument();
+  });
+
+  it('shows the TTA Timeline tab with the feature flag', () => {
+    renderRecipientTabs(null, { ...DEFAULT_USER, flags: ['tta_timeline'] });
+
+    expect(screen.getByRole('link', { name: 'TTA Timeline' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/1/timeline'
+    );
   });
 });

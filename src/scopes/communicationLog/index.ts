@@ -1,12 +1,21 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
+import {
+  afterCommunicationDate,
+  beforeCommunicationDate,
+  withinCommunicationDate,
+} from './communicationDate';
 import { withCreator, withoutCreator } from './creator';
-import { withMethod, withoutMethod } from './method';
-import { withResult, withoutResult } from './result';
-import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDate } from './communicationDate';
-import { withPurpose, withoutPurpose } from './purpose';
-import { withoutRegion, withRegion } from './region';
+import { withGoal, withoutGoal } from './goal';
+import { withGroup, withoutGroup } from './group';
 import { withIds, withoutIds } from './id';
+import { withMethod, withoutMethod } from './method';
+import { withMyReports, withoutMyReports } from './myReports';
+import { withOtherTtaStaff, withoutOtherTtaStaff } from './otherTtaStaff';
+import { withoutPurpose, withPurpose } from './purpose';
+import { withoutRegion, withRegion } from './region';
+import { withoutResult, withResult } from './result';
+import { withoutRoles, withRoles } from './role';
 
 export const topicToQuery = {
   id: {
@@ -23,9 +32,21 @@ export const topicToQuery = {
     win: (query: string[]) => withinCommunicationDate(query),
     in: (query: string[]) => withinCommunicationDate(query),
   },
+  goal: {
+    in: (query: string[]) => withGoal(query),
+    nin: (query: string[]) => withoutGoal(query),
+  },
   method: {
     in: (query: string[]) => withMethod(query),
     nin: (query: string[]) => withoutMethod(query),
+  },
+  myReports: {
+    in: (query: string[], _: unknown, userId: number) => withMyReports(query, _, userId),
+    nin: (query: string[], _: unknown, userId: number) => withoutMyReports(query, _, userId),
+  },
+  otherTtaStaff: {
+    in: (query: string[]) => withOtherTtaStaff(query),
+    nin: (query: string[]) => withoutOtherTtaStaff(query),
   },
   result: {
     in: (query: string[]) => withResult(query),
@@ -38,6 +59,14 @@ export const topicToQuery = {
   region: {
     in: (query: string[]) => withRegion(query),
     nin: (query: string[]) => withoutRegion(query),
+  },
+  group: {
+    in: (query: string[], _: unknown, userId: number) => withGroup(query, userId),
+    nin: (query: string[], _: unknown, userId: number) => withoutGroup(query, userId),
+  },
+  role: {
+    in: (query: string[]) => withRoles(query),
+    nin: (query: string[]) => withoutRoles(query),
   },
 };
 

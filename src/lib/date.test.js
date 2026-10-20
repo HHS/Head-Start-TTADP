@@ -21,6 +21,12 @@ describe('parseDate', () => {
     expect(parseDate('05.13.25')).toEqual(new Date(2025, 4, 13));
   });
 
+  // Zero-padded dotted dates need their own format entry: moment's strict M/D
+  // tokens reject a leading zero, so 'MM.DD.YYYY' has to be listed explicitly.
+  it('parses valid MM.DD.YYYY', () => {
+    expect(parseDate('05.13.2025')).toEqual(new Date(2025, 4, 13));
+  });
+
   it('rejects completely invalid format', () => {
     expect(parseDate('not-a-date')).toBeNull();
   });

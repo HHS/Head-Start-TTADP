@@ -1,16 +1,16 @@
+import { faker } from '@faker-js/faker';
 import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
-import { createReport, destroyReport, createGoal } from '../../testUtils';
-import filtersToScopes from '../index';
 import {
-  Goal,
-  Objective,
-  ActivityReportObjective,
-  ActivityReportGoal,
   ActivityReportFile,
+  ActivityReportGoal,
+  ActivityReportObjective,
   ActivityReportObjectiveFile,
   File,
+  Goal,
+  Objective,
 } from '../../models';
+import { createGoal, createReport, destroyReport } from '../../testUtils';
+import filtersToScopes from '../index';
 
 describe('goal filtersToScopes', () => {
   describe('resourceAttachment', () => {
@@ -35,7 +35,7 @@ describe('goal filtersToScopes', () => {
       reportToInclude = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -89,7 +89,7 @@ describe('goal filtersToScopes', () => {
       reportToExclude = await createReport({
         activityRecipients: [
           {
-            grantId: faker.datatype.number(),
+            grantId: faker.number.int({ min: 0, max: 99999 }),
           },
         ],
       });
@@ -139,24 +139,13 @@ describe('goal filtersToScopes', () => {
         fileId: aroResourceExcluded.id,
       });
 
-      reports = [
-        reportToInclude,
-        reportToExclude,
-      ];
+      reports = [reportToInclude, reportToExclude];
 
-      goals = [
-        goalToInclude,
-        goalToExclude,
-      ];
+      goals = [goalToInclude, goalToExclude];
 
       goalIds = goals.map((goal) => goal.id);
 
-      resources = [
-        arResource,
-        aroResource,
-        arResourceExcluded,
-        aroResourceExcluded,
-      ];
+      resources = [arResource, aroResource, arResourceExcluded, aroResourceExcluded];
     });
 
     afterAll(async () => {
@@ -214,9 +203,7 @@ describe('goal filtersToScopes', () => {
         force: true,
       });
 
-      await Promise.all(reports.map((r) => (
-        destroyReport(r)
-      )));
+      await Promise.all(reports.map((r) => destroyReport(r)));
     });
 
     describe('ar resource', () => {

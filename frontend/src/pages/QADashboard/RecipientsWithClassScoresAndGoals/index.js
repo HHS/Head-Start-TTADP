@@ -1,29 +1,23 @@
-import React, {
-  useState,
-  useRef,
-  useContext,
-} from 'react';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Helmet } from 'react-helmet';
-import {
-  Grid, Alert,
-} from '@trussworks/react-uswds';
 import colors from '../../../colors';
-import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
-import useFilters from '../../../hooks/useFilters';
-import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/RecipientsWithClassScoresAndGoalsWidget';
-import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
-import UserContext from '../../../UserContext';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import useFilters from '../../../hooks/useFilters';
+import UserContext from '../../../UserContext';
+import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/RecipientsWithClassScoresAndGoalsWidget';
+import { QA_DASHBOARD_FILTER_CONFIG, QA_DASHBOARD_FILTER_KEY } from '../constants';
 
 const ALLOWED_SUBFILTERS = [
   'domainClassroomOrganization',
@@ -41,8 +35,8 @@ export default function RecipientsWithClassScoresAndGoals() {
   const pageDrawerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, updateError] = useState();
-  const [recipientsWithClassScoresAndGoalsData,
-    setRecipientsWithClassScoresAndGoalsData] = useState({});
+  const [recipientsWithClassScoresAndGoalsData, setRecipientsWithClassScoresAndGoalsData] =
+    useState({});
   const { user } = useContext(UserContext);
   const {
     // from useUserDefaultRegionFilters
@@ -53,13 +47,7 @@ export default function RecipientsWithClassScoresAndGoals() {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(
-    user,
-    QA_DASHBOARD_FILTER_KEY,
-    true,
-    [],
-    QA_DASHBOARD_FILTER_CONFIG,
-  );
+  } = useFilters(user, QA_DASHBOARD_FILTER_KEY, true, [], QA_DASHBOARD_FILTER_CONFIG);
 
   /* istanbul ignore next: hard to test */
   useDeepCompareEffect(() => {
@@ -67,11 +55,10 @@ export default function RecipientsWithClassScoresAndGoals() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        const data = await getSelfServiceData(
-          'recipients-with-class-scores-and-goals',
-          filters,
-          ['with_class_widget', 'with_class_page'],
-        );
+        const data = await getSelfServiceData('recipients-with-class-scores-and-goals', filters, [
+          'with_class_widget',
+          'with_class_page',
+        ]);
 
         // Get summary and row data.
         const pageData = data.filter((d) => d.data_set === 'with_class_page');
@@ -80,6 +67,7 @@ export default function RecipientsWithClassScoresAndGoals() {
         // Convert data to the format the widget expects.
         const reducedRecipientData = pageData[0].data.reduce((acc, item) => {
           const {
+            classReviewCardId,
             recipientId,
             recipientName,
             classroomOrganization,
@@ -96,8 +84,15 @@ export default function RecipientsWithClassScoresAndGoals() {
           } = item;
 
           const regionId = item['region id'];
-          // Check if recipientId is already in the accumulator.
-          const existingRecipient = acc.find((recipient) => recipient.id === recipientId);
+          const formattedLastARStartDate =
+            lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY');
+          const formattedReportDeliveryDate =
+            reportDeliveryDate === null
+              ? null
+              : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+
+          // Check if the CLASS review card is already in the accumulator.
+          const existingRecipient = acc.find((recipient) => recipient.id === classReviewCardId);
           if (existingRecipient) {
             // Add goal info.
             existingRecipient.goals.push({
@@ -107,26 +102,51 @@ export default function RecipientsWithClassScoresAndGoals() {
               creator,
               collaborator: collaborators,
               goalCreatedAt,
+              lastARStartDate: formattedLastARStartDate,
             });
+            if (
+              formattedLastARStartDate &&
+              (!existingRecipient.lastARStartDate ||
+                moment(formattedLastARStartDate, 'MM/DD/YYYY').isAfter(
+                  moment(existingRecipient.lastARStartDate, 'MM/DD/YYYY')
+                ))
+            ) {
+              existingRecipient.lastARStartDate = formattedLastARStartDate;
+              const exportLastARStartDate = existingRecipient.dataForExport.find(
+                ({ title }) => title === 'Last AR Start Date'
+              );
+              if (exportLastARStartDate) {
+                exportLastARStartDate.value = formattedLastARStartDate;
+              }
+            }
             return acc;
           }
 
           // Else add a new recipient.
           const newRecipient = {
-            id: recipientId,
+            id: classReviewCardId,
+            recipientId,
             name: recipientName,
             heading: recipientName,
             emotionalSupport,
             classroomOrganization,
             instructionalSupport,
             grantNumber,
-            lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
-            reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            lastARStartDate: formattedLastARStartDate,
+            reportDeliveryDate: formattedReportDeliveryDate,
             regionId,
             dataForExport: [
               {
+                title: 'Grant Number',
+                value: grantNumber,
+              },
+              {
+                title: 'Report Received Date',
+                value: formattedReportDeliveryDate,
+              },
+              {
                 title: 'Last AR Start Date',
-                value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+                value: formattedLastARStartDate,
               },
               {
                 title: 'Emotional Support',
@@ -140,10 +160,6 @@ export default function RecipientsWithClassScoresAndGoals() {
                 title: 'Instructional Support',
                 value: instructionalSupport,
               },
-              {
-                title: 'Report Delivery Date',
-                value: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-              },
             ],
             goals: [
               {
@@ -153,6 +169,7 @@ export default function RecipientsWithClassScoresAndGoals() {
                 creator,
                 collaborator: collaborators,
                 goalCreatedAt,
+                lastARStartDate: formattedLastARStartDate,
               },
             ],
           };
@@ -161,8 +178,8 @@ export default function RecipientsWithClassScoresAndGoals() {
         }, []);
 
         // Sort by name for initial display.
-        const sortedReducedRecipients = reducedRecipientData.sort(
-          (a, b) => a.name.localeCompare(b.name),
+        const sortedReducedRecipients = reducedRecipientData.sort((a, b) =>
+          a.name.localeCompare(b.name)
         );
 
         setRecipientsWithClassScoresAndGoalsData({
@@ -185,18 +202,24 @@ export default function RecipientsWithClassScoresAndGoals() {
       <Helmet>
         <title>Recipients with CLASS&reg; scores and goals</title>
       </Helmet>
-      <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
+      <FontAwesomeIcon
+        className="margin-right-1"
+        data-testid="back-link-icon"
+        color={colors.ttahubMediumBlue}
+        icon={faArrowLeft}
+      />
+      <Link
+        className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
+        to="/dashboards/qa-dashboard"
+      >
         Back to Quality Assurance Dashboard
       </Link>
-      <h1 className="landing margin-top-0">
-        Recipients with CLASS&reg; scores and goals
-      </h1>
+      <h1 className="landing margin-top-0">Recipients with CLASS&reg; scores and goals</h1>
       <Grid row>
         {error && (
-        <Alert className="margin-bottom-2" type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert className="margin-bottom-2" type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
       <FilterPanelContainer>
@@ -213,12 +236,7 @@ export default function RecipientsWithClassScoresAndGoals() {
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
+      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="QA dashboard filters">
         <ContentFromFeedByTag tagName="ttahub-qa-dash-class-filters" />
       </Drawer>
       <RecipientsWithClassScoresAndGoalsWidget
@@ -235,11 +253,13 @@ RecipientsWithClassScoresAndGoals.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

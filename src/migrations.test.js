@@ -1,6 +1,5 @@
-const simpleGit = require('simple-git');
-const fs = require('fs');
-const path = require('path');
+const { simpleGit } = require('simple-git');
+const path = require('node:path');
 
 function getRenameCommand(file, date) {
   const dateTimePrefix = new Date()
@@ -38,23 +37,25 @@ async function listTree(branchName, filePath = '') {
     const result = await git.raw(['ls-tree', branchName, filePath]);
     const entries = result.split('\n').filter(Boolean);
 
-    const tree = await Promise.all(entries.map(async (entry) => {
-      const [info, file] = entry.split('\t');
-      const [, type, hash] = info.split(' ');
+    const tree = await Promise.all(
+      entries.map(async (entry) => {
+        const [info, file] = entry.split('\t');
+        const [, type] = info.split(' ');
 
-      if (type === 'tree') {
+        if (type === 'tree') {
+          return {
+            name: file,
+            type: 'directory',
+            children: await listTree(branchName, `${filePath}${file}/`),
+          };
+        }
+
         return {
           name: file,
-          type: 'directory',
-          children: await listTree(branchName, `${filePath}${file}/`),
+          type: 'file',
         };
-      }
-
-      return {
-        name: file,
-        type: 'file',
-      };
-    }));
+      })
+    );
 
     return tree;
   } catch (error) {
@@ -80,10 +81,7 @@ async function getCurrentBranch() {
 
 async function checkFileDatePrefix() {
   const results = [];
-  const paths = [
-    'src/migrations/',
-    'src/seeders/',
-  ];
+  const paths = ['src/migrations/', 'src/seeders/'];
   const mainFiles = (await Promise.all(paths.map(async (p) => listTree('origin/main', p))))
     .flat()
     .map(({ name }) => name);
@@ -95,13 +93,15 @@ async function checkFileDatePrefix() {
   const prFileDates = getLatestFileDates(prFiles, paths);
 
   const tooManyDigits = prFileDates.filter((value) => value > 99999999999999);
-  if (tooManyDigits && tooManyDigits.length) {
+  if (tooManyDigits?.length) {
     results.push(`Some files are named incorrectly, the number prefix should only have 14 digits.
     The format should be YYYYMMDDHHmmss.`);
   } else {
-    const cleanedMainFileDates = mainFileDates.map((mdf) => (mdf > 99999999999999
-      ? Math.floor(mdf / (10 ** Math.floor(Math.log10(mdf)) - 99999999999999 + 1))
-      : mdf));
+    const cleanedMainFileDates = mainFileDates.map((mdf) =>
+      mdf > 99999999999999
+        ? Math.floor(mdf / (10 ** Math.floor(Math.log10(mdf)) - 99999999999999 + 1))
+        : mdf
+    );
     const latestMainFileDate = Math.max(...cleanedMainFileDates);
     const prFilesWithOlderDates = [];
 
@@ -112,12 +112,18 @@ async function checkFileDatePrefix() {
     });
 
     if (prFilesWithOlderDates.length === 0) {
-      results.push('All files on the branch have a newer date than the latest file on the main branch');
+      results.push(
+        'All files on the branch have a newer date than the latest file on the main branch'
+      );
     } else {
-      results.push('Some files on the branch have dates older than or equal to the latest file on the main branch:');
+      results.push(
+        'Some files on the branch have dates older than or equal to the latest file on the main branch:'
+      );
       prFilesWithOlderDates.forEach(({ file, date }) => {
         const renameCommand = getRenameCommand(file, date);
-        results.push(`- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`);
+        results.push(
+          `- File ${file} needs to be renamed. Consider using the following command: ${renameCommand}`
+        );
       });
     }
   }
@@ -127,7 +133,9 @@ async function checkFileDatePrefix() {
 describe('Check File Date Prefix', () => {
   it('should pass when all files on the branch have a newer date than the latest file on main branch', async () => {
     const results = await checkFileDatePrefix();
-    expect(results).toStrictEqual(['All files on the branch have a newer date than the latest file on the main branch']);
+    expect(results).toStrictEqual([
+      'All files on the branch have a newer date than the latest file on the main branch',
+    ]);
   });
 });
 

@@ -18,7 +18,7 @@ module.exports = {
           type: Sequelize.ENUM(['email', 'phone', 'in_person', 'virtual']),
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
     });
   },
@@ -39,7 +39,7 @@ module.exports = {
           type: Sequelize.ARRAY(Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone'])),
           allowNull: false,
         },
-        { transaction },
+        { transaction }
       );
     });
   },

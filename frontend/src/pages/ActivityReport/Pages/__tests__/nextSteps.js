@@ -1,9 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, waitFor, fireEvent,
-} from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -17,7 +15,9 @@ const RECIPIENT_BUTTON = 'recipientNextSteps-button';
 
 const RenderNextSteps = ({
   // eslint-disable-next-line react/prop-types
-  specialistNextSteps, recipientNextSteps, activityRecipientType,
+  specialistNextSteps,
+  recipientNextSteps,
+  activityRecipientType,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -37,7 +37,9 @@ const RenderNextSteps = ({
         false,
         '',
         jest.fn(),
-        () => <></>,
+        () => (
+          <></>
+        )
       )}
     </FormProvider>
   );
@@ -45,16 +47,16 @@ const RenderNextSteps = ({
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  specialistNextSteps, recipientNextSteps, activityRecipientType,
+  specialistNextSteps,
+  recipientNextSteps,
+  activityRecipientType,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: { specialistNextSteps, recipientNextSteps },
   });
   return (
-    <FormProvider {...hookForm}>
-      {nextSteps.reviewSection(activityRecipientType)}
-    </FormProvider>
+    <FormProvider {...hookForm}>{nextSteps.reviewSection(activityRecipientType)}</FormProvider>
   );
 };
 
@@ -64,17 +66,21 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
       specialistNextSteps={specialist}
       recipientNextSteps={recipient}
       activityRecipientType={activityRecipientType}
-    />,
+    />
   );
 };
 
-const renderReviewNextSteps = (specialist = [], recipient = [], activityRecipientType = 'recipient') => {
+const renderReviewNextSteps = (
+  specialist = [],
+  recipient = [],
+  activityRecipientType = 'recipient'
+) => {
   render(
     <RenderReview
       specialistNextSteps={specialist}
       recipientNextSteps={recipient}
       activityRecipientType={activityRecipientType}
-    />,
+    />
   );
 };
 
@@ -82,7 +88,7 @@ describe('next steps review', () => {
   it('renders recipient next steps', async () => {
     renderReviewNextSteps(
       [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
-      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 1 }],
+      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 1 }]
     );
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
     expect(screen.queryAllByText(/step 1/i).length).toBe(2);
@@ -127,7 +133,7 @@ describe('next steps', () => {
     // When a user is on the next steps page
     renderNextSteps(
       [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
-      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 2 }],
+      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 2 }]
     );
 
     let newSteps = screen.queryAllByRole('textbox');
@@ -146,12 +152,10 @@ describe('next steps', () => {
 
   it('can add and delete an entry for specialist', async () => {
     // Given a user wants the add a new entry
-    renderNextSteps(
-      [
-        { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
-        { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
-      ],
-    );
+    renderNextSteps([
+      { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
+      { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
+    ]);
 
     // Add new Specialist Step.
     const newEntryButtons = screen.queryAllByRole('button', { name: /add next step/i });
@@ -159,7 +163,9 @@ describe('next steps', () => {
     userEvent.click(newEntryButtons[0]);
 
     // When the user presses cancel to change their mind
-    const cancelBtn = await screen.findByRole('button', { name: /remove specialist next steps 3/i });
+    const cancelBtn = await screen.findByRole('button', {
+      name: /remove specialist next steps 3/i,
+    });
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box
@@ -174,7 +180,7 @@ describe('next steps', () => {
       [
         { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
         { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
-      ],
+      ]
     );
 
     // Add new Recipient Step.
@@ -184,7 +190,9 @@ describe('next steps', () => {
 
     // When the user presses cancel to change their mind
 
-    const cancelBtn = await screen.findByRole('button', { name: /remove recipient's next steps 3/i });
+    const cancelBtn = await screen.findByRole('button', {
+      name: /remove recipient's next steps 3/i,
+    });
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box
@@ -193,9 +201,7 @@ describe('next steps', () => {
   });
 
   it('can change step for specialist', async () => {
-    renderNextSteps(
-      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
-    );
+    renderNextSteps([{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }]);
     const stepText = await screen.findByRole('textbox', { name: 'Step 1' });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
@@ -207,18 +213,14 @@ describe('next steps', () => {
       writable: true,
       configurable: true,
     });
-    renderNextSteps(
-      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
-    );
+    renderNextSteps([{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }]);
     const stepText = await screen.findByRole('textbox', { name: 'Step 1' });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 
   it('can change date for specialist', async () => {
-    renderNextSteps(
-      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
-    );
+    renderNextSteps([{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }]);
 
     // Change date.
     const dateInput = await screen.findByTestId('date-picker-external-input');
@@ -234,18 +236,14 @@ describe('next steps', () => {
   });
 
   it('can change step for recipient', async () => {
-    renderNextSteps(
-      [], [{ note: 'Step 1', id: 2, completeDate: '06/02/2022' }],
-    );
+    renderNextSteps([], [{ note: 'Step 1', id: 2, completeDate: '06/02/2022' }]);
     const stepText = await screen.findByRole('textbox', { name: 'Step 1' });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 
   it('can change date for recipient', async () => {
-    renderNextSteps(
-      [], [{ note: 'Step 2', id: 2, completeDate: '06/03/2022' }],
-    );
+    renderNextSteps([], [{ note: 'Step 2', id: 2, completeDate: '06/03/2022' }]);
 
     // Change date.
     const dateInput = await screen.findByTestId('date-picker-external-input');
@@ -273,65 +271,77 @@ describe('isPageComplete for Next steps', () => {
   });
 
   it('returns false if no next steps are provided', async () => {
-    const result = isPageComplete({
-      specialistNextSteps: [], recipientNextSteps: [],
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        specialistNextSteps: [],
+        recipientNextSteps: [],
+      },
+      { isValid: false }
+    );
     expect(result).toBe(false);
   });
 
   it('returns false if no note was provided on one step', async () => {
-    const result = isPageComplete({
-      specialistNextSteps: [{
-        note: '',
-        completeDate: '09/17/2017',
-      }],
-      recipientNextSteps: [
-        {
-          note: 'A step sir',
-          completeDate: '09/17/2017',
-        },
-      ],
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        specialistNextSteps: [
+          {
+            note: '',
+            completeDate: '09/17/2017',
+          },
+        ],
+        recipientNextSteps: [
+          {
+            note: 'A step sir',
+            completeDate: '09/17/2017',
+          },
+        ],
+      },
+      { isValid: false }
+    );
     expect(result).toBe(false);
   });
 
   it('returns false if an invalid date was provided on one step', async () => {
-    const result = isPageComplete({
-      specialistNextSteps: [{
-        note: 'a step',
-        completeDate: '09/17/2017',
-      }],
-      recipientNextSteps: [
-        {
-          note: 'A step sir',
-          completeDate: 'a step a step a step',
-        },
-      ],
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        specialistNextSteps: [
+          {
+            note: 'a step',
+            completeDate: '09/17/2017',
+          },
+        ],
+        recipientNextSteps: [
+          {
+            note: 'A step sir',
+            completeDate: 'a step a step a step',
+          },
+        ],
+      },
+      { isValid: false }
+    );
     expect(result).toBe(false);
   });
 
   it('returns true if completeDate is a valid ISO format', () => {
-    const result = isPageComplete({
-      specialistNextSteps: [
-        { note: 'ISO test', completeDate: '2025-05-17' },
-      ],
-      recipientNextSteps: [
-        { note: 'ISO test 2', completeDate: '2025-05-18' },
-      ],
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        specialistNextSteps: [{ note: 'ISO test', completeDate: '2025-05-17' }],
+        recipientNextSteps: [{ note: 'ISO test 2', completeDate: '2025-05-18' }],
+      },
+      { isValid: false }
+    );
     expect(result).toBe(true);
   });
 
   it('returns true if completeDate is a valid dot format', () => {
-    const result = isPageComplete({
-      specialistNextSteps: [
-        { note: 'Dot format test', completeDate: '5.17.25' },
-      ],
-      recipientNextSteps: [
-        { note: 'Another one', completeDate: '5.18.25' },
-      ],
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        specialistNextSteps: [{ note: 'Dot format test', completeDate: '5.17.25' }],
+        recipientNextSteps: [{ note: 'Another one', completeDate: '5.18.25' }],
+      },
+      { isValid: false }
+    );
     expect(result).toBe(true);
   });
 });

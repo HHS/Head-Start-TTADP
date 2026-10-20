@@ -1,11 +1,10 @@
-import httpCodes from 'http-codes';
 import httpContext from 'express-http-context';
+import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
-
-import { logger, auditLogger } from '../logger';
-import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
+import { auditLogger, hashForLogging, logger } from '../logger';
 import { validateUserAuthForAdmin } from './accessValidation';
+import findOrCreateUser from './findOrCreateUser';
 
 const namespace = 'MIDDLEWARE:CURRENT USER';
 
@@ -64,17 +63,23 @@ export async function currentUserId(req, res) {
           const userId = idFromSessionOrLocals();
 
           if (userId === null) {
-            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
+            auditLogger.error(
+              'Impersonation failure. No valid user ID found in session or locals.'
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
 
           if (!(await validateUserAuthForAdmin(Number(userId)))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
 
           if (await validateUserAuthForAdmin(Number(impersonatedUserId))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
@@ -85,18 +90,23 @@ export async function currentUserId(req, res) {
         return Number(impersonatedUserId);
       }
     } catch (e) {
-      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
+      auditLogger.error(
+        `Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`
+      );
       return handleErrors(req, res, e, logContext);
     }
   }
 
   if (
-    process.env.NODE_ENV !== 'production'
-    && process.env.BYPASS_AUTH === 'true'
-    && req.headers && req.headers['playwright-user-id']
+    process.env.NODE_ENV !== 'production' &&
+    process.env.BYPASS_AUTH === 'true' &&
+    req.headers &&
+    req.headers['playwright-user-id']
   ) {
     const userId = req.headers['playwright-user-id'];
-    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`);
+    auditLogger.warn(
+      `Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`
+    );
     if (req.session) {
       req.session.userId = userId;
       req.session.uuid = uuidv4();
@@ -113,19 +123,33 @@ export async function currentUserId(req, res) {
  * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
 export async function retrieveUserDetails(data) {
-  logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
-
   const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null;
 
   const email = data?.email ? data.email.toString() : null;
   const hsesUsername = data?.sub ? data.sub.toString() : null;
   const hsesUserId = data?.userId ? data.userId.toString() : null;
   const hsesAuthorities = data?.roles || [];
+
+  // Log shape/presence only; data carries PII (email, name, sub) that should never hit logs.
+  // subHash correlates this line with the authMiddleware login-flow logs for the same user,
+  // without logging hsesUsername (the sub/email) itself.
+  logger.debug(
+    `User details response received: ${JSON.stringify({
+      hasName: Boolean(name),
+      hasEmail: Boolean(email),
+      hasHsesUsername: Boolean(hsesUsername),
+      hasHsesUserId: Boolean(hsesUserId),
+      roleCount: hsesAuthorities.length,
+      subHash: hashForLogging(hsesUsername),
+    })}`
+  );
   if (!hsesUsername) {
     auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
-    throw new Error(`Missing required user info from HSES: ${JSON.stringify({
-      hsesUsername,
-    })}`);
+    throw new Error(
+      `Missing required user info from HSES: ${JSON.stringify({
+        hsesUsername,
+      })}`
+    );
   }
 
   return findOrCreateUser({

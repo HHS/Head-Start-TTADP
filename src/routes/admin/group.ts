@@ -1,19 +1,19 @@
 /* eslint-disable import/prefer-default-export */
-import express, { Response, Request } from 'express';
+import express, { type Request, type Response } from 'express';
 import httpCodes from 'http-codes';
-import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
-import { groupsByRegion } from '../../services/groups';
 import { currentUserId } from '../../services/currentUser';
+import { groupsByRegion } from '../../services/groups';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };
 
 /**
-   *
-   * @param {Request} req - request
-   * @param {Response} res - response
-   */
+ *
+ * @param {Request} req - request
+ * @param {Response} res - response
+ */
 export async function getGroupsByRegion(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {

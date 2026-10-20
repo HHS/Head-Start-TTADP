@@ -1,5 +1,5 @@
-import { getRecipients } from './recipient';
 import { allRecipients } from '../../services/recipient';
+import { getRecipients } from './recipient';
 
 jest.mock('../../services/recipient', () => ({
   allRecipients: jest.fn(),

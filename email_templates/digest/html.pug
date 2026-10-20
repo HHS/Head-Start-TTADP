@@ -1,17 +1,21 @@
 p Hello #{user.name},
 p Below are your report notifications for #{freq}.
-p Select the name of a report to view it in the Hub.
+p Select the report number to view it in the Hub.
 case type
     when 'collaboratorDigest'
         p You were added as a collaborator on these activity reports:
     when 'changesRequestedDigest'
         p Changes were requested to these activity reports:
     when 'approverAssignedDigest'
-        p These activity reports were submitted for your review:
+        p These activity reports were submitted for your approval:
     when 'reportApprovedDigest'
         p These activity reports were approved:
     when 'recipientReportApprovedDigest'
         p Activity Reports associated with your recipients were approved:
+    when 'collaboratorReportSubmittedForReviewDigest'
+        p The following Activity Reports, on which you are a collaborator, have been submitted for approval:
+    when 'creatorReportSubmittedForReviewDigest'
+        p The following Activity Reports, on which you are a creator, have been submitted for approval:
     default
         p
 ul

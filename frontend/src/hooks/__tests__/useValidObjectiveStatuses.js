@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import useValidObjectiveStatuses from '../useValidObjectiveStatuses';
 import { OBJECTIVE_STATUS } from '../../Constants';
+import useValidObjectiveStatuses from '../useValidObjectiveStatuses';
 
 describe('useValidObjectiveStatuses', () => {
   it('returns read-only options when goal is closed', () => {
@@ -9,9 +9,9 @@ describe('useValidObjectiveStatuses', () => {
     const userCanEdit = true;
     const currentStatus = OBJECTIVE_STATUS.IN_PROGRESS;
 
-    const { result } = renderHook(() => useValidObjectiveStatuses(
-      goalStatus, userCanEdit, currentStatus,
-    ));
+    const { result } = renderHook(() =>
+      useValidObjectiveStatuses(goalStatus, userCanEdit, currentStatus)
+    );
 
     const [options, isReadOnly] = result.current;
 
@@ -24,9 +24,9 @@ describe('useValidObjectiveStatuses', () => {
     const userCanEdit = false;
     const currentStatus = OBJECTIVE_STATUS.IN_PROGRESS;
 
-    const { result } = renderHook(() => useValidObjectiveStatuses(
-      goalStatus, userCanEdit, currentStatus,
-    ));
+    const { result } = renderHook(() =>
+      useValidObjectiveStatuses(goalStatus, userCanEdit, currentStatus)
+    );
 
     const [options, isReadOnly] = result.current;
 
@@ -39,14 +39,16 @@ describe('useValidObjectiveStatuses', () => {
     const userCanEdit = true;
     const currentStatus = OBJECTIVE_STATUS.COMPLETE;
 
-    const { result } = renderHook(() => useValidObjectiveStatuses(
-      goalStatus, userCanEdit, currentStatus,
-    ));
+    const { result } = renderHook(() =>
+      useValidObjectiveStatuses(goalStatus, userCanEdit, currentStatus)
+    );
 
     const [options, isReadOnly] = result.current;
 
     expect(options).toEqual([
-      OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.SUSPENDED, OBJECTIVE_STATUS.COMPLETE,
+      OBJECTIVE_STATUS.IN_PROGRESS,
+      OBJECTIVE_STATUS.SUSPENDED,
+      OBJECTIVE_STATUS.COMPLETE,
     ]);
     expect(isReadOnly).toBe(false);
   });
@@ -56,9 +58,9 @@ describe('useValidObjectiveStatuses', () => {
     const userCanEdit = true;
     const currentStatus = OBJECTIVE_STATUS.NOT_STARTED;
 
-    const { result } = renderHook(() => useValidObjectiveStatuses(
-      goalStatus, userCanEdit, currentStatus,
-    ));
+    const { result } = renderHook(() =>
+      useValidObjectiveStatuses(goalStatus, userCanEdit, currentStatus)
+    );
 
     const [options, isReadOnly] = result.current;
 

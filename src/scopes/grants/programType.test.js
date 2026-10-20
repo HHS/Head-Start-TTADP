@@ -1,11 +1,11 @@
 import {
-  Op,
   filtersToScopes,
   Grant,
-  Recipient,
-  sequelize,
-  recipients,
+  Op,
   possibleIds,
+  Recipient,
+  recipients,
+  sequelize,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';

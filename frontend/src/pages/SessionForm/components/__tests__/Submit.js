@@ -1,13 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import Submit from '../Submit';
-import UserContext from '../../../../UserContext';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
+import UserContext from '../../../../UserContext';
+import Submit from '../Submit';
 
 jest.mock('../../../../hooks/useEventAndSessionStaff');
+jest.mock(
+  '../../../../components/HookFormRichEditor',
+  () =>
+    function MockHookFormRichEditor({ id, name, ariaLabel }) {
+      return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
+    }
+);
 
 const FormWrapper = ({ defaultValues, children }) => {
   const hookForm = useForm({
@@ -15,11 +24,7 @@ const FormWrapper = ({ defaultValues, children }) => {
     defaultValues,
   });
 
-  return (
-    <FormProvider {...hookForm}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...hookForm}>{children}</FormProvider>;
 };
 
 const renderSubmit = (props, defaultValues = {}, user = { id: 1 }) => {
@@ -28,7 +33,7 @@ const renderSubmit = (props, defaultValues = {}, user = { id: 1 }) => {
       <FormWrapper defaultValues={defaultValues}>
         <Submit {...props} />
       </FormWrapper>
-    </UserContext.Provider>,
+    </UserContext.Provider>
   );
 };
 
@@ -45,6 +50,7 @@ describe('Submit', () => {
     ],
     isPoc: false,
     isAdmin: false,
+    isOwner: false,
   };
 
   const mockApprovers = [
@@ -95,11 +101,7 @@ describe('Submit', () => {
       // Current user has id: 2, which matches the second approver
       const user = { id: 2 };
 
-      renderSubmit(
-        { ...defaultProps, isAdmin: true },
-        defaultValues,
-        user,
-      );
+      renderSubmit({ ...defaultProps, isAdmin: true }, defaultValues, user);
 
       // The dropdown should be visible
       expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
@@ -131,6 +133,103 @@ describe('Submit', () => {
       expect(screen.getByRole('option', { name: 'Approver One' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Approver Two' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('filters out event owner from approver list regardless of logged-in user', () => {
+      const defaultValues = {
+        facilitation: 'regional_tta_staff',
+        event: {
+          data: { eventOrganizer: 'REGIONAL_PD_WITH_NATIONAL_CENTERS' },
+          ownerId: 1, // Event owner matches Approver One
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      // Current user is NOT the owner (id: 999)
+      const user = { id: 999 };
+
+      renderSubmit(defaultProps, defaultValues, user);
+
+      // The dropdown should be visible
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+
+      // Approver One (id: 1, matches event ownerId) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver One' })).not.toBeInTheDocument();
+
+      // Other approvers should be visible
+      expect(screen.getByRole('option', { name: 'Approver Two' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('filters out both current user and event owner from approver list', () => {
+      const defaultValues = {
+        facilitation: 'regional_tta_staff',
+        event: {
+          data: { eventOrganizer: 'REGIONAL_PD_WITH_NATIONAL_CENTERS' },
+          ownerId: 1, // Event owner matches Approver One
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      // Current user matches Approver Two
+      const user = { id: 2 };
+
+      renderSubmit(defaultProps, defaultValues, user);
+
+      // The dropdown should be visible
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+
+      // Approver One (event owner) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver One' })).not.toBeInTheDocument();
+
+      // Approver Two (current user) should NOT be in the dropdown
+      expect(screen.queryByRole('option', { name: 'Approver Two' })).not.toBeInTheDocument();
+
+      // Only Approver Three should be visible
+      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('hides approver selection for a non-POC regional owner on national center facilitation and excludes them', () => {
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
+
+      renderSubmit({ ...defaultProps, isOwner: true }, defaultValues, user);
+
+      expect(
+        screen.queryByRole('combobox', { name: /Approving manager/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('still shows approver selection for an admin regional owner on national center facilitation', () => {
+      // Regression: admin override in useCanSelectApprover. An admin who
+      // happens to be the event owner of a Regional PD w/ NC + Trainer = NC
+      // event must still see and use the approver dropdown for remediation.
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
+
+      renderSubmit({ ...defaultProps, isOwner: true, isAdmin: true }, defaultValues, user);
+
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
     });
   });
 });

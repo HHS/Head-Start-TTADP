@@ -1,11 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import { render, screen, waitFor } from '@testing-library/react';
-import CollabReports from '../components/CollabReports';
-import { getReports, getAlerts } from '../../../fetchers/collaborationReports';
+import React from 'react';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { NOOP } from '../../../Constants';
+import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import UserContext from '../../../UserContext';
+import CollabReports from '../components/CollabReports';
 
 jest.mock('../../../fetchers/collaborationReports');
 
@@ -25,7 +26,7 @@ describe('CollabReports', () => {
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <CollabReports {...props} />
         </UserContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -73,6 +74,14 @@ describe('CollabReports', () => {
       expect(getReports).toHaveBeenCalled();
       // The empty message should still be present
       expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
+    });
+  });
+
+  test('initializes sort config with perPage: 10', async () => {
+    getReports.mockResolvedValue({ count: 0, rows: [] });
+    renderTest({});
+    await waitFor(() => {
+      expect(getReports).toHaveBeenCalledWith(expect.objectContaining({ perPage: 10 }), []);
     });
   });
 

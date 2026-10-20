@@ -1,10 +1,14 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { submitReport, unlockReport } from './handlers';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db, {
-  ActivityReportApprover, ActivityReport, Permission, User,
+  ActivityReport,
+  ActivityReportApprover,
+  Notification,
+  Permission,
+  User,
 } from '../../models';
+import { submitReport, unlockReport } from './handlers';
 
 const draftObject = {
   activityRecipientType: 'recipient',
@@ -59,28 +63,35 @@ const mockResponse = {
 
 describe('submitReport', () => {
   beforeAll(async () => {
-    await User.bulkCreate(
-      [mockUser, mockManager, secondMockManager],
-      { validate: true, individualHooks: true },
+    await User.bulkCreate([mockUser, mockManager, secondMockManager], {
+      validate: true,
+      individualHooks: true,
+    });
+    await Permission.bulkCreate(
+      [
+        {
+          userId: mockUser.id,
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+        {
+          userId: mockManager.id,
+          regionId: 1,
+          scopeId: SCOPES.APPROVE_REPORTS,
+        },
+        {
+          userId: secondMockManager.id,
+          regionId: 1,
+          scopeId: SCOPES.APPROVE_REPORTS,
+        },
+        {
+          userId: mockUser.id,
+          regionId: 14,
+          scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
+        },
+      ],
+      { validate: true, individualHooks: true }
     );
-    await Permission.bulkCreate([{
-      userId: mockUser.id,
-      regionId: 1,
-      scopeId: SCOPES.READ_WRITE_REPORTS,
-    }, {
-      userId: mockManager.id,
-      regionId: 1,
-      scopeId: SCOPES.APPROVE_REPORTS,
-    }, {
-      userId: secondMockManager.id,
-      regionId: 1,
-      scopeId: SCOPES.APPROVE_REPORTS,
-    },
-    {
-      userId: mockUser.id,
-      regionId: 14,
-      scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
-    }], { validate: true, individualHooks: true });
   });
 
   afterAll(async () => {
@@ -91,6 +102,7 @@ describe('submitReport', () => {
     });
     await ActivityReport.destroy({ where: { userId: mockUser.id } });
     await Permission.destroy({ where: { userId: userIds } });
+    await Notification.destroy({ where: { userId: userIds } });
     await User.destroy({ where: { id: userIds } });
     await db.sequelize.close();
   });
@@ -106,17 +118,21 @@ describe('submitReport', () => {
       params: { activityReportId: draftReport.id },
       body: { approverUserIds: [mockManager.id, secondMockManager.id], additionalNotes: 'notes' },
     };
-    const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+    const assignedNotification = jest
+      .spyOn(mailer, 'approverAssignedNotification')
+      .mockImplementation();
 
     await submitReport(request, mockResponse);
     expect(assignedNotification).toHaveBeenCalled();
-    expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-      calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      approvers: [
-        expect.objectContaining({ status: null, note: null }),
-        expect.objectContaining({ status: null, note: null }),
-      ],
-    }));
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [
+          expect.objectContaining({ status: null, note: null }),
+          expect.objectContaining({ status: null, note: null }),
+        ],
+      })
+    );
   });
   it('resets NEEDS_ACTION approver statuses', async () => {
     const submittedReport = await ActivityReport.create({
@@ -125,7 +141,10 @@ describe('submitReport', () => {
       userId: mockUser.id,
     });
     await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: mockManager.id, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'make changes x, y, z',
+      activityReportId: submittedReport.id,
+      userId: mockManager.id,
+      status: APPROVER_STATUSES.NEEDS_ACTION,
+      note: 'make changes x, y, z',
     });
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
     // check that testing condition is correct
@@ -133,18 +152,23 @@ describe('submitReport', () => {
     const request = {
       session: { userId: mockUser.id },
       params: { activityReportId: submittedReport.id },
-      body: { approverUserIds: [mockManager.id], additionalNotes: 'I made those changes to x, y, z' },
+      body: {
+        approverUserIds: [mockManager.id],
+        additionalNotes: 'I made those changes to x, y, z',
+      },
     };
-    const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+    const assignedNotification = jest
+      .spyOn(mailer, 'approverAssignedNotification')
+      .mockImplementation();
 
     await submitReport(request, mockResponse);
     expect(assignedNotification).toHaveBeenCalled();
-    expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-      calculatedStatus: REPORT_STATUSES.SUBMITTED,
-      approvers: [
-        expect.objectContaining({ status: null, note: 'make changes x, y, z' }),
-      ],
-    }));
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approvers: [expect.objectContaining({ status: null, note: 'make changes x, y, z' })],
+      })
+    );
   });
   it('resets to NEEDS_ACTION on unlock', async () => {
     const submittedReport = await ActivityReport.create({
@@ -153,11 +177,17 @@ describe('submitReport', () => {
       userId: mockUser.id,
     });
     await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: mockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'report looks good',
+      activityReportId: submittedReport.id,
+      userId: mockManager.id,
+      status: APPROVER_STATUSES.APPROVED,
+      note: 'report looks good',
     });
 
     await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: secondMockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'agree report looks good',
+      activityReportId: submittedReport.id,
+      userId: secondMockManager.id,
+      status: APPROVER_STATUSES.APPROVED,
+      note: 'agree report looks good',
     });
 
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);

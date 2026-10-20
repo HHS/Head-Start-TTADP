@@ -29,7 +29,10 @@ describe('GrantRelationshipToActive', () => {
 
   beforeAll(async () => {
     recipient = await Recipient.create({ ...mockRecipient });
-    grant = await Grant.create({ ...mockGrant, recipientId: recipient.id }, { individualHooks: true });
+    grant = await Grant.create(
+      { ...mockGrant, recipientId: recipient.id },
+      { individualHooks: true }
+    );
   });
 
   afterAll(async () => {
@@ -55,23 +58,21 @@ describe('GrantRelationshipToActive', () => {
       await grant.update({ status: 'Active' }, { individualHooks: true });
     });
     it('throws an error on create', async () => {
-      await expect(GrantRelationshipToActive.create({ grantId: grant.id }))
-        .rejects
-        .toThrow('Insertion not allowed on materialized view');
+      await expect(GrantRelationshipToActive.create({ grantId: grant.id })).rejects.toThrow(
+        'Insertion not allowed on materialized view'
+      );
     });
 
     it('throws an error on update', async () => {
       instance = await GrantRelationshipToActive.findOne({ where: { grantId: grant.id } });
-      await expect(instance.update({ activeGrantId: 12345 }))
-        .rejects
-        .toThrow('Update not allowed on materialized view');
+      await expect(instance.update({ activeGrantId: 12345 })).rejects.toThrow(
+        'Update not allowed on materialized view'
+      );
     });
 
     it('throws an error on destroy', async () => {
       instance = await GrantRelationshipToActive.findOne({ where: { grantId: grant.id } });
-      await expect(instance.destroy())
-        .rejects
-        .toThrow('Deletion not allowed on materialized view');
+      await expect(instance.destroy()).rejects.toThrow('Deletion not allowed on materialized view');
     });
   });
 
@@ -91,11 +92,12 @@ describe('GrantRelationshipToActive', () => {
       db.sequelize.query = jest.fn().mockRejectedValue(new Error('Refresh failed'));
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-      await expect(GrantRelationshipToActive.refresh())
-        .rejects
-        .toThrow('Refresh failed');
+      await expect(GrantRelationshipToActive.refresh()).rejects.toThrow('Refresh failed');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error refreshing materialized view:', expect.any(Error));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error refreshing materialized view:',
+        expect.any(Error)
+      );
       db.sequelize.query = originalQuery;
       consoleErrorSpy.mockRestore();
     });

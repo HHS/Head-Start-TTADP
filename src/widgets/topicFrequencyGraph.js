@@ -1,18 +1,20 @@
-import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { uniq } from 'lodash';
+import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
   ActivityReportObjective,
   Goal,
   Objective,
-  Topic,
   sequelize,
+  Topic,
 } from '../models';
 import { scopeToWhere } from '../scopes/utils';
 import { getAllTopicsForWidget as getAllTopics } from './helpers';
 
-const getTopicMappings = async () => sequelize.query(`
+const getTopicMappings = async () =>
+  sequelize.query(
+    `
 SELECT
   DISTINCT
   TT."name",
@@ -21,14 +23,12 @@ FROM "Topics" TT
 LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
 WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
 ORDER BY TT."name"
-`, { type: QueryTypes.SELECT });
+`,
+    { type: QueryTypes.SELECT }
+  );
 
 export async function topicFrequencyGraph(scopes) {
-  const [
-    topicsAndParticipants,
-    topicMappings,
-    dbTopics,
-  ] = await Promise.all([
+  const [topicsAndParticipants, topicMappings, dbTopics] = await Promise.all([
     ActivityReport.findAll({
       attributes: [
         [
@@ -51,22 +51,24 @@ export async function topicFrequencyGraph(scopes) {
         [Op.and]: [scopes.activityReport],
         calculatedStatus: REPORT_STATUSES.APPROVED,
       },
-      include: [{
-        attributes: [],
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        required: false,
-        include: [
-          {
-            attributes: [],
-            model: Topic,
-            as: 'topics',
-            through: {
+      include: [
+        {
+          attributes: [],
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: false,
+          include: [
+            {
               attributes: [],
+              model: Topic,
+              as: 'topics',
+              through: {
+                attributes: [],
+              },
             },
-          },
-        ],
-      }],
+          ],
+        },
+      ],
     }),
     // Get mappings.
     getTopicMappings(),
@@ -100,11 +102,7 @@ export async function topicFrequencyGraph(scopes) {
 export async function topicFrequencyGraphViaGoals(scopes) {
   const activityReportWhere = await scopeToWhere(ActivityReport, 'art', scopes.activityReport);
 
-  const [
-    topicsAndParticipants,
-    topicMappings,
-    dbTopics,
-  ] = await Promise.all([
+  const [topicsAndParticipants, topicMappings, dbTopics] = await Promise.all([
     Goal.findAll({
       attributes: [
         [
@@ -151,9 +149,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
           'topics',
         ],
       ],
-      group: [
-        '"Goal".id',
-      ],
+      group: ['"Goal".id'],
       where: {
         [Op.and]: [scopes.goal],
       },
@@ -163,29 +159,31 @@ export async function topicFrequencyGraphViaGoals(scopes) {
           model: Objective,
           as: 'objectives',
           required: true,
-          include: [{
-            attributes: [],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            required: true,
-            include: [
-              {
-                attributes: [],
-                model: Topic,
-                as: 'topics',
-                through: {
+          include: [
+            {
+              attributes: [],
+              model: ActivityReportObjective,
+              as: 'activityReportObjectives',
+              required: true,
+              include: [
+                {
                   attributes: [],
+                  model: Topic,
+                  as: 'topics',
+                  through: {
+                    attributes: [],
+                  },
                 },
-              },
-              {
-                attributes: [],
-                model: ActivityReport,
-                as: 'activityReport',
-                required: true,
-                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-              },
-            ],
-          }],
+                {
+                  attributes: [],
+                  model: ActivityReport,
+                  as: 'activityReport',
+                  required: true,
+                  where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+                },
+              ],
+            },
+          ],
         },
       ],
     }),
@@ -203,16 +201,13 @@ export async function topicFrequencyGraphViaGoals(scopes) {
   }));
 
   topicsAndParticipants?.forEach((goalData) => {
-    goalData
-      .get('topics')?.forEach(({ topic, reportIds }) => {
-        const topicResponse = topicsResponse
-          .find((t) => t.topic === lookUpTopic.get(topic));
+    goalData.get('topics')?.forEach(({ topic, reportIds }) => {
+      const topicResponse = topicsResponse.find((t) => t.topic === lookUpTopic.get(topic));
 
-        if (!topicResponse) return;
-        reportIds?.forEach((id) => topicResponse.reportIds.add(id));
-      });
+      if (!topicResponse) return;
+      reportIds?.forEach((id) => topicResponse.reportIds.add(id));
+    });
   });
 
-  return topicsResponse
-    .map(({ topic, reportIds }) => ({ topic, count: reportIds.size }));
+  return topicsResponse.map(({ topic, reportIds }) => ({ topic, count: reportIds.size }));
 }

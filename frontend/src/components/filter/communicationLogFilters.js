@@ -1,20 +1,31 @@
-import React from 'react';
 import moment from 'moment';
+import React from 'react';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
   IS,
   IS_NOT,
+  MY_REPORTS_FILTER_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
-import { fixQueryWhetherStringOrArray } from './utils';
-import FilterDateRange from './FilterDateRange';
+import FilterCommunicationGoal from './FilterCommunicationGoal';
+import FilterCommunicationLogStaff from './FilterCommunicationLogStaff';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
+import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
+import FilterDateRange from './FilterDateRange';
+import FilterGroups from './FilterGroups';
 import FilterInput from './FilterInput';
-import { handleArrayQuery } from './helpers';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
+import { handleArrayQuery } from './helpers';
+import MyReportsSelect from './MyReportsSelect';
+import {
+  fixQueryWhetherStringOrArray,
+  useDisplayCommunicationLogStaff,
+  useDisplayGroups,
+} from './utils';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -24,6 +35,11 @@ const EMPTY_SINGLE_SELECT = {
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
+};
+
+const EMPTY_MY_REPORTS_MULTI_SELECT = {
+  "where I'm the": [],
+  "where I'm not the": [],
 };
 
 const EMPTY_TEXT_INPUT = {
@@ -123,9 +139,93 @@ export const regionFilter = {
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionalSelect
-      appliedRegion={query}
+    <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />
+  ),
+};
+
+export const specialistFilter = {
+  id: 'role',
+  display: 'Specialist roles',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSpecialistSelect
+      inputId={`role-${condition}-${id}`}
       onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const myReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      isFor="commLog"
+    />
+  ),
+};
+
+export const otherTtaStaffFilter = {
+  id: 'otherTtaStaff',
+  display: 'Other TTA staff',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayCommunicationLogStaff,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationLogStaff
+      inputId={`otherTtaStaff-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const goalFilter = {
+  id: 'goal',
+  display: 'Goal category',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationGoal
+      inputId={`goal-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayGroups,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups inputId={`group-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+  ),
+};
+
+export const purposeFilter = {
+  id: 'purpose',
+  display: 'Purpose',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationPurpose
+      inputId={`purpose-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };

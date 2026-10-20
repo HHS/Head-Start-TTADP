@@ -1,7 +1,7 @@
-import { afterCreate, afterUpdate } from './group';
 import { GROUP_COLLABORATORS } from '../../constants';
-import { currentUserPopulateCollaboratorForType } from '../helpers/genericCollaborator';
 import { skipIf } from '../helpers/flowControl';
+import { currentUserPopulateCollaboratorForType } from '../helpers/genericCollaborator';
+import { afterCreate, afterUpdate } from './group';
 
 jest.mock('../helpers/genericCollaborator', () => ({
   currentUserPopulateCollaboratorForType: jest.fn(),
@@ -32,14 +32,14 @@ describe('group hooks', () => {
         mockSequelize,
         mockOptions.transaction,
         mockInstance.id,
-        GROUP_COLLABORATORS.CREATOR,
+        GROUP_COLLABORATORS.CREATOR
       );
       expect(currentUserPopulateCollaboratorForType).toHaveBeenCalledWith(
         'group',
         mockSequelize,
         mockOptions.transaction,
         mockInstance.id,
-        GROUP_COLLABORATORS.EDITOR,
+        GROUP_COLLABORATORS.EDITOR
       );
     });
 
@@ -54,14 +54,14 @@ describe('group hooks', () => {
         mockSequelize,
         mockOptions.transaction,
         mockInstance.id,
-        GROUP_COLLABORATORS.CREATOR,
+        GROUP_COLLABORATORS.CREATOR
       );
       expect(currentUserPopulateCollaboratorForType).toHaveBeenCalledWith(
         'group',
         mockSequelize,
         mockOptions.transaction,
         mockInstance.id,
-        GROUP_COLLABORATORS.EDITOR,
+        GROUP_COLLABORATORS.EDITOR
       );
     });
   });
@@ -76,7 +76,7 @@ describe('group hooks', () => {
         mockSequelize,
         mockOptions.transaction,
         mockInstance.id,
-        GROUP_COLLABORATORS.EDITOR,
+        GROUP_COLLABORATORS.EDITOR
       );
       expect(skipIf).not.toHaveBeenCalled();
     });

@@ -6,13 +6,15 @@ export function withGoalName(searchText: string[]) {
 
   return {
     where: {
-      [Op.or]: searchTerms.map((term) => sequelize.literal(`"Recipient"."id" IN (
+      [Op.or]: searchTerms.map((term) =>
+        sequelize.literal(`"Recipient"."id" IN (
           SELECT DISTINCT "Grants"."recipientId"  
           FROM "Grants"  
           INNER JOIN "Goals" ON "Goals"."grantId" = "Grants"."id"  
           GROUP BY "Grants"."id"  
           HAVING LOWER(STRING_AGG("Goals".name, CHR(10))) LIKE ${sequelize.escape(term)}
-        )`)),
+        )`)
+      ),
     },
   };
 }
@@ -22,13 +24,15 @@ export function withoutGoalName(searchText: string[]) {
 
   return {
     where: {
-      [Op.and]: searchTerms.map((term) => sequelize.literal(`"Recipient"."id" NOT IN (
+      [Op.and]: searchTerms.map((term) =>
+        sequelize.literal(`"Recipient"."id" NOT IN (
           SELECT DISTINCT "Grants"."recipientId"  
           FROM "Grants"  
           INNER JOIN "Goals" ON "Goals"."grantId" = "Grants"."id"  
           GROUP BY "Grants"."id"  
           HAVING LOWER(STRING_AGG("Goals".name, CHR(10))) LIKE ${sequelize.escape(term)}
-        )`)),
+        )`)
+      ),
     },
   };
 }

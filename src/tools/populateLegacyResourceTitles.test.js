@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable no-underscore-dangle */
-import db, {
-  Resource,
-} from '../models';
-import processLegacyResources from './populateLegacyResourceTitles';
+
 import { auditLogger } from '../logger';
+import db, { Resource } from '../models';
+import processLegacyResources from './populateLegacyResourceTitles';
 
 jest.mock('bull');
 

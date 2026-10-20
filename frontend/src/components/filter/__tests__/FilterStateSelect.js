@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import FilterStateSelect from '../FilterStateSelect';
+import React from 'react';
+import selectEvent from 'react-select-event';
 import UserContext from '../../../UserContext';
+import FilterStateSelect from '../FilterStateSelect';
 
 const { findByText } = screen;
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -19,12 +16,8 @@ describe('FilterStateSelect', () => {
   const renderStateSelect = (user, onApply) => {
     render(
       <UserContext.Provider value={{ user }}>
-        <FilterStateSelect
-          onApply={onApply}
-          inputId="curly"
-          query={[]}
-        />
-      </UserContext.Provider>,
+        <FilterStateSelect onApply={onApply} inputId="curly" query={[]} />
+      </UserContext.Provider>
     );
   };
 
@@ -44,6 +37,54 @@ describe('FilterStateSelect', () => {
     const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Massachusetts (MA)']);
     expect(onApply).toHaveBeenCalledWith(['MA']);
+  });
+
+  it('includes the Virgin Islands for a user with permissions to region 2', async () => {
+    const onApply = jest.fn();
+    const user = {
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: READ_ACTIVITY_REPORTS,
+        },
+      ],
+    };
+
+    renderStateSelect(user, onApply);
+    const select = await findByText(/Select state or territory to filter by/i);
+    await selectEvent.select(select, ['Virgin Islands (VI)']);
+    const options = Array.from(document.querySelectorAll('div[class$="-option"]')).map(
+      (option) => option.textContent
+    );
+    expect(options).toEqual([
+      'New Jersey (NJ)',
+      'New York (NY)',
+      'Puerto Rico (PR)',
+      'Virgin Islands (VI)',
+    ]);
+    expect(onApply).toHaveBeenCalledWith(['VI']);
+  });
+
+  it('does not duplicate the Virgin Islands for a user with permissions to regions 2 and 9', async () => {
+    const onApply = jest.fn();
+    const user = {
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 9,
+          scopeId: READ_ACTIVITY_REPORTS,
+        },
+      ],
+    };
+
+    renderStateSelect(user, onApply);
+    const select = await findByText(/Select state or territory to filter by/i);
+    selectEvent.openMenu(select);
+    const options = await screen.findAllByText('Virgin Islands (VI)');
+    expect(options.length).toBe(1);
   });
 
   it('handles a user with permissions to region 11', async () => {

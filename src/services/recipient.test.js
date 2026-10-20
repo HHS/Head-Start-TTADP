@@ -1,60 +1,56 @@
+import { faker } from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import faker from '@faker-js/faker';
-import crypto from 'crypto';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { AUTOMATIC_CREATION, CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
-  Recipient,
-  Grant,
-  Program,
-  Region,
-  User,
-  Objective,
+  ActivityReportApprover,
+  ActivityReportCollaborator,
+  ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalTemplateFieldPrompt,
-  Topic,
-  ActivityReportGoal,
+  Grant,
+  Objective,
   Permission,
+  Program,
   ProgramPersonnel,
-  sequelize,
-  ActivityReportApprover,
-  ActivityReportCollaborator,
+  Recipient,
+  Region,
   Role,
-  GoalCollaborator,
+  sequelize,
+  Topic,
+  User,
 } from '../models';
-import {
-  allRecipients,
-  recipientById,
-  recipientsByName,
-  recipientsByUserId,
-  getGoalsByActivityRecipient,
-  recipientLeadership,
-  allArUserIdsByRecipientAndRegion,
-  calculatePreviousStatus,
-  wasGoalPreviouslyClosed,
-  reduceObjectivesForRecipientRecord,
-  reduceTopicsOfDifferingType,
-  combineObjectiveIds,
-  missingStandardGoals,
-} from './recipient';
 import filtersToScopes from '../scopes';
-import SCOPES from '../middleware/scopeConstants';
 import {
-  GOAL_STATUS,
-  OBJECTIVE_STATUS,
-  AUTOMATIC_CREATION,
-  CREATION_METHOD,
-} from '../constants';
-import {
+  createGrant,
   createRecipient,
   createReport,
   destroyReport,
-  createGrant,
+  getUniqueId,
 } from '../testUtils';
+import {
+  allArUserIdsByRecipientAndRegion,
+  allRecipients,
+  calculatePreviousStatus,
+  combineObjectiveIds,
+  getGoalsByActivityRecipient,
+  missingStandardGoals,
+  recipientById,
+  recipientLeadership,
+  recipientsByName,
+  recipientsByUserId,
+  reduceObjectivesForRecipientRecord,
+  reduceTopicsOfDifferingType,
+  wasGoalPreviouslyClosed,
+} from './recipient';
 
 // Seed faker for reproducibility
 faker.seed(123);
@@ -171,7 +167,6 @@ describe('Recipient DB service', () => {
         startDate: new Date(moment().subtract(5, 'days').format('MM/DD/yyyy')),
         endDate: new Date(moment().format('MM/DD/yyyy')),
       }),
-
     ]);
     await Promise.all([
       Program.create({
@@ -302,8 +297,12 @@ describe('Recipient DB service', () => {
       expect(recipient3.grants[0].grantSpecialistName).toBe('Tom Jones');
       expect(recipient3.grants[0].startDate).toBeTruthy();
       expect(recipient3.grants[0].endDate).toBeTruthy();
-      expect(recipient3.grants[0].programs.map((program) => program.name).sort()).toStrictEqual(['type2', 'type'].sort());
-      expect(recipient3.grants[0].programs.map((program) => program.programType).sort()).toStrictEqual(['EHS', 'HS'].sort());
+      expect(recipient3.grants[0].programs.map((program) => program.name).sort()).toStrictEqual(
+        ['type2', 'type'].sort()
+      );
+      expect(
+        recipient3.grants[0].programs.map((program) => program.programType).sort()
+      ).toStrictEqual(['EHS', 'HS'].sort());
     });
     it('returns recipient and grants without a region specified', async () => {
       const recipient2 = await recipientById(74, {});
@@ -435,10 +434,7 @@ describe('Recipient DB service', () => {
 
       await GoalTemplate.destroy({
         where: {
-          id: [
-            duplicateGoalTemplateOne?.id,
-            duplicateGoalTemplateTwo?.id,
-          ].filter(Boolean),
+          id: [duplicateGoalTemplateOne?.id, duplicateGoalTemplateTwo?.id].filter(Boolean),
         },
         individualHooks: true,
         force: true,
@@ -447,12 +443,12 @@ describe('Recipient DB service', () => {
 
     it('returns missing standard goals if only one of the grants for the recipient has goals', async () => {
       multiGrantRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant4 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '3423423',
@@ -464,7 +460,7 @@ describe('Recipient DB service', () => {
       });
 
       grant5 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: multiGrantRecipient.id,
         regionId: 1,
         number: '4234666',
@@ -483,29 +479,37 @@ describe('Recipient DB service', () => {
       });
 
       // Create a goal for the recipient using each goal template.
-      await Promise.all(goalTemplates.map((goalTemplate) => Goal.create({
-        recipientId: multiGrantRecipient.id,
-        goalTemplateId: goalTemplate.id,
-        status: GOAL_STATUS.ACTIVE,
-        name: goalTemplate.name,
-        source: null,
-        onApprovedAR: false,
-        createdVia: 'rtr',
-        grantId: grant4.id,
-      })));
+      await Promise.all(
+        goalTemplates.map((goalTemplate) =>
+          Goal.create({
+            recipientId: multiGrantRecipient.id,
+            goalTemplateId: goalTemplate.id,
+            status: GOAL_STATUS.ACTIVE,
+            name: goalTemplate.name,
+            source: null,
+            onApprovedAR: false,
+            createdVia: 'rtr',
+            grantId: grant4.id,
+          })
+        )
+      );
 
       // Add goals for all but one of the goal templates to the second grant.
       const allTemplatesExceptOne = goalTemplates.filter((t) => t.id !== 1);
-      await Promise.all(allTemplatesExceptOne.map((goalTemplate) => Goal.create({
-        recipientId: multiGrantRecipient.id,
-        goalTemplateId: goalTemplate.id,
-        status: GOAL_STATUS.ACTIVE,
-        name: goalTemplate.name,
-        source: null,
-        onApprovedAR: false,
-        createdVia: 'rtr',
-        grantId: grant5.id, // We expect this grant to be missing one goal.
-      })));
+      await Promise.all(
+        allTemplatesExceptOne.map((goalTemplate) =>
+          Goal.create({
+            recipientId: multiGrantRecipient.id,
+            goalTemplateId: goalTemplate.id,
+            status: GOAL_STATUS.ACTIVE,
+            name: goalTemplate.name,
+            source: null,
+            onApprovedAR: false,
+            createdVia: 'rtr',
+            grantId: grant5.id, // We expect this grant to be missing one goal.
+          })
+        )
+      );
       const recipient = await recipientById(multiGrantRecipient.id, {});
 
       // Call the function to find missing standard goals
@@ -519,15 +523,15 @@ describe('Recipient DB service', () => {
 
     it('does not count templates as missing when each grant uses a template that shares a name', async () => {
       recipientWithTemplatesWithSameName = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       duplicateGrantOne = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         programSpecialistName: 'Gus',
         status: 'Active',
         endDate: new Date(2024, 10, 2),
@@ -536,10 +540,10 @@ describe('Recipient DB service', () => {
       });
 
       duplicateGrantTwo = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithTemplatesWithSameName.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         programSpecialistName: 'Gus',
         status: 'Active',
         endDate: new Date(2024, 10, 2),
@@ -547,7 +551,7 @@ describe('Recipient DB service', () => {
         annualFundingMonth: 'October',
       });
 
-      const duplicateTemplateName = `duplicate standard goal ${faker.datatype.number()}`;
+      const duplicateTemplateName = `duplicate standard goal ${faker.number.int({ min: 0, max: 99999 })}`;
 
       const curatedTemplates = await GoalTemplate.findAll({
         where: {
@@ -556,46 +560,54 @@ describe('Recipient DB service', () => {
         },
       });
 
-      await Promise.all(curatedTemplates.map((template) => Goal.create({
-        recipientId: recipientWithTemplatesWithSameName.id,
-        goalTemplateId: template.id,
-        status: GOAL_STATUS.ACTIVE,
-        name: template.templateName,
-        source: null,
-        onApprovedAR: false,
-        createdVia: 'rtr',
-        grantId: duplicateGrantOne.id,
-      })));
+      await Promise.all(
+        curatedTemplates.map((template) =>
+          Goal.create({
+            recipientId: recipientWithTemplatesWithSameName.id,
+            goalTemplateId: template.id,
+            status: GOAL_STATUS.ACTIVE,
+            name: template.templateName,
+            source: null,
+            onApprovedAR: false,
+            createdVia: 'rtr',
+            grantId: duplicateGrantOne.id,
+          })
+        )
+      );
 
-      await Promise.all(curatedTemplates.map((template) => Goal.create({
-        recipientId: recipientWithTemplatesWithSameName.id,
-        goalTemplateId: template.id,
-        status: GOAL_STATUS.ACTIVE,
-        name: template.templateName,
-        source: null,
-        onApprovedAR: false,
-        createdVia: 'rtr',
-        grantId: duplicateGrantTwo.id,
-      })));
+      await Promise.all(
+        curatedTemplates.map((template) =>
+          Goal.create({
+            recipientId: recipientWithTemplatesWithSameName.id,
+            goalTemplateId: template.id,
+            status: GOAL_STATUS.ACTIVE,
+            name: template.templateName,
+            source: null,
+            onApprovedAR: false,
+            createdVia: 'rtr',
+            grantId: duplicateGrantTwo.id,
+          })
+        )
+      );
 
       duplicateGoalTemplateOne = await GoalTemplate.create({
-        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        templateName: `${duplicateTemplateName}-${faker.number.int({ min: 0, max: 99999 })}`,
         creationMethod: CREATION_METHOD.CURATED,
       });
 
       duplicateGoalTemplateTwo = await GoalTemplate.create({
-        templateName: `${duplicateTemplateName}-${faker.datatype.number()}`,
+        templateName: `${duplicateTemplateName}-${faker.number.int({ min: 0, max: 99999 })}`,
         creationMethod: CREATION_METHOD.CURATED,
       });
 
       await duplicateGoalTemplateOne.update(
         { templateName: duplicateTemplateName },
-        { hooks: false, individualHooks: false },
+        { hooks: false, individualHooks: false }
       );
 
       await duplicateGoalTemplateTwo.update(
         { templateName: duplicateTemplateName },
-        { hooks: false, individualHooks: false },
+        { hooks: false, individualHooks: false }
       );
 
       await Goal.create({
@@ -628,12 +640,12 @@ describe('Recipient DB service', () => {
 
     it('returns an empty array when no standard goals are missing', async () => {
       recipient1 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant1 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient1.id,
         regionId: 1,
         number: '234234',
@@ -652,16 +664,20 @@ describe('Recipient DB service', () => {
       });
 
       // Create a goal for the recipient using each goal template.
-      await Promise.all(goalTemplates.map((goalTemplate) => Goal.create({
-        recipientId: recipient1.id,
-        goalTemplateId: goalTemplate.id,
-        status: GOAL_STATUS.ACTIVE,
-        name: goalTemplate.name,
-        source: null,
-        onApprovedAR: false,
-        createdVia: 'rtr',
-        grantId: grant1.id,
-      })));
+      await Promise.all(
+        goalTemplates.map((goalTemplate) =>
+          Goal.create({
+            recipientId: recipient1.id,
+            goalTemplateId: goalTemplate.id,
+            status: GOAL_STATUS.ACTIVE,
+            name: goalTemplate.name,
+            source: null,
+            onApprovedAR: false,
+            createdVia: 'rtr',
+            grantId: grant1.id,
+          })
+        )
+      );
 
       const recipient = await recipientById(recipient1.id, {});
       const foundGoals = await missingStandardGoals(recipient, {});
@@ -670,12 +686,12 @@ describe('Recipient DB service', () => {
 
     it('returns an array of missing standard goals', async () => {
       recipient2 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant2 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient2.id,
         regionId: 1,
         number: '323456',
@@ -694,12 +710,12 @@ describe('Recipient DB service', () => {
 
     it('returns some of the goal templates when some are missing', async () => {
       recipient3 = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       grant3 = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient3.id,
         regionId: 1,
         number: '323457',
@@ -735,13 +751,13 @@ describe('Recipient DB service', () => {
     it('does not count inactive grants or Monitoring standard templates as missing goals', async () => {
       // Create recipient with inactive grant
       recipientWithInactiveGrant = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       // Create an inactive grant
       inactiveGrant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithInactiveGrant.id,
         regionId: 1,
         number: '323458',
@@ -754,13 +770,13 @@ describe('Recipient DB service', () => {
 
       // Create recipient with active grant for monitoring goal
       recipientWithMonitoringGoal = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
       });
 
       // Create an active grant
       monitoringGrant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipientWithMonitoringGoal.id,
         regionId: 1,
         number: '323459',
@@ -797,7 +813,7 @@ describe('Recipient DB service', () => {
 
       // Verify that the monitoring goal template is not included in missing goals
       const monitoringTemplateIncluded = monitoringGoals.some(
-        (g) => g.goalTemplateId === monitoringGoalTemplate.id,
+        (g) => g.goalTemplateId === monitoringGoalTemplate.id
       );
       expect(monitoringTemplateIncluded).toBe(false);
     });
@@ -1019,7 +1035,14 @@ describe('Recipient DB service', () => {
     });
 
     it('finds based on recipient name', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'name',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(66);
@@ -1027,114 +1050,250 @@ describe('Recipient DB service', () => {
     });
 
     it('finds based on recipient id', async () => {
-      const foundRecipients = await recipientsByName('5555', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        '5555',
+        await regionToScope(1),
+        'name',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(64);
     });
 
     it('finds based on region', async () => {
-      const foundRecipients = await recipientsByName('banana', await regionToScope(2), 'name', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'banana',
+        await regionToScope(2),
+        'name',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(65);
     });
 
     it('sorts based on name', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'name',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual(
-        [67, 68, 63, 66].sort((a, b) => a - b),
+        [67, 68, 63, 66].sort((a, b) => a - b)
       );
     });
 
     it('sorts based on program specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'programSpecialist',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'grantSpecialist',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([67, 68, 63, 66].sort());
     });
 
     it('respects sort order', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'name',
+        'desc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(4);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 67, 68].sort());
     });
 
     it('respects the offset passed in', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 1, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'apple',
+        await regionToScope(1),
+        'name',
+        'asc',
+        1,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66, 68].sort());
     });
 
     it('finds inactive grants that fall in the accepted range', async () => {
-      const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
+      const foundRecipients = await recipientsByName(
+        'Pumpkin',
+        await regionToScope(1),
+        'name',
+        'asc',
+        0,
+        [1, 2]
+      );
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
+    });
+
+    describe('with a goal category (standard) filter applied', () => {
+      let templateFEI;
+      let feiGoal;
+
+      async function standardToScope(condition, standards) {
+        const query = { [`standard.${condition}`]: standards };
+        const { grant } = await filtersToScopes(query);
+        return grant;
+      }
+
+      beforeAll(async () => {
+        templateFEI = await GoalTemplate.findOne({ where: { standard: 'FEI' } });
+        feiGoal = await Goal.create({
+          name: 'FEI goal for recipient search standard filter',
+          status: 'Not Started',
+          timeframe: '12 months',
+          grantId: 50,
+          goalTemplateId: templateFEI.id,
+          createdVia: 'rtr',
+        });
+      });
+
+      afterAll(async () => {
+        await Goal.destroy({
+          where: { id: feiGoal.id },
+          force: true,
+          individualHooks: true,
+        });
+      });
+
+      it('does not error and includes matching recipients with "is"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('in', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
+      });
+
+      it('does not error and excludes matching recipients with "is not"', async () => {
+        const foundRecipients = await recipientsByName(
+          'apple',
+          await standardToScope('nin', ['FEI']),
+          'name',
+          'asc',
+          0,
+          [1, 2]
+        );
+        expect(foundRecipients.rows.map((g) => g.id)).not.toContain(63);
+      });
     });
   });
 
   describe('recipientsByUserId', () => {
     let region;
+    let readOnlyRegion;
     let user;
+    let readOnlyUser;
     let firstRecipient;
     let secondRecipient;
+    let readOnlyRecipient;
 
     beforeAll(async () => {
-      region = await Region.create({ name: 'Test Region 200', id: 200 });
-      user = await User.create({
-        id: faker.datatype.number(),
-        homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
-        lastLogin: new Date(),
+      [region, readOnlyRegion] = await Promise.all([
+        Region.create({ name: 'Test Region 200', id: 200 }),
+        Region.create({ name: 'Test Region 201', id: 201 }),
+      ]);
+      [user, readOnlyUser] = await Promise.all(
+        [0, 1].map(() =>
+          User.create({
+            id: getUniqueId(),
+            homeRegionId: 1,
+            hsesUsername: faker.string.sample(),
+            hsesUserId: faker.string.sample(),
+            lastLogin: new Date(),
+          })
+        )
+      );
+
+      await Permission.bulkCreate([
+        { userId: user.id, regionId: region.id, scopeId: SCOPES.READ_WRITE_REPORTS },
+        { userId: user.id, regionId: readOnlyRegion.id, scopeId: SCOPES.READ_REPORTS },
+        { userId: readOnlyUser.id, regionId: region.id, scopeId: SCOPES.READ_REPORTS },
+      ]);
+
+      readOnlyRecipient = await Recipient.create({
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: 'Test Recipient 202',
       });
 
-      await Permission.create({
-        userId: user.id,
-        regionId: region.id,
-        scopeId: SCOPES.READ_REPORTS,
+      await Grant.create({
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        recipientId: readOnlyRecipient.id,
+        regionId: readOnlyRegion.id,
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       firstRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         name: 'Test Recipient 200',
       });
 
       secondRecipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         name: 'Test Recipient 201',
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: firstRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
       });
 
       await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: secondRecipient.id,
         regionId: region.id,
-        number: String(faker.datatype.number({ min: 1000 })),
+        number: String(faker.number.int({ min: 1000, max: 1000 + 99999 })),
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
@@ -1142,14 +1301,16 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
+      const recipientIds = [firstRecipient.id, secondRecipient.id, readOnlyRecipient.id];
+      const userIds = [user.id, readOnlyUser.id];
       await Grant.destroy({
-        where: { recipientId: [firstRecipient.id, secondRecipient.id] },
+        where: { recipientId: recipientIds },
         individualHooks: true,
       });
-      await Recipient.destroy({ where: { id: [firstRecipient.id, secondRecipient.id] } });
-      await Permission.destroy({ where: { userId: user.id } });
-      await User.destroy({ where: { id: user.id } });
-      await Region.destroy({ where: { id: region.id } });
+      await Recipient.destroy({ where: { id: recipientIds } });
+      await Permission.destroy({ where: { userId: userIds } });
+      await User.destroy({ where: { id: userIds } });
+      await Region.destroy({ where: { id: [region.id, readOnlyRegion.id] } });
     });
 
     it('finds grants for the user', async () => {
@@ -1163,6 +1324,16 @@ describe('Recipient DB service', () => {
 
       const grants = [...first.grants, ...second.grants];
       expect(grants.length).toBe(2);
+    });
+
+    it('excludes recipients in regions the user can only read', async () => {
+      const foundRecipients = await recipientsByUserId(user.id);
+      expect(foundRecipients.map((r) => r.id)).not.toContain(readOnlyRecipient.id);
+    });
+
+    it('returns an empty array if the user has no write regions', async () => {
+      const foundRecipients = await recipientsByUserId(readOnlyUser.id);
+      expect(foundRecipients.length).toBe(0);
     });
 
     it('returns an empty array if the user is not found', async () => {
@@ -1182,8 +1353,8 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        uei: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        uei: faker.string.sample(),
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       });
 
@@ -1200,18 +1371,15 @@ describe('Recipient DB service', () => {
       grant = await Grant.create({
         status: 'Active',
         regionId: region,
-        id: faker.datatype.number({ min: 1000 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         startDate: '2019-01-01',
         endDate: '2024-01-01',
       });
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(goal.name)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(goal.name).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -1396,9 +1564,7 @@ describe('Recipient DB service', () => {
 
       const notSureResponse = goalRows.find((r) => r.id === goals[1].id);
       expect(notSureResponse).toBeTruthy();
-      expect(notSureResponse.responsesForComparison).toBe(
-        'not sure,dont have to',
-      );
+      expect(notSureResponse.responsesForComparison).toBe('not sure,dont have to');
 
       const notSureResponse2 = goalRows.find((r) => r.id === goals[2].id);
       expect(notSureResponse2).toBeTruthy();
@@ -1517,6 +1683,7 @@ describe('Recipient DB service', () => {
     let objectives;
     let topics;
     let report;
+    let activeReport;
 
     beforeAll(async () => {
       recipient = await createRecipient();
@@ -1593,10 +1760,14 @@ describe('Recipient DB service', () => {
         regionId: grant.regionId,
       });
 
-      const aros = await Promise.all(objectives.map((o) => ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: o.id,
-      })));
+      const aros = await Promise.all(
+        objectives.map((o) =>
+          ActivityReportObjective.create({
+            activityReportId: report.id,
+            objectiveId: o.id,
+          })
+        )
+      );
 
       // Disperse topics over objectives to make sure we don't lose any.
       await ActivityReportObjectiveTopic.create({
@@ -1620,6 +1791,20 @@ describe('Recipient DB service', () => {
         activityReportId: report.id,
         goalId: goal1.id,
       });
+      activeReport = await createReport({
+        activityRecipients: [
+          {
+            grantId: grant.id,
+          },
+        ],
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        regionId: grant.regionId,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: activeReport.id,
+        goalId: goal2.id,
+      });
     });
 
     afterAll(async () => {
@@ -1641,6 +1826,7 @@ describe('Recipient DB service', () => {
         individualHooks: true,
       });
       await destroyReport(report);
+      await destroyReport(activeReport);
 
       await Topic.destroy({
         where: {
@@ -1678,11 +1864,7 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully maintains two goals without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {},
-      );
+      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
       // Assert counts.
       expect(goalsForRecord.count).toBe(2);
@@ -1692,6 +1874,7 @@ describe('Recipient DB service', () => {
       // Select the first goal by goal id.
       const goal = goalsForRecord.goalRows.find((g) => g.id === goals[0].id);
       expect(goal).toBeTruthy();
+      expect(goal.hasActiveActivityReports).toBe(false);
 
       // Assert the goal has the correct number of objectives.
       expect(goal.objectives.length).toBe(1);
@@ -1707,12 +1890,13 @@ describe('Recipient DB service', () => {
 
       // Assert topic names.
       expect(goal.objectives[0].topics).toEqual(
-        expect.arrayContaining([topics[0].name, topics[1].name, topics[2].name, topics[4].name]),
+        expect.arrayContaining([topics[0].name, topics[1].name, topics[2].name, topics[4].name])
       );
 
       // Assert the second goal by id.
       const goal2 = goalsForRecord.goalRows.find((g) => g.id === goals[1].id);
       expect(goal2).toBeTruthy();
+      expect(goal2.hasActiveActivityReports).toBe(true);
 
       // Assert the second goal has the correct number of objectives.
       expect(goal2.objectives.length).toBe(1);
@@ -1727,7 +1911,7 @@ describe('Recipient DB service', () => {
 
       // Assert topic name.
       expect(goal2.objectives[0].topics).toEqual(
-        expect.arrayContaining([topics[3].name, topics[4].name]),
+        expect.arrayContaining([topics[3].name, topics[4].name])
       );
     });
 
@@ -1764,11 +1948,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]);
     });
@@ -1806,11 +1986,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
     });
@@ -1820,11 +1996,7 @@ describe('Recipient DB service', () => {
       const goal = { objectives: [], goalTopics: [], reasons: [] };
       const grantNumbers = ['12345'];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result).toEqual([]);
     });
@@ -1861,11 +2033,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
     });
@@ -1904,11 +2072,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = ['G123'];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.map((o) => o.id)).toEqual([3, 1, 2]);
     });
@@ -1934,11 +2098,7 @@ describe('Recipient DB service', () => {
       const goal = { ids: [], grantNumbers: [], objectives: [] };
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result).toBeDefined();
       expect(result.length).toBeGreaterThanOrEqual(0);
@@ -1959,11 +2119,7 @@ describe('Recipient DB service', () => {
       const goal = { ids: [], grantNumbers: [], objectives: [] };
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.length).toBe(1);
       expect(result[0].id).toBe(1);
@@ -1976,9 +2132,7 @@ describe('Recipient DB service', () => {
             id: 1,
             title: 'Objective 1',
             status: 'In Progress',
-            activityReports: [
-              { displayId: 'AR1', topic: 'Report Topic 1' },
-            ],
+            activityReports: [{ displayId: 'AR1', topic: 'Report Topic 1' }],
           },
         ],
       };
@@ -1989,20 +2143,14 @@ describe('Recipient DB service', () => {
             id: 1,
             title: 'Objective 1',
             status: 'In Progress',
-            activityReports: [
-              { displayId: 'AR2', topic: 'Report Topic 2' },
-            ],
+            activityReports: [{ displayId: 'AR2', topic: 'Report Topic 2' }],
           },
         ],
       };
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.length).toBe(1);
       expect(result[0].activityReports).toEqual([
@@ -2036,11 +2184,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result.length).toBe(1);
       expect(result[0].activityReports).toEqual([]);
@@ -2057,24 +2201,16 @@ describe('Recipient DB service', () => {
             id: 1,
             title: 'Objective 1',
             status: 'In Progress',
-            activityReports: [
-              { displayId: 'AR1', topic: 'Report Topic 1' },
-            ],
+            activityReports: [{ displayId: 'AR1', topic: 'Report Topic 1' }],
           },
         ],
       };
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
-      expect(result[0].activityReports).toEqual([
-        { displayId: 'AR1', topic: 'Report Topic 1' },
-      ]);
+      expect(result[0].activityReports).toEqual([{ displayId: 'AR1', topic: 'Report Topic 1' }]);
     });
 
     it('handles undefined topics and reasons gracefully', () => {
@@ -2097,11 +2233,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result).toBeDefined();
       expect(goal.goalTopics).toEqual([]);
@@ -2128,11 +2260,7 @@ describe('Recipient DB service', () => {
 
       const grantNumbers = [];
 
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
 
       expect(result).toBeDefined();
       expect(goal.goalTopics).toEqual([]);
@@ -2284,24 +2412,62 @@ describe('Recipient DB service', () => {
       expect(result[0].topics).toContain('Topic B');
       expect(result[0].topics).toContain('Topic C');
     });
+
+    it('omits null findingSource in recipient objective citations', () => {
+      const currentModel = {
+        grant: { number: 'G123' },
+        objectives: [],
+      };
+
+      const goal = {
+        ids: [1],
+        grantNumbers: ['G123'],
+        goalTopics: [],
+        reasons: [],
+        objectives: [
+          {
+            id: 1,
+            goalId: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [],
+            activityReportObjectives: [
+              {
+                topics: [],
+                activityReportObjectiveCitations: [
+                  {
+                    toJSON: () => ({
+                      citation: '1302.102(d)(1)(ii)',
+                      findingType: 'ANC',
+                      acro: 'ANC',
+                      findingSource: null,
+                      standardId: 204344,
+                    }),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, ['G123']);
+
+      expect(result[0].citations).toEqual(['ANC - 1302.102(d)(1)(ii)']);
+    });
   });
 
   describe('recipientLeadership', () => {
-    const createProgramPersonnel = async (
-      grantId,
-      programId,
-      role = 'director',
-      active = true,
-    ) => {
+    const createProgramPersonnel = async (grantId, programId, role = 'director', active = true) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
         programId,
         role,
         title: '',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        suffix: faker.name.suffix(),
-        prefix: faker.name.prefix(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        suffix: faker.person.suffix(),
+        prefix: faker.person.prefix(),
         active,
         effectiveDate: active ? new Date() : new Date('2020/01/01'),
         mapsTo: null,
@@ -2328,13 +2494,13 @@ describe('Recipient DB service', () => {
     const REGION_ID = 10;
 
     const recipient = {
-      name: faker.datatype.string({ min: 10 }),
-      id: faker.datatype.number({ min: 10000 }),
-      uei: faker.datatype.string({ min: 10 }),
+      name: faker.string.sample(10),
+      id: faker.number.int({ min: 10000, max: 10000 + 99999 }),
+      uei: faker.string.sample(10),
     };
     const grant = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2343,8 +2509,8 @@ describe('Recipient DB service', () => {
     };
 
     const grant2 = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2353,8 +2519,8 @@ describe('Recipient DB service', () => {
     };
 
     const irrelevantGrant = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID + 1,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -2368,7 +2534,7 @@ describe('Recipient DB service', () => {
       startDate: '2023/01/01',
       endDate: '2023/12/31',
       status: 'Active',
-      name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      name: `${faker.animal.type() + faker.company.name()} Program`,
       programType: 'HS',
     };
 
@@ -2382,20 +2548,20 @@ describe('Recipient DB service', () => {
 
       const program1 = await db.Program.create({
         ...dummyProgram,
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       const program2 = await db.Program.create({
         ...dummyProgram,
         grantId: grant2.id,
         programType: 'EHS',
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       const irrelevantProgram = await db.Program.create({
         ...dummyProgram,
         grantId: irrelevantGrant.id,
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       // Program personnel to ignore
@@ -2476,64 +2642,64 @@ describe('Recipient DB service', () => {
 
     beforeAll(async () => {
       author = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       collaboratorOne = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       collaboratorTwo = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       approverOne = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       approverTwo = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       dummyUser = await User.create({
-        id: faker.datatype.number(),
+        id: getUniqueId(),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        name: faker.datatype.string(),
-        uei: faker.datatype.string(),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
+        name: faker.string.sample(),
+        uei: faker.string.sample(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         recipientId: recipient.id,
         regionId: 1,
-        number: faker.datatype.string(),
+        number: faker.string.sample(),
         status: 'Active',
         startDate: new Date(),
         endDate: new Date(),
@@ -2564,7 +2730,6 @@ describe('Recipient DB service', () => {
       await ActivityReportApprover.create({
         activityReportId: report.id,
         userId: approverOne.id,
-
       });
 
       await ActivityReportApprover.create({
@@ -2737,12 +2902,14 @@ describe('Recipient DB service', () => {
 
       // Create test goals
       goals = await Promise.all(
-        ['Goal 1', 'Goal 2'].map((name) => Goal.create({
-          name,
-          status: GOAL_STATUS.IN_PROGRESS,
-          grantId: grant.id,
-          onApprovedAR: true,
-        })),
+        ['Goal 1', 'Goal 2'].map((name) =>
+          Goal.create({
+            name,
+            status: GOAL_STATUS.IN_PROGRESS,
+            grantId: grant.id,
+            onApprovedAR: true,
+          })
+        )
       );
 
       roles = await Role.findAll({
@@ -2755,11 +2922,13 @@ describe('Recipient DB service', () => {
       });
 
       collaborators = await Promise.all(
-        goals.map((goal) => GoalCollaborator.create({
-          goalId: goal.id,
-          collaboratorTypeId: 1, // '1' is 'Creator'
-          userId: 1,
-        })),
+        goals.map((goal) =>
+          GoalCollaborator.create({
+            goalId: goal.id,
+            collaboratorTypeId: 1, // '1' is 'Creator'
+            userId: 1,
+          })
+        )
       );
     });
 
@@ -2778,14 +2947,10 @@ describe('Recipient DB service', () => {
 
     it('constructs goalWhere when goalIds is an array', async () => {
       const goalIds = goals.map((goal) => goal.id);
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          goalIds,
-          sortBy: 'goalStatus',
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        goalIds,
+        sortBy: 'goalStatus',
+      });
 
       expect(result.goalRows.length).toBe(goalIds.length);
       result.goalRows.forEach((goal) => {
@@ -2795,13 +2960,9 @@ describe('Recipient DB service', () => {
 
     it('sanitizes goalIds when provided as a single string', async () => {
       const singleGoalId = String(goals[0].id);
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          goalIds: singleGoalId,
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        goalIds: singleGoalId,
+      });
 
       expect(result.goalRows.length).toBe(1);
       expect(result.goalRows[0].id).toBe(Number(singleGoalId));
@@ -2815,41 +2976,27 @@ describe('Recipient DB service', () => {
 
     it('correctly sanitizes goalIds as part of sanitizedIds', async () => {
       const goalIds = goals.map((goal) => String(goal.id));
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          goalIds,
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        goalIds,
+      });
 
       expect(result.goalRows.length).toBe(goals.length);
     });
 
     it('maps collaborator roles correctly', async () => {
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {},
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
       result.goalRows.forEach((goal) => {
         expect(goal.collaborators).toBeDefined();
         goal.collaborators.forEach((collaborator) => {
           expect(collaborator.goalCreatorRoles).toBeDefined();
-          expect(collaborator.goalCreatorRoles.length).toBeGreaterThanOrEqual(
-            0,
-          );
+          expect(collaborator.goalCreatorRoles.length).toBeGreaterThanOrEqual(0);
         });
       });
     });
 
     it('assigns collaborators to goals', async () => {
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {},
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
       result.goalRows.forEach((goal) => {
         expect(goal.collaborators).toBeDefined();
@@ -2860,25 +3007,18 @@ describe('Recipient DB service', () => {
     it('returns all goals if limitNum is falsy', async () => {
       const findAll = jest.spyOn(Goal, 'findAll');
 
-      await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          limit: 0,
-        },
-      );
+      await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        limit: 0,
+      });
 
       expect(findAll).not.toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
     });
 
     it('sorts by goalStatus correctly with mixed statuses', async () => {
-      await Goal.update(
-        { status: 'Draft' },
-        { where: { id: goals[0].id }, individualHooks: true },
-      );
+      await Goal.update({ status: 'Draft' }, { where: { id: goals[0].id }, individualHooks: true });
       await Goal.update(
         { status: 'Suspended' },
-        { where: { id: goals[1].id }, individualHooks: true },
+        { where: { id: goals[1].id }, individualHooks: true }
       );
 
       const goal3 = await Goal.create({
@@ -2890,14 +3030,10 @@ describe('Recipient DB service', () => {
 
       goals.push(goal3);
 
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'asc',
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'asc',
+      });
 
       expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
         'Draft',
@@ -2908,14 +3044,8 @@ describe('Recipient DB service', () => {
     });
 
     it('sorts correctly with null statuses', async () => {
-      await Goal.update(
-        { status: null },
-        { where: { id: goals[0].id }, individualHooks: true },
-      );
-      await Goal.update(
-        { status: null },
-        { where: { id: goals[1].id }, individualHooks: true },
-      );
+      await Goal.update({ status: null }, { where: { id: goals[0].id }, individualHooks: true });
+      await Goal.update({ status: null }, { where: { id: goals[1].id }, individualHooks: true });
 
       const goal3 = await Goal.create({
         name: goal3Name,
@@ -2926,31 +3056,23 @@ describe('Recipient DB service', () => {
 
       goals.push(goal3);
 
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'asc',
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'asc',
+      });
 
-      expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
-        null,
-        null,
-        'In Progress',
-      ]);
+      expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([null, null, 'In Progress']);
       await Goal.destroy({ where: { id: goal3.id }, individualHooks: true, force: true });
     });
 
     it('correctly handles invalid statuses', async () => {
       await Goal.update(
         { status: 'In Progress' },
-        { where: { id: goals[0].id }, individualHooks: true },
+        { where: { id: goals[0].id }, individualHooks: true }
       );
       await Goal.update(
         { status: 'Unknown' },
-        { where: { id: goals[1].id }, individualHooks: true },
+        { where: { id: goals[1].id }, individualHooks: true }
       );
 
       const goal3 = await Goal.create({
@@ -2962,14 +3084,10 @@ describe('Recipient DB service', () => {
 
       goals.push(goal3);
 
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'asc',
-        },
-      );
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'asc',
+      });
 
       expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
         'In Progress',
@@ -3011,10 +3129,12 @@ describe('Recipient DB service', () => {
 
       const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
-      const feiGoals = result.goalRows
-        .filter((goal) => goal.goalTemplateId === feiPrompt.goalTemplateId);
-      const nonFeiGoals = result.goalRows
-        .filter((goal) => goal.goalTemplateId !== feiPrompt.goalTemplateId);
+      const feiGoals = result.goalRows.filter(
+        (goal) => goal.goalTemplateId === feiPrompt.goalTemplateId
+      );
+      const nonFeiGoals = result.goalRows.filter(
+        (goal) => goal.goalTemplateId !== feiPrompt.goalTemplateId
+      );
 
       feiGoals.forEach((goal) => {
         expect(goal.isFei).toBe(true);

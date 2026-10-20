@@ -1,15 +1,28 @@
-import overview from './overview';
+import approvalRateByDeadline from './approvalRateByDeadline';
+import approvedARAndTRByGoalCategory from './approvedARAndTRByGoalCategory';
 import dashboardOverview from './dashboardOverview';
-import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
-import standardGoalsList from './standardGoalsList';
-import { topicFrequencyGraph } from './topicFrequencyGraph';
-import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
+import goalDashboard from './goalDashboard';
+import goalDashboardGoals from './goalDashboardGoals';
 import goalStatusByGoalName from './goalStatusByGoalName';
-import trOverview from './trOverview';
-import trReasonList from './trReasonList';
-import trSessionsByTopic from './trSessionsByTopic';
+import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
+import activeNoncompliantCitationsWithTtaSupport from './monitoring/activeNoncompliantCitationsWithTtaSupport';
+import compliantFollowUpReviewsWithTtaSupport from './monitoring/compliantFollowUpReviewsWithTtaSupport';
+import monitoringOverview from './monitoring/monitoringOverview';
+import monitoringTta from './monitoring/monitoringTta';
+
+import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
+import overview from './overview';
+import standardGoalsList from './standardGoalsList';
+import targetPopulationTable from './targetPopulationTable';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
+import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
+import trOverview from './trOverview';
+import trSessionsByTopic from './trSessionsByTopic';
+import trSessionsForRecipient from './trSessionsForRecipient';
+import trStandardGoalList from './trStandardGoalList';
+import ttaHistoryOverview from './ttaHistoryOverview';
 
 /*
   All widgets need to be added to this object
@@ -26,7 +39,22 @@ export default {
   goalStatusByGoalName,
 
   trOverview,
-  trReasonList,
+  trStandardGoalList,
   trSessionsByTopic,
+  trSessionsForRecipient,
+  ttaHistoryOverview,
   trHoursOfTrainingByNationalCenter,
+  approvalRateByDeadline,
+
+  // Monitoring widgets
+  activeDeficientCitationsWithTtaSupport,
+  activeNoncompliantCitationsWithTtaSupport,
+  compliantFollowUpReviewsWithTtaSupport,
+  monitoringOverview,
+  reportCountByFindingCategory,
+  monitoringTta,
+
+  goalDashboard,
+  goalDashboardGoals,
+  approvedARAndTRByGoalCategory,
 };

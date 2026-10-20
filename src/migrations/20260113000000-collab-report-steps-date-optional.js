@@ -7,10 +7,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.changeColumn('CollabReportSteps', 'collabStepCompleteDate', {
-        type: Sequelize.DATEONLY,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.changeColumn(
+        'CollabReportSteps',
+        'collabStepCompleteDate',
+        {
+          type: Sequelize.DATEONLY,
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
 
@@ -19,10 +24,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.changeColumn('CollabReportSteps', 'collabStepCompleteDate', {
-        type: Sequelize.DATEONLY,
-        allowNull: false,
-      }, { transaction });
+      await queryInterface.changeColumn(
+        'CollabReportSteps',
+        'collabStepCompleteDate',
+        {
+          type: Sequelize.DATEONLY,
+          allowNull: false,
+        },
+        { transaction }
+      );
     });
   },
 };

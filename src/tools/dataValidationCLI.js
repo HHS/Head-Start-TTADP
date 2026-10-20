@@ -1,5 +1,5 @@
-import dataValidation from './dataValidation';
 import { auditLogger } from '../logger';
+import dataValidation from './dataValidation';
 
 /**
  * dataValidationCLI runs basic queries against the DB to verify that the db state

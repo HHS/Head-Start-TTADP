@@ -1,13 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  ActivityReport,
-  ActivityRecipient,
-  User,
-  Recipient,
-  OtherEntity,
-  Grant,
-} from '..';
 import { auditLogger } from '../../logger';
+import db, { ActivityRecipient, ActivityReport, Grant, OtherEntity, Recipient, User } from '..';
 
 const mockUser = {
   name: 'Joe Green',
@@ -112,14 +105,17 @@ describe('Activity Reports model', () => {
   });
   afterAll(async () => {
     if (activityRecipients) {
-      await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.destroy({
-          where: {
-            activityReportId: activityRecipient.activityReportId,
-            grantId: activityRecipient.grantId,
-            otherEntityId: activityRecipient.otherEntityId,
-          },
-        })));
+      await Promise.all(
+        activityRecipients.map(async (activityRecipient) =>
+          ActivityRecipient.destroy({
+            where: {
+              activityReportId: activityRecipient.activityReportId,
+              grantId: activityRecipient.grantId,
+              otherEntityId: activityRecipient.otherEntityId,
+            },
+          })
+        )
+      );
       await ActivityReport.destroy({ where: { id: report.id } });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
@@ -135,14 +131,17 @@ describe('Activity Reports model', () => {
     expect(activityRecipients[2].activityRecipientId).toEqual(null);
   });
   it('name', async () => {
-    const arr = await Promise.all(activityRecipients
-      .map(async (activityRecipient) => ActivityRecipient.findOne({
-        where: {
-          activityReportId: activityRecipient.activityReportId,
-          grantId: activityRecipient.grantId,
-          otherEntityId: activityRecipient.otherEntityId,
-        },
-      })));
+    const arr = await Promise.all(
+      activityRecipients.map(async (activityRecipient) =>
+        ActivityRecipient.findOne({
+          where: {
+            activityReportId: activityRecipient.activityReportId,
+            grantId: activityRecipient.grantId,
+            otherEntityId: activityRecipient.otherEntityId,
+          },
+        })
+      )
+    );
     expect(arr[0].name).toEqual(grant.name);
     expect(arr[1].name).toEqual(otherEntity.name);
     expect(arr[2].name).toEqual(null);

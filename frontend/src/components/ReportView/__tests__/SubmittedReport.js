@@ -1,10 +1,8 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import SubmittedReport from '../SubmittedReport';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import SubmittedReport from '../SubmittedReport';
 
 const mockReport = {
   reportId: 123,
@@ -13,19 +11,10 @@ const mockReport = {
   deliveryMethod: 'in-person',
   virtualDeliveryType: null,
   activityRecipientType: 'recipient',
-  activityRecipients: [
-    { name: 'Recipient A' },
-    { name: 'Recipient B' },
-  ],
+  activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
   targetPopulations: ['Population 1', 'Population 2'],
-  approvers: [
-    { user: { fullName: 'Manager 1' } },
-    { user: { fullName: 'Manager 2' } },
-  ],
-  activityReportCollaborators: [
-    { fullName: 'Collaborator 1' },
-    { fullName: 'Collaborator 2' },
-  ],
+  approvers: [{ user: { fullName: 'Manager 1' } }, { user: { fullName: 'Manager 2' } }],
+  activityReportCollaborators: [{ fullName: 'Collaborator 1' }, { fullName: 'Collaborator 2' }],
   participants: ['Participant 1', 'Participant 2'],
   language: ['English', 'Spanish'],
   numberOfParticipants: 10,
@@ -35,12 +24,8 @@ const mockReport = {
   endDate: '2023-01-02',
   duration: '2.5',
   activityReason: 'Activity reason',
-  specialistNextSteps: [
-    { note: 'Specialist step 1', completeDate: '2023-02-01' },
-  ],
-  recipientNextSteps: [
-    { note: 'Recipient step 1', completeDate: '2023-02-01' },
-  ],
+  specialistNextSteps: [{ note: 'Specialist step 1', completeDate: '2023-02-01' }],
+  recipientNextSteps: [{ note: 'Recipient step 1', completeDate: '2023-02-01' }],
   files: [
     {
       url: { url: 'http://example.com/file1.pdf' },
@@ -170,8 +155,12 @@ describe('SubmittedReport', () => {
     render(<SubmittedReport data={nonHybridReport} />);
 
     expect(screen.getByText('Number of participants attending')).toBeInTheDocument();
-    expect(screen.queryByText('Number of participants attending in person')).not.toBeInTheDocument();
-    expect(screen.queryByText('Number of participants attending virtually')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Number of participants attending in person')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Number of participants attending virtually')
+    ).not.toBeInTheDocument();
   });
 
   it('handles virtual participant count when null', () => {

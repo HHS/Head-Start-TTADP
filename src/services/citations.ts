@@ -1,22 +1,22 @@
-/* eslint-disable no-plusplus */
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 
-const { MonitoringStandard } = db;
+const { Citation } = db;
 
 export async function textByCitation(
-  citationIds: string[],
-): Promise<{ text: string, citation: string }[]> {
-  return MonitoringStandard.findAll({
-    attributes: ['text', 'citation'],
+  citationIds: string[]
+): Promise<{ text: string; citation: string }[]> {
+  return Citation.findAll({
+    attributes: [['standard_text', 'text'], 'citation'],
     where: {
       citation: citationIds,
     },
-    group: ['text', 'citation'],
+    group: ['standard_text', 'citation'],
     order: ['citation'],
   });
 }
 
-const cutOffStartDate = '2025-01-21';
 /*
   The purpose of this function is to get citations by grant id.
   We then need to format the response for how it needs to be
@@ -35,143 +35,126 @@ export interface CitationsByGrantId {
     reviewName: string;
     findingType: string;
     grantNumber: string;
-    findingSource: string;
+    findingSource: string | null;
     reportDeliveryDate: Date;
     monitoringFindingStatusName: string;
+    name: string;
   }[];
+}
+
+function addCitationNames(citationsByGrantId: CitationsByGrantId[]): CitationsByGrantId[] {
+  return citationsByGrantId
+    .map((citation) => ({
+      ...citation,
+      grants: citation.grants
+        .map((grant) => {
+          const name = formatMonitoringCitationName({
+            acro: grant.acro,
+            citation: grant.citation,
+            findingSource: grant.findingSource,
+          });
+
+          if (!name) {
+            return null;
+          }
+
+          return {
+            ...grant,
+            name,
+          };
+        })
+        .filter(Boolean) as CitationsByGrantId['grants'],
+    }))
+    .filter((citation) => citation.grants.length > 0);
 }
 
 export async function getCitationsByGrantIds(
   grantIds: number[],
-  reportStartDate: string,
+  reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
-  // Query to get the citations by grant id.
+  if (grantIds.some((id) => Number.isNaN(parseInt(String(id), 10)))) {
+    throw new Error(`Invalid grantIds: ${grantIds}`);
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(reportStartDate)) {
+    throw new Error(`Invalid reportStartDate: ${reportStartDate}`);
+  }
+
   const grantsByCitations = await sequelize.query(
     /* sql */
-    `WITH
-      -- find active status citations
-      active_citations AS (
-      SELECT mf."findingId" fid
-      FROM "MonitoringFindings" mf
-      JOIN "MonitoringFindingStatuses" mfs
-        ON mf."statusId" = mfs."statusId"
-      WHERE mfs.name IN ('Active', 'Elevated Deficiency')
-        AND mf."sourceDeletedAt" IS NULL
-      ),
-      -- get the order and status of reviews associated with citations
-      ordered_citation_reviews AS (
-      SELECT
-        mfh."findingId" fid,
-        mfh."reviewId" rid,
-        mrs.name review_status,
-        mr."reportDeliveryDate" rdd,
-        ROW_NUMBER() OVER (
-          PARTITION BY mfh."findingId"
-          ORDER BY mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
-        ) recency_rank
-      FROM "MonitoringFindingHistories" mfh
-      JOIN "MonitoringReviews" mr
-        ON mfh."reviewId" = mr."reviewId"
-      JOIN "MonitoringReviewStatuses" mrs
-        ON mr."statusId" = mrs."statusId"
-      -- This works without bringing in MonitoringFindings because when MonitoringFindings
-      -- are deleted in IT-AMS data, so are all linking MonitoringFindingHistories records
-      WHERE mfh."sourceDeletedAt" IS NULL
-      ),
-      -- union together active citations with those whose most recent linked
-      -- review is not complete, yielding the list of citations on which TTA
-      -- might still be in progress
-      open_citations AS (
-      SELECT fid FROM active_citations
-      UNION
-      SELECT fid FROM ordered_citation_reviews
-      WHERE recency_rank = 1
-        AND (
-          review_status != 'Complete'
-          OR
-          '${reportStartDate}'::date BETWEEN '${cutOffStartDate}' AND rdd
-        )
-      ),
-      -- Subquery ensures only the most recent history for each finding-grant combination
-      "RecentMonitoring" AS ( 
-        SELECT DISTINCT ON (mfh."findingId", gr.id)
-          mfh."findingId",
-          gr.id AS "grantId",
-          mr."reviewId",
-          mr."name",
-          mr."reportDeliveryDate"
-        FROM "MonitoringFindingHistories" mfh
-        JOIN "MonitoringReviews" mr
-          ON mfh."reviewId" = mr."reviewId"
-        JOIN "MonitoringReviewGrantees" mrg
-          ON mrg."reviewId" = mr."reviewId"
-        JOIN "Grants" gr
-          ON gr.number = mrg."grantNumber"
-        WHERE mr."reportDeliveryDate"::date BETWEEN '${cutOffStartDate}' AND '${reportStartDate}'
-        ORDER BY mfh."findingId", gr.id, mr."reportDeliveryDate" DESC
-      )
+    `WITH monitoring_template AS (
+      SELECT DISTINCT ON (standard) id monitoring_gtid
+      FROM "GoalTemplates"
+      WHERE standard = 'Monitoring'
+        AND "deletedAt" IS NULL
+      ORDER BY standard, id DESC
+    )
     SELECT
-      ms."standardId",
-      ms.citation,
-      JSONB_AGG( DISTINCT
+      c.standard_id AS "standardId",
+      c.citation,
+      JSONB_AGG(DISTINCT
         JSONB_BUILD_OBJECT(
-          'findingId', mf."findingId",
-          'grantId', gr.id,
-          'originalGrantId', grta."grantId", -- this is not used anywhere
+          'findingId', c.finding_uuid,
+          'grantId', gc."grantId",
           'grantNumber', gr.number,
-          'reviewName', rm."name",
-          'reportDeliveryDate', rm."reportDeliveryDate",
-          'findingType', mf."findingType",
-          'findingSource', mf."source",
-          'monitoringFindingStatusName', mfs."name",
-          'citation', ms.citation,
+          'reviewName', dr.review_name,
+          'reportDeliveryDate', dr.report_delivery_date,
+          'findingType', c.calculated_finding_type,
+          'findingSource', c.calculated_category,
+          'monitoringFindingStatusName', c.raw_status,
+          'citation', c.citation,
           'severity', CASE
-                  WHEN mf."findingType" = 'Deficiency' THEN 1
-                  WHEN mf."findingType" = 'Noncompliance' THEN 2
-                  ELSE 3 -- Area of Concern
-                END,
+            WHEN c.calculated_finding_type = 'Deficiency' THEN 1
+            WHEN c.calculated_finding_type = 'Noncompliance' THEN 2
+            ELSE 3
+          END,
           'acro', CASE
-                  WHEN mf."findingType" = 'Deficiency' THEN 'DEF'
-                  WHEN mf."findingType" = 'Noncompliance' THEN 'ANC'
-                  ELSE 'AOC' -- Area of Concern
-                END
+            WHEN c.calculated_finding_type = 'Deficiency' THEN 'DEF'
+            WHEN c.calculated_finding_type = 'Noncompliance' THEN 'ANC'
+            ELSE 'AOC'
+          END
         )
       ) grants
-    FROM "GrantRelationshipToActive" grta
+    FROM "GrantCitations" gc
+    JOIN "Citations" c
+      ON c.id = gc."citationId"
+      AND c."deletedAt" IS NULL
     JOIN "Grants" gr
-      ON  grta."grantId" = gr.id
+      ON gr.id = gc."grantId"
     JOIN "Goals" g
-      ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
+      ON g."grantId" = gc."grantId"
       AND g."status" NOT IN ('Closed', 'Suspended')
-    JOIN "GoalTemplates" gt
-      ON g."goalTemplateId" = gt."id"
-      AND gt."standard" = 'Monitoring'
-    JOIN "MonitoringReviewGrantees" mrg
-      ON gr.number = mrg."grantNumber"
-    JOIN "RecentMonitoring" rm 
-      ON rm."grantId" = gr.id
-    JOIN open_citations oc
-      ON rm."findingId" = oc.fid
-    JOIN "MonitoringFindings" mf
-      ON rm."findingId" = mf."findingId"
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    JOIN "MonitoringFindingStandards" mfs2
-      ON mf."findingId" = mfs2."findingId"
-    JOIN "MonitoringStandards" ms
-      ON mfs2."standardId" = ms."standardId"
-    JOIN "MonitoringFindingGrants" mfg
-      ON mf."findingId" = mfg."findingId"
-      AND mrg."granteeId" = mfg."granteeId"
-    WHERE 1 = 1
-      AND (
-        grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
-        OR gr.id IN (${grantIds.join(',')})
-      )
-    GROUP BY 1,2
-    ORDER BY 2,1;
-    `,
+      AND g."deletedAt" IS NULL
+    JOIN monitoring_template
+      ON g."goalTemplateId" = monitoring_gtid
+    JOIN "DeliveredReviewCitations" drc
+      ON drc."citationId" = c.id
+      AND '${reportStartDate}'::date BETWEEN drc.latest_review_start AND drc.latest_review_end
+    JOIN "GrantDeliveredReviews" gdr
+      ON gdr."deliveredReviewId" = drc."deliveredReviewId"
+      AND gdr."grantId" = gc."grantId"
+    JOIN "DeliveredReviews" dr
+      ON dr.id = drc."deliveredReviewId"
+      AND dr."deletedAt" IS NULL
+    LEFT JOIN citations_live_values clv
+      ON clv.id = c.id
+    WHERE c.active = true
+    -- Only include citations where the last closed goal was before the latest report delivery date... 
+    -- ...except in the case of an admin-reopened goal. Since those are createdVia 'rtr' we can narrowly select those here.
+      AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'))
+      AND gc."grantId" IN (${grantIds.join(',')})
+    GROUP BY 1, 2
+    ORDER BY 2, 1`
   );
 
-  return grantsByCitations[0];
+  const results = grantsByCitations[0] as CitationsByGrantId[];
+
+  if (results.length === 0) {
+    auditLogger.warn(
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. ` +
+        'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.'
+    );
+  }
+
+  return addCitationNames(results);
 }

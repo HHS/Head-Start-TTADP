@@ -1,43 +1,65 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
+import { UniqueConstraintError } from 'sequelize';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
+  ActivityReportCollaborator,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
-  Topic,
-  GoalTemplate,
-  GoalTemplateFieldPrompt,
+  CollaboratorType,
+  Goal,
   GoalCollaborator,
   GoalFieldResponse,
-  Goal,
   GoalStatusChange,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
+  Grant,
   Objective,
   ObjectiveTemplate,
-  Grant,
+  Permission,
   Recipient,
   Role,
-  UserRole,
-  CollaboratorType,
+  Topic,
   User,
+  UserRole,
 } from '../models';
 import {
+  createGoalTemplate,
+  createGrant,
+  createRecipient,
+  createReport,
+  createUser,
+  destroyReport,
+} from '../testUtils';
+import {
+  createObjectivesForGoal,
   goalForRtr,
   newStandardGoal,
   standardGoalsForRecipient,
   updateExistingStandardGoal,
-  createObjectivesForGoal,
 } from './standardGoals';
-import {
-  createGrant,
-  createRecipient,
-  createGoalTemplate,
-  createReport,
-  destroyReport,
-} from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
+
+const createUniqueConstraintError = (constraint) =>
+  new UniqueConstraintError({
+    errors: [],
+    fields: {
+      goalTemplateId: 1,
+      grantId: 1,
+    },
+    parent: {
+      code: '23505',
+      constraint,
+      detail: 'Key (grantId, goalTemplateId) already exists.',
+      message: `duplicate key value violates unique constraint "${constraint}"`,
+      name: 'error',
+      sql: 'INSERT INTO "Goals" ...',
+    },
+  });
 
 describe('standardGoal service', () => {
   let recipient;
@@ -98,6 +120,7 @@ describe('standardGoal service', () => {
           force: true,
         });
       });
+
       it('fetches open goal for the rtr', async () => {
         const g = await goalForRtr(grant.id, goalTemplate.id);
         expect(g).toBeDefined();
@@ -114,7 +137,7 @@ describe('standardGoal service', () => {
             where: {
               id: goal.id,
             },
-          },
+          }
         );
 
         let g = await goalForRtr(grant.id, goalTemplate.id);
@@ -163,10 +186,7 @@ describe('standardGoal service', () => {
       afterAll(async () => {
         const goals = await Goal.findAll({
           where: {
-            goalTemplateId: [
-              goalTemplateNoPrompt.id,
-              goalTemplateWithPrompt.id,
-            ],
+            goalTemplateId: [goalTemplateNoPrompt.id, goalTemplateWithPrompt.id],
           },
           paranoid: false,
         });
@@ -204,10 +224,7 @@ describe('standardGoal service', () => {
 
         await GoalTemplate.destroy({
           where: {
-            id: [
-              goalTemplateNoPrompt.id,
-              goalTemplateWithPrompt.id,
-            ],
+            id: [goalTemplateNoPrompt.id, goalTemplateWithPrompt.id],
           },
           individualHooks: true,
           force: true,
@@ -221,6 +238,53 @@ describe('standardGoal service', () => {
           force: true,
         });
       });
+
+      const createActivityReportBlocker = async ({
+        calculatedStatus,
+        goalStatus = GOAL_STATUS.DRAFT,
+        onApprovedAR = false,
+        userId,
+      }) => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateWithPrompt.id,
+          },
+          force: true,
+        });
+        const hiddenGoal = await Goal.create({
+          createdVia: 'activityReport',
+          goalTemplateId: goalTemplateWithPrompt.id,
+          grantId: grant.id,
+          onApprovedAR,
+          status: goalStatus,
+        });
+        const submissionStatus =
+          calculatedStatus === REPORT_STATUSES.DRAFT
+            ? REPORT_STATUSES.DRAFT
+            : REPORT_STATUSES.SUBMITTED;
+        const report = await createReport({
+          activityRecipients: [{ grantId: grant.id }],
+          calculatedStatus,
+          creatorRole: 'Grants Specialist',
+          regionId: grant.regionId,
+          submissionStatus,
+          userId,
+        });
+        await ActivityReportGoal.create({
+          activityReportId: report.id,
+          goalId: hiddenGoal.id,
+          status: hiddenGoal.status,
+        });
+
+        return { hiddenGoal, report };
+      };
+
+      const destroyActivityReportBlocker = async ({ hiddenGoal, report }) => {
+        await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
+        await destroyReport(report);
+        await hiddenGoal.destroy({ force: true });
+      };
 
       it('creates a new standard goal', async () => {
         const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
@@ -248,7 +312,7 @@ describe('standardGoal service', () => {
             where: {
               id: g.id,
             },
-          },
+          }
         );
 
         const g2 = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
@@ -276,7 +340,7 @@ describe('standardGoal service', () => {
             where: {
               id: g.id,
             },
-          },
+          }
         );
 
         const g2 = await newStandardGoal(
@@ -284,7 +348,7 @@ describe('standardGoal service', () => {
           goalTemplateNoPrompt.id,
           [],
           [],
-          GOAL_STATUS.IN_PROGRESS,
+          GOAL_STATUS.IN_PROGRESS
         );
         expect(g2).toBeDefined();
         expect(g2.status).toBe(GOAL_STATUS.IN_PROGRESS);
@@ -295,8 +359,12 @@ describe('standardGoal service', () => {
         await expect(newStandardGoal(grant.id, 999)).rejects.toThrow();
       });
 
-      it('throws an error if the standard goal is already used', async () => {
-        // First, make sure we don't have any existing goals for this template/grant
+      it.each([
+        GOAL_STATUS.DRAFT,
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.IN_PROGRESS,
+        GOAL_STATUS.SUSPENDED,
+      ])('returns a conflict for an existing %s goal', async (status) => {
         await Goal.destroy({
           where: {
             grantId: grant.id,
@@ -304,17 +372,241 @@ describe('standardGoal service', () => {
           },
           force: true,
         });
-
-        // Now create a goal with the specific grant and template
-        await Goal.create({
-          grantId: grant.id,
-          goalTemplateId: goalTemplateNoPrompt.id,
-          status: GOAL_STATUS.NOT_STARTED,
+        const existingGoal = await Goal.create({
           createdVia: 'rtr',
+          goalTemplateId: goalTemplateNoPrompt.id,
+          grantId: grant.id,
+          status,
+        });
+        const goalCountBeforeRequest = await Goal.count({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
         });
 
-        // Try to create another goal with the same grant and template - should throw
-        await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toThrow();
+        try {
+          await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+          await expect(
+            Goal.count({
+              where: {
+                grantId: grant.id,
+                goalTemplateId: goalTemplateNoPrompt.id,
+              },
+            })
+          ).resolves.toBe(goalCountBeforeRequest);
+        } finally {
+          await existingGoal.destroy({ force: true });
+        }
+      });
+
+      it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+        'returns %s activity report blockers before validating required prompts',
+        async (calculatedStatus) => {
+          const blocker = await createActivityReportBlocker({ calculatedStatus });
+          const goalCountBeforeRequest = await Goal.count({
+            where: {
+              grantId: grant.id,
+              goalTemplateId: goalTemplateWithPrompt.id,
+            },
+          });
+
+          try {
+            await expect(
+              newStandardGoal(
+                grant.id,
+                goalTemplateWithPrompt.id,
+                undefined,
+                undefined,
+                undefined,
+                {
+                  userId: blocker.report.userId,
+                }
+              )
+            ).rejects.toMatchObject({
+              responseBody: {
+                blockingActivityReports: [
+                  expect.objectContaining({
+                    displayId: blocker.report.displayId,
+                  }),
+                ],
+                code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+              },
+              statusCode: 409,
+            });
+            await expect(
+              Goal.count({
+                where: {
+                  grantId: grant.id,
+                  goalTemplateId: goalTemplateWithPrompt.id,
+                },
+              })
+            ).resolves.toBe(goalCountBeforeRequest);
+          } finally {
+            await destroyActivityReportBlocker(blocker);
+          }
+        }
+      );
+
+      it('treats a goal on an Approved activity report as already used, not blocked by the report', async () => {
+        const blocker = await createActivityReportBlocker({
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          goalStatus: GOAL_STATUS.IN_PROGRESS,
+          onApprovedAR: true,
+        });
+        const goalCountBeforeRequest = await Goal.count({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateWithPrompt.id,
+          },
+        });
+
+        try {
+          await expect(
+            newStandardGoal(grant.id, goalTemplateWithPrompt.id, undefined, undefined, undefined, {
+              userId: blocker.report.userId,
+            })
+          ).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+          await expect(
+            Goal.count({
+              where: {
+                grantId: grant.id,
+                goalTemplateId: goalTemplateWithPrompt.id,
+              },
+            })
+          ).resolves.toBe(goalCountBeforeRequest);
+        } finally {
+          await destroyActivityReportBlocker(blocker);
+        }
+      });
+
+      it('authorizes activity report links in POST conflicts at the service boundary', async () => {
+        const creator = await createUser({ name: 'POST blocker creator' });
+        const collaborator = await createUser({ name: 'POST blocker collaborator' });
+        const unrelatedRegionalUser = await createUser({ name: 'POST blocker regional user' });
+        const users = [creator, collaborator, unrelatedRegionalUser];
+        let blocker;
+
+        try {
+          await Permission.bulkCreate(
+            users.map((user) => ({
+              regionId: grant.regionId,
+              scopeId: SCOPES.READ_WRITE_REPORTS,
+              userId: user.id,
+            }))
+          );
+          blocker = await createActivityReportBlocker({
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            userId: creator.id,
+          });
+          await ActivityReportCollaborator.create({
+            activityReportId: blocker.report.id,
+            userId: collaborator.id,
+          });
+
+          for (const [user, href] of [
+            [creator, `/activity-reports/${blocker.report.id}`],
+            [collaborator, `/activity-reports/${blocker.report.id}`],
+            [unrelatedRegionalUser, null],
+          ]) {
+            await expect(
+              newStandardGoal(
+                grant.id,
+                goalTemplateWithPrompt.id,
+                undefined,
+                undefined,
+                undefined,
+                { userId: user.id }
+              )
+            ).rejects.toMatchObject({
+              responseBody: {
+                blockingActivityReports: [
+                  expect.objectContaining({
+                    displayId: blocker.report.displayId,
+                    href,
+                  }),
+                ],
+                code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+              },
+              statusCode: 409,
+            });
+          }
+        } finally {
+          if (blocker) {
+            await ActivityReportCollaborator.destroy({
+              where: { activityReportId: blocker.report.id },
+            });
+          }
+          await Permission.destroy({ where: { userId: users.map((user) => user.id) } });
+          if (blocker) {
+            await destroyActivityReportBlocker(blocker);
+          }
+          await User.destroy({ where: { id: users.map((user) => user.id) } });
+        }
+      });
+
+      it('translates a standard goal uniqueness race into a conflict', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+        const uniquenessError = createUniqueConstraintError('unique_grantId_goalTemplateId');
+        const createSpy = jest.spyOn(Goal, 'create').mockRejectedValueOnce(uniquenessError);
+
+        try {
+          await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toMatchObject({
+            responseBody: {
+              code: 'STANDARD_GOAL_ALREADY_USED',
+            },
+            statusCode: 409,
+          });
+        } finally {
+          createSpy.mockRestore();
+        }
+      });
+
+      it('does not translate an unrelated uniqueness error', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+        const uniquenessError = createUniqueConstraintError('unrelated_objective_constraint');
+        const createObjectivesSpy = jest
+          .spyOn(Objective, 'bulkCreate')
+          .mockRejectedValueOnce(uniquenessError);
+
+        try {
+          await expect(
+            newStandardGoal(grant.id, goalTemplateNoPrompt.id, [
+              { title: 'Objective that encounters a uniqueness error' },
+            ])
+          ).rejects.toBe(uniquenessError);
+        } finally {
+          createObjectivesSpy.mockRestore();
+          await Goal.destroy({
+            where: {
+              grantId: grant.id,
+              goalTemplateId: goalTemplateNoPrompt.id,
+            },
+            force: true,
+          });
+        }
       });
 
       it('creates objectives', async () => {
@@ -325,18 +617,14 @@ describe('standardGoal service', () => {
           },
         });
 
-        const g = await newStandardGoal(
-          grant.id,
-          goalTemplateNoPrompt.id,
-          [
-            {
-              title: 'Objective 1',
-            },
-            {
-              title: 'Objective 2',
-            },
-          ],
-        );
+        const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id, [
+          {
+            title: 'Objective 1',
+          },
+          {
+            title: 'Objective 2',
+          },
+        ]);
 
         expect(g).toBeDefined();
         expect(g.objectives).toBeDefined();
@@ -351,12 +639,7 @@ describe('standardGoal service', () => {
       });
 
       it('adds prompts if prompts are required', async () => {
-        const g = await newStandardGoal(
-          grant.id,
-          goalTemplateWithPrompt.id,
-          [],
-          ['Option 1'],
-        );
+        const g = await newStandardGoal(grant.id, goalTemplateWithPrompt.id, [], ['Option 1']);
 
         expect(g).toBeDefined();
         expect(g.responses).toBeDefined();
@@ -411,10 +694,7 @@ describe('standardGoal service', () => {
         });
 
         const secret = 'secret';
-        const hash = crypto
-          .createHmac('md5', secret)
-          .update(objectiveTitle)
-          .digest('hex');
+        const hash = crypto.createHmac('md5', secret).update(objectiveTitle).digest('hex');
 
         objectiveTemplate = await ObjectiveTemplate.create({
           templateTitle: objectiveTitle,
@@ -427,16 +707,14 @@ describe('standardGoal service', () => {
           objectiveTemplateId: objectiveTemplate.id,
           goalId: goal.id,
           status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'rtr',
         });
       });
 
       afterAll(async () => {
         const goals = await Goal.findAll({
           where: {
-            goalTemplateId: [
-              goalTemplate.id,
-              goalTemplateNoUtilization.id,
-            ],
+            goalTemplateId: [goalTemplate.id, goalTemplateNoUtilization.id],
           },
           paranoid: false,
         });
@@ -468,10 +746,7 @@ describe('standardGoal service', () => {
 
         await GoalTemplateFieldPrompt.destroy({
           where: {
-            goalTemplateId: [
-              goalTemplate.id,
-              goalTemplateNoUtilization.id,
-            ],
+            goalTemplateId: [goalTemplate.id, goalTemplateNoUtilization.id],
           },
         });
 
@@ -485,10 +760,7 @@ describe('standardGoal service', () => {
 
         await GoalTemplate.destroy({
           where: {
-            id: [
-              goalTemplate.id,
-              goalTemplateNoUtilization.id,
-            ],
+            id: [goalTemplate.id, goalTemplateNoUtilization.id],
           },
           individualHooks: true,
           force: true,
@@ -503,19 +775,16 @@ describe('standardGoal service', () => {
         });
       });
       it('updates an existing standard goal', async () => {
-        const g = await updateExistingStandardGoal(
-          grant.id,
-          goalTemplate.id,
-          [],
-          ['Option 1'],
-        );
+        const g = await updateExistingStandardGoal(grant.id, goalTemplate.id, [], ['Option 1']);
         expect(g).toBeDefined();
         expect(g.id).toBe(goal.id);
         expect(g.status).toBe(GOAL_STATUS.NOT_STARTED);
       });
       it('throws an error if the standard goal has not been utilized', async () => {
         // eslint-disable-next-line max-len
-        await expect(updateExistingStandardGoal(grant.id, goalTemplateNoUtilization.id)).rejects.toThrow();
+        await expect(
+          updateExistingStandardGoal(grant.id, goalTemplateNoUtilization.id)
+        ).rejects.toThrow();
       });
 
       it('updates existing and saves new objectives', async () => {
@@ -531,7 +800,7 @@ describe('standardGoal service', () => {
               title: 'Objective 2',
             },
           ],
-          ['Option 1'],
+          ['Option 1']
         );
 
         expect(g).toBeDefined();
@@ -547,9 +816,7 @@ describe('standardGoal service', () => {
           grant.id,
           goalTemplate.id,
           [],
-          [
-            'Option 1', 'Option 2',
-          ],
+          ['Option 1', 'Option 2']
         );
 
         expect(g).toBeDefined();
@@ -577,14 +844,16 @@ describe('standardGoal service', () => {
               objectiveTemplateId: null,
             },
           ],
-          [],
+          []
         );
 
         expect(g).toBeDefined();
         expect(g.objectives).toBeDefined();
         expect(g.objectives.length).toBe(1);
         expect(g.objectives[0].id).toBe(objectiveWithId.id);
-        expect(g.objectives[0].title).toBe('This is an existing suspended objective with the a matching ID Updated');
+        expect(g.objectives[0].title).toBe(
+          'This is an existing suspended objective with the a matching ID Updated'
+        );
         expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
       });
 
@@ -606,7 +875,7 @@ describe('standardGoal service', () => {
               objectiveTemplateId: null,
             },
           ],
-          [],
+          []
         );
 
         expect(g).toBeDefined();
@@ -618,6 +887,17 @@ describe('standardGoal service', () => {
       });
 
       it('creates a new objective if its not found by id or title and goal id', async () => {
+        // The preceding test leaves objectiveWithoutId in the DB (it is still returned by goalForRtr
+        // because onApprovedAR=true, but it is not removed by updateExistingStandardGoal's selective
+        // delete because it only deletes objectives with createdVia='rtr' and onAR=false). Remove it
+        // explicitly so this test starts from a clean slate.
+        if (objectiveWithoutId) {
+          await Objective.destroy({
+            where: { id: objectiveWithoutId.id },
+            force: true,
+          });
+        }
+
         // Create the test objecitve here so its not dlelete by other tests in this block.
         const g = await updateExistingStandardGoal(
           grant.id,
@@ -629,7 +909,7 @@ describe('standardGoal service', () => {
               objectiveTemplateId: null,
             },
           ],
-          [],
+          []
         );
 
         expect(g).toBeDefined();
@@ -923,10 +1203,7 @@ describe('standardGoal service', () => {
 
       await ActivityReportObjectiveTopic.destroy({
         where: {
-          topicId: [
-            topicOne.id,
-            topicTwo.id,
-          ],
+          topicId: [topicOne.id, topicTwo.id],
         },
       });
 
@@ -1006,11 +1283,10 @@ describe('standardGoal service', () => {
 
     it('retrieves standard goals for a recipient with correct structure and data', async () => {
       // Call the function with the recipient and region from the grant
-      const result = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        { sortBy: 'goalStatus', sortDir: 'desc' },
-      );
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+      });
 
       // Verify the structure of the response
       expect(result).toHaveProperty('count');
@@ -1027,15 +1303,13 @@ describe('standardGoal service', () => {
 
       // Find the goal for the second template (should be IN_PROGRESS)
       const secondTemplateGoal = result.goalRows.find(
-        (g) => g.goalTemplateId === secondGoalTemplate.id,
+        (g) => g.goalTemplateId === secondGoalTemplate.id
       );
       expect(secondTemplateGoal).toBeDefined();
       expect(secondTemplateGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
 
       // Find the goal for the first template (should be NOT_STARTED)
-      const firstTemplateGoal = result.goalRows.find(
-        (g) => g.goalTemplateId === goalTemplate.id,
-      );
+      const firstTemplateGoal = result.goalRows.find((g) => g.goalTemplateId === goalTemplate.id);
       expect(firstTemplateGoal).toBeDefined();
       expect(firstTemplateGoal.status).toBe(GOAL_STATUS.NOT_STARTED);
 
@@ -1050,32 +1324,53 @@ describe('standardGoal service', () => {
       expect(result.statuses).toBeDefined();
     });
 
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'identifies goals on %s activity reports',
+      async (calculatedStatus) => {
+        await db.ActivityReport.update(
+          { calculatedStatus },
+          { where: { id: activityReportTwo.id }, hooks: false }
+        );
+
+        try {
+          const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+          const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+          expect(goal.hasActiveActivityReports).toBe(true);
+        } finally {
+          await db.ActivityReport.update(
+            { calculatedStatus: REPORT_STATUSES.APPROVED },
+            { where: { id: activityReportTwo.id }, hooks: false }
+          );
+        }
+      }
+    );
+
+    it('does not identify goals on approved activity reports as active', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {});
+      const goal = result.goalRows.find((row) => row.id === secondGoalForFirstTemplate.id);
+
+      expect(goal.hasActiveActivityReports).toBe(false);
+    });
+
     it('paginates standard goals correctly using limit and offset', async () => {
       // Get all goals for reference
-      const allGoals = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'desc',
-        },
-      );
+      const allGoals = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+      });
 
       // There should be 2 goals total
       expect(allGoals.count).toBe(2);
       expect(allGoals.goalRows.length).toBe(2);
 
       // Test with limit of 1 and offset of 0 (first page)
-      const firstPage = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'desc',
-          limit: 1,
-          offset: 0,
-        },
-      );
+      const firstPage = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        limit: 1,
+        offset: 0,
+      });
 
       // Should return the count of all goals, but only include 1 goal in goalRows
       expect(firstPage.count).toBe(2); // Total count remains the same
@@ -1083,16 +1378,12 @@ describe('standardGoal service', () => {
       expect(firstPage.goalRows[0].id).toBe(allGoals.goalRows[0].id); // First goal should match
 
       // Test with limit of 1 and offset of 1 (second page)
-      const secondPage = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'desc',
-          limit: 1,
-          offset: 1,
-        },
-      );
+      const secondPage = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        limit: 1,
+        offset: 1,
+      });
 
       // Should return the count of all goals, but only include 1 goal in goalRows
       expect(secondPage.count).toBe(2); // Total count remains the same
@@ -1100,36 +1391,106 @@ describe('standardGoal service', () => {
       expect(secondPage.goalRows[0].id).toBe(allGoals.goalRows[1].id); // Second goal should match
 
       // Test with limit larger than available goals
-      const largeLimit = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'desc',
-          limit: 10,
-          offset: 0,
-        },
-      );
+      const largeLimit = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        limit: 10,
+        offset: 0,
+      });
 
       // Should return all goals
       expect(largeLimit.count).toBe(2);
       expect(largeLimit.goalRows.length).toBe(2);
 
       // Test with offset beyond available goals
-      const largeOffset = await standardGoalsForRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          sortDir: 'desc',
-          limit: 10,
-          offset: 10,
-        },
-      );
+      const largeOffset = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        limit: 10,
+        offset: 10,
+      });
 
       // Should return empty result set but correct count
       expect(largeOffset.count).toBe(2);
       expect(largeOffset.goalRows.length).toBe(0);
+    });
+
+    it('returns only the specified goal when a single valid goalId is passed', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: [secondGoalForFirstTemplate.id],
+      });
+
+      expect(result.count).toBe(1);
+      expect(result.goalRows).toHaveLength(1);
+      expect(result.goalRows[0].id).toBe(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toHaveLength(1);
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+    });
+
+    it('returns only the subset of goals when a subset of valid goalIds is passed', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: [secondGoalForFirstTemplate.id, secondGoalForSecondTemplate.id],
+      });
+
+      expect(result.count).toBe(2);
+      expect(result.goalRows).toHaveLength(2);
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toContain(secondGoalForSecondTemplate.id);
+    });
+
+    it('returns all goals unchanged when an empty goalIds array is passed', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: [],
+      });
+
+      expect(result.count).toBe(2);
+      expect(result.goalRows).toHaveLength(2);
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toContain(secondGoalForSecondTemplate.id);
+    });
+
+    it('returns empty result when all passed goalIds are non-numeric strings', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: ['abc', 'xyz'],
+      });
+
+      expect(result.count).toBe(0);
+      expect(result.goalRows).toHaveLength(0);
+      expect(result.allGoalIds).toHaveLength(0);
+    });
+
+    it('returns empty result when all passed goalIds are zero or negative', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: [0, -1],
+      });
+
+      expect(result.count).toBe(0);
+      expect(result.goalRows).toHaveLength(0);
+      expect(result.allGoalIds).toHaveLength(0);
+    });
+
+    it('drops invalid entries and returns only the valid goal when goalIds contains mixed valid and invalid values', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, grant.regionId, {
+        sortBy: 'goalStatus',
+        sortDir: 'desc',
+        goalIds: [secondGoalForFirstTemplate.id, 'bad'],
+      });
+
+      expect(result.count).toBe(1);
+      expect(result.goalRows).toHaveLength(1);
+      expect(result.goalRows[0].id).toBe(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toHaveLength(1);
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
     });
   });
 
@@ -1150,7 +1511,7 @@ describe('standardGoal service', () => {
 
     beforeAll(async () => {
       user = await User.create({
-        id: faker.datatype.number({ min: 1000 }),
+        id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
         homeRegionId: 1,
         name: 'Test Param User',
         hsesUsername: 'Test Param User',
@@ -1264,27 +1625,23 @@ describe('standardGoal service', () => {
     });
 
     it('returns goals for recipient with default params', async () => {
-      const result = await standardGoalsForRecipient(
-        recipientForParam.id,
-        grant.regionId,
-        {},
-      );
+      const result = await standardGoalsForRecipient(recipientForParam.id, grant.regionId, {});
       expect(result.count).toBe(1);
       expect(result.goalRows[0].objectives.length).toBe(3);
 
       // we expect two objectives find them by title.
       const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
-        (o) => o.title === 'Created via RTR Objective',
+        (o) => o.title === 'Created via RTR Objective'
       );
       expect(createdViaRtrObjectiveToAssert).toBeDefined();
 
       const createdViaArButNotApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
-        (o) => o.title === 'Created via AR and approved Objective',
+        (o) => o.title === 'Created via AR and approved Objective'
       );
       expect(createdViaArButNotApprovedObjectiveToAssert).toBeDefined();
 
       const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
-        (o) => o.title === 'Created via AR and approved Objective',
+        (o) => o.title === 'Created via AR and approved Objective'
       );
       expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
     });
@@ -1294,17 +1651,17 @@ describe('standardGoal service', () => {
         recipientForParam.id,
         grant.regionId,
         {},
-        true,
+        true
       );
       expect(result.count).toBe(1);
       expect(result.goalRows[0].objectives.length).toBe(2);
 
       const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
-        (o) => o.title === 'Created via RTR Objective',
+        (o) => o.title === 'Created via RTR Objective'
       );
       expect(createdViaRtrObjectiveToAssert).toBeDefined();
       const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
-        (o) => o.title === 'Created via AR and approved Objective',
+        (o) => o.title === 'Created via AR and approved Objective'
       );
       expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
     });
@@ -1365,17 +1722,12 @@ describe('standardGoal service', () => {
     });
 
     it('returns goals for both Curated and Automatic creation methods', async () => {
-      const result = await standardGoalsForRecipient(
-        localRecipient.id,
-        localGrant.regionId,
-        {},
-      );
+      const result = await standardGoalsForRecipient(localRecipient.id, localGrant.regionId, {});
       expect(result.count).toBe(2);
       const templateIds = result.goalRows.map((g) => g.goalTemplateId);
-      expect(templateIds).toEqual(expect.arrayContaining([
-        curatedTemplate.id,
-        automaticTemplate.id,
-      ]));
+      expect(templateIds).toEqual(
+        expect.arrayContaining([curatedTemplate.id, automaticTemplate.id])
+      );
     });
   });
 
@@ -1384,6 +1736,7 @@ describe('standardGoal service', () => {
     const objectives = [
       {
         id: 1,
+        ids: [1],
         isNew: false,
         ttaProvided: 'TTA provided details',
         title: 'Objective title 1',
@@ -1404,7 +1757,7 @@ describe('standardGoal service', () => {
         isNew: true,
         ttaProvided: 'TTA provided details',
         title: 'Objective title 2',
-        status: 'NOT_STARTED',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
         topics: ['topic2'],
         resources: ['resource2'],
         files: ['file2'],
@@ -1420,6 +1773,8 @@ describe('standardGoal service', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
+      // By default the submitted objective ids still exist (not stale).
+      Objective.findAll = jest.fn().mockResolvedValue([{ id: 1, goalId: 1, deletedAt: null }]);
     });
 
     it('should return an empty array if no objectives are provided', async () => {
@@ -1427,8 +1782,51 @@ describe('standardGoal service', () => {
       expect(result).toEqual([]);
     });
 
+    it('should skip objectives deleted from this goal (stale form data)', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findAll = jest
+        .fn()
+        .mockResolvedValue([{ id: 1, goalId: goal.id, deletedAt: new Date() }]);
+      Objective.create = jest.fn();
+
+      const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
+
+      expect(Objective.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: [1, 1] }, paranoid: false })
+      );
+      expect(Objective.create).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should skip objectives whose ids no longer exist at all', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findAll = jest.fn().mockResolvedValue([]);
+      Objective.create = jest.fn();
+
+      const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
+
+      expect(Objective.create).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should carry over objectives deleted from a different goal (e.g. recipient change)', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findAll = jest
+        .fn()
+        .mockResolvedValue([{ id: 1, goalId: goal.id + 1, deletedAt: new Date() }]);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({ id: 3, title: 'Objective title 1', goalId: goal.id }),
+      });
+
+      const result = await createObjectivesForGoal(goal, [objectives[0]], 1);
+
+      expect(Objective.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Objective title 1', goalId: goal.id })
+      );
+      expect(result).toHaveLength(1);
+    });
+
     it('should create new objectives for new items', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1441,20 +1839,21 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
-        title: 'Objective title 2',
-        goalId: goal.id,
-        status: OBJECTIVE_STATUS.NOT_STARTED,
-        createdVia: 'activityReport',
-      }));
+      expect(Objective.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Objective title 2',
+          goalId: goal.id,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          createdVia: 'activityReport',
+        })
+      );
 
       expect(result).toHaveLength(2);
       expect(result[1].title).toBe('Objective title 2');
     });
 
     it('should update existing objectives', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue({
+      const existingObj = {
         id: 1,
         title: 'Objective title 1',
         onApprovedAR: false,
@@ -1466,9 +1865,17 @@ describe('standardGoal service', () => {
           status: OBJECTIVE_STATUS.IN_PROGRESS,
           goalId: goal.id,
         }),
+      };
+
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        // First call: lookup by ids + goalId for existing objective
+        if (where.id) {
+          return Promise.resolve(existingObj);
+        }
+        // Fallback: title-based lookup for new objectives
+        return Promise.resolve(null);
       });
 
-      Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
           id: 2,
@@ -1480,8 +1887,12 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          id: [1, 1],
+          goalId: goal.id,
+        },
+      });
 
       expect(result).toHaveLength(2);
       expect(result[0].title).toBe('Objective title 1');
@@ -1489,28 +1900,25 @@ describe('standardGoal service', () => {
     });
 
     it('should reuse an existing objective if conditions match', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
-
       // Mock finding the objective by title and goal ID
-      Objective.findOne = jest.fn()
-        .mockImplementation(({ where }) => {
-          if (where.title === 'Objective title 2') {
-            return Promise.resolve({
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        if (where.title === 'Objective title 2') {
+          return Promise.resolve({
+            id: 2,
+            title: 'Objective title 2',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            update: jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
+            toJSON: () => ({
               id: 2,
               title: 'Objective title 2',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
-              update: jest.fn().mockResolvedValue(true),
-              save: jest.fn().mockResolvedValue(true),
-              toJSON: () => ({
-                id: 2,
-                title: 'Objective title 2',
-                status: OBJECTIVE_STATUS.NOT_STARTED,
-                goalId: goal.id,
-              }),
-            });
-          }
-          return Promise.resolve(null);
-        });
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              goalId: goal.id,
+            }),
+          });
+        }
+        return Promise.resolve(null);
+      });
 
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1533,6 +1941,90 @@ describe('standardGoal service', () => {
       expect(result).toHaveLength(2);
       expect(result[1].id).toBe(2);
       expect(result[1].title).toBe('Objective title 2');
+      expect(result[1].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[1].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should honor submitted status when reusing an existing objective by title', async () => {
+      const reportId = 456;
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        if (where.title === 'Objective title 2') {
+          return Promise.resolve({
+            id: 2,
+            title: 'Objective title 2',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            createdVia: 'activityReport',
+            createdViaActivityReportId: 123,
+            update: jest.fn().mockResolvedValue(true),
+            save: jest.fn().mockResolvedValue(true),
+            toJSON: () => ({
+              id: 2,
+              title: 'Objective title 2',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              goalId: goal.id,
+              createdVia: 'activityReport',
+              createdViaActivityReportId: 123,
+            }),
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[1],
+            status: OBJECTIVE_STATUS.COMPLETE,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(2);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(result[0].objectiveCreatedHere).toBe(false);
+    });
+
+    it('should keep existing objective status when stale form data submits not started by id', async () => {
+      const reportId = 456;
+      const existingObj = {
+        id: 1,
+        title: 'Objective title 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        createdVia: 'activityReport',
+        createdViaActivityReportId: 123,
+        onApprovedAR: false,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          goalId: goal.id,
+          createdVia: 'activityReport',
+          createdViaActivityReportId: 123,
+        }),
+      };
+
+      Objective.findOne = jest.fn().mockResolvedValue(existingObj);
+
+      const result = await createObjectivesForGoal(
+        goal,
+        [
+          {
+            ...objectives[0],
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            createdHere: true,
+          },
+        ],
+        reportId
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(result[0].objectiveCreatedHere).toBe(false);
     });
 
     it('should handle undefined fields without throwing an error', async () => {
@@ -1546,7 +2038,6 @@ describe('standardGoal service', () => {
         },
       ];
 
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1561,6 +2052,78 @@ describe('standardGoal service', () => {
 
       expect(result).toHaveLength(0);
       expect(Objective.create).not.toHaveBeenCalled();
+    });
+
+    it('should create a new objective when continuing from a closed goal lifecycle', async () => {
+      // Scenario: Goal template has been through a lifecycle.
+      // - Old goal (id: 50) was closed, had Objective 10 on it.
+      // - New goal (id: 100) is a fresh lifecycle of the same template.
+      // - User selects Objective 10 for continuation on the new goal.
+      //
+      // The old code had two bugs:
+      // 1. findByPk(id) found the old objective without checking goalId,
+      //    attaching it to the wrong goal.
+      // 2. The `ids` search excluded the primary `id`, so the objective
+      //    was missed and a duplicate was created.
+      //
+      // The fix ensures findOne always filters by goalId and includes
+      // both `id` and `ids` in the search.
+
+      const newGoal = { id: 100 };
+      const continuedObjectives = [
+        {
+          id: 10,
+          ids: [10],
+          isNew: false,
+          ttaProvided: 'Continued TTA',
+          title: 'Continued Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          topics: ['topic1'],
+          resources: [],
+          files: [],
+          courses: [],
+          closeSuspendReason: null,
+          closeSuspendContext: null,
+          ActivityReportObjective: {},
+          supportType: 'supportType1',
+          goalId: 50, // old closed goal
+          createdHere: false,
+        },
+      ];
+
+      // findOne with goalId: 100 returns null because no objective exists on the new goal yet
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 99,
+          title: 'Continued Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: newGoal.id,
+        }),
+      });
+
+      const result = await createObjectivesForGoal(newGoal, continuedObjectives, 1);
+
+      // The lookup must search by ids+id AND constrain by the new goal's id
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          id: [10, 10],
+          goalId: newGoal.id,
+        },
+      });
+
+      // No objective found on the new goal, so a new one is created
+      expect(Objective.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Continued Objective',
+          goalId: newGoal.id,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          createdVia: 'activityReport',
+        })
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].goalId).toBe(newGoal.id);
     });
   });
 });

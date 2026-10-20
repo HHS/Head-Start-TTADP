@@ -1,11 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import RecipientSummary from '../RecipientSummary';
 
 describe('RecipientSummary', () => {
   const renderRecipientSummary = (summary) => {
-    render(<div data-testid="recipient-summary-container"><RecipientSummary summary={summary} regionId={12} /></div>);
+    render(
+      <div data-testid="recipient-summary-container">
+        <RecipientSummary summary={summary} regionId={12} />
+      </div>
+    );
   };
 
   it('renders the recipient summary appropriately', async () => {

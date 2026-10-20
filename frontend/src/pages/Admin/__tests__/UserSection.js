@@ -1,24 +1,13 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render,
-  screen,
-  within,
-  fireEvent,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import React from 'react';
+import selectEvent from 'react-select-event';
 import UserSection from '../UserSection';
 
-const {
-  ADMIN,
-  READ_ACTIVITY_REPORTS,
-  UNLOCK_APPROVED_REPORTS,
-} = SCOPE_IDS;
+const { ADMIN, READ_ACTIVITY_REPORTS, UNLOCK_APPROVED_REPORTS } = SCOPE_IDS;
 
 describe('UserSection', () => {
   const onSave = jest.fn();
@@ -47,10 +36,21 @@ describe('UserSection', () => {
       flags: ['moon_man'],
     };
 
-    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
-    await act(() => waitFor(() => {
-      render(<UserSection user={user} onSave={onSave} features={[{ value: 'half_goat', label: 'Half goat' }]} />);
-    }));
+    fetchMock.get('/api/admin/roles', [
+      { fullName: 'Grantee Specialist', name: 'GS', id: 1 },
+      { fullName: 'COR', name: 'COR', id: 2 },
+    ]);
+    await act(() =>
+      waitFor(() => {
+        render(
+          <UserSection
+            user={user}
+            onSave={onSave}
+            features={[{ value: 'half_goat', label: 'Half goat' }]}
+          />
+        );
+      })
+    );
   });
 
   afterEach(() => fetchMock.restore());
@@ -63,12 +63,16 @@ describe('UserSection', () => {
   });
 
   it('properly controls global permissions', () => {
-    const adminCheckbox = screen.getByRole('checkbox', { name: /admin : user can view the admin panel and change user permissions \(including their own\)/i });
+    const adminCheckbox = screen.getByRole('checkbox', {
+      name: /admin : user can view the admin panel and change user permissions \(including their own\)/i,
+    });
     expect(adminCheckbox).toBeChecked();
     userEvent.click(adminCheckbox);
     expect(adminCheckbox).not.toBeChecked();
 
-    const unlockCheckbox = screen.getByRole('checkbox', { name: /unlock_approved_reports : user can unlock approved reports\./i });
+    const unlockCheckbox = screen.getByRole('checkbox', {
+      name: /unlock_approved_reports : user can unlock approved reports\./i,
+    });
     expect(unlockCheckbox).toBeChecked();
     userEvent.click(unlockCheckbox);
     expect(unlockCheckbox).not.toBeChecked();

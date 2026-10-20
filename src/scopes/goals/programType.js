@@ -1,3 +1,4 @@
+import { filterToAllowedProgramTypes } from '../utils';
 import { filterAssociation } from './utils';
 
 // this should return an array of activityReport ids. That where clause will be finished when the
@@ -22,7 +23,8 @@ const programTypes = `
  * @returns an object with a where clause in the sequelize syntax
  */
 export function withProgramTypes(types) {
-  return filterAssociation(programTypes, types, false, '~*');
+  const allowedTypes = filterToAllowedProgramTypes(types);
+  return filterAssociation(programTypes, allowedTypes, false, '~*');
 }
 
 /**
@@ -30,5 +32,6 @@ export function withProgramTypes(types) {
  * @returns an object with a where clause in the sequelize syntax
  */
 export function withoutProgramTypes(types) {
-  return filterAssociation(programTypes, types, true, '~*');
+  const allowedTypes = filterToAllowedProgramTypes(types);
+  return filterAssociation(programTypes, allowedTypes, true, '~*');
 }

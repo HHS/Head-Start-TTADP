@@ -1,28 +1,29 @@
 /* eslint-disable max-len */
-import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
-import parse from 'csv-parse/lib/sync';
+
 import {
-  TRAINING_REPORT_STATUSES as TRS,
-  REASONS,
-  TARGET_POPULATIONS,
-  EVENT_TARGET_POPULATIONS,
-  EVENT_AUDIENCE,
-  REPORT_STATUSES,
   ALL_STATES_FLATTENED,
+  EVENT_AUDIENCE,
+  EVENT_TARGET_POPULATIONS,
+  REASONS,
+  REPORT_STATUSES,
+  TARGET_POPULATIONS,
+  TRAINING_REPORT_STATUSES as TRS,
 } from '@ttahub/common';
+import { parse } from 'csv-parse/sync';
 import moment from 'moment';
+import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import { FILE_STATUSES } from '../constants';
+import { trEventComplete } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db from '../models';
-import {
-  EventShape,
+import EventReport from '../policies/event';
+import type {
   CreateEventRequest,
-  UpdateEventRequest,
+  EventShape,
   SessionShape,
   TRAlertShape,
+  UpdateEventRequest,
 } from './types/event';
-import EventReport from '../policies/event';
-import { trEventComplete } from '../lib/mailer';
-import { FILE_STATUSES } from '../constants';
 
 const {
   EventReportPilot,
@@ -61,9 +62,35 @@ const INCLUDED_SESSION_ATTRIBUTES = [
   'approverId',
   'submitted',
   'submitterId',
-  // eslint-disable-next-line @typescript-eslint/quotes
-  [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+  // startDate/endDate are dedicated columns and the single source of truth for
+  // session dates; the JSONB data.startDate/data.endDate are re-derived from them
+  // on read (see injectSessionColumnDates).
+  'startDate',
+  'endDate',
 ];
+
+/**
+ * Re-derives the display `data.startDate` / `data.endDate` (MM/DD/YYYY) from the
+ * dedicated startDate/endDate columns, which are the single source of truth.
+ * Mirrors services/sessionReports.ts#findSessionHelper so the JSONB values the
+ * frontend and alert logic read stay in sync with the columns. Mutates and
+ * returns the given session model instance.
+ */
+const injectSessionColumnDates = (session) => {
+  if (!session) return session;
+  const rawStart = session.get('startDate') as string | null;
+  const rawEnd = session.get('endDate') as string | null;
+  session.set(
+    'data',
+    {
+      ...((session.get('data') as Record<string, unknown>) ?? {}),
+      startDate: rawStart ? moment(rawStart, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+      endDate: rawEnd ? moment(rawEnd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+    },
+    { raw: true }
+  );
+  return session;
+};
 
 /**
  * Creates an event.
@@ -82,20 +109,24 @@ const INCLUDED_SESSION_ATTRIBUTES = [
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
-  const {
-    ownerId,
-    pocIds,
-    collaboratorIds,
-    regionId,
-    data,
-  } = request;
+  const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
+
+  // The event display id is provided via `data.eventId` but is stored solely in
+  // the dedicated `eventId` column (the single source of truth); it is not
+  // persisted back into the JSONB `data`.
+  const { eventId, ...dataWithoutEventId } = data;
+
+  if (!eventId) {
+    throw new Error('Missing required field: data.eventId');
+  }
 
   return EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
     regionId,
-    data: cast(JSON.stringify(data), 'jsonb'),
+    eventId,
+    data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 }
 
@@ -120,7 +151,10 @@ export async function destroyEvent(id: number): Promise<void> {
   }
 }
 
-export async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
+export async function findEventHelper(
+  where,
+  plural = false
+): Promise<EventShape | EventShape[] | null> {
   const query = {
     attributes: [
       'id',
@@ -128,6 +162,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
       'pocIds',
       'collaboratorIds',
       'regionId',
+      'eventId',
       'data',
       'updatedAt',
       'version',
@@ -154,28 +189,19 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           {
             model: GoalTemplate,
             as: 'goalTemplates',
-            attributes: [
-              'id',
-              'standard',
-            ],
+            attributes: ['id', 'standard'],
             through: { attributes: [] }, // exclude join table attributes
           },
           {
             required: false,
             model: User,
             as: 'trainers',
-            attributes: [
-              'fullName',
-              'name',
-              'id',
-            ],
+            attributes: ['fullName', 'name', 'id'],
             include: [
               {
                 model: db.Role,
                 as: 'roles',
-                attributes: [
-                  'name',
-                ],
+                attributes: ['name'],
               },
             ],
           },
@@ -183,18 +209,27 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
-        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        order: [
+          ['startDate', 'ASC'],
+          ['data.sessionName', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       },
     ],
   };
 
-  const event = plural ? await EventReportPilot.findAll(query) : await EventReportPilot.findOne(query);
+  const event = plural
+    ? await EventReportPilot.findAll(query)
+    : await EventReportPilot.findOne(query);
 
   if (!event) {
     return null;
   }
 
   if (Array.isArray(event)) {
+    event.forEach((e) => {
+      (e.sessionReports ?? []).forEach(injectSessionColumnDates);
+    });
     return event;
   }
 
@@ -204,12 +239,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     if (event.ownerId) {
       const ownerUser = await User.findOne({
         where: { id: event.ownerId },
-        attributes: [
-          'name',
-          'email',
-          'id',
-          'fullName',
-        ],
+        attributes: ['name', 'email', 'id', 'fullName'],
         include: [
           {
             model: db.Role,
@@ -231,9 +261,10 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
+    eventId: event?.eventId,
     data: event?.data,
     updatedAt: event?.updatedAt,
-    sessionReports: event?.sessionReports ?? [],
+    sessionReports: (event?.sessionReports ?? []).map(injectSessionColumnDates),
     version: event?.version ?? EVENT_REPORT_PILOT_VERSION,
   };
 }
@@ -258,10 +289,7 @@ export async function findEventHelperBlob({
   const getClause = () => {
     if (allowNull) {
       return {
-        [Op.or]: [
-          { [key]: value },
-          { [key]: { [Op.eq]: null } },
-        ],
+        [Op.or]: [{ [key]: value }, { [key]: { [Op.eq]: null } }],
       };
     }
 
@@ -275,19 +303,12 @@ export async function findEventHelperBlob({
       ...where,
     };
   } else if (regions && regions.length) {
-    // @ts-ignore
+    // @ts-expect-error
     where.regionId = regions;
   }
 
   const events = await EventReportPilot.findAll({
-    attributes: [
-      'id',
-      'ownerId',
-      'pocIds',
-      'collaboratorIds',
-      'regionId',
-      'data',
-    ],
+    attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     include: [
       {
         model: SessionReportPilot,
@@ -319,11 +340,23 @@ export async function findEventHelperBlob({
             ],
           },
         ],
-        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        order: [
+          ['startDate', 'ASC'],
+          ['data.sessionName', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       },
     ],
     where,
-    order: [['data.eventId', 'ASC'], ['data.startDate', 'ASC']],
+    order: [
+      ['eventId', 'ASC'],
+      ['data.startDate', 'ASC'],
+    ],
+  });
+
+  // Re-derive each session's display dates from the dedicated columns.
+  (events || []).forEach((event) => {
+    (event.sessionReports ?? []).forEach(injectSessionColumnDates);
   });
 
   // if a fallbackValue was provided for this key search
@@ -360,34 +393,21 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
-  const {
-    ownerId,
-    pocIds,
-    collaboratorIds,
-    regionId,
-    data,
-  } = request;
+  const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
   const { status } = data;
 
   if (ownerId) {
-    const newOwner = await User.findOne(
-      {
-        where: { id: ownerId },
-        attributes: [
-          'id',
-          'fullName',
-          'email',
-          'name',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-          },
-        ],
-      },
-    );
+    const newOwner = await User.findOne({
+      where: { id: ownerId },
+      attributes: ['id', 'fullName', 'email', 'name'],
+      include: [
+        {
+          model: db.Role,
+          as: 'roles',
+        },
+      ],
+    });
 
     if (newOwner) {
       // update the owner in the data.
@@ -402,26 +422,60 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     await trEventComplete(evt.toJSON());
   }
 
+  // eventId is an immutable identifier stored in the dedicated `eventId` column,
+  // which is the single source of truth. Reject any attempt to change it, and
+  // never persist it back into the JSONB `data`.
+  const { eventId: requestedEventId, ...incomingData } = data as {
+    eventId?: string;
+  } & Record<string, unknown>;
+
+  if (requestedEventId && requestedEventId !== evt.eventId) {
+    throw new Error('eventId is immutable and cannot be changed');
+  }
+
+  // checkUpdateEventBody has already narrowed the request to the schema
+  // allowlist, and the TR form round-trips the whole blob back to us
+  // (resetFormData spreads `data` into the form, onSave sends getValues() back),
+  // so writing the request straight into the column would permanently drop any
+  // stored key the allowlist does not declare. Merge over what is stored
+  // instead, the same way updateSession does, and drop the hydrated/derived
+  // keys that saves predating the schema may have persisted — the strip list in
+  // src/routes/events/middleware.ts keeps them out of new requests, but not out
+  // of rows already written.
+  const {
+    sessionReports: _sessionReports,
+    id: _storedId,
+    version: _version,
+    region: _region,
+    updatedAt: _storedUpdatedAt,
+    createdAt: _storedCreatedAt,
+    eventId: _storedEventId,
+    ...storedData
+  } = (evt.data ?? {}) as Record<string, unknown>;
+
+  const persistedData = { ...storedData, ...incomingData };
+
   await evt.update(
     {
       ownerId,
       pocIds,
       collaboratorIds,
       regionId,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      eventId: evt.eventId,
+      data: cast(JSON.stringify(persistedData), 'jsonb'),
     },
-    { where: { id }, individualHooks: true },
+    { where: { id }, individualHooks: true }
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventByDbId(
+  id: number,
+  scopes: WhereOptions[] = [{}]
+): Promise<EventShape | null> {
   const where = {
-    [Op.and]: [
-      { id },
-      ...scopes,
-    ],
+    [Op.and]: [{ id }, ...scopes],
   };
   return findEventHelper(where) as Promise<EventShape>;
 }
@@ -432,19 +486,19 @@ const parseMinimalEventForAlert = (
     ownerId: number;
     pocIds: number[];
     collaboratorIds: number[];
+    eventId: string;
     data: {
-      eventId: string;
       eventName: string;
       startDate: string;
       endDate: string;
       status: string;
-    },
+    };
   },
   alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted',
-  sessionName = '--',
-) : TRAlertShape => ({
+  sessionName = '--'
+): TRAlertShape => ({
   id: event.id,
-  eventId: event.data.eventId,
+  eventId: event.eventId,
   eventName: event.data.eventName,
   alertType,
   sessionName,
@@ -459,23 +513,37 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'collabComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete' | 'ownerComplete';
+
+// Re-export shared predicates so existing imports from ./services/event keep
+// working (e.g. `import { isNationalCenterUser } from '../services/event'`).
+// The canonical definitions live in `./eventFlow` to avoid a circular import
+// with `../policies/event`.
+export {
+  FACILITATION_NATIONAL_CENTER,
+  isNationalCenterFacilitator,
+  isNationalCenterUser,
+  NATIONAL_CENTER_ROLE_NAME,
+  REGIONAL_PD_WITH_NATIONAL_CENTERS,
+} from './eventFlow';
+
+import { isNationalCenterFacilitator, isSessionSubmitted } from './eventFlow';
 
 const checkSessionForCompletion = (
   session: SessionShape,
   event: EventShape,
   checker: TChecker,
-  missingSessionInfo: TRAlertShape[],
+  missingSessionInfo: TRAlertShape[]
 ) => {
   // this checks to see if the session has been completed
   // with a lookup in the form data
   // by the owner or the poc (depending on the checker parameter)
-  const sessionValid = !!(session.data[checker]);
+  const sessionValid = !!session.data[checker];
 
   if (!sessionValid) {
     missingSessionInfo.push({
       id: session.id,
-      eventId: event.data.eventId,
+      eventId: event.eventId,
       isSession: true,
       sessionName: session.data.sessionName,
       eventName: event.data.eventName,
@@ -497,7 +565,9 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   alerts.forEach((alert) => {
     if (alert.approverId) userIds.add(alert.approverId);
     if (alert.submitterId) userIds.add(alert.submitterId);
-    alert.collaboratorIds.forEach((id) => userIds.add(id));
+    alert.collaboratorIds.forEach((id) => {
+      userIds.add(id);
+    });
   });
 
   // If no user IDs to fetch, return alerts as-is
@@ -506,10 +576,10 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   }
 
   // Fetch all users in one query
-  const users = await User.findAll({
+  const users = (await User.findAll({
     where: { id: { [Op.in]: Array.from(userIds) } },
     attributes: ['id', 'name'],
-  }) as Array<{ id: number; name: string }>;
+  })) as Array<{ id: number; name: string }>;
 
   const userMap = new Map(users.map((u) => [u.id, u.name]));
 
@@ -529,28 +599,27 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
 export async function getTrainingReportAlerts(
   userId: number | undefined,
   regions: number[] | undefined,
-  where: SequelizeWhereOptions[] = [],
+  where: SequelizeWhereOptions[] = []
 ): Promise<TRAlertShape[]> {
   // get all events that the user is a part of and that are not complete/suspended
-  const events = await findEventHelper({
-    [Op.and]: [
-      ...where,
-      {
-        ...(
-          // we do not check regions.length here
+  const events = (await findEventHelper(
+    {
+      [Op.and]: [
+        ...where,
+        {
+          ...// we do not check regions.length here
           // because we want an empty array to apply
-          regions
-            ? { regionId: { [Op.in]: regions } }
-            : {}
-        ),
-        data: {
-          status: {
-            [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+          (regions ? { regionId: { [Op.in]: regions } } : {}),
+          data: {
+            status: {
+              [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+            },
           },
         },
-      },
-    ],
-  }, true) as EventShape[];
+      ],
+    },
+    true
+  )) as EventShape[];
 
   const alerts = [];
 
@@ -614,26 +683,69 @@ export async function getTrainingReportAlerts(
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
       }
 
-      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+      const sessions = event.sessionReports.filter(
+        (session) => session.data.status !== TRS.COMPLETE
+      );
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+          .startOf('day')
+          .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          if (isNationalCenterFacilitator(event, session)) {
+            // In the national center facilitation flow, owner-side completion is tracked via
+            // ownerComplete and collaborator-side via collabComplete. Pick
+            // the checker for this user's role; when no user is provided
+            // (system-wide alerts), check ownerComplete first and fall back
+            // to collabComplete (the existing per-session dedupe ensures at
+            // most one alert per session per pass).
+            const checkers: TChecker[] = [];
+            if (userId) {
+              if (event.ownerId === userId) checkers.push('ownerComplete');
+              if (event.collaboratorIds.includes(userId)) checkers.push('collabComplete');
+            } else {
+              checkers.push('ownerComplete', 'collabComplete');
+            }
+            for (const checker of checkers) {
+              if (alerts.find((alert) => alert.isSession && alert.id === session.id)) break;
+              checkSessionForCompletion(session, event, checker, alerts);
+            }
+          } else {
+            checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          }
         }
       });
     }
 
     // the other event triggers for everyone
     if (pocUserFilter(event, userId)) {
-      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+      const sessions = event.sessionReports.filter(
+        (session) => session.data.status !== TRS.COMPLETE
+      );
 
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
+        // POC is normally not involved — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. However, POCs can now
+        // create sessions (canCreateSession() includes isPoc()), and when they
+        // do they still set pocComplete on submit (see SessionForm/index.js).
+        // Only skip the alert when we have evidence the session is using
+        // ownerComplete and not pocComplete (i.e. owner-created in the new
+        // flow); otherwise fall through and check pocComplete as usual.
+        if (
+          isNationalCenterFacilitator(event, session) &&
+          session.data.pocComplete === undefined &&
+          session.data.ownerComplete !== undefined
+        ) {
+          return;
+        }
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+          .startOf('day')
+          .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-        // eslint-disable-next-line no-restricted-syntax
+          // eslint-disable-next-line no-restricted-syntax
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }
       }); // for each session
@@ -646,8 +758,8 @@ export async function getTrainingReportAlerts(
       if (session.data.status === TRS.COMPLETE) return;
 
       // Check for waitingForApproval - session submitted and awaiting approver review
-      // Submitted means: approverId set, pocComplete and collabComplete are true, status is IN_PROGRESS
-      const isSubmitted = session.submitted;
+      // Use the policy's submission rule so stale flags from another workflow don't count
+      const isSubmitted = isSessionSubmitted(event, session);
 
       if (isSubmitted && ![REPORT_STATUSES.NEEDS_ACTION].includes(session.data.status)) {
         const isSubmitter = session.submitterId === userId;
@@ -657,7 +769,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter || isApprover) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -686,7 +798,7 @@ export async function getTrainingReportAlerts(
         if (!userId || isSubmitter) {
           alerts.push({
             id: session.id,
-            eventId: event.data.eventId,
+            eventId: event.eventId,
             isSession: true,
             sessionName: session.data.sessionName,
             eventName: event.data.eventName,
@@ -712,7 +824,7 @@ export async function getTrainingReportAlerts(
 
 export async function getTrainingReportAlertsForUser(
   userId: number,
-  regions: number[],
+  regions: number[]
 ): Promise<TRAlertShape[]> {
   const where = {
     [Op.or]: [
@@ -731,7 +843,9 @@ export async function getTrainingReportAlertsForUser(
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`),
+          [Op.in]: sequelize.literal(
+            `(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`
+          ),
         },
       },
     ],
@@ -740,14 +854,15 @@ export async function getTrainingReportAlertsForUser(
   return getTrainingReportAlerts(userId, regions, [where]);
 }
 
-export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventBySmartsheetId(
+  eventId: string,
+  scopes: WhereOptions[] = [{}]
+): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       {
-        data: {
-          eventId: {
-            [Op.endsWith]: `-${eventId}`,
-          },
+        eventId: {
+          [Op.eq]: eventId,
         },
       },
       ...scopes,
@@ -773,216 +888,33 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
 }
 
 /**
- * Determine if a POC can see sessions based on event organizer type
- * @param event - The event
- * @returns boolean - true if POC can see sessions
- */
-const pocCanSeeSessionsForEvent = (event: EventShape): boolean => {
-  const organizerType = event.data?.eventOrganizer;
-
-  // POCs can NOT see sessions for "Regional TTA Hosted Event (no National Centers)"
-  if (organizerType === 'Regional TTA Hosted Event (no National Centers)') {
-    return false;
-  }
-
-  // POCs CAN see sessions for "Regional PD Event (with National Centers)"
-  // regardless of trainer type
-  if (organizerType === 'Regional PD Event (with National Centers)') {
-    return true;
-  }
-
-  // Default: allow POC to see sessions (defensive)
-  return true;
-};
-
-/**
- * Check if user can view a specific session based on their role and session status
- * @param session - The session
- * @param event - The event containing the session
- * @param userId - The user ID
- * @param isOwner - Is user the event owner
- * @param isCollaborator - Is user an event collaborator
- * @param isPoc - Is user an event POC
- * @returns boolean - true if user can view the session
- */
-const canUserViewSession = (
-  session: SessionShape,
-  event: EventShape,
-  userId: number,
-  isOwner: boolean,
-  isCollaborator: boolean,
-  isPoc: boolean,
-): boolean => {
-  const sessionStatus = session.data?.status;
-
-  // Owner and collaborators always see all sessions
-  if (isOwner || isCollaborator) {
-    return true;
-  }
-
-  // POC visibility depends on event organizer type
-  if (isPoc) {
-    // Check if POC can see sessions for this event type
-    if (!pocCanSeeSessionsForEvent(event)) {
-      return false; // POC cannot see any sessions for this event type
-    }
-    // POC can see sessions for this event type
-    return true;
-  }
-
-  if (session.approverId === userId && session.submitted) {
-    // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
-    // (and hasn't been returned for edits, I.E. needs_action)
-    return true;
-  }
-
-  // Regional users (everyone else) can only see COMPLETE sessions
-  return sessionStatus === TRS.COMPLETE;
-};
-
-/**
- * Filter sessions in a single event based on user role and visibility rules
+ * All users with region access can see all sessions now.
+ * Parameters are kept for backwards compatibility but are no longer used.
  * @param event - The event containing sessions
- * @param userId - The user ID
- * @param isAdmin - Whether the user is an admin
- * @returns EventShape with filtered sessions
+ * @param _userId - The user ID (unused)
+ * @param _isAdmin - Whether the user is an admin (unused)
+ * @returns EventShape with all sessions
  */
 export function filterEventSessions(
   event: EventShape,
-  userId: number,
-  isAdmin = false,
+  _userId: number,
+  _isAdmin = false
 ): EventShape {
-  // Admins see everything
-  if (isAdmin) return event;
-
-  const isOwner = event.ownerId === userId;
-  const isCollaborator = event.collaboratorIds.includes(userId);
-  const isPoc = event.pocIds && event.pocIds.includes(userId);
-
-  const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
-
-  return {
-    ...event,
-    sessionReports: filteredSessions,
-  };
-}
-
-/**
- *
- * remember, regional filtering is done in the previous step
- * so all we need to do here is a last cleanup of the data by status
- *
- * @param events
- * @param status
- * @param userId
- * @returns
- */
-export async function filterEventsByStatus(events: EventShape[], status: string, userId: number, isAdmin = false) : Promise<EventShape[]> {
-  // Admins see everything
-  if (isAdmin) return events;
-
-  switch (status) {
-    case TRS.NOT_STARTED:
-    case null:
-      /**
-       * Not started events
-       * Visible only to owner, collab or POC
-       */
-      return events.filter((event) => {
-        // Owner can see
-        if (event.ownerId === userId) {
-          return true;
-        }
-
-        if (event.collaboratorIds.includes(userId)) {
-          return true;
-        }
-
-        // POC can see
-        if (event.pocIds && event.pocIds.includes(userId)) {
-          return true;
-        }
-
-        // Collaborators CANNOT see NOT_STARTED events
-        return false;
-      });
-
-    case TRS.IN_PROGRESS:
-      /**
-       * In progress events
-       * Only form users see the event, session visibility varies by role
-       */
-      return events.map((event) => {
-        const isOwner = event.ownerId === userId;
-        const isCollaborator = event.collaboratorIds.includes(userId);
-        const isPoc = event.pocIds && event.pocIds.includes(userId);
-        const isApproverWithSubmittedSession = event.sessionReports.some((session) => session.approverId === userId && session.submitted);
-
-        if (!isOwner && !isCollaborator && !isPoc && !isApproverWithSubmittedSession) {
-          // User has no role in this event, return nothing, to be filtered out
-          // in the next array loop
-          return null;
-        }
-
-        // Filter sessions based on user role and event organizer type
-        const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
-
-        return {
-          // I am going to ts-ignore this to avoid implementing a new type
-          // to represent the sequelize model vs the data shape as
-          // that would require a snipe hunt through the TR services
-          // @ts-ignore
-          ...event.toJSON(),
-          sessionReports: filteredSessions,
-        };
-      }).filter((event) => Boolean(event)) as EventShape[];
-
-    case TRS.COMPLETE:
-    case TRS.SUSPENDED:
-      // Everyone with regional permissions sees all events and all sessions
-      return events;
-
-    default:
-      return [];
-  }
-}
-
-export async function findEventsByStatus(
-  status: string,
-  readableRegions: number[],
-  userId: number,
-  fallbackValue = undefined,
-  allowNull = false,
-  scopes = undefined,
-  isAdmin = false,
-): Promise<EventShape[] | null> {
-  const events = await findEventHelperBlob({
-    key: 'status',
-    value: status,
-    regions: readableRegions,
-    fallbackValue,
-    allowNull: status === TRS.NOT_STARTED || allowNull,
-    scopes,
-  }) as EventShape[];
-
-  return filterEventsByStatus(events, status, userId, isAdmin);
+  return event;
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
   return EventReportPilot.findAll({
-    attributes: [
-      'id',
-      'ownerId',
-      'pocIds',
-      'collaboratorIds',
-      'regionId',
-      'data',
-    ],
+    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     raw: true,
   });
 }
 
-const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(Boolean);
+const splitPipe = (str: string) =>
+  str
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
@@ -1004,11 +936,7 @@ const mappings: Record<string, string> = {
   'State/Territory Invited': 'additionalStates',
 };
 
-const toSplit = [
-  'targetPopulations',
-  'reasons',
-  'additionalStates',
-];
+const toSplit = ['targetPopulations', 'reasons', 'additionalStates'];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -1026,14 +954,15 @@ export const mapLineToData = (line: Record<string, string>) => {
     if (Object.keys(mappings).includes(key)) {
       const mappedKey = mappings[key] || key;
       data[mappedKey] = toSplit.includes(mappedKey)
-        ? splitPipe(line[key]).map(applyReplacements) : line[key];
+        ? splitPipe(line[key]).map(applyReplacements)
+        : line[key];
     }
   });
 
   return data;
 };
 
-export const checkUserExists = async (key:'email' | 'name', value: string) => {
+export const checkUserExists = async (key: 'email' | 'name', value: string) => {
   const user = await db.User.findOne({
     where: {
       [key]: {
@@ -1089,21 +1018,15 @@ const checkUserExistsByEmail = async (email: string) => checkUserExists('email',
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
     attributes: ['id'],
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
-        ),
-      },
-    },
+    where: { eventId },
   });
 
   if (event) throw new Error(`Event ${eventId} already exists`);
 };
 
-const VALID_STATE_NAMES = [...new Set(
-  ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim()),
-)];
+const VALID_STATE_NAMES = [
+  ...new Set(ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim())),
+];
 
 const validateStates = (states: Set<string>) => {
   Array.from(states).forEach((state) => {
@@ -1118,11 +1041,18 @@ export async function csvImport(buffer: Buffer) {
   const skipped: string[] = [];
   const errors: string[] = [];
 
-  const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  let parsed: Record<string, string>[];
+  try {
+    parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  } catch (error) {
+    errors.push(`CSV parse error: ${error.message}`);
+    return { count: 0, skipped, errors };
+  }
+
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
       const cleanLine = Object.fromEntries(
-        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()]),
+        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()])
       );
 
       const eventId = cleanLine['Event ID'];
@@ -1138,7 +1068,9 @@ export async function csvImport(buffer: Buffer) {
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
-        skipped.push(`Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        skipped.push(
+          `Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`
+        );
         return false;
       }
 
@@ -1149,7 +1081,7 @@ export async function csvImport(buffer: Buffer) {
         errors.push(`No creator listed on import for ${eventId}`);
         return false;
       }
-      let owner: { name: string; id: number; };
+      let owner: { name: string; id: number };
       if (creator) {
         owner = await checkUserExistsByEmail(creator);
 
@@ -1166,7 +1098,9 @@ export async function csvImport(buffer: Buffer) {
       const pocs = [];
 
       if (cleanLine['Designated POC for Event/Request']) {
-        const pocNames = cleanLine['Designated POC for Event/Request'].split('/').map((name) => name.trim());
+        const pocNames = cleanLine['Designated POC for Event/Request']
+          .split('/')
+          .map((name) => name.trim());
         // eslint-disable-next-line no-restricted-syntax
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
@@ -1183,8 +1117,15 @@ export async function csvImport(buffer: Buffer) {
       }
 
       const organizer = cleanLine['Event Organizer - Type of Event'];
-      if (!['Regional PD Event (with National Centers)', 'Regional TTA Hosted Event (no National Centers)'].includes(organizer)) {
-        errors.push(`Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`);
+      if (
+        ![
+          'Regional PD Event (with National Centers)',
+          'Regional TTA Hosted Event (no National Centers)',
+        ].includes(organizer)
+      ) {
+        errors.push(
+          `Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`
+        );
         return false;
       }
 
@@ -1193,22 +1134,38 @@ export async function csvImport(buffer: Buffer) {
       // right now the valid values in the CSV are 'Recipients' and 'Regional office/TTA', and the form expects
       // the values to be 'recipients' and 'regional-office-tta', so this will transform the values to match
       // so the form is correctly populated
-      data.eventIntendedAudience = (data.eventIntendedAudience as string).replace(/ |\//g, '-').toLowerCase();
+      data.eventIntendedAudience = (data.eventIntendedAudience as string)
+        .replace(/ |\//g, '-')
+        .toLowerCase();
 
       // Reasons, remove duplicates and invalid values.
-      data.reasons = [...new Set(data.reasons as string[])].filter((reason) => REASONS.includes(reason));
+      data.reasons = [...new Set(data.reasons as string[])].filter((reason) =>
+        REASONS.includes(reason)
+      );
 
       // Target Populations, remove duplicates and invalid values.
-      data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
+      const allTargetPopulations = [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS];
+      const filteredTargetPopulations = [...new Set(data.targetPopulations as string[])].filter(
+        (target) => allTargetPopulations.includes(target)
+      );
+      if (!filteredTargetPopulations.length) {
+        throw new Error(`'Target populations' is required for Event ID "${eventId}".`);
+      }
+      data.targetPopulations = filteredTargetPopulations;
 
       // Additional States Involved, remove duplicates.
       data.additionalStates = [...validateStates(new Set(data.additionalStates as string[]))];
+
+      // The event display id is stored solely in the dedicated `eventId` column
+      // (the single source of truth); it is not persisted back into the JSONB `data`.
+      delete data.eventId;
 
       await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         pocIds: pocs,
+        eventId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,

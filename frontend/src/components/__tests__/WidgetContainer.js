@@ -1,9 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import WidgetContainer from '../WidgetContainer';
 
 const renderWidgetContainer = (
@@ -16,7 +14,7 @@ const renderWidgetContainer = (
   enableCheckboxes = false,
   exportRows = jest.fn(),
   footNote = null,
-  subtitle2 = null,
+  subtitle2 = null
 ) => {
   const [showPagingBottom, showPagingTop] = showPaging;
 
@@ -36,26 +34,30 @@ const renderWidgetContainer = (
         handlePageChange={handlePageChange}
         error={error}
         showHeaderBorder={showHeaderBorder}
-        menuItems={enableCheckboxes ? [
-          {
-            label: 'Export selected rows',
-            onClick: () => {
-              exportRows('selected');
-            },
-          },
-          {
-            label: 'Export table',
-            onClick: () => {
-              exportRows('all');
-            },
-          },
-        ] : []}
+        menuItems={
+          enableCheckboxes
+            ? [
+                {
+                  label: 'Export selected rows',
+                  onClick: () => {
+                    exportRows('selected');
+                  },
+                },
+                {
+                  label: 'Export table',
+                  onClick: () => {
+                    exportRows('all');
+                  },
+                },
+              ]
+            : []
+        }
         footNote={footNote}
         subtitle2={subtitle2}
       >
         This widget has been contained.
       </WidgetContainer>
-    </>,
+    </>
   );
 };
 
@@ -78,7 +80,12 @@ describe('Widget Container', () => {
 
   it('calls paging correctly', async () => {
     const changePage = jest.fn();
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [false, true], changePage);
+    renderWidgetContainer(
+      'Widget Container Title',
+      'Widget Container Subtitle',
+      [false, true],
+      changePage
+    );
     expect(screen.getByText(/Widget Container Title/i)).toBeInTheDocument();
     expect(screen.getByText(/1-10 of 100/i)).toBeInTheDocument();
     const pageBtn = await screen.findByRole('button', { name: /page 2/i });
@@ -100,13 +107,24 @@ describe('Widget Container', () => {
 
   it('hides header border', async () => {
     renderWidgetContainer('Widget container header', null, [true, false], () => {}, null, false);
-    const containerElement = screen.getByRole('heading', { name: /widget container header/i }).parentElement;
+    const containerElement = screen.getByRole('heading', {
+      name: /widget container header/i,
+    }).parentElement;
     expect(containerElement).not.toHaveClass('ttahub-border-base-lighter');
   });
 
   it('call exportRows with the correct values', async () => {
     const exportRows = jest.fn();
-    renderWidgetContainer('Widget Container Title', null, [true, false], () => {}, null, false, true, exportRows);
+    renderWidgetContainer(
+      'Widget Container Title',
+      null,
+      [true, false],
+      () => {},
+      null,
+      false,
+      true,
+      exportRows
+    );
 
     // Click the context menu button.
     const contextMenuBtn = screen.getByTestId('context-menu-actions-btn');
@@ -126,7 +144,17 @@ describe('Widget Container', () => {
   });
 
   it('renders foot note', async () => {
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false], () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
+    renderWidgetContainer(
+      'Widget Container Title',
+      'Widget Container Subtitle',
+      [true, false],
+      () => {},
+      null,
+      false,
+      false,
+      () => {},
+      '* There are many footnotes but this one is mine.'
+    );
     expect(screen.getByText(/There are many footnotes but this one is mine./i)).toBeInTheDocument();
   });
 });

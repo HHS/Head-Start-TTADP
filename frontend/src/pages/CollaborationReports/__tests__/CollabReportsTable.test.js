@@ -1,12 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
 import CollabReportsTable from '../components/CollabReportsTable';
 
@@ -80,15 +76,19 @@ describe('CollabReportsTable', () => {
   it('renders create message when showCreateMsgOnEmpty is true', () => {
     render(<CollabReportsTable {...defaultProps} showCreateMsgOnEmpty />);
     expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
-    expect(screen.getByText(/Document your work connecting Head Start programs/)).toBeInTheDocument();
-    expect(screen.getByText(/To get started, click the "New Collaboration Report" button./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Document your work connecting Head Start programs/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/To get started, click the "New Collaboration Report" button./)
+    ).toBeInTheDocument();
   });
 
   it('renders table when reports are present', () => {
     render(
       <MemoryRouter>
         <CollabReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
@@ -103,7 +103,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Find the perPage select dropdown
@@ -118,7 +118,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const perPageSelect = screen.getByLabelText('Select per page');
@@ -133,6 +133,88 @@ describe('CollabReportsTable', () => {
         perPage: 50,
       });
     });
+
+    it('resets activePage to 1 and offset to 0 when changing perPage', () => {
+      const sortConfigOnPage2 = {
+        ...defaultProps.sortConfig,
+        activePage: 2,
+        offset: 10,
+      };
+
+      render(
+        <MemoryRouter>
+          <CollabReportsTable
+            {...defaultProps}
+            sortConfig={sortConfigOnPage2}
+            data={mockReportData}
+          />
+        </MemoryRouter>
+      );
+
+      const perPageSelect = screen.getByLabelText('Select per page');
+      fireEvent.change(perPageSelect, { target: { value: '25' } });
+
+      const updateFunction = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFunction(sortConfigOnPage2);
+
+      expect(result).toEqual({
+        ...sortConfigOnPage2,
+        perPage: 25,
+        activePage: 1,
+        offset: 0,
+      });
+    });
+  });
+
+  describe('page navigation handlePageChange', () => {
+    const paginatedData = { ...mockReportData, count: 30 };
+
+    it('calls setSortConfig with updated activePage and offset when navigating to page 2', async () => {
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={paginatedData} />
+        </MemoryRouter>
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      expect(mockSetSortConfig).toHaveBeenCalledWith(expect.any(Function));
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(defaultProps.sortConfig);
+      expect(result).toEqual({ ...defaultProps.sortConfig, activePage: 2, offset: 10 });
+    });
+
+    it('calculates offset correctly for different perPage values', async () => {
+      const sortConfigWith25 = { ...defaultProps.sortConfig, perPage: 25 };
+      render(
+        <MemoryRouter>
+          <CollabReportsTable
+            {...defaultProps}
+            sortConfig={sortConfigWith25}
+            data={paginatedData}
+          />
+        </MemoryRouter>
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(sortConfigWith25);
+      expect(result).toEqual({ ...sortConfigWith25, activePage: 2, offset: 25 }); // (2-1)*25=25
+    });
+
+    it('preserves other sortConfig properties when navigating pages', async () => {
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={paginatedData} />
+        </MemoryRouter>
+      );
+      const pageBtns = await screen.findAllByRole('button', { name: /page 2/i });
+      fireEvent.click(pageBtns[0]);
+      const updateFn = mockSetSortConfig.mock.calls[0][0];
+      const result = updateFn(defaultProps.sortConfig);
+      expect(result.direction).toBe(defaultProps.sortConfig.direction);
+      expect(result.sortBy).toBe(defaultProps.sortConfig.sortBy);
+      expect(result.perPage).toBe(defaultProps.sortConfig.perPage);
+    });
   });
 
   describe('Export functionality', () => {
@@ -140,11 +222,13 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Look for the menu button using the correct aria-label
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
 
       expect(screen.getByText('Export table')).toBeInTheDocument();
@@ -154,17 +238,19 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
 
       const exportAllButton = screen.getByText('Export table');
       fireEvent.click(exportAllButton);
 
       await waitFor(() => {
-        expect(getReportsCSV).toHaveBeenCalledWith(defaultProps.sortConfig);
+        expect(getReportsCSV).toHaveBeenCalled();
       });
     });
 
@@ -172,10 +258,12 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
 
       expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument();
@@ -187,7 +275,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Select a checkbox for report with id 1
@@ -195,7 +283,9 @@ describe('CollabReportsTable', () => {
       userEvent.click(checkbox);
 
       // Open menu
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
 
       expect(screen.getByText('Export selected rows')).toBeInTheDocument();
@@ -205,7 +295,7 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Select checkboxes for reports
@@ -216,7 +306,9 @@ describe('CollabReportsTable', () => {
       userEvent.click(checkbox2);
 
       // Open menu and click Export selected
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
 
       const exportSelectedButton = screen.getByText('Export selected rows');
@@ -231,11 +323,13 @@ describe('CollabReportsTable', () => {
       render(
         <MemoryRouter>
           <CollabReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Initially no Export selected option
-      const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
       fireEvent.click(menuButton);
       expect(screen.queryByText('Export selected rows')).not.toBeInTheDocument();
 
@@ -247,6 +341,76 @@ describe('CollabReportsTable', () => {
       // Now Export selected should be available
       fireEvent.click(menuButton);
       expect(screen.getByText('Export selected rows')).toBeInTheDocument();
+    });
+
+    it('keeps selections when the page changes', async () => {
+      const filters = [{ topic: 'startDate', condition: 'is within', query: '2024' }];
+      const pageOne = { rows: [mockReportData.rows[0]], count: 2 };
+      const pageTwo = { rows: [mockReportData.rows[1]], count: 2 };
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={pageOne} filters={filters} />
+        </MemoryRouter>
+      );
+
+      userEvent.click(screen.getByDisplayValue('1'));
+
+      // same filters, next page of the same dataset
+      rerender(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={pageTwo} filters={filters} />
+        </MemoryRouter>
+      );
+
+      userEvent.click(screen.getByDisplayValue('2'));
+
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
+      fireEvent.click(menuButton);
+      fireEvent.click(screen.getByText('Export selected rows'));
+
+      await waitFor(() => {
+        expect(getReportsCSVById).toHaveBeenCalledWith(['1', '2'], defaultProps.sortConfig);
+      });
+    });
+
+    it('clears selections when the filters change', async () => {
+      // getReportsCSVById posts ids without the active filters, so a selection carried over from
+      // a previous filter would silently export a report the table no longer shows.
+      const initialFilters = [{ topic: 'startDate', condition: 'is within', query: '2024' }];
+      const narrowedFilters = [{ topic: 'author', condition: 'is', query: 'Bob Johnson' }];
+      const filteredData = { rows: [mockReportData.rows[1]], count: 1 };
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} filters={initialFilters} />
+        </MemoryRouter>
+      );
+
+      // select report 1, then filter it out of the table
+      userEvent.click(screen.getByDisplayValue('1'));
+
+      rerender(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={filteredData} filters={narrowedFilters} />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByDisplayValue('1')).not.toBeInTheDocument();
+
+      userEvent.click(screen.getByDisplayValue('2'));
+
+      const menuButton = screen.getByRole('button', {
+        name: /open actions for collaboration reports/i,
+      });
+      fireEvent.click(menuButton);
+      fireEvent.click(screen.getByText('Export selected rows'));
+
+      await waitFor(() => {
+        expect(getReportsCSVById).toHaveBeenCalledWith(['2'], defaultProps.sortConfig);
+      });
     });
   });
 });

@@ -1,14 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import ObjectiveForm from '../ObjectiveForm';
+import React from 'react';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
-import { OBJECTIVE_STATUS } from '../../../Constants';
+import ObjectiveForm from '../ObjectiveForm';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -24,9 +22,7 @@ describe('ObjectiveForm', () => {
         name: 'Behavioral / Mental Health / Trauma',
       },
     ],
-    resources: [
-      { key: 'gee-whix', value: '' },
-    ],
+    resources: [{ key: 'gee-whix', value: '' }],
     id: 123,
     status: OBJECTIVE_STATUS.NOT_STARTED,
     supportType: 'Maintaining',
@@ -40,9 +36,9 @@ describe('ObjectiveForm', () => {
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
     goalStatus = 'Draft',
-    userCanEdit = true,
+    userCanEdit = true
   ) => {
-    render((
+    render(
       <UserContext.Provider value={{ user: { flags: [] } }}>
         <ObjectiveForm
           index={index}
@@ -70,15 +66,18 @@ describe('ObjectiveForm', () => {
           userCanEdit={userCanEdit}
         />
       </UserContext.Provider>
-    ));
+    );
   };
 
   beforeEach(() => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-topic',
+      `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`
+    );
   });
 
   afterEach(() => {
@@ -90,9 +89,7 @@ describe('ObjectiveForm', () => {
     const objective = {
       title: '',
       topics: [],
-      resources: [
-        { key: 'gee-whix', value: '' },
-      ],
+      resources: [{ key: 'gee-whix', value: '' }],
       status: OBJECTIVE_STATUS.NOT_STARTED,
     };
 
@@ -106,6 +103,13 @@ describe('ObjectiveForm', () => {
     userEvent.click(objectiveText);
     userEvent.tab(); // trigger blur event
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>, <></>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [
+      <span className="usa-error-message">{objectiveTextError}</span>,
+      <></>,
+      <></>,
+      <></>,
+      <></>,
+      <></>,
+    ]);
   });
 });

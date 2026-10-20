@@ -1,4 +1,3 @@
-.ttahub-review-card--finding-within-review
-  .ttahub-review-card--finding-within-review-category {
+.ttahub-review-card--finding-within-review .ttahub-review-card--finding-within-review-category {
   grid-column: span 2;
 }

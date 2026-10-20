@@ -1,16 +1,17 @@
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import DOMPurify from 'dompurify';
+import { ContentState, EditorState } from 'draft-js';
+import htmlToDraft from 'html-to-draftjs';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
-import htmlToDraft from 'html-to-draftjs';
-import { EditorState, ContentState } from 'draft-js';
-import { DECIMAL_BASE, REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import {
-  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
-  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
-  WITHIN,
-  QUERY_CONDITIONS,
+  DATE_DISPLAY_FORMAT,
   DATE_FMT,
   DATE_FORMAT,
-  DATE_DISPLAY_FORMAT,
+  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
+  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
+  QUERY_CONDITIONS,
+  WITHIN,
 } from './Constants';
 
 /**
@@ -35,8 +36,10 @@ export const isValidURL = (url) => {
  */
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
-  return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
-    || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
+  return (
+    newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION) ||
+    newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION)
+  );
 };
 
 /**
@@ -53,11 +56,26 @@ export const isExternalURL = (url) => {
     return false;
   }
 
-  return (newUrl.host !== currentHost.host);
+  return newUrl.host !== currentHost.host;
 };
 
-export const reportIsEditable = (status) => status === REPORT_STATUSES.DRAFT
-  || status === REPORT_STATUSES.NEEDS_ACTION;
+/**
+ * Decide if a string is safe to render as a link: either a same-app relative
+ * path (e.g. "/goal/123") or a valid http(s) URL per `isValidURL`.
+ *
+ * Whitespace and backslashes are rejected outright, even though `new URL()`
+ * would otherwise accept them: it silently normalizes backslashes to slashes
+ * and encodes spaces, which can disguise the link's real destination (e.g.
+ * "http:\\trusted.example@evil.example" resolves to host "evil.example").
+ */
+export const isSafeRenderableLink = (to) => {
+  if (/[\s\\]/.test(to)) return false;
+  if (/^\/(?!\/)/.test(to)) return true;
+  return isValidURL(to);
+};
+
+export const reportIsEditable = (status) =>
+  status === REPORT_STATUSES.DRAFT || status === REPORT_STATUSES.NEEDS_ACTION;
 
 /**
  * Given an html string.
@@ -71,8 +89,102 @@ export const getEditorState = (name) => {
   return EditorState.createWithContent(contentState);
 };
 
+/**
+ * Convert a rich-text (HTML) value into a clean, human-readable plain-text
+ * string. Strips all tags, decodes the whitespace entities Draft emits, and
+ * collapses remaining whitespace. Useful for compact displays (e.g. cards)
+ * where the formatting itself should not be rendered.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} plain text ('' for empty or non-string input)
+ */
+export const getRichTextAsText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return '';
+  }
+
+  return (
+    html
+      // replace tags with a space so adjacent blocks don't merge words together
+      .replace(/<[^>]*>/g, ' ')
+      // decode common whitespace entities that Draft emits
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#160;/g, ' ')
+      // normalize remaining whitespace (including newlines)
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+};
+
+/**
+ * Determine whether a rich-text (HTML) value is semantically empty.
+ *
+ * React Draft emits several "empty" variants beyond a bare `<p></p>` — for
+ * example `<p></p>\n`, `<p>&nbsp;</p>`, or multiple empty paragraphs. A naive
+ * check against a single sentinel string misses these, so we strip the value
+ * down to its visible text (via `getRichTextAsText`) and check for content.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {boolean} true when the value contains no visible text content
+ */
+export const isEmptyRichText = (html) => getRichTextAsText(html).length === 0;
+
+/**
+ * Strict allowlist for read-only rich-text rendering. Intentionally excludes
+ * embedded/atomic content such as `img` and `iframe`, which `html-to-draftjs`
+ * converts into atomic blocks that can crash the read-only Draft renderer.
+ */
+export const RICH_TEXT_ALLOWED_TAGS = [
+  'p',
+  'br',
+  'strong',
+  'em',
+  'del',
+  'ins',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'a',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'code',
+  'pre',
+  'span',
+  'div',
+];
+
+export const RICH_TEXT_ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];
+
+/**
+ * Sanitize stored rich-text HTML with the strict read-only allowlist above.
+ *
+ * Backend hooks only sanitize on create/update, so legacy values (or values
+ * authored before a sanitization change) can still contain unsupported markup.
+ * Sanitizing at render time strips it before the value reaches the Draft
+ * renderer, preventing crashes from atomic content like `iframe`/`img`.
+ *
+ * @param {string} html - rich-text HTML string
+ * @returns {string} sanitized HTML (non-string input is returned unchanged)
+ */
+export const sanitizeRichText = (html) => {
+  if (!html || typeof html !== 'string') {
+    return html;
+  }
+
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: RICH_TEXT_ALLOWED_TAGS,
+    ALLOWED_ATTR: RICH_TEXT_ALLOWED_ATTR,
+  });
+};
+
 export const getDistinctSortedArray = (arr) => {
-  let distinctList = arr.filter(((a) => a !== null));
+  let distinctList = arr.filter((a) => a !== null);
   distinctList = [...new Set(distinctList)];
   distinctList = distinctList.sort();
   return distinctList;
@@ -118,6 +230,57 @@ export function expandFilters(filters) {
   return arr;
 }
 
+/**
+ * Express expects arrays in queries like
+ * &filter.is[]=1&filter.is[]=2
+ * rather than &filter.is[]=1,2
+ *
+ * @param {Array} filters
+ * @returns array of filters
+ */
+
+export function expandMonitoringFilters(filters) {
+  const arr = [];
+
+  filters.forEach((filter) => {
+    const { topic, query, condition } = filter;
+    const queries = Array.isArray(query) ? query : [query];
+
+    // startDate is a special case because the monitoring dashboard exposes one
+    // Date filter while the backend applies that date to different columns for
+    // different monitoring datasets.
+    if (topic === 'startDate') {
+      const generatedDateTopics = ['completeDate', 'reportDeliveryDate'];
+      queries.forEach((q) => {
+        arr.push({ ...filter, query: q });
+        generatedDateTopics.forEach((generatedTopic) => {
+          arr.push({
+            topic: generatedTopic,
+            condition,
+            query: q,
+          });
+        });
+      });
+
+      return;
+    }
+
+    if (Array.isArray(query)) {
+      query.forEach((q) => {
+        arr.push({
+          topic,
+          condition,
+          query: q,
+        });
+      });
+    } else {
+      arr.push(filter);
+    }
+  });
+
+  return arr;
+}
+
 export function decodeQueryParam(param) {
   const query = decodeURIComponent(param);
   if (query.includes(',')) {
@@ -128,50 +291,134 @@ export function decodeQueryParam(param) {
 
 export function queryStringToFilters(queryString) {
   const queries = queryString.split('&');
-  return queries.map((q) => {
-    const [topicAndCondition, query] = q.split('=');
-    const [topic, searchCondition] = topicAndCondition.split('.');
+  const parsed = queries
+    .map((q) => {
+      const [topicAndCondition, query] = q.split('=');
+      const [topic, searchCondition] = topicAndCondition.split('.');
 
-    const queryKeys = Object.keys(QUERY_CONDITIONS);
-    const queryConditions = Object.values(QUERY_CONDITIONS);
+      const queryKeys = Object.keys(QUERY_CONDITIONS);
+      const queryConditions = Object.values(QUERY_CONDITIONS);
 
-    const decodedQueryParam = decodeQueryParam(query);
+      const decodedQueryParam = decodeQueryParam(query);
 
-    const findCondition = (queryCondition) => {
-      const decoded = decodeURIComponent(searchCondition);
-      return decoded === queryCondition;
-    };
-
-    const index = queryConditions.findIndex(findCondition);
-
-    const condition = queryKeys[index];
-
-    if (topic && condition && query) {
-      return {
-        id: uuidv4(),
-        topic,
-        condition,
-        // we use is and is not for query parameters
-        query: condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
+      const findCondition = (queryCondition) => {
+        const decoded = decodeURIComponent(searchCondition);
+        return decoded === queryCondition;
       };
-    }
 
-    return null;
-  }).filter((query) => query);
+      const index = queryConditions.findIndex(findCondition);
+
+      const condition = queryKeys[index];
+
+      if (topic && condition && query) {
+        return {
+          id: uuidv4(),
+          topic,
+          condition,
+          // we use is and is not for query parameters
+          query:
+            condition === 'is not' || condition === 'is' ? [decodedQueryParam] : decodedQueryParam,
+        };
+      }
+
+      return null;
+    })
+    .filter((query) => query);
+
+  // filtersToQueryString serializes array-query filters (is/is not) as one param per value.
+  // Merge params with the same topic+condition back into a single combined filter entry.
+  const merged = new Map();
+  parsed.forEach((filter) => {
+    if (!Array.isArray(filter.query)) {
+      merged.set(`${filter.topic}:${filter.condition}:${String(filter.query)}`, filter);
+      return;
+    }
+    const key = `${filter.topic}:${filter.condition}`;
+    const existing = merged.get(key);
+    if (existing) {
+      merged.set(key, {
+        ...existing,
+        query: [...new Set([...existing.query, ...filter.query.flat()])],
+      });
+    } else {
+      merged.set(key, filter);
+    }
+  });
+  return [...merged.values()];
+}
+
+const FILTER_DATE_INPUT_FORMATS = [DATE_FMT, DATE_FORMAT];
+
+function formatFilterDateForQuery(date) {
+  const parsed = moment(date, FILTER_DATE_INPUT_FORMATS, true);
+  return parsed.isValid() ? parsed.format(DATE_FMT) : null;
+}
+
+function formatDateFilterQueryValue(query) {
+  if (typeof query !== 'string') {
+    return query;
+  }
+
+  const dates = query.split('-');
+  if (dates.length === 1) {
+    return formatFilterDateForQuery(query) || query;
+  }
+
+  if (dates.length !== 2) {
+    return query;
+  }
+
+  const startDate = formatFilterDateForQuery(dates[0]);
+  const endDate = formatFilterDateForQuery(dates[1]);
+
+  return startDate && endDate ? `${startDate}-${endDate}` : query;
+}
+
+export function formatDateFilterForQuery(query) {
+  return Array.isArray(query)
+    ? query.map(formatDateFilterQueryValue)
+    : formatDateFilterQueryValue(query);
 }
 
 export function filtersToQueryString(filters, region) {
-  const filtersWithValues = filters.filter((f) => {
+  const filtersForQuery = filters.map((filter) =>
+    filter.condition === WITHIN
+      ? { ...filter, query: formatDateFilterForQuery(filter.query) }
+      : filter
+  );
+
+  const filtersWithValues = filtersForQuery.filter((f) => {
     if (f.condition === WITHIN) {
-      const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+      const queries = Array.isArray(f.query) ? f.query : [f.query];
+
+      return queries.every((query) => {
+        if (typeof query !== 'string') {
+          return false;
+        }
+
+        const dates = query.split('-');
+        if (dates.length !== 2) {
+          return false;
+        }
+
+        return dates.every((date) => moment(date, DATE_FMT, true).isValid());
+      });
     }
     return f.query !== '';
   });
   const queryFragments = filtersWithValues.map((filter) => {
+    if (Array.isArray(filter.query)) {
+      return filter.query
+        .map((q) => {
+          const con = QUERY_CONDITIONS[filter.condition];
+          const trimmedQ = String(q).trim();
+          return `${filter.topic}.${con}=${encodeURIComponent(trimmedQ)}`;
+        })
+        .join('&');
+    }
     const con = QUERY_CONDITIONS[filter.condition];
-    const q = String(filter.query).trim();
-    return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
+    const trimmedQ = String(filter.query).trim();
+    return `${filter.topic}.${con}=${encodeURIComponent(trimmedQ)}`;
   });
 
   if (region && !Number.isNaN(parseInt(region, DECIMAL_BASE))) {
@@ -203,16 +450,19 @@ export function filtersToQueryString(filters, region) {
  * @param {Object} format
  * @returns a date string
  */
-export function formatDateRange(format = {
-  lastThirtyDays: false,
-  yearToDate: false,
-  withSpaces: false,
-  forDateTime: false,
-  lastThreeMonths: false,
-  lastSixMonths: false,
-  sep: '-',
-  string: '',
-}) {
+export function formatDateRange(
+  format = {
+    lastThirtyDays: false,
+    lastTwelveMonths: false,
+    yearToDate: false,
+    withSpaces: false,
+    forDateTime: false,
+    lastThreeMonths: false,
+    lastSixMonths: false,
+    sep: '-',
+    string: '',
+  }
+) {
   const selectedFormat = format.forDateTime ? DATE_FMT : DATE_FORMAT;
 
   let { sep } = format;
@@ -223,6 +473,11 @@ export function formatDateRange(format = {
 
   let firstDay;
   let secondDay;
+
+  if (format.lastTwelveMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(12, 'months');
+  }
 
   if (format.lastThirtyDays) {
     secondDay = moment();
@@ -280,11 +535,12 @@ export const parseFeedIntoDom = (feed) => {
 
 export const checkboxesToIds = (checkboxes) => {
   const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
-  // Loop all selected rows and parseInt to an array of integers.
-  // If the ID isn't a number, keep it as a string.
+  // Preserve composite IDs like "123:456"; only legacy numeric row IDs should become numbers.
   return selectedRowsStrings.map((s) => {
-    const parsedInt = parseInt(s, DECIMAL_BASE);
-    return s.includes('-') ? s : parsedInt;
+    if (/^\d+$/.test(s)) {
+      return parseInt(s, DECIMAL_BASE);
+    }
+    return s;
   });
 };
 
@@ -295,7 +551,9 @@ export const blobToCsvDownload = (blob, fileName) => {
     // Check if url exists with the attribute of download
     // and remove it if it does.
     if (document.getElementsByName('download').length > 0) {
-      Array.from(document.getElementsByName('download')).forEach((el) => el.remove());
+      Array.from(document.getElementsByName('download')).forEach((el) => {
+        el.remove();
+      });
     }
 
     url = window.URL.createObjectURL(blob);
@@ -328,17 +586,42 @@ export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
 };
 
 export const SUPPORTED_DATE_FORMATS = [
-  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
-  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
-  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
-  'M.D.YY', 'MM.DD.YY',
+  'MM/DD/YYYY',
+  'M/D/YYYY',
+  'M/DD/YYYY',
+  'MM/D/YYYY',
+  'MM/DD/YY',
+  'M/D/YY',
+  'M/DD/YY',
+  'MM/D/YY',
+  'YYYY-MM-DD',
+  'YYYY-M-D',
+  'YYYY-M-DD',
+  'YYYY-MM-D',
+  'M.D.YYYY',
+  'MM.D.YYYY',
+  'M.DD.YYYY',
+  'MM.DD.YYYY',
+  'M.D.YY',
+  'MM.DD.YY',
 ];
 
 export function isValidDate(value) {
   if (!value) return null;
   const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
   return parsed ? moment(value, parsed, true) : null;
+}
+
+// Parses supported date formats strictly, avoiding Moment's deprecated JS Date fallback.
+// ISO 8601 values are parsed as UTC so a date-only timestamp (e.g. midnight UTC) doesn't
+// shift to the previous calendar day when formatted in timezones behind UTC.
+export function parseDateStrict(value) {
+  if (!value) return null;
+  if (moment(value, moment.ISO_8601, true).isValid()) {
+    return moment.utc(value);
+  }
+  const parsed = moment(value, ['YYYY-MM-DD', 'MM/DD/YYYY'], true);
+  return parsed.isValid() ? parsed : null;
 }
 
 /**
@@ -359,23 +642,16 @@ export function isValidDate(value) {
  *   }[]
  * }
  */
-export function getCollabReportStatusDisplayAndClassnames(
-  userId,
-  report,
-) {
-  const {
-    calculatedStatus,
-    author,
-    collaboratingSpecialists = [],
-    approvers = [],
-  } = report;
+export function getCollabReportStatusDisplayAndClassnames(userId, report) {
+  const { calculatedStatus, author, collaboratingSpecialists = [], approvers = [] } = report;
 
   let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
   let displayStatus = calculatedStatus;
 
   // Check if user is the report creator or collaborator
-  const isCreatorOrCollaborator = (author && userId === author.id)
-    || collaboratingSpecialists.some((specialist) => specialist.id === userId);
+  const isCreatorOrCollaborator =
+    (author && userId === author.id) ||
+    collaboratingSpecialists.some((specialist) => specialist.id === userId);
 
   // Check if user is an approver
   const userApprover = approvers.find((approver) => approver.user && approver.user.id === userId);
@@ -388,10 +664,10 @@ export function getCollabReportStatusDisplayAndClassnames(
       displayStatus = 'Needs action';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
     } else if (
-      calculatedStatus === REPORT_STATUSES.SUBMITTED
-      && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
-      && !approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+      calculatedStatus === REPORT_STATUSES.SUBMITTED &&
+      approvers.length > 0 &&
+      approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED) &&
+      !approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
     ) {
       // -- if the report is submitted and the report has been approved by one approver
       // but not by all reviewers, they see "Reviewed"
@@ -412,8 +688,9 @@ export function getCollabReportStatusDisplayAndClassnames(
       displayStatus = 'Reviewed';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
     } else if (
-      calculatedStatus === REPORT_STATUSES.SUBMITTED
-      || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+      calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    ) {
       // If they haven't reviewed it yet and the report is submitted, they see "Needs action"
       displayStatus = 'Needs action';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
@@ -430,7 +707,7 @@ export function getCollabReportStatusDisplayAndClassnames(
 export function getStatusDisplayAndClassnames(
   calculatedStatus,
   approvers = [],
-  justSubmitted = false,
+  justSubmitted = false
 ) {
   let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
   let displayStatus = calculatedStatus;
@@ -446,27 +723,30 @@ export function getStatusDisplayAndClassnames(
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
   ) {
     displayStatus = 'Reviewed';
     statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
-      && approvers && approvers.length > 0
-      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
   ) {
     displayStatus = 'Needs action';
     statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
   }
 
   if (
-    calculatedStatus !== REPORT_STATUSES.APPROVED
-      && approvers && approvers.length > 0
-      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    calculatedStatus !== REPORT_STATUSES.APPROVED &&
+    approvers &&
+    approvers.length > 0 &&
+    approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
   ) {
     displayStatus = REPORT_STATUSES.APPROVED;
     statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
@@ -477,3 +757,6 @@ export function getStatusDisplayAndClassnames(
     statusClassName,
   };
 }
+
+export const toSentenceCase = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : str;

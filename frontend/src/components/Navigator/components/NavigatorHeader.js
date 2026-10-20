@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef } from 'react';
 
 const NavigatorHeader = ({ label, titleOverride, formData }) => {
   const heading = useRef();
@@ -14,7 +14,9 @@ const NavigatorHeader = ({ label, titleOverride, formData }) => {
 
   return (
     <div className="padding-top-2">
-      <h2 className="font-family-serif" data-testid="navigator-header" ref={heading}>{finalLabel}</h2>
+      <h2 className="font-family-serif" data-testid="navigator-header" ref={heading}>
+        {finalLabel}
+      </h2>
     </div>
   );
 };

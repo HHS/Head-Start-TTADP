@@ -4,6 +4,16 @@
     color: $text-link;
 }
 
+// Clamp the session objective to three lines, appending an ellipsis only when
+// the text overflows.
+.ttahub-session-card__objective {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
 @container ttahub-event-card (min-width: 800px) {
     .ttahub-session-card__card-data {
         display: flex;

@@ -1,7 +1,8 @@
 /* eslint-disable import/prefer-default-export */
-import httpCodes from 'http-codes';
+
 import axios from 'axios';
 import he from 'he';
+import httpCodes from 'http-codes';
 import { auditLogger, logger } from '../logger';
 import { Resource } from '../models';
 
@@ -9,7 +10,8 @@ const requestOptions = {
   maxRedirects: 25,
   responseEncoding: 'utf8',
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
   },
 };
 
@@ -19,20 +21,17 @@ const requestOptions = {
  * @param {object} obj - The object to filter.
  * @returns {object} - The filtered object.
  */
-const filterToSupportedCharacters = (obj) => JSON.parse(JSON.stringify(obj, (key, value) => {
-  if (typeof value === 'string') {
-    return Buffer.from(value, 'utf-8').toString();
-  }
-  return value;
-}));
+const filterToSupportedCharacters = (obj) =>
+  JSON.parse(
+    JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'string') {
+        return Buffer.from(value, 'utf-8').toString();
+      }
+      return value;
+    })
+  );
 
-const commonAuthNames = [
-  'login',
-  'signin',
-  'authenticate',
-  'unavailable',
-  'auth',
-];
+const commonAuthNames = ['login', 'signin', 'authenticate', 'unavailable', 'auth'];
 
 /**
  * Overrides the status code to UNAUTHORIZED if authentication is required.
@@ -78,7 +77,7 @@ const getMimeType = async (url) => {
       mimeType = error.response.headers['content-type']; // Get the MIME type from the error response headers.
       auditLogger.error(
         `Resource Queue: Unable to retrieve header for Resource (URL: ${url}), received status code of ${statusCode}. Please make sure this is a valid address:`,
-        error,
+        error
       ); // Log an error message with the URL and status code.
     } else {
       auditLogger.error('Error checking status:', error); // Log a generic error message.
@@ -86,14 +85,17 @@ const getMimeType = async (url) => {
   }
 
   // Update URL in DB.
-  await Resource.update({
-    ...(mimeType && { mimeType }), // Update the MIME type in the database if it exists.
-    // Update the status code in the database if it exists.
-    ...(statusCode && { lastStatusCode: statusCode }),
-  }, {
-    where: { url },
-    individualHooks: true,
-  });
+  await Resource.update(
+    {
+      ...(mimeType && { mimeType }), // Update the MIME type in the database if it exists.
+      // Update the status code in the database if it exists.
+      ...(statusCode && { lastStatusCode: statusCode }),
+    },
+    {
+      where: { url },
+      individualHooks: true,
+    }
+  );
 
   return { mimeType, statusCode }; // Return the MIME type and status code as an object.
 };
@@ -115,23 +117,28 @@ const getMetadataValuesFrommJson = async (url) => {
     // Check if the URL already contains query parameters
     if (url.includes('?')) {
       metadataUrl = `${url}&_format=json`;
-    } else if (url.includes('#')) { // Check if the URL contains a fragment identifier
+    } else if (url.includes('#')) {
+      // Check if the URL contains a fragment identifier
       metadataUrl = `${url.split('#')[0]}?_format=json`;
-    } else { // Append query parameter to the URL
+    } else {
+      // Append query parameter to the URL
       metadataUrl = `${url}?_format=json`;
     }
     const res = await axios.get(metadataUrl, requestOptions);
 
     result = {
       // Check if the response data is a non-empty object and the content-type is JSON
-      metadata: (typeof res.data === 'object' && Object.keys(res.data)?.length !== 0 && res?.headers['content-type'] === 'application/json')
-        ? res.data
-        : null,
+      metadata:
+        typeof res.data === 'object' &&
+        Object.keys(res.data)?.length !== 0 &&
+        res?.headers['content-type'] === 'application/json'
+          ? res.data
+          : null,
       statusCode: overrideStatusCodeOnAuthRequired(
         res.status,
         commonAuthNames,
         res?.request?.res?.responseUrl !== metadataUrl && res?.request?.res?.responseUrl,
-        true,
+        true
       ),
       mimeType: res.headers['content-type'],
     };
@@ -140,7 +147,7 @@ const getMetadataValuesFrommJson = async (url) => {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
         error,
-        error.stack,
+        error.stack
       );
       result = {
         metadata: null,
@@ -150,7 +157,7 @@ const getMetadataValuesFrommJson = async (url) => {
     } else {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}). Please make sure this is a valid address:`,
-        error,
+        error
       );
       throw error;
     }
@@ -161,7 +168,7 @@ const getMetadataValuesFrommJson = async (url) => {
 const metadataPatterns = [
   /<(title)[^>]*>([^<]+)<\/title>/gi,
   // eslint-disable-next-line no-useless-escape
-  /<meta[ \t]+(?:name|property)="([^"]*)"[ \t]+content="([^"]*)"[ \t]?(?:[\/])?>/gi,
+  /<meta[ \t]+(?:name|property)="([^"]*)"[ \t]+content="([^"]*)"[ \t]?(?:[/])?>/gi,
 ];
 /**
  * Retrieves metadata values from an HTML page.
@@ -177,9 +184,11 @@ const getMetadataValuesFromHtml = async (url) => {
 
     // Extract metadata values from the HTML response
     const metadata = metadataPatterns
-      .flatMap((pattern) => ((res && res.data && typeof res.data === 'string')
-        ? [...(res?.data?.matchAll(pattern) || null)]
-        : []))
+      .flatMap((pattern) =>
+        res && res.data && typeof res.data === 'string'
+          ? [...(res?.data?.matchAll(pattern) || null)]
+          : []
+      )
       .reduce((acc, meta) => {
         if (Array.isArray(meta)) {
           const key = meta[1].toLowerCase();
@@ -201,14 +210,13 @@ const getMetadataValuesFromHtml = async (url) => {
 
     // Prepare the result object
     result = {
-      metadata: (typeof metadata === 'object' && Object.keys(metadata).length !== 0)
-        ? metadata
-        : null,
+      metadata:
+        typeof metadata === 'object' && Object.keys(metadata).length !== 0 ? metadata : null,
       statusCode: overrideStatusCodeOnAuthRequired(
         res?.status,
         commonAuthNames,
         res?.request?.res?.responseUrl !== url && res?.request?.res?.responseUrl,
-        true,
+        true
       ),
       mimeType: res?.headers['content-type'],
     };
@@ -217,7 +225,7 @@ const getMetadataValuesFromHtml = async (url) => {
       // Log an error message when unable to collect metadata due to a response error
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from page scrape for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
-        error,
+        error
       );
       result = {
         statusCode: error.response.status,
@@ -227,7 +235,7 @@ const getMetadataValuesFromHtml = async (url) => {
       // Log an error message when unable to collect metadata due to an unexpected error
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from page scrape for Resource (URL: ${url}). Please make sure this is a valid address:`,
-        error,
+        error
       );
       throw error;
     }
@@ -291,22 +299,25 @@ const getMetadataValues = async (url) => {
   } catch (error) {
     auditLogger.error(
       `Resource Queue: Unable to retrieving metadata for Resource (URL: ${url}). Please make sure this is a valid address:`,
-      error,
+      error
     ); // Log an error message if there is an exception while retrieving metadata.
   }
-  await Resource.update({
-    ...(title && { title }), // Update the title field in the database if it exists.
-    // Update the metadata and metadataUpdatedAt fields in the database if they exist.
-    ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
-    ...(mimeType && { mimeType }), // Update the mimeType field in the database if it exists.
-    // Update the lastStatusCode field in the database if it exists.
-    ...(statusCode && { lastStatusCode: statusCode }),
-    // Update the metadataUpdatedAt field in the database with the current date.
-    metadataUpdatedAt: new Date(),
-  }, {
-    where: { url }, // Specify the resource to update based on the URL.
-    individualHooks: true, // Enable individual hooks for the update operation.
-  });
+  await Resource.update(
+    {
+      ...(title && { title }), // Update the title field in the database if it exists.
+      // Update the metadata and metadataUpdatedAt fields in the database if they exist.
+      ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
+      ...(mimeType && { mimeType }), // Update the mimeType field in the database if it exists.
+      // Update the lastStatusCode field in the database if it exists.
+      ...(statusCode && { lastStatusCode: statusCode }),
+      // Update the metadataUpdatedAt field in the database with the current date.
+      metadataUpdatedAt: new Date(),
+    },
+    {
+      where: { url }, // Specify the resource to update based on the URL.
+      individualHooks: true, // Enable individual hooks for the update operation.
+    }
+  );
   return {
     title,
     statusCode,
@@ -343,22 +354,25 @@ const getPageScrapeValues = async (url) => {
   } catch (error) {
     auditLogger.error(
       `Resource Queue: Unable to page scrape for Resource (URL: ${url}). Please make sure this is a valid address:`,
-      error,
+      error
     );
     throw error; // Rethrow the error to be handled by the caller
   }
 
   // Update the resource with the scraped data
-  await Resource.update({
-    ...(title && { title }), // Update the title if it exists
-    // Update the metadata and metadataUpdatedAt if they exist
-    ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
-    ...(mimeType && { mimeType }), // Update the MIME type if it exists
-    ...(statusCode && { lastStatusCode: statusCode }), // Update the last status code if it exists
-  }, {
-    where: { url },
-    individualHooks: true,
-  });
+  await Resource.update(
+    {
+      ...(title && { title }), // Update the title if it exists
+      // Update the metadata and metadataUpdatedAt if they exist
+      ...(metadata && { metadata, metadataUpdatedAt: new Date() }),
+      ...(mimeType && { mimeType }), // Update the MIME type if it exists
+      ...(statusCode && { lastStatusCode: statusCode }), // Update the last status code if it exists
+    },
+    {
+      where: { url },
+      individualHooks: true,
+    }
+  );
 
   return { title, statusCode }; // Return the scraped title and status code
 };
@@ -383,9 +397,7 @@ export const unparsableMimeTypes = [
  * @returns {Promise<object>} - The status and data of the retrieved resource metadata.
  */
 const getResourceMetaDataJob = async (job) => {
-  const {
-    resourceId, resourceUrl,
-  } = job.data;
+  const { resourceId, resourceUrl } = job.data;
 
   try {
     // Determine if this is an ECLKC or HeadStart resource.
@@ -402,7 +414,9 @@ const getResourceMetaDataJob = async (job) => {
 
     // Check if the MIME type is unparsable.
     if (mimeType && unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))) {
-      auditLogger.error(`Resource Queue: Warning, unable to process resource '${resourceUrl}', received status code '${statusCode}'.`);
+      auditLogger.error(
+        `Resource Queue: Warning, unable to process resource '${resourceUrl}', received status code '${statusCode}'.`
+      );
       return {
         status: httpCodes.NO_CONTENT,
         data: { url: resourceUrl },
@@ -411,7 +425,9 @@ const getResourceMetaDataJob = async (job) => {
 
     // Check if the status code indicates an error.
     if (statusCode !== httpCodes.OK) {
-      auditLogger.error(`Resource Queue: Warning, unable to retrieve resource '${resourceUrl}', received status code '${statusCode}'.`);
+      auditLogger.error(
+        `Resource Queue: Warning, unable to retrieve resource '${resourceUrl}', received status code '${statusCode}'.`
+      );
       return { status: statusCode || 500, data: { url: resourceUrl } };
     }
 
@@ -419,25 +435,32 @@ const getResourceMetaDataJob = async (job) => {
     if (isEclkc || isHeadStart) {
       ({ title, statusCode } = await getMetadataValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
-        auditLogger.error(`Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
+        auditLogger.error(
+          `Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`
+        );
         return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     } else {
       // If it is not an HeadStart resource, scrape the page title.
       ({ title, statusCode } = await getPageScrapeValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
-        auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
+        auditLogger.error(
+          `Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`
+        );
         return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     }
-    logger.info(`Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`);
+    logger.info(
+      `Resource Queue: Successfully retrieved resource metadata for resource '${resourceUrl}'`
+    );
     return { status: httpCodes.OK, data: { url: resourceUrl } };
   } catch (error) {
-    auditLogger.error(`Resource Queue: Unable to retrieve metadata or title for Resource (ID: ${resourceId} URL: ${resourceUrl}), please make sure this is a valid address:`, error);
+    auditLogger.error(
+      `Resource Queue: Unable to retrieve metadata or title for Resource (ID: ${resourceId} URL: ${resourceUrl}), please make sure this is a valid address:`,
+      error
+    );
     return { status: httpCodes.NOT_FOUND, data: { url: resourceUrl } };
   }
 };
 
-export {
-  getResourceMetaDataJob,
-};
+export { getResourceMetaDataJob };

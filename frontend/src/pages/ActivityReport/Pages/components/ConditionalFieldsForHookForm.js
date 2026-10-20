@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { useController } from 'react-hook-form';
+import useDeepCompareEffect from 'use-deep-compare-effect';
+import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
-import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';
 
 const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
@@ -20,7 +20,7 @@ export const FIELD_DICTIONARY = {
       drawerButtonText,
       drawerTitle,
       drawerTagName,
-      drawerClassName,
+      drawerClassName
     ) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
@@ -49,9 +49,7 @@ export default function ConditionalFieldsForHookForm({
   drawerClassName,
 }) {
   const {
-    field: {
-      onChange: onUpdateGoalPrompts,
-    },
+    field: { onChange: onUpdateGoalPrompts },
   } = useController({
     name: 'goalPrompts',
     defaultValue: [],
@@ -71,7 +69,10 @@ export default function ConditionalFieldsForHookForm({
     // with the prompt data
 
     const goalPrompts = (prompts || []).map(({ promptId, title, grantId }) => ({
-      promptId, title, fieldName: formatPromptTitle({ title, grantId }), grantId,
+      promptId,
+      title,
+      fieldName: formatPromptTitle({ title, grantId }),
+      grantId,
     }));
     onUpdateGoalPrompts(goalPrompts);
   }, [onUpdateGoalPrompts, prompts]);
@@ -86,7 +87,7 @@ export default function ConditionalFieldsForHookForm({
         drawerButtonText,
         drawerTitle,
         drawerTagName,
-        drawerClassName,
+        drawerClassName
       );
     }
 
@@ -95,24 +96,23 @@ export default function ConditionalFieldsForHookForm({
 
   return (
     <>
-      {
-      heading
-      && prompts
-      && prompts.length > 0
-      && (<h3>{heading}</h3>)
-      }
+      {heading && prompts && prompts.length > 0 && <h3>{heading}</h3>}
       {fields}
     </>
   );
 }
 
 ConditionalFieldsForHookForm.propTypes = {
-  prompts: PropTypes.arrayOf(PropTypes.shape({
-    fieldType: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    prompt: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  }.isRequired)).isRequired,
+  prompts: PropTypes.arrayOf(
+    PropTypes.shape(
+      {
+        fieldType: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        prompt: PropTypes.string.isRequired,
+        options: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }.isRequired
+    )
+  ).isRequired,
   userCanEdit: PropTypes.bool,
   heading: PropTypes.string,
   drawerButtonText: PropTypes.string,

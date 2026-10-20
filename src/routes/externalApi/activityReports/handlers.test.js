@@ -1,5 +1,5 @@
-import ActivityReportsPresenter from '../../../serializers/activityReports';
 import ActivityReport from '../../../policies/activityReport';
+import ActivityReportsPresenter from '../../../serializers/activityReports';
 import { notFound, unauthorized } from '../../../serializers/errorResponses';
 import { activityReportAndRecipientsById } from '../../../services/activityReports';
 import { getReportByDisplayId } from './handlers';
@@ -61,7 +61,10 @@ describe('External API Activity Report handlers', () => {
 
       await getReportByDisplayId(mockRequest, mockResponse);
 
-      expect(unauthorized).toHaveBeenCalledWith(mockResponse, 'User is not authorized to access R01-AR-1234');
+      expect(unauthorized).toHaveBeenCalledWith(
+        mockResponse,
+        'User is not authorized to access R01-AR-1234'
+      );
     });
   });
 });

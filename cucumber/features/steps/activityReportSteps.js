@@ -1,18 +1,13 @@
 /* eslint-disable import/no-extraneous-dependencies */
 require('dotenv').config();
-const {
-  Given, Then, When,
-} = require('@cucumber/cucumber');
+const { Given, Then, When } = require('@cucumber/cucumber');
 const assertTrue = require('assert');
 const scope = require('../support/scope');
 
 Given('I am on the landing page', async () => {
   const page = scope.context.currentPage;
   const selector = 'a[href$="activity-reports"]';
-  await Promise.all([
-    page.waitForNavigation(),
-    page.click(selector),
-  ]);
+  await Promise.all([page.waitForNavigation(), page.click(selector)]);
 
   await scope.context.currentPage.waitForSelector('h1');
 
@@ -26,31 +21,42 @@ Given('I am on the landing page', async () => {
 When('I select {string}', async (inputLabel) => {
   const page = scope.context.currentPage;
   const selector = `//label[text()='${inputLabel}']`;
-  const element = await page.$x(selector);
+  const element = await page.$$(`xpath/${selector}`);
   await element[0].click();
 });
 
 Then('I see text containing {string}', async (string) => {
   const page = scope.context.currentPage;
   const pageContent = await page.content();
-  assertTrue(pageContent.includes(string), `Expected page to contain text "${string}", but it did not.`);
+  assertTrue(
+    pageContent.includes(string),
+    `Expected page to contain text "${string}", but it did not.`
+  );
 });
 
-Then('I see {string} as an option in the {string} multiselect', async (expectedOption, dropdownLabel) => {
-  const page = scope.context.currentPage;
-  const selector = `//label[text()='${dropdownLabel}']//div`;
-  const multiselect = await page.$x(selector);
-  await multiselect[0].click();
-  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`);
-  let found = false;
+Then(
+  'I see {string} as an option in the {string} multiselect',
+  async (expectedOption, dropdownLabel) => {
+    const page = scope.context.currentPage;
+    const selector = `//label[text()='${dropdownLabel}']//div`;
+    const multiselect = await page.$$(`xpath/${selector}`);
+    await multiselect[0].click();
+    const elements = await page.$$(
+      `xpath///label[text()='${dropdownLabel}']//div//div[2]//div//div`
+    );
+    let found = false;
 
-  for (let i = 0; i < elements.length; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
-    const text = await (await elements[i].getProperty('textContent')).jsonValue();
-    if (text.trim() === expectedOption) {
-      found = true;
+    for (let i = 0; i < elements.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const text = await (await elements[i].getProperty('textContent')).jsonValue();
+      if (text.trim() === expectedOption) {
+        found = true;
+      }
     }
-  }
 
-  assertTrue(found === true, `Did not find option "${expectedOption}" in multiselect component labeled "${dropdownLabel}"`);
-});
+    assertTrue(
+      found === true,
+      `Did not find option "${expectedOption}" in multiselect component labeled "${dropdownLabel}"`
+    );
+  }
+);

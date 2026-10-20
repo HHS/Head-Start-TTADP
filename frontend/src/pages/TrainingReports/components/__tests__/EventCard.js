@@ -1,15 +1,13 @@
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import {
-  act, render, screen,
-} from '@testing-library/react';
-import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
-import fetchMock from 'fetch-mock';
-import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
-import EventCard from '../EventCard';
 import UserContext from '../../../../UserContext';
+import EventCard from '../EventCard';
 
 describe('EventCard', () => {
   const history = createMemoryHistory();
@@ -19,6 +17,7 @@ describe('EventCard', () => {
     collaboratorIds: [],
     pocIds: [],
     regionId: 1,
+    eventId: 'TR-R01-1234',
     data: {
       eventName: 'This is my event title',
       eventId: 'TR-R01-1234',
@@ -58,7 +57,7 @@ describe('EventCard', () => {
   const renderEventCard = (
     event = defaultEvent,
     user = DEFAULT_USER,
-    onDeleteEvent = jest.fn(),
+    onDeleteEvent = jest.fn()
   ) => {
     render(
       <UserContext.Provider value={{ user }}>
@@ -76,7 +75,7 @@ describe('EventCard', () => {
             removeEventFromDisplay={jest.fn()}
           />
         </Router>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -96,15 +95,21 @@ describe('EventCard', () => {
   it('displays sessions', () => {
     renderEventCard();
     const expBtn = screen.getByRole('button', { name: /view sessions for event TR-R01-1234/i });
-    expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
+    expect(
+      document.querySelector('.ttahub-session-card__session-list[hidden]')
+    ).toBeInTheDocument();
 
     // Expand Objectives via click.
     userEvent.click(expBtn);
-    expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).not.toBeInTheDocument();
+    expect(
+      document.querySelector('.ttahub-session-card__session-list[hidden]')
+    ).not.toBeInTheDocument();
 
     // Collapse Objectives via click.
     userEvent.click(expBtn);
-    expect(document.querySelector('.ttahub-session-card__session-list[hidden]')).toBeInTheDocument();
+    expect(
+      document.querySelector('.ttahub-session-card__session-list[hidden]')
+    ).toBeInTheDocument();
   });
 
   it('hides the edit and create options', async () => {
@@ -114,11 +119,17 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute(
+      'href',
+      `/training-report/view/${defaultEvent.data.eventId}`
+    );
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete', eventSubmitted: true } });
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: 'Complete', eventSubmitted: true },
+    });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -133,16 +144,18 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
+    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute(
+      'href',
+      `/training-report/view/${defaultEvent.data.eventId}`
+    );
   });
 
   it('only shows the view options with view permission', async () => {
-    renderEventCard(defaultEvent,
-      {
-        ...DEFAULT_USER,
-        id: 2,
-        permissions: [{ scopeId: SCOPE_IDS.READ_REPORTS, regionId: 1 }],
-      });
+    renderEventCard(defaultEvent, {
+      ...DEFAULT_USER,
+      id: 2,
+      permissions: [{ scopeId: SCOPE_IDS.READ_REPORTS, regionId: 1 }],
+    });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
@@ -150,31 +163,36 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
-  it('does not show the create session option for poc without write permission', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      pocIds: [2],
-    },
-    {
-      ...DEFAULT_USER,
-      id: 2,
-      permissions: [
-        {
-          scopeId: SCOPE_IDS.READ_REPORTS,
-          regionId: 1,
-        },
-      ],
-    });
+  it('poc can create session', async () => {
+    renderEventCard(
+      {
+        ...defaultEvent,
+        pocIds: [2],
+      },
+      {
+        ...DEFAULT_USER,
+        id: 2,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/create session/i)).toBeNull();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('hides the delete for events that arent not started or suspended', async () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, DEFAULT_USER);
+    renderEventCard(
+      { ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } },
+      DEFAULT_USER
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
@@ -182,14 +200,18 @@ describe('EventCard', () => {
   });
 
   it('shows the delete for events that are not started or suspended', async () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } }, {
-      ...DEFAULT_USER,
-      permissions: [{
-        scopeId: SCOPE_IDS.ADMIN,
-        regionId: 1,
-      },
-      ],
-    });
+    renderEventCard(
+      { ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } },
+      {
+        ...DEFAULT_USER,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -198,14 +220,19 @@ describe('EventCard', () => {
 
   it('shows the delete modal for events and calls the correct function', async () => {
     const onDeleteEvent = jest.fn();
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } }, {
-      ...DEFAULT_USER,
-      permissions: [{
-        scopeId: SCOPE_IDS.ADMIN,
-        regionId: 1,
+    renderEventCard(
+      { ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } },
+      {
+        ...DEFAULT_USER,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
       },
-      ],
-    }, onDeleteEvent);
+      onDeleteEvent
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -214,10 +241,12 @@ describe('EventCard', () => {
     const deleteBtns = screen.queryAllByRole('button', { name: /delete event/i });
     userEvent.click(deleteBtns[0]);
 
-    expect(await screen.findByText(/are you sure you want to delete this event/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/are you sure you want to delete this event/i)
+    ).toBeInTheDocument();
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
-    expect(onDeleteEvent).toHaveBeenCalledWith('1234', 1);
+    expect(onDeleteEvent).toHaveBeenCalledWith(defaultEvent.data.eventId, 1);
   });
 
   it('cannot edit suspended events', () => {
@@ -243,26 +272,33 @@ describe('EventCard', () => {
     const editEvent = screen.queryByText(/edit event/i);
     expect(editEvent).toBeInTheDocument();
     userEvent.click(editEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/event-summary');
+    expect(history.push).toHaveBeenCalledWith(
+      `/training-report/${defaultEvent.data.eventId}/event-summary`
+    );
 
     // Create session.
     userEvent.click(contextBtn);
     const createSession = screen.queryByText(/create session/i);
     expect(createSession).toBeInTheDocument();
     userEvent.click(createSession);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
+    expect(history.push).toHaveBeenCalledWith(
+      `/training-report/${defaultEvent.data.eventId}/session/new/`
+    );
 
     // View/Print event.
     contextBtn.click();
     const viewEvent = screen.queryByText(/view\/print event/i);
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
+    expect(history.push).toHaveBeenCalledWith(`/training-report/view/${defaultEvent.data.eventId}`);
   });
 
   it('hides edit if eventSubmitted is set', () => {
     history.push = jest.fn();
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, eventSubmitted: true, status: 'Not started' } });
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, eventSubmitted: true, status: 'Not started' },
+    });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -279,7 +315,10 @@ describe('EventCard', () => {
   });
 
   it('does not show complete event if not owner', async () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, { ...DEFAULT_USER, id: 2 });
+    renderEventCard(
+      { ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } },
+      { ...DEFAULT_USER, id: 2 }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -288,7 +327,10 @@ describe('EventCard', () => {
   });
 
   it('does not show complete event if no sessions', async () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress', sessionReports: [] } });
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: 'In progress', sessionReports: [] },
+    });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -317,7 +359,12 @@ describe('EventCard', () => {
   it('does not show complete event if owner not complete', async () => {
     renderEventCard({
       ...defaultEvent,
-      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      sessionReports: [
+        {
+          ...defaultEvent.sessionReports[0],
+          data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' },
+        },
+      ],
       data: { ...defaultEvent.data, status: 'In progress', eventSubmitted: false },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -330,9 +377,16 @@ describe('EventCard', () => {
   it('shows complete event if all of the above are true', async () => {
     renderEventCard({
       ...defaultEvent,
-      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      sessionReports: [
+        {
+          ...defaultEvent.sessionReports[0],
+          data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' },
+        },
+      ],
       data: {
-        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
+        ...defaultEvent.data,
+        status: 'In progress',
+        eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -345,9 +399,16 @@ describe('EventCard', () => {
   it('happy path: async complete event', async () => {
     renderEventCard({
       ...defaultEvent,
-      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      sessionReports: [
+        {
+          ...defaultEvent.sessionReports[0],
+          data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' },
+        },
+      ],
       data: {
-        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
+        ...defaultEvent.data,
+        status: 'In progress',
+        eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -355,7 +416,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
     act(() => {
       userEvent.click(completeEvent);
     });
@@ -366,9 +427,16 @@ describe('EventCard', () => {
   it('sad path: async failure to complete event', async () => {
     renderEventCard({
       ...defaultEvent,
-      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      sessionReports: [
+        {
+          ...defaultEvent.sessionReports[0],
+          data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' },
+        },
+      ],
       data: {
-        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
+        ...defaultEvent.data,
+        status: 'In progress',
+        eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -376,7 +444,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
     act(() => {
       userEvent.click(completeEvent);
     });
@@ -386,18 +454,22 @@ describe('EventCard', () => {
   });
 
   it('shows suspend event for admin', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
-    }, {
-      ...DEFAULT_USER,
-      id: 2,
-      permissions: [{
-        scopeId: SCOPE_IDS.ADMIN,
-        regionId: 1,
+    renderEventCard(
+      {
+        ...defaultEvent,
+        data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
       },
-      ],
-    });
+      {
+        ...DEFAULT_USER,
+        id: 2,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -427,13 +499,16 @@ describe('EventCard', () => {
   });
 
   it('does not shows suspend event for not-owner', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
-    }, {
-      ...DEFAULT_USER,
-      id: 2,
-    });
+    renderEventCard(
+      {
+        ...defaultEvent,
+        data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      },
+      {
+        ...DEFAULT_USER,
+        id: 2,
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -449,7 +524,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const suspendEvent = screen.queryByText(/suspend event/i);
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
 
     act(() => {
       userEvent.click(suspendEvent);
@@ -467,7 +542,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const suspendEvent = screen.queryByText(/suspend event/i);
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
 
     act(() => {
       userEvent.click(suspendEvent);
@@ -478,18 +553,22 @@ describe('EventCard', () => {
   });
 
   it('shows resume event for admin', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
-    }, {
-      ...DEFAULT_USER,
-      id: 2,
-      permissions: [{
-        scopeId: SCOPE_IDS.ADMIN,
-        regionId: 1,
+    renderEventCard(
+      {
+        ...defaultEvent,
+        data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
       },
-      ],
-    });
+      {
+        ...DEFAULT_USER,
+        id: 2,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -519,13 +598,16 @@ describe('EventCard', () => {
   });
 
   it('does not shows resume event for not-owner', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
-    }, {
-      ...DEFAULT_USER,
-      id: 2,
-    });
+    renderEventCard(
+      {
+        ...defaultEvent,
+        data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+      },
+      {
+        ...DEFAULT_USER,
+        id: 2,
+      }
+    );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -541,7 +623,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const resumeEvent = screen.queryByText(/resume event/i);
-    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, { message: 'success', id: 1 });
 
     act(() => {
       userEvent.click(resumeEvent);
@@ -559,7 +641,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     const resumeEvent = screen.queryByText(/resume event/i);
-    fetchMock.put('/api/events/id/1234', 500);
+    fetchMock.put(`/api/events/id/${defaultEvent.data.eventId}`, 500);
 
     act(() => {
       userEvent.click(resumeEvent);

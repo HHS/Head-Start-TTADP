@@ -9,12 +9,7 @@ const createReport = ({ author, regionId = 1, eventId = 1 }) => ({
 
 let nextUserId = 0;
 
-const createUser = ({
-  write = false,
-  read = false,
-  admin = false,
-  regionId = 1,
-}) => {
+const createUser = ({ write = false, read = false, admin = false, regionId = 1 }) => {
   const permissions = [];
 
   nextUserId += 1;

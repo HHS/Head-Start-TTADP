@@ -1,6 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import ActivityReport from './activityReport';
 import SCOPES from '../middleware/scopeConstants';
+import ActivityReport from './activityReport';
 
 function activityReport(
   author,
@@ -8,34 +8,41 @@ function activityReport(
   approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
-  raw = true,
+  raw = true
 ) {
-  const report = raw ? {
-    userId: author,
-    regionId: 1,
-    activityReportCollaborators: [],
-    approvers: [],
-    submissionStatus,
-    calculatedStatus,
-  } : {
-    dataValues: {
-      userId: author,
-      regionId: 1,
-      activityReportCollaborators: [],
-      approvers: [],
-      submissionStatus,
-      calculatedStatus,
-    },
-  };
+  const report = raw
+    ? {
+        userId: author,
+        regionId: 1,
+        activityReportCollaborators: [],
+        approvers: [],
+        submissionStatus,
+        calculatedStatus,
+      }
+    : {
+        dataValues: {
+          userId: author,
+          regionId: 1,
+          activityReportCollaborators: [],
+          approvers: [],
+          submissionStatus,
+          calculatedStatus,
+        },
+      };
 
   if (activityReportCollaborator) {
     report.activityReportCollaborators.push(activityReportCollaborator);
   }
 
   if (approvers) {
-    report.approvers = [...report.approvers, ...approvers.map((approver) => ({
-      id: 9, status: null, note: null, user: { id: approver },
-    })),
+    report.approvers = [
+      ...report.approvers,
+      ...approvers.map((approver) => ({
+        id: 9,
+        status: null,
+        note: null,
+        user: { id: approver },
+      })),
     ];
   }
 
@@ -84,6 +91,8 @@ const admin = user(true, true, true, false, 6);
 const approver = user(false, false, false, true, 7);
 const canApproveRegion = user(false, false, false, true, 8);
 const canNotApproveRegion = user(false, false, false, false, 9);
+const authorApprover = user(true, false, false, true, 1);
+const collaboratorApprover = user(true, false, false, true, 2);
 
 describe('Activity Report policies', () => {
   describe('isApproverAndCreator', () => {
@@ -117,6 +126,20 @@ describe('Activity Report policies', () => {
       const policy = new ActivityReport(canNotApproveRegion, report);
       expect(policy.canReview()).toBeFalsy();
     });
+
+    it('is false if the user is the author, even with regional approval', () => {
+      const report = activityReport(authorApprover.id, null, [authorApprover.id]);
+      const policy = new ActivityReport(authorApprover, report);
+      expect(policy.canReview()).toBeFalsy();
+    });
+
+    it('is false if the user is a collaborator, even with regional approval', () => {
+      const report = activityReport(author.id, { user: collaboratorApprover }, [
+        collaboratorApprover.id,
+      ]);
+      const policy = new ActivityReport(collaboratorApprover, report);
+      expect(policy.canReview()).toBeFalsy();
+    });
   });
 
   describe('canCreate', () => {
@@ -147,7 +170,7 @@ describe('Activity Report policies', () => {
           null,
           null,
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.NEEDS_ACTION,
+          REPORT_STATUSES.NEEDS_ACTION
         );
         const policy = new ActivityReport(author, report);
         expect(policy.canUpdate()).toBeTruthy();
@@ -165,7 +188,7 @@ describe('Activity Report policies', () => {
           null,
           [approver.id],
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.SUBMITTED
         );
         const policy = new ActivityReport(approver, report);
         expect(policy.canUpdate()).toBeTruthy();
@@ -177,7 +200,7 @@ describe('Activity Report policies', () => {
           null,
           [approver.id],
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.NEEDS_ACTION,
+          REPORT_STATUSES.NEEDS_ACTION
         );
         const policy = new ActivityReport(approver, report);
         expect(policy.canUpdate()).toBeTruthy();
@@ -189,7 +212,7 @@ describe('Activity Report policies', () => {
           null,
           [approver.id],
           REPORT_STATUSES.DRAFT,
-          REPORT_STATUSES.DRAFT,
+          REPORT_STATUSES.DRAFT
         );
         const policy = new ActivityReport(approver, report);
         expect(policy.canUpdate()).toBe(false);
@@ -201,7 +224,7 @@ describe('Activity Report policies', () => {
           null,
           [approver.id],
           REPORT_STATUSES.APPROVED,
-          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED
         );
         const policy = new ActivityReport(approver, report);
         expect(policy.canUpdate()).toBe(false);
@@ -213,7 +236,7 @@ describe('Activity Report policies', () => {
           null,
           [approver.id, canApproveRegion.id],
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.SUBMITTED
         );
 
         report.approvers[1] = {
@@ -244,7 +267,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canUpdate()).toBeFalsy();
@@ -256,7 +279,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.APPROVED,
+        REPORT_STATUSES.APPROVED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canUpdate()).toBeFalsy();
@@ -270,7 +293,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.APPROVED,
+        REPORT_STATUSES.APPROVED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canReset()).toBeFalsy();
@@ -282,7 +305,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canReset()).toBeTruthy();
@@ -294,7 +317,7 @@ describe('Activity Report policies', () => {
         activityReportCollaborator,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
       const policy = new ActivityReport(activityReportCollaborator.user, report);
       expect(policy.canReset()).toBeTruthy();
@@ -306,7 +329,7 @@ describe('Activity Report policies', () => {
         activityReportCollaborator,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
       const policy = new ActivityReport(otherUser, report);
       expect(policy.canReset()).toBeFalsy();
@@ -373,7 +396,7 @@ describe('Activity Report policies', () => {
           null,
           null,
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED
         );
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeTruthy();
@@ -385,7 +408,7 @@ describe('Activity Report policies', () => {
           null,
           null,
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED
         );
         const policy = new ActivityReport(approver, report);
         expect(policy.canGet()).toBeTruthy();
@@ -397,7 +420,7 @@ describe('Activity Report policies', () => {
           null,
           null,
           REPORT_STATUSES.SUBMITTED,
-          REPORT_STATUSES.APPROVED,
+          REPORT_STATUSES.APPROVED
         );
         const policy = new ActivityReport(admin, report);
         expect(policy.canGet()).toBeTruthy();
@@ -418,7 +441,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeTruthy();
@@ -430,7 +453,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.NEEDS_ACTION,
+        REPORT_STATUSES.NEEDS_ACTION
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeTruthy();
@@ -454,7 +477,7 @@ describe('Activity Report policies', () => {
         null,
         null,
         REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.APPROVED,
+        REPORT_STATUSES.APPROVED
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();

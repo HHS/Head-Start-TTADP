@@ -1,14 +1,14 @@
+import { IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
+import { auditLogger } from '../../logger';
 import S3Client from '../stream/s3';
-import ZipStream, { FileInfo as ZipFileInfo } from '../stream/zip';
+import ZipStream, { type FileInfo as ZipFileInfo } from '../stream/zip';
+import processFilesFromZip from './processFilesFromZip';
 import {
   getNextFileToProcess,
   recordAvailableDataFiles,
-  setImportFileStatus,
   setImportDataFileStatusByPath,
+  setImportFileStatus,
 } from './record';
-import { IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
-import { auditLogger } from '../../logger';
-import processFilesFromZip from './processFilesFromZip';
 
 /**
  * Processes a zip file from S3.
@@ -17,9 +17,7 @@ import processFilesFromZip from './processFilesFromZip';
  * @returns {Promise<void>} A promise that resolves when the zip file has been processed
  * successfully.
  */
-const processZipFileFromS3 = async (
-  importId: number,
-) => {
+const processZipFileFromS3 = async (importId: number) => {
   const startTime = new Date(); // The start time for file collection
   // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
@@ -62,11 +60,7 @@ const processZipFileFromS3 = async (
 
   try {
     // Create a new ZipStream instance using the downloaded file stream
-    zipClient = new ZipStream(
-      s3FileStream,
-      undefined,
-      neededFiles,
-    );
+    zipClient = new ZipStream(s3FileStream, undefined, neededFiles);
 
     // Get details of all files in the zip archive
     fileDetails = await zipClient.getAllFileDetails();
@@ -86,21 +80,24 @@ const processZipFileFromS3 = async (
   // then cast the remaining ones as ZipFileInfo type
   const filteredFileDetails = fileDetails
     .filter((fileDetail) => fileDetail)
-    .filter(({ name, path }) => neededFiles.some((neededFile) => (
-      neededFile.name === name
-        && neededFile.path === path
-    ))) as ZipFileInfo[];
+    .filter(({ name, path }) =>
+      neededFiles.some((neededFile) => neededFile.name === name && neededFile.path === path)
+    ) as ZipFileInfo[];
 
-  await Promise.all(fileDetails
-    .filter(({ name, path }) => !neededFiles.some((neededFile) => (
-      neededFile.name === name
-        && neededFile.path === path
-    )))
-    .map(async (fileDetail) => setImportDataFileStatusByPath(
-      importFileId,
-      fileDetail,
-      IMPORT_DATA_STATUSES.WILL_NOT_PROCESS,
-    )));
+  await Promise.all(
+    fileDetails
+      .filter(
+        ({ name, path }) =>
+          !neededFiles.some((neededFile) => neededFile.name === name && neededFile.path === path)
+      )
+      .map(async (fileDetail) =>
+        setImportDataFileStatusByPath(
+          importFileId,
+          fileDetail,
+          IMPORT_DATA_STATUSES.WILL_NOT_PROCESS
+        )
+      )
+  );
 
   let results;
 
@@ -111,7 +108,7 @@ const processZipFileFromS3 = async (
       importFileId,
       zipClient,
       filteredFileDetails,
-      processDefinitions,
+      processDefinitions
     );
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED

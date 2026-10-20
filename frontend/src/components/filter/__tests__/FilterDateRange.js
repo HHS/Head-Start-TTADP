@@ -1,15 +1,21 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { formatDateRange } from '../../../utils';
 import FilterDateRange from '../FilterDateRange';
 import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
-  const renderFilterDateRange = (query, condition = 'is on or after', onApplyDateRange = jest.fn(), setError = jest.fn(), customDateOptions = null) => {
+  const renderFilterDateRange = (
+    query,
+    condition = 'is on or after',
+    onApplyDateRange = jest.fn(),
+    setError = jest.fn(),
+    customDateOptions = null,
+    minDate,
+    minDateErrorMessage
+  ) => {
     const updateSingleDate = jest.fn();
 
     render(
@@ -20,8 +26,10 @@ describe('FilterDateRange', () => {
           updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyDateRange}
           customDateOptions={customDateOptions}
+          minDate={minDate}
+          minDateErrorMessage={minDateErrorMessage}
         />
-      </FilterErrorContext.Provider>,
+      </FilterErrorContext.Provider>
     );
   };
 
@@ -29,10 +37,19 @@ describe('FilterDateRange', () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', 'is on or after', onApplyDateRange);
     const date = screen.getByRole('textbox', { name: /date/i });
-    userEvent.type(date, '10/31/2021');
+    userEvent.type(date, '02/01/2025');
     expect(onApplyDateRange).toHaveBeenCalled();
     const [hidden] = await screen.findAllByRole('textbox', { hidden: true });
-    expect(hidden).toHaveValue('2021-10-31');
+    expect(hidden).toHaveValue('2025-02-01');
+  });
+
+  it('allows dates before the monitoring minimum date by default', () => {
+    const onApplyDateRange = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/01/2021');
+
+    expect(onApplyDateRange).toHaveBeenCalledWith('2021/01/01');
   });
 
   it('checks for valid dates', async () => {
@@ -46,6 +63,62 @@ describe('FilterDateRange', () => {
     expect(setError).toHaveBeenCalledWith(message);
   });
 
+  it('rejects dates before the minimum date', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError, null, '2025-01-21');
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/20/202');
+    onApplyDateRange.mockClear();
+    userEvent.type(date, '5');
+
+    expect(setError).toHaveBeenCalledWith('Please enter a valid date');
+    expect(onApplyDateRange).not.toHaveBeenCalled();
+  });
+
+  it('uses the configured minimum date error message', () => {
+    const setError = jest.fn();
+    renderFilterDateRange(
+      '',
+      'is on or after',
+      jest.fn(),
+      setError,
+      null,
+      '2025-01-21',
+      'Please enter a date on or after 01/21/2025'
+    );
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.type(date, '01/20/2025');
+
+    expect(setError).toHaveBeenCalledWith('Please enter a date on or after 01/21/2025');
+  });
+
+  it('rejects dates after today', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.clear(date);
+    userEvent.type(date, '12/31/209');
+    onApplyDateRange.mockClear();
+    userEvent.type(date, '9');
+
+    expect(setError).toHaveBeenCalledWith('Please enter a valid date');
+    expect(onApplyDateRange).not.toHaveBeenCalled();
+  });
+
+  it('applies a valid date and clears the error', () => {
+    const onApplyDateRange = jest.fn();
+    const setError = jest.fn();
+    renderFilterDateRange('', 'is on or after', onApplyDateRange, setError);
+    const date = screen.getByRole('textbox', { name: /date/i });
+    userEvent.clear(date);
+    userEvent.type(date, '02/01/2025');
+
+    expect(onApplyDateRange).toHaveBeenCalledWith('2025/02/01');
+    expect(setError).toHaveBeenLastCalledWith('');
+  });
+
   it('renders the is dropdown', async () => {
     const onApplyDateRange = jest.fn();
     renderFilterDateRange('', 'is', onApplyDateRange);
@@ -54,15 +127,45 @@ describe('FilterDateRange', () => {
     expect(onApplyDateRange).toHaveBeenCalled();
   });
 
+  it('shows the selected preset when the query is a string', () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    renderFilterDateRange(yearToDate, 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
+  });
+
+  it('shows the selected preset when the query comes from the URL', () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    renderFilterDateRange([yearToDate], 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
+  });
+
+  it('shows a restored date range when it is not in the current preset options', () => {
+    const restoredRange = '2024/01/01-2024/03/15';
+
+    renderFilterDateRange([restoredRange], 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('01/01/2024 - 03/15/2024');
+    expect(date).toHaveValue(restoredRange);
+  });
+
   it('renders custom date options', async () => {
     const customDateOptions = [
       {
         label: 'Last three months',
-        value: jest.fn(),
+        value: 'last-three-months',
       },
       {
         label: 'Last six months',
-        value: jest.fn(),
+        value: 'last-six-months',
       },
     ];
     const onApplyDateRange = jest.fn();

@@ -6,7 +6,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(
-        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";',
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
       );
       await queryInterface.addColumn(
         'GoalTemplates',
@@ -15,12 +15,15 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
-      return queryInterface.sequelize.query(`
+      return queryInterface.sequelize.query(
+        `
          UPDATE "Topics" SET "deletedAt" = NOW() WHERE "name" = 'Equity';
          UPDATE "GoalTemplates" SET "deletedAt" = NOW() WHERE "templateName" = '(DEIA) The recipient will implement comprehensive systems and services that promote diversity, equity, inclusion, accessibility, and belonging.';
-       `, { transaction });
+       `,
+        { transaction }
+      );
     });
   },
 
@@ -29,7 +32,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(
-        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";',
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
       );
     });
   },

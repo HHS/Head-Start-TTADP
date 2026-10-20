@@ -62,3 +62,13 @@
 .goals-table .disabled {
   display: none;
 }
+
+.ttahub-goal-card__recipient-column,
+.ttahub-goal-card__grant-number-column {
+  min-width: 0;
+}
+
+.ttahub-goal-card__recipient-column p,
+.ttahub-goal-card__grant-number-column p {
+  overflow-wrap: break-word;
+}

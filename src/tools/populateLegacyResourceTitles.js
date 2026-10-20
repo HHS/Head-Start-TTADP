@@ -1,11 +1,9 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 import { Op } from 'sequelize';
-import {
-  Resource,
-} from '../models';
-import { addGetResourceMetadataToQueue } from '../services/resourceQueue';
 import { auditLogger, logger } from '../logger';
+import { Resource } from '../models';
+import { addGetResourceMetadataToQueue } from '../services/resourceQueue';
 
 export default async function processLegacyResources(startDate, endDate) {
   try {
@@ -25,7 +23,9 @@ export default async function processLegacyResources(startDate, endDate) {
       // eslint-disable-next-line no-await-in-loop
       await addGetResourceMetadataToQueue(resource.id, resource.url);
     }
-    logger.info(`Populate Legacy Resources: ...Finished adding of ${resources.length} resources for metadata processing`);
+    logger.info(
+      `Populate Legacy Resources: ...Finished adding of ${resources.length} resources for metadata processing`
+    );
   } catch (err) {
     // eslint-disable-next-line no-console
     auditLogger.error(`Populate Legacy Resources Error: ${err}`);

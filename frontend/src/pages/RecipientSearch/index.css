@@ -3,12 +3,12 @@
 }
 
 .ttahub-recipient-search--search-input {
-    border-radius: 0.25rem 0 0 0.25rem;
-    height: auto;
-    padding: 0.5rem 0.25rem;
-    width: 480px;
+  border-radius: 0.25rem 0 0 0.25rem;
+  height: auto;
+  padding: 0.5rem 0.25rem;
+  width: 480px;
 }
 
 .ttahub-recipient-search--submit-button {
-    border-radius: 0 0.25rem 0.25rem 0;
+  border-radius: 0 0.25rem 0.25rem 0;
 }

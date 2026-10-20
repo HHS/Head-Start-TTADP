@@ -1,11 +1,10 @@
 import {} from 'dotenv/config';
-import httpCodes from 'http-codes';
-
 import httpContext from 'express-http-context';
-import { retrieveUserDetails, currentUserId } from './currentUser';
-import findOrCreateUser from './findOrCreateUser';
-import { auditLogger } from '../logger';
+import httpCodes from 'http-codes';
+import { auditLogger, hashForLogging, logger } from '../logger';
 import { validateUserAuthForAdmin } from './accessValidation';
+import { currentUserId, retrieveUserDetails } from './currentUser';
+import findOrCreateUser from './findOrCreateUser';
 
 jest.mock('axios');
 jest.mock('./findOrCreateUser');
@@ -13,6 +12,7 @@ jest.mock('./accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn(),
 }));
 jest.mock('../logger', () => ({
+  ...jest.requireActual('../logger'),
   logger: {
     debug: jest.fn(),
   },
@@ -117,12 +117,15 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (200), but the session user (100) is not an admin.'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Impersonation failure. User (100) attempted to impersonate user (200), but the session user (100) is not an admin.'
+        )
+      );
     });
 
     test('handles impersonation when Auth-Impersonation-Id header is set and impersonated user is an admin', async () => {
       const mockRequest = {
-
         headers: { 'auth-impersonation-id': JSON.stringify(300) },
         session: {},
       };
@@ -139,7 +142,11 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (300), but the impersonated user is an admin.'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Impersonation failure. User (100) attempted to impersonate user (300), but the impersonated user is an admin.'
+        )
+      );
     });
 
     test('allows impersonation when Auth-Impersonation-Id header is set and both users pass validation', async () => {
@@ -219,7 +226,8 @@ describe('currentUser', () => {
 
       await currentUserId(mockRequest, mockResponse);
 
-      const expectedMessage = 'MIDDLEWARE:CURRENT USER - UNEXPECTED ERROR - Error: Admin validation failed';
+      const expectedMessage =
+        'MIDDLEWARE:CURRENT USER - UNEXPECTED ERROR - Error: Admin validation failed';
       expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
     });
 
@@ -237,7 +245,7 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'Impersonation failure. No valid user ID found in session or locals.',
+        'Impersonation failure. No valid user ID found in session or locals.'
       );
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
     });
@@ -257,7 +265,7 @@ describe('currentUser', () => {
       expect(mockRequest.session.userId).toEqual('123');
       expect(mockRequest.session.uuid).toBeDefined();
       expect(auditLogger.warn).toHaveBeenCalledWith(
-        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.',
+        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.'
       );
     });
 
@@ -273,7 +281,7 @@ describe('currentUser', () => {
       expect(userId).toEqual(123);
       expect(mockRequest.session).toBeUndefined();
       expect(auditLogger.warn).toHaveBeenCalledWith(
-        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.',
+        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.'
       );
     });
   });
@@ -336,13 +344,15 @@ describe('currentUser', () => {
 
       await retrieveUserDetails(data);
 
-      expect(findOrCreateUser).toHaveBeenCalledWith(expect.objectContaining({
-        name: 'Jane Doe',
-        email: null,
-        hsesUserId: null,
-        hsesAuthorities: [],
-        hsesUsername: 'jane.doe',
-      }));
+      expect(findOrCreateUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Jane Doe',
+          email: null,
+          hsesUserId: null,
+          hsesAuthorities: [],
+          hsesUsername: 'jane.doe',
+        })
+      );
     });
 
     test('handles non-string email/sub/userId via toString()', async () => {
@@ -374,10 +384,37 @@ describe('currentUser', () => {
         roles: [],
       };
 
-      await expect(retrieveUserDetails(data))
-        .rejects.toThrow(/Missing required user info from HSES/i);
+      await expect(retrieveUserDetails(data)).rejects.toThrow(
+        /Missing required user info from HSES/i
+      );
 
       expect(findOrCreateUser).not.toHaveBeenCalled();
+    });
+
+    test('does not log PII from the HSES response', async () => {
+      const data = {
+        given_name: 'Joe',
+        family_name: 'Smith',
+        email: 'ada@example.com',
+        sub: 'ada.smith',
+        roles: ['ROLE_USER'],
+        userId: 42,
+      };
+
+      await retrieveUserDetails(data);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        `User details response received: ${JSON.stringify({
+          hasName: true,
+          hasEmail: true,
+          hasHsesUsername: true,
+          hasHsesUserId: true,
+          roleCount: 1,
+          subHash: hashForLogging('ada.smith'),
+        })}`
+      );
+      const loggedValues = logger.debug.mock.calls.map((call) => JSON.stringify(call));
+      expect(loggedValues.join('\n')).not.toMatch(/ada@example\.com|ada\.smith|Joe|Smith/);
     });
   });
 });

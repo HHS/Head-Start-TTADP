@@ -42,5 +42,5 @@ export const shouldUpdateFormData = (isAutoSave) => {
   const selection = document.getSelection();
 
   // Return false (don't update) if cursor is within a rich text editor
-  return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
+  return !Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode));
 };

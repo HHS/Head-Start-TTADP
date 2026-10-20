@@ -1,10 +1,10 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
+import { Dropdown, FormGroup, Label } from '@trussworks/react-uswds';
 import { SUPPORT_TYPES } from '@ttahub/common';
-import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import DrawerTriggerButton from './DrawerTriggerButton';
 import Req from './Req';
 import SupportTypeDrawer from './SupportTypeDrawer';
-import DrawerTriggerButton from './DrawerTriggerButton';
 
 export default function ObjectiveSupportType({
   supportType,
@@ -14,12 +14,10 @@ export default function ObjectiveSupportType({
   error,
 }) {
   const supportTypeDrawerTriggerRef = useRef(null);
-  const hasError = !!(error.props.children);
+  const hasError = !!error.props.children;
   return (
     <FormGroup error={hasError}>
-      <SupportTypeDrawer
-        drawerTriggerRef={supportTypeDrawerTriggerRef}
-      />
+      <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
       <div className="display-flex">
         <Label htmlFor={inputName}>
           Support type
@@ -37,11 +35,14 @@ export default function ObjectiveSupportType({
         onBlur={onBlurSupportType}
         value={supportType}
       >
-        <option disabled hidden value="">Select one</option>
-        {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
+        <option disabled hidden value="">
+          Select one
+        </option>
+        {SUPPORT_TYPES.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
       </Dropdown>
     </FormGroup>
-
   );
 }
 

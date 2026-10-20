@@ -1,9 +1,6 @@
 import { Op } from 'sequelize';
 import db, { Course } from '../models';
-import {
-  csvImport,
-  getAllCourses,
-} from './course';
+import { csvImport, getAllCourses } from './course';
 
 describe('Course', () => {
   let foreverCourse;
@@ -35,8 +32,7 @@ describe('Course', () => {
     afterEach(async () => {
       await Course.destroy({
         where: {
-          name:
-          {
+          name: {
             [Op.in]: courseNamesToCleanup,
           },
         },
@@ -98,7 +94,7 @@ describe('Course', () => {
     });
 
     it('existing course with exact match', async () => {
-      const existingCourse1 = 'Existing course with; exact\' matchz!';
+      const existingCourse1 = "Existing course with; exact' matchz!";
       const existingCourse2 = ' Existing   course With EXACT matchz ';
 
       const afterCreateDate = new Date();
@@ -150,7 +146,7 @@ describe('Course', () => {
       const courseToAdd = 'Existing course with exact match';
       courseNamesToCleanup.push(courseToAdd);
 
-      const existingCourse1 = 'Existing course with; exact\' match!';
+      const existingCourse1 = "Existing course with; exact' match!";
       const existingCourse2 = ' Existing   course With EXAC T match ';
       const existingCourse3 = ' Existing     course With EXACT   match ';
 
@@ -189,9 +185,10 @@ describe('Course', () => {
       expect(response.errors.length).toBe(0);
       expect(response.created[0].name).toBe(courseToAdd);
 
-      const updatedCourses = response.replaced.filter((c) => c.name === existingCourse1
-        || c.name === existingCourse2
-        || c.name === existingCourse3);
+      const updatedCourses = response.replaced.filter(
+        (c) =>
+          c.name === existingCourse1 || c.name === existingCourse2 || c.name === existingCourse3
+      );
       expect(updatedCourses.length).toBe(3);
 
       // Check the database.
@@ -223,8 +220,47 @@ describe('Course', () => {
       verifyPersistedCourse('Forever course');
     });
 
+    it('skips empty lines between rows', async () => {
+      const course1 = 'Course With Empty Lines Alpha';
+      const course2 = 'Course With Empty Lines Beta';
+      courseNamesToCleanup.push(course1, course2);
+
+      const importData = `course name\n\n${course1}\n\n${course2}\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response.count).toBe(2);
+      expect(response.created.length).toBe(2);
+      expect(response.errors.length).toBe(0);
+      const names = response.created.map((c) => c.name.trim());
+      expect(names).toContain(course1);
+      expect(names).toContain(course2);
+    });
+
+    it('returns a parse error gracefully when a row has more fields than the header', async () => {
+      const importData = `course name\nValid Course Name,unexpected extra value\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response).not.toBe(false);
+      expect(response.count).toBe(0);
+      expect(response.errors.length).toBe(1);
+      expect(response.errors[0]).toMatch(/CSV parse error/i);
+    });
+
+    it('returns a parse error gracefully when a row has fewer fields than the header', async () => {
+      const importData = `course name,second column\nOnly One Value\n`;
+      const buffer = Buffer.from(importData);
+      const response = await csvImport(buffer);
+
+      expect(response).not.toBe(false);
+      expect(response.count).toBe(0);
+      expect(response.errors.length).toBe(1);
+      expect(response.errors[0]).toMatch(/CSV parse error/i);
+    });
+
     it('deletes unused courses', async () => {
-      const courseToAdd = 'Existing course with; exact\' match!';
+      const courseToAdd = "Existing course with; exact' match!";
       courseNamesToCleanup.push(courseToAdd);
 
       const courseToDelete1 = 'Course to delete 1';
@@ -274,9 +310,10 @@ describe('Course', () => {
       expect(createdCourse.length).toBe(1);
 
       // Assert deleted courses.
-      const deletedCourses = response.deleted.filter((c) => c.name === courseToDelete1
-        || c.name === courseToDelete2
-        || c.name === courseToDelete3);
+      const deletedCourses = response.deleted.filter(
+        (c) =>
+          c.name === courseToDelete1 || c.name === courseToDelete2 || c.name === courseToDelete3
+      );
       expect(deletedCourses.length).toBe(3);
 
       // Make sure the deleted courses are not in the database.

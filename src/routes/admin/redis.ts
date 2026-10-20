@@ -1,22 +1,22 @@
 /* eslint-disable import/prefer-default-export */
-import express, { Response, Request } from 'express';
+import express, { type Request, type Response } from 'express';
+import { handleError } from '../../lib/apiErrorHandler';
 import { getRedis } from '../../lib/redisClient';
 import { auditLogger } from '../../logger';
 import transactionWrapper from '../transactionWrapper';
-import { handleError } from '../../lib/apiErrorHandler';
 
 const namespace = 'ADMIN:REDIS:INFO';
 const logContext = { namespace };
 
 /**
-   * Gets the redis info from the client, as if you'd run "info"
-   * redis cli
-   *
-   * https://redis.io/commands/info/
-   *
-   * @param {Request} _req - request
-   * @param {Response} res - response
-   */
+ * Gets the redis info from the client, as if you'd run "info"
+ * redis cli
+ *
+ * https://redis.io/commands/info/
+ *
+ * @param {Request} _req - request
+ * @param {Response} res - response
+ */
 export async function getRedisInfo(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {

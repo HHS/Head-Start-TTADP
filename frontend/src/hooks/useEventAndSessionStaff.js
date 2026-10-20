@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import useFetch from './useFetch';
-import { getRegionalTrainerOptions, getNationalCenterTrainerOptions } from '../fetchers/users';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../fetchers/users';
+import useFetch from './useFetch';
 
 export default function useEventAndSessionStaff(event, isEvent = false) {
   const { watch } = useFormContext();
@@ -10,55 +10,82 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
   const facilitation = watch('facilitation');
 
   const eventOrganizer = useMemo(() => {
-    if (event && event.data && event.data.eventOrganizer) {
+    if (event?.data?.eventOrganizer) {
       return event.data.eventOrganizer;
     }
 
-    if (event && event.eventOrganizer) {
+    if (event?.eventOrganizer) {
       return event.eventOrganizer;
     }
 
     return '';
   }, [event]);
 
-  const {
-    data: regionalTrainers,
-  } = useFetch(
+  const { data: regionalTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
 
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
+  const { data: nationalCenterTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
+
+  // Filter out AA users for session trainers (isEvent=false)
+  // AA users should only appear as Event Collaborators, not as Session Trainers
+  const regionalTrainersForDisplay = useMemo(() => {
+    if (isEvent) {
+      return regionalTrainers;
+    }
+    return regionalTrainers.filter((user) => {
+      // only filter out users whose ONLY ROLE is AA
+      if (user.roles?.length === 1) {
+        return user.roles[0].name !== 'AA';
+      }
+
+      return true;
+    });
+  }, [regionalTrainers, isEvent]);
 
   return useMemo(() => {
     let optionsForValue = [];
     let trainerOptions = [];
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      optionsForValue = regionalTrainers;
-      trainerOptions = regionalTrainers;
+      optionsForValue = regionalTrainersForDisplay;
+      trainerOptions = [
+        {
+          label: 'Regional trainers',
+          options: regionalTrainersForDisplay,
+        },
+      ];
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
       if (facilitation === 'regional_tta_staff') {
-        optionsForValue = regionalTrainers;
-        trainerOptions = regionalTrainers;
+        optionsForValue = regionalTrainersForDisplay;
+        trainerOptions = [
+          {
+            label: 'Regional trainers',
+            options: regionalTrainersForDisplay,
+          },
+        ];
       }
 
       if (facilitation === 'national_center' || isEvent) {
         optionsForValue = nationalCenterTrainers;
-        trainerOptions = nationalCenterTrainers;
+        trainerOptions = [
+          {
+            label: 'National Center trainers',
+            options: nationalCenterTrainers,
+          },
+        ];
       }
 
       if (facilitation === 'both') {
-        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
+        optionsForValue = [...nationalCenterTrainers, ...regionalTrainersForDisplay];
         trainerOptions = [
           {
             label: 'National Center trainers',
@@ -66,7 +93,7 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
           },
           {
             label: 'Regional trainers',
-            options: regionalTrainers,
+            options: regionalTrainersForDisplay,
           },
         ];
       }
@@ -76,5 +103,5 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
       trainerOptions,
       optionsForValue,
     };
-  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainers]);
+  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainersForDisplay]);
 }

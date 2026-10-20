@@ -1,17 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-
-import MyAlerts from '../MyAlerts';
-import activityReports from '../mocks';
+import React from 'react';
+import { Router } from 'react-router';
 import { ALERTS_PER_PAGE } from '../../../Constants';
 import UserContext from '../../../UserContext';
+import MyAlerts from '../MyAlerts';
+import activityReports from '../mocks';
 
 const user = {
   name: 'test@test.com',
@@ -46,17 +44,21 @@ const renderMyAlerts = (report = false) => {
           sortHandler={requestAlertsSort}
           updateReportAlerts={updateReportAlerts}
           setAlertReportsCount={setAlertReportsCount}
-          fetchReports={() => { }}
-          updateReportFilters={() => { }}
-          handleDownloadAllAlerts={() => { }}
+          fetchReports={() => {}}
+          updateReportFilters={() => {}}
+          handleDownloadAllAlerts={() => {}}
         />
       </UserContext.Provider>
-    </Router>,
+    </Router>
   );
   return history;
 };
 
 describe('My Alerts', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   test('displays report id column', async () => {
     renderMyAlerts();
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
@@ -98,7 +100,9 @@ describe('My Alerts', () => {
 
   test('displays the correct recipients', async () => {
     renderMyAlerts();
-    const recipients = await screen.findByRole('button', { name: /click to visually reveal the recipients for r14-ar-1/i });
+    const recipients = await screen.findByRole('button', {
+      name: /click to visually reveal the recipients for r14-ar-1/i,
+    });
     expect(recipients.textContent).toContain('Johnston-Romaguera');
     const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
@@ -119,7 +123,9 @@ describe('My Alerts', () => {
 
   test('displays the correct collaborators', async () => {
     renderMyAlerts();
-    const collaborators = await screen.findByRole('button', { name: /click to visually reveal the collaborators for r14-ar-1/i });
+    const collaborators = await screen.findByRole('button', {
+      name: /click to visually reveal the collaborators for r14-ar-1/i,
+    });
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
     const truncated = collaborators.firstChild.firstChild.firstChild;
@@ -432,6 +438,7 @@ describe('My Alerts', () => {
       collaborators: [],
     };
 
+    fetchMock.delete('/api/activity-reports/1', 204);
     renderMyAlerts(report);
     const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
     userEvent.click(menuButtons[0]);
@@ -443,10 +450,15 @@ describe('My Alerts', () => {
 
     const contextMenu = await screen.findAllByTestId('context-menu-actions-btn');
     expect(contextMenu).toBeTruthy();
-    const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
+    const button = await screen.findByRole('button', {
+      name: /this button will permanently delete the report\./i,
+      hidden: true,
+    });
     userEvent.click(button);
 
-    const modal = document.querySelector('#DeleteReportModal');
-    expect(modal).toHaveClass('is-hidden');
+    await waitFor(() => {
+      const modal = document.querySelector('#DeleteReportModal');
+      expect(modal).toHaveClass('is-hidden');
+    });
   });
 });

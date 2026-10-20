@@ -1,10 +1,5 @@
 import fetchMock from 'fetch-mock';
-import {
-  unsubscribe,
-  subscribe,
-  updateSettings,
-  getEmailSettings,
-} from '../settings';
+import { getEmailSettings, getSettings, subscribe, unsubscribe, updateSettings } from '../settings';
 
 describe('settings fetcher', () => {
   beforeEach(() => fetchMock.reset());
@@ -19,6 +14,13 @@ describe('settings fetcher', () => {
   it('gets email settings', async () => {
     fetchMock.get('/api/settings/email', []);
     await getEmailSettings();
+
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('gets settings', async () => {
+    fetchMock.get('/api/settings', []);
+    await getSettings();
 
     expect(fetchMock.called()).toBeTruthy();
   });

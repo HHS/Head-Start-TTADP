@@ -5,11 +5,17 @@ export class MeshClient {
     this.callbacks = {};
   }
 
-  connect() { return jest.fn(() => Promise.resolve()); }
+  connect() {
+    return jest.fn(() => Promise.resolve());
+  }
 
-  joinRoom() { return jest.fn(() => Promise.resolve()); }
+  joinRoom() {
+    return jest.fn(() => Promise.resolve());
+  }
 
-  publishPresenceState() { jest.fn(() => Promise.resolve()); }
+  publishPresenceState() {
+    jest.fn(() => Promise.resolve());
+  }
 
   on() {
     return jest.fn((event, cb) => {
@@ -26,12 +32,16 @@ export class MeshClient {
   }
 
   command() {
-    return jest.fn(() => Promise.resolve({
-      states: {
-        abc: { userId: 1, username: 'test user' },
-      },
-    }));
+    return jest.fn(() =>
+      Promise.resolve({
+        states: {
+          abc: { userId: 1, username: 'test user' },
+        },
+      })
+    );
   }
 
-  close() { return jest.fn(() => Promise.resolve()); }
+  close() {
+    return jest.fn(() => Promise.resolve());
+  }
 }

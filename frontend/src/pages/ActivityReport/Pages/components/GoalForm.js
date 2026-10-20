@@ -1,21 +1,17 @@
-import React, {
-  useEffect, useMemo, useContext, useState,
-} from 'react';
-import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals';
-import Objectives from './Objectives';
-import ConditionalFields from './ConditionalFieldsForHookForm';
-import {
-  GOAL_NAME_ERROR,
-} from '../../../../components/GoalForm/constants';
-import { NO_ERROR, ERROR_FORMAT } from './constants';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
+import { GOAL_NAME_ERROR } from '../../../../components/GoalForm/constants';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
+import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals';
+import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
+import ConditionalFields from './ConditionalFieldsForHookForm';
+import { ERROR_FORMAT, NO_ERROR } from './constants';
+import Objectives from './Objectives';
 
 export default function GoalForm({
   goal,
@@ -35,7 +31,7 @@ export default function GoalForm({
   const [templateResponses, templatePrompts] = useGoalTemplatePrompts(
     goal.goalTemplateId,
     goal.goalIds,
-    true, // isForActivityReport (looks like it is)
+    true // isForActivityReport (looks like it is)
   );
 
   /**
@@ -52,10 +48,7 @@ export default function GoalForm({
   const activityRecipients = watch('activityRecipients');
 
   const {
-    field: {
-      onChange: onUpdateText,
-      value: goalText,
-    },
+    field: { onChange: onUpdateText, value: goalText },
   } = useController({
     name: 'goalName',
     rules: {
@@ -71,11 +64,7 @@ export default function GoalForm({
   // the fields via the useController functions
   useEffect(() => {
     onUpdateText(goal.name ? goal.name : defaultName);
-  }, [
-    defaultName,
-    goal.name,
-    onUpdateText,
-  ]);
+  }, [defaultName, goal.name, onUpdateText]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -92,7 +81,7 @@ export default function GoalForm({
         setAppLoadingText('Loading');
         const allObjectiveOptions = await getGoalTemplateObjectiveOptions(
           reportId,
-          goal.goalTemplateId,
+          goal.goalTemplateId
         );
         setObjectiveOptions(allObjectiveOptions);
         setObjectiveOptionsLoaded(true);
@@ -115,14 +104,12 @@ export default function GoalForm({
     goal.prompts,
     templateResponses,
     templatePrompts,
-    activityRecipients,
+    activityRecipients
   );
 
   return (
     <>
-      <ReadOnlyField>
-        {goalText}
-      </ReadOnlyField>
+      <ReadOnlyField>{goalText}</ReadOnlyField>
 
       <ConditionalFields
         prompts={prompts}
@@ -138,8 +125,11 @@ export default function GoalForm({
         objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalStatus={status}
-        noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
-          ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
+        noObjectiveError={
+          errors.goalForEditing && errors.goalForEditing.objectives
+            ? ERROR_FORMAT(errors.goalForEditing.objectives.message)
+            : NO_ERROR
+        }
         reportId={parseInt(reportId, DECIMAL_BASE)}
         citationOptions={citationOptions}
         rawCitations={rawCitations}
@@ -154,10 +144,7 @@ GoalForm.propTypes = {
   goal: PropTypes.shape({
     goalTemplateId: PropTypes.number.isRequired,
     goalIds: PropTypes.arrayOf(PropTypes.number),
-    value: PropTypes.oneOfType([
-      PropTypes.number,
-      PropTypes.string,
-    ]),
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     grantIds: PropTypes.arrayOf(PropTypes.number),
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
@@ -169,34 +156,46 @@ GoalForm.propTypes = {
     status: PropTypes.string,
     source: PropTypes.string,
     createdVia: PropTypes.string,
-    prompts: PropTypes.arrayOf(PropTypes.shape({
-      type: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      prompt: PropTypes.string.isRequired,
-      options: PropTypes.arrayOf(PropTypes.string).isRequired,
-    }.isRequired)),
+    prompts: PropTypes.arrayOf(
+      PropTypes.shape(
+        {
+          type: PropTypes.string.isRequired,
+          title: PropTypes.string.isRequired,
+          prompt: PropTypes.string.isRequired,
+          options: PropTypes.arrayOf(PropTypes.string).isRequired,
+        }.isRequired
+      )
+    ),
   }).isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })).isRequired,
-  citationOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })),
+  topicOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ).isRequired,
+  citationOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ),
   isMonitoringGoal: PropTypes.bool,
-  rawCitations: PropTypes.arrayOf(PropTypes.shape({
-    standardId: PropTypes.number,
-    citation: PropTypes.string,
-    // Create array of jsonb objects
-    grants: PropTypes.arrayOf(PropTypes.shape({
-      grantId: PropTypes.number,
-      findingId: PropTypes.string,
-      reviewName: PropTypes.string,
-      grantNumber: PropTypes.string,
-      reportDeliveryDate: PropTypes.string,
-    })),
-  })),
+  rawCitations: PropTypes.arrayOf(
+    PropTypes.shape({
+      standardId: PropTypes.number,
+      citation: PropTypes.string,
+      // Create array of jsonb objects
+      grants: PropTypes.arrayOf(
+        PropTypes.shape({
+          grantId: PropTypes.number,
+          findingId: PropTypes.string,
+          reviewName: PropTypes.string,
+          grantNumber: PropTypes.string,
+          reportDeliveryDate: PropTypes.string,
+        })
+      ),
+    })
+  ),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 

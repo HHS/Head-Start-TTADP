@@ -1,25 +1,27 @@
-import React, {
-  useEffect,
-  useState,
-  useContext,
-} from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useLocation } from 'react-router-dom';
-import {
-  Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
-} from '@trussworks/react-uswds';
-import PropTypes from 'prop-types';
-import moment from 'moment';
+import { Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import Container from '../../../../components/Container';
-import colors from '../../../../colors';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import AppLoadingContext from '../../../../AppLoadingContext';
-import UserContext from '../../../../UserContext';
-import ReadOnlyField from '../../../../components/ReadOnlyField';
-import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import colors from '../../../../colors';
+import { Accordion } from '../../../../components/Accordion';
+import Container from '../../../../components/Container';
+import ContextMenu from '../../../../components/ContextMenu';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
+import {
+  faArrowLeft,
+  faChartColumn,
+  faCheckCircle,
+  faPauseCircle,
+  faPenCircle,
+} from '../../../../icons';
+import UserContext from '../../../../UserContext';
+import { DashboardOverviewContainer } from '../../../../widgets/DashboardOverviewContainer';
 import './index.scss';
 
 export const GoalUserIdentifier = ({ goal }) => {
@@ -27,20 +29,22 @@ export const GoalUserIdentifier = ({ goal }) => {
     return ' by OHS';
   }
 
-  return goal.goalCollaborators && goal.goalCollaborators.some(
-    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-  )
-    ? ` by ${goal.goalCollaborators.find(
-      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
-    ).user.name}`
+  return goal.goalCollaborators &&
+    goal.goalCollaborators.some(
+      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user
+    )
+    ? ` by ${
+        goal.goalCollaborators.find(
+          (c) => c.collaboratorType && c.collaboratorType.name === 'Creator'
+        ).user.name
+      }`
     : '';
 };
 
-export const StatusActionTag = ({
-  update, goalHistory, currentGoalIndex,
-}) => {
-  const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
-    && goalHistory.some((hist, index) => index > currentGoalIndex && hist.status === 'Closed');
+export const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
+  const isReopened =
+    (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') &&
+    goalHistory.some((hist, index) => index > currentGoalIndex && hist.status === 'Closed');
 
   if (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') {
     return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
@@ -58,13 +62,7 @@ export const StatusActionTag = ({
     case 'Complete':
       return <span>Completed on</span>;
     default:
-      return (
-        <span>
-          {update.newStatus}
-          {' '}
-          on
-        </span>
-      );
+      return <span>{update.newStatus} on</span>;
   }
 };
 
@@ -73,9 +71,11 @@ StatusActionTag.propTypes = {
     newStatus: PropTypes.string,
     reason: PropTypes.string,
   }).isRequired,
-  goalHistory: PropTypes.arrayOf(PropTypes.shape({
-    status: PropTypes.string,
-  })).isRequired,
+  goalHistory: PropTypes.arrayOf(
+    PropTypes.shape({
+      status: PropTypes.string,
+    })
+  ).isRequired,
   currentGoalIndex: PropTypes.number.isRequired,
 };
 
@@ -84,15 +84,19 @@ export const userDisplayFromStatus = (goal, update) => {
     return <GoalUserIdentifier goal={goal} />;
   }
 
-  if (goal.standard === 'Monitoring'
-    && update.newStatus === GOAL_STATUS.NOT_STARTED
-    && update.reason === 'Active monitoring citations') {
+  if (
+    goal.standard === 'Monitoring' &&
+    update.newStatus === GOAL_STATUS.NOT_STARTED &&
+    update.reason === 'Active monitoring citations'
+  ) {
     return ' by OHS';
   }
 
-  if (goal.standard === 'Monitoring'
-    && update.newStatus === 'Closed'
-    && update.reason === 'No active monitoring citations') {
+  if (
+    goal.standard === 'Monitoring' &&
+    update.newStatus === 'Closed' &&
+    update.reason === 'No active monitoring citations'
+  ) {
     return ' by OHS';
   }
 
@@ -102,17 +106,57 @@ export const userDisplayFromStatus = (goal, update) => {
   return '';
 };
 
-export default function ViewGoalDetails({
-  recipient,
-  regionId,
-}) {
+export const formatRecipientGrantDisplay = (
+  grant,
+  defaultRecipientName = '',
+  recipientGrants = [],
+  goalGrantId = null
+) => {
+  if (!grant) {
+    return 'N/A';
+  }
+
+  const recipientName = grant.recipient?.name || grant.recipientName || defaultRecipientName;
+  let grantNumberWithProgramTypes = grant.numberWithProgramTypes;
+
+  if (!grantNumberWithProgramTypes && goalGrantId && Array.isArray(recipientGrants)) {
+    const matchingRecipientGrant = recipientGrants.find((g) => g.id === goalGrantId);
+    grantNumberWithProgramTypes = matchingRecipientGrant?.numberWithProgramTypes;
+  }
+
+  if (grantNumberWithProgramTypes && recipientName) {
+    return `${recipientName} - ${grantNumberWithProgramTypes}`;
+  }
+
+  if (grantNumberWithProgramTypes) {
+    return grantNumberWithProgramTypes;
+  }
+
+  if (grant.number && recipientName) {
+    return `${recipientName} - ${grant.number}`;
+  }
+
+  if (grant.number) {
+    return grant.number;
+  }
+
+  return 'N/A';
+};
+
+export default function ViewGoalDetails({ recipient, regionId }) {
   const [fetchError, setFetchError] = useState('');
   const [goalHistory, setGoalHistory] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
   const location = useLocation();
+  const fallbackGoalSummary = location.state?.goalSummary || {};
+  const backLinkTo =
+    location.state?.backLinkTo ||
+    `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`;
+  const backLinkText = location.state?.backLinkText || 'Back to RTTAPA';
 
   const getQueryParams = () => {
     const searchParams = new URLSearchParams(location.search);
@@ -122,9 +166,17 @@ export default function ViewGoalDetails({
 
   const { goalId } = getQueryParams();
 
-  const canView = user.permissions.filter(
-    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
-  ).length > 0;
+  const menuItems = [
+    {
+      label: 'Print goal summary',
+      onClick: () => window.print(),
+    },
+  ];
+
+  const canView =
+    user.permissions.filter(
+      (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE)
+    ).length > 0;
 
   useEffect(() => {
     let isSubscribed = true; // Flag to track component mount status
@@ -142,7 +194,8 @@ export default function ViewGoalDetails({
 
         const data = await response.json();
         if (isSubscribed) {
-          setGoalHistory(data);
+          setGoalHistory(data.goals);
+          setOverview(data.overview);
         }
       } catch (err) {
         if (isSubscribed) {
@@ -191,40 +244,32 @@ export default function ViewGoalDetails({
   if (loading) {
     return null;
   }
-
-  if (goalHistory.length === 0) {
-    return (
-      <Alert role="alert" className="margin-y-2" type="info">
-        No goal history found
-      </Alert>
-    );
-  }
-
-  const sortedGoalHistory = [...goalHistory].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  );
-
-  const firstGoal = sortedGoalHistory[0] || {};
+  const hasGoalHistory = goalHistory.length > 0;
+  const firstGoal = goalHistory[0] || fallbackGoalSummary;
   const goalTemplate = firstGoal.goalTemplate || {};
-  const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
+  const goalTemplateName =
+    goalTemplate.templateName || firstGoal.goalTemplateName || 'Standard Goal';
 
   // Create accordion items from goal history
-  const accordionItems = sortedGoalHistory.map((goal, index) => {
+  const accordionItems = goalHistory.map((goal, index) => {
     // doing this moment/format transform here in order to make grouping by below
     // a bit more readable
-    const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      : []).map((gsc) => ({
+    const statusUpdates = (
+      goal.statusChanges && goal.statusChanges.length > 0 ? goal.statusChanges : []
+    ).map((gsc) => ({
       ...gsc,
-      performedAt: moment.utc(
-        gsc.performedAt || gsc.createdAt,
-      ).format(DATE_DISPLAY_FORMAT),
+      performedAt: moment.utc(gsc.performedAt || gsc.createdAt).format(DATE_DISPLAY_FORMAT),
     }));
     // Deduplicate near-identical updates (same time and statuses) to avoid double-rendering.
     const dedupedStatusUpdates = statusUpdates.reduce((acc, curr) => {
-      if (!acc.find((gsc) => gsc.performedAt === curr.performedAt
-        && gsc.newStatus === curr.newStatus
-        && gsc.oldStatus === curr.oldStatus)) {
+      if (
+        !acc.find(
+          (gsc) =>
+            gsc.performedAt === curr.performedAt &&
+            gsc.newStatus === curr.newStatus &&
+            gsc.oldStatus === curr.oldStatus
+        )
+      ) {
         acc.push(curr);
       }
       return acc;
@@ -233,8 +278,9 @@ export default function ViewGoalDetails({
     // Ensure the list includes an initial "Added" item when there are updates
     // but no explicit add. Criteria to detect an existing "Added"-like update:
     // oldStatus is null or newStatus is Not Started.
-    const hasAddedUpdate = dedupedStatusUpdates.some((u) => u.oldStatus === null
-      || u.newStatus === GOAL_STATUS.NOT_STARTED);
+    const hasAddedUpdate = dedupedStatusUpdates.some(
+      (u) => u.oldStatus === null || u.newStatus === GOAL_STATUS.NOT_STARTED
+    );
     const displayUpdates = [...dedupedStatusUpdates];
     if (dedupedStatusUpdates.length > 0 && !hasAddedUpdate) {
       displayUpdates.unshift({
@@ -250,17 +296,62 @@ export default function ViewGoalDetails({
 
     const objectives = goal.objectives || [];
 
+    // When the goal is currently suspended, the reason must come from the most recent
+    // status change that transitioned the goal to Suspended. The backend-provided
+    // `goal.reason` is derived from an arbitrary joined status change row (the earliest),
+    // which yields incorrect values like "Goal created". We sort explicitly by timestamp
+    // (using the raw statusChanges so the original ISO timestamps are preserved) rather
+    // than relying on the order the backend returns the status changes in.
+    const suspendedReason =
+      goal.status === GOAL_STATUS.SUSPENDED
+        ? [...(goal.statusChanges || [])]
+            .filter((u) => u.newStatus === GOAL_STATUS.SUSPENDED)
+            .sort(
+              (a, b) =>
+                moment.utc(a.performedAt || a.createdAt).valueOf() -
+                moment.utc(b.performedAt || b.createdAt).valueOf()
+            )
+            .at(-1)?.reason
+        : null;
+
+    const rootCauseItems = (goal.responses || []).reduce((items, response) => {
+      if (Array.isArray(response.response)) {
+        response.response.filter(Boolean).forEach((value, valueIndex) => {
+          items.push({
+            key: `${response.id}-${valueIndex}`,
+            text: value,
+          });
+        });
+        return items;
+      }
+
+      if (response.response) {
+        items.push({
+          key: `${response.id}`,
+          text: response.response,
+        });
+      }
+
+      return items;
+    }, []);
+
     const getUserByFromStatus = (update) => userDisplayFromStatus(goal, update);
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
-      handleToggle: () => { }, // Add dummy handler to satisfy prop-types
-      className: 'view-standard-goals-accordion',
+      handleToggle: () => {}, // Add dummy handler to satisfy prop-types
+      className: `view-standard-goals-accordion${index > 0 ? ' view-standard-goals-accordion--with-divider' : ''}`,
       content: (
         <div className="goal-history-content">
+          <div className="print-only margin-bottom-2">
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif goal-history-print-goal-number">
+              Goal number
+            </h2>
+            <p className="margin-top-1 margin-bottom-2">{`G-${goal.id}`}</p>
+          </div>
           <SummaryBox>
-            <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
+            <SummaryBoxHeading headingLevel="h4">Goal updates</SummaryBoxHeading>
             <SummaryBoxContent>
               {' '}
               {statusUpdates.length > 0 ? (
@@ -270,24 +361,21 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={sortedGoalHistory}
+                          goalHistory={goalHistory}
                           currentGoalIndex={index}
                         />
-                      </strong>
-                      {' '}
-                      <strong>
-                        {update.performedAt}
-                      </strong>
+                      </strong>{' '}
+                      <strong>{update.performedAt}</strong>
                       {getUserByFromStatus(update)}
-                      {(update.newStatus === GOAL_STATUS.SUSPENDED
-                        && updateIndex !== displayUpdates.length - 1) ? (
-                          <>
-                            <br />
-                            Reason:
-                            {' '}
-                            {update.reason}
-                          </>
-                        ) : <></>}
+                      {update.newStatus === GOAL_STATUS.SUSPENDED &&
+                      updateIndex !== displayUpdates.length - 1 ? (
+                        <>
+                          <br />
+                          Reason: {update.reason}
+                        </>
+                      ) : (
+                        <></>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -296,11 +384,8 @@ export default function ViewGoalDetails({
                   <li>
                     <strong>
                       {goal.status === GOAL_STATUS.NOT_STARTED ? 'Added' : `${goal.status}`}
-                    </strong>
-                    {' '}
-                    on
-                    {' '}
-                    <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    </strong>{' '}
+                    on <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                     <GoalUserIdentifier goal={goal} />
                   </li>
                 </ul>
@@ -308,187 +393,192 @@ export default function ViewGoalDetails({
             </SummaryBoxContent>
           </SummaryBox>
 
-          {goal.responses && goal.responses.length > 0 && (
-          <ReadOnlyField label="Root causes">
-            {goal.responses.map((response) => (
-              <div key={response.id}>
-                {Array.isArray(response.response) ? (
-                  response.response.join(', ')
-                ) : (
-                  <p>{response.response}</p>
-                )}
-              </div>
-            ))}
-          </ReadOnlyField>
+          {rootCauseItems.length > 0 && (
+            <ReadOnlyField label="Root causes">
+              <ul className="usa-list margin-y-0" aria-label="Root causes list">
+                {rootCauseItems.map((rootCause) => (
+                  <li key={rootCause.key}>{rootCause.text}</li>
+                ))}
+              </ul>
+            </ReadOnlyField>
           )}
 
           <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
-              {goal.status === GOAL_STATUS.SUSPENDED
-                ? (
-                  <>
-                    {' '}
-                    -
-                    {' '}
-                    {goal.reason}
-                  </>
-                )
-                : <></>}
+              {goal.status === GOAL_STATUS.SUSPENDED && suspendedReason ? (
+                <> - {suspendedReason}</>
+              ) : (
+                <></>
+              )}
             </ReadOnlyField>
           </div>
 
           {objectives.length > 0 && (
-          <div className="objective-details-section margin-bottom-3">
-            {objectives.map((objective) => (
-              <div key={objective.id} className="margin-bottom-3">
-                <h3 className="smart-hub-serif">Objective summary</h3>
-                <ReadOnlyField label="TTA objective">
-                  {objective.title}
-                </ReadOnlyField>
+            <div className="objective-details-section margin-bottom-3">
+              {objectives.map((objective) => (
+                <div key={objective.id} className="margin-bottom-3">
+                  <h4 className="smart-hub-serif">Objective summary</h4>
+                  <ReadOnlyField label="TTA objective">{objective.title}</ReadOnlyField>
 
-                {/* Display Reports */}
-                {objective.activityReportObjectives
-                        && objective.activityReportObjectives.length > 0 && (
-                          <div className="margin-top-2">
-                            <ReadOnlyField label="Reports">
-                              {objective.activityReportObjectives
-                                .filter((aro) => aro.activityReport)
-                                .map((aro, reportIndex, array) => (
-                                  <React.Fragment key={`report-${aro.activityReport.id}`}>
-                                    <Link to={`/activity-reports/view/${aro.activityReport.id}`}>
-                                      {aro.activityReport.displayId}
-                                    </Link>
-                                    {reportIndex < array.length - 1 && ', '}
-                                  </React.Fragment>
-                                ))}
-                            </ReadOnlyField>
-                          </div>
-                )}
-
-                {/* Display Topics */}
-                {!objective.activityReportObjectives
-                        || !objective.activityReportObjectives.some(
-                          (aro) => aro.topics && aro.topics.length > 0,
-                        ) ? null : (
-                          <div className="margin-top-2">
-                            <ReadOnlyField label="Topics">
-                              {(objective.activityReportObjectives || [])
-                                .flatMap((aro) => aro.topics || [])
-                                .filter(
-                                  (topic, i, self) => i === self.findIndex(
-                                    (t) => t.id === topic.id,
-                                  ),
-                                )
-                                .map((topic, topicIndex, array) => (
-                                  <React.Fragment key={`topic-${topic.id}`}>
-                                    {topic.name}
-                                    {topicIndex < array.length - 1 && ', '}
-                                  </React.Fragment>
-                                ))}
-                            </ReadOnlyField>
-                          </div>
-                  )}
-                {/* Check if there are any resources before rendering the section */}
-                {(
-                  // Check for courses
-                  ((objective.activityReportObjectives || [])
-                    .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                    .filter(
-                      (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                        (c) => c.course && c.course.id === courseObj.course.id,
-                      ),
-                    ).length > 0)
-                  // Check for resources/links
-                  || ((objective.activityReportObjectives || []).some(
-                    (aro) => aro.resources && aro.resources.length > 0,
-                  ))
-                  // Check for files
-                  || ((objective.activityReportObjectives || []).some(
-                    (aro) => aro.files && aro.files.length > 0,
-                  ))
-                ) && (
-                  <>
-                    <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-                    <div className="resource-sections-container">
-                      {/* Display Courses if present */}
-                      {(objective.activityReportObjectives || [])
-                        .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                        .filter(
-                          (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                            (c) => c.course && c.course.id === courseObj.course.id,
-                          ),
-                        ).length > 0 && (
-                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-link-wrapper">
-                            {objective.activityReportObjectives
-                              .flatMap((aro) => aro.activityReportObjectiveCourses || [])
-                              .filter(
-                                (courseObj, i, self) => courseObj.course && i === self.findIndex(
-                                  (c) => c.course && c.course.id === courseObj.course.id,
-                                ),
-                              )
-                              .map((courseObj) => (
-                                <li key={`course-${courseObj.course.id}`}>
-                                  {courseObj.course.name}
-                                </li>
-                              ))}
-                          </ul>
-                      )}
-
-                      {/* Display Resources */}
-                      {!objective.activityReportObjectives
-                              || !objective.activityReportObjectives.some(
-                                (aro) => aro.resources && aro.resources.length > 0,
-                              ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
-                                  {(objective.activityReportObjectives || [])
-                                    .flatMap((aro) => aro.resources || [])
-                                    .filter(
-                                      (resource, i, self) => i === self.findIndex(
-                                        (r) => r.id === resource.id,
-                                      ),
-                                    )
-                                    .map((resource) => (
-                                      <li key={`resource-${resource.id}`}>
-                                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                          {resource.title || resource.url}
-                                        </a>
-                                      </li>
-                                    ))}
-                                </ul>
-                        )}
-
-                      {/* Display Objective Files */}
-                      {!objective.activityReportObjectives
-                              || !objective.activityReportObjectives.some(
-                                (aro) => aro.files && aro.files.length > 0,
-                              ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
-                                  {(objective.activityReportObjectives || [])
-                                    .flatMap((aro) => aro.files || [])
-                                    .filter(
-                                      (file, i, self) => i === self.findIndex(
-                                        (f) => f.id === file.id,
-                                      ),
-                                    )
-                                    .map((file) => (
-                                      <li key={`file-${file.id}`}>
-                                        {file.originalFileName}
-                                      </li>
-                                    ))}
-                                </ul>
-                        )}
+                  {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                    <div className="margin-top-2">
+                      <ReadOnlyField label="TTA specialists">
+                        {objective.ttaSpecialists.join('; ')}
+                      </ReadOnlyField>
                     </div>
-                  </>
-                )}
+                  ) : null}
 
-                {/* Display Objective Status */}
-                <ReadOnlyField label="Objective status" className="margin-top-2">
-                  {objective.status}
-                </ReadOnlyField>
-              </div>
-            ))}
-          </div>
+                  {/* Display Reports */}
+                  {objective.activityReportObjectives &&
+                    objective.activityReportObjectives.length > 0 && (
+                      <div className="margin-top-2">
+                        <ReadOnlyField label="Reports">
+                          {objective.activityReportObjectives
+                            .filter((aro) => aro.activityReport)
+                            .map((aro, reportIndex, array) => (
+                              <React.Fragment key={`report-${aro.activityReport.id}`}>
+                                <Link to={`/activity-reports/view/${aro.activityReport.id}`}>
+                                  {aro.activityReport.displayId}
+                                </Link>
+                                {reportIndex < array.length - 1 && ', '}
+                              </React.Fragment>
+                            ))}
+                        </ReadOnlyField>
+                      </div>
+                    )}
+
+                  {/* Display Topics */}
+                  {!objective.activityReportObjectives ||
+                  !objective.activityReportObjectives.some(
+                    (aro) => aro.topics && aro.topics.length > 0
+                  ) ? null : (
+                    <div className="margin-top-2">
+                      <ReadOnlyField label="Topics">
+                        {(objective.activityReportObjectives || [])
+                          .flatMap((aro) => aro.topics || [])
+                          .filter(
+                            (topic, i, self) => i === self.findIndex((t) => t.id === topic.id)
+                          )
+                          .map((topic, topicIndex, array) => (
+                            <React.Fragment key={`topic-${topic.id}`}>
+                              {topic.name}
+                              {topicIndex < array.length - 1 && ', '}
+                            </React.Fragment>
+                          ))}
+                      </ReadOnlyField>
+                    </div>
+                  )}
+                  {/* Check if there are any resources before rendering the section */}
+                  {
+                    // Check for courses
+                    ((objective.activityReportObjectives || [])
+                      .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                      .filter(
+                        (courseObj, i, self) =>
+                          courseObj.course &&
+                          i ===
+                            self.findIndex((c) => c.course && c.course.id === courseObj.course.id)
+                      ).length > 0 ||
+                      // Check for resources/links
+                      (objective.activityReportObjectives || []).some(
+                        (aro) => aro.resources && aro.resources.length > 0
+                      ) ||
+                      // Check for files
+                      (objective.activityReportObjectives || []).some(
+                        (aro) => aro.files && aro.files.length > 0
+                      )) && (
+                      <>
+                        <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
+                        <div className="resource-sections-container">
+                          {/* Courses are plain text in the Resources section (not links). */}
+                          {(objective.activityReportObjectives || [])
+                            .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                            .filter(
+                              (courseObj, i, self) =>
+                                courseObj.course &&
+                                i ===
+                                  self.findIndex(
+                                    (c) => c.course && c.course.id === courseObj.course.id
+                                  )
+                            ).length > 0 && (
+                            <ul className="usa-list margin-top-0 margin-bottom-0 resource-courses-wrapper">
+                              {objective.activityReportObjectives
+                                .flatMap((aro) => aro.activityReportObjectiveCourses || [])
+                                .filter(
+                                  (courseObj, i, self) =>
+                                    courseObj.course &&
+                                    i ===
+                                      self.findIndex(
+                                        (c) => c.course && c.course.id === courseObj.course.id
+                                      )
+                                )
+                                .map((courseObj) => (
+                                  <li key={`course-${courseObj.course.id}`}>
+                                    {courseObj.course.name}
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+
+                          {!objective.activityReportObjectives ||
+                          !objective.activityReportObjectives.some(
+                            (aro) => aro.resources && aro.resources.length > 0
+                          ) ? null : (
+                            <ul className="usa-list margin-top-0 resource-link-wrapper">
+                              {(objective.activityReportObjectives || [])
+                                .flatMap((aro) => aro.resources || [])
+                                .filter(
+                                  (resource, i, self) =>
+                                    i === self.findIndex((r) => r.id === resource.id)
+                                )
+                                .map((resource) => (
+                                  <li key={`resource-${resource.id}`}>
+                                    <a
+                                      className={
+                                        !resource.title || resource.title === resource.url
+                                          ? 'resource-url-link'
+                                          : 'resource-title-link'
+                                      }
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {resource.title || resource.url}
+                                    </a>
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+
+                          {/* Files are plain text entries so they are never underlined like links. */}
+                          {!objective.activityReportObjectives ||
+                          !objective.activityReportObjectives.some(
+                            (aro) => aro.files && aro.files.length > 0
+                          ) ? null : (
+                            <ul className="usa-list margin-top-0 resource-files-wrapper">
+                              {(objective.activityReportObjectives || [])
+                                .flatMap((aro) => aro.files || [])
+                                .filter(
+                                  (file, i, self) => i === self.findIndex((f) => f.id === file.id)
+                                )
+                                .map((file) => (
+                                  <li key={`file-${file.id}`}>{file.originalFileName}</li>
+                                ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
+                    )
+                  }
+
+                  {/* Display Objective Status */}
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="Objective status">{objective.status}</ReadOnlyField>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       ),
@@ -499,38 +589,118 @@ export default function ViewGoalDetails({
     <>
       <Link
         className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
+        to={backLinkTo}
       >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-        <span>Back to RTTAPA</span>
+        <FontAwesomeIcon
+          className="margin-right-1"
+          color={colors.ttahubMediumBlue}
+          icon={faArrowLeft}
+        />
+        <span>{backLinkText}</span>
       </Link>
 
-      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
-        TTA Goals for
-        {' '}
-        {recipient.name}
-        {' '}
-        - Region
-        {' '}
-        {regionId}
+      <h1 className="page-heading view-standard-goals-page-heading margin-top-0 margin-bottom-0 margin-left-2">
+        TTA Goals for {recipient.name} - Region {regionId}
       </h1>
 
-      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <div className="margin-bottom-5">
-          <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
+      <Container
+        className="margin-y-3 margin-left-2 maxw-desktop view-standard-goals-print-container"
+        paddingX={4}
+        paddingY={5}
+      >
+        <div className="margin-bottom-3 goal-summary-block">
+          <div className="display-flex flex-justify margin-bottom-3 goal-summary-heading-row">
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif">Goal summary</h2>
+            <div className="no-print">
+              <ContextMenu label={`Actions for goal ${goalId}`} menuItems={menuItems} />
+            </div>
+          </div>
           <ReadOnlyField label="Recipient grant numbers">
-            {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+            {formatRecipientGrantDisplay(
+              firstGoal.grant,
+              recipient.name,
+              recipient.grants,
+              firstGoal.grantId
+            )}
           </ReadOnlyField>
-          <ReadOnlyField label="Recipient's goal">
-            {firstGoal.name || goalTemplateName}
-          </ReadOnlyField>
+          <div className="recipient-goal-print-accent">
+            <ReadOnlyField label="Recipient's goal">
+              {firstGoal.name || goalTemplateName}
+            </ReadOnlyField>
+          </div>
         </div>
 
-        <Accordion
-          multiselectable
-          bordered
-          items={accordionItems}
-        />
+        <div className="goal-history-dashboard no-print">
+          <DashboardOverviewContainer
+            loading={loading}
+            fieldData={[
+              {
+                key: 'activity-reports',
+                icon: faChartColumn,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Activity reports',
+                data: String(overview?.activityReports ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of Activity Reports the goal was used on.',
+              },
+              {
+                key: 'goal-objectives',
+                icon: faPenCircle,
+                iconColor: colors.ttahubMediumBlue,
+                backgroundColor: colors.ttahubBlueLight,
+                label1: 'Goal objectives',
+                data: String(overview?.objectives ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of objectives on the goal.',
+              },
+              {
+                key: 'goal-closures',
+                icon: faCheckCircle,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Goal closures',
+                data: String(overview?.closures ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been closed.',
+              },
+              {
+                key: 'goal-suspensions',
+                icon: faPauseCircle,
+                iconColor: colors.errorDark,
+                backgroundColor: colors.errorLighter,
+                label1: 'Goal suspensions',
+                data: String(overview?.suspensions ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been suspended.',
+              },
+            ]}
+          />
+        </div>
+
+        <div className="goal-history-print-overview print-only margin-bottom-4">
+          <p className="margin-bottom-1 text-bold">Goal information:</p>
+          <p className="margin-y-0">
+            <strong>{overview?.activityReports ?? 0}</strong> Activity Reports
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.objectives ?? 0}</strong> goal objectives
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.closures ?? 0}</strong> goal closures
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.suspensions ?? 0}</strong> goal suspensions
+          </p>
+        </div>
+
+        {hasGoalHistory ? (
+          <Accordion multiselectable bordered items={accordionItems} />
+        ) : (
+          <Alert role="alert" className="margin-top-2" type="info">
+            No goal history found
+          </Alert>
+        )}
       </Container>
     </>
   );
@@ -544,7 +714,7 @@ ViewGoalDetails.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         numberWithProgramTypes: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,

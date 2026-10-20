@@ -1,29 +1,23 @@
 /* eslint-disable react/prop-types */
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen, fireEvent, waitFor,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import ObjectiveSelection from '../ObjectiveSelection';
+import { FormProvider, useForm } from 'react-hook-form';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
 import { CREATE_A_NEW_OBJECTIVE } from '../constants';
+import ObjectiveSelection from '../ObjectiveSelection';
 
 const RTest = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
+    <FormProvider {...methods}>{children}</FormProvider>
   );
 };
 
-const renderWithFormProvider = (ui, formData = {}) => render(
-  <RTest defaultValues={formData}>
-    {ui}
-  </RTest>,
-);
+const renderWithFormProvider = (ui, formData = {}) =>
+  render(<RTest defaultValues={formData}>{ui}</RTest>);
 
 const mockField = {
   id: '1',
@@ -59,7 +53,7 @@ describe('ObjectiveSelection', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         objectiveOptions={mockObjectiveOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByText('Select TTA objective')).toBeInTheDocument();
@@ -83,7 +77,7 @@ describe('ObjectiveSelection', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         objectiveOptions={mockObjectiveOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByText('Select TTA objective')).toBeInTheDocument();
@@ -110,7 +104,7 @@ describe('ObjectiveSelection', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         objectiveOptions={mockObjectiveOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByText('Select TTA objective')).toBeInTheDocument();
@@ -118,7 +112,9 @@ describe('ObjectiveSelection', () => {
 
   it('calls remove function when remove button is clicked', () => {
     const formData = {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ label: 'Objective 1', value: 'Objective 1', objectiveId: 1 }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        { label: 'Objective 1', value: 'Objective 1', objectiveId: 1 },
+      ],
     };
 
     const fieldWithMatchingData = {
@@ -135,7 +131,7 @@ describe('ObjectiveSelection', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         objectiveOptions={mockObjectiveOptions}
       />,
-      formData,
+      formData
     );
 
     const removeButton = screen.getByText('Remove this objective');
@@ -164,7 +160,7 @@ describe('ObjectiveSelection', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         objectiveOptions={mockObjectiveOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -183,13 +179,15 @@ describe('ObjectiveSelection', () => {
         index={0}
         remove={mockRemove}
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
-        objectiveOptions={[{
-          value: CREATE_A_NEW_OBJECTIVE,
-          label: CREATE_A_NEW_OBJECTIVE,
-          objectiveId: null,
-        }]}
+        objectiveOptions={[
+          {
+            value: CREATE_A_NEW_OBJECTIVE,
+            label: CREATE_A_NEW_OBJECTIVE,
+            objectiveId: null,
+          },
+        ]}
       />,
-      formData,
+      formData
     );
 
     expect(await screen.findByText('TTA objective')).toBeInTheDocument();

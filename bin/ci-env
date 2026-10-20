@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Usage: bin/ci-env <command...>
+exec env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub "$@"

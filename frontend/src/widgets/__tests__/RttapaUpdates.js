@@ -1,6 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import React from 'react';
 import { Router } from 'react-router';
 import RttapaUpdates from '../RttapaUpdates';
 
@@ -33,11 +33,12 @@ describe('RttapaUpdates', () => {
 
   const history = createMemoryHistory();
 
-  const renderTest = (logs = DEFAULT_LOGS) => render(
-    <Router history={history}>
-      <RttapaUpdates regionId={1} recipientId={1} logs={logs} />
-    </Router>,
-  );
+  const renderTest = (logs = DEFAULT_LOGS) =>
+    render(
+      <Router history={history}>
+        <RttapaUpdates regionId={1} recipientId={1} logs={logs} />
+      </Router>
+    );
 
   test('renders the widget heading', async () => {
     renderTest();
@@ -64,6 +65,10 @@ describe('RttapaUpdates', () => {
 
   test('renders the no logs message', () => {
     renderTest([]);
-    expect(screen.getByText('There are no communication logs with a purpose of “RTTAPA updates” or “RTTAPA initial plan / new recipient”.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'There are no communication logs with a purpose of “RTTAPA updates” or “RTTAPA initial plan / new recipient”.'
+      )
+    ).toBeInTheDocument();
   });
 });

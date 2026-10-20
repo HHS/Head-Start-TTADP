@@ -1,27 +1,23 @@
 /* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import { SUPPORT_TYPES } from '@ttahub/common';
-import { MemoryRouter } from 'react-router-dom';
-import join from 'url-join';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { MemoryRouter } from 'react-router-dom';
 import selectEvent from 'react-select-event';
-import sessionSummary, { isPageComplete } from '../sessionSummary';
-import NetworkContext from '../../../../NetworkContext';
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import join from 'url-join';
 import AppLoadingContext from '../../../../AppLoadingContext';
-import { mockRSSData } from '../../../../testHelpers';
 import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
+import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import NetworkContext from '../../../../NetworkContext';
+import { mockRSSData } from '../../../../testHelpers';
+import UserContext from '../../../../UserContext';
+import sessionSummary, { isPageComplete } from '../sessionSummary';
 
 const mockData = (files) => ({
   dataTransfer: {
@@ -36,7 +32,11 @@ const mockData = (files) => ({
 });
 
 const file = (name, id, status = 'Uploaded') => ({
-  originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+  originalFileName: name,
+  id,
+  fileSize: 2000,
+  status,
+  lastModified: 123456,
 });
 
 const dispatchEvt = (node, type, data) => {
@@ -51,17 +51,118 @@ const flushPromises = async (rerender, ui) => {
 
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
-    it('returns true if form state is valid', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({
-          objectiveTrainers: [1],
-          objectiveTopics: [1],
-        })),
-      })).toBe(true);
+    const makeHookForm = ({
+      useIpdCourses = false,
+      trainers = [],
+      otherTrainers = '',
+      ttaProvided = 'filled',
+      objective = 'filled',
+    } = {}) => ({
+      getValues: jest.fn((field) => {
+        if (!field) {
+          return { useIpdCourses, trainers };
+        }
+
+        if (field === 'useIpdCourses') {
+          return useIpdCourses;
+        }
+
+        if (field === 'trainers') {
+          return trainers;
+        }
+
+        if (field === 'otherTrainers') {
+          return otherTrainers;
+        }
+
+        if (field === 'ttaProvided') {
+          return ttaProvided;
+        }
+
+        if (field === 'objective') {
+          return objective;
+        }
+
+        return 'filled';
+      }),
     });
 
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
+    it('returns true when required fields are complete and Other trainer is not selected', () => {
+      expect(
+        isPageComplete(
+          makeHookForm({
+            trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+          })
+        )
+      ).toBe(true);
+    });
+
+    it('returns false when Other trainer is selected and otherTrainers is empty', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: '',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when Other trainer is selected and otherTrainers is provided', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: 'Custom Trainer',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when ttaProvided is semantically empty (%s)', (_label, ttaProvided) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when ttaProvided has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        ttaProvided: '<p>Provided coaching on ERSEA.</p>',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['single empty paragraph', '<p></p>'],
+      ['empty paragraph with newline', '<p></p>\n'],
+      ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+      ['spaces only', '<p>   </p>'],
+      ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+    ])('returns false when objective is semantically empty (%s)', (_label, objective) => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective,
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when objective has real rich-text content', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+        objective: '<p>Improve ERSEA enrollment processes.</p>',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
     });
   });
 
@@ -84,12 +185,14 @@ describe('sessionSummary', () => {
         1: NOT_STARTED,
         2: NOT_STARTED,
       },
-      files: [{
-        originalFileName: 'fancy',
-        fileSize: 104520,
-        status: 'APPROVED',
-        id: 2,
-      }],
+      files: [
+        {
+          originalFileName: 'fancy',
+          fileSize: 104520,
+          status: 'APPROVED',
+          id: 2,
+        },
+      ],
     };
 
     const defaultAdditionalData = {
@@ -104,39 +207,59 @@ describe('sessionSummary', () => {
       },
     };
 
+    const ncAdditionalData = {
+      event: {
+        regionId: 1,
+        data: {
+          regionId: 1,
+          eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        },
+      },
+    };
+
     const RenderSessionSummary = ({
       formValues = defaultFormValues,
       additionalData = defaultAdditionalData,
+      user = { id: 1, permissions: [] },
+      onForm = () => {},
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
+        shouldUnregister: false,
       });
+      onForm(hookForm);
 
       return (
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
-          <MemoryRouter>
-            <FormProvider {...hookForm}>
-              <NetworkContext.Provider value={{ connectionActive: true }}>
-                {sessionSummary.render(
-                  { ...defaultAdditionalData, ...additionalData },
-                  defaultFormValues,
-                  1,
-                  false,
-                  jest.fn(),
-                  onSaveDraft,
-                  jest.fn(),
-                  false,
-                  'key',
-                  jest.fn(),
-                  () => <></>,
-                )}
-              </NetworkContext.Provider>
-            </FormProvider>
-          </MemoryRouter>
+          <UserContext.Provider value={{ user }}>
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.render(
+                    { ...defaultAdditionalData, ...additionalData },
+                    defaultFormValues,
+                    1,
+                    false,
+                    jest.fn(),
+                    onSaveDraft,
+                    jest.fn(),
+                    false,
+                    'key',
+                    jest.fn(),
+                    () => (
+                      <></>
+                    )
+                  )}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       );
     };
@@ -148,17 +271,17 @@ describe('sessionSummary', () => {
       ]);
 
       fetchMock.get('/api/users/trainers/regional/region/1', [
-        { id: 1, fullName: 'Regional Trainer 1' },
-        { id: 2, fullName: 'Regional Trainer 2' },
-        { id: 3, fullName: 'Regional Trainer 3' },
-        { id: 4, fullName: 'Regional Trainer 4' },
+        { id: 1, fullName: 'Regional Trainer 1', roles: [{ name: 'GS' }] },
+        { id: 2, fullName: 'Regional Trainer 2', roles: [{ name: 'GS' }] },
+        { id: 3, fullName: 'Regional Trainer 3', roles: [{ name: 'GS' }] },
+        { id: 4, fullName: 'Regional Trainer 4', roles: [{ name: 'GS' }] },
       ]);
 
       fetchMock.get('/api/users/trainers/national-center/region/1', [
-        { id: 1, fullName: 'National Center Trainer 1' },
-        { id: 2, fullName: 'National Center Trainer 2' },
-        { id: 3, fullName: 'National Center Trainer 3' },
-        { id: 4, fullName: 'National Center Trainer 4' },
+        { id: 1, fullName: 'National Center Trainer 1', roles: [{ name: 'NC' }] },
+        { id: 2, fullName: 'National Center Trainer 2', roles: [{ name: 'NC' }] },
+        { id: 3, fullName: 'National Center Trainer 3', roles: [{ name: 'NC' }] },
+        { id: 4, fullName: 'National Center Trainer 4', roles: [{ name: 'NC' }] },
       ]);
 
       fetchMock.get('/api/courses', [
@@ -186,6 +309,80 @@ describe('sessionSummary', () => {
       fetchMock.restore();
     });
 
+    it('lets admins change facilitation immediately after session name', async () => {
+      render(
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
+        />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue('regional_tta_staff');
+      screen.getByRole('textbox', { name: /session name/i }).focus();
+      userEvent.tab();
+      expect(field).toHaveFocus();
+
+      userEvent.selectOptions(field, 'national_center');
+      expect(field).toHaveValue('national_center');
+      userEvent.selectOptions(field, 'both');
+      expect(field).toHaveValue('both');
+    });
+
+    it('resets the approver and completion flags when an admin changes facilitation', async () => {
+      let hookForm;
+      render(
+        <RenderSessionSummary
+          user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }}
+          additionalData={ncAdditionalData}
+          formValues={{
+            ...defaultFormValues,
+            approverId: 7,
+            ownerComplete: true,
+            collabComplete: true,
+            pocComplete: true,
+          }}
+          onForm={(form) => {
+            hookForm = form;
+          }}
+        />
+      );
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(hookForm.getValues('approverId')).toBe(7);
+
+      userEvent.selectOptions(field, 'national_center');
+
+      await waitFor(() => expect(hookForm.getValues('approverId')).toBe(''));
+      expect(hookForm.getValues('facilitation')).toBe('national_center');
+      expect(hookForm.getValues('ownerComplete')).toBe(false);
+      expect(hookForm.getValues('collabComplete')).toBe(false);
+      expect(hookForm.getValues('pocComplete')).toBe(false);
+    });
+
+    it('hides the facilitation dropdown from admins on events without National Centers', async () => {
+      render(
+        <RenderSessionSummary user={{ id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] }} />
+      );
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('preserves facilitation without an editable field for non-admin users', async () => {
+      render(<RenderSessionSummary />);
+
+      await screen.findByRole('textbox', { name: /session name/i });
+      expect(
+        screen.queryByRole('combobox', { name: /training facilitation/i })
+      ).not.toBeInTheDocument();
+      expect(document.querySelector('input[name="facilitation"]')).toHaveValue(
+        'regional_tta_staff'
+      );
+    });
+
     it('renders session summary', async () => {
       const { rerender } = render(<RenderSessionSummary />);
 
@@ -196,7 +393,9 @@ describe('sessionSummary', () => {
         userEvent.type(sessionName, 'Session name');
       });
 
-      const startDate = await screen.findByLabelText(/session start Date/i, { selector: '#startDate' });
+      const startDate = await screen.findByLabelText(/session start Date/i, {
+        selector: '#startDate',
+      });
       act(() => {
         userEvent.type(startDate, '01/01/2021');
       });
@@ -214,11 +413,6 @@ describe('sessionSummary', () => {
       const duration = await screen.findByLabelText(/duration/i);
       act(() => {
         userEvent.type(duration, '1.25');
-      });
-
-      const sessionObjective = await screen.findByLabelText(/session objective/i);
-      act(() => {
-        userEvent.type(sessionObjective, 'Session objective');
       });
 
       await selectEvent.select(document.getElementById('objectiveTopics'), ['Complaint']);
@@ -270,9 +464,7 @@ describe('sessionSummary', () => {
         userEvent.click(confirmDelete);
       });
 
-      await waitFor(() => expect(
-        fetchMock.called(deleteUrl, { method: 'DELETE' }),
-      ).toBe(true));
+      await waitFor(() => expect(fetchMock.called(deleteUrl, { method: 'DELETE' })).toBe(true));
 
       // Select courses.
       let yesCourses = document.querySelector('#useIpdCourses-yes');
@@ -280,7 +472,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
       await selectEvent.select(courseSelect, ['Sample Course 2', 'Sample Course 3']);
       expect(await screen.findByText(/Sample Course 2/i)).toBeVisible();
       expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
@@ -326,13 +518,6 @@ describe('sessionSummary', () => {
         userEvent.click(noIsaidNoIsaidNoFilesSir);
       });
 
-      act(() => {
-        userEvent.type(
-          screen.getByLabelText(/TTA provided/i),
-          'TTA provided',
-        );
-      });
-
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
         userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
@@ -343,7 +528,64 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('shows validation error when iPD courses is yes but no courses selected', async () => {
+    it('loads global goal templates when the session has no grants', async () => {
+      fetchMock.get('/api/goal-templates', [{ id: 1, standard: 'Family engagement' }], {
+        overwriteRoutes: true,
+      });
+      render(<RenderSessionSummary />);
+
+      await waitFor(() => expect(fetchMock.called('/api/goal-templates')).toBe(true));
+      const goalSelect = document.getElementById('goalTemplates');
+      expect(goalSelect).not.toBeNull();
+      await selectEvent.select(goalSelect, 'Family engagement');
+
+      expect(screen.getByText('Family engagement')).toBeInTheDocument();
+    });
+
+    it('exposes required-field semantics for the TTA provided rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field is labeled "TTA provided" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/TTA provided/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
+
+      // The rich-text editor is present and labeled for assistive technology.
+      await waitFor(() => {
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /TTA provided/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
+        expect(editable).toHaveAttribute('aria-label', expect.stringMatching(/TTA provided/i));
+      });
+    });
+
+    it('exposes required-field semantics for the session objectives rich-text field', async () => {
+      render(<RenderSessionSummary />);
+
+      // The required field is labeled "Session objectives" with a required indicator,
+      // so screen readers announce it the way the previous native textarea did.
+      const label = await screen.findByText(/Session objectives/i, { selector: 'label' });
+      expect(label).toBeInTheDocument();
+      expect(label.querySelector('.smart-hub--form-required')).not.toBeNull();
+
+      // The rich-text editor is present and labeled for assistive technology.
+      await waitFor(() => {
+        const editables = Array.from(document.querySelectorAll('[contenteditable="true"]'));
+        const editable = editables.find((node) =>
+          /Session objectives/i.test(node.getAttribute('aria-label') || '')
+        );
+        expect(editable).not.toBeUndefined();
+        expect(editable).toHaveAttribute(
+          'aria-label',
+          expect.stringMatching(/Session objectives/i)
+        );
+      });
+    });
+
+    it('shows validation error when EEP courses is yes but no courses selected', async () => {
       render(<RenderSessionSummary />);
 
       const yesCourses = document.querySelector('#useIpdCourses-yes');
@@ -351,7 +593,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
 
       await act(async () => {
         userEvent.click(courseSelect);
@@ -486,9 +728,7 @@ describe('sessionSummary', () => {
         userEvent.click(confirmDelete);
       });
 
-      await waitFor(() => expect(
-        fetchMock.called(deleteUrl, { method: 'DELETE' }),
-      ).toBe(true));
+      await waitFor(() => expect(fetchMock.called(deleteUrl, { method: 'DELETE' })).toBe(true));
 
       const deleteMessage = await screen.findByText('File could not be deleted');
       expect(deleteMessage).toBeInTheDocument();
@@ -556,7 +796,9 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
+      render(
+        <RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />
+      );
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
@@ -567,7 +809,12 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }} />);
+      render(
+        <RenderSessionSummary
+          formValues={values}
+          additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }}
+        />
+      );
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
     });
@@ -578,7 +825,12 @@ describe('sessionSummary', () => {
         status: 'Complete',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }} />);
+      render(
+        <RenderSessionSummary
+          formValues={values}
+          additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }}
+        />
+      );
       expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
@@ -598,11 +850,13 @@ describe('sessionSummary', () => {
       const TestComponent = () => {
         const formValues = {
           recipients: [],
-          files: [{
-            originalFileName: 'test-file.pdf',
-            id: 1,
-            url: { url: 'https://example.com/file.pdf' },
-          }],
+          files: [
+            {
+              originalFileName: 'test-file.pdf',
+              id: 1,
+              url: { url: 'https://example.com/file.pdf' },
+            },
+          ],
         };
 
         const hookForm = useForm({
@@ -611,7 +865,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -637,10 +893,12 @@ describe('sessionSummary', () => {
       const TestComponent = () => {
         const formValues = {
           recipients: [],
-          files: [{
-            originalFileName: 'test-file-no-url.pdf',
-            id: 2,
-          }],
+          files: [
+            {
+              originalFileName: 'test-file-no-url.pdf',
+              id: 2,
+            },
+          ],
         };
 
         const hookForm = useForm({
@@ -649,7 +907,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -683,7 +943,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -722,7 +984,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -740,6 +1004,47 @@ describe('sessionSummary', () => {
         expect(screen.getByText(/Course One/i)).toBeInTheDocument();
         expect(screen.getByText(/Course Two/i)).toBeInTheDocument();
       });
+    });
+
+    it('renders legacy ttaProvided with unsupported markup without crashing', async () => {
+      const TestComponent = () => {
+        const formValues = {
+          recipients: [],
+          files: [],
+          // Legacy value stored before render-time sanitization: contains atomic
+          // markup that would otherwise crash the read-only Draft renderer.
+          ttaProvided:
+            '<p>Legacy content</p><iframe src="https://evil.example"></iframe><img src="x" onerror="alert(1)" />',
+        };
+
+        const hookForm = useForm({
+          mode: 'onBlur',
+          defaultValues: formValues,
+        });
+
+        return (
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
+            <MemoryRouter>
+              <FormProvider {...hookForm}>
+                <NetworkContext.Provider value={{ connectionActive: true }}>
+                  {sessionSummary.reviewSection()}
+                </NetworkContext.Provider>
+              </FormProvider>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        );
+      };
+
+      render(<TestComponent />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Legacy content/i)).toBeInTheDocument();
+      });
+
+      expect(document.querySelector('iframe')).toBeNull();
+      expect(document.querySelector('img')).toBeNull();
     });
   });
 });

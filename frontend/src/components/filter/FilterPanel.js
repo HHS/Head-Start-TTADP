@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { isArray } from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import useSubFilters from '../../hooks/useSubFilters';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
-import useSubFilters from '../../hooks/useSubFilters';
 
 const REGION = 'region';
 
 const determineRegionalFilters = (filters, allUserRegions) => {
-  const passedRegionFilters = filters.filter((f) => f.topic === REGION).map((r) => {
-    if (isArray(r.query)) {
-      return parseInt(r.query[0], 10);
-    }
-    return r.query;
-  });
+  const passedRegionFilters = filters
+    .filter((f) => f.topic === REGION)
+    .flatMap((r) => {
+      const values = isArray(r.query) ? r.query : [r.query];
+      return values.map((v) => parseInt(v, 10));
+    });
 
   const containsAllRegions = allUserRegions.every((region) => passedRegionFilters.includes(region));
   return containsAllRegions ? filters.filter((f) => f.topic !== REGION) : filters;
@@ -32,12 +32,13 @@ export default function FilterPanel({
 }) {
   // eslint-disable-next-line max-len
   const [filtersToShow, setFiltersToShow] = useState(
-    determineRegionalFilters(filters, allUserRegions),
+    determineRegionalFilters(filters, allUserRegions)
   );
-  const {
-    subFilters,
-    filteredFilterConfig,
-  } = useSubFilters(filtersToShow, filterConfig, allowedSubfilters);
+  const { subFilters, filteredFilterConfig } = useSubFilters(
+    filtersToShow,
+    filterConfig,
+    allowedSubfilters
+  );
 
   useEffect(() => {
     // Hide or Show Region Filters.
@@ -47,7 +48,7 @@ export default function FilterPanel({
   const onApply = (items) => {
     // Check for region filters.
     const regionFilters = items.filter((f) => f.topic === 'region');
-    onApplyFilters(items, (regionFilters.length === 0 && manageRegions));
+    onApplyFilters(items, regionFilters.length === 0 && manageRegions);
   };
 
   const onRemoveFilterPill = (id) => {

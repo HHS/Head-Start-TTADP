@@ -1,9 +1,6 @@
 import express from 'express';
-import {
-  getResourcesDashboardData,
-  getFlatResourcesDataWithCache,
-} from './handlers';
 import transactionWrapper from '../transactionWrapper';
+import { getFlatResourcesDataWithCache, getResourcesDashboardData } from './handlers';
 
 const router = express.Router();
 router.get('/', transactionWrapper(getResourcesDashboardData));

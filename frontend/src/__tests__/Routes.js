@@ -1,24 +1,26 @@
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { act, render, screen } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import PropTypes from 'prop-types';
-import { SCOPE_IDS } from '@ttahub/common';
-import Routes from '../Routes';
-import UserContext from '../UserContext';
+import React from 'react';
+import { MemoryRouter, Redirect } from 'react-router-dom';
 import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
+import Routes from '../Routes';
+import UserContext from '../UserContext';
 
 const defaultFlags = [
   'quality_assurance_dashboard',
   'resources_dashboard',
   'view_courses',
   'communication_log',
+  'recipient_tta_request',
 ];
 
 // mock child components lightly to ensure they render *something* identifiable
 // this avoids needing to mock deeply nested dependencies of each page
 jest.mock('../pages/Home', () => () => <div>Home Page Welcome</div>);
+jest.mock('../pages/Home/NewHome', () => () => <div>New Home Page Welcome</div>);
 jest.mock('../pages/Landing', () => () => <div>Activity Reports Landing</div>);
 jest.mock('../pages/ActivityReport', () => () => <div>Activity Report Form</div>);
 jest.mock('../pages/ApprovedActivityReport', () => () => <div>Approved Activity Report View</div>);
@@ -26,24 +28,42 @@ jest.mock('../pages/LegacyReport', () => () => <div>Legacy Report View</div>);
 jest.mock('../pages/RecipientRecord', () => () => <div>Recipient TTA Record</div>);
 jest.mock('../pages/RecipientSearch', () => () => <div>Recipient Search Page</div>);
 jest.mock('../pages/RegionalDashboard', () => () => <div>Regional Dashboard Page</div>);
+jest.mock('../pages/GoalDashboard', () => () => <div>Goal Dashboard Page</div>);
+jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
+  <div>Goal Dashboard Print Preview Page</div>
+));
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
+jest.mock('../pages/TtaRequests', () => () => <div>TTA Requests Page</div>);
 jest.mock('../pages/TrainingReportForm', () => () => <div>Training Report Form Page</div>);
 jest.mock('../pages/ViewTrainingReport', () => () => <div>View Training Report Page</div>);
 jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
 jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page</div>);
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
+jest.mock('../pages/AccountManagement/ManageNotifications', () => () => (
+  <div>Manage Notifications Page</div>
+));
+jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => <div>Recipients With No TTA Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => <div>Recipients With Class Scores and Goals Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => <div>Recipients With OHS Standard FEI Goal Page</div>);
-jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => <div>Communication Log Dashboard Page</div>);
-jest.mock('../pages/RegionalCommunicationLog', () => () => <div>Regional Communication Log Form Page</div>);
-jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => <div>View Communication Log Page</div>);
+jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => (
+  <div>Recipients With Class Scores and Goals Page</div>
+));
+jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => (
+  <div>Recipients With OHS Standard FEI Goal Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => (
+  <div>Communication Log Dashboard Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog', () => () => (
+  <div>Regional Communication Log Form Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => (
+  <div>View Communication Log Page</div>
+));
 
 function MockSomethingWentWrong({ responseCode }) {
   return (
@@ -65,6 +85,15 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
+
+  if (flag === 'actionable_notifications' && !window.test_actionable_notifications_flag) {
+    return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
+  }
+
+  if (flag === 'recipient_tta_request' && !window.test_recipient_tta_request_flag) {
+    return renderNotFound ? <Redirect to="/something-went-wrong/404" /> : null;
+  }
+
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -83,11 +112,11 @@ const RenderRoutes = async (
   authenticated = true,
   userOverrides = {},
   routeProps = {},
-  authError = null,
+  authError = null
 ) => {
   const logout = jest.fn();
   const announce = jest.fn();
-  const setAreThereUnreadNotifications = jest.fn();
+  const setAreThereUnreadWhatsNewNotifications = jest.fn();
   const updateUser = jest.fn();
 
   const defaultUser = {
@@ -105,7 +134,11 @@ const RenderRoutes = async (
 
   const user = { ...defaultUser, ...userOverrides };
 
-  window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
+  window.test_quality_assurance_dashboard_flag = user.flags?.includes(
+    'quality_assurance_dashboard'
+  );
+  window.test_actionable_notifications_flag = user.flags?.includes('actionable_notifications');
+  window.test_recipient_tta_request_flag = user.flags?.includes('recipient_tta_request');
 
   const defaultProps = {
     alert: null,
@@ -113,13 +146,13 @@ const RenderRoutes = async (
     announce,
     user,
     authenticated,
-    areThereUnreadNotifications: false,
-    setAreThereUnreadNotifications,
+    areThereUnreadWhatsNewNotifications: false,
+    setAreThereUnreadWhatsNewNotifications,
     authError,
     updateUser,
     loggedOut: false,
     timedOut: false,
-    notifications: null,
+    whatsNewNotifications: null,
     ...routeProps,
   };
 
@@ -135,29 +168,32 @@ const RenderRoutes = async (
                 announce={defaultProps.announce}
                 user={defaultProps.user}
                 authenticated={defaultProps.authenticated}
-                areThereUnreadNotifications={defaultProps.areThereUnreadNotifications}
-                setAreThereUnreadNotifications={defaultProps.setAreThereUnreadNotifications}
+                areThereUnreadWhatsNewNotifications={
+                  defaultProps.areThereUnreadWhatsNewNotifications
+                }
+                setAreThereUnreadWhatsNewNotifications={
+                  defaultProps.setAreThereUnreadWhatsNewNotifications
+                }
                 authError={defaultProps.authError}
                 updateUser={defaultProps.updateUser}
                 loggedOut={defaultProps.loggedOut}
                 timedOut={defaultProps.timedOut}
-                notifications={defaultProps.notifications}
+                whatsNewNotifications={defaultProps.whatsNewNotifications}
               />
             </UserContext.Provider>
           </MyGroupsProvider>
         </AriaLiveContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   });
 };
 
 describe('Routes', () => {
   beforeEach(() => {
-    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: {} });
+    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: [] });
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/groups', []);
     fetchMock.get('/api/users/settings', []);
-    fetchMock.get('/api/widgets/unreadNotifications', { count: 0 });
 
     // use a fallback for any other GET/POST/etc. request to avoid test failures
     // due to unmocked APIs called by the *actual* page components (which we've mocked).
@@ -168,13 +204,49 @@ describe('Routes', () => {
   afterEach(() => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
+    delete window.test_actionable_notifications_flag;
+    delete window.test_recipient_tta_request_flag;
   });
 
   // --- authenticated routes ---
 
-  it('renders the Home page for "/"', async () => {
-    await RenderRoutes('/');
+  it('renders the legacy Home page for an unflagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
     expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the legacy Home page for a non-admin without a flags array', async () => {
+    await RenderRoutes('/', true, {
+      flags: undefined,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for a flagged non-admin', async () => {
+    await RenderRoutes('/', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
+  });
+
+  it('renders the new Home page for an admin without the flag', async () => {
+    await RenderRoutes('/', true, {
+      flags: defaultFlags,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
+      roles: [{ name: 'Admin' }],
+    });
+    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders the Landing page for "/activity-reports"', async () => {
@@ -222,14 +294,38 @@ describe('Routes', () => {
     expect(await screen.findByText('Resources Dashboard Page')).toBeInTheDocument();
   });
 
-  it('renders the Course Dashboard page for "/dashboards/ipd-courses"', async () => {
-    await RenderRoutes('/dashboards/ipd-courses');
+  it('renders the Goal Dashboard page for "/dashboards/goal-dashboard"', async () => {
+    await RenderRoutes('/dashboards/goal-dashboard');
+    expect(await screen.findByText('Goal Dashboard Page')).toBeInTheDocument();
+  });
+
+  it('renders the Goal Dashboard print preview page for "/dashboards/goal-dashboard/print"', async () => {
+    await RenderRoutes('/dashboards/goal-dashboard/print');
+    expect(await screen.findByText('Goal Dashboard Print Preview Page')).toBeInTheDocument();
+  });
+
+  it('renders the Course Dashboard page for "/dashboards/eep-courses"', async () => {
+    await RenderRoutes('/dashboards/eep-courses');
     expect(await screen.findByText('Course Dashboard Page')).toBeInTheDocument();
   });
 
   it('renders the Training Reports page for "/training-reports/not-started"', async () => {
     await RenderRoutes('/training-reports/not-started');
     expect(await screen.findByText('Training Reports Page')).toBeInTheDocument();
+  });
+
+  it('renders the TTA Requests page for "/tta-requests"', async () => {
+    await RenderRoutes('/tta-requests');
+    expect(await screen.findByText('TTA Requests Page')).toBeInTheDocument();
+  });
+
+  it('redirects "/tta-requests" to 404 when the recipient_tta_request flag is off', async () => {
+    const flagsWithoutRecipientTtaRequest = defaultFlags.filter(
+      (f) => f !== 'recipient_tta_request'
+    );
+    await RenderRoutes('/tta-requests', true, { flags: flagsWithoutRecipientTtaRequest });
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
+    expect(screen.queryByText('TTA Requests Page')).toBe(null);
   });
 
   it('renders the Training Report Form page for "/training-report/:id/event-summary"', async () => {
@@ -262,9 +358,9 @@ describe('Routes', () => {
     expect(await screen.findByText('Group Details Page')).toBeInTheDocument();
   });
 
-  it('renders the Notifications page for "/notifications"', async () => {
-    await RenderRoutes('/notifications');
-    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  it('renders the Whats New page for "/whats-new"', async () => {
+    await RenderRoutes('/whats-new');
+    expect(await screen.findByText('Whats New Page')).toBeInTheDocument();
   });
 
   it('renders the Admin page for "/admin" for admin users', async () => {
@@ -277,19 +373,23 @@ describe('Routes', () => {
     expect(await screen.findByText('QA Dashboard Page')).toBeInTheDocument();
   });
 
-  it('renders the QA Recipients With No TTA page', async () => {
+  it('redirects the removed QA Recipients With No TTA route to 404', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-no-tta');
-    expect(await screen.findByText('Recipients With No TTA Page')).toBeInTheDocument();
+    expect(await screen.findByText(/Something Went Wrong Page Code:\s*404/i)).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With Class Scores and Goals page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-class-scores-and-goals');
-    expect(await screen.findByText('Recipients With Class Scores and Goals Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With Class Scores and Goals Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With OHS Standard FEI Goal page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal');
-    expect(await screen.findByText('Recipients With OHS Standard FEI Goal Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With OHS Standard FEI Goal Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the Regional Communication Log Dashboard page', async () => {
@@ -330,11 +430,44 @@ describe('Routes', () => {
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
   });
 
+  it('renders the Notifications page for "/notifications" when the actionable_notifications flag is on', async () => {
+    await RenderRoutes('/notifications', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+    });
+    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  });
+
+  it('does not render the Notifications page for "/notifications" when the actionable_notifications flag is off', async () => {
+    await RenderRoutes('/notifications');
+    expect(await screen.findByText('Actionable Notifications Flag Not Found')).toBeInTheDocument();
+    expect(screen.queryByText('Notifications Page')).toBe(null);
+  });
+
+  it('routes "/notifications/verify-email/:token" to the notifications management page for flagged users', async () => {
+    await RenderRoutes('/notifications/verify-email/tok-123', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Manage Notifications Page')).toBeInTheDocument();
+  });
+
+  it('routes "/notifications/verify-email/:token" to the legacy account page for unflagged users', async () => {
+    await RenderRoutes('/notifications/verify-email/tok-123', true, {
+      flags: defaultFlags,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
+      roles: [],
+    });
+    expect(await screen.findByText('Account Management Page')).toBeInTheDocument();
+  });
+
   // --- unauthenticated scenarios ---
 
-  it('renders Unauthenticated component when not authenticated on "/"', async () => {
+  it('does not render either Home page when unauthenticated on "/"', async () => {
     await RenderRoutes('/', false);
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders Unauthenticated component when not authenticated on "/activity-reports"', async () => {
@@ -342,8 +475,10 @@ describe('Routes', () => {
     expect(await screen.findByText('Unauthenticated Page')).toBeInTheDocument();
   });
 
-  it('renders Request Permissions component when authError is 403', async () => {
+  it('renders Request Permissions instead of either Home page for a 403', async () => {
     await RenderRoutes('/', false, {}, {}, 403);
     expect(await screen.findByText('Request Permissions Page')).toBeInTheDocument();
+    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
+    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- Some test FEI goals were created for region 6 grants that weren't supposed to have them
 
       -- PROCESS:
@@ -41,7 +40,9 @@ module.exports = {
       WHERE id = gid
       ;
       
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 
@@ -50,7 +51,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- REVERSE PROCESS:
       -- Unmark objectives deletedAt
       -- Unmark goals deletedAt
@@ -80,7 +82,9 @@ module.exports = {
       WHERE id = gid
       ;
       
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 };

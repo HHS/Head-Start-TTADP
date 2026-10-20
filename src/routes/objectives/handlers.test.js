@@ -1,15 +1,13 @@
 import httpCodes from 'http-codes';
-import {
-  updateStatus,
-} from './handlers';
-import { userById } from '../../services/users';
-import {
-  updateObjectiveStatusByIds,
-  getObjectiveRegionAndGoalStatusByIds,
-} from '../../services/objectives';
-import { sequelize } from '../../models';
-import SCOPES from '../../middleware/scopeConstants';
 import { OBJECTIVE_STATUS } from '../../constants';
+import SCOPES from '../../middleware/scopeConstants';
+import { sequelize } from '../../models';
+import {
+  getObjectiveRegionAndGoalStatusByIds,
+  updateObjectiveStatusByIds,
+} from '../../services/objectives';
+import { userById } from '../../services/users';
+import { updateStatus } from './handlers';
 
 jest.mock('../../services/objectives', () => ({
   ...jest.requireActual('../../services/objectives'),
@@ -51,10 +49,12 @@ describe('objectives handlers', () => {
     it('returns an error if user does not have regional permissions', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -80,10 +80,12 @@ describe('objectives handlers', () => {
     it('returns an error if IDS are missing from the body', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -107,10 +109,12 @@ describe('objectives handlers', () => {
     it('returns an error if status is missing from the body', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -133,10 +137,12 @@ describe('objectives handlers', () => {
     it('returns an error if the provided objectives span 2 regions', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -184,10 +190,12 @@ describe('objectives handlers', () => {
     it('returns an error if the provided objectives do not match the provided region', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -235,10 +243,12 @@ describe('objectives handlers', () => {
     it('returns an error if the status transition is invalid', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -286,13 +296,56 @@ describe('objectives handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
     });
 
+    it('prevents moving a completed objective back to in progress when its goal is closed', async () => {
+      const user = {
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      userById.mockResolvedValue(user);
+      getObjectiveRegionAndGoalStatusByIds.mockResolvedValue([
+        {
+          id: 1,
+          status: OBJECTIVE_STATUS.COMPLETE,
+          goal: {
+            status: 'Closed',
+            grant: {
+              regionId: 1,
+            },
+          },
+        },
+      ]);
+
+      await updateStatus(
+        {
+          ...mockRequest,
+          body: {
+            ids: [1],
+            regionId: 1,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+          },
+        },
+        mockResponse
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+      expect(updateObjectiveStatusByIds).not.toHaveBeenCalled();
+    });
+
     it('successfully updates status for a user with regional permissions', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -343,10 +396,12 @@ describe('objectives handlers', () => {
     it('successfully updates status for a user with admin permissions', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.ADMIN,
-          regionId: 14,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.ADMIN,
+            regionId: 14,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -396,10 +451,12 @@ describe('objectives handlers', () => {
     it('handles failures', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.ADMIN,
-          regionId: 14,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.ADMIN,
+            regionId: 14,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -449,10 +506,12 @@ describe('objectives handlers', () => {
     it('correctly sets overrideStatus for Not Started to complete', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -506,21 +565,22 @@ describe('objectives handlers', () => {
       await updateStatus(request, mockResponse);
 
       expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
-        [
-          1, 2, 3],
+        [1, 2, 3],
         OBJECTIVE_STATUS.IN_PROGRESS,
         'Test reason',
-        'Test context',
+        'Test context'
       );
     });
 
     it('correctly sets overrideStatus for In Progress to Not Started', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -577,17 +637,19 @@ describe('objectives handlers', () => {
         [1, 2, 3],
         OBJECTIVE_STATUS.IN_PROGRESS,
         'Test reason',
-        'Test context',
+        'Test context'
       );
     });
 
     it('correctly sets overrideStatus for suspended to not started', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -641,21 +703,22 @@ describe('objectives handlers', () => {
       await updateStatus(request, mockResponse);
 
       expect(updateObjectiveStatusByIds).toHaveBeenCalledWith(
-        [
-          1, 2, 3],
+        [1, 2, 3],
         OBJECTIVE_STATUS.SUSPENDED,
         'Test reason',
-        'Test context',
+        'Test context'
       );
     });
 
     it('correctly sets overrideStatus for a variety of statuses', async () => {
       const user = {
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       };
 
       const regionId = 1;
@@ -702,7 +765,7 @@ describe('objectives handlers', () => {
         [1, 2],
         OBJECTIVE_STATUS.IN_PROGRESS,
         'Test reason',
-        'Test context',
+        'Test context'
       );
     });
   });

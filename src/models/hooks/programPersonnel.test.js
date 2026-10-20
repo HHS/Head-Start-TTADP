@@ -1,25 +1,20 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import db from '..';
 
 const { ProgramPersonnel, Grant, Program } = db;
 
 describe('ProgramPersonnel hooks', () => {
   describe('afterBulkCreate', () => {
-    const createProgramPersonnel = async (
-      grantId,
-      programId,
-      role = 'director',
-      active = true,
-    ) => {
+    const createProgramPersonnel = async (grantId, programId, role = 'director', active = true) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
         programId,
         role,
         title: '',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        suffix: faker.name.suffix(),
-        prefix: faker.name.prefix(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        suffix: faker.person.suffix(),
+        prefix: faker.person.prefix(),
         active,
         effectiveDate: active ? new Date() : new Date('2020/01/01'),
         mapsTo: null,
@@ -46,14 +41,14 @@ describe('ProgramPersonnel hooks', () => {
     const REGION_ID = 10;
 
     const recipient = {
-      name: faker.datatype.string({ min: 10 }),
-      id: faker.datatype.number({ min: 10000 }),
-      uei: faker.datatype.string({ min: 10 }),
+      name: faker.string.sample(10),
+      id: faker.number.int({ min: 10000, max: 10000 + 99999 }),
+      uei: faker.string.sample(10),
     };
 
     const grant = {
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -67,7 +62,7 @@ describe('ProgramPersonnel hooks', () => {
       startDate: '2023/01/01',
       endDate: '2023/12/31',
       status: 'Active',
-      name: `${faker.animal.type() + faker.company.companyName()} Program`,
+      name: `${faker.animal.type() + faker.company.name()} Program`,
       programType: 'HS',
     };
 
@@ -79,7 +74,7 @@ describe('ProgramPersonnel hooks', () => {
 
       program = await db.Program.create({
         ...dummyProgram,
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       await createProgramPersonnel(grant.id, program.id);
@@ -116,23 +111,28 @@ describe('ProgramPersonnel hooks', () => {
     });
 
     it('updates mapTo on bulkcreate', async () => {
-      const personnelBulked = await ProgramPersonnel.bulkCreate([{
-        grantId: grant.id,
-        programId: program.id,
-        role: 'director',
-        title: '',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        suffix: faker.name.suffix(),
-        prefix: faker.name.prefix(),
-        active: true,
-        effectiveDate: new Date(),
-        mapsTo: null,
-        email: faker.internet.email(),
-      }], {
-        individualHooks: false,
-        returning: true,
-      });
+      const personnelBulked = await ProgramPersonnel.bulkCreate(
+        [
+          {
+            grantId: grant.id,
+            programId: program.id,
+            role: 'director',
+            title: '',
+            firstName: faker.person.firstName(),
+            lastName: faker.person.lastName(),
+            suffix: faker.person.suffix(),
+            prefix: faker.person.prefix(),
+            active: true,
+            effectiveDate: new Date(),
+            mapsTo: null,
+            email: faker.internet.email(),
+          },
+        ],
+        {
+          individualHooks: false,
+          returning: true,
+        }
+      );
 
       const newDirector = personnelBulked[0];
 

@@ -1,16 +1,10 @@
-import React from 'react';
+import { faCube, faFolder, faLink, faUser, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
-import {
-  faLink,
-  faCube,
-  faUser,
-  faUserFriends,
-  faFolder,
-} from '@fortawesome/free-solid-svg-icons';
-import { DashboardOverviewContainer } from './DashboardOverviewContainer';
+import React from 'react';
 import colors from '../colors';
+import { DashboardOverviewContainer } from './DashboardOverviewContainer';
 
-const createOverviewFieldArray = (data) => ([
+const createOverviewFieldArray = (data) => [
   {
     key: 'report-resources',
     icon: faLink,
@@ -54,26 +48,21 @@ const createOverviewFieldArray = (data) => ([
     data: data.participant.numParticipants,
   },
   {
-    key: 'reports-citing-ipd-courses',
+    key: 'reports-citing-eep-courses',
     icon: faFolder,
     showTooltip: false,
-    label1: 'Reports citing iPD courses',
+    label1: 'Reports citing EEP courses',
     iconColor: colors.baseDark,
     backgroundColor: colors.baseLightest,
     tooltipText: 'Total participants of ARs that cite at least one resource',
     data: data.ipdCourses.percentReports,
-    route: 'ipd-courses',
+    route: 'eep-courses',
   },
-]);
+];
 
-export function ResourcesDashboardOverviewWidget({
-  data, loading,
-}) {
+export function ResourcesDashboardOverviewWidget({ data, loading }) {
   return (
-    <DashboardOverviewContainer
-      fieldData={createOverviewFieldArray(data)}
-      loading={loading}
-    />
+    <DashboardOverviewContainer fieldData={createOverviewFieldArray(data)} loading={loading} />
   );
 }
 
@@ -95,7 +84,6 @@ ResourcesDashboardOverviewWidget.propTypes = {
     participant: PropTypes.shape({
       numParticipants: PropTypes.string,
     }),
-
   }),
   loading: PropTypes.bool,
 };

@@ -1,16 +1,53 @@
 import express from 'express';
 import {
+  checkGrantNumberParam,
+  checkRecipientIdParam,
+  checkRegionIdParam,
+} from '../../middleware/checkIdParamMiddleware';
+import transactionWrapper from '../transactionWrapper';
+import {
   getClassScore,
+  getCompliantFollowUpReviewsDetails,
+  getFindingCategories,
   getMonitoringData,
+  getMonitoringRelatedTtaCsv,
   getTtaByCitation,
   getTtaByReview,
 } from './handlers';
-import transactionWrapper from '../transactionWrapper';
 
 const router = express.Router();
-router.get('/:recipientId/region/:regionId/grant/:grantNumber', transactionWrapper(getMonitoringData));
-router.get('/:recipientId/region/:regionId/tta/citation', transactionWrapper(getTtaByCitation));
-router.get('/:recipientId/region/:regionId/tta/review', transactionWrapper(getTtaByReview));
-router.get('/class/:recipientId/region/:regionId/grant/:grantNumber', transactionWrapper(getClassScore));
+router.get(
+  '/:recipientId/region/:regionId/grant/:grantNumber',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkGrantNumberParam,
+  transactionWrapper(getMonitoringData)
+);
+router.get(
+  '/:recipientId/region/:regionId/tta/citation',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  transactionWrapper(getTtaByCitation)
+);
+router.get(
+  '/:recipientId/region/:regionId/tta/review',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  transactionWrapper(getTtaByReview)
+);
+router.get(
+  '/class/:recipientId/region/:regionId/grant/:grantNumber',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkGrantNumberParam,
+  transactionWrapper(getClassScore)
+);
+
+router.get('/related-tta', transactionWrapper(getMonitoringRelatedTtaCsv));
+router.get('/finding-categories', transactionWrapper(getFindingCategories));
+router.get(
+  '/compliant-follow-up-reviews/details',
+  transactionWrapper(getCompliantFollowUpReviewsDetails)
+);
 
 export default router;

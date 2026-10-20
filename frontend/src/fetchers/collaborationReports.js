@@ -1,31 +1,12 @@
-import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
-import moment from 'moment';
 import { uniqueId } from 'lodash';
-import {
-  get, put, post, destroy,
-} from './index';
-import { blobToCsvDownload } from '../utils';
+import moment from 'moment';
+import join from 'url-join';
+import { blobToCsvDownload, filtersToQueryString } from '../utils';
+import { destroy, get, post, put } from './index';
+import { getSortConfigParams } from './utils';
 
 const collabReportUrl = '/api/collaboration-reports';
-
-const SORT_PARAMS_CONFIG = {
-  sortDir: 'direction',
-  sortBy: 'sortBy',
-  activePage: 'activePage',
-  offset: 'offset',
-  limit: 'perPage',
-};
-
-const getSortConfigParams = (sortConfig) => {
-  const params = new URLSearchParams();
-  Object.entries(SORT_PARAMS_CONFIG).forEach(([paramName, configLocation]) => {
-    if (sortConfig[configLocation]) {
-      params.append(paramName, sortConfig[configLocation]);
-    }
-  });
-  return params;
-};
 
 const formatCSVParams = (params) => {
   params.delete('limit');
@@ -51,33 +32,43 @@ export const getReport = async (reportId) => {
 export const getCSV = async (url) => {
   const reports = await get(url);
   const csv = await reports.text();
-  blobToCsvDownload(new Blob([csv], { type: 'text/csv' }), `${moment().format('YYYY-MM-DD')}-${uniqueId('collab-reports-export-')}.csv`);
+  blobToCsvDownload(
+    new Blob([csv], { type: 'text/csv' }),
+    `${moment().format('YYYY-MM-DD')}-${uniqueId('collab-reports-export-')}.csv`
+  );
 };
 
 export const getReportsCSVById = async (ids, sortConfig) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
-  const reportIds = ids.map((id) => (`id.in[]=${id}`)).join('&');
+  const reportIds = ids.map((id) => `id.in[]=${id}`).join('&');
   const url = join(collabReportUrl, 'csv');
   return getCSV(`${url}?${reportIds}&${params.toString()}`);
 };
 
-export const getReportsCSV = async (sortConfig) => {
+export const getReportsCSV = async (sortConfig, filters) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
+  const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [params.toString(), filterParams].filter(Boolean).join('&');
   const url = join(collabReportUrl, 'csv');
-  return getCSV(`${url}?${params.toString()}`);
+  return getCSV(`${url}?${qs}`);
 };
 
-export const getReports = async (sortConfig) => {
-  const params = getSortConfigParams(sortConfig);
-  const reports = await get(`${collabReportUrl}?${params.toString()}`);
+export const getReports = async (sortConfig, filters) => {
+  const sortParams = getSortConfigParams(sortConfig);
+  const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
+  const url = collabReportUrl;
+  const reports = await get(`${url}?${qs}`);
   const json = await reports.json();
   return json;
 };
 
-export const getAlerts = async (sortConfig) => {
-  const params = getSortConfigParams(sortConfig);
+export const getAlerts = async (sortConfig, filters) => {
+  const sortParams = getSortConfigParams(sortConfig);
+  const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
   const url = join(collabReportUrl, 'alerts');
-  const reports = await get(`${url}?${params.toString()}`);
+  const reports = await get(`${url}?${qs}`);
   const json = await reports.json();
   return json;
 };
@@ -97,4 +88,10 @@ export const submitReport = async (reportId, data) => {
   const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'submit');
   const response = await put(url, data);
   return response.json();
+};
+
+export const unlockReport = async (reportId) => {
+  const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
+  const response = await put(url);
+  return response.status;
 };

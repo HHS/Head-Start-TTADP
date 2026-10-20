@@ -1,17 +1,11 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  EventReportPilot,
-  SessionReportPilot,
-  Recipient,
-  Grant,
-  User,
-} from '../models';
+import db, { EventReportPilot, Grant, Recipient, SessionReportPilot, User } from '../models';
 import {
-  createUser,
   createGrant,
   createRecipient,
   createSessionReport,
   createTrainingReport,
+  createUser,
 } from '../testUtils';
 import trOverview from './trOverview';
 
@@ -140,11 +134,14 @@ describe('TR overview widget', () => {
     });
 
     // training report 3 (sessions not completed)
-    trainingReport3 = await createTrainingReport({
-      collaboratorIds: [userCollaborator.id],
-      pocIds: [userPoc.id],
-      ownerId: userCreator.id,
-    }, { individualHooks: false });
+    trainingReport3 = await createTrainingReport(
+      {
+        collaboratorIds: [userCollaborator.id],
+        pocIds: [userPoc.id],
+        ownerId: userCreator.id,
+      },
+      { individualHooks: false }
+    );
 
     // - session report 5
     await createSessionReport({
@@ -234,13 +231,9 @@ describe('TR overview widget', () => {
     // Confine this to the grants and reports that we created
     const scopes = {
       grant: {
-        where: [
-          { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-        ],
+        where: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
       },
-      trainingReport: [
-        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
-      ],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
     };
 
     // run our function
@@ -291,13 +284,9 @@ describe('TR overview widget', () => {
     // Confine this to the grants and reports that we created
     const scopes = {
       grant: {
-        where: [
-          { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-        ],
+        where: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
       },
-      trainingReport: [
-        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
-      ],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
     };
 
     // run our function
@@ -305,5 +294,67 @@ describe('TR overview widget', () => {
 
     // validate result
     expect(data.numParticipants).toBe('100');
+  });
+
+  it('handles session with null recipients', async () => {
+    // - session report with null recipients
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: null,
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 10,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+
+    // Confine this to the grants and reports that we created
+    const scopes = {
+      grant: {
+        where: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      },
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
+    };
+
+    // run our function - should not throw
+    const data = await trOverview(scopes);
+
+    // validate it returns data without error
+    expect(data).toBeDefined();
+    expect(data.numReports).toBeDefined();
+  });
+
+  it('handles session with zero numberOfParticipants for non-hybrid delivery', async () => {
+    // - session report with numberOfParticipants as 0 (not hybrid, so should not add participants)
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 0,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+
+    // Confine this to the grants and reports that we created
+    const scopes = {
+      grant: {
+        where: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      },
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
+    };
+
+    // run our function - should handle zero participants gracefully
+    const data = await trOverview(scopes);
+
+    // validate it returns data
+    expect(data).toBeDefined();
+    expect(data.numParticipants).toBeDefined();
   });
 });

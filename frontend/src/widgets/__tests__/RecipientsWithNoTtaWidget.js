@@ -1,23 +1,29 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import RecipientsWithNoTtaWidget from '../RecipientsWithNoTtaWidget';
 
 const rendersRecipientsWithNoTta = (data) => {
-  render(<RecipientsWithNoTtaWidget
-    data={data}
-    loading={false}
-    resetPagination={false}
-    setResetPagination={() => {}}
-    perPageNumber={10}
-  />);
+  render(
+    <RecipientsWithNoTtaWidget
+      data={data}
+      loading={false}
+      resetPagination={false}
+      setResetPagination={() => {}}
+      perPageNumber={10}
+    />
+  );
 };
 
 describe('Recipients with no tta Widget', () => {
   it('renders correctly with  null data', async () => {
     rendersRecipientsWithNoTta({});
     expect(screen.getByText(/recipients with no tta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Recipients without Activity Reports or Training Reports for more than 90 days./i
+      )
+    ).toBeInTheDocument();
   });
   it('renders correctly without data', async () => {
     const emptyData = {
@@ -26,7 +32,11 @@ describe('Recipients with no tta Widget', () => {
     };
     rendersRecipientsWithNoTta(emptyData);
     expect(screen.getByText(/recipients with no tta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Recipients without Activity Reports or Training Reports for more than 90 days./i
+      )
+    ).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -46,14 +56,16 @@ describe('Recipients with no tta Widget', () => {
             isUrl: true,
             hideLinkIcon: true,
             link: '/recipient-tta-records/376/region/1/profile',
-            data: [{
-              title: 'Date of Last TTA',
-              value: '2021-09-01',
-            },
-            {
-              title: 'Days Since Last TTA',
-              value: '90',
-            }],
+            data: [
+              {
+                title: 'Date of Last TTA',
+                value: '2021-09-01',
+              },
+              {
+                title: 'Days Since Last TTA',
+                value: '90',
+              },
+            ],
           },
           {
             heading: 'Test Recipient 2',
@@ -62,14 +74,16 @@ describe('Recipients with no tta Widget', () => {
             isUrl: true,
             hideLinkIcon: true,
             link: '/recipient-tta-records/376/region/1/profile',
-            data: [{
-              title: 'Date of Last TTA',
-              value: '2021-09-02',
-            },
-            {
-              title: 'Days Since Last TTA',
-              value: '91',
-            }],
+            data: [
+              {
+                title: 'Date of Last TTA',
+                value: '2021-09-02',
+              },
+              {
+                title: 'Days Since Last TTA',
+                value: '91',
+              },
+            ],
           },
         ],
       },
@@ -77,7 +91,11 @@ describe('Recipients with no tta Widget', () => {
     rendersRecipientsWithNoTta(data);
 
     expect(screen.getByText(/recipients with no tta/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Recipients without Activity Reports or Training Reports for more than 90 days./i
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
 

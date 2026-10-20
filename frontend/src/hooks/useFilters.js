@@ -1,7 +1,8 @@
 import { useCallback, useContext, useMemo } from 'react';
-import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
-import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../AriaLiveContext';
+import { NOOP } from '../Constants';
+import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
+import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
 
 export default function useFilters(
   user,
@@ -9,38 +10,53 @@ export default function useFilters(
   manageRegions = false,
   additionalDefaultFilters = [],
   filterConfig = [],
+  // Optional side-effect invoked whenever the filter set changes via any of the
+  // exits this hook returns (setFilters, onApplyFilters, onRemoveFilter).
+  // Pages whose paginated tables hold their own offset state can pass
+  // `() => setResetPagination(true)` here to keep table pagination in sync
+  // with filter mutations. See TTAHUB-5283.
+  onFiltersChange = NOOP,
+  replaceInitialUrl = false
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
-  const {
-    regions,
-    defaultRegion,
-    hasMultipleRegions,
-    allRegionsFilters,
-    defaultFilters,
-  } = useUserDefaultRegionFilters(user, manageRegions);
+  const { regions, defaultRegion, hasMultipleRegions, allRegionsFilters, defaultFilters } =
+    useUserDefaultRegionFilters(user, manageRegions);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     filterKey,
     [...defaultFilters, ...additionalDefaultFilters],
+    replaceInitialUrl
+  );
+
+  // Wrap setFilters so every filter mutation - whether driven by the
+  // FilterPanel, by a region-permission modal, or by some other consumer -
+  // fires the optional onFiltersChange callback. onApplyFilters and
+  // onRemoveFilter delegate to setFilters and inherit the side effect.
+  const setFilters = useCallback(
+    (newFilters) => {
+      onFiltersChange();
+      setFiltersInHook(newFilters);
+    },
+    [onFiltersChange, setFiltersInHook]
   );
 
   // Apply filters.
-  const onApplyFilters = useCallback((newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters([
-        ...newFilters,
-      ]);
-    }
+  const onApplyFilters = useCallback(
+    (newFilters, addBackDefaultRegions) => {
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters([...newFilters]);
+      }
 
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
-  }, [allRegionsFilters, ariaLiveContext, setFilters]);
+      ariaLiveContext.announce(
+        `${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`
+      );
+    },
+    [allRegionsFilters, ariaLiveContext, setFilters]
+  );
 
   // Remove Filters.
   const onRemoveFilter = (id, addBackDefaultRegions) => {

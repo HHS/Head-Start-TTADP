@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('reportId filtersToScopes', () => {
@@ -25,9 +25,10 @@ describe('reportId filtersToScopes', () => {
 
     beforeAll(async () => {
       reportIncluded = await ActivityReport.create({ ...draftReport, id: 12345 });
-      reportIncludedLegacy = await ActivityReport.create(
-        { ...draftReport, legacyId: 'R01-AR-012345' },
-      );
+      reportIncludedLegacy = await ActivityReport.create({
+        ...draftReport,
+        legacyId: 'R01-AR-012345',
+      });
       reportExcluded = await ActivityReport.create({ ...draftReport, id: 12346 });
       possibleIds = [
         reportIncluded.id,
@@ -50,8 +51,9 @@ describe('reportId filtersToScopes', () => {
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportIncluded.id, reportIncludedLegacy.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportIncluded.id, reportIncludedLegacy.id])
+      );
     });
 
     it('excluded has conditions for legacy and non-legacy reports', async () => {
@@ -61,10 +63,9 @@ describe('reportId filtersToScopes', () => {
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining(
-          [sharedTestData.globallyExcludedReport.id, reportExcluded.id],
-        ));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([sharedTestData.globallyExcludedReport.id, reportExcluded.id])
+      );
     });
   });
 });

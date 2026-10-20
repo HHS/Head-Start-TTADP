@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       const loggedUser = '0';
       const sessionSig = __filename;
       const auditDescriptor = 'RUN MIGRATIONS';
@@ -11,32 +11,31 @@ module.exports = {
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
       // Disable audit logging
       await queryInterface.sequelize.query(
         `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-        { transaction },
+        { transaction }
       );
       await queryInterface.addColumn(
         'Recipients',
         'uei',
         { type: Sequelize.DataTypes.STRING, defaultValue: '', allowNull: true },
-        { transaction },
+        { transaction }
       );
       // Enable audit logging
       await queryInterface.sequelize.query(
         `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-        { transaction },
+        { transaction }
       );
-    },
-  ),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+    }),
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       const loggedUser = '0';
       const sessionSig = __filename;
       const auditDescriptor = 'RUN MIGRATIONS';
@@ -46,27 +45,22 @@ module.exports = {
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
       // Disable audit logging
       await queryInterface.sequelize.query(
         `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
-        { transaction },
+        { transaction }
       );
-      await queryInterface.removeColumn(
-        'Recipients',
-        'uei',
-        { transaction },
-      );
+      await queryInterface.removeColumn('Recipients', 'uei', { transaction });
       // Enable audit logging
       await queryInterface.sequelize.query(
         `
           SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
           `,
-        { transaction },
+        { transaction }
       );
-    },
-  ),
+    }),
 };

@@ -1,11 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
+
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createMemoryHistory } from 'history';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import UserContext from '../../../../../UserContext';
 import NextStepsRepeater from '../NextStepsRepeater';
 
@@ -52,5 +52,39 @@ describe('NextStepsRepeater', () => {
   it('shows required asterisk when required is true', () => {
     renderRepeater({ required: true });
     expect(screen.getByLabelText('Step 1 *')).toBeInTheDocument();
+  });
+
+  it('requires next-step dates to be after the session start date', async () => {
+    renderRepeater({ afterDate: '01/01/2024' });
+
+    const dateInput = screen.getByRole('textbox', {
+      name: /when do you anticipate completing step 1/i,
+    });
+    userEvent.type(dateInput, '01/02/2024');
+    userEvent.click(screen.getByRole('button', { name: /calendar/i }));
+    expect(screen.getByRole('button', { name: '1 January 2024 Monday' })).toBeDisabled();
+    userEvent.click(screen.getByRole('button', { name: /calendar/i }));
+
+    act(() => userEvent.clear(dateInput));
+    userEvent.type(dateInput, '01/01/2024');
+    fireEvent.blur(dateInput);
+    expect(
+      await screen.findByText('Next step date must be after the session start date')
+    ).toBeVisible();
+    expect(dateInput).toHaveAttribute('aria-invalid', 'true');
+    expect(dateInput).toHaveAccessibleDescription(
+      'Next step date must be after the session start date'
+    );
+
+    act(() => userEvent.clear(dateInput));
+    userEvent.type(dateInput, '01/02/2024');
+    fireEvent.blur(dateInput);
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Next step date must be after the session start date')
+      ).not.toBeInTheDocument();
+    });
+    expect(dateInput).toHaveAttribute('aria-invalid', 'false');
+    expect(dateInput).not.toHaveAttribute('aria-describedby');
   });
 });

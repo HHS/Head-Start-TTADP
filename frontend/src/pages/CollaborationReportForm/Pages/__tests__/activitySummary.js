@@ -2,19 +2,20 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import NetworkContext from '../../../../NetworkContext';
-import activitySummary, { isPageComplete } from '../activitySummary';
 import UserContext from '../../../../UserContext';
+import activitySummary, { isPageComplete } from '../activitySummary';
 
 const RenderActivitySummary = ({
   networkActive = true,
-  collaborators = [{ id: 1, name: 'test', roles: [] }, { id: 2, name: 'test2', roles: [] }],
+  collaborators = [
+    { id: 1, name: 'test', roles: [] },
+    { id: 2, name: 'test2', roles: [] },
+  ],
   defaultValues = {},
 }) => {
   const hookForm = useForm({
@@ -43,7 +44,9 @@ const RenderActivitySummary = ({
             false,
             '',
             jest.fn(),
-            () => <></>,
+            () => (
+              <></>
+            )
           )}
         </FormProvider>
       </UserContext.Provider>
@@ -52,9 +55,7 @@ const RenderActivitySummary = ({
 };
 
 describe('CollabReport ActivitySummary Review Section', () => {
-  const RenderReview = ({
-    networkActive = true,
-  }) => {
+  const RenderReview = ({ networkActive = true }) => {
     const defaultValues = {
       collabReportSpecialists: [],
       name: '',
@@ -77,9 +78,7 @@ describe('CollabReport ActivitySummary Review Section', () => {
         value={{ connectionActive: networkActive, localStorageAvailable: true }}
       >
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <FormProvider {...hookForm}>
-            {activitySummary.reviewSection()}
-          </FormProvider>
+          <FormProvider {...hookForm}>{activitySummary.reviewSection()}</FormProvider>
         </UserContext.Provider>
       </NetworkContext.Provider>
     );
@@ -125,23 +124,31 @@ describe('CollabReport Activity Summary Page', () => {
   });
 
   it('renders start and end date pickers with proper setup', () => {
-    render(<RenderActivitySummary defaultValues={{ startDate: '01/01/2024', endDate: '01/02/2024' }} />);
+    render(
+      <RenderActivitySummary defaultValues={{ startDate: '01/01/2024', endDate: '01/02/2024' }} />
+    );
 
     expect(screen.getByText('Start date')).toBeInTheDocument();
     expect(screen.getByText('End date')).toBeInTheDocument();
   });
 
   it('updates end date', async () => {
-    render(<RenderActivitySummary defaultValues={{ startDate: '01/01/2024', endDate: '01/02/2024' }} />);
+    render(
+      <RenderActivitySummary defaultValues={{ startDate: '01/01/2024', endDate: '01/02/2024' }} />
+    );
 
     // I wrote this this way to account for the weird HTML while also preserving the desired pattern
     // of accessing inputs the same way the user would, via the label text
     // TODO: determine if the nested strategy of the FormItem component
     // presents an accessibility issue
-    let endDate = document.querySelector(`#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`);
+    let endDate = document.querySelector(
+      `#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`
+    );
     userEvent.clear(endDate);
     userEvent.type(endDate, '01/04/2025');
-    endDate = document.querySelector(`#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`);
+    endDate = document.querySelector(
+      `#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`
+    );
     expect(endDate).toHaveValue('01/04/2025');
   });
 
@@ -467,21 +474,13 @@ describe('CollabReport Activity Summary Page', () => {
 
   describe('State activity conditional rendering', () => {
     it('shows states fieldset when state activity is selected', async () => {
-      render(
-        <RenderActivitySummary
-          defaultValues={{ isStateActivity: 'true' }}
-        />,
-      );
+      render(<RenderActivitySummary defaultValues={{ isStateActivity: 'true' }} />);
 
       expect(screen.getByText('Choose the states involved')).toBeInTheDocument();
     });
 
     it('hides states fieldset when regional activity is selected', async () => {
-      render(
-        <RenderActivitySummary
-          defaultValues={{ isStateActivity: 'false' }}
-        />,
-      );
+      render(<RenderActivitySummary defaultValues={{ isStateActivity: 'false' }} />);
 
       expect(screen.queryByText('Choose the states involved')).not.toBeInTheDocument();
     });
@@ -493,11 +492,7 @@ describe('CollabReport Activity Summary Page', () => {
     });
 
     it('renders StateMultiSelect component when states fieldset is shown', async () => {
-      render(
-        <RenderActivitySummary
-          defaultValues={{ isStateActivity: 'true' }}
-        />,
-      );
+      render(<RenderActivitySummary defaultValues={{ isStateActivity: 'true' }} />);
 
       expect(screen.getByText('Choose the states involved')).toBeInTheDocument();
       // StateMultiSelect should render - we can verify by checking for the multi-select structure
@@ -521,11 +516,7 @@ describe('CollabReport Activity Summary Page', () => {
     });
 
     it('hides states fieldset when user selects regional radio button', async () => {
-      render(
-        <RenderActivitySummary
-          defaultValues={{ isStateActivity: 'true' }}
-        />,
-      );
+      render(<RenderActivitySummary defaultValues={{ isStateActivity: 'true' }} />);
 
       // Verify states fieldset is initially shown
       expect(screen.getByText('Choose the states involved')).toBeInTheDocument();

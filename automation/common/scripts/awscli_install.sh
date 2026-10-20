@@ -83,7 +83,8 @@ function verify_file_hash() {
     local expected_hash="$2"
 
     log "INFO" "Verifying hash of the downloaded file..."
-    local computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
+    local computed_hash
+    computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
 
     if [ "$computed_hash" == "$expected_hash" ]; then
         log "INFO" "Hash verification successful."

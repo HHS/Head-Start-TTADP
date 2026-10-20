@@ -1,10 +1,11 @@
 /* eslint-disable react/prop-types */
+
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import ObjectivesSection from '../ObjectivesSection';
-import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import { FormProvider, useForm } from 'react-hook-form';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import ObjectivesSection from '../ObjectivesSection';
 
 let reset;
 
@@ -15,17 +16,11 @@ const RTest = ({ children }) => {
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
+    <FormProvider {...methods}>{children}</FormProvider>
   );
 };
 
-const renderWithFormProvider = (ui) => render(
-  <RTest>
-    {ui}
-  </RTest>,
-);
+const renderWithFormProvider = (ui) => render(<RTest>{ui}</RTest>);
 
 describe('ObjectivesSection', () => {
   it('renders without crashing', () => {
@@ -56,9 +51,14 @@ describe('ObjectivesSection', () => {
   it('removes an objective when "Remove this objective" button is clicked', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
-        objectiveId: '1', value: 'Objective 1', onAR: false, status: OBJECTIVE_STATUS.IN_PROGRESS,
-      }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        {
+          objectiveId: '1',
+          value: 'Objective 1',
+          onAR: false,
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+        },
+      ],
     });
     const objectives = await screen.findAllByLabelText(/tta objective/i);
     expect(objectives).toHaveLength(2);
@@ -90,7 +90,9 @@ describe('ObjectivesSection', () => {
   it('doesnt render ReadOnlyField when status is not Complete or Suspended', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.IN_PROGRESS }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        { objectiveId: '1', value: 'Objective 1', status: OBJECTIVE_STATUS.IN_PROGRESS },
+      ],
     });
 
     expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
@@ -99,9 +101,14 @@ describe('ObjectivesSection', () => {
   it('shows the readonly and remove button when onAR is false', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
-        objectiveId: '1', value: 'Objective 1', onAR: false, statue: OBJECTIVE_STATUS.SUSPENDED,
-      }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        {
+          objectiveId: '1',
+          value: 'Objective 1',
+          onAR: false,
+          statue: OBJECTIVE_STATUS.SUSPENDED,
+        },
+      ],
     });
 
     expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
@@ -124,6 +131,8 @@ describe('ObjectivesSection', () => {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
     });
 
-    expect(screen.queryByText('Objectives used on reports cannot be edited.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Objectives used on reports cannot be edited.')
+    ).not.toBeInTheDocument();
   });
 });

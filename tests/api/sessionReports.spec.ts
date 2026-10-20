@@ -1,12 +1,11 @@
-import { test, expect } from '@playwright/test';
-import Joi from '@hapi/joi';
+import { expect, test } from '@playwright/test';
+import Joi from 'joi';
 import { root, validateSchema } from './common';
 
 test('get /session-reports', async ({ request }) => {
-  const response = await request.get(
-    `${root}/session-reports`,
-    { headers: { 'playwright-user-id': '1' } },
-  );
+  const response = await request.get(`${root}/session-reports`, {
+    headers: { 'playwright-user-id': '1' },
+  });
 
   expect(response.status()).toBe(200);
 

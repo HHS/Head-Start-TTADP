@@ -1,13 +1,7 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
-import {
-  ActivityReport,
-  ActivityReportGoal,
-  Goal,
-  GoalTemplate,
-  sequelize,
-} from '../models';
 import { CREATION_METHOD } from '../constants';
+import { ActivityReport, ActivityReportGoal, Goal, GoalTemplate, sequelize } from '../models';
 
 export default async function standardGoalsList(scopes) {
   // Query for all standard goals linked to activity reports
@@ -18,10 +12,7 @@ export default async function standardGoalsList(scopes) {
       [sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'count'],
     ],
     where: {
-      [Op.and]: [
-        scopes.activityReport,
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-      ],
+      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
       startDate: {
         [Op.gte]: new Date('2025-09-01'),
       },
@@ -65,8 +56,10 @@ export default async function standardGoalsList(scopes) {
   });
 
   // Transform results to format expected by the widget
-  return results.map((result) => ({
-    name: result.standard,
-    count: parseInt(result.count, 10),
-  })).sort((a, b) => b.count - a.count);
+  return results
+    .map((result) => ({
+      name: result.standard,
+      count: parseInt(result.count, 10),
+    }))
+    .sort((a, b) => b.count - a.count);
 }

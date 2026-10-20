@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
       validatedAt: { allowNull: true, type: DataTypes.DATE },
     },
     // freezeTableName because it wants to pluralize to UserValidationStatuses.
-    { sequelize, modelName: 'UserValidationStatus', freezeTableName: true },
+    { sequelize, modelName: 'UserValidationStatus', freezeTableName: true }
   );
 
   return UserValidationStatus;

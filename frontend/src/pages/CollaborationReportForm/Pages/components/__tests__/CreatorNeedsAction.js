@@ -14,11 +14,7 @@ jest.mock('../../../../../hooks/useExistingApprovers', () => () => mockUseExisti
 // Test wrapper component
 const TestWrapper = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
 describe('CreatorNeedsAction Component', () => {
@@ -57,11 +53,12 @@ describe('CreatorNeedsAction Component', () => {
     });
   });
 
-  const renderComponent = (props = {}) => render(
-    <TestWrapper>
-      <CreatorNeedsAction {...defaultProps} {...props} />
-    </TestWrapper>,
-  );
+  const renderComponent = (props = {}) =>
+    render(
+      <TestWrapper>
+        <CreatorNeedsAction {...defaultProps} {...props} />
+      </TestWrapper>
+    );
 
   describe('Three Section Layout', () => {
     it('renders approval status section with correct heading', () => {

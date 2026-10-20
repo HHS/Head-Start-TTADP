@@ -1,12 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
 
 const DEFAULT_RESPONSE = `<?xml version="1.0" encoding="UTF-8"?>
@@ -50,10 +45,18 @@ describe('ContentFromFeedByTag', () => {
     content = DEFAULT_RESPONSE,
     selector = null,
     openLinksInNewTab = false,
+    hideEmptyParagraphs = false
   ) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
     // eslint-disable-next-line max-len
-    render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} openLinksInNewTab={openLinksInNewTab} />);
+    render(
+      <ContentFromFeedByTag
+        tagName={tag}
+        contentSelector={selector}
+        openLinksInNewTab={openLinksInNewTab}
+        hideEmptyParagraphs={hideEmptyParagraphs}
+      />
+    );
   };
 
   it('renders a feed', async () => {
@@ -61,19 +64,19 @@ describe('ContentFromFeedByTag', () => {
       renderContentFromFeed();
     });
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Create and manage goals and objectives from the RTR')
+    ).toBeInTheDocument();
   });
 
   it('renders an extract from a feed', async () => {
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        DEFAULT_RESPONSE,
-        '[data-linked-resource-id="8028231"]',
-      );
+      renderContentFromFeed('tag', DEFAULT_RESPONSE, '[data-linked-resource-id="8028231"]');
     });
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Create and manage goals and objectives from the RTR')
+    ).toBeInTheDocument();
   });
 
   it('handles an error', async () => {
@@ -161,12 +164,7 @@ describe('ContentFromFeedByTag', () => {
 </feed>`;
 
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        supportTypeResponse,
-        null,
-        true,
-      );
+      renderContentFromFeed('tag', supportTypeResponse, null, true);
     });
 
     const article = document.querySelector('.ttahub-feed-article-content');
@@ -191,5 +189,51 @@ describe('ContentFromFeedByTag', () => {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
+  });
+
+  it('hides &nbsp;-only paragraphs when hideEmptyParagraphs=true', async () => {
+    const nbspResponse = `<?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <title>Test</title>
+        <entry>
+          <title>Test entry</title>
+          <summary type="html">&lt;p&gt;Real content&lt;/p&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&lt;p&gt;More content&lt;/p&gt;</summary>
+        </entry>
+      </feed>`;
+
+    act(() => {
+      renderContentFromFeed('nbsp-tag', nbspResponse, null, false, true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Real content')).toBeInTheDocument();
+    });
+
+    const paragraphs = document.querySelectorAll('.ttahub-feed-article-content p');
+    const nbspPara = Array.from(paragraphs).find((p) => p.textContent === '\u00a0');
+    expect(nbspPara.style.display).toBe('none');
+  });
+
+  it('shows &nbsp;-only paragraphs by default (hideEmptyParagraphs=false)', async () => {
+    const nbspResponse = `<?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <title>Test</title>
+        <entry>
+          <title>Test entry</title>
+          <summary type="html">&lt;p&gt;Real content&lt;/p&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;</summary>
+        </entry>
+      </feed>`;
+
+    act(() => {
+      renderContentFromFeed('nbsp-tag-2', nbspResponse);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Real content')).toBeInTheDocument();
+    });
+
+    const paragraphs = document.querySelectorAll('.ttahub-feed-article-content p');
+    const nbspPara = Array.from(paragraphs).find((p) => p.textContent === '\u00a0');
+    expect(nbspPara.style.display).not.toBe('none');
   });
 });

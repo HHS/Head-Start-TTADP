@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -121,7 +119,7 @@ module.exports = {
           ON clf."communicationLogId" = cl.id
         GROUP BY 4;
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

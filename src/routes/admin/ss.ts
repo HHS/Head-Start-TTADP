@@ -1,9 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import express from 'express';
 import { createClient } from 'smartsheet';
-import transactionWrapper from '../transactionWrapper';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger as logger } from '../../logger';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:SMARTSHEET';
 const logContext = { namespace };
@@ -28,7 +28,7 @@ function createSmartsheetClient() {
   return createClient({
     accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
     baseUrl: process.env.SMARTSHEET_ENDPOINT,
-    logLevel: 'info',
+    // logLevel: 'info', // There is a bug right now, removing this will default to 'info'.
   });
 }
 
@@ -58,7 +58,9 @@ export async function listSheets(req, res) {
       throw new Error('Failed to list sheets');
     }
     const allSheets = result.data;
-    result.data = allSheets.filter((sheet: SheetData) => sheet.name.startsWith('PD23-24 b. Region'));
+    result.data = allSheets.filter((sheet: SheetData) =>
+      sheet.name.startsWith('PD23-24 b. Region')
+    );
 
     return res.status(200).json(result);
   } catch (error) {
@@ -69,7 +71,7 @@ export async function listSheets(req, res) {
 
 export async function getSheet(req, res) {
   const { sheetId } = req.params;
-  const lastFourDigits = (sheetId && sheetId.length > 0) ? sheetId.slice(-8) : null;
+  const lastFourDigits = sheetId && sheetId.length > 0 ? sheetId.slice(-8) : null;
 
   try {
     const result = await smartsheetClient.sheets.getSheet({ id: sheetId });

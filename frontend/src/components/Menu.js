@@ -1,3 +1,4 @@
+// biome-ignore-all lint/a11y/noNoninteractiveElementToInteractiveRole: TODO investigate if menu/menuitem roles should be removed or if this is a false positive
 /*
   Context menu shows a list of actions the user can select to perform actions. The actions
   are hidden until the user opens the menu (the three dot icon). The menu is automatically
@@ -5,14 +6,15 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, {
-  useState, useEffect, useCallback, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
+
 import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './Menu.scss';
 
 const ESCAPE_KEY_CODE = 27;
+const TAB_KEY_CODE = 9;
 
 function Menu({
   label,
@@ -30,13 +32,16 @@ function Menu({
   const [shown, updateShown] = useState(false);
   const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
-  const buttonRef = useRef(null);
+  const containerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const clickingMenuItemRef = useRef(false);
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
       updateShown(false);
     }
-  }, [updateShown]);
+  }, []);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -48,14 +53,10 @@ function Menu({
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
-    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
+    if (fixed && containerRef.current?.getBoundingClientRect) {
+      // containerRef.current.style = 'background: red';
       // get the button's position
-      const {
-        top,
-        height,
-        left: l,
-        width,
-      } = buttonRef.current.getBoundingClientRect();
+      const { top, height, left: l, width } = containerRef.current.getBoundingClientRect();
 
       // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
@@ -79,7 +80,7 @@ function Menu({
     }
   }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
-  // watch for window scroll
+  // watch for window scroll and table container scroll
   useEffect(() => {
     // the menu position is based on the button position, but because it is encased in a
     // no-overflow div, we position it using "fixed"
@@ -87,6 +88,19 @@ function Menu({
     // when the user scrolls
     if (fixed) {
       window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+
+      // Also listen for scroll on the table container for horizontal scrolling
+      const tableContainer = containerRef.current?.closest('.usa-table-container--scrollable');
+      if (tableContainer) {
+        tableContainer.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
+      }
+
+      return () => {
+        window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        if (tableContainer) {
+          tableContainer.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
+        }
+      };
     }
 
     return () => {
@@ -95,13 +109,48 @@ function Menu({
   }, [fixed, recordButtonPositionAndUpdateMenu]);
 
   const onBlur = (e) => {
-    const { currentTarget } = e;
+    if (clickingMenuItemRef.current) {
+      clickingMenuItemRef.current = false;
+      return;
+    }
+
+    const { currentTarget, relatedTarget } = e;
+
+    // When using a portal, relatedTarget will be the element receiving focus
+    // If it's inside our menu, don't close
+    if (relatedTarget && menuRef.current?.contains(relatedTarget)) {
+      return;
+    }
+
+    // Also allow focus to move to the trigger button
+    if (relatedTarget && triggerRef.current?.contains(relatedTarget)) {
+      return;
+    }
 
     setTimeout(() => {
-      if (!currentTarget.contains(document.activeElement) && shown) {
+      // Check if focus is still within the button container or the portal-rendered menu
+      const focusInContainer = currentTarget.contains(document.activeElement);
+      const focusInMenu = menuRef.current?.contains(document.activeElement);
+      if (!focusInContainer && !focusInMenu && shown) {
+        // When tabbing out of a portal menu, focus goes somewhere unexpected
+        // Restore focus to trigger before closing
+        if (fixed && triggerRef.current) {
+          triggerRef.current.focus();
+        }
         updateShown(false);
       }
     }, 0);
+  };
+
+  // Handle Tab key in portal menu - close menu and return focus to trigger
+  const onMenuKeyDown = (event) => {
+    if (event.keyCode === TAB_KEY_CODE && fixed) {
+      event.preventDefault();
+      updateShown(false);
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+    }
   };
 
   const placementClass = (() => {
@@ -122,48 +171,91 @@ function Menu({
     updateShown((previous) => !previous);
   };
 
+  // Manage focus: move to menu when opening, return to trigger when closing
+  const prevShownRef = useRef(false);
+  useEffect(() => {
+    if (shown && menuRef.current) {
+      // Menu just opened - focus first menu item
+      const firstButton = menuRef.current.querySelector('button');
+      if (firstButton) {
+        firstButton.focus();
+      }
+    } else if (!shown && prevShownRef.current && triggerRef.current) {
+      // Menu just closed - return focus to trigger button
+      triggerRef.current.focus();
+    }
+    prevShownRef.current = shown;
+  }, [shown]);
+
   return (
-    <div
-      onBlur={onBlur}
-      className="position-relative"
-    >
+    // biome-ignore lint/a11y/noStaticElementInteractions: requires interaction
+    <div onBlur={onBlur} className="position-relative smart-hub-menu-container" ref={containerRef}>
       <button
+        ref={triggerRef}
         className={`smart-hub--menu-button usa-button usa-button--unstyled smart-hub--button__no-margin ${className}`}
         aria-haspopup
         onClick={onClick}
         aria-label={label}
         type="button"
         data-testid={buttonTestId}
-        ref={buttonRef}
       >
         {buttonText}
       </button>
-      {shown && (
-      <div data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
-        <ul className="usa-list usa-list--unstyled" role="menu">
-          {menuItems.map((item) => (
-            <li key={item.label} role="menuitem">
-              <Button type="button" id={item.id || undefined} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin" aria-label={item.label}>
-                <div className="padding-2 padding-right-3">
-                  {item.label}
-                </div>
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      )}
+      {shown &&
+        (() => {
+          const menuContent = (
+            // needed fix below for safari's focus behavior with portals and blur events -
+            // blur fires before the click event on the menu item, so we set a ref to
+            // ignore the blur when clicking a menu item, then reset it in a mousedown
+            // event on the menu container
+            // biome-ignore lint/a11y/noStaticElementInteractions: requires interaction
+            <div
+              ref={menuRef}
+              onMouseDown={() => {
+                clickingMenuItemRef.current = true;
+              }}
+              data-testid="menu"
+              className={menuClass}
+              style={{ backgroundColor, ...menuPosition }}
+            >
+              <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
+                {menuItems.map((item) => (
+                  // biome-ignore lint/a11y/useFocusableInteractive: see ignore all
+                  <li key={item.label} role="menuitem">
+                    <Button
+                      type="button"
+                      id={item.id || undefined}
+                      onClick={() => {
+                        updateShown(false);
+                        item.onClick();
+                      }}
+                      unstyled
+                      className="smart-hub--menu-button smart-hub--button__no-margin"
+                      aria-label={item.label}
+                    >
+                      <div className="padding-2 padding-right-3">{item.label}</div>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+          // Use portal when fixed to escape stacking context of sticky table columns
+          return fixed ? createPortal(menuContent, document.body) : menuContent;
+        })()}
     </div>
   );
 }
 
 Menu.propTypes = {
   label: PropTypes.string.isRequired,
-  menuItems: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
-    onClick: PropTypes.func,
-    id: PropTypes.string,
-  })).isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
+      onClick: PropTypes.func,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   backgroundColor: PropTypes.string,
   buttonTestId: PropTypes.string,
   left: PropTypes.bool,

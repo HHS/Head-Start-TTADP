@@ -1,32 +1,32 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
-import { ModalToggleButton } from '@trussworks/react-uswds';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
+import { ModalToggleButton } from '@trussworks/react-uswds';
+import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
+import React, { useRef } from 'react';
 import { OBJECTIVE_STATUS } from '../../Constants';
+import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 
 describe('ObjectiveSuspendModal', () => {
-  const ModalComponent = (
-    {
-      goalIds = [1],
-      newStatus = OBJECTIVE_STATUS.CLOSED,
-      onSubmit = jest.fn(),
-      resetValues = false,
-      setError = jest.fn(),
-    },
-  ) => {
+  const ModalComponent = ({
+    goalIds = [1],
+    newStatus = OBJECTIVE_STATUS.CLOSED,
+    onSubmit = jest.fn(),
+    resetValues = false,
+    setError = jest.fn(),
+  }) => {
     const modalRef = useRef();
 
     return (
       <div>
         <div>Test Close Suspend Modal</div>
-        <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
-        <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} opener>
+          Open
+        </ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} closer>
+          Close
+        </ModalToggleButton>
         <ObjectiveSuspendModal
           goalIds={goalIds}
           newStatus={newStatus}

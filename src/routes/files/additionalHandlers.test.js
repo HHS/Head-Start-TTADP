@@ -1,21 +1,18 @@
-import db from '../../models';
-import {
-  deleteOnlyFile,
-  deleteHandler,
-} from './handlers';
-import { userById } from '../../services/users';
-import { currentUserId } from '../../services/currentUser';
-import {
-  getFileById,
-  deleteFile,
-  deleteCommunicationLogFile,
-  deleteSessionSupportingAttachment,
-} from '../../services/files';
-import { logById } from '../../services/communicationLog';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
+import db from '../../models';
+import { logById } from '../../services/communicationLog';
+import { currentUserId } from '../../services/currentUser';
+import { findEventBySmartsheetId } from '../../services/event';
+import {
+  deleteCommunicationLogFile,
+  deleteFile,
+  deleteSessionSupportingAttachment,
+  getFileById,
+} from '../../services/files';
 import { findSessionById } from '../../services/sessionReports';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { userById } from '../../services/users';
+import { deleteHandler, deleteOnlyFile } from './handlers';
 
 jest.mock('../../services/communicationLog', () => ({
   logById: jest.fn(),
@@ -26,7 +23,7 @@ jest.mock('../../services/sessionReports', () => ({
 }));
 
 jest.mock('../../services/event', () => ({
-  findEventBySmartsheetIdSuffix: jest.fn(),
+  findEventBySmartsheetId: jest.fn(),
 }));
 
 jest.mock('../../services/files', () => ({
@@ -92,19 +89,23 @@ describe('file handlers, additional tests', () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       });
 
       getFileById.mockResolvedValueOnce({
         id: 123,
         key: 'key',
-        communicationLogFiles: [{
-          communicationLogId: 456,
-          fileId: 123,
-        }],
+        communicationLogFiles: [
+          {
+            communicationLogId: 456,
+            fileId: 123,
+          },
+        ],
       });
 
       logById.mockResolvedValue({
@@ -132,10 +133,12 @@ describe('file handlers, additional tests', () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({
         id: 1,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
       });
 
       findSessionById.mockResolvedValueOnce({
@@ -143,7 +146,7 @@ describe('file handlers, additional tests', () => {
         eventId: 789,
       });
 
-      findEventBySmartsheetIdSuffix.mockResolvedValueOnce({
+      findEventBySmartsheetId.mockResolvedValueOnce({
         id: 789,
         ownerId: 1,
         collaboratorIds: [],
@@ -153,10 +156,12 @@ describe('file handlers, additional tests', () => {
       getFileById.mockResolvedValueOnce({
         id: 123,
         key: 'key',
-        supportingAttachments: [{
-          sessionReportPilotId: 456,
-          fileId: 123,
-        }],
+        supportingAttachments: [
+          {
+            sessionReportPilotId: 456,
+            fileId: 123,
+          },
+        ],
       });
 
       logById.mockResolvedValue({
@@ -168,6 +173,34 @@ describe('file handlers, additional tests', () => {
 
       expect(deleteSessionSupportingAttachment).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(204);
+    });
+
+    it('rethrows caught errors when running inside transactionWrapper', async () => {
+      const error = new Error('delete failed');
+      const mockRequest = {
+        inTransactionWrapper: true,
+        params: {
+          fileId: '123',
+        },
+        user: {
+          id: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
+      });
+      getFileById.mockRejectedValueOnce(error);
+
+      await expect(deleteHandler(mockRequest, mockResponse)).rejects.toThrow(error);
+      expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });
 

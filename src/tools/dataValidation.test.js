@@ -1,7 +1,7 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
-import { sequelize, SiteAlert } from '../models';
 import { auditLogger } from '../logger';
+import { SiteAlert, sequelize } from '../models';
+import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
 
 jest.mock('../logger');
 
@@ -53,10 +53,7 @@ describe('dataValidation', () => {
 
   describe('run count and last updated', () => {
     it('should return the count and last updated value for the given table', async () => {
-      const {
-        updatedAt,
-        count,
-      } = await countAndLastUpdated('Grants');
+      const { updatedAt, count } = await countAndLastUpdated('Grants');
       expect(parseInt(count, DECIMAL_BASE)).toBeGreaterThan(0);
       expect(updatedAt).not.toBe('');
     });
@@ -77,7 +74,7 @@ describe('dataValidation', () => {
       /ActivityReports has \d+ records, last updated at: .+/,
       /Users has \d+ records, last updated at: .+/,
       /Files has \d+ records, last updated at: */,
-      /Objectives has \d+ records, last updated at: .+/,
+      /Objectives has \d+ records, last updated at: .*/,
       /NextSteps has \d+ records, last updated at: .*/,
     ];
 

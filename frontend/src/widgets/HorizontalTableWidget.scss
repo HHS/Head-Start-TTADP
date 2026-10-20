@@ -1,47 +1,68 @@
 @use "../colors.scss" as *;
 
-@media (min-width: 60em) {
-  .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column-border::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    border-right: 1px solid black;
-  }
+.smarthub-horizontal-table-widget td .usa-checkbox__label::before {
+  /* this vertically aligns the checkbox in the table cell */
+  top: 4px;
+}
 
-  .smarthub-horizontal-table-widget .data-header {
-    background: #fff;
-    border-bottom: 0px;
-    position: sticky;
-    top: 0;
-    vertical-align: bottom;
-  }
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column-border::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  border-right: 1px solid black;
+}
 
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
-    z-index: 1;
-    position: sticky;
-    right: 0;
-    font-weight: bold;
-    min-width: 90px;
-  }
+.smarthub-horizontal-table-widget .data-header.smarthub-horizontal-table--sticky-first-column {
+  background: #fff;
+  position: sticky;
+  top: 0;
+  vertical-align: bottom;
+}
 
-  // Because putting the border on the sticky element doesn't work, and box-shadow
-  // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
-  // is above the border.
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    border-left: 1px solid black;
-  }
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column,
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column {
+  z-index: 1;
+  position: sticky;
+  right: 0;
+}
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
-    position: sticky;
-  }
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
+  font-weight: bold;
+  min-width: 90px;
+}
+
+// Because putting the border on the sticky element doesn't work, and box-shadow
+// isn't ideal because of z-indexing weirdness that happens when a ContextMenu
+// is above the border.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before,
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-sticky-last-data-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-left: 1px solid black;
+}
+
+.smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-sticky-last-data-column,
+.smarthub-horizontal-table-widget .usa-table tfoot td.smarthub-horizontal-table-sticky-last-data-column {
+  background-color: #fff;
+  z-index: 2;
+}
+
+.smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-last-column {
+  background-color: white;
+  z-index: 2;
+}
+
+.smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-last-column {
+  background-color: inherit;
+}
+
+.smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-sticky-last-data-column {
+  background-color: inherit;
 }
 
 .smarthub-horizontal-table-widget .checkbox-column {
@@ -53,7 +74,6 @@
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
-  z-index: 1;
   background-color: white;
   left: 0;
 }
@@ -71,12 +91,12 @@
   height: calc(100% - 1.5rem);
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable {
   overflow-x: auto;
   overflow-y: auto;
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+.smarthub-horizontal-table-widget.usa-table-container--scrollable thead {
   border-top: 1px solid lightgray;
 }
 
@@ -113,7 +133,8 @@
 }
 
 .smarthub-horizontal-table-widget a {
-  max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+  max-width: 50ch;
+  /* the ch unit is character, so a max width of 55 characters */
   display: inline-block;
   vertical-align: middle;
 }
@@ -123,44 +144,85 @@
   vertical-align: middle;
 }
 
-.smarthub-horizontal-table-widget .left-with-checkbox {
-  left: 44px;
-}
-
-
 .smarthub-horizontal-table-widget tfoot {
   border-top: 1px solid $text-ink;
 }
 
 .smarthub-horizontal-table-widget tfoot td {
   font-weight: bold;
+  position: relative;
 }
 
-// First footer cell sticky.
-.smarthub-horizontal-table-widget tfoot td:first-child {
+// Footer checkbox placeholder sticky when selection checkboxes are enabled.
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-checkbox-column {
   left: 0;
   position: sticky;
   z-index: 1;
   min-width: 64px;
 }
 
-// Second footer cell sticky.
-.smarthub-horizontal-table-widget tfoot td:nth-child(2) {
+// Footer label sticky — mirrors sticky first column in tbody. This must be
+// class-driven because the label is the first footer cell without checkboxes
+// and the second footer cell with checkboxes.
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-first-column {
+  left: var(--smarthub-horizontal-table-footer-first-column-left, 0px);
   position: sticky;
   z-index: 1;
   max-width: 330px;
-  left: 44px;
+}
+
+// Right border on the first (label) footer cell — continues the first-column divider.
+// When enableCheckboxes=false, the label is at td:first-child.
+// When enableCheckboxes=true, the label is at td:nth-child(2).
+.smarthub-horizontal-table-widget tfoot td.smarthub-horizontal-table-footer-first-column::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  border-right: 1px solid black;
+}
+
+// Left border on the last footer cell — continues the last-column divider.
+.smarthub-horizontal-table-widget tfoot td:last-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-left: 1px solid black;
 }
 
 // Make sure first column is always sticky.
-.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+  left: 0px;
   position: sticky;
   z-index: 1;
   max-width: 330px;
+
+  &.smarthub-horizontal-table--sticky-first-column-checkboxes-enabled {
+    left: 44px;
+  }
 }
 
 // Ensure cell font size is consistent, even when it's a tooltip wrapper
 .smarthub-horizontal-table-widget .usa-table tbody td,
 .smarthub-horizontal-table-widget .usa-table tbody td .smart-hub-tooltip .smart-hub--ellipsis {
   font-size: 1.06rem;
+}
+
+// Raise the stacking order of a sticky first-column cell while its tooltip is
+// open so the tooltip body renders above the row above rather than behind it.
+// overflow: visible counteracts the text-overflow-ellipsis class's overflow: hidden
+// which otherwise clips the absolutely-positioned tooltip body.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table--sticky-first-column:has(.show-tooltip) {
+  z-index: 3;
+  overflow: visible;
+}
+
+// USWDS sets font-weight:normal on .usa-table td (specificity 0,1,1), which overrides
+// inherited bold and the text-bold utility (specificity 0,1,0).
+// This rule restores bold for cells that explicitly carry the text-bold class.
+.smarthub-horizontal-table-widget .usa-table tbody td.text-bold {
+  font-weight: bold;
 }

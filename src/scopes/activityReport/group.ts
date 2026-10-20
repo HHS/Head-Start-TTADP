@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 import { validatedIdArray } from '../utils';
 

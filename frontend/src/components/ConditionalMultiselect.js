@@ -1,12 +1,12 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import Select from 'react-select';
-import selectOptionsReset from './selectOptionsReset';
+import { v4 as uuidv4 } from 'uuid';
+import ContentFromFeedByTag from './ContentFromFeedByTag';
 import Drawer from './Drawer';
 import DrawerTriggerButton from './DrawerTriggerButton';
-import ContentFromFeedByTag from './ContentFromFeedByTag';
+import selectOptionsReset from './selectOptionsReset';
 
 export default function ConditionalMultiselect({
   fieldData,
@@ -29,8 +29,9 @@ export default function ConditionalMultiselect({
   };
 
   const options = fieldData.options.map((label, value) => ({ label, value }));
-  const selectedOptions = (fieldValue || []).map((label) => options
-    .find((option) => option.label === label));
+  const selectedOptions = (fieldValue || []).map((label) =>
+    options.find((option) => option.label === label)
+  );
 
   if (!userCanEdit) {
     if (!fieldValue || fieldValue.length === 0) {
@@ -39,12 +40,8 @@ export default function ConditionalMultiselect({
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-0">
-          {fieldData.displayName}
-        </p>
-        <p className="usa-prose text-bold margin-bottom-0">
-          {fieldData.title}
-        </p>
+        <p className="usa-prose text-bold margin-bottom-0">{fieldData.displayName}</p>
+        <p className="usa-prose text-bold margin-bottom-0">{fieldData.title}</p>
         <ul className="usa-list usa-list--unstyled">
           {fieldValue.map((option) => (
             <li key={uuidv4()}>{option}</li>
@@ -57,12 +54,7 @@ export default function ConditionalMultiselect({
   return (
     <>
       {drawerTagName && (
-        <Drawer
-          triggerRef={drawerTriggerRef}
-          stickyHeader
-          stickyFooter
-          title={drawerTitle}
-        >
+        <Drawer triggerRef={drawerTriggerRef} stickyHeader stickyFooter title={drawerTitle}>
           <ContentFromFeedByTag
             className={drawerClassName}
             tagName={drawerTagName}
@@ -73,12 +65,13 @@ export default function ConditionalMultiselect({
       <FormGroup className="margin-top-0" error={error.props.children} key={fieldName}>
         <Label htmlFor={fieldName}>
           <>
-            <p className="usa-prose text-bold margin-bottom-0">
-              {fieldData.displayName}
-            </p>
-            { fieldData.prompt }
-            {' '}
-            {validations.required && (<span className="smart-hub--form-required font-family-sans font-ui-xs margin-right-1">*</span>)}
+            <p className="usa-prose text-bold margin-bottom-0">{fieldData.displayName}</p>
+            {fieldData.prompt}{' '}
+            {validations.required && (
+              <span className="smart-hub--form-required font-family-sans font-ui-xs margin-right-1">
+                *
+              </span>
+            )}
             {drawerTagName && drawerButtonText && (
               <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
                 {drawerButtonText}
@@ -86,7 +79,7 @@ export default function ConditionalMultiselect({
             )}
           </>
         </Label>
-        { fieldData.hint && (<span className="usa-hint">{fieldData.hint}</span>)}
+        {fieldData.hint && <span className="usa-hint">{fieldData.hint}</span>}
         {error}
         <Select
           inputName={fieldName}

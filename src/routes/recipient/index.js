@@ -1,41 +1,47 @@
 import express from 'express';
+import { Transaction } from 'sequelize';
+import { checkRecipientIdParam, checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
+import transactionWrapper from '../transactionWrapper';
 import {
-  getRecipient,
-  searchRecipients,
-  getGoalsByRecipient,
   getGoalsByIdandRecipient,
+  getGoalsByRecipient,
+  getRecipient,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
+  getRecipientTimeline,
+  searchRecipients,
 } from './handlers';
-import {
-  checkRegionIdParam,
-  checkRecipientIdParam,
-} from '../../middleware/checkIdParamMiddleware';
-import transactionWrapper from '../transactionWrapper';
+import { checkRecipientTimelineQuery } from './middleware';
 
 const router = express.Router();
 router.get('/search', transactionWrapper(searchRecipients));
 router.get('/user', transactionWrapper(getRecipientAndGrantsByUser));
-router.get(
-  '/:recipientId',
-  checkRecipientIdParam,
-  transactionWrapper(getRecipient),
-);
+router.get('/:recipientId', checkRecipientIdParam, transactionWrapper(getRecipient));
 router.get(
   '/:recipientId/region/:regionId/goals',
   checkRecipientIdParam,
   checkRegionIdParam,
-  transactionWrapper(getGoalsByRecipient),
+  transactionWrapper(getGoalsByRecipient)
 );
 router.get(
   '/:recipientId/goals',
   checkRecipientIdParam,
-  transactionWrapper(getGoalsByIdandRecipient),
+  transactionWrapper(getGoalsByIdandRecipient)
 );
 router.get(
   '/:recipientId/region/:regionId/leadership',
   checkRecipientIdParam,
-  transactionWrapper(getRecipientLeadership),
+  transactionWrapper(getRecipientLeadership)
+);
+router.get(
+  '/:recipientId/region/:regionId/timeline',
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkRecipientTimelineQuery,
+  // The index and every source's population queries must observe the same snapshot.
+  transactionWrapper(getRecipientTimeline, '', false, {
+    isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ,
+  })
 );
 
 export default router;

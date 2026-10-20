@@ -1,29 +1,54 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  startDateFilter,
+  activityReportGoalResponseFilter,
+  deliveryMethodFilter,
   endDateFilter,
   grantNumberFilter,
+  grantStatusFilter,
+  myReportsFilter,
+  participantsFilter,
+  priorityIndicatorFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
+  regionFilter,
   reportIdFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
+  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
-  singleOrMultiRecipientsFilter,
   topicsFilter,
-  participantsFilter,
-  myReportsFilter,
   ttaTypeFilter,
-  reportTextFilter,
-  deliveryMethodFilter,
-  activityReportGoalResponseFilter,
-  regionFilter,
-  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
+import { reviewTypeFilter } from '../../components/filter/deliveredReviewFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
-import { groupsFilter } from '../../components/filter/grantFilters';
+import {
+  findingCategoryFilter,
+  findingTypeFilter,
+} from '../../components/filter/grantCitationFilters';
+import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
+
+const MONITORING_FILTER_CONFIG = [
+  findingCategoryFilter,
+  findingTypeFilter,
+  programSpecialistFilter,
+  reviewTypeFilter,
+  regionFilter,
+  stateCodeFilter,
+  {
+    ...startDateFilter,
+    display: 'Date',
+    minDate: '2025-01-21',
+    minDateErrorMessage: 'Please enter a date on or after 01/21/2025',
+  },
+  topicsFilter,
+];
+
+// sort by display prop
+MONITORING_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
@@ -54,4 +79,16 @@ const DASHBOARD_FILTER_CONFIG = [
 // sort by display prop
 DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
-export { DASHBOARD_FILTER_CONFIG };
+const RECIPIENT_SPOTLIGHT_FILTER_CONFIG = [
+  grantNumberFilter, // Grant number
+  groupsFilter, // Group
+  lastTTA, // Last TTA
+  programSpecialistFilter, // Program specialist
+  priorityIndicatorFilter, // Priority indicator (NEW)
+  regionFilter, // Region
+  stateCodeFilter, // State or territory
+];
+
+RECIPIENT_SPOTLIGHT_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG, MONITORING_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG };

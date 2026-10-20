@@ -1,20 +1,15 @@
-import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
-import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
-import MyGroupsProvider from '../../../components/MyGroupsProvider';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
+import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import UserContext from '../../../UserContext';
+import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -35,7 +30,7 @@ describe('MyGroups', () => {
             </MyGroupsProvider>
           </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -48,10 +43,7 @@ describe('MyGroups', () => {
         recipientId: 1,
         name: 'grant1',
         regionId: 1,
-        programTypes: [
-          'EHS',
-          'HS',
-        ],
+        programTypes: ['EHS', 'HS'],
       },
       {
         grantId: 2,
@@ -59,9 +51,7 @@ describe('MyGroups', () => {
         recipientId: 2,
         name: 'grant2',
         regionId: 1,
-        programTypes: [
-          'EHS',
-        ],
+        programTypes: ['EHS'],
       },
       {
         grantId: 3,
@@ -69,9 +59,7 @@ describe('MyGroups', () => {
         recipientId: 3,
         name: 'grant3',
         regionId: 2,
-        programTypes: [
-          'HS',
-        ],
+        programTypes: ['HS'],
       },
     ];
 
@@ -233,7 +221,10 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), [
+        'grant1 - 111111 - EHS, HS',
+        'grant2 - 222222 - EHS',
+      ]);
     });
 
     // Check the 'Keep this group private.' is NOT checkbox.
@@ -266,7 +257,10 @@ describe('MyGroups', () => {
     await act(async () => {
       await waitFor(() => {
         // Select 'individual1' and 'individual2'.
-        selectEvent.select(screen.getByLabelText(/Invite individuals/i), ['individual1', 'individual2']);
+        selectEvent.select(screen.getByLabelText(/Invite individuals/i), [
+          'individual1',
+          'individual2',
+        ]);
       });
     });
 
@@ -291,7 +285,10 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), [
+        'grant1 - 111111 - EHS, HS',
+        'grant2 - 222222 - EHS',
+      ]);
     });
 
     // Check the 'Keep this group private.' checkbox.
@@ -312,7 +309,9 @@ describe('MyGroups', () => {
     expect(screen.queryByText(/Add co-owner/i)).not.toBeInTheDocument();
 
     // Expect the 'Who do you want to share this group with?' radio buttons to not be visible.
-    expect(screen.queryByText(/Who do you want to share this group with?/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Who do you want to share this group with?/i)
+    ).not.toBeInTheDocument();
 
     // Expect the individuals select to not be visible.
     expect(screen.queryByText(/Invite individuals/i)).not.toBeInTheDocument();
@@ -332,7 +331,6 @@ describe('MyGroups', () => {
           regionId: 1,
         },
       ],
-
     });
     const save = screen.getByText(/Save group/i);
     act(() => {
@@ -349,7 +347,10 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), [
+        'grant1 - 111111 - EHS, HS',
+        'grant2 - 222222 - EHS',
+      ]);
     });
 
     // Check the 'Keep this group private.' is NOT checkbox.
@@ -402,7 +403,10 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), [
+        'grant1 - 111111 - EHS, HS',
+        'grant2 - 222222 - EHS',
+      ]);
     });
 
     fetchMock.post('/api/groups', {
@@ -550,7 +554,10 @@ describe('MyGroups', () => {
     await act(async () => {
       await waitFor(() => {
         // Select 'individual2'.
-        selectEvent.select(screen.getByLabelText(/Invite individuals/i), ['individual1', 'individual2']);
+        selectEvent.select(screen.getByLabelText(/Invite individuals/i), [
+          'individual1',
+          'individual2',
+        ]);
       });
     });
 
@@ -583,7 +590,9 @@ describe('MyGroups', () => {
       renderMyGroups();
     });
 
-    const userError = await screen.findByText('There was an error fetching co-owners and individuals');
+    const userError = await screen.findByText(
+      'There was an error fetching co-owners and individuals'
+    );
     expect(userError).toBeInTheDocument();
   });
 
@@ -594,7 +603,10 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), [
+        'grant1 - 111111 - EHS, HS',
+        'grant2 - 222222 - EHS',
+      ]);
     });
 
     // Check the 'Keep this group private.' is NOT checkbox.
@@ -643,7 +655,9 @@ describe('MyGroups', () => {
     await act(async () => {
       userEvent.click(removeCoOwner);
       await waitFor(() => {
-        expect(screen.queryByText(/you can only choose up to three co-owners./i)).not.toBeInTheDocument();
+        expect(
+          screen.queryByText(/you can only choose up to three co-owners./i)
+        ).not.toBeInTheDocument();
       });
     });
   });
@@ -707,7 +721,9 @@ describe('MyGroups', () => {
         expect(screen.getByText(/individual1/i)).toBeInTheDocument();
 
         // Expect check box 'Keep this group private.' to not be checked.
-        expect(screen.queryAllByRole('checkbox', { name: /keep this group private\./i }).length).toBe(0);
+        expect(
+          screen.queryAllByRole('checkbox', { name: /keep this group private\./i }).length
+        ).toBe(0);
 
         // Assert radio button 'Individuals in my region' is checked.
         const radio = screen.getByLabelText(/Individuals in my region/i);

@@ -1,11 +1,12 @@
 /* eslint-disable react/no-unknown-property */
-import React, { useState, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@trussworks/react-uswds';
-import DeleteFileModal from './DeleteFileModal';
+import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import colors from '../../colors';
+import DeleteFileModal from './DeleteFileModal';
 
 export const getStatus = (status) => {
   switch (status) {
@@ -54,15 +55,9 @@ const FileTable = ({ onFileRemoved, files }) => {
       <table className="files-table">
         <thead className="files-table--thead" bgcolor="#F8F8F8">
           <tr>
-            <th width="50%">
-              Name
-            </th>
-            <th width="20%">
-              Size
-            </th>
-            <th width="20%">
-              Status
-            </th>
+            <th width="50%">Name</th>
+            <th width="20%">Size</th>
+            <th width="20%">Status</th>
             <th width="10%">
               <span className="usa-sr-only">Remove file</span>
             </th>
@@ -71,15 +66,9 @@ const FileTable = ({ onFileRemoved, files }) => {
         <tbody>
           {files.map((file, currentIndex) => (
             <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
-              <td className="files-table--file-name">
-                {file.originalFileName}
-              </td>
-              <td>
-                {`${(file.fileSize / 1000).toFixed(1)} KB`}
-              </td>
-              <td>
-                {getStatus(file.status)}
-              </td>
+              <td className="files-table--file-name">{file.originalFileName}</td>
+              <td>{`${(file.fileSize / 1000).toFixed(1)} KB`}</td>
+              <td>{getStatus(file.status)}</td>
               <td>
                 <Button
                   type="button"
@@ -91,7 +80,11 @@ const FileTable = ({ onFileRemoved, files }) => {
                   }}
                 >
                   <span className="fa-sm">
-                    <FontAwesomeIcon color={colors.textInk} icon={faTrash} aria-label={`remove ${file.originalFileName}`} />
+                    <FontAwesomeIcon
+                      color={colors.textInk}
+                      icon={faTrash}
+                      aria-label={`remove ${file.originalFileName}`}
+                    />
                   </span>
                 </Button>
               </td>
@@ -99,9 +92,7 @@ const FileTable = ({ onFileRemoved, files }) => {
           ))}
         </tbody>
       </table>
-      {files.length === 0 && (
-      <p className="files-table--empty">No files uploaded</p>
-      )}
+      {files.length === 0 && <p className="files-table--empty">No files uploaded</p>}
     </div>
   );
 };
@@ -113,7 +104,6 @@ FileTable.propTypes = {
 };
 FileTable.defaultProps = {
   files: [],
-
 };
 
 export default FileTable;

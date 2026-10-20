@@ -1,6 +1,6 @@
-import { saveNotes } from './activityReports';
 import parseDate from '../lib/date';
 import { NextStep } from '../models';
+import { saveNotes } from './activityReports';
 
 jest.mock('../models', () => ({
   NextStep: {
@@ -26,24 +26,28 @@ describe('saveNotes', () => {
 
     await saveNotes(activityReportId, notes, false);
 
-    expect(NextStep.destroy).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        activityReportId,
-        noteType: 'SPECIALIST',
-      }),
-      individualHooks: true,
-    }));
+    expect(NextStep.destroy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          activityReportId,
+          noteType: 'SPECIALIST',
+        }),
+        individualHooks: true,
+      })
+    );
 
     expect(NextStep.bulkCreate).toHaveBeenCalledWith(
-      [expect.objectContaining({
-        note: 'Valid note',
-        completeDate: parseDate('05/13/2025'),
-        activityReportId,
-        noteType: 'SPECIALIST',
-      })],
+      [
+        expect.objectContaining({
+          note: 'Valid note',
+          completeDate: parseDate('05/13/2025'),
+          activityReportId,
+          noteType: 'SPECIALIST',
+        }),
+      ],
       expect.objectContaining({
         updateOnDuplicate: ['note', 'completeDate', 'updatedAt'],
-      }),
+      })
     );
   });
 
@@ -58,18 +62,18 @@ describe('saveNotes', () => {
     await saveNotes(activityReportId, notes, false);
 
     expect(NextStep.bulkCreate).toHaveBeenCalledWith(
-      [expect.objectContaining({
-        note: 'No date here',
-        completeDate: null,
-      })],
-      expect.anything(),
+      [
+        expect.objectContaining({
+          note: 'No date here',
+          completeDate: null,
+        }),
+      ],
+      expect.anything()
     );
   });
 
   it('filters out notes with no id, no note, and no date', async () => {
-    const notes = [
-      { note: '', completeDate: '' },
-    ];
+    const notes = [{ note: '', completeDate: '' }];
 
     await saveNotes(activityReportId, notes, false);
 
@@ -82,10 +86,12 @@ describe('saveNotes', () => {
     await saveNotes(activityReportId, notes, true);
 
     expect(NextStep.bulkCreate).toHaveBeenCalledWith(
-      [expect.objectContaining({
-        noteType: 'RECIPIENT',
-      })],
-      expect.anything(),
+      [
+        expect.objectContaining({
+          noteType: 'RECIPIENT',
+        }),
+      ],
+      expect.anything()
     );
   });
 
@@ -95,10 +101,12 @@ describe('saveNotes', () => {
     await saveNotes(activityReportId, notes, false);
 
     expect(NextStep.bulkCreate).toHaveBeenCalledWith(
-      [expect.objectContaining({
-        id: 42,
-      })],
-      expect.anything(),
+      [
+        expect.objectContaining({
+          id: 42,
+        }),
+      ],
+      expect.anything()
     );
   });
 });

@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- fixing the desired goal status
       DROP TABLE IF EXISTS status_update_goals;
       CREATE TEMP TABLE status_update_goals
@@ -75,7 +74,9 @@ module.exports = {
       UNION
       SELECT 'updated_to_not_started' operation, COUNT(*) cnt FROM updated_to_not_started
       ;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

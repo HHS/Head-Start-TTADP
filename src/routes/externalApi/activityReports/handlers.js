@@ -1,10 +1,10 @@
+import handleErrors from '../../../lib/apiErrorHandler';
 import ActivityReport from '../../../policies/activityReport';
 import ActivityReportsPresenter from '../../../serializers/activityReports';
 import { notFound, unauthorized } from '../../../serializers/errorResponses';
-import { userById } from '../../../services/users';
 import { activityReportAndRecipientsById } from '../../../services/activityReports';
-import handleErrors from '../../../lib/apiErrorHandler';
 import { currentUserId } from '../../../services/currentUser';
+import { userById } from '../../../services/users';
 
 const logContext = {
   namespace: 'API:ACTIVITY_REPORTS',

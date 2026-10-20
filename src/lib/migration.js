@@ -15,16 +15,17 @@ const prepMigration = async (
   transaction,
   sessionSig,
   auditDescriptor = 'RUN MIGRATIONS',
-  loggedUser = '0',
-) => queryInterface.sequelize.query(
-  // Set audit configuration values using the provided parameters
-  `SELECT
+  loggedUser = '0'
+) =>
+  queryInterface.sequelize.query(
+    // Set audit configuration values using the provided parameters
+    `SELECT
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', NULL, TRUE) as "transactionId",
       set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-  { transaction },
-);
+    { transaction }
+  );
 
 /**
  * Sets the audit logging state by calling a stored procedure in the database.
@@ -32,15 +33,12 @@ const prepMigration = async (
  * @param {Object} transaction - The Sequelize Transaction object.
  * @param {Boolean} enable - Whether to enable or disable audit logging. Default is true.
  */
-const setAuditLoggingState = async (
-  queryInterface,
-  transaction,
-  enable = true,
-) => queryInterface.sequelize.query(
-  // Calls the ZAFSetTriggerState stored procedure with the given enable parameter.
-  `SELECT "ZAFSetTriggerState"(null, null, null, '${enable ? 'ENABLE' : 'DISABLE'}');`,
-  { transaction },
-);
+const setAuditLoggingState = async (queryInterface, transaction, enable = true) =>
+  queryInterface.sequelize.query(
+    // Calls the ZAFSetTriggerState stored procedure with the given enable parameter.
+    `SELECT "ZAFSetTriggerState"(null, null, null, '${enable ? 'ENABLE' : 'DISABLE'}');`,
+    { transaction }
+  );
 
 /**
  * Removes specified tables and their audit logs from the database.
@@ -49,27 +47,25 @@ const setAuditLoggingState = async (
  * @param {Object} transaction - The current transaction.
  * @param {Array} tables - An array of table names to remove.
  */
-const removeTables = async (
-  queryInterface,
-  transaction,
-  tables = [],
-) => {
+const removeTables = async (queryInterface, transaction, tables = []) => {
   if (tables.length) {
     // Disable audit logging during table removal
     await setAuditLoggingState(queryInterface, transaction, false);
     // Remove each table and its audit log in parallel
-    await Promise.all(tables.map(async (table) => {
-      // Call stored procedure to remove auditing on table
-      await queryInterface.sequelize.query(
-        ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
-        { raw: true, transaction },
-      );
-      // Drop audit log table
-      await queryInterface.dropTable(`ZAL${table}`, { transaction });
-      // Drop main table
-      await queryInterface.dropTable(table, { transaction });
-      return null;
-    }));
+    await Promise.all(
+      tables.map(async (table) => {
+        // Call stored procedure to remove auditing on table
+        await queryInterface.sequelize.query(` SELECT "ZAFRemoveAuditingOnTable"('${table}');`, {
+          raw: true,
+          transaction,
+        });
+        // Drop audit log table
+        await queryInterface.dropTable(`ZAL${table}`, { transaction });
+        // Drop main table
+        await queryInterface.dropTable(table, { transaction });
+        return null;
+      })
+    );
     // Re-enable audit logging
     await setAuditLoggingState(queryInterface, transaction, true);
   }
@@ -87,10 +83,18 @@ const addValuesToEnumIfTheyDontExist = async (
   queryInterface,
   transaction,
   enumName,
-  enumValues = [],
-) => Promise.all(Object.values(enumValues).map((enumValue) => queryInterface.sequelize.query(`
+  enumValues = []
+) =>
+  Promise.all(
+    Object.values(enumValues).map((enumValue) =>
+      queryInterface.sequelize.query(
+        `
   ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';
-`, { transaction })));
+`,
+        { transaction }
+      )
+    )
+  );
 
 /**
  * Replaces a specific value in an array column of a table with a new value.
@@ -108,12 +112,16 @@ const replaceValueInArray = async (
   table,
   column,
   oldValue,
-  newValue,
-) => queryInterface.sequelize.query(/* sql */`
+  newValue
+) =>
+  queryInterface.sequelize.query(
+    /* sql */ `
   UPDATE "${table}"
   SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
   WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
-`, { transaction });
+`,
+    { transaction }
+  );
 
 /**
  * Replaces a specific value in a JSONB array within a PostgreSQL table column.
@@ -133,8 +141,10 @@ const replaceValueInJSONBArray = async (
   column,
   field,
   oldValue,
-  newValue,
-) => queryInterface.sequelize.query(/* sql */`
+  newValue
+) =>
+  queryInterface.sequelize.query(
+    /* sql */ `
   UPDATE "${table}"
   SET
     "${column}" = (
@@ -156,7 +166,9 @@ const replaceValueInJSONBArray = async (
         )
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
-`, { transaction });
+`,
+    { transaction }
+  );
 
 const dropAndRecreateEnum = async (
   queryInterface,
@@ -166,28 +178,36 @@ const dropAndRecreateEnum = async (
   columnName,
   enumValues = [],
   enumType = 'text',
-  isArray = true, // Only set this to false if you're sure the column is not an array.
+  isArray = true // Only set this to false if you're sure the column is not an array.
 ) => {
-  await queryInterface.sequelize.query(`
+  await queryInterface.sequelize.query(
+    `
   -- rename the existing type
   ALTER TYPE "${enumName}" RENAME TO "${enumName}_old";
   -- create the new type
   CREATE TYPE "${enumName}" AS ENUM(
     ${enumValues.map((enumValue) => `'${enumValue}'`).join(',\n')}
-  );`, { transaction });
+  );`,
+    { transaction }
+  );
 
   const enumNameWithType = isArray ? `"${enumName}"[]` : `"${enumName}"`;
   const enumTypeForAlter = isArray ? `${enumType}[]` : enumType;
-  const setArrayDefault = isArray ? `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];` : '';
+  const setArrayDefault = isArray
+    ? `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];`
+    : '';
 
-  return queryInterface.sequelize.query(`
+  return queryInterface.sequelize.query(
+    `
   -- update the columns to use the new type
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default null;
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE ${enumNameWithType} USING "${columnName}"::${enumTypeForAlter}::${enumNameWithType};
   ${setArrayDefault}
   -- remove the old type
   DROP TYPE "${enumName}_old";
-`, { transaction });
+`,
+    { transaction }
+  );
 };
 
 /**
@@ -206,7 +226,7 @@ const updateUsersFlagsEnum = async (
   queryInterface,
   transaction,
   valuesToRemove = [],
-  specificFlags = FEATURE_FLAGS,
+  specificFlags = FEATURE_FLAGS
 ) => {
   const enumName = 'enum_Users_flags';
   const tableName = 'Users';
@@ -221,25 +241,35 @@ const updateUsersFlagsEnum = async (
          * We need to check if the enum value exists before trying to remove it
          * (it won't, if it's not in the constants.js FEATURE_FLAGS array)
          */
-        const result = await queryInterface.sequelize.query(`
+        const result = await queryInterface.sequelize.query(
+          `
           SELECT EXISTS(
             SELECT 1
             FROM pg_type t
             JOIN pg_enum e ON t.oid = e.enumtypid
             WHERE t.typname = '${enumName}' AND e.enumlabel = '${value}'
           );
-        `, { transaction });
+        `,
+          { transaction }
+        );
 
         const enumIsValid = result[0][0].exists;
         return enumIsValid ? value : null;
-      }),
+      })
     );
 
     const validForRemove = existingEnums.filter((value) => value);
-    await Promise.all(validForRemove.map((value) => queryInterface.sequelize.query(`
+    await Promise.all(
+      validForRemove.map((value) =>
+        queryInterface.sequelize.query(
+          `
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
-    `, { transaction })));
+    `,
+          { transaction }
+        )
+      )
+    );
 
     return dropAndRecreateEnum(
       queryInterface,
@@ -247,16 +277,11 @@ const updateUsersFlagsEnum = async (
       enumName,
       tableName,
       columnName,
-      specificFlags,
+      specificFlags
     );
   }
 
-  return addValuesToEnumIfTheyDontExist(
-    queryInterface,
-    transaction,
-    enumName,
-    specificFlags,
-  );
+  return addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, specificFlags);
 };
 
 /**
@@ -274,7 +299,7 @@ const updateUsersFlagsEnum = async (
 const updateSequence = async (queryInterface, tableName, transaction = null) => {
   try {
     // Query to locate the sequence based on the table name
-    const findSequenceQuery = /* sql */`
+    const findSequenceQuery = /* sql */ `
       SELECT
         c.table_name,
         c.column_name,
@@ -299,19 +324,21 @@ const updateSequence = async (queryInterface, tableName, transaction = null) => 
     }
 
     // Iterate through sequences (if a table has more than one sequence)
-    await Promise.all(sequences.map(async ({ column_name, sequence_name }) => {
-      // Find the maximum value of the ID column in the table
-      const maxValueQuery = /* sql */`SELECT MAX("${column_name}") FROM "${tableName}"`;
-      const maxResult = await queryInterface.sequelize.query(maxValueQuery, {
-        type: QueryTypes.SELECT,
-        transaction,
-      });
-      const maxValue = maxResult[0].max || 0;
+    await Promise.all(
+      sequences.map(async ({ column_name, sequence_name }) => {
+        // Find the maximum value of the ID column in the table
+        const maxValueQuery = /* sql */ `SELECT MAX("${column_name}") FROM "${tableName}"`;
+        const maxResult = await queryInterface.sequelize.query(maxValueQuery, {
+          type: QueryTypes.SELECT,
+          transaction,
+        });
+        const maxValue = maxResult[0].max || 0;
 
-      // Update the sequence
-      const setValQuery = /* sql */`SELECT setval('"${sequence_name}"', COALESCE(${maxValue} + 1, 1), false);`;
-      await queryInterface.sequelize.query(setValQuery, { transaction });
-    }));
+        // Update the sequence
+        const setValQuery = /* sql */ `SELECT setval('"${sequence_name}"', COALESCE(${maxValue} + 1, 1), false);`;
+        await queryInterface.sequelize.query(setValQuery, { transaction });
+      })
+    );
   } catch (error) {
     throw new Error(`Error updating sequence: ${tableName}, ${error.message}`);
   }

@@ -1,31 +1,30 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db, {
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
   ActivityReportObjectiveCitation,
-  Topic,
-  GoalTemplate,
-  GoalCollaborator,
-  Goal,
-  Objective,
-  Grant,
-  Recipient,
+  ActivityReportObjectiveTopic,
+  Citation,
   CollaboratorType,
+  Goal,
+  GoalCollaborator,
+  GoalTemplate,
+  Grant,
+  GrantCitation,
+  Objective,
+  Recipient,
+  Topic,
   User,
 } from '../models';
 import {
-  standardGoalsForRecipient,
-  createObjectivesForGoal,
-} from './standardGoals';
-import {
+  createGoalTemplate,
   createGrant,
   createRecipient,
-  createGoalTemplate,
   createReport,
   destroyReport,
 } from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { createObjectivesForGoal, standardGoalsForRecipient } from './standardGoals';
 
 describe('standardGoals with Data', () => {
   afterAll(async () => {
@@ -48,21 +47,23 @@ describe('standardGoals with Data', () => {
     let creatorCollabType;
     let citationOnApprovedReport;
     let citationOnNonApprovedReport;
+    let normalizedCitationOnApprovedReport;
+    let normalizedCitationOnNonApprovedReport;
 
     beforeAll(async () => {
+      const uniqueUserId = `Test Topics User ${Date.now()}-${faker.number.int({ min: 1000, max: 9999 })}`;
       user = await User.create({
-        id: faker.datatype.number({ min: 2000 }),
+        id: faker.number.int({ min: 2000000, max: 2999999 }),
         homeRegionId: 1,
-        name: 'Test Topics User',
-        hsesUsername: 'Test Topics User',
-        hsesUserId: 'Test Topics User',
+        name: uniqueUserId,
+        hsesUsername: uniqueUserId,
+        hsesUserId: uniqueUserId,
         lastLogin: new Date(),
       });
 
       creatorCollabType = await CollaboratorType.findOrCreate({
         where: { name: 'Creator' },
-        defaults: { name: 'Creator' },
-        validForId: 1,
+        defaults: { name: 'Creator', validForId: 1 },
       });
 
       recipientForTopics = await createRecipient({});
@@ -73,7 +74,7 @@ describe('standardGoals with Data', () => {
       });
 
       goalTemplate = await createGoalTemplate({
-        name: 'Test Topics Template',
+        name: `Test Topics Template ${Date.now()}`,
         creationMethod: CREATION_METHOD.CURATED,
       });
 
@@ -160,104 +161,229 @@ describe('standardGoals with Data', () => {
         topicId: topicOnNonApprovedReport.id,
       });
 
-      // Create citations for both approved and non-approved reports' objectives
+      normalizedCitationOnApprovedReport = await Citation.create({
+        mfid: faker.number.int({ min: 100000, max: 999999 }),
+        finding_uuid: `approved-finding-${Date.now()}`,
+        citation: 'Citation on approved report',
+        raw_finding_type: 'Type 1',
+        calculated_finding_type: 'Type 1',
+      });
+
+      normalizedCitationOnNonApprovedReport = await Citation.create({
+        mfid: faker.number.int({ min: 1000000, max: 1999999 }),
+        finding_uuid: `non-approved-finding-${Date.now()}`,
+        citation: 'Citation on non-approved report',
+        raw_finding_type: 'Type 2',
+        calculated_finding_type: 'Type 2',
+      });
+
+      await GrantCitation.create({
+        grantId: grant.id,
+        citationId: normalizedCitationOnApprovedReport.id,
+      });
+
+      await GrantCitation.create({
+        grantId: grant.id,
+        citationId: normalizedCitationOnNonApprovedReport.id,
+      });
+
+      // Create citations for both approved and non-approved reports' objectives.
+      // Keep legacy monitoringReferences and flattened fields aligned for test readability.
       citationOnApprovedReport = await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: activityReportObjectiveForApprovedReport.id,
+        citationId: normalizedCitationOnApprovedReport.id,
         citation: 'Citation on approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-          findingType: 'Type 1',
-          findingSource: 'Source 1',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: normalizedCitationOnApprovedReport.finding_uuid,
+            reviewName: 'Review 1',
+            standardId: 200001,
+            grantNumber: grant.number,
+            findingType: 'Type 1',
+            findingSource: 'Source 1',
+            acro: 'AOC',
+            severity: 3,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Complete',
+            name: 'Citation 1',
+          },
+        ],
+        findingId: normalizedCitationOnApprovedReport.finding_uuid,
+        grantId: grant.id,
+        grantNumber: grant.number,
+        reviewName: 'Review 1',
+        standardId: 200001,
+        findingType: 'Type 1',
+        findingSource: 'Source 1',
+        acro: 'AOC',
+        name: 'Citation 1',
+        severity: 3,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+        monitoringFindingStatusName: 'Complete',
       });
 
       citationOnNonApprovedReport = await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: activityReportObjectiveForNonApprovedReport.id,
+        citationId: normalizedCitationOnNonApprovedReport.id,
         citation: 'Citation on non-approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 2,
-          reviewName: 'Review 2',
-          findingType: 'Type 2',
-          findingSource: 'Source 2',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
+            reviewName: 'Review 2',
+            standardId: 200002,
+            grantNumber: grant.number,
+            findingType: 'Type 2',
+            findingSource: 'Source 2',
+            acro: 'AOC',
+            severity: 3,
+            reportDeliveryDate: '2025-02-17T05:00:00+00:00',
+            monitoringFindingStatusName: 'Complete',
+            name: 'Citation 2',
+          },
+        ],
+        findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
+        grantId: grant.id,
+        grantNumber: grant.number,
+        reviewName: 'Review 2',
+        standardId: 200002,
+        findingType: 'Type 2',
+        findingSource: 'Source 2',
+        acro: 'AOC',
+        name: 'Citation 2',
+        severity: 3,
+        reportDeliveryDate: '2025-02-17T05:00:00+00:00',
+        monitoringFindingStatusName: 'Complete',
       });
     });
 
     afterAll(async () => {
+      const citationIds = [citationOnApprovedReport?.id, citationOnNonApprovedReport?.id].filter(
+        Boolean
+      );
+
+      const normalizedCitationIds = [
+        normalizedCitationOnApprovedReport?.id,
+        normalizedCitationOnNonApprovedReport?.id,
+      ].filter(Boolean);
+
+      const topicIds = [topicOnApprovedReport?.id, topicOnNonApprovedReport?.id].filter(Boolean);
+
+      const activityReportObjectiveIds = [
+        activityReportObjectiveForApprovedReport?.id,
+        activityReportObjectiveForNonApprovedReport?.id,
+      ].filter(Boolean);
+
+      const objectiveIds = [approvedObjective?.id, nonApprovedObjective?.id].filter(Boolean);
+
       // Clean up all the resources created for this test
       // Clean up citations first
-      await ActivityReportObjectiveCitation.destroy({
-        where: {
-          id: [
-            citationOnApprovedReport.id,
-            citationOnNonApprovedReport.id,
-          ],
-        },
-        force: true,
-      });
+      if (citationIds.length) {
+        await ActivityReportObjectiveCitation.destroy({
+          where: {
+            id: citationIds,
+          },
+          force: true,
+        });
+      }
 
-      await ActivityReportObjectiveTopic.destroy({
-        where: {
-          topicId: [
-            topicOnApprovedReport.id,
-            topicOnNonApprovedReport.id,
-          ],
-        },
-      });
+      if (grant?.id && normalizedCitationIds.length) {
+        await GrantCitation.destroy({
+          where: {
+            grantId: grant.id,
+            citationId: normalizedCitationIds,
+          },
+          force: true,
+        });
+      }
 
-      await Topic.destroy({
-        where: {
-          id: [
-            topicOnApprovedReport.id,
-            topicOnNonApprovedReport.id,
-          ],
-        },
-        force: true,
-      });
+      if (normalizedCitationIds.length) {
+        await Citation.destroy({
+          where: {
+            id: normalizedCitationIds,
+          },
+          force: true,
+        });
+      }
 
-      await ActivityReportObjective.destroy({
-        where: {
-          id: [
-            activityReportObjectiveForApprovedReport.id,
-            activityReportObjectiveForNonApprovedReport.id,
-          ],
-        },
-        individualHooks: true,
-        force: true,
-      });
+      if (topicIds.length) {
+        await ActivityReportObjectiveTopic.destroy({
+          where: {
+            topicId: topicIds,
+          },
+        });
 
-      await GoalCollaborator.destroy({
-        where: {
-          goalId: goalForTopics.id,
-        },
-        force: true,
-      });
+        await Topic.destroy({
+          where: {
+            id: topicIds,
+          },
+          force: true,
+        });
+      }
 
-      await Objective.destroy({
-        where: {
-          id: [
-            approvedObjective.id,
-            nonApprovedObjective.id,
-          ],
-        },
-        force: true,
-      });
+      if (activityReportObjectiveIds.length) {
+        await ActivityReportObjective.destroy({
+          where: {
+            id: activityReportObjectiveIds,
+          },
+          individualHooks: true,
+          force: true,
+        });
+      }
 
-      await destroyReport(approvedReport);
-      await destroyReport(nonApprovedReport);
+      if (goalForTopics?.id) {
+        await GoalCollaborator.destroy({
+          where: {
+            goalId: goalForTopics.id,
+          },
+          force: true,
+        });
+      }
 
-      await Goal.destroy({ where: { id: goalForTopics.id }, force: true });
-      await GoalTemplate.destroy({ where: { id: goalTemplate.id }, force: true });
-      await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
-      await Recipient.destroy({ where: { id: recipientForTopics.id }, force: true });
-      await CollaboratorType.destroy({
-        where: { id: creatorCollabType[0].id },
-        force: true,
-      });
-      await User.destroy({ where: { id: user.id }, force: true });
+      if (objectiveIds.length) {
+        await Objective.destroy({
+          where: {
+            id: objectiveIds,
+          },
+          force: true,
+        });
+      }
+
+      if (approvedReport) {
+        await destroyReport(approvedReport);
+      }
+
+      if (nonApprovedReport) {
+        await destroyReport(nonApprovedReport);
+      }
+
+      if (goalForTopics?.id) {
+        await Goal.destroy({ where: { id: goalForTopics.id }, force: true });
+      }
+
+      if (goalTemplate?.id) {
+        await GoalTemplate.destroy({ where: { id: goalTemplate.id }, force: true });
+      }
+
+      if (grant?.id) {
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+      }
+
+      if (recipientForTopics?.id) {
+        await Recipient.destroy({ where: { id: recipientForTopics.id }, force: true });
+      }
+
+      if (creatorCollabType?.[0]?.id) {
+        await CollaboratorType.destroy({
+          where: { id: creatorCollabType[0].id },
+          force: true,
+        });
+      }
+
+      if (user?.id) {
+        await User.destroy({ where: { id: user.id }, force: true });
+      }
     });
 
     it('returns goals with topics and citations only from activity reports with calculatedStatus=APPROVED', async () => {
@@ -265,7 +391,7 @@ describe('standardGoals with Data', () => {
         recipientForTopics.id,
         grant.regionId,
         {},
-        true,
+        true
       );
       expect(result.count).toBe(1);
 
@@ -273,15 +399,13 @@ describe('standardGoals with Data', () => {
       const goalRow = result.goalRows[0];
 
       // Access the topics correctly - they might be strings directly instead of objects
-      const objectiveTopics = goalRow.objectives.flatMap(
-        (objective) => {
+      const objectiveTopics = goalRow.objectives.flatMap((objective) => {
         // Handle both string topics and object topics with name property
-          if (objective.topics) {
-            return objective.topics.map((topic) => (typeof topic === 'string' ? topic : topic.name));
-          }
-          return [];
-        },
-      );
+        if (objective.topics) {
+          return objective.topics.map((topic) => (typeof topic === 'string' ? topic : topic.name));
+        }
+        return [];
+      });
 
       // Should include the topic from the approved report
       expect(objectiveTopics).toContain('Topic on approved report');
@@ -290,21 +414,60 @@ describe('standardGoals with Data', () => {
       expect(objectiveTopics).not.toContain('Topic on non-approved report');
 
       // Get the citations to assert.
-      const objectiveCitations = goalRow.objectives.flatMap(
-        (objective) => {
+      const objectiveCitations = goalRow.objectives.flatMap((objective) => {
         // Handle both string topics and object topics with name property
-          if (objective.citations) {
-            return objective.citations.map((citation) => (typeof citation === 'string' ? citation : citation.name));
-          }
-          return [];
-        },
-      );
+        if (objective.citations) {
+          return objective.citations.map((citation) =>
+            typeof citation === 'string' ? citation : citation.name
+          );
+        }
+        return [];
+      });
 
       // Should include the citation from the approved report
       expect(objectiveCitations).toContain('Type 1 - Citation on approved report - Source 1');
 
       // Should NOT include the citation from the non-approved report
-      expect(objectiveCitations).not.toContain('Type 2 - Citation on non-approved report - Source 2');
+      expect(objectiveCitations).not.toContain(
+        'Type 2 - Citation on non-approved report - Source 2'
+      );
+    });
+
+    it('only uses directly included flattened citation references', async () => {
+      await ActivityReportObjectiveCitation.update(
+        {
+          monitoringReferences: [],
+          acro: '',
+          findingType: '',
+          findingSource: '',
+        },
+        {
+          where: {
+            id: [citationOnApprovedReport.id, citationOnNonApprovedReport.id],
+          },
+          individualHooks: true,
+        }
+      );
+
+      const result = await standardGoalsForRecipient(
+        recipientForTopics.id,
+        grant.regionId,
+        {},
+        true
+      );
+
+      const objectiveCitations = result.goalRows[0].objectives.flatMap((objective) =>
+        objective.citations
+          ? objective.citations.map((citation) =>
+              typeof citation === 'string' ? citation : citation.name
+            )
+          : []
+      );
+
+      expect(objectiveCitations).not.toContain('Type 1 - Citation on approved report - Source 1');
+      expect(objectiveCitations).not.toContain(
+        'Type 2 - Citation on non-approved report - Source 2'
+      );
     });
   });
 
@@ -323,7 +486,7 @@ describe('standardGoals with Data', () => {
       // Create test user with unique hsesUserId
       const uniqueUserId = `Test Objective User ${Date.now()}`;
       user = await User.create({
-        id: faker.datatype.number({ min: 3000 }),
+        id: faker.number.int({ min: 3000, max: 3000 + 99999 }),
         homeRegionId: 1,
         name: uniqueUserId,
         hsesUsername: uniqueUserId,
@@ -334,8 +497,7 @@ describe('standardGoals with Data', () => {
       // Create collaborator type
       creatorCollabType = await CollaboratorType.findOrCreate({
         where: { name: 'Creator' },
-        defaults: { name: 'Creator' },
-        validForId: 1,
+        defaults: { name: 'Creator', validForId: 1 },
       });
 
       // Create recipient and grant
@@ -443,7 +605,7 @@ describe('standardGoals with Data', () => {
     });
 
     it('should look up objective via ids array and goal id when goal id does not match the objective.goalId', async () => {
-    // Create input with IDs array that includes the existing objective ID
+      // Create input with IDs array that includes the existing objective ID
       const objectiveInput = {
         id: 99999, // ID that doesn't exist in the database
         ids: [99999, objective.id, 88888], // Include the real objective ID in the array

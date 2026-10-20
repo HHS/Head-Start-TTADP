@@ -1,14 +1,14 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
   EventReportPilot,
   EventReportPilotNationalCenterUser,
-  User,
   NationalCenter,
   NationalCenterUser,
+  User,
 } from '../models';
-import updateCompletedEventReportPilots from './updateCompletedEventReportPilots';
 import { createUser } from '../testUtils';
+import updateCompletedEventReportPilots from './updateCompletedEventReportPilots';
 
 describe('updateCompletedEventReportPilots', () => {
   let nationalCenter1;
@@ -24,9 +24,9 @@ describe('updateCompletedEventReportPilots', () => {
   let erp3;
 
   beforeAll(async () => {
-    nationalCenter1 = await NationalCenter.create({ name: faker.datatype.string(4) });
-    nationalCenter2 = await NationalCenter.create({ name: faker.datatype.string(4) });
-    nationalCenter3 = await NationalCenter.create({ name: faker.datatype.string(4) });
+    nationalCenter1 = await NationalCenter.create({ name: faker.string.sample(4) });
+    nationalCenter2 = await NationalCenter.create({ name: faker.string.sample(4) });
+    nationalCenter3 = await NationalCenter.create({ name: faker.string.sample(4) });
 
     user1 = await createUser();
     user2 = await createUser();
@@ -36,24 +36,45 @@ describe('updateCompletedEventReportPilots', () => {
     await NationalCenterUser.create({ userId: user2.id, nationalCenterId: nationalCenter2.id });
     await NationalCenterUser.create({ userId: user3.id, nationalCenterId: nationalCenter3.id });
 
-    erp1 = await EventReportPilot.create({
-      regionId: 1,
-      ownerId: user1.id,
-      collaboratorIds: [user2.id, user3.id],
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-    }, { individualHooks: false });
-    erp2 = await EventReportPilot.create({
-      ownerId: user2.id,
-      regionId: 1,
-      collaboratorIds: [user1.id, user3.id, 123_123],
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-    }, { individualHooks: false });
-    erp3 = await EventReportPilot.create({
-      regionId: 1,
-      collaboratorIds: [],
-      ownerId: user3.id,
-      data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
-    }, { individualHooks: false });
+    erp1 = await EventReportPilot.create(
+      {
+        regionId: 1,
+        ownerId: user1.id,
+        collaboratorIds: [user2.id, user3.id],
+        eventId: `R01-TR-${faker.string.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      },
+      { individualHooks: false }
+    );
+    erp2 = await EventReportPilot.create(
+      {
+        ownerId: user2.id,
+        regionId: 1,
+        collaboratorIds: [user1.id, user3.id, 123_123],
+        eventId: `R01-TR-${faker.string.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      },
+      { individualHooks: false }
+    );
+    erp3 = await EventReportPilot.create(
+      {
+        regionId: 1,
+        collaboratorIds: [],
+        ownerId: user3.id,
+        eventId: `R01-TR-${faker.string.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      },
+      { individualHooks: false }
+    );
 
     await EventReportPilotNationalCenterUser.destroy({
       where: {
@@ -95,10 +116,12 @@ describe('updateCompletedEventReportPilots', () => {
     expect(erp2Users).toHaveLength(3);
     expect(erp3Users).toHaveLength(0);
 
-    expect(erp1Users.map((u) => u.userId))
-      .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
-    expect(erp2Users.map((u) => u.userId))
-      .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
+    expect(erp1Users.map((u) => u.userId)).toEqual(
+      expect.arrayContaining([user1.id, user2.id, user3.id])
+    );
+    expect(erp2Users.map((u) => u.userId)).toEqual(
+      expect.arrayContaining([user1.id, user2.id, user3.id])
+    );
 
     // run it again to make sure that it doesn't error on existing
     await updateCompletedEventReportPilots();
@@ -108,7 +131,8 @@ describe('updateCompletedEventReportPilots', () => {
     });
     erp2Users = await EventReportPilotNationalCenterUser.findAll({
       where: { eventReportPilotId: erp2.id },
-    }); erp3Users = await EventReportPilotNationalCenterUser.findAll({
+    });
+    erp3Users = await EventReportPilotNationalCenterUser.findAll({
       where: { eventReportPilotId: erp3.id },
     });
 
@@ -116,10 +140,12 @@ describe('updateCompletedEventReportPilots', () => {
     expect(erp2Users).toHaveLength(3);
     expect(erp3Users).toHaveLength(0);
 
-    expect(erp1Users.map((u) => u.userId))
-      .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
-    expect(erp2Users.map((u) => u.userId))
-      .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
+    expect(erp1Users.map((u) => u.userId)).toEqual(
+      expect.arrayContaining([user1.id, user2.id, user3.id])
+    );
+    expect(erp2Users.map((u) => u.userId)).toEqual(
+      expect.arrayContaining([user1.id, user2.id, user3.id])
+    );
   });
 
   it('does not create EventReportPilotNationalCenterUser records for report owners without national centers', async () => {
@@ -127,12 +153,19 @@ describe('updateCompletedEventReportPilots', () => {
     const userWithoutNationalCenter = await createUser();
 
     // Create an Event Report for the user without a national center
-    const erpWithoutNationalCenter = await EventReportPilot.create({
-      regionId: 1,
-      ownerId: userWithoutNationalCenter.id,
-      collaboratorIds: [],
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-    }, { individualHooks: false });
+    const erpWithoutNationalCenter = await EventReportPilot.create(
+      {
+        regionId: 1,
+        ownerId: userWithoutNationalCenter.id,
+        collaboratorIds: [],
+        eventId: `R01-TR-${faker.string.uuid()}`,
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      },
+      { individualHooks: false }
+    );
 
     await updateCompletedEventReportPilots();
 

@@ -154,7 +154,8 @@ const getReports = (queryInterface) => [
     duration: 150,
     isStateActivity: false,
     conductMethod: 'phone',
-    description: 'This is a submitted collaboration report with null approver status for testing purposes.',
+    description:
+      'This is a submitted collaboration report with null approver status for testing purposes.',
     submittedAt: new Date('2025-01-08'),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -492,7 +493,9 @@ module.exports = {
     await queryInterface.bulkInsert('CollabReportDataUsed', dataUsed);
     await queryInterface.bulkInsert('CollabReportGoals', goals);
     await queryInterface.bulkInsert('CollabReportSteps', steps);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "CollabReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
+    await queryInterface.sequelize.query(
+      `ALTER SEQUENCE "CollabReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`
+    );
   },
 
   async down(queryInterface) {

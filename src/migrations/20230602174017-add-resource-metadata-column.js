@@ -10,14 +10,24 @@ module.exports = {
                 set_config('audit.transactionId', NULL, TRUE) as "transactionId",
                 set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Add metadata column.
-      await queryInterface.addColumn('Resources', 'metadata', { type: Sequelize.JSONB }, { transaction });
+      await queryInterface.addColumn(
+        'Resources',
+        'metadata',
+        { type: Sequelize.JSONB },
+        { transaction }
+      );
 
       // Add a lastUpdated metadata field to all resources.
-      await queryInterface.addColumn('Resources', 'metadataUpdatedAt', { type: Sequelize.DATE }, { transaction });
+      await queryInterface.addColumn(
+        'Resources',
+        'metadataUpdatedAt',
+        { type: Sequelize.DATE },
+        { transaction }
+      );
     });
   },
   down: async (queryInterface) => {
@@ -31,7 +41,7 @@ module.exports = {
                 set_config('audit.transactionId', NULL, TRUE) as "transactionId",
                 set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Remove metadata column.

@@ -1,5 +1,125 @@
-import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
-import { getCollabReportStatusDisplayAndClassnames } from '../utils';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import {
+  getCollabReportStatusDisplayAndClassnames,
+  getRichTextAsText,
+  isEmptyRichText,
+  isSafeRenderableLink,
+  sanitizeRichText,
+} from '../utils';
+
+describe('sanitizeRichText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['empty string', ''],
+    ['non-string', 42],
+  ])('returns %s unchanged', (_label, value) => {
+    expect(sanitizeRichText(value)).toBe(value);
+  });
+
+  it('preserves allowed formatting markup', () => {
+    const html = '<p><strong>Bold</strong> and <em>italic</em> text</p>';
+    expect(sanitizeRichText(html)).toBe(html);
+  });
+
+  it('strips unsupported atomic markup (iframe)', () => {
+    const result = sanitizeRichText('<p>Before</p><iframe src="https://evil.example"></iframe>');
+    expect(result).not.toContain('iframe');
+    expect(result).toContain('Before');
+  });
+
+  it('strips unsupported atomic markup (img)', () => {
+    const result = sanitizeRichText('<p>Legacy</p><img src="x" onerror="alert(1)" />');
+    expect(result).not.toContain('<img');
+    expect(result).not.toContain('onerror');
+    expect(result).toContain('Legacy');
+  });
+
+  it('strips script tags', () => {
+    const result = sanitizeRichText('<p>Safe</p><script>alert(1)</script>');
+    expect(result).not.toContain('script');
+    expect(result).toContain('Safe');
+  });
+});
+
+describe('isEmptyRichText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['non-string', 123],
+    ['empty string', ''],
+    ['single empty paragraph', '<p></p>'],
+    ['empty paragraph with newline', '<p></p>\n'],
+    ['non-breaking space paragraph', '<p>&nbsp;</p>\n'],
+    ['numeric nbsp entity', '<p>&#160;</p>'],
+    ['spaces only', '<p>   </p>'],
+    ['multiple empty paragraphs', '<p></p><p></p><p>&nbsp;</p>'],
+  ])('returns true for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(true);
+  });
+
+  it.each([
+    ['plain text wrapped in a paragraph', '<p>Hello</p>'],
+    ['text alongside empty paragraphs', '<p></p><p>Some content</p>'],
+    ['formatted text', '<p><strong>Bold</strong> content</p>'],
+  ])('returns false for %s', (_label, value) => {
+    expect(isEmptyRichText(value)).toBe(false);
+  });
+});
+
+describe('getRichTextAsText', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['non-string', 123],
+    ['empty string', ''],
+    ['single empty paragraph', '<p></p>'],
+    ['non-breaking space paragraph', '<p>&nbsp;</p>'],
+  ])('returns an empty string for %s', (_label, value) => {
+    expect(getRichTextAsText(value)).toBe('');
+  });
+
+  it('strips a paragraph wrapper', () => {
+    expect(getRichTextAsText('<p>Hello world</p>')).toBe('Hello world');
+  });
+
+  it('strips inline formatting markup', () => {
+    expect(getRichTextAsText('<p>Improve <strong>ERSEA</strong> enrollment</p>')).toBe(
+      'Improve ERSEA enrollment'
+    );
+  });
+
+  it('joins multiple blocks with a single space', () => {
+    expect(getRichTextAsText('<p>First</p><p>Second</p>')).toBe('First Second');
+  });
+
+  it('collapses list items and whitespace entities', () => {
+    expect(getRichTextAsText('<ul><li>One</li><li>Two</li></ul>')).toBe('One Two');
+    expect(getRichTextAsText('<p>a&nbsp;&#160;b</p>')).toBe('a b');
+  });
+});
+
+describe('isSafeRenderableLink', () => {
+  it.each([
+    ['a same-app relative path', '/goal/123'],
+    ['a valid http URL', 'http://example.com/path'],
+    ['a valid https URL', 'https://example.com/path'],
+  ])('accepts %s', (_label, to) => {
+    expect(isSafeRenderableLink(to)).toBe(true);
+  });
+
+  it.each([
+    ['a javascript: URI', 'javascript:alert(1)'],
+    ['a data: URI', 'data:text/html,test'],
+    ['a protocol-relative URL', '//evil.example'],
+    ['a relative path with a backslash', '/\\evil.example'],
+    ['a value containing a newline', 'java\nscript:alert(1)'],
+    ['a backslash-obfuscated host', 'http:\\\\evil.example\\path'],
+    ['a URL containing a space', 'https://example.com/foo bar'],
+  ])('rejects %s', (_label, to) => {
+    expect(isSafeRenderableLink(to)).toBe(false);
+  });
+});
 
 describe('getCollabReportStatusDisplayAndClassnames', () => {
   const mockUserId = 1;
@@ -34,7 +154,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`
+      );
     });
 
     it('should show "Reviewed" when submitted and some but not all approvers have approved', () => {
@@ -50,7 +172,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Submitted" when report is submitted with no approvals', () => {
@@ -66,7 +190,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Submitted');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Submitted" when report is submitted with all approvers approved', () => {
@@ -82,7 +208,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Submitted');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show default status for draft reports', () => {
@@ -94,7 +222,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`
+      );
     });
 
     it('should show default status for approved reports', () => {
@@ -106,7 +236,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.APPROVED);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`
+      );
     });
   });
 
@@ -120,7 +252,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`
+      );
     });
 
     it('should show "Reviewed" when submitted and partially approved', () => {
@@ -136,7 +270,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Submitted" when submitted', () => {
@@ -148,7 +284,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Submitted');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
   });
 
@@ -162,7 +300,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`
+      );
     });
 
     it('should show "Reviewed" when submitted and approver status is needs_action', () => {
@@ -174,7 +314,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Reviewed" when single approver has set status to needs_action', () => {
@@ -186,7 +328,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Reviewed" when single approver has approved even if report status is needs_action', () => {
@@ -198,7 +342,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Reviewed" when approver has approved', () => {
@@ -210,7 +356,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show default status for draft reports even if user is approver', () => {
@@ -222,7 +370,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`
+      );
     });
   });
 
@@ -237,7 +387,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should show "Reviewed" when user has approved their own report', () => {
@@ -250,7 +402,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Reviewed');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
   });
 
@@ -266,7 +420,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.SUBMITTED);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
   });
 
@@ -281,7 +437,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`
+      );
     });
 
     it('should handle missing approvers array', () => {
@@ -294,7 +452,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`
+      );
     });
 
     it('should handle approver without user object', () => {
@@ -306,7 +466,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.SUBMITTED);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should handle empty approvers array when checking for partial approval', () => {
@@ -319,7 +481,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe('Submitted');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`
+      );
     });
 
     it('should handle missing author object', () => {
@@ -332,7 +496,9 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
       expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
+      expect(result.statusClassName).toBe(
+        `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`
+      );
     });
   });
 });

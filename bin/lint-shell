@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v shellcheck >/dev/null 2>&1; then
+	echo "ShellCheck is required. Install it locally, then run: yarn lint:shell" >&2
+	exit 127
+fi
+
+is_excluded() {
+	case "$1" in
+		.git/*|*/.git/*|node_modules/*|*/node_modules/*|build/*|*/build/*|coverage/*|*/coverage/*|reports/*|*/reports/*|lint-reports/*|*/lint-reports/*|vendor/*|*/vendor/*)
+			return 0
+			;;
+	esac
+
+	return 1
+}
+
+has_bash_shebang() {
+	local first_line
+	IFS= read -r first_line < "$1" || return 1
+	[[ "$first_line" =~ ^#![[:space:]]*(/bin/bash|/usr/bin/env([[:space:]]+[^[:space:]]+)*[[:space:]]+bash)([[:space:]].*)?$ ]]
+}
+
+is_extensionless() {
+	local filename=${1##*/}
+	[[ "$filename" != *.* ]]
+}
+
+scripts=()
+while IFS= read -r -d '' file; do
+	if is_excluded "$file"; then
+		continue
+	fi
+
+	if [[ "$file" == *.sh ]] || { is_extensionless "$file" && has_bash_shebang "$file"; }; then
+		scripts+=("$file")
+	fi
+done < <(git ls-files -z)
+
+if [[ ${#scripts[@]} -eq 0 ]]; then
+	echo "No tracked Bash scripts found."
+	exit 0
+fi
+
+printf 'Running ShellCheck on %d tracked Bash scripts:\n' "${#scripts[@]}"
+printf '  %s\n' "${scripts[@]}"
+
+shellcheck --severity=warning "${scripts[@]}"

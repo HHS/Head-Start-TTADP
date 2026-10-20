@@ -26,23 +26,26 @@ export default (sequelize, DataTypes) => {
        */
     }
   }
-  MonitoringFindingLink.init({
-    // Note: id column is only here for the audit log
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
+  MonitoringFindingLink.init(
+    {
+      // Note: id column is only here for the audit log
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+      },
+      findingId: {
+        primaryKey: true,
+        allowNull: false,
+        type: DataTypes.TEXT,
+      },
     },
-    findingId: {
-      primaryKey: true,
-      allowNull: false,
-      type: DataTypes.TEXT,
-    },
-  }, {
-    sequelize,
-    modelName: 'MonitoringFindingLink',
-    tableName: 'MonitoringFindingLinks',
-    paranoid: true,
-  });
+    {
+      sequelize,
+      modelName: 'MonitoringFindingLink',
+      tableName: 'MonitoringFindingLinks',
+      paranoid: true,
+    }
+  );
   return MonitoringFindingLink;
 };

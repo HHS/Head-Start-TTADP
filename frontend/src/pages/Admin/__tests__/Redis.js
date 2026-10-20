@@ -1,10 +1,8 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import join from 'url-join';
 import Redis from '../Redis';
 

@@ -1,14 +1,18 @@
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import type { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 
-type TRStatusType = TRAINING_REPORT_STATUSES.NOT_STARTED
-| TRAINING_REPORT_STATUSES.IN_PROGRESS
-| TRAINING_REPORT_STATUSES.COMPLETED
-| TRAINING_REPORT_STATUSES.SUSPENDED;
+type TRStatusType =
+  | TRAINING_REPORT_STATUSES.NOT_STARTED
+  | TRAINING_REPORT_STATUSES.IN_PROGRESS
+  | TRAINING_REPORT_STATUSES.COMPLETED
+  | TRAINING_REPORT_STATUSES.SUSPENDED;
 
 export type SessionShape = {
   id: number;
   eventId?: number;
   approverId?: number;
+  // Dedicated columns; single source of truth for session dates (YYYY-MM-DD).
+  startDate?: string | null;
+  endDate?: string | null;
   data: {
     sessionName: string;
     status: string;
@@ -19,9 +23,13 @@ export type SessionShape = {
     isIstVisit: 'yes' | 'no';
     regionalOfficeTta?: string;
     participants?: { value: string; label: string }[];
-    nextSteps: { completeDate: string, note: string }[];
+    nextSteps: { completeDate: string; note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
+    ownerComplete?: boolean;
+    ownerCompleteId?: number;
+    ownerCompleteDate?: string;
+    facilitation?: string;
     objectiveTrainers: string[];
   };
   submitterId: number | null;
@@ -30,21 +38,13 @@ export type SessionShape = {
   updatedAt?: string;
 };
 
-type EventReportPilotNationalCenterUserType = {
-  id: number;
-  eventReportPilotId: number;
-  nationalCenterId: number;
-  nationalCenterName: string;
-  userName: string;
-  userId: number;
-};
-
 export type EventShape = {
   id: number;
   ownerId: number;
   pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
+  eventId: string;
   data: {
     startDate: string;
     endDate: string;
@@ -53,7 +53,10 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
-    eventOrganizer?: 'Regional TTA Hosted Event (no National Centers)' | 'Regional PD Event (with National Centers)';
+    additionalRegions?: string[];
+    eventOrganizer?:
+      | 'Regional TTA Hosted Event (no National Centers)'
+      | 'Regional PD Event (with National Centers)';
   };
   updatedAt: string;
   sessionReports: SessionShape[];
@@ -67,8 +70,9 @@ export type CreateEventRequest = {
   collaboratorIds: number[];
   regionId: number;
   data: {
-    owner: undefined | { id: string; name: string; email: string }
+    owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
+    eventId: string;
   };
 };
 
@@ -78,7 +82,13 @@ export type TRAlertShape = {
   id: number;
   eventId: string;
   eventName: string;
-  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted' | 'waitingForApproval' | 'changesNeeded';
+  alertType:
+    | 'noSessionsCreated'
+    | 'missingEventInfo'
+    | 'missingSessionInfo'
+    | 'eventNotCompleted'
+    | 'waitingForApproval'
+    | 'changesNeeded';
   eventStatus: TRStatusType;
   sessionName: string;
   sessionId: number | false;

@@ -1,12 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { ObjectiveSwitch } from '../StandardGoalCard';
-import UserContext from '../../../UserContext';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import UserContext from '../../../UserContext';
+import { ObjectiveSwitch } from '../StandardGoalCard';
 
 describe('ObjectiveSwitch', () => {
   const history = createMemoryHistory();
@@ -43,7 +43,7 @@ describe('ObjectiveSwitch', () => {
             isMonitoringGoal={false}
           />
         </Router>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();

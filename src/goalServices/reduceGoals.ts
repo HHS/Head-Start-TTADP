@@ -1,46 +1,35 @@
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import { auditLogger } from '../logger';
-import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
-import {
-  IGoalModelInstance,
-  IGoal,
-  IObjectiveModelInstance,
-  IFile,
-  ITopic,
-  IResource,
+import { getCitationReferenceLabel } from '../services/activityReportObjectiveCitations';
+import type { CitationReferenceEntry } from '../services/types/activityReportObjectiveCitations';
+import type {
   ICourse,
+  IFile,
+  IGoal,
+  IGoalModelInstance,
+  IObjectiveModelInstance,
+  IPrompt,
   IReducedGoal,
   IReducedObjective,
-  IPrompt,
+  IResource,
   IReviewPrompt,
+  ITopic,
 } from './types';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
 export function reduceObjectives(
   newObjectives: IObjectiveModelInstance[],
-  currentObjectives: IReducedObjective[],
+  currentObjectives: IReducedObjective[]
 ) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
-  const objectivesToSort = newObjectives.reduce((
-    objectives: IReducedObjective[],
-    objective,
-  ) => {
-    const exists = objectives.find((o) => (
-      o.title.trim() === objective.title.trim() && o.status === objective.status
-    )) as IReducedObjective | undefined;
+  const objectivesToSort = newObjectives.reduce((objectives: IReducedObjective[], objective) => {
+    const exists = objectives.find(
+      (o) => o.title.trim() === objective.title.trim() && o.status === objective.status
+    ) as IReducedObjective | undefined;
 
-    const {
-      id,
-      otherEntityId,
-      title,
-      status,
-      topics,
-      resources,
-      files,
-      courses,
-    } = objective;
+    const { id, otherEntityId, title, status, topics, resources, files, courses } = objective;
 
     if (exists) {
       exists.ids = [...exists.ids, id];
@@ -64,6 +53,7 @@ export function reduceObjectives(
       resources,
       files,
       courses,
+      citations: (objective as IObjectiveModelInstance).citations,
       value: id,
       ids: [id],
       goalId: objective.goalId,
@@ -71,16 +61,11 @@ export function reduceObjectives(
       onAR: objective.onAR,
       rtrOrder: objective.rtrOrder,
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: otherEntityId
-        ? [otherEntityId]
-        : [],
+      recipientIds: otherEntityId ? [otherEntityId] : [],
       isNew: false,
     } as IReducedObjective;
 
-    return [
-      ...objectives,
-      newObjective,
-    ];
+    return [...objectives, newObjective];
   }, currentObjectives || []);
 
   objectivesToSort.sort((o1, o2) => {
@@ -94,30 +79,191 @@ export function reduceObjectives(
 }
 
 /**
-   * Reduces the relation through activity report objectives.
-   *
-   * This function extracts and deduplicates related entities (e.g., topics, resources, courses)
-   * from an `IObjectiveModelInstance` by traversing through its `activityReportObjectives`
-   * associations.
-   * It ensures that both existing and newly found relations are merged while removing duplicates.
-   *
-   * @param {IObjectiveModelInstance} objective - The objective containing activity report
-   *                                              objectives.
-   * @param {string} join - The table name that joins the activity report objectives with the
-   *                        relation.
-   *                        Example: 'activityReportObjectiveResources'.
-   * @param {string} relation - The specific relation to extract. Example: 'resource'.
-   * @param {Object} [exists={}] - The existing relations object.
-   * @param {string} [uniqueBy='id'] - The key used to ensure uniqueness in the final result.
-   * @returns {Array} - A deduplicated array of related entities.
-   */
+ * Reduces the relation through activity report objectives.
+ *
+ * This function extracts and deduplicates related entities (e.g., topics, resources, courses)
+ * from an `IObjectiveModelInstance` by traversing through its `activityReportObjectives`
+ * associations.
+ * It ensures that both existing and newly found relations are merged while removing duplicates.
+ *
+ * @param {IObjectiveModelInstance} objective - The objective containing activity report
+ *                                              objectives.
+ * @param {string} join - The table name that joins the activity report objectives with the
+ *                        relation.
+ *                        Example: 'activityReportObjectiveResources'.
+ * @param {string} relation - The specific relation to extract. Example: 'resource'.
+ * @param {Object} [exists={}] - The existing relations object.
+ * @param {string} [uniqueBy='id'] - The key used to ensure uniqueness in the final result.
+ * @returns {Array} - A deduplicated array of related entities.
+ */
 type IAcceptableModelParameter = ITopic | IResource | ICourse;
+
+type CitationMonitoringReference = {
+  acro?: string;
+  name?: string;
+  grantId?: number;
+  citation?: string;
+  severity?: number;
+  findingId?: string;
+  reviewName?: string;
+  standardId?: number | null;
+  findingType?: string;
+  grantNumber?: string;
+  findingSource?: string;
+  reportDeliveryDate?: Date | string | null;
+  monitoringFindingStatusName?: string;
+};
+
+type CitationWithDisplayLabel = {
+  id: number | null;
+  name: string;
+  monitoringReferences: CitationMonitoringReference[];
+};
+
+function isCitationWithDisplayLabel(
+  citation: CitationWithDisplayLabel | null
+): citation is CitationWithDisplayLabel {
+  return !!citation;
+}
+
+function formatMonitoringReferenceFromFlattenedCitation(
+  citation: {
+    citation?: string;
+    acro?: string | null;
+    findingType?: string | null;
+    findingSource?: string | null;
+    grantId?: number | null;
+    severity?: number | null;
+    findingId?: string | null;
+    reviewName?: string | null;
+    standardId?: number | null;
+    grantNumber?: string | null;
+    reportDeliveryDate?: Date | string | null;
+    monitoringFindingStatusName?: string | null;
+  },
+  citationName: string
+): CitationMonitoringReference | null {
+  const hasFlattenedReferenceData = [
+    citation.grantId,
+    citation.severity,
+    citation.findingId,
+    citation.reviewName,
+    citation.standardId,
+    citation.grantNumber,
+    citation.reportDeliveryDate,
+    citation.monitoringFindingStatusName,
+    citation.acro,
+    citation.findingType,
+    citation.findingSource,
+  ].some((value) => value !== undefined && value !== null && value !== '');
+
+  if (!hasFlattenedReferenceData) {
+    return null;
+  }
+
+  return {
+    acro: citation.acro || '',
+    name: citationName,
+    ...(typeof citation.grantId === 'number' ? { grantId: citation.grantId } : {}),
+    citation: citation.citation || '',
+    ...(typeof citation.severity === 'number' ? { severity: citation.severity } : {}),
+    ...(typeof citation.findingId === 'string' ? { findingId: citation.findingId } : {}),
+    ...(typeof citation.reviewName === 'string' ? { reviewName: citation.reviewName } : {}),
+    standardId: citation.standardId ?? null,
+    findingType: citation.findingType || '',
+    ...(typeof citation.grantNumber === 'string' && citation.grantNumber
+      ? { grantNumber: citation.grantNumber }
+      : {}),
+    findingSource: citation.findingSource || '',
+    reportDeliveryDate: citation.reportDeliveryDate ?? null,
+    monitoringFindingStatusName: citation.monitoringFindingStatusName || '',
+  };
+}
+
+function monitoringReferenceIdentity(reference: CitationMonitoringReference): string {
+  return [
+    reference.standardId ?? '',
+    reference.grantId ?? '',
+    reference.findingId ?? '',
+    reference.reviewName ?? '',
+    reference.grantNumber ?? '',
+    reference.findingSource ?? '',
+    reference.acro ?? '',
+    reference.findingType ?? '',
+  ].join('|');
+}
+
+function citationIdentity(citation: CitationWithDisplayLabel): string {
+  return `${citation.id ?? 'null'}-${citation.name}`;
+}
+
+function mergeFormattedCitations(
+  citations: CitationWithDisplayLabel[]
+): CitationWithDisplayLabel[] {
+  const dedupedCitations = new Map<string, CitationWithDisplayLabel>();
+
+  citations.forEach((citation) => {
+    const key = citationIdentity(citation);
+    const existing = dedupedCitations.get(key);
+
+    if (!existing) {
+      dedupedCitations.set(key, {
+        ...citation,
+        monitoringReferences: uniqBy(
+          citation.monitoringReferences || [],
+          (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference)
+        ),
+      });
+      return;
+    }
+
+    existing.monitoringReferences = uniqBy(
+      [...(existing.monitoringReferences || []), ...(citation.monitoringReferences || [])],
+      (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference)
+    );
+  });
+
+  return Array.from(dedupedCitations.values());
+}
+
+function formatObjectiveCitation(citation: {
+  citation?: string;
+  monitoringReferences?: CitationMonitoringReference[] | CitationReferenceEntry[] | null;
+  acro?: string | null;
+  findingType?: string | null;
+  findingSource?: string | null;
+  standardId?: number | null;
+  grantId?: number | null;
+  severity?: number | null;
+  findingId?: string | null;
+  reviewName?: string | null;
+  grantNumber?: string | null;
+  reportDeliveryDate?: Date | string | null;
+  monitoringFindingStatusName?: string | null;
+}): CitationWithDisplayLabel | null {
+  const formattedCitation = getCitationReferenceLabel(citation, 'acro');
+  if (!formattedCitation) {
+    return null;
+  }
+
+  const references = formatMonitoringReferenceFromFlattenedCitation(
+    citation,
+    formattedCitation.label
+  );
+
+  return {
+    id: formattedCitation.id,
+    name: formattedCitation.label,
+    monitoringReferences: references ? [references] : [],
+  };
+}
+
 export const reduceRelationThroughActivityReportObjectives = (
   objective: IObjectiveModelInstance,
   join: string,
   relation: string,
   exists = {},
-  uniqueBy = 'id',
+  uniqueBy = 'id'
 ) => {
   // Retrieve existing relation array (defaults to empty array)
   const existingRelation = exists[`${relation}s`] || [];
@@ -126,8 +272,8 @@ export const reduceRelationThroughActivityReportObjectives = (
   // Ensures the expected association (join) exists before mapping.
   const newRelations = objective.activityReportObjectives?.[0]?.[join]
     ? objective.activityReportObjectives[0][join]
-      .map((t: IAcceptableModelParameter) => t[relation]?.dataValues) // Gets dataValues if exist
-      .filter((t: IAcceptableModelParameter) => t) // Removes null/undefined values
+        .map((t: IAcceptableModelParameter) => t[relation]?.dataValues) // Gets dataValues if exist
+        .filter((t: IAcceptableModelParameter) => t) // Removes null/undefined values
     : [];
 
   // Combine existing and new relations ensuring uniqueness based on the specified key.
@@ -138,29 +284,35 @@ export const reduceRelationThroughActivityReportObjectives = (
 
 export function reduceObjectivesForActivityReport(
   newObjectives: IObjectiveModelInstance[],
-  currentObjectives = [],
+  currentObjectives = []
 ) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
-    const objectiveStatus = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : objective.status;
+    const objectiveStatus =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].status
+        ? objective.activityReportObjectives[0].status
+        : objective.status;
 
-    const objectiveSupportType = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].supportType
-      ? objective.activityReportObjectives[0].supportType : null;
+    const objectiveSupportType =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].supportType
+        ? objective.activityReportObjectives[0].supportType
+        : null;
 
-    const objectiveCreatedHere = objective.activityReportObjectives
-        && objective.activityReportObjectives.some((aro) => aro.objectiveCreatedHere) ? true : null;
+    const objectiveCreatedHere =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives.some((aro) => aro.objectiveCreatedHere)
+        ? true
+        : null;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
-    const exists = objectives.find((o) => (
-      o.title.trim() === objective.title.trim()
-      && o.status === objectiveStatus
-    ));
+    const exists = objectives.find(
+      (o) => o.title.trim() === objective.title.trim() && o.status === objectiveStatus
+    );
 
     if (exists) {
       const { id } = objective;
@@ -176,38 +328,35 @@ export function reduceObjectivesForActivityReport(
         'activityReportObjectiveResources',
         'resource',
         exists,
-        'value',
+        'value'
       );
 
       exists.topics = reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveTopics',
         'topic',
-        exists,
+        exists
       );
 
       exists.courses = reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveCourses',
         'course',
-        exists,
+        exists
       );
 
       // Citations should return null not exists (every subsequent adding of objective).
-      exists.citations = uniq(
-        objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
+      exists.citations = mergeFormattedCitations(
+        objective.activityReportObjectives && objective.activityReportObjectives.length > 0
           ? [
-            ...exists.citations || [],
-            ...objective.activityReportObjectives.flatMap(
-              (aro) => (aro.activityReportObjectiveCitations || []).map((c) => ({
-                ...c.dataValues,
-                id: c.monitoringReferences[0].standardId,
-                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-              })),
-            ),
-          ]
-          : [],
+              ...(exists.citations || []),
+              ...objective.activityReportObjectives.flatMap((aro) =>
+                (aro.activityReportObjectiveCitations || [])
+                  .map((citation) => formatObjectiveCitation(citation))
+                  .filter((formattedCitation) => isCitationWithDisplayLabel(formattedCitation))
+              ),
+            ]
+          : [...(exists.citations || [])]
       );
 
       // Set to null if we don't have any citations.
@@ -215,14 +364,18 @@ export function reduceObjectivesForActivityReport(
         exists.citations = null;
       }
 
-      exists.files = uniqBy([
-        ...exists.files,
-        ...(objective.activityReportObjectives
-            && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-          : []),
-      ], (e: IFile) => e.key);
+      exists.files = uniqBy(
+        [
+          ...exists.files,
+          ...(objective.activityReportObjectives && objective.activityReportObjectives.length > 0
+            ? objective.activityReportObjectives[0].activityReportObjectiveFiles.map((f) => ({
+                ...f.file.dataValues,
+                url: f.file.url,
+              }))
+            : []),
+        ],
+        (e: IFile) => e.key
+      );
 
       return objectives;
     }
@@ -230,22 +383,30 @@ export function reduceObjectivesForActivityReport(
     // since this method is used to rollup both objectives on and off activity reports
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-          && objective.activityReportObjectives[0]
-          && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
-    const arOrder = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].arOrder
-      ? objective.activityReportObjectives[0].arOrder : null;
-    const closeSuspendContext = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].closeSuspendContext
-      ? objective.activityReportObjectives[0].closeSuspendContext : null;
-    const closeSuspendReason = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].closeSuspendReason
-      ? objective.activityReportObjectives[0].closeSuspendReason : null;
+    const ttaProvided =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].ttaProvided
+        ? objective.activityReportObjectives[0].ttaProvided
+        : null;
+    const arOrder =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].arOrder
+        ? objective.activityReportObjectives[0].arOrder
+        : null;
+    const closeSuspendContext =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].closeSuspendContext
+        ? objective.activityReportObjectives[0].closeSuspendContext
+        : null;
+    const closeSuspendReason =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].closeSuspendReason
+        ? objective.activityReportObjectives[0].closeSuspendReason
+        : null;
 
     const { id } = objective;
 
@@ -262,12 +423,9 @@ export function reduceObjectivesForActivityReport(
       closeSuspendContext,
       closeSuspendReason,
       objectiveCreatedHere,
-      useIpdCourses: objective.activityReportObjectives?.[0]?.useIpdCourses
-        ?? objective.useIpdCourses
-        ?? false,
-      useFiles: objective.activityReportObjectives?.[0]?.useFiles
-        ?? objective.useFiles
-        ?? false,
+      useIpdCourses:
+        objective.activityReportObjectives?.[0]?.useIpdCourses ?? objective.useIpdCourses ?? false,
+      useFiles: objective.activityReportObjectives?.[0]?.useFiles ?? objective.useFiles ?? false,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -277,37 +435,37 @@ export function reduceObjectivesForActivityReport(
       topics: reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveTopics',
-        'topic',
+        'topic'
       ),
       resources: reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveResources',
         'resource',
         {},
-        'value',
+        'value'
       ),
-      files: objective.activityReportObjectives
-      && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-        : [],
+      files:
+        objective.activityReportObjectives && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles.map((f) => ({
+              ...f.file.dataValues,
+              url: f.file.url,
+            }))
+          : [],
       courses: reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveCourses',
-        'course',
+        'course'
       ),
       // Citations should return null if they are not applicable (first time we add the objective).
-      citations:
-        uniq(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives.flatMap(
-            (aro) => aro.activityReportObjectiveCitations.map((c) => ({
-              ...c.dataValues,
-              id: c.monitoringReferences[0].standardId,
-              name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-            })),
-          )
-          : []),
+      citations: mergeFormattedCitations(
+        objective.activityReportObjectives && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives.flatMap((aro) =>
+              aro.activityReportObjectiveCitations
+                .map((citation) => formatObjectiveCitation(citation))
+                .filter((formattedCitation) => isCitationWithDisplayLabel(formattedCitation))
+            )
+          : []
+      ),
     };
 
     // If we have no citations set to null.
@@ -337,73 +495,65 @@ export function reduceObjectivesForActivityReport(
  */
 function reducePrompts(
   forReport: boolean,
-  newPrompts:IPrompt[] = [],
-  promptsToReduce:IPrompt[] = [],
+  newPrompts: IPrompt[] = [],
+  promptsToReduce: IPrompt[] = []
 ) {
-  return newPrompts
-    ?.reduce((previousPrompts, currentPrompt) => {
-      const promptId = currentPrompt.promptId
-        ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+  return newPrompts?.reduce((previousPrompts, currentPrompt) => {
+    const promptId = currentPrompt.promptId
+      ? currentPrompt.promptId
+      : currentPrompt.dataValues.promptId;
 
-      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
-      if (existingPrompt) {
-        if (!forReport) {
-          existingPrompt.response = uniq(
-            [...existingPrompt.response, ...currentPrompt.responses.flatMap((r) => r.response)],
-          );
-        }
-
-        if (forReport) {
-          existingPrompt.response = uniq(
-            [
-              ...existingPrompt.response,
-              ...(currentPrompt.response || []),
-              ...(currentPrompt.reportResponse || []),
-            ],
-          );
-          existingPrompt.reportResponse = uniq(
-            [
-              ...(existingPrompt.reportResponse || []),
-              ...(currentPrompt.reportResponse || []),
-            ],
-          );
-        }
-
-        return previousPrompts;
+    const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
+    if (existingPrompt) {
+      if (!forReport) {
+        existingPrompt.response = uniq([
+          ...existingPrompt.response,
+          ...currentPrompt.responses.flatMap((r) => r.response),
+        ]);
       }
-
-      const newPrompt = {
-        promptId,
-        ordinal: currentPrompt.ordinal,
-        title: currentPrompt.title,
-        prompt: currentPrompt.prompt,
-        hint: currentPrompt.hint,
-        fieldType: currentPrompt.fieldType,
-        options: currentPrompt.options,
-        validations: currentPrompt.validations,
-        grantId: currentPrompt.grantId,
-        grantDisplayName: currentPrompt.grantDisplayName,
-      } as IPrompt;
 
       if (forReport) {
-        newPrompt.response = uniq(
-          [
-            ...(currentPrompt.response || []),
-            ...(currentPrompt.reportResponse || []),
-          ],
-        );
-        newPrompt.reportResponse = (currentPrompt.reportResponse || []);
+        existingPrompt.response = uniq([
+          ...existingPrompt.response,
+          ...(currentPrompt.response || []),
+          ...(currentPrompt.reportResponse || []),
+        ]);
+        existingPrompt.reportResponse = uniq([
+          ...(existingPrompt.reportResponse || []),
+          ...(currentPrompt.reportResponse || []),
+        ]);
       }
 
-      if (!forReport) {
-        newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
-      }
+      return previousPrompts;
+    }
 
-      return [
-        ...previousPrompts,
-        newPrompt,
-      ];
-    }, promptsToReduce);
+    const newPrompt = {
+      promptId,
+      ordinal: currentPrompt.ordinal,
+      title: currentPrompt.title,
+      prompt: currentPrompt.prompt,
+      hint: currentPrompt.hint,
+      fieldType: currentPrompt.fieldType,
+      options: currentPrompt.options,
+      validations: currentPrompt.validations,
+      grantId: currentPrompt.grantId,
+      grantDisplayName: currentPrompt.grantDisplayName,
+    } as IPrompt;
+
+    if (forReport) {
+      newPrompt.response = uniq([
+        ...(currentPrompt.response || []),
+        ...(currentPrompt.reportResponse || []),
+      ]);
+      newPrompt.reportResponse = currentPrompt.reportResponse || [];
+    }
+
+    if (!forReport) {
+      newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
+    }
+
+    return [...previousPrompts, newPrompt];
+  }, promptsToReduce);
 }
 
 /**
@@ -411,27 +561,26 @@ function reducePrompts(
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-export function reduceGoals(
-  goals: IGoalModelInstance[],
-  forReport = false,
-): IReducedGoal[] {
+export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IReducedGoal[] {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
-  const where = (g: IReducedGoal, currentValue: IGoalModelInstance) => (forReport
-    ? (g.name || '').trim() === (currentValue.dataValues.name || '').trim()
-    : (g.name || '').trim() === (currentValue.dataValues.name || '').trim()
-   && g.status === currentValue.dataValues.status);
+  const where = (g: IReducedGoal, currentValue: IGoalModelInstance) =>
+    forReport
+      ? (g.name || '').trim() === (currentValue.dataValues.name || '').trim()
+      : (g.name || '').trim() === (currentValue.dataValues.name || '').trim() &&
+        g.status === currentValue.dataValues.status;
 
-  function getGoalCollaboratorDetails(
-    collabType: string,
-    dataValues: IGoalModelInstance,
-  ) {
+  function getGoalCollaboratorDetails(collabType: string, dataValues: IGoalModelInstance) {
     // eslint-disable-next-line max-len
-    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    const collaborator = dataValues.goalCollaborators?.find(
+      (gc) => gc.collaboratorType.name === collabType
+    );
     return {
       [`goal${collabType}`]: collaborator,
       [`goal${collabType}Name`]: collaborator?.user?.name,
-      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles
+        ?.map((ur) => ur.role.name)
+        .join(', '),
     };
   }
 
@@ -439,7 +588,10 @@ export function reduceGoals(
     try {
       const existingGoal = previousValues.find((g) => where(g, currentValue));
       if (existingGoal) {
-        existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
+        existingGoal.goalNumbers = [
+          ...existingGoal.goalNumbers,
+          currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+        ];
         existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
         existingGoal.grants = [
           ...existingGoal.grants,
@@ -454,30 +606,36 @@ export function reduceGoals(
         existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
         existingGoal.objectives = objectivesReducer(
           currentValue.objectives,
-          existingGoal.objectives,
+          existingGoal.objectives
         );
 
         if (forReport) {
           // Get the regular prompts for the report.
-          const promptsToAdd = (currentValue.dataValues.prompts || []).map((p) => ({
-            ...p,
-            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
-          }) as IPrompt);
+          const promptsToAdd = (currentValue.dataValues.prompts || []).map(
+            (p) =>
+              ({
+                ...p,
+                grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+              }) as IPrompt
+          );
           (existingGoal.prompts as IPrompt[]).push(...promptsToAdd);
           // Get prompts for review.
-          const promptsToAddForReview = (currentValue.dataValues.prompts || []).map((p) => ({
-            key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
-            promptId: p.promptId,
-            responses: p.response || [],
-            recipients: [
-              {
-                id: currentValue.grant.recipientId,
-                name: currentValue.grant.recipientNameWithPrograms,
-              },
-            ],
-            grantId: currentValue.grant.id,
-            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
-          }) as IReviewPrompt);
+          const promptsToAddForReview = (currentValue.dataValues.prompts || []).map(
+            (p) =>
+              ({
+                key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
+                promptId: p.promptId,
+                responses: p.response || [],
+                recipients: [
+                  {
+                    id: currentValue.grant.recipientId,
+                    name: currentValue.grant.recipientNameWithPrograms,
+                  },
+                ],
+                grantId: currentValue.grant.id,
+                grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+              }) as IReviewPrompt
+          );
 
           (existingGoal.promptsForReview as IReviewPrompt[]).push(...promptsToAddForReview);
         } else {
@@ -491,31 +649,34 @@ export function reduceGoals(
             [currentValue.grant.numberWithProgramTypes]: reducePrompts(
               forReport,
               promptsWithGrantName,
-              [], // we don't want to combine existing prompts if reducing for the RTR
+              [] // we don't want to combine existing prompts if reducing for the RTR
             ),
           };
           existingGoal.source = {
-            ...existingGoal.source as {
+            ...(existingGoal.source as {
               [key: string]: string;
-            },
+            }),
             [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
           };
         }
 
         existingGoal.collaborators = existingGoal.collaborators || [];
 
-        existingGoal.collaborators = uniqBy([
-          ...existingGoal.collaborators,
-          {
-            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues as IGoal),
-            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues as IGoal),
-          } as {
-            goalNumber: string;
-            goalCreatorName: string;
-            goalCreatorRoles: string;
-          },
-        ], 'goalCreatorName');
+        existingGoal.collaborators = uniqBy(
+          [
+            ...existingGoal.collaborators,
+            {
+              goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+              ...getGoalCollaboratorDetails('Creator', currentValue.dataValues as IGoal),
+              ...getGoalCollaboratorDetails('Linker', currentValue.dataValues as IGoal),
+            } as {
+              goalNumber: string;
+              goalCreatorName: string;
+              goalCreatorRoles: string;
+            },
+          ],
+          'goalCreatorName'
+        );
 
         existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
 
@@ -533,21 +694,25 @@ export function reduceGoals(
       const promptsForReport = reducePrompts(
         forReport,
         promptsWithGrantName,
-        [], // No existing prompts to merge with
+        [] // No existing prompts to merge with
       );
 
       // Create review prompts only if needed for the report
-      const promptsForReview = forReport ? (currentValue.dataValues.prompts || []).map((p) => ({
-        key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
-        promptId: p.promptId,
-        responses: p.response || [],
-        recipients: [{
-          id: currentValue.grant.recipientId,
-          name: currentValue.grant.recipientNameWithPrograms,
-        }],
-        grantId: currentValue.grant.id,
-        grantDisplayName: currentValue.grant.recipientNameWithPrograms,
-      })) : [];
+      const promptsForReview = forReport
+        ? (currentValue.dataValues.prompts || []).map((p) => ({
+            key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
+            promptId: p.promptId,
+            responses: p.response || [],
+            recipients: [
+              {
+                id: currentValue.grant.recipientId,
+                name: currentValue.grant.recipientNameWithPrograms,
+              },
+            ],
+            grantId: currentValue.grant.id,
+            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+          }))
+        : [];
 
       let sourceForRTR: { [key: string]: string };
       let sourceForPrompts: { [key: string]: IPrompt[] };
@@ -582,9 +747,7 @@ export function reduceGoals(
         onAR: currentValue.dataValues.onAR,
         onApprovedAR: currentValue.dataValues.onApprovedAR,
         rtrOrder: currentValue.dataValues.rtrOrder,
-        objectives: objectivesReducer(
-          currentValue.objectives,
-        ),
+        objectives: objectivesReducer(currentValue.objectives),
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
         goalIds: [currentValue.dataValues.id],
         grant: currentValue.grant.dataValues,
@@ -614,14 +777,15 @@ export function reduceGoals(
             goalCreatorName: string;
             goalCreatorRoles: string;
           },
-        ].filter(
-          (c: { goalCreatorName: string }) => c.goalCreatorName !== null,
-        );
+        ].filter((c: { goalCreatorName: string }) => c.goalCreatorName !== null);
       }
 
       return [...previousValues, goal];
     } catch (err) {
-      auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
+      auditLogger.error(
+        'Error reducing goal in services/goals reduceGoals, exiting reducer early',
+        err
+      );
       return previousValues;
     }
   }, []);

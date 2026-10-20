@@ -14,6 +14,8 @@ const audit = require('./auditModelGenerator');
 const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
+// Model names are discovered at runtime, so TypeScript cannot infer the registry's keys.
+/** @type {Record<string, any>} */
 const db = {};
 
 let sequelize;
@@ -38,22 +40,25 @@ function isConnectionOpen() {
   return isOpen;
 }
 
-fs
-  .readdirSync(__dirname)
-  .filter((file) => (file.indexOf('.') !== 0)
-    && (file !== basename)
-    && (file !== 'auditModelGenerator.js')
-    && (file !== 'auditModels.js')
-    && (file.slice(-3) === '.js'))
+fs.readdirSync(__dirname)
+  .filter(
+    (file) =>
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file !== 'auditModelGenerator.js' &&
+      file !== 'auditModels.js' &&
+      file.slice(-3) === '.js'
+  )
   .forEach((file) => {
     try {
       const modelDef = require(path.join(__dirname, file));
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
-        // GrantRelationshipToActive is excluded here because it is a materialized view,
-        // so we don't want a ZAL created for it.
-        if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
+        // View-backed models (static isView = true) are excluded because ZAL audit tables
+        // do not exist for views. RequestErrors and models flagged noAudit (operational
+        // tables whose migration removes DB-level auditing) are also excluded.
+        if (model.name !== 'RequestErrors' && !model.isView && !model.noAudit) {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }
