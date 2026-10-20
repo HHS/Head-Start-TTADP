@@ -100,10 +100,14 @@ describe('ViewTtaRequest', () => {
     expect(screen.getByText('TTA Staff')).toBeVisible();
 
     expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
-    expect(screen.getByText('Lorem ipsum dolor sit amet')).toBeVisible();
-    expect(
-      screen.getByText('(Monitoring) The recipient will develop and implement a QIP/CAP')
-    ).toBeVisible();
+    const context = screen.getByText('Lorem ipsum dolor sit amet');
+    expect(context).toBeVisible();
+    const goal = screen.getByText(
+      '(Monitoring) The recipient will develop and implement a QIP/CAP'
+    );
+    expect(goal).toBeVisible();
+    // the goal comes before the background or context
+    expect(goal.compareDocumentPosition(context) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const citation = screen.getByText('ANC - 1302.91(e)(1)');
     expect(citation).toBeVisible();
     // the citations are bulleted

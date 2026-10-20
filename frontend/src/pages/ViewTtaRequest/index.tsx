@@ -123,6 +123,7 @@ export default function ViewTtaRequest({
           sections={[
             {
               data: {
+                "Recipient's Goal": goalLabel(ttaRequest.goalTemplate),
                 'Request background or context': ttaRequest.context ?? '',
                 ...(citations.length
                   ? {
@@ -137,7 +138,6 @@ export default function ViewTtaRequest({
                       ),
                     }
                   : {}),
-                "Recipient's Goal": goalLabel(ttaRequest.goalTemplate),
                 // plain text from a textarea, so it is wrapped to keep it from being read as HTML
                 ...(ttaRequest.creatorNotes
                   ? {
