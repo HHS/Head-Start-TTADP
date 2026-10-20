@@ -89,4 +89,23 @@ describe('NotificationList', () => {
 
     expect(onArchive).toHaveBeenCalledWith(42);
   });
+
+  it('does not render dismiss buttons when isArchive is true', () => {
+    renderList({
+      isArchive: true,
+      notifications: [
+        {
+          id: 42,
+          type: 'changesRequested',
+          text: 'An archived notification',
+          displayId: 'R01',
+          actionable: false,
+          archivedAt: '2026-06-10T00:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(screen.getByText('An archived notification')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Dismiss/i })).toBeNull();
+  });
 });

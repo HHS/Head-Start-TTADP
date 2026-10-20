@@ -223,7 +223,10 @@ describe('createOrUpdate', () => {
 
     await Objective.destroy({
       where: {
-        [db.Sequelize.Op.or]: [{ goalId: goals[0].id }, { createdViaActivityReportId: report.id }],
+        [db.Sequelize.Op.or]: [
+          { goalId: goals.map((g) => g.id) },
+          { createdViaActivityReportId: report.id },
+        ],
       },
       individualHooks: true,
       force: true,
@@ -237,7 +240,7 @@ describe('createOrUpdate', () => {
     });
     await Goal.destroy({
       where: {
-        grantId: grantIds[0],
+        grantId: grantIds,
       },
       individualHooks: true,
       force: true,
