@@ -492,7 +492,8 @@ const uploadHandler = async (req, res) => {
         return;
       }
 
-      const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+      const ext = fileTypeToUse.ext.startsWith('.') ? fileTypeToUse.ext : `.${fileTypeToUse.ext}`;
+      const fileName = `${uuidv4()}${ext}`;
 
       try {
         metadata = await metadataFn(originalFilename, fileName, size);

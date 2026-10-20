@@ -1,5 +1,9 @@
 import express from 'express';
 import request from 'supertest';
+import SCOPES from '../../middleware/scopeConstants';
+import { currentUserId } from '../../services/currentUser';
+import { getRecipientTimeline } from '../../services/recipientTimeline';
+import { userById } from '../../services/users';
 import { checkRecipientAccessAndExistence } from '../utils';
 import router from './index';
 
@@ -12,6 +16,9 @@ jest.mock('../transactionWrapper', () =>
   )
 );
 jest.mock('../utils');
+jest.mock('../../services/currentUser');
+jest.mock('../../services/recipientTimeline');
+jest.mock('../../services/users');
 
 describe('recipient routes', () => {
   const app = express();
@@ -20,6 +27,12 @@ describe('recipient routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     checkRecipientAccessAndExistence.mockResolvedValue(true);
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue({
+      id: 1000,
+      permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
   });
 
   it('wires the timeline handler behind recipient, region, and query validation', () => {
@@ -50,20 +63,24 @@ describe('recipient routes', () => {
   });
 
   it('accepts the multi-select event-type filter used by the timeline UI', async () => {
-    const filters = JSON.stringify({
-      topic: 'eventType',
-      condition: 'is',
-      query: ['Email communication', 'Phone communication', 'In person communication'],
-    });
-
-    expect(filters).toHaveLength(118);
-
-    const response = await request(app)
-      .get('/recipient/100000/region/1/timeline')
-      .query({ filters });
+    const response = await request(app).get(
+      '/recipient/100000/region/1/timeline?eventType.in[]=Email%20communication&eventType.in[]=Phone%20communication&eventType.in[]=In%20person%20communication'
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ count: 0, events: [] });
+    expect(getRecipientTimeline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: [
+          {
+            topic: 'eventType',
+            condition: 'is',
+            query: ['Email communication', 'Phone communication', 'In person communication'],
+          },
+        ],
+      }),
+      { canReadCommunicationLogs: true }
+    );
   });
 
   it.each([

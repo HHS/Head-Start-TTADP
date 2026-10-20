@@ -67,7 +67,7 @@ export default function RestartStandardGoalForm({
       await addStandardGoal({
         goalTemplateId,
         grantId,
-        status: GOAL_STATUS.IN_PROGRESS,
+        status: GOAL_STATUS.NOT_STARTED,
         ...mapObjectivesAndRootCauses(data),
       });
 

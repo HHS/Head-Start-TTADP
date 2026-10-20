@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -909,7 +909,7 @@ describe('Horizontal Table Widget', () => {
     });
   });
 
-  it('deselects an individual row checkbox and clears select-all when it was checked', async () => {
+  it('deselects an individual row checkbox and unchecks select-all', async () => {
     const setCheckboxes = jest.fn();
     const data = [
       { id: 'row-1', heading: 'Row 1', title: 'Row 1', data: [{ title: 'col1', value: '10' }] },
@@ -932,19 +932,13 @@ describe('Horizontal Table Widget', () => {
       </Router>
     );
 
-    // Use fireEvent.change to reliably trigger toggleSelectAll with checked=true,
-    // which sets the internal allCheckBoxesChecked to true.
-    const selectAll = screen.getByLabelText('Select or de-select all');
-    fireEvent.change(selectAll, { target: { checked: true } });
+    // Every row on this page is selected, so select-all reads as checked.
+    expect(screen.getByLabelText('Select or de-select all')).toBeChecked();
 
-    // Now fire handleReportSelect with checked=false while allCheckBoxesChecked=true
-    const rowCheckbox = screen.getByLabelText('Select Row 1');
-    fireEvent.change(rowCheckbox, { target: { checked: false, value: 'row-1' } });
+    userEvent.click(screen.getByLabelText('Select Row 1'));
 
-    // setCheckboxes should have been called with row-1 set to false
     await waitFor(() => {
-      const calls = setCheckboxes.mock.calls;
-      expect(calls.some((call) => call[0]['row-1'] === false)).toBe(true);
+      expect(setCheckboxes).toHaveBeenCalledWith({ 'row-1': false });
     });
   });
 
@@ -1085,5 +1079,103 @@ describe('Horizontal Table Widget', () => {
       'tbody td.smarthub-horizontal-table-last-column'
     );
     expect(stickyBodyCells.length).toBeGreaterThan(0);
+  });
+
+  describe('selection across pages', () => {
+    const pageOne = [
+      { id: 'row-1', heading: 'Row 1', title: 'Row 1', data: [{ title: 'col1', value: '10' }] },
+      { id: 'row-2', heading: 'Row 2', title: 'Row 2', data: [{ title: 'col1', value: '20' }] },
+    ];
+
+    const pageTwo = [
+      { id: 'row-3', heading: 'Row 3', title: 'Row 3', data: [{ title: 'col1', value: '30' }] },
+      { id: 'row-4', heading: 'Row 4', title: 'Row 4', data: [{ title: 'col1', value: '40' }] },
+    ];
+
+    // Mirrors how the paginated tables own the selection map and hand it to the widget.
+    const Harness = ({ data, onSelectionChange }) => {
+      const [checkboxes, setCheckboxes] = React.useState({});
+
+      React.useEffect(() => {
+        onSelectionChange(checkboxes);
+      }, [checkboxes, onSelectionChange]);
+
+      return (
+        <Router history={history}>
+          <HorizontalTableWidget
+            headers={['col1']}
+            data={data}
+            firstHeading="Category"
+            showTotalColumn={false}
+            enableCheckboxes
+            checkboxes={checkboxes}
+            setCheckboxes={setCheckboxes}
+            selectAllIdPrefix="test-"
+            sortConfig={{}}
+            requestSort={() => {}}
+          />
+        </Router>
+      );
+    };
+
+    const selectedIds = (selection) => Object.keys(selection).filter((id) => selection[id]);
+
+    it('keeps a row selected after the page changes', async () => {
+      let selection = {};
+      const onSelectionChange = (next) => {
+        selection = next;
+      };
+
+      const { rerender } = render(<Harness data={pageOne} onSelectionChange={onSelectionChange} />);
+
+      userEvent.click(screen.getByLabelText('Select Row 1'));
+      await waitFor(() => expect(selectedIds(selection)).toEqual(['row-1']));
+
+      // Paginate: same widget, new rows.
+      rerender(<Harness data={pageTwo} onSelectionChange={onSelectionChange} />);
+
+      userEvent.click(screen.getByLabelText('Select Row 3'));
+      await waitFor(() => expect(selectedIds(selection).sort()).toEqual(['row-1', 'row-3']));
+
+      // And back to the first page — the original selection is still checked.
+      rerender(<Harness data={pageOne} onSelectionChange={onSelectionChange} />);
+      expect(screen.getByLabelText('Select Row 1')).toBeChecked();
+      expect(screen.getByLabelText('Select Row 2')).not.toBeChecked();
+    });
+
+    it('select all only applies to the current page and preserves other pages', async () => {
+      let selection = {};
+      const onSelectionChange = (next) => {
+        selection = next;
+      };
+
+      const { rerender } = render(<Harness data={pageOne} onSelectionChange={onSelectionChange} />);
+
+      userEvent.click(screen.getByLabelText('Select Row 1'));
+      await waitFor(() => expect(selectedIds(selection)).toEqual(['row-1']));
+
+      rerender(<Harness data={pageTwo} onSelectionChange={onSelectionChange} />);
+
+      // Select all on page two must not clear the page one selection.
+      userEvent.click(screen.getByLabelText('Select or de-select all'));
+      await waitFor(() =>
+        expect(selectedIds(selection).sort()).toEqual(['row-1', 'row-3', 'row-4'])
+      );
+    });
+
+    it('checks select all only when every row on the current page is selected', async () => {
+      const onSelectionChange = () => {};
+
+      render(<Harness data={pageOne} onSelectionChange={onSelectionChange} />);
+
+      const selectAll = screen.getByLabelText('Select or de-select all');
+      expect(selectAll).not.toBeChecked();
+
+      userEvent.click(screen.getByLabelText('Select Row 1'));
+      await waitFor(() => expect(selectAll).not.toBeChecked());
+
+      userEvent.click(screen.getByLabelText('Select Row 2'));
+      await waitFor(() => expect(selectAll).toBeChecked());
+    });
   });
 });

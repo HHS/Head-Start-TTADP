@@ -22,6 +22,7 @@ export default (sequelize, DataTypes) => {
       });
       Region.hasMany(models.ActivityReport, { foreignKey: 'regionId', as: 'activityReports' });
       Region.hasMany(models.CollabReport, { foreignKey: 'regionId', as: 'collabReports' });
+      Region.hasMany(models.TtaRequest, { foreignKey: 'regionId', as: 'ttaRequests' });
       Region.hasMany(models.GoalTemplate, { foreignKey: 'regionId', as: 'goalTemplates' });
       Region.hasMany(models.ObjectiveTemplate, {
         foreignKey: 'regionId',

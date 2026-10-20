@@ -42,7 +42,7 @@ export type SessionReportTableRow = {
   recipients: { label: string }[];
   participants: string[];
   duration: number;
-  participantCount: number | null;
+  participantCount: number;
   deliveryMethod: string | null;
 };
 

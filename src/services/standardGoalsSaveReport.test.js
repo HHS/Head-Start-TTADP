@@ -731,6 +731,114 @@ describe('save standard goals for report', () => {
     });
   });
 
+  describe('stale objective deleted in another tab', () => {
+    let grant;
+    let goalTemplate;
+    let report;
+    let file;
+    const resourceUrl = `https://${faker.internet.domainName()}/stale-objective`;
+    const objectiveTitle = 'stale objective deleted in another tab';
+
+    const goalPayload = (objectives) => [
+      {
+        goalIds: [],
+        grantIds: [grant.id],
+        goalTemplateId: goalTemplate.id,
+        name: goalTemplate.templateName,
+        status: GOAL_STATUS.NOT_STARTED,
+        timeframe: null,
+        source: [],
+        prompts: [],
+        objectives,
+      },
+    ];
+
+    const objectivePayload = (overrides = {}) => ({
+      id: null,
+      isNew: true,
+      ttaProvided: 'tta',
+      title: objectiveTitle,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+      topics: [],
+      resources: [{ key: faker.string.uuid(), value: resourceUrl }],
+      files: [{ id: file.id }],
+      courses: [],
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      supportType: 'Implementing',
+      goalId: null,
+      createdHere: true,
+      ...overrides,
+    });
+
+    beforeAll(async () => {
+      grant = await createGrant({ recipientId: recipient1.id });
+      goalTemplate = await createGoalTemplate({
+        name: 'Stale objective template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+      report = await createReport({
+        activityRecipients: [{ grantId: grant.id }],
+        status: REPORT_STATUSES.IN_PROGRESS,
+      });
+      file = await File.create({
+        originalFileName: 'stale-objective.pdf',
+        key: `${faker.string.uuid()}.pdf`,
+        status: 'APPROVED',
+        fileSize: 1234,
+      });
+    });
+
+    afterAll(async () => {
+      await cleanUpGoalAndAllAssociations(
+        goalTemplate.id,
+        report.id,
+        [grant.id],
+        [],
+        [],
+        [file],
+        [{ url: resourceUrl }]
+      );
+    });
+
+    it('drops the stale objective instead of throwing a FK constraint error', async () => {
+      // Tab 1: save the report with an objective that has a resource and a file.
+      await saveStandardGoalsForReport(goalPayload([objectivePayload()]), report);
+
+      const savedObjective = await Objective.findOne({ where: { title: objectiveTitle } });
+      expect(savedObjective).toBeTruthy();
+      const savedAro = await ActivityReportObjective.findOne({
+        where: { activityReportId: report.id, objectiveId: savedObjective.id },
+      });
+      expect(
+        await ActivityReportObjectiveFile.count({
+          where: { activityReportObjectiveId: savedAro.id },
+        })
+      ).toBe(1);
+
+      // Tab 2: delete the objective and save.
+      await saveStandardGoalsForReport(goalPayload([]), report);
+      expect(await Objective.findByPk(savedObjective.id)).toBeNull();
+
+      // Tab 1: save the stale form data that still references the deleted objective.
+      const staleObjective = objectivePayload({
+        id: savedObjective.id,
+        ids: [savedObjective.id],
+        isNew: false,
+        goalId: savedObjective.goalId,
+      });
+      await expect(
+        saveStandardGoalsForReport(goalPayload([staleObjective]), report)
+      ).resolves.toBeDefined();
+
+      const recreated = await Objective.findAll({ where: { title: objectiveTitle } });
+      expect(recreated).toHaveLength(0);
+      expect(await ActivityReportObjective.count({ where: { activityReportId: report.id } })).toBe(
+        0
+      );
+    });
+  });
+
   describe('reused objectives on activity reports', () => {
     let grant;
     let goalTemplate;
