@@ -1,15 +1,13 @@
-import React from 'react';
+import { Alert, Button, Textarea } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Button, Textarea, Alert } from '@trussworks/react-uswds';
-import PlusButton from '../GoalForm/PlusButton';
+import React from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import FormItem from '../FormItem';
+import PlusButton from '../GoalForm/PlusButton';
 import ReadOnlyField from '../ReadOnlyField';
 
-export default function ObjectivesSection({
-  fieldName,
-}) {
+export default function ObjectivesSection({ fieldName }) {
   const { register, control } = useFormContext();
 
   const {
@@ -29,30 +27,19 @@ export default function ObjectivesSection({
 
   return (
     <div className="margin-top-4" data-testid="objectives-section">
-      {(objectives.length > 0)
-        && <h2>Objectives</h2>}
-      {hasReportedObjectives
-        && (
-        <Alert
-          type="info"
-          slim
-          className="margin-top-3 margin-bottom-2"
-        >
+      {objectives.length > 0 && <h2>Objectives</h2>}
+      {hasReportedObjectives && (
+        <Alert type="info" slim className="margin-top-3 margin-bottom-2">
           Objectives used on reports cannot be edited.
         </Alert>
-        )}
+      )}
       {objectives.map((field, index) => {
         const isReadOnly = field.onAR === true;
         return (
           <div key={field.id}>
             <div hidden={!isReadOnly}>
-              <ReadOnlyField
-                label="TTA objective"
-              >
-                {field.value}
-              </ReadOnlyField>
-              {
-              (field.onAR === false) && (
+              <ReadOnlyField label="TTA objective">{field.value}</ReadOnlyField>
+              {field.onAR === false && (
                 <Button
                   type="button"
                   className="margin-top-1"
@@ -63,14 +50,10 @@ export default function ObjectivesSection({
                 >
                   Remove this objective
                 </Button>
-              )
-              }
+              )}
             </div>
             <div hidden={isReadOnly}>
-              <FormItem
-                label="TTA objective"
-                name={`${fieldName}[${index}].value`}
-              >
+              <FormItem label="TTA objective" name={`${fieldName}[${index}].value`}>
                 <input
                   type="hidden"
                   // eslint-disable-next-line react/jsx-props-no-spreading

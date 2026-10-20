@@ -4,35 +4,19 @@ const orderRecipientsBy = (sortBy, sortDir) => {
   let result = '';
   switch (sortBy) {
     case 'name':
-      result = [[
-        'name',
-        sortDir,
-      ]];
+      result = [['name', sortDir]];
       break;
     case 'regionId':
       result = [
-        [
-          'grants', 'regionId', sortDir,
-        ],
-        [
-          'name',
-          sortDir,
-        ],
+        ['grants', 'regionId', sortDir],
+        ['name', sortDir],
       ];
       break;
     case 'programSpecialist':
-      result = [
-        [
-          sequelize.literal('"programSpecialists"'), sortDir,
-        ],
-      ];
+      result = [[sequelize.literal('"programSpecialists"'), sortDir]];
       break;
     case 'grantSpecialist':
-      result = [
-        [
-          sequelize.literal('"grantSpecialists"'), sortDir,
-        ],
-      ];
+      result = [[sequelize.literal('"grantSpecialists"'), sortDir]];
       break;
     default:
       break;

@@ -1,6 +1,6 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getRecipientSpotlight } from '../recipientSpotlight';
+import join from 'url-join';
+import { getRecipientSpotlight, getRecipientSpotlightCsv } from '../recipientSpotlight';
 
 const recipientUrl = join('/', 'api', 'recipient-spotlight');
 
@@ -24,7 +24,10 @@ describe('recipientSpotlight fetcher', () => {
     const sortDir = 'asc';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0`, mockResponse);
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=0`,
+      mockResponse
+    );
 
     const response = await getRecipientSpotlight(sortBy, sortDir);
 
@@ -37,7 +40,10 @@ describe('recipientSpotlight fetcher', () => {
     const limit = 5;
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=${offset}&limit=${limit}`, mockResponse);
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=${offset}&limit=${limit}`,
+      mockResponse
+    );
 
     const response = await getRecipientSpotlight('recipientName', 'desc', offset, null, limit);
 
@@ -49,7 +55,10 @@ describe('recipientSpotlight fetcher', () => {
     const filters = 'recipientId.in=123&region.in=1';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&${filters}`, mockResponse);
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&${filters}`,
+      mockResponse
+    );
 
     const response = await getRecipientSpotlight('recipientName', 'desc', 0, filters);
 
@@ -65,15 +74,12 @@ describe('recipientSpotlight fetcher', () => {
     const filters = 'recipientId.in=123&region.in=1&status=inactive';
     const mockResponse = { data: 'test data' };
 
-    fetchMock.getOnce(`${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}&${filters}`, mockResponse);
-
-    const response = await getRecipientSpotlight(
-      sortBy,
-      sortDir,
-      offset,
-      filters,
-      limit,
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=${sortBy}&direction=${sortDir}&offset=${offset}&limit=${limit}&${filters}`,
+      mockResponse
     );
+
+    const response = await getRecipientSpotlight(sortBy, sortDir, offset, filters, limit);
 
     expect(response).toEqual(mockResponse);
     expect(fetchMock.called()).toBe(true);
@@ -93,10 +99,46 @@ describe('recipientSpotlight fetcher', () => {
       null,
       null,
       false,
-      controller.signal,
+      controller.signal
     );
 
     const lastOptions = fetchMock.lastOptions();
     expect(lastOptions.signal).toBe(controller.signal);
+  });
+});
+
+describe('getRecipientSpotlightCsv fetcher', () => {
+  beforeEach(() => fetchMock.reset());
+  afterEach(() => fetchMock.restore());
+
+  it('requests a csv blob with default parameters', async () => {
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=recipientName&direction=desc&offset=0&mustHaveIndicators=true&format=csv`,
+      {
+        body: 'Recipient name,Region\nRecipient A,1',
+        headers: { 'Content-Type': 'text/csv' },
+      }
+    );
+
+    const result = await getRecipientSpotlightCsv();
+
+    expect(fetchMock.called()).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
+  });
+
+  it('includes sort, filters and grantId in the csv request url', async () => {
+    const filters = 'region.in=1';
+    fetchMock.getOnce(
+      `${recipientUrl}?sortBy=lastTTA&direction=asc&offset=0&${filters}&grantId=42&mustHaveIndicators=true&format=csv`,
+      {
+        body: 'Recipient name,Region\nRecipient A,1',
+        headers: { 'Content-Type': 'text/csv' },
+      }
+    );
+
+    const result = await getRecipientSpotlightCsv('lastTTA', 'asc', filters, 42);
+
+    expect(fetchMock.called()).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
   });
 });

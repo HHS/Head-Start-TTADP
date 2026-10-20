@@ -1,20 +1,12 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faAngleDown,
-} from '@fortawesome/free-solid-svg-icons';
+import PropTypes from 'prop-types';
+import React from 'react';
 import colors from '../../../colors';
 import Menu from '../../Menu';
 import './StatusDropdown.css';
 
-export default function StatusDropdown({
-  label,
-  options,
-  className,
-  icon,
-  display,
-}) {
+export default function StatusDropdown({ label, options, className, icon, display }) {
   return (
     <Menu
       label={label}
@@ -22,13 +14,18 @@ export default function StatusDropdown({
       left={false}
       up={false}
       className={`ttahub-status-select ${className}`}
-      buttonText={(
+      buttonText={
         <>
           {icon}
           {display}
-          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={faAngleDown} />
+          <FontAwesomeIcon
+            className="margin-left-1"
+            size="1x"
+            color={colors.ttahubMediumBlue}
+            icon={faAngleDown}
+          />
         </>
-      )}
+      }
     />
   );
 }
@@ -36,10 +33,12 @@ export default function StatusDropdown({
 StatusDropdown.propTypes = {
   className: PropTypes.string,
   label: PropTypes.string.isRequired,
-  options: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    onClick: PropTypes.func.isRequired,
-  })).isRequired,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      onClick: PropTypes.func.isRequired,
+    })
+  ).isRequired,
   icon: PropTypes.node.isRequired,
   display: PropTypes.node.isRequired,
 };

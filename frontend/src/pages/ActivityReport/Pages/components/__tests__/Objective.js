@@ -1,22 +1,20 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import {
-  render, screen, within, act, fireEvent, waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import selectEvent from 'react-select-event';
-import React from 'react';
-import fetchMock from 'fetch-mock';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FormProvider, useForm } from 'react-hook-form';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import Objective from '../Objective';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
-import UserContext from '../../../../../UserContext';
-import { mockRSSData } from '../../../../../testHelpers';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import { mockRSSData } from '../../../../../testHelpers';
+import UserContext from '../../../../../UserContext';
+import Objective, { buildSelectedCitationObjects } from '../Objective';
 
 const history = createMemoryHistory();
 
@@ -44,7 +42,11 @@ const mockData = (files) => ({
 });
 
 const file = (name, id, status = 'Uploaded') => ({
-  originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+  originalFileName: name,
+  id,
+  fileSize: 2000,
+  status,
+  lastModified: 123456,
 });
 
 const dispatchEvt = (node, type, data) => {
@@ -67,6 +69,8 @@ const RenderObjective = ({
   rawCitations = [],
   additionalHookFormData = {},
   isMonitoringGoal = false,
+  objectiveOptions = [],
+  includeObjectiveOptions = true,
 }) => {
   const hookForm = useForm({
     mode: 'onBlur',
@@ -93,19 +97,19 @@ const RenderObjective = ({
     <Router history={history}>
       <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
         <FormProvider {...hookForm}>
-          <AppLoadingContext.Provider value={
-        {
-          setAppLoadingText: jest.fn(),
-          setIsAppLoading: jest.fn(),
-        }
-      }
+          <AppLoadingContext.Provider
+            value={{
+              setAppLoadingText: jest.fn(),
+              setIsAppLoading: jest.fn(),
+            }}
           >
             <Objective
-              objective={defaultObjective}
+              objective={objective}
               topicOptions={[]}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
+              {...(includeObjectiveOptions ? { objectiveOptions } : {})}
               options={[
                 {
                   label: 'Create a new objective',
@@ -130,7 +134,8 @@ const RenderObjective = ({
                   status: OBJECTIVE_STATUS.COMPLETE,
                   title: 'Existing objective',
                   objectiveCreatedHere: false,
-                }]}
+                },
+              ]}
               index={1}
               remove={onRemove}
               fieldArrayName="objectives"
@@ -160,43 +165,374 @@ describe('Objective', () => {
   beforeEach(async () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
-    fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-provided', mockRSSData());
+    fetchMock.get('/api/courses', [
+      { id: 1, name: 'Course 1' },
+      { id: 2, name: 'Course 2' },
+    ]);
   });
 
   it('renders an objective', async () => {
     render(<RenderObjective />);
-    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    expect(
+      await screen.findByText(/This is an objective title/i, { selector: 'textarea' })
+    ).toBeVisible();
   });
 
-  it('renders an objective that doesn\'t have a status', async () => {
+  it("renders an objective that doesn't have a status", async () => {
     render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
   });
 
+  it('renders when objective options are omitted', async () => {
+    render(<RenderObjective includeObjectiveOptions={false} />);
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
+  it('preserves the selected option selectKey on the built citation object', () => {
+    const newCitations = [
+      {
+        id: 100,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [100],
+        selectKey: 'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 100,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+    expect(built.selectKey).toBe(
+      'Noncompliance::ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol'
+    );
+  });
+
+  it('expands a shared citation option across all standardIds', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [205833, 205834],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    expect(buildSelectedCitationObjects(newCitations, rawCitations)).toEqual([
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        standardIds: [205833, 205834],
+        findingType: 'Noncompliance',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+            standardId: 205833,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+            standardId: 205834,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('round-trips shared citation options without losing additional standardIds', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [205833, 205834],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+    const [rebuilt] = buildSelectedCitationObjects([built], rawCitations);
+
+    expect(rebuilt.standardIds).toEqual([205833, 205834]);
+    expect(rebuilt.monitoringReferences.map((grant) => grant.grantId)).toEqual([15764, 15401]);
+  });
+
+  it('falls back to monitoringReferences when standardIds are missing on a selected citation', () => {
+    const newCitations = [
+      {
+        id: 205833,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        monitoringReferences: [
+          {
+            grantId: 15764,
+            standardId: 205833,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+          {
+            grantId: 15401,
+            standardId: 205834,
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+          },
+        ],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15764,
+            grantNumber: '06CH012850',
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 15401,
+            grantNumber: '06CH012631',
+          },
+        ],
+      },
+    ];
+
+    const [built] = buildSelectedCitationObjects(newCitations, rawCitations);
+
+    expect(built.standardIds).toEqual([205833, 205834]);
+    expect(built.monitoringReferences.map((grant) => grant.grantId)).toEqual([15764, 15401]);
+  });
+
+  it('only attaches grants matching the selected option when a standardId spans multiple options', () => {
+    // Both displayed options share standardId 100 because the raw record is
+    // grouped by standardId + citation text only. Selecting the Noncompliance
+    // option must not attach the Deficiency finding (or vice versa).
+    const newCitations = [
+      {
+        id: 100,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [100],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 100,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-anc',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 1,
+            grantNumber: '12345',
+          },
+          {
+            acro: 'DEF',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-def',
+            findingSource: 'Improper Release',
+            findingType: 'Deficiency',
+            grantId: 1,
+            grantNumber: '12345',
+          },
+        ],
+      },
+    ];
+
+    const result = buildSelectedCitationObjects(newCitations, rawCitations);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].monitoringReferences).toHaveLength(1);
+    expect(result[0].monitoringReferences[0]).toEqual(
+      expect.objectContaining({
+        findingId: 'finding-anc',
+        findingType: 'Noncompliance',
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+      })
+    );
+    // The unrelated Deficiency finding must not be attached.
+    expect(result[0].monitoringReferences.some((ref) => ref.findingId === 'finding-def')).toBe(
+      false
+    );
+  });
+
+  it('returns nothing when no grant matches the selected option', () => {
+    const newCitations = [
+      {
+        id: 100,
+        name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+        findingType: 'Noncompliance',
+        standardIds: [100],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 100,
+        grants: [
+          {
+            acro: 'DEF',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-def',
+            findingSource: 'Improper Release',
+            findingType: 'Deficiency',
+            grantId: 1,
+            grantNumber: '12345',
+          },
+        ],
+      },
+    ];
+
+    expect(buildSelectedCitationObjects(newCitations, rawCitations)).toEqual([]);
+  });
+
   it('renders the citations dropdown when there are citations available', async () => {
-    const citationOptions = [{
-      label: 'Label 1',
-      options: [
-        { name: 'Citation 1', id: 1 },
-      ],
-    }];
+    const citationOptions = [
+      {
+        label: 'Label 1',
+        options: [{ name: 'Citation 1', id: 1 }],
+      },
+    ];
 
-    const rawCitations = [{
-      citation: 'Citation 1',
-      standardId: 1,
-      grants: [{
-        acro: 'DEF',
+    const rawCitations = [
+      {
         citation: 'Citation 1',
-        grantId: 1,
-        grantNumber: '12345',
-      }],
-    }];
+        standardId: 1,
+        grants: [
+          {
+            acro: 'DEF',
+            citation: 'Citation 1',
+            name: 'Citation 1',
+            grantId: 1,
+            grantNumber: '12345',
+          },
+        ],
+      },
+    ];
 
-    render(<RenderObjective
-      citationOptions={citationOptions}
-      rawCitations={rawCitations}
-      isMonitoringGoal
-    />);
+    render(
+      <RenderObjective
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        isMonitoringGoal
+      />
+    );
     const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
     expect(helpButton).toBeVisible();
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
@@ -211,7 +547,9 @@ describe('Objective', () => {
   it('uploads a file', async () => {
     fetchMock.post('/api/files', [{ objectiveIds: [] }]);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link\?/i);
+    const files = screen.getByText(
+      /Did you use any other TTA resources that aren't available as link\?/i
+    );
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);
@@ -226,7 +564,9 @@ describe('Objective', () => {
   it('handles a file upload error', async () => {
     fetchMock.post('/api/files', 500);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link?/i);
+    const files = screen.getByText(
+      /Did you use any other TTA resources that aren't available as link?/i
+    );
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);
@@ -239,12 +579,14 @@ describe('Objective', () => {
     await screen.findByText(/error uploading your file/i);
   });
 
-  it('keeps the iPD course choice selected when switched to "Yes"', async () => {
+  it('keeps the EEP course choice selected when switched to "Yes"', async () => {
     render(<RenderObjective />);
 
-    const ipdFieldset = screen.getByText(/Did you use an iPD course as a resource/i).closest('fieldset');
-    const yesRadio = within(ipdFieldset).getByLabelText('Yes');
-    const noRadio = within(ipdFieldset).getByLabelText('No');
+    const eepFieldset = screen
+      .getByText(/Did you use an EEP course as a resource/i)
+      .closest('fieldset');
+    const yesRadio = within(eepFieldset).getByLabelText('Yes');
+    const noRadio = within(eepFieldset).getByLabelText('No');
 
     expect(noRadio).toBeChecked();
 
@@ -257,7 +599,9 @@ describe('Objective', () => {
   it('does not clear TTA provided between objective changes', async () => {
     render(<RenderObjective />);
     await screen.findByText('What');
-    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    await act(async () =>
+      selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective'])
+    );
     expect(await screen.findByText('What')).toBeVisible();
 
     const values = getValues();
@@ -269,19 +613,33 @@ describe('Objective', () => {
   it('switches the title to read only if the objective changes', async () => {
     render(<RenderObjective />);
     await screen.findByText('What');
-    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
-    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
-    expect(await screen.findByText(/Existing objective/i, { selector: 'div.usa-prose' })).toBeVisible();
+    expect(
+      await screen.findByText(/This is an objective title/i, { selector: 'textarea' })
+    ).toBeVisible();
+    await act(async () =>
+      selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective'])
+    );
+    expect(
+      await screen.findByText(/Existing objective/i, { selector: 'div.usa-prose' })
+    ).toBeVisible();
     expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
-    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
-    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(
+      0
+    );
+    await act(async () =>
+      selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective'])
+    );
     expect(await screen.findByText(/Create a new objective/i)).toBeVisible();
-    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(1);
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(
+      1
+    );
   });
 
   it('you can change status to suspended', async () => {
     render(<RenderObjective />);
-    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    expect(
+      await screen.findByText(/This is an objective title/i, { selector: 'textarea' })
+    ).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
     userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
@@ -300,16 +658,43 @@ describe('Objective', () => {
 
   it('you can change status to in progress', async () => {
     render(<RenderObjective />);
-    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    expect(
+      await screen.findByText(/This is an objective title/i, { selector: 'textarea' })
+    ).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
     userEvent.selectOptions(select, OBJECTIVE_STATUS.IN_PROGRESS);
 
-    expect(await screen.findByLabelText(/objective status/i)).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue(
+      OBJECTIVE_STATUS.IN_PROGRESS
+    );
+  });
+
+  it('updates the submitted status when not started is no longer available', async () => {
+    render(
+      <RenderObjective
+        objective={{ ...defaultObjective, status: OBJECTIVE_STATUS.NOT_STARTED }}
+        objectiveOptions={[
+          {
+            id: defaultObjective.id,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+          },
+        ]}
+      />
+    );
+
+    const select = await screen.findByLabelText(/objective status/i);
+
+    await waitFor(() => {
+      expect(select).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(getValues('objectives[1].status')).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+    });
   });
 
   it('when changing status to suspended, you can cancel', async () => {
     render(<RenderObjective />);
-    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    expect(
+      await screen.findByText(/This is an objective title/i, { selector: 'textarea' })
+    ).toBeVisible();
     const select = await screen.findByLabelText(/objective status/i);
     userEvent.selectOptions(select, OBJECTIVE_STATUS.SUSPENDED);
 
@@ -319,30 +704,39 @@ describe('Objective', () => {
     const context = await screen.findByLabelText(/Additional context/i);
     userEvent.type(context, 'This is the context');
 
-    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls^="modal-suspend-objective-"]' }));
+    userEvent.click(
+      await screen.findByText(/cancel/i, {
+        selector: '[aria-controls^="modal-suspend-objective-"]',
+      })
+    );
 
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/not started/i)).toBeVisible();
   });
 
   it('shows a warning when the citations selected are not for all the grants selected', async () => {
-    const citationOptions = [{
-      label: 'Label 1',
-      options: [
-        { name: 'Citation 1', id: 1 },
-      ],
-    }];
+    const citationOptions = [
+      {
+        label: 'Label 1',
+        options: [{ name: 'Citation 1', id: 1 }],
+      },
+    ];
 
-    const rawCitations = [{
-      citation: 'Citation 1',
-      standardId: 1,
-      grants: [{
-        acro: 'DEF',
+    const rawCitations = [
+      {
         citation: 'Citation 1',
-        grantId: 1,
-        grantNumber: '12345',
-      }],
-    }];
+        standardId: 1,
+        grants: [
+          {
+            acro: 'DEF',
+            citation: 'Citation 1',
+            name: 'Citation 1',
+            grantId: 1,
+            grantNumber: '12345',
+          },
+        ],
+      },
+    ];
 
     const additionalHookFormData = {
       activityRecipients: [
@@ -359,12 +753,14 @@ describe('Objective', () => {
       ],
     };
 
-    render(<RenderObjective
-      citationOptions={citationOptions}
-      rawCitations={rawCitations}
-      additionalHookFormData={additionalHookFormData}
-      isMonitoringGoal
-    />);
+    render(
+      <RenderObjective
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        additionalHookFormData={additionalHookFormData}
+        isMonitoringGoal
+      />
+    );
 
     const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
     expect(helpButton).toBeVisible();
@@ -376,8 +772,103 @@ describe('Objective', () => {
 
     expect(await screen.findByText(/Citation 1/i)).toBeVisible();
 
-    expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+    expect(
+      await screen.findByText(/This grant does not have any of the citations selected/i)
+    ).toBeVisible();
     expect(await screen.findByText(/Recipient 2/i)).toBeVisible();
-    expect(await screen.findByText(/To avoid errors when submitting the report, you can either/i)).toBeVisible();
+    expect(
+      await screen.findByText(/To avoid errors when submitting the report, you can either/i)
+    ).toBeVisible();
+  });
+
+  it('does not show a warning when a shared citation option covers all grants', async () => {
+    const citationOptions = [
+      {
+        label: 'Noncompliance',
+        options: [
+          {
+            name: 'ANC - 1302.47(b)(7)(vi) - Findings Outside the Protocol',
+            id: 205833,
+            standardIds: [205833, 205834],
+          },
+        ],
+      },
+    ];
+
+    const rawCitations = [
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205833,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-1',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 1,
+            grantNumber: '12345',
+            monitoringFindingStatusName: 'Active',
+            reportDeliveryDate: '2024-12-03',
+            reviewName: 'review-1',
+            severity: 2,
+          },
+        ],
+      },
+      {
+        citation: '1302.47(b)(7)(vi)',
+        standardId: 205834,
+        grants: [
+          {
+            acro: 'ANC',
+            citation: '1302.47(b)(7)(vi)',
+            findingId: 'finding-2',
+            findingSource: 'Findings Outside the Protocol',
+            findingType: 'Noncompliance',
+            grantId: 2,
+            grantNumber: '67890',
+            monitoringFindingStatusName: 'Active',
+            reportDeliveryDate: '2024-12-03',
+            reviewName: 'review-2',
+            severity: 2,
+          },
+        ],
+      },
+    ];
+
+    const additionalHookFormData = {
+      activityRecipients: [
+        {
+          id: 1,
+          activityRecipientId: 1,
+          name: 'Recipient 1',
+        },
+        {
+          id: 2,
+          activityRecipientId: 2,
+          name: 'Recipient 2',
+        },
+      ],
+    };
+
+    render(
+      <RenderObjective
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        additionalHookFormData={additionalHookFormData}
+        isMonitoringGoal
+      />
+    );
+
+    const citationSelect = await screen.findByRole('combobox', { name: /citation/i });
+    await selectEvent.select(citationSelect, [
+      /ANC - 1302\.47\(b\)\(7\)\(vi\) - Findings Outside the Protocol/i,
+    ]);
+
+    expect(
+      screen.queryByText(/This grant does not have any of the citations selected/i)
+    ).toBeNull();
+    expect(screen.queryByText(/Recipient 1/i)).toBeNull();
+    expect(screen.queryByText(/Recipient 2/i)).toBeNull();
   });
 });

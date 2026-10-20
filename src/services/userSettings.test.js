@@ -1,5 +1,6 @@
-import { USER_SETTINGS } from '../constants';
-import db, { User, UserSettingOverrides, Permission } from '../models';
+import { EMAIL_NOTIFICATION_SETTING_KEYS, USER_SETTINGS } from '../constants';
+import SCOPES from '../middleware/scopeConstants';
+import db, { Permission, User, UserSettingOverrides, UserSettings } from '../models';
 import {
   getDefaultSettings,
   saveSettings,
@@ -11,8 +12,6 @@ import {
   usersWithSetting,
 } from './userSettings';
 
-import SCOPES from '../middleware/scopeConstants';
-
 describe('UserSetting service', () => {
   afterAll(async () => {
     await db.sequelize.close();
@@ -22,25 +21,30 @@ describe('UserSetting service', () => {
     const ids = [999, 1000];
     const now = new Date();
 
-    const create = () => Promise.all(ids.map(async (id) => {
-      await User.create({
-        id,
-        name: `user ${id}`,
-        email: `user${id}@test.gov`,
-        hsesUsername: `user.${id}`,
-        hsesUserId: id,
-        createdAt: now,
-        updatedAt: now,
-        lastLogin: new Date(),
-      });
-      await Permission.create({
-        userId: id,
-        regionId: 14,
-        scopeId: SCOPES.SITE_ACCESS,
-      });
+    await UserSettingOverrides.destroy({ where: { userId: ids } });
+    await Permission.destroy({ where: { userId: ids } });
+    await User.destroy({ where: { id: ids } });
 
-      await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
-    }));
+    const create = () =>
+      Promise.all(
+        ids.map(async (id) => {
+          await User.create({
+            id,
+            name: `user ${id}`,
+            email: `user${id}@test.gov`,
+            hsesUsername: `user.${id}`,
+            hsesUserId: id,
+            createdAt: now,
+            updatedAt: now,
+            lastLogin: new Date(),
+          });
+          await Permission.create({
+            userId: id,
+            regionId: 14,
+            scopeId: SCOPES.SITE_ACCESS,
+          });
+        })
+      );
 
     await create();
   });
@@ -66,7 +70,8 @@ describe('UserSetting service', () => {
     it('properly inserts overrides', async () => {
       const defaultSettings = await getDefaultSettings();
       const defs = Object.keys(defaultSettings).map((key) => ({
-        key, value: defaultSettings[key].defaultValue,
+        key,
+        value: defaultSettings[key].defaultValue,
       }));
       await saveSettings(999, settings);
       const found = await userSettingsById(999);
@@ -85,7 +90,8 @@ describe('UserSetting service', () => {
     it('properly updates an override', async () => {
       const defaultSettings = await getDefaultSettings();
       const defs = Object.keys(defaultSettings).map((key) => ({
-        key, value: defaultSettings[key].defaultValue,
+        key,
+        value: defaultSettings[key].defaultValue,
       }));
       await saveSettings(999, settings);
       const found = await userSettingsById(999);
@@ -97,8 +103,9 @@ describe('UserSetting service', () => {
 
       // Sorts the array of objects found and expected by comparing the 'key' property in
       // ascending order.
-      expect(found.sort((a, b) => a.key.localeCompare(b.key)))
-        .toEqual(expected.sort((a, b) => a.key.localeCompare(b.key)));
+      expect(found.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+        expected.sort((a, b) => a.key.localeCompare(b.key))
+      );
 
       const newSettings = [
         {
@@ -121,14 +128,16 @@ describe('UserSetting service', () => {
 
       // Sorts the array of objects found2 and expected2 by comparing the 'key' property in
       // ascending order.
-      expect(found2.sort((a, b) => a.key.localeCompare(b.key)))
-        .toEqual(expected2.sort((a, b) => a.key.localeCompare(b.key)));
+      expect(found2.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+        expected2.sort((a, b) => a.key.localeCompare(b.key))
+      );
     });
 
     it('properly deletes an override', async () => {
       const defaultSettings = await getDefaultSettings();
       const defs = Object.keys(defaultSettings).map((key) => ({
-        key, value: defaultSettings[key].defaultValue,
+        key,
+        value: defaultSettings[key].defaultValue,
       }));
       await saveSettings(999, settings);
       const found = await userSettingsById(999);
@@ -140,8 +149,9 @@ describe('UserSetting service', () => {
 
       // Sorts the array of objects found and expected by comparing the 'key' property in
       // ascending order.
-      expect(found.sort((a, b) => a.key.localeCompare(b.key)))
-        .toEqual(expected.sort((a, b) => a.key.localeCompare(b.key)));
+      expect(found.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+        expected.sort((a, b) => a.key.localeCompare(b.key))
+      );
 
       const newSettings = [
         {
@@ -159,8 +169,9 @@ describe('UserSetting service', () => {
 
       // Sorts the array of objects found2 and defs by comparing the 'key' property in
       // ascending order.
-      expect(found2.sort((a, b) => a.key.localeCompare(b.key)))
-        .toEqual(defs.sort((a, b) => a.key.localeCompare(b.key)));
+      expect(found2.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+        defs.sort((a, b) => a.key.localeCompare(b.key))
+      );
     });
 
     it('properly serializes', async () => {
@@ -230,12 +241,28 @@ describe('UserSetting service', () => {
       const settings = await userSettingsById(999);
       expect(settings.length).toBe(len);
     });
+
+    it('returns in-app notification defaults as boolean true', async () => {
+      const key = 'inAppWhenReportSubmittedForReview';
+      const setting = await UserSettings.findOne({ where: { key } });
+      const originalDefault = setting.default;
+
+      await setting.update({ default: true });
+      const settings = await userSettingsById(999);
+      const inAppDefault = settings.find((current) => current.key === key);
+
+      expect(inAppDefault).toBeDefined();
+      expect(inAppDefault.value).toBe(true);
+      expect(typeof inAppDefault.value).toBe('boolean');
+
+      await setting.update({ default: originalDefault });
+    });
   });
 
   describe('subscribeAll', () => {
     it('sets all email settings to immediate frequency', async () => {
       await subscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)).toBe(true);
@@ -245,7 +272,7 @@ describe('UserSetting service', () => {
   describe('unsubscribeAll', () => {
     it('sets all email settings to never frequency', async () => {
       await unsubscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.NEVER)).toBe(true);
@@ -266,16 +293,16 @@ describe('UserSetting service', () => {
       ];
       await saveSettings(999, settings);
       const found = await userEmailSettingsById(999);
-      const keys = new Set(found.map(({ dataValues: { key } }) => key));
-      expect(keys.size).toBe(Object.keys(USER_SETTINGS.EMAIL.KEYS).length);
-      Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
+      const keys = new Set(found.map(({ key }) => key));
+      expect(keys.size).toBe(EMAIL_NOTIFICATION_SETTING_KEYS.length);
+      EMAIL_NOTIFICATION_SETTING_KEYS.forEach((key) => {
         expect(keys.has(key)).toBe(true);
       });
     });
   });
 
   describe('userSettingOverridesById', () => {
-    it('returns the value when there\'s an override', async () => {
+    it("returns the value when there's an override", async () => {
       const setting = [
         {
           key: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
@@ -285,15 +312,15 @@ describe('UserSetting service', () => {
       await saveSettings(999, setting);
       const found = await userSettingOverridesById(
         999,
-        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED
       );
       expect(found).toEqual(setting[0]);
     });
 
-    it('returns undefined when there\'s no override', async () => {
+    it("returns undefined when there's no override", async () => {
       const found = await userSettingOverridesById(
         999,
-        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED
       );
       expect(found).toBeUndefined();
     });

@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -56,7 +54,7 @@ module.exports = {
         ALTER TABLE "ValidFor" ADD CONSTRAINT "ValidFor_option_unique" UNIQUE
         USING INDEX "ValidFor_option_unique";
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

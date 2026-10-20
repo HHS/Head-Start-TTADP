@@ -1,28 +1,28 @@
-import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
+import { NOOP } from '../Constants';
+import WidgetContainer from '../components/WidgetContainer';
+import useMediaCapture from '../hooks/useMediaCapture';
+import HorizontalTableWidget from './HorizontalTableWidget';
 import VBarGraph from './VBarGraph';
 import withWidgetData from './withWidgetData';
-import WidgetContainer from '../components/WidgetContainer';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import useMediaCapture from '../hooks/useMediaCapture';
-import { NOOP } from '../Constants';
 
 const FIRST_HEADING = 'National Center';
 const HEADINGS = ['Hours'];
 
 const TITLE = 'Hours of training by National Center';
 
-const TRHoursWidget = ({
-  data,
-}) => {
+const TRHoursWidget = ({ data }) => {
   const widgetRef = useRef(null);
   const [showTabularData, setShowTabularData] = useState(false);
   const capture = useMediaCapture(widgetRef, TITLE);
 
-  const menuItems = [{
-    label: showTabularData ? 'Display graph' : 'Display table',
-    onClick: () => setShowTabularData(!showTabularData),
-  }];
+  const menuItems = [
+    {
+      label: showTabularData ? 'Display graph' : 'Display table',
+      onClick: () => setShowTabularData(!showTabularData),
+    },
+  ];
 
   if (!showTabularData) {
     menuItems.push({
@@ -78,10 +78,12 @@ const TRHoursWidget = ({
 };
 
 TRHoursWidget.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    count: PropTypes.number,
-  })),
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      count: PropTypes.number,
+    })
+  ),
 };
 
 TRHoursWidget.defaultProps = {

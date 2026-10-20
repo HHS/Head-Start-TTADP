@@ -1,15 +1,21 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen, waitFor, fireEvent,
-} from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import RecipientSpotlightDataController from '../RecipientSpotlightDataController';
-import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import FilterContext from '../../../../FilterContext';
+import {
+  getRecipientSpotlight,
+  getRecipientSpotlightCsv,
+} from '../../../../fetchers/recipientSpotlight';
+import { blobToCsvDownload } from '../../../../utils';
+import RecipientSpotlightDataController from '../RecipientSpotlightDataController';
 
 jest.mock('../../../../fetchers/recipientSpotlight');
+jest.mock('../../../../utils', () => ({
+  ...jest.requireActual('../../../../utils'),
+  blobToCsvDownload: jest.fn(),
+}));
 
 describe('RecipientSpotlightDataController', () => {
   const mockSetIsAppLoading = jest.fn();
@@ -62,10 +68,11 @@ describe('RecipientSpotlightDataController', () => {
   const renderController = (props = {}) => {
     const { filters = [], regionId = 1 } = { ...defaultProps, ...props };
     return render(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -76,13 +83,14 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     getRecipientSpotlight.mockResolvedValue(mockRecipientData);
+    getRecipientSpotlightCsv.mockResolvedValue(new Blob(['csv']));
   });
 
   it('renders without crashing', async () => {
@@ -104,7 +112,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -173,7 +181,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -196,7 +204,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         25,
         null,
-        true,
+        true
       );
     });
   });
@@ -219,8 +227,13 @@ describe('RecipientSpotlightDataController', () => {
     // Guard should prevent state update and any additional fetch
     expect(getRecipientSpotlight).toHaveBeenCalledTimes(1);
     expect(getRecipientSpotlight).not.toHaveBeenCalledWith(
-      expect.anything(), expect.anything(), expect.anything(),
-      expect.anything(), 0, expect.anything(), expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      0,
+      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -248,7 +261,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -271,10 +284,11 @@ describe('RecipientSpotlightDataController', () => {
     ];
 
     rerender(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -285,7 +299,7 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
 
     await waitFor(() => {
@@ -296,7 +310,7 @@ describe('RecipientSpotlightDataController', () => {
         'test.in[]=value',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -326,7 +340,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
 
@@ -342,7 +356,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -372,7 +386,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
 
@@ -388,7 +402,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         25,
         null,
-        true,
+        true
       );
     });
   });
@@ -427,25 +441,18 @@ describe('RecipientSpotlightDataController', () => {
     fireEvent.change(sortDropdown, { target: { value: 'lastTTA-desc' } });
 
     await waitFor(() => {
-      expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'lastTTA',
-        'desc',
-        0,
-        '',
-        10,
-        null,
-        true,
-      );
+      expect(getRecipientSpotlight).toHaveBeenCalledWith('lastTTA', 'desc', 0, '', 10, null, true);
     });
   });
 
   it('calls setIsAppLoading when cards finish loading', async () => {
     const mockSetIsAppLoadingLocal = jest.fn();
     render(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: true,
-        setIsAppLoading: mockSetIsAppLoadingLocal,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: true,
+          setIsAppLoading: mockSetIsAppLoadingLocal,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -456,11 +463,37 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
 
     await waitFor(() => {
       expect(mockSetIsAppLoadingLocal).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('exports the table to CSV from the actions menu', async () => {
+    renderController();
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Recipient 1')).toBeInTheDocument();
+    });
+
+    // Open the Actions menu, then choose Export table
+    fireEvent.click(screen.getByRole('button', { name: 'Open Actions for priority indicators' }));
+    fireEvent.click(screen.getByText('Export table'));
+
+    await waitFor(() => {
+      expect(getRecipientSpotlightCsv).toHaveBeenCalledWith(
+        'indicatorCount',
+        'desc',
+        '',
+        null,
+        true
+      );
+    });
+
+    await waitFor(() => {
+      expect(blobToCsvDownload).toHaveBeenCalledWith(expect.any(Blob), 'recipient-spotlight.csv');
     });
   });
 });

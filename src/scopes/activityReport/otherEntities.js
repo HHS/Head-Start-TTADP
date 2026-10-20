@@ -32,16 +32,12 @@ function generateWhere(escapedSearchTerms, exclude) {
 
   if (exclude) {
     return {
-      [Op.and]: [
-        sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`),
-      ],
+      [Op.and]: [sequelize.literal(`("ActivityReport"."id" NOT IN (${userSubQuery}))`)],
     };
   }
 
   return {
-    [Op.or]: [
-      sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`),
-    ],
+    [Op.or]: [sequelize.literal(`("ActivityReport"."id" IN (${userSubQuery}))`)],
   };
 }
 
@@ -54,9 +50,10 @@ function validateOtherEntity(otherEntityType) {
 
 export function withOtherEntities(otherEntities) {
   // Removes empty strings.
-  const otherEntitiesIn = otherEntities.map(
-    (oe) => validateOtherEntity(oe),
-  ).filter((oe) => oe).join(', ');
+  const otherEntitiesIn = otherEntities
+    .map((oe) => validateOtherEntity(oe))
+    .filter((oe) => oe)
+    .join(', ');
 
   // Empty array shan't not pass!
   if (otherEntitiesIn.length === 0) {
@@ -68,9 +65,10 @@ export function withOtherEntities(otherEntities) {
 
 export function withoutOtherEntities(otherEntities) {
   // filter removes empty strings
-  const otherEntitiesIn = otherEntities.map(
-    (oe) => validateOtherEntity(oe),
-  ).filter((oe) => oe).join(', ');
+  const otherEntitiesIn = otherEntities
+    .map((oe) => validateOtherEntity(oe))
+    .filter((oe) => oe)
+    .join(', ');
 
   // Empty array shan't not pass!
   if (otherEntitiesIn.length === 0) {

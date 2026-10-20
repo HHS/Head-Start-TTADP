@@ -1,7 +1,7 @@
-import { compileFile } from 'pug';
 import * as path from 'path';
-import { logger } from '../../logger';
+import { compileFile } from 'pug';
 import { EMAIL_ACTIONS } from '../../constants';
+import { logger } from '../../logger';
 import { createMailerLog } from '../../services/mailerLog';
 
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
@@ -21,11 +21,13 @@ export default async function logEmailNotification(job, success, result) {
   let newCollaborator;
   let newApprover;
   let collabArray;
+  let approverArray;
   let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
-  const { report } = data;
-  const { author, activityReportCollaborators } = report;
+  const { report, approversWithSettings: approvers = [] } = data;
+  const { author, activityReportCollaborators = [] } = report;
+  let templateLocals = report;
 
   try {
     switch (job.name) {
@@ -41,7 +43,8 @@ export default async function logEmailNotification(job, success, result) {
         break;
       case EMAIL_ACTIONS.NEEDS_ACTION:
         collabArray = activityReportCollaborators.map((c) => c.user.email);
-        emailTo = [author ? author.email : '', ...collabArray];
+        approverArray = approvers.map((a) => a.user.email);
+        emailTo = [author ? author.email : '', ...collabArray, ...approverArray];
         template = path.resolve(emailTemplatePath, 'changes_requested_by_manager', 'subject.pug');
         break;
       case EMAIL_ACTIONS.APPROVED:
@@ -49,10 +52,18 @@ export default async function logEmailNotification(job, success, result) {
         emailTo = [author ? author.email : '', ...collaboratorEmailAddresses];
         template = path.resolve(emailTemplatePath, 'report_approved', 'subject.pug');
         break;
+      case EMAIL_ACTIONS.APPROVER_APPROVED:
+        emailTo = approvers.map((a) => a.user.email);
+        template = path.resolve(emailTemplatePath, 'report_approved_approver', 'subject.pug');
+        templateLocals = { ...report, approverName: data.approverName };
+        break;
       case EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED:
         programSpecialists = data.programSpecialists;
         emailTo = programSpecialists.map((ps) => ps.email);
-        report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ').trim();
+        report.recipientNamesDisplay = data.recipients
+          .map((r) => r.name)
+          .join(', ')
+          .trim();
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
         break;
       case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
@@ -67,7 +78,7 @@ export default async function logEmailNotification(job, success, result) {
         logger.error(`Unknown job name: ${job.name}`);
         throw new Error(`Unknown job name: ${job.name}`);
     }
-    subject = compileFile(template)(report);
+    subject = compileFile(template)(templateLocals);
     const mailerLogEntry = await createMailerLog({
       jobId: job.id,
       emailTo,

@@ -17,7 +17,7 @@ module.exports = {
           GROUP BY "name"
           HAVING COUNT(*) > 1
         `,
-        { transaction },
+        { transaction }
       );
 
       // Resolve duplicates in GrantReplacementTypes
@@ -32,7 +32,7 @@ module.exports = {
             SET "grantReplacementTypeId" = ${idToKeep}
             WHERE "grantReplacementTypeId" = ANY(array[${idsToRemove.join(',')}])
           `,
-          { transaction },
+          { transaction }
         );
 
         // Delete duplicate ids from GrantReplacementTypes
@@ -41,7 +41,7 @@ module.exports = {
             DELETE FROM "GrantReplacementTypes"
             WHERE id = ANY(array[${idsToRemove.join(',')}])
           `,
-          { transaction },
+          { transaction }
         );
       }
 
@@ -64,7 +64,7 @@ module.exports = {
           AND gr. "replacingGrantId" = subquery."replacingGrantId"
           AND gr. "grantReplacementTypeId" = subquery."grantReplacementTypeId"
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

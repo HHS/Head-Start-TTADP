@@ -2,11 +2,7 @@ const { DataTypes } = require('sequelize');
 const db = require('../..');
 
 // Import the functions to be tested
-const {
-  getEnumColumnDefinitions,
-  getValidValues,
-  validateChangedOrSetEnums,
-} = require('../enum');
+const { getEnumColumnDefinitions, getValidValues, validateChangedOrSetEnums } = require('../enum');
 
 describe('enum', () => {
   describe('getEnumColumnDefinitions', () => {

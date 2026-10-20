@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "name": "@ttahub/common",
     "version": "2.2.22",
     "description": "The purpose of this package is to reduce code duplication between the frontend and backend projects.",
@@ -6,4 +7,13 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {}
+=======
+  "name": "@ttahub/common",
+  "version": "2.4.11",
+  "description": "The purpose of this package is to reduce code duplication between the frontend and backend projects.",
+  "main": "src/index.js",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {}
+>>>>>>> main
 }

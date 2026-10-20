@@ -1,16 +1,16 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
+  ActivityReport,
+  ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
+  Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Recipient,
   sequelize,
   User,
-  Goal,
-  ActivityReport,
-  Grant,
-  ActivityReportGoal,
-  Recipient,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-  ActivityReportGoalFieldResponse,
 } from '..';
 
 const mockReport = {
@@ -72,26 +72,26 @@ describe('goalFieldResponseHooks', () => {
 
     beforeAll(async () => {
       mockUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 133434 }),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        name: faker.person.firstName(),
       });
 
       recipientToNotUpdate = await Recipient.create({
-        id: faker.datatype.number({ min: 133434 }),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        name: faker.person.firstName(),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -99,8 +99,8 @@ describe('goalFieldResponseHooks', () => {
       });
 
       grantNotToUpdate = await Grant.create({
-        id: faker.datatype.number({ min: 133434 }),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 133434, max: 133434 + 99999 }),
+        number: faker.string.sample(),
         recipientId: recipientToNotUpdate.id,
         regionId: 1,
         startDate: new Date(),
@@ -252,11 +252,12 @@ describe('goalFieldResponseHooks', () => {
 
       // Create ActivityReportGoalFieldResponse not to update.
       // eslint-disable-next-line max-len
-      activityReportGoalFieldResponseDiffGoalNotToUpdate = await ActivityReportGoalFieldResponse.create({
-        activityReportGoalId: activityReportGoalNotToUpdate.id,
-        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
-        response: ['Activity Report Goal Response NOT TO UPDATE'],
-      });
+      activityReportGoalFieldResponseDiffGoalNotToUpdate =
+        await ActivityReportGoalFieldResponse.create({
+          activityReportGoalId: activityReportGoalNotToUpdate.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+          response: ['Activity Report Goal Response NOT TO UPDATE'],
+        });
 
       // Create ActivityReportGoalFieldResponse approved.
       activityReportGoalFieldResponseApproved = await ActivityReportGoalFieldResponse.create({
@@ -361,7 +362,7 @@ describe('goalFieldResponseHooks', () => {
             goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
           },
           individualHooks: false,
-        },
+        }
       );
 
       // Reset goal field response.
@@ -370,7 +371,7 @@ describe('goalFieldResponseHooks', () => {
         {
           where: { id: goalFieldResponse.id },
           individualHooks: false,
-        },
+        }
       );
 
       // Reset activity report goal field response.
@@ -379,7 +380,7 @@ describe('goalFieldResponseHooks', () => {
         {
           where: { id: activityReportGoalFieldResponse.id },
           individualHooks: false,
-        },
+        }
       );
 
       // Retrieve updated goal field response.
@@ -405,11 +406,12 @@ describe('goalFieldResponseHooks', () => {
 
       // Retrieve not to update activity report goal field response.
       // eslint-disable-next-line max-len
-      activityReportGoalFieldResponseDiffGoalNotToUpdate = await ActivityReportGoalFieldResponse.findOne({
-        where: {
-          id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
-        },
-      });
+      activityReportGoalFieldResponseDiffGoalNotToUpdate =
+        await ActivityReportGoalFieldResponse.findOne({
+          where: {
+            id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
+          },
+        });
 
       // Delete any ActivityReportGoalFieldResponses for the missing response.
       await ActivityReportGoalFieldResponse.destroy({
@@ -424,11 +426,17 @@ describe('goalFieldResponseHooks', () => {
       // Assert initial values.
       expect(goalFieldResponse.response).toEqual(['Initial Activity Report Goal Response']);
       expect(activityReportGoalFieldResponse.response).toEqual(goalFieldResponse.response);
-      expect(activityReportGoalFieldResponseApproved.response).toEqual(['Initial Approved Activity Report Goal Response']);
+      expect(activityReportGoalFieldResponseApproved.response).toEqual([
+        'Initial Approved Activity Report Goal Response',
+      ]);
 
       // Assert Initial No Change values.
-      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
-      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
+      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
 
       // Assert the activityReportGoalAlreadyUsingFeiResponse is set.
       let alreadyUsingResponse = await ActivityReportGoalFieldResponse.findOne({
@@ -451,7 +459,7 @@ describe('goalFieldResponseHooks', () => {
         {
           where: { id: goalFieldResponse.id },
           individualHooks: true,
-        },
+        }
       );
 
       // Retrieve updated goal field response.
@@ -478,7 +486,9 @@ describe('goalFieldResponseHooks', () => {
       // Assert updated values.
       expect(goalFieldResponse.response).toEqual(['Updated Goal Field Response']);
       expect(activityReportGoalFieldResponse.response).toEqual(goalFieldResponse.response);
-      expect(activityReportGoalFieldResponseApproved.response).toEqual(['Initial Approved Activity Report Goal Response']);
+      expect(activityReportGoalFieldResponseApproved.response).toEqual([
+        'Initial Approved Activity Report Goal Response',
+      ]);
 
       // Get the activity report associated with activityReportGoalFieldResponse.
       const activityReportUpdatedAt = await ActivityReport.findOne({
@@ -500,7 +510,9 @@ describe('goalFieldResponseHooks', () => {
       expect(activityReportUpdatedAtDate >= beforeGoalFieldResponseUpdate).toBeTruthy();
 
       // eslint-disable-next-line max-len
-      const approvedActivityReportUpdatedAtDate = new Date(activityReportApprovedUpdatedAt.updatedAt);
+      const approvedActivityReportUpdatedAtDate = new Date(
+        activityReportApprovedUpdatedAt.updatedAt
+      );
       expect(approvedActivityReportUpdatedAtDate < beforeGoalFieldResponseUpdate).toBeTruthy();
 
       // Get report not to update.
@@ -523,14 +535,19 @@ describe('goalFieldResponseHooks', () => {
       });
 
       // eslint-disable-next-line max-len
-      activityReportGoalFieldResponseDiffGoalNotToUpdate = await ActivityReportGoalFieldResponse.findOne({
-        where: {
-          id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
-        },
-      });
+      activityReportGoalFieldResponseDiffGoalNotToUpdate =
+        await ActivityReportGoalFieldResponse.findOne({
+          where: {
+            id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
+          },
+        });
 
-      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
-      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
+      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
 
       // Assert we only have one entry still for the same FEI.
       alreadyUsingResponse = await ActivityReportGoalFieldResponse.findAll({
@@ -575,7 +592,9 @@ describe('goalFieldResponseHooks', () => {
         },
       });
       expect(existingResponses.length).toBe(1);
-      expect(existingResponses[0].response).toEqual(['Initial Missing Activity Report Goal Response']);
+      expect(existingResponses[0].response).toEqual([
+        'Initial Missing Activity Report Goal Response',
+      ]);
 
       // Retrieve all ActivityReportGoalFieldResponses for the missing response.
       missingResponses = await ActivityReportGoalFieldResponse.findAll({
@@ -595,7 +614,7 @@ describe('goalFieldResponseHooks', () => {
         {
           where: { id: missingGoalFieldResponse.id },
           individualHooks: true,
-        },
+        }
       );
 
       // Assert the ActivityReport goal field response was created.
@@ -606,7 +625,9 @@ describe('goalFieldResponseHooks', () => {
         },
       });
       expect(missingResponses.length).toBe(1);
-      expect(missingResponses[0].response).toEqual(['Updated Missing Activity Report Goal Response']);
+      expect(missingResponses[0].response).toEqual([
+        'Updated Missing Activity Report Goal Response',
+      ]);
 
       // Verify we only have one entry still for the same FEI.
       existingResponses = await ActivityReportGoalFieldResponse.findAll({
@@ -616,7 +637,9 @@ describe('goalFieldResponseHooks', () => {
         },
       });
       expect(existingResponses.length).toBe(1);
-      expect(existingResponses[0].response).toEqual(['Updated Missing Activity Report Goal Response']);
+      expect(existingResponses[0].response).toEqual([
+        'Updated Missing Activity Report Goal Response',
+      ]);
 
       // Assert the final count of ActivityReportGoalFieldResponses.
       const activityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll({
@@ -638,7 +661,7 @@ describe('goalFieldResponseHooks', () => {
         },
         {
           where: { id: report.id },
-        },
+        }
       );
 
       // Assert initial values.
@@ -646,8 +669,12 @@ describe('goalFieldResponseHooks', () => {
       expect(activityReportGoalFieldResponse.response).toEqual(goalFieldResponse.response);
 
       // Assert Initial No Change values.
-      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
-      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
+      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
 
       // HOOK: Change goal response to trigger hook.
       await GoalFieldResponse.update(
@@ -655,7 +682,7 @@ describe('goalFieldResponseHooks', () => {
         {
           where: { id: goalFieldResponse.id },
           individualHooks: true,
-        },
+        }
       );
 
       // Retrieve updated goal field response.
@@ -674,7 +701,9 @@ describe('goalFieldResponseHooks', () => {
 
       // Assert updated values.
       expect(goalFieldResponse.response).toEqual(['Updated Goal Field Response']);
-      expect(activityReportGoalFieldResponse.response).toEqual(['Initial Activity Report Goal Response']);
+      expect(activityReportGoalFieldResponse.response).toEqual([
+        'Initial Activity Report Goal Response',
+      ]);
 
       // Assert no updated values.
       goalFieldResponseDiffGoalNotToUpdate = await GoalFieldResponse.findOne({
@@ -684,14 +713,19 @@ describe('goalFieldResponseHooks', () => {
       });
 
       // eslint-disable-next-line max-len
-      activityReportGoalFieldResponseDiffGoalNotToUpdate = await ActivityReportGoalFieldResponse.findOne({
-        where: {
-          id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
-        },
-      });
+      activityReportGoalFieldResponseDiffGoalNotToUpdate =
+        await ActivityReportGoalFieldResponse.findOne({
+          where: {
+            id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
+          },
+        });
 
-      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
-      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+      expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
+      expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual([
+        'Activity Report Goal Response NOT TO UPDATE',
+      ]);
     });
   });
 });

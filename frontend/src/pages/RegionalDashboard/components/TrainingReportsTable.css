@@ -1,0 +1,9 @@
+.training-reports-table--widget-container .usa-table tbody td,
+.training-reports-table--widget-container
+  .usa-table
+  tbody
+  td
+  .smart-hub-tooltip
+  .smart-hub--ellipsis {
+  font-size: 15px;
+}

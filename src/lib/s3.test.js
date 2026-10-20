@@ -6,11 +6,12 @@ const loadModule = (env = {}) => {
   jest.resetModules();
   process.env = { ...ORIGINAL_ENV, ...env };
   const recordedCommands = [];
-  const makeCommand = (name) => jest.fn((params) => {
-    const cmd = { name, params };
-    recordedCommands.push(cmd);
-    return cmd;
-  });
+  const makeCommand = (name) =>
+    jest.fn((params) => {
+      const cmd = { name, params };
+      recordedCommands.push(cmd);
+      return cmd;
+    });
 
   const mockSend = jest.fn();
   const mockDone = jest.fn().mockResolvedValue({ Key: 'uploaded-key' });
@@ -18,7 +19,11 @@ const loadModule = (env = {}) => {
   const mockGetSignedUrl = jest.fn();
   const mockAuditLogger = { info: jest.fn(), error: jest.fn() };
   const mockErrorLogger = {
-    error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    trace: jest.fn(),
   };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
@@ -207,7 +212,9 @@ describe('S3 helpers', () => {
       const client = { send: jest.fn().mockRejectedValue(error) };
       const job = { data: { fileId: 2, fileKey: 'missing.txt', bucket: 'bucket-one' } };
       const res = await deleteFileFromS3Job(job, client);
-      expect(mockAuditLogger.error).toHaveBeenCalledWith("S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom");
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(
+        "S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom"
+      );
       expect(res).toEqual({ data: job.data, status: 500, res: undefined });
     });
   });
@@ -216,9 +223,7 @@ describe('S3 helpers', () => {
     it('enables versioning when it is not already enabled', async () => {
       const { verifyVersioning, recordedCommands } = loadModule();
       const client = {
-        send: jest.fn()
-          .mockResolvedValueOnce({ Status: 'Suspended' })
-          .mockResolvedValueOnce({}),
+        send: jest.fn().mockResolvedValueOnce({ Status: 'Suspended' }).mockResolvedValueOnce({}),
       };
       await verifyVersioning('bucket-one', client);
       expect(client.send).toHaveBeenCalledTimes(2);
@@ -252,9 +257,7 @@ describe('S3 helpers', () => {
     it('buffers the GetObject Body stream before returning', async () => {
       const { downloadFile, recordedCommands } = loadModule();
       const body = {
-        transformToByteArray: jest.fn().mockResolvedValue(
-          new Uint8Array([97, 98, 99]),
-        ),
+        transformToByteArray: jest.fn().mockResolvedValue(new Uint8Array([97, 98, 99])),
       };
       const response = { Body: body, ContentType: 'text/plain' };
       const client = { send: jest.fn().mockResolvedValue(response) };
@@ -290,46 +293,89 @@ describe('S3 helpers', () => {
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: '',
+        S3_PUBLIC_ENDPOINT: '',
       };
-      const {
-        getSignedDownloadUrl,
-        mockGetSignedUrl,
-        recordedCommands,
-        mockAuditLogger,
-      } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'test.amazonaws.com', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
       expect(mockAuditLogger.info).toHaveBeenCalled();
+      // AWS S3 uses virtual-hosted style, so the bucket is not part of the path
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ path: '/file.txt' }),
+        expect.any(Object)
+      );
     });
 
-    it('uses Minio host when S3_ENDPOINT is set', async () => {
+    it('maps the Docker-internal minio host to localhost when S3_PUBLIC_ENDPOINT is unset', async () => {
       const env = {
         S3_BUCKET: 'env-bucket',
         AWS_ACCESS_KEY_ID: 'ENV_AK',
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
         S3_ENDPOINT: 'http://minio:9000',
+        S3_PUBLIC_ENDPOINT: '',
       };
-      const {
-        getSignedDownloadUrl,
-        mockGetSignedUrl,
-        mockAuditLogger,
-      } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
-      const result = { host: 'minio:9000', path: '/file.txt' };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      expect(res).toEqual({ url: `http://${result.host}${result.path}`, error: null });
       expect(mockAuditLogger.info).toHaveBeenCalled();
-      // Verify that mockGetSignedUrl was called with the Minio host
+      // Verify the host is browser-reachable and the link is path-style (bucket in the path)
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
-          host: 'minio:9000',
+          host: 'localhost:9000',
+          path: '/bucket-one/file.txt',
         }),
-        expect.any(Object),
+        expect.any(Object)
+      );
+    });
+
+    it('keeps a non-minio S3_ENDPOINT host when S3_PUBLIC_ENDPOINT is unset', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://storage.example.test:9000',
+        S3_PUBLIC_ENDPOINT: '',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      const client = { send: jest.fn() };
+      mockGetSignedUrl.mockImplementation(() => ({
+        host: 'storage.example.test:9000',
+        path: '/bucket-one/file.txt',
+      }));
+      getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ host: 'storage.example.test:9000' }),
+        expect.any(Object)
+      );
+    });
+
+    it('prefers S3_PUBLIC_ENDPOINT over S3_ENDPOINT for the link host', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://minio:9000',
+        S3_PUBLIC_ENDPOINT: 'http://localhost:9000',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      const client = { send: jest.fn() };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
+      mockGetSignedUrl.mockImplementation(() => result);
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+      expect(res).toEqual({ url: 'http://localhost:9000/bucket-one/file.txt', error: null });
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ host: 'localhost:9000', path: '/bucket-one/file.txt' }),
+        expect.any(Object)
       );
     });
 
@@ -341,21 +387,19 @@ describe('S3 helpers', () => {
         AWS_REGION: 'us-gov-west-1',
         S3_ENDPOINT: 'http://localhost:9000',
       };
-      const {
-        getSignedDownloadUrl,
-        mockGetSignedUrl,
-      } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
       const client = { send: jest.fn() };
-      const result = { host: 'localhost:9000', path: '/file.txt' };
+      const result = { host: 'localhost:9000', path: '/bucket-one/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
-      expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
+      expect(res).toEqual({ url: `http://${result.host}${result.path}`, error: null });
       // Verify that mockGetSignedUrl was called with the localhost host
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'localhost:9000',
+          path: '/bucket-one/file.txt',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -366,12 +410,12 @@ describe('S3 helpers', () => {
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
       };
-      const {
-        getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger,
-      } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const fakeErr = new Error('presign failed');
-      mockGetSignedUrl.mockImplementationOnce(() => { throw fakeErr; });
+      mockGetSignedUrl.mockImplementationOnce(() => {
+        throw fakeErr;
+      });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
       expect(mockAuditLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
       expect(res.url).toBeNull();
@@ -381,14 +425,12 @@ describe('S3 helpers', () => {
 
   describe('uploadFile', () => {
     it('enables versioning in production before uploading', async () => {
-      const {
-        uploadFile, mockUpload, mockDone, recordedCommands,
-      } = loadModule({ NODE_ENV: 'production' });
+      const { uploadFile, mockUpload, mockDone, recordedCommands } = loadModule({
+        NODE_ENV: 'production',
+      });
       mockUpload.mockImplementation(() => ({ done: mockDone }));
       const client = {
-        send: jest.fn()
-          .mockResolvedValueOnce({ Status: 'Suspended' })
-          .mockResolvedValueOnce({}),
+        send: jest.fn().mockResolvedValueOnce({ Status: 'Suspended' }).mockResolvedValueOnce({}),
       };
       const buffer = Buffer.from('data');
       const type = { mime: 'text/plain' };

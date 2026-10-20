@@ -1,13 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getTopics } from '../../fetchers/topics';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-export default function FilterTopicSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterTopicSelect({ onApply, inputId, query }) {
   const [topicOptions, setTopicOptions] = useState([]);
 
   useEffect(() => {

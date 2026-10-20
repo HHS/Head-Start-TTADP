@@ -37,6 +37,9 @@ describe('widgets index', () => {
 
     expect(widgets.trHoursOfTrainingByNationalCenter).toBeDefined();
     expect(typeof widgets.trHoursOfTrainingByNationalCenter).toBe('function');
+
+    expect(widgets.goalDashboard).toBeDefined();
+    expect(typeof widgets.goalDashboard).toBe('function');
   });
 
   it('exports the correct number of widgets', () => {

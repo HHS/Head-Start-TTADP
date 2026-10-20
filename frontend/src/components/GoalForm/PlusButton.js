@@ -1,17 +1,18 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import './PlusButton.scss';
 
-export default function PlusButton({
-  onClick,
-  text,
-  testId,
-  className,
-}) {
+export default function PlusButton({ onClick, text, testId, className }) {
   return (
     <>
-      <Button type="button" className={`ttahub-plus-button ${className}`} data-testid={testId} unstyled onClick={onClick}>
+      <Button
+        type="button"
+        className={`ttahub-plus-button ${className}`}
+        data-testid={testId}
+        unstyled
+        onClick={onClick}
+      >
         <i className="fa-regular fa-circle-plus margin-right-1" />
         {text}
       </Button>

@@ -6,16 +6,23 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      const FEI_GOAL = '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)';
-      const MONITORING_GOAL = '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+      const FEI_GOAL =
+        '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)';
+      const MONITORING_GOAL =
+        '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
 
       const FEI_SOURCE = 'Regional office priority';
       const MONITORING_SOURCE = 'Federal monitoring issues, including CLASS and RANs';
 
-      await queryInterface.addColumn('GoalTemplates', 'source', {
-        type: _Sequelize.STRING,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'GoalTemplates',
+        'source',
+        {
+          type: _Sequelize.STRING,
+          allowNull: true,
+        },
+        { transaction }
+      );
 
       await queryInterface.sequelize.query(
         `
@@ -35,7 +42,7 @@ module.exports = {
               SELECT "id" FROM "GoalTemplates" WHERE "templateName" ILIKE '${MONITORING_GOAL}' AND "creationMethod" = 'Curated'
             );
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

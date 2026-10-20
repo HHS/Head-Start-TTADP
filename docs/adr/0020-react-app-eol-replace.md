@@ -32,4 +32,10 @@ We will replace Create React App with Vite for our React project. Vite offers se
 - **Migrating Existing Codebase:** While Vite aims to be as compatible with CRA as possible, some parts of the existing codebase might require adjustments—especially if there are features or dependencies that assume CRA's specific setup. A detailed migration plan and testing will be necessary to ensure smooth adoption. Since we don't extend or modify the vanilla CRA configuration, this is unlikely to be a substantial hurdle.
 - **Possible Short-Term Disruption:** The switch to Vite, while beneficial in the long run, may temporarily disrupt development workflows as the team adapts to the new tool and resolves compatibility issues.
 
+### Post-migration compatibility notes
+- The Draft.js stack (`react-draft-wysiwyg`/`draft-js` via `fbjs`) expects a Node-style `global` and `setImmediate` in browser runtime code.
+- In Vite, this requires explicit compatibility shims (`global` -> `globalThis` in Vite config plus early runtime setup in `frontend/src/polyfills.js`).
+- Editor replacement was evaluated at a high level: current usage spans many read-only and editable surfaces, HTML serialization helpers, and autosave behavior tied to `.rdw-editor-main`.
+- Recommendation: keep the targeted shim in place for immediate stability, then execute any editor replacement as a dedicated phased effort (feature parity + regression coverage), rather than coupling it to the CRA->Vite migration bug fix.
+
 In summary, while there are some potential challenges with the migration, the benefits—particularly in terms of faster builds, improved developer experience, and reduced complexity—make Vite a strong alternative to CRA.

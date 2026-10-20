@@ -1,54 +1,53 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  TopicFrequencyGraphWidget,
-  sortData,
-  SORT_ORDER,
-} from '../TopicFrequencyGraph';
+import React from 'react';
+import { SORT_ORDER, sortData, TopicFrequencyGraphWidget } from '../TopicFrequencyGraph';
 
-const TEST_DATA = [{
-  topic: 'CLASS: Instructional Support',
-  count: 12,
-},
-{
-  topic: 'Community and Self-Assessment',
-  count: 155,
-},
-{
-  topic: 'Family Support Services',
-  count: 53,
-},
-{
-  topic: 'Fiscal / Budget',
-  count: 0,
-},
-{
-  topic: 'Five-Year Grant',
-  count: 33,
-},
-{
-  topic: 'Human Resources',
-  count: 0,
-}];
+const TEST_DATA = [
+  {
+    topic: 'CLASS: Instructional Support',
+    count: 12,
+  },
+  {
+    topic: 'Community and Self-Assessment',
+    count: 155,
+  },
+  {
+    topic: 'Family Support Services',
+    count: 53,
+  },
+  {
+    topic: 'Fiscal / Budget',
+    count: 0,
+  },
+  {
+    topic: 'Five-Year Grant',
+    count: 33,
+  },
+  {
+    topic: 'Human Resources',
+    count: 0,
+  },
+];
 
-const renderArGraphOverview = async (props) => (
+const renderArGraphOverview = async (props) =>
   render(
-    <TopicFrequencyGraphWidget updateRoles={() => {}} loading={props.loading || false} data={props.data} dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }} />,
-  )
-);
+    <TopicFrequencyGraphWidget
+      updateRoles={() => {}}
+      loading={props.loading || false}
+      data={props.data}
+      dateTime={{ timestamp: '', label: '05/27/1967-08/21/1968' }}
+    />
+  );
 
 describe('Topic & Frequency Graph Widget', () => {
   it('shows the correct data', async () => {
     renderArGraphOverview({ data: TEST_DATA });
-    const graphTitle = screen.getByRole('heading', { name: /number of activity reports by topic/i });
+    const graphTitle = screen.getByRole('heading', {
+      name: /number of activity reports by topic/i,
+    });
     expect(graphTitle).toBeInTheDocument();
     expect(document.querySelector('svg')).toBeInTheDocument();
   });
@@ -56,32 +55,34 @@ describe('Topic & Frequency Graph Widget', () => {
   it('correctly sorts data by count', () => {
     let data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC);
-    expect(data).toStrictEqual([
-      {
-        topic: 'Community and Self-Assessment',
-        count: 155,
-      },
-      {
-        topic: 'Family Support Services',
-        count: 53,
-      },
-      {
-        topic: 'Five-Year Grant',
-        count: 33,
-      },
-      {
-        topic: 'CLASS: Instructional Support',
-        count: 12,
-      },
-      {
-        topic: 'Fiscal / Budget',
-        count: 0,
-      },
-      {
-        topic: 'Human Resources',
-        count: 0,
-      },
-    ].reverse());
+    expect(data).toStrictEqual(
+      [
+        {
+          topic: 'Community and Self-Assessment',
+          count: 155,
+        },
+        {
+          topic: 'Family Support Services',
+          count: 53,
+        },
+        {
+          topic: 'Five-Year Grant',
+          count: 33,
+        },
+        {
+          topic: 'CLASS: Instructional Support',
+          count: 12,
+        },
+        {
+          topic: 'Fiscal / Budget',
+          count: 0,
+        },
+        {
+          topic: 'Human Resources',
+          count: 0,
+        },
+      ].reverse()
+    );
 
     data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC, true);
@@ -118,32 +119,34 @@ describe('Topic & Frequency Graph Widget', () => {
 
     sortData(data, SORT_ORDER.ALPHA);
 
-    expect(data).toStrictEqual([
-      {
-        topic: 'CLASS: Instructional Support',
-        count: 12,
-      },
-      {
-        topic: 'Community and Self-Assessment',
-        count: 155,
-      },
-      {
-        topic: 'Family Support Services',
-        count: 53,
-      },
-      {
-        topic: 'Fiscal / Budget',
-        count: 0,
-      },
-      {
-        topic: 'Five-Year Grant',
-        count: 33,
-      },
-      {
-        topic: 'Human Resources',
-        count: 0,
-      },
-    ].reverse());
+    expect(data).toStrictEqual(
+      [
+        {
+          topic: 'CLASS: Instructional Support',
+          count: 12,
+        },
+        {
+          topic: 'Community and Self-Assessment',
+          count: 155,
+        },
+        {
+          topic: 'Family Support Services',
+          count: 53,
+        },
+        {
+          topic: 'Fiscal / Budget',
+          count: 0,
+        },
+        {
+          topic: 'Five-Year Grant',
+          count: 33,
+        },
+        {
+          topic: 'Human Resources',
+          count: 0,
+        },
+      ].reverse()
+    );
   });
 
   it('shows accessibility/tabular data', async () => {
@@ -168,9 +171,13 @@ describe('Topic & Frequency Graph Widget', () => {
     renderArGraphOverview({ data: [...TEST_DATA] });
     const button = screen.getByRole('button', { name: /change topic graph order/i });
     act(() => userEvent.click(button));
-    const aZ = screen.getByRole('button', { name: /select to view data from a to z\. select apply filters button to apply selection/i });
+    const aZ = screen.getByRole('button', {
+      name: /select to view data from a to z\. select apply filters button to apply selection/i,
+    });
     act(() => userEvent.click(aZ));
-    const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
+    const apply = screen.getByRole('button', {
+      name: 'Apply filters for the Change topic graph order menu',
+    });
 
     // Wait for graph to render (takes a sec because of dynamic imports)
     await screen.findByText('Human Resources');

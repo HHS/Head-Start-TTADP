@@ -10,7 +10,7 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.sequelize.query(
@@ -23,15 +23,23 @@ module.exports = {
         -- add unique constraint
         ALTER TABLE "Groups"
         ADD CONSTRAINT "Groups_name_key" UNIQUE (name);`,
-        { transaction },
+        { transaction }
       );
 
       // add isUnique boolean column to the Groups table
-      await queryInterface.addColumn('Groups', 'isPublic', { type: Sequelize.BOOLEAN, default: false }, { transaction });
+      await queryInterface.addColumn(
+        'Groups',
+        'isPublic',
+        { type: Sequelize.BOOLEAN, default: false },
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         UPDATE "Groups"
-        SET "isPublic" = false;`, { transaction });
+        SET "isPublic" = false;`,
+        { transaction }
+      );
     });
   },
   down: async (queryInterface) => {
@@ -45,14 +53,14 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Disable allow null and unique.
       await queryInterface.sequelize.query(
         `ALTER TABLE "Groups"
         DROP CONSTRAINT "Groups_name_key";`,
-        { transaction },
+        { transaction }
       );
 
       // remove isUnique boolean column to the Groups table

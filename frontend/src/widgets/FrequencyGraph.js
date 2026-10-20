@@ -1,11 +1,11 @@
-import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import withWidgetData from './withWidgetData';
+import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import Container from '../components/Container';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import BarGraph from './BarGraph';
-import DisplayTableToggle from '../components/DisplayTableToggleButton';
+import withWidgetData from './withWidgetData';
 import './FrequencyGraph.css';
 
 function sortData(data, isTabular) {
@@ -35,14 +35,25 @@ export function FreqGraph({ data, loading }) {
   const columnHeadings = HEADINGS[TOPIC_STR];
 
   return (
-    <Container className="ttahub--frequency-graph position-relative" loading={loading} loadingLabel="Topics frequency loading">
+    <Container
+      className="ttahub--frequency-graph position-relative"
+      loading={loading}
+      loadingLabel="Topics frequency loading"
+    >
       <Grid row className="position-relative margin-bottom-2">
-        <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
+        <Grid
+          className="flex-align-self-center desktop:display-flex flex-align-center"
+          desktop={{ col: 'auto' }}
+          mobileLg={{ col: 10 }}
+        >
           <h2 className="display-inline desktop:margin-y-0 margin-left-1" aria-live="polite">
             Topics in activity reports
           </h2>
         </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
+        <Grid
+          desktop={{ col: 'auto' }}
+          className="ttahub--show-accessible-data-button flex-align-self-center"
+        >
           <DisplayTableToggle
             displayTable={showAccessibleData}
             title="number of activity reports by topics"
@@ -50,21 +61,15 @@ export function FreqGraph({ data, loading }) {
           />
         </Grid>
       </Grid>
-      { showAccessibleData
-        ? (
-          <AccessibleWidgetData
-            caption="Number of Activity Reports by Topics Table"
-            columnHeadings={columnHeadings}
-            rows={accessibleRows}
-          />
-        )
-        : (
-          <BarGraph
-            data={sortedData}
-            xAxisLabel="Topics"
-            widgetRef={widgetRef}
-          />
-        )}
+      {showAccessibleData ? (
+        <AccessibleWidgetData
+          caption="Number of Activity Reports by Topics Table"
+          columnHeadings={columnHeadings}
+          rows={accessibleRows}
+        />
+      ) : (
+        <BarGraph data={sortedData} xAxisLabel="Topics" widgetRef={widgetRef} />
+      )}
     </Container>
   );
 }
@@ -75,8 +80,9 @@ FreqGraph.propTypes = {
       PropTypes.shape({
         topic: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
 };

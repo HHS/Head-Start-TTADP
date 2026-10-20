@@ -1,5 +1,5 @@
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, act, screen } from '@testing-library/react';
 import DisplayNextSteps, { skipDisplaySteps } from '../DisplayNextSteps';
 
 describe('DisplayNextSteps', () => {
@@ -10,30 +10,36 @@ describe('DisplayNextSteps', () => {
     });
 
     it('should return true if all steps do not have a note and completeDate', () => {
-      expect(skipDisplaySteps([
-        { note: '', completeDate: '' },
-        { note: null, completeDate: null },
-      ])).toBe(true);
+      expect(
+        skipDisplaySteps([
+          { note: '', completeDate: '' },
+          { note: null, completeDate: null },
+        ])
+      ).toBe(true);
     });
 
     it('should return false if some steps have a note or completeDate', () => {
-      expect(skipDisplaySteps([
-        { note: 'Note 1', completeDate: '' },
-        { note: '', completeDate: '2022-01-01' },
-      ])).toBe(false);
+      expect(
+        skipDisplaySteps([
+          { note: 'Note 1', completeDate: '' },
+          { note: '', completeDate: '2022-01-01' },
+        ])
+      ).toBe(false);
     });
 
     it('should return false if all steps have a note or completeDate', () => {
-      expect(skipDisplaySteps([
-        {
-          note: 'First step',
-          completeDate: '2022-01-01',
-        },
-        {
-          note: 'second step',
-          completeDate: '2022-01-02',
-        },
-      ])).toBe(false);
+      expect(
+        skipDisplaySteps([
+          {
+            note: 'First step',
+            completeDate: '2022-01-01',
+          },
+          {
+            note: 'second step',
+            completeDate: '2022-01-02',
+          },
+        ])
+      ).toBe(false);
     });
   });
 

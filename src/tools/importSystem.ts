@@ -1,19 +1,18 @@
+import { MAINTENANCE_TYPE } from '../constants';
 import { download, process } from '../lib/importSystem';
 import { enqueueImportMaintenanceJob } from '../lib/maintenance/import';
-import { MAINTENANCE_TYPE } from '../constants';
 import { auditLogger } from '../logger';
 
 export default async function manuallyTriggerImportSystem(
   action: string,
   importIdStr: string,
-  timeBoxStr: string,
+  timeBoxStr: string
 ) {
   try {
-    if (!importIdStr || importIdStr.length === 0) throw new Error(`Bad or missing importId: '${importIdStr}'`);
+    if (!importIdStr || importIdStr.length === 0)
+      throw new Error(`Bad or missing importId: '${importIdStr}'`);
     const importId = Number(importIdStr);
-    const timeBox = timeBoxStr && timeBoxStr.length
-      ? Number(timeBoxStr)
-      : undefined;
+    const timeBox = timeBoxStr && timeBoxStr.length ? Number(timeBoxStr) : undefined;
     if (!Number.isNaN(importId)) {
       switch (action) {
         case 'download':

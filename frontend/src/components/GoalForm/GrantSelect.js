@@ -1,14 +1,10 @@
-import React from 'react';
+import { FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Select from 'react-select';
-import {
-  FormGroup, Label,
-} from '@trussworks/react-uswds';
-import {
-  SELECT_GRANTS_ERROR,
-} from './constants';
-import selectOptionsReset from '../selectOptionsReset';
 import Req from '../Req';
+import selectOptionsReset from '../selectOptionsReset';
+import { SELECT_GRANTS_ERROR } from './constants';
 
 export default function GrantSelect({
   error,
@@ -23,9 +19,7 @@ export default function GrantSelect({
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
-        {label}
-        {' '}
-        <Req />
+        {label} <Req />
       </Label>
       {error}
       <Select
@@ -52,15 +46,19 @@ export default function GrantSelect({
 
 GrantSelect.propTypes = {
   error: PropTypes.node.isRequired,
-  selectedGrants: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  selectedGrants: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
-  possibleGrants: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  possibleGrants: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   label: PropTypes.string,

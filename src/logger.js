@@ -1,7 +1,38 @@
-import { format, transports, createLogger } from 'winston';
+import crypto from 'node:crypto';
 import expressWinston from 'express-winston';
 import path from 'path';
+import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
+
+/**
+ * One-way, truncated HMAC of an identifier (e.g. an HSES sub/email) for use as a log
+ * correlation key. Lets separate log lines be tied to the same login/user without ever
+ * writing the identifier itself to logs.
+ *
+ * Keyed with SESSION_SECRET rather than a bare hash: emails are predictable/directory-sourced,
+ * so an unkeyed hash would let anyone with log access hash guessed candidates and match them
+ * against logged values, defeating the point of not logging the identifier. If no secret is
+ * configured, we skip the hash entirely rather than falling back to a known/empty key, which
+ * would be just as guessable as an unkeyed hash.
+ * @param {unknown} value
+ * @returns {string | undefined}
+ */
+const hashForLogging = (value) => {
+  if (value === undefined || value === null || value === '' || !process.env.SESSION_SECRET) {
+    return undefined;
+  }
+  return crypto
+    .createHmac('sha256', process.env.SESSION_SECRET)
+    .update(String(value))
+    .digest('hex')
+    .slice(0, 16);
+};
+
+/**
+ * @typedef {import('winston').Logger & {
+ *   alertError: (message: string, alertType: string, err?: unknown) => void
+ * }} AuditLogger
+ */
 
 const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
 const callsiteExcludePatterns = [
@@ -77,6 +108,41 @@ const getCallsite = () => {
   return getCallsiteFromStack(stackContainer.stack);
 };
 
+const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return { name: value.name, message: value.message };
+  }
+
+  seen.add(value);
+
+  const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
+    const propertyValue = value[key];
+    acc[key] =
+      propertyValue instanceof Error
+        ? normalizeErrorForLogging(propertyValue, seen)
+        : propertyValue;
+    return acc;
+  }, {});
+
+  if (!normalized.name) {
+    normalized.name = value.name;
+  }
+
+  if (!normalized.message) {
+    normalized.message = value.message;
+  }
+
+  if (!normalized.stack && value.stack) {
+    normalized.stack = value.stack;
+  }
+
+  return normalized;
+};
+
 const callsiteFormatter = format((info) => {
   const callsite = getCallsite();
   if (!callsite) {
@@ -99,56 +165,76 @@ const formatFunc = ({
   meta = {},
   sourceFile,
   sourceLine,
+  ...fields
 }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(meta)}${location}`;
+  const combinedMeta = { ...meta, ...fields };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
 };
 
 const stringFormatter = format.combine(
   format.timestamp(),
   format.colorize(),
   format.align(),
-  format.printf(formatFunc),
+  format.printf(formatFunc)
 );
 
-const jsonFormatter = format.combine(
-  format.timestamp(),
-  format.json(),
-);
+const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
   ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
-  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter,
+  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
 
 const logger = createLogger({
   level,
   format: formatter,
-  transports: [
-    new transports.Console(),
-  ],
+  transports: [new transports.Console()],
 });
 
+/** @type {AuditLogger} */
 const auditLogger = createLogger({
   level: 'info',
-  format: format.combine(
-    format.label({ label: 'AUDIT' }),
-    formatter,
-  ),
-  transports: [
-    new transports.Console(),
-  ],
+  format: format.combine(format.label({ label: 'AUDIT' }), formatter),
+  transports: [new transports.Console()],
 });
 
+auditLogger.alertError = (message, alertType, err = undefined) => {
+  const alertMeta = {
+    notify: true,
+    alertType,
+    logCategory: 'audit',
+  };
+
+  if (err !== undefined) {
+    alertMeta.err = normalizeErrorForLogging(err);
+  }
+
+  auditLogger.error(message, alertMeta);
+};
+
+const REDACTED_VALUE = '[REDACTED]';
+
+// Headers that carry credentials or session identifiers.
+const SENSITIVE_HEADERS = ['cookie', 'authorization', 'proxy-authorization'];
+
+const maskHeaders = (headers) =>
+  Object.entries(headers || {}).reduce((acc, [name, value]) => {
+    acc[name] = SENSITIVE_HEADERS.includes(name.toLowerCase()) ? REDACTED_VALUE : value;
+    return acc;
+  }, {});
+
+// express-winston's default filter returns req[propName]; mask sensitive headers before logging.
+const requestFilter = (req, propName) =>
+  propName === 'headers'
+    ? maskHeaders(req.headers)
+    : expressWinston.defaultRequestFilter(req, propName);
+
 const requestLogger = expressWinston.logger({
-  transports: [
-    new transports.Console(),
-  ],
-  format: format.combine(
-    format.label({ label: 'REQUEST' }),
-    formatter,
-  ),
+  transports: [new transports.Console()],
+  format: format.combine(format.label({ label: 'REQUEST' }), formatter),
+  requestFilter,
   dynamicMeta: (req, res) => {
     if (req && req.session) {
       return {
@@ -178,8 +264,9 @@ const testingHooks = {
   parseStackLine,
   getCallsiteFromStack,
   formatFunc,
+  normalizeErrorForLogging,
+  maskHeaders,
+  requestFilter,
 };
 
-export {
-  logger, auditLogger, requestLogger, errorLogger, testingHooks,
-};
+export { auditLogger, errorLogger, hashForLogging, logger, requestLogger, testingHooks };

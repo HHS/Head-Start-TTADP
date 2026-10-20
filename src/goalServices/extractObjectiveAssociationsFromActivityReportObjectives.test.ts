@@ -1,5 +1,5 @@
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
-import { IActivityReportObjectivesModelInstance } from './types';
+import type { IActivityReportObjectivesModelInstance } from './types';
 
 describe('extractObjectiveAssociationsFromActivityReportObjectives', () => {
   it('should extract associations and call toJSON on each association', () => {
@@ -11,7 +11,7 @@ describe('extractObjectiveAssociationsFromActivityReportObjectives', () => {
 
     const associations = extractObjectiveAssociationsFromActivityReportObjectives(
       [mockActivityReportObjective],
-      'courses',
+      'courses'
     );
 
     expect(associations).toEqual([{ id: 1, name: 'Mocked Association' }]);

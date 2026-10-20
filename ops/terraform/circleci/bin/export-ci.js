@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-require = require('esm')(module /*, options*/);
-require("../index.js").exportLastMainTests();
+const esmRequire = require('esm')(module /*, options*/);
+esmRequire('../index.js').exportLastMainTests();

@@ -1,16 +1,16 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
-import getGoalsForReport from './getGoalsForReport';
+import { OBJECTIVE_STATUS } from '../constants';
 import {
-  Goal,
-  Objective,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  User,
+  Goal,
+  Objective,
   sequelize,
+  User,
 } from '../models';
-import { OBJECTIVE_STATUS } from '../constants';
+import getGoalsForReport from './getGoalsForReport';
 
 describe('getGoalsForReport', () => {
   let goal;
@@ -23,10 +23,10 @@ describe('getGoalsForReport', () => {
 
   beforeAll(async () => {
     // Create User.
-    const userName = faker.random.word();
+    const userName = faker.word.sample();
 
     user = await User.create({
-      id: faker.datatype.number({ min: 1000 }),
+      id: faker.number.int({ min: 1000, max: 1000 + 99999 }),
       homeRegionId: 1,
       name: userName,
       hsesUsername: userName,
@@ -45,17 +45,23 @@ describe('getGoalsForReport', () => {
     });
 
     // Create Included Objectives.
-    objective1 = await Objective.create({
-      title: 'Include Goal - Excluded Objective 1',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.DRAFT,
-    }, { individualHooks: true });
+    objective1 = await Objective.create(
+      {
+        title: 'Include Goal - Excluded Objective 1',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.DRAFT,
+      },
+      { individualHooks: true }
+    );
 
-    objective2 = await Objective.create({
-      title: 'Include Goal - Included Objective 2',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.DRAFT,
-    }, { individualHooks: true });
+    objective2 = await Objective.create(
+      {
+        title: 'Include Goal - Included Objective 2',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.DRAFT,
+      },
+      { individualHooks: true }
+    );
 
     // Create Exclude Goal.
     excludedGoal = await Goal.create({
@@ -68,11 +74,14 @@ describe('getGoalsForReport', () => {
     });
 
     // Create Excluded Objectives.
-    excludeObjective = await Objective.create({
-      title: 'Excluded Goal - Excluded Objective 1',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.DRAFT,
-    }, { individualHooks: true });
+    excludeObjective = await Objective.create(
+      {
+        title: 'Excluded Goal - Excluded Objective 1',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.DRAFT,
+      },
+      { individualHooks: true }
+    );
 
     // create report
     report = await ActivityReport.create({

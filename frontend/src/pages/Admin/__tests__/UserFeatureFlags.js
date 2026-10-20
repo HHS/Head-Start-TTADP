@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import UserFeatureFlags from '../UserFeatureFlags';
 
 describe('UserPermissions', () => {
@@ -20,11 +20,9 @@ describe('UserPermissions', () => {
 
     const onFeaturesChange = jest.fn();
 
-    render(<UserFeatureFlags
-      flags={flags}
-      features={features}
-      onFeaturesChange={onFeaturesChange}
-    />);
+    render(
+      <UserFeatureFlags flags={flags} features={features} onFeaturesChange={onFeaturesChange} />
+    );
 
     expect(screen.getByText(/advanced features/i)).toBeVisible();
     const firstCheck = await screen.findByRole('checkbox', { name: /first feature/i });

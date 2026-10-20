@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('reportText filtersToScopes', () => {
@@ -60,8 +60,9 @@ describe('reportText filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('excludes reports with matching text', async () => {
@@ -73,7 +74,9 @@ describe('reportText filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         // eslint-disable-next-line max-len
-        .toEqual(expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id]));
+        .toEqual(
+          expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+        );
     });
   });
 });

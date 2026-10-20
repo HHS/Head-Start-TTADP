@@ -6,6 +6,4 @@ const afterDestroy = async (_sequelize, instance) => {
   await addDeleteFileToQueue(instance.id, instance.key);
 };
 
-export {
-  afterDestroy,
-};
+export { afterDestroy };

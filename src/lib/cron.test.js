@@ -1,15 +1,10 @@
 import { CronJob } from 'cron';
-// eslint-disable-next-line import/no-named-default
-import { lastDayOfMonth, default as runCronJobs } from './cron';
+import { auditLogger, logger } from '../logger';
+import { deleteExpiredArchivedNotifications } from '../services/notifications';
+import deleteOldRecords from '../tools/dbMaintenance';
+import { dailyNightSched, lastDayOfMonth, runCronJobs } from './cron';
+import { DIGEST_CONFIG, digestForSetting, recipientApprovedDigest } from './mailer';
 import updateGrantsRecipients from './updateGrantsRecipients';
-import {
-  approvedDigest,
-  changesRequestedDigest,
-  collaboratorDigest,
-  submittedDigest,
-  recipientApprovedDigest,
-  trainingReportTaskDueNotifications,
-} from './mailer';
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation((schedule, jobFunction) => ({
@@ -19,20 +14,68 @@ jest.mock('cron', () => ({
   })),
 }));
 
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
 jest.mock('./updateGrantsRecipients');
+jest.mock('../tools/dbMaintenance');
+jest.mock('../services/notifications', () => ({
+  deleteExpiredArchivedNotifications: jest.fn(),
+}));
 jest.mock('./mailer', () => ({
-  approvedDigest: jest.fn().mockReturnValue('approvedDigest'),
-  changesRequestedDigest: jest.fn().mockReturnValue('changesRequestedDigest'),
-  collaboratorDigest: jest.fn().mockReturnValue('collaboratorDigest'),
-  submittedDigest: jest.fn().mockReturnValue('submittedDigest'),
+  DIGEST_CONFIG: {
+    collaboratorAction: {
+      settingKey: 'collaborator',
+      reportFetcher: 'collaboratorFetcher',
+      actionType: 'collaboratorAction',
+      logKey: 'CollaboratorDigest',
+    },
+    changesRequestedAction: {
+      settingKey: 'changesRequested',
+      reportFetcher: 'changesRequestedFetcher',
+      actionType: 'changesRequestedAction',
+      logKey: 'ChangesRequestedDigest',
+    },
+    submittedAction: {
+      settingKey: 'submitted',
+      reportFetcher: 'submittedFetcher',
+      actionType: 'submittedAction',
+      logKey: 'SubmittedDigest',
+    },
+    approvedAction: {
+      settingKey: 'approved',
+      reportFetcher: 'approvedFetcher',
+      actionType: 'approvedAction',
+      logKey: 'ApprovedDigest',
+    },
+  },
+  digestForSetting: jest.fn().mockResolvedValue('digestForSetting'),
   recipientApprovedDigest: jest.fn().mockReturnValue('recipientApprovedDigest'),
-  trainingReportTaskDueNotifications: jest.fn().mockReturnValue('trainingReportTaskDueNotifications'),
+  trainingReportTaskDueNotifications: jest
+    .fn()
+    .mockReturnValue('trainingReportTaskDueNotifications'),
 }));
 
 describe('cron', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  const getScheduledJob = (jobName) => {
+    const job = CronJob.mock.results
+      .map(({ value }) => value)
+      .find(({ jobFunction }) => jobFunction.name === jobName);
+
+    expect(job).toBeDefined();
+    return job;
+  };
 
   describe('lastDayOfMonth', () => {
     it('returns true if it is the last day of the month', () => {
@@ -55,6 +98,7 @@ describe('cron', () => {
 
     afterEach(() => {
       process.env = envBackup;
+      jest.restoreAllMocks();
     });
 
     it('does not start cron jobs if CF_INSTANCE_INDEX is not 0', () => {
@@ -92,7 +136,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(3);
+      expect(CronJob).toHaveBeenCalledTimes(5);
     });
 
     it('starts all cron jobs in production on instance 0 non-cloud.gov', () => {
@@ -102,19 +146,42 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(4);
+      expect(CronJob).toHaveBeenCalledTimes(6);
     });
 
-    it('runs the updateGrantsRecipients job on schedule cloud.gov', () => {
+    it('runs the updateGrantsRecipients job on schedule', () => {
       process.env.CF_INSTANCE_INDEX = '0';
       process.env.NODE_ENV = 'production';
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      const jobFunction = CronJob.mock.calls[0][1];
+      const { jobFunction } = getScheduledJob('runUpdateJob');
+
       jobFunction();
 
       expect(updateGrantsRecipients).toHaveBeenCalled();
+    });
+
+    it('catches rejected HSES imports and logs the error without rejecting the scheduled job', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+      const error = new Error("Invalid value { '$': { 'xsi:nil': 'true' } }");
+      updateGrantsRecipients.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runUpdateJob');
+
+      // Await the callback directly so a regression fails this assertion instead of
+      // emitting an unhandled rejection that could terminate the Jest process.
+      await expect(jobFunction()).resolves.toBe(false);
+
+      expect(updateGrantsRecipients).toHaveBeenCalledTimes(1);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `Error processing HSES file: ${error.message}`
+      );
+      expect(logger.error).toHaveBeenCalledWith(`HSES file Error: ${error.message}`);
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
     });
 
     it('runs the daily email job on schedule', async () => {
@@ -123,14 +190,31 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      const jobFunction = CronJob.mock.calls[1][1];
+      const { jobFunction } = getScheduledJob('runDailyEmailJob');
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(submittedDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(approvedDigest).toHaveBeenCalledWith('today', 'daily');
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...Object.values(DIGEST_CONFIG)[0],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...Object.values(DIGEST_CONFIG)[1],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...Object.values(DIGEST_CONFIG)[2],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...Object.values(DIGEST_CONFIG)[3],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('today', 'daily');
     });
 
@@ -140,14 +224,31 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      const jobFunction = CronJob.mock.calls[2][1];
+      const { jobFunction } = getScheduledJob('runWeeklyEmailJob');
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(submittedDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(approvedDigest).toHaveBeenCalledWith('this week', 'weekly');
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...Object.values(DIGEST_CONFIG)[0],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...Object.values(DIGEST_CONFIG)[1],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...Object.values(DIGEST_CONFIG)[2],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...Object.values(DIGEST_CONFIG)[3],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('this week', 'weekly');
     });
 
@@ -159,15 +260,135 @@ describe('cron', () => {
       jest.spyOn(global, 'Date').mockImplementation(() => date);
 
       runCronJobs();
-      const jobFunction = CronJob.mock.calls[3][1];
+      const { jobFunction } = getScheduledJob('runMonthlyEmailJob');
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(submittedDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(approvedDigest).toHaveBeenCalledWith('this month', 'monthly');
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...Object.values(DIGEST_CONFIG)[0],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...Object.values(DIGEST_CONFIG)[1],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...Object.values(DIGEST_CONFIG)[2],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...Object.values(DIGEST_CONFIG)[3],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('this month', 'monthly');
+    });
+
+    it('runs the audit log cleanup job on schedule', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runDBCleanupJob');
+
+      await jobFunction();
+
+      expect(deleteOldRecords).toHaveBeenCalled();
+    });
+
+    it('schedules the notification cleanup job on the nightly cron and starts it', () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+
+      runCronJobs();
+      const job = getScheduledJob('runNotificationCleanupJob');
+
+      expect(job.schedule).toBe(dailyNightSched);
+      expect(job.start).toHaveBeenCalled();
+    });
+
+    it('runs the notification cleanup job on schedule', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      deleteExpiredArchivedNotifications.mockResolvedValueOnce(5);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runNotificationCleanupJob');
+
+      await jobFunction();
+
+      expect(logger.info).toHaveBeenCalledWith('Starting expired archived notification cleanup');
+      expect(deleteExpiredArchivedNotifications).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(
+        'Completed expired archived notification cleanup (5 deleted)'
+      );
+    });
+
+    it('logs audit log cleanup errors with normalized messages and stack details', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      const error = new Error('cleanup failed');
+      deleteOldRecords.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runDBCleanupJob');
+
+      await jobFunction();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Audit Log Cleanup job: cleanup failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith('Audit Log Cleanup Error: cleanup failed');
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
+    });
+
+    it('logs notification cleanup errors without throwing', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      const error = new Error('notification cleanup failed');
+      deleteExpiredArchivedNotifications.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runNotificationCleanupJob');
+
+      await expect(jobFunction()).resolves.toBeUndefined();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Notification Cleanup job: notification cleanup failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        'Notification Cleanup Error: notification cleanup failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
+    });
+
+    it('logs non-error cron failures without losing object details', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+      digestForSetting.mockRejectedValueOnce({ reason: 'digest failed' });
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runDailyEmailJob');
+
+      await jobFunction();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing daily Email Digest job: {"reason":"digest failed"}'
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        'daily Email Digest Error: {"reason":"digest failed"}'
+      );
+      expect(logger.error).toHaveBeenCalledWith({ reason: 'digest failed' });
     });
 
     it('does not run the monthly email job if not the last day of the month', async () => {
@@ -178,14 +399,11 @@ describe('cron', () => {
       jest.spyOn(global, 'Date').mockImplementation(() => date);
 
       runCronJobs();
-      const jobFunction = CronJob.mock.calls[3][1];
+      const { jobFunction } = getScheduledJob('runMonthlyEmailJob');
 
       await jobFunction();
 
-      expect(collaboratorDigest).not.toHaveBeenCalled();
-      expect(changesRequestedDigest).not.toHaveBeenCalled();
-      expect(submittedDigest).not.toHaveBeenCalled();
-      expect(approvedDigest).not.toHaveBeenCalled();
+      expect(digestForSetting).not.toHaveBeenCalled();
       expect(recipientApprovedDigest).not.toHaveBeenCalled();
     });
   });

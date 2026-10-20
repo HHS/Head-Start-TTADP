@@ -1,28 +1,24 @@
 import db from '../models';
 
-const {
-  CollaboratorType,
-  ValidFor,
-} = db;
+const { CollaboratorType, ValidFor } = db;
 
 const getCollaboratorTypeMapping = async (
-  collectionName: string,
+  collectionName: string
 ): Promise<{ [key: string]: number }> => {
   const collaboratorTypes = await CollaboratorType.findAll({
     attributes: ['id', 'name'],
-    include: [{
-      model: ValidFor,
-      as: 'validFor',
-      attributes: [],
-      required: true,
-      where: { name: collectionName },
-    }],
+    include: [
+      {
+        model: ValidFor,
+        as: 'validFor',
+        attributes: [],
+        required: true,
+        where: { name: collectionName },
+      },
+    ],
   });
   // Create a mapping of collaborator types by name
-  const collaboratorTypeMapping = collaboratorTypes.reduce((
-    acc,
-    { dataValues: { id, name } },
-  ) => {
+  const collaboratorTypeMapping = collaboratorTypes.reduce((acc, { dataValues: { id, name } }) => {
     acc[name] = id;
     return acc;
   }, {});

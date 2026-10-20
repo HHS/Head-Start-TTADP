@@ -1,25 +1,23 @@
 import {
-  endDateFilter,
-  startDateFilter,
   activityReportGoalResponseFilter,
+  domainClassroomOrganizationFilter,
+  domainEmotionalSupportFilter,
+  domainInstructionalSupportFilter,
   grantNumberFilter,
   grantStatusFilter,
   groupsFilter,
-  singleOrMultiRecipientsFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
+  regionFilter,
   reportIdFilter,
   reportTextFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
-  domainClassroomOrganizationFilter,
-  domainEmotionalSupportFilter,
-  domainInstructionalSupportFilter,
-  regionFilter,
 } from '../../components/filter/activityReportFilters';
 import {
   createDateFilter,
@@ -31,8 +29,6 @@ const QA_DASHBOARD_FILTER_KEY = 'qa-dashboard';
 
 const QA_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
-  endDateFilter,
-  startDateFilter,
   activityReportGoalResponseFilter,
   goalNameFilter,
   grantNumberFilter,
@@ -58,7 +54,4 @@ const QA_DASHBOARD_FILTER_CONFIG = [
 
 QA_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
-export {
-  QA_DASHBOARD_FILTER_CONFIG,
-  QA_DASHBOARD_FILTER_KEY,
-};
+export { QA_DASHBOARD_FILTER_CONFIG, QA_DASHBOARD_FILTER_KEY };

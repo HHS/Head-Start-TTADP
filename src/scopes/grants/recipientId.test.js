@@ -1,10 +1,10 @@
 import {
-  Op,
   filtersToScopes,
   Grant,
-  sequelize,
-  recipients,
+  Op,
   possibleIds,
+  recipients,
+  sequelize,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';
@@ -17,6 +17,19 @@ describe('grants/recipientId', () => {
   afterAll(async () => {
     await tearDownSharedTestData();
     await sequelize.close();
+  });
+
+  it('filters by recipientId using ctn', async () => {
+    const filters = { 'recipientId.ctn': [recipients[0].id] };
+    const scope = await filtersToScopes(filters, 'grant');
+    const found = await Grant.findAll({
+      where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+    });
+
+    expect(found.length).toBeGreaterThan(0);
+    found.forEach((grant) => {
+      expect(grant.recipientId).toBe(recipients[0].id);
+    });
   });
 
   it('filters by single recipientId', async () => {
@@ -32,9 +45,36 @@ describe('grants/recipientId', () => {
     });
   });
 
+  it('filters by recipientId.ctn (mapped to withRecipientId)', async () => {
+    const filters = { 'recipientId.ctn': [recipients[0].id] };
+    const scope = await filtersToScopes(filters, 'grant');
+    const found = await Grant.findAll({
+      where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+    });
+
+    expect(found.length).toBeGreaterThan(0);
+    found.forEach((grant) => {
+      expect(grant.recipientId).toBe(recipients[0].id);
+    });
+  });
+
   it('filters by multiple recipientIds', async () => {
     const recipientIds = [recipients[0].id, recipients[1].id];
     const filters = { 'recipientId.in': recipientIds };
+    const scope = await filtersToScopes(filters, 'grant');
+    const found = await Grant.findAll({
+      where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+    });
+
+    expect(found.length).toBeGreaterThan(0);
+    found.forEach((grant) => {
+      expect(recipientIds).toContain(grant.recipientId);
+    });
+  });
+
+  it('filters by multiple recipientIds using ctn', async () => {
+    const recipientIds = [recipients[0].id, recipients[1].id];
+    const filters = { 'recipientId.ctn': recipientIds };
     const scope = await filtersToScopes(filters, 'grant');
     const found = await Grant.findAll({
       where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },

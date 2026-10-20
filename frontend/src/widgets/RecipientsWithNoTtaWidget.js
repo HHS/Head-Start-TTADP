@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants';
-import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
-import useWidgetPaging from '../hooks/useWidgetPaging';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import useWidgetPaging from '../hooks/useWidgetPaging';
+import HorizontalTableWidget from './HorizontalTableWidget';
 
 const defaultSortConfig = {
   sortBy: 'Days_Since_Last_TTA',
@@ -12,12 +12,7 @@ const defaultSortConfig = {
   activePage: 1,
 };
 
-function RecipientsWithNoTtaWidget({
-  data,
-  loading,
-  resetPagination,
-  setResetPagination,
-}) {
+function RecipientsWithNoTtaWidget({ data, loading, resetPagination, setResetPagination }) {
   const { pageData, widgetData } = data;
   const [allRecipientData, setAllRecipientData] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
@@ -25,30 +20,24 @@ function RecipientsWithNoTtaWidget({
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
   const [checkBoxes, setCheckBoxes] = useState({});
 
-  const {
-    offset,
-    activePage,
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-  } = useWidgetPaging(
-    pageData ? pageData.headers : [],
-    'recipientsWithNoTta',
-    defaultSortConfig,
-    RECIPIENTS_WITH_NO_TTA_PER_PAGE,
-    allRecipientData, // data to use.
-    setAllRecipientData,
-    resetPagination,
-    setResetPagination,
-    loading,
-    checkBoxes,
-    'RecipientsWithNoTta',
-    setRecipientsPerPage,
-    ['Recipient'],
-    ['Date_of_Last_TTA'],
-    'recipientsWithNoTta.csv',
-  );
+  const { offset, activePage, handlePageChange, requestSort, exportRows, sortConfig } =
+    useWidgetPaging(
+      pageData ? pageData.headers : [],
+      'recipientsWithNoTta',
+      defaultSortConfig,
+      RECIPIENTS_WITH_NO_TTA_PER_PAGE,
+      allRecipientData, // data to use.
+      setAllRecipientData,
+      resetPagination,
+      setResetPagination,
+      loading,
+      checkBoxes,
+      'RecipientsWithNoTta',
+      setRecipientsPerPage,
+      ['Recipient'],
+      ['Date_of_Last_TTA'],
+      'recipientsWithNoTta.csv'
+    );
 
   useEffect(() => {
     try {
@@ -137,7 +126,7 @@ RecipientsWithNoTtaWidget.propTypes = {
             recipient: PropTypes.string,
             dateOfLastTta: PropTypes.date,
             daysSinceLastTta: PropTypes.number,
-          }),
+          })
         ),
       }),
       PropTypes.shape({}),

@@ -1,14 +1,14 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
+  createGrant,
   createReport,
   destroyReport,
-  createGrant,
   faker,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('stateCode filtersToScopes', () => {
@@ -36,7 +36,7 @@ describe('stateCode filtersToScopes', () => {
       });
 
       reportOne = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -44,7 +44,7 @@ describe('stateCode filtersToScopes', () => {
         ],
       });
       reportTwo = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -55,7 +55,7 @@ describe('stateCode filtersToScopes', () => {
         ],
       });
       reportThree = await createReport({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         activityRecipients: [
           {
             grantId: grantTwo.id,
@@ -84,8 +84,7 @@ describe('stateCode filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
     });
   });
 });

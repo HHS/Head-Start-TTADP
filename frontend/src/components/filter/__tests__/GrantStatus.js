@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import GrantStatus, { displayGrantsStatus } from '../GrantStatus';
 
 const { findByRole } = screen;
@@ -40,14 +37,8 @@ describe('displayCdiGrantStatus', () => {
 });
 
 describe('CdiGrantFilter', () => {
-  const renderCdiGrantSelect = (appliedType, onApply) => (
-    render(
-      <GrantStatus
-        onApply={onApply}
-        inputId="cdiGrantFilter"
-        appliedTTAType={appliedType}
-      />,
-    ));
+  const renderCdiGrantSelect = (appliedType, onApply) =>
+    render(<GrantStatus onApply={onApply} inputId="cdiGrantFilter" appliedTTAType={appliedType} />);
 
   it('calls the on apply handler', async () => {
     const onApply = jest.fn();

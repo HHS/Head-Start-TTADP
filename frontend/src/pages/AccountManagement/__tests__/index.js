@@ -1,16 +1,10 @@
-import React from 'react';
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
-import AccountManagement from '..';
-import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
+import AccountManagement from '..';
 
 describe('AccountManagement', () => {
   const now = new Date();
@@ -30,13 +24,7 @@ describe('AccountManagement', () => {
     'emailWhenRecipientReportApprovedProgramSpecialist',
   ];
 
-  const vals = [
-    'immediately',
-    'never',
-    'this month',
-    'this week',
-    'today',
-  ];
+  const vals = ['immediately', 'never', 'this month', 'this week', 'today'];
 
   const unsub = keys.map((key) => ({ key, value: 'never' }));
   const sub = keys.map((key) => ({ key, value: 'immediately' }));
@@ -49,12 +37,10 @@ describe('AccountManagement', () => {
       <MemoryRouter>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
           <UserContext.Provider value={{ user }}>
-            <AccountManagement
-              updateUser={() => {}}
-            />
+            <AccountManagement updateUser={() => {}} />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 
@@ -108,44 +94,100 @@ describe('AccountManagement', () => {
         renderAM({ ...normalUser, roles: [{ name: 'ECM' }] });
         await screen.findByText('Account Management');
         await screen.findByText('Email preferences');
-        expect(screen.queryByText('Someone submits an activity report for my approval.')).toBeInTheDocument();
-        expect(screen.queryByText('A manager requests changes to an activity report that I created or collaborated on.')).toBeInTheDocument();
-        expect(screen.queryByText('Managers approve an activity report that I created or collaborated on.')).toBeInTheDocument();
-        expect(screen.queryByText('I\'m added as a collaborator on an activity report.')).toBeInTheDocument();
-        expect(screen.queryAllByText('One of my recipients\' activity reports is available.').length).toBe(0);
+        expect(
+          screen.queryByText('Someone submits an activity report for my approval.')
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText(
+            'A manager requests changes to an activity report that I created or collaborated on.'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText(
+            'Managers approve an activity report that I created or collaborated on.'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText("I'm added as a collaborator on an activity report.")
+        ).toBeInTheDocument();
+        expect(
+          screen.queryAllByText("One of my recipients' activity reports is available.").length
+        ).toBe(0);
       });
 
       it('shows correct options for collaborators', async () => {
         renderAM({ ...normalUser, roles: [{ name: 'FES' }] });
         await screen.findByText('Account Management');
         await screen.findByText('Email preferences');
-        expect(screen.queryAllByText('Someone submits an activity report for my approval.').length).toBe(0);
-        expect(screen.queryByText('A manager requests changes to an activity report that I created or collaborated on.')).toBeInTheDocument();
-        expect(screen.queryByText('Managers approve an activity report that I created or collaborated on.')).toBeInTheDocument();
-        expect(screen.queryByText('I\'m added as a collaborator on an activity report.')).toBeInTheDocument();
-        expect(screen.queryAllByText('One of my recipients\' activity reports is available.').length).toBe(0);
+        expect(
+          screen.queryAllByText('Someone submits an activity report for my approval.').length
+        ).toBe(0);
+        expect(
+          screen.queryByText(
+            'A manager requests changes to an activity report that I created or collaborated on.'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText(
+            'Managers approve an activity report that I created or collaborated on.'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByText("I'm added as a collaborator on an activity report.")
+        ).toBeInTheDocument();
+        expect(
+          screen.queryAllByText("One of my recipients' activity reports is available.").length
+        ).toBe(0);
       });
 
       it('shows correct options for recipients', async () => {
         renderAM({ ...normalUser, roles: [{ name: 'SPS' }] });
         await screen.findByText('Account Management');
         await screen.findByText('Email preferences');
-        expect(screen.queryAllByText('Someone submits an activity report for my approval.').length).toBe(0);
-        expect(screen.queryAllByText('A manager requests changes to an activity report that I created or collaborated on.').length).toBe(0);
-        expect(screen.queryAllByText('Managers approve an activity report that I created or collaborated on.').length).toBe(0);
-        expect(screen.queryAllByText('I\'m added as a collaborator on an activity report.').length).toBe(0);
-        expect(screen.queryByText('One of my recipients\' activity reports is available.')).toBeInTheDocument();
+        expect(
+          screen.queryAllByText('Someone submits an activity report for my approval.').length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText(
+            'A manager requests changes to an activity report that I created or collaborated on.'
+          ).length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText(
+            'Managers approve an activity report that I created or collaborated on.'
+          ).length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText("I'm added as a collaborator on an activity report.").length
+        ).toBe(0);
+        expect(
+          screen.queryByText("One of my recipients' activity reports is available.")
+        ).toBeInTheDocument();
       });
 
       it('hides all options with no roles', async () => {
         renderAM({ ...normalUser, roles: [] });
         await screen.findByText('Account Management');
         expect(await screen.queryAllByText('Email preferences').length).toBe(0);
-        expect(screen.queryAllByText('Someone submits an activity report for my approval.').length).toBe(0);
-        expect(screen.queryAllByText('A manager requests changes to an activity report that I created or collaborated on.').length).toBe(0);
-        expect(screen.queryAllByText('Managers approve an activity report that I created or collaborated on.').length).toBe(0);
-        expect(screen.queryAllByText('I\'m added as a collaborator on an activity report.').length).toBe(0);
-        expect(screen.queryAllByText('One of my recipients\' activity reports is available.').length).toBe(0);
+        expect(
+          screen.queryAllByText('Someone submits an activity report for my approval.').length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText(
+            'A manager requests changes to an activity report that I created or collaborated on.'
+          ).length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText(
+            'Managers approve an activity report that I created or collaborated on.'
+          ).length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText("I'm added as a collaborator on an activity report.").length
+        ).toBe(0);
+        expect(
+          screen.queryAllByText("One of my recipients' activity reports is available.").length
+        ).toBe(0);
       });
     });
 

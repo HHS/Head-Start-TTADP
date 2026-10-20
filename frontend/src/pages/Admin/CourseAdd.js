@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
+import { Button, Fieldset, Form, FormGroup, Label, TextInput } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  Button,
-  Fieldset,
-  Form,
-  FormGroup,
-  Label,
-  TextInput,
-} from '@trussworks/react-uswds';
+import React, { useState } from 'react';
 import { createCourseByName } from '../../fetchers/courses';
 
 function CourseAdd({ refresh }) {
@@ -41,11 +34,7 @@ function CourseAdd({ refresh }) {
             />
           </Fieldset>
         </FormGroup>
-        <Button
-          type="submit"
-          data-testid="add-course"
-          className="margin-top-2"
-        >
+        <Button type="submit" data-testid="add-course" className="margin-top-2">
           Add course
         </Button>
       </Form>

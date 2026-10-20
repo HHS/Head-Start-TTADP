@@ -1,20 +1,28 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
-      await queryInterface.addColumn('Resources', 'mimeType', {
-        type: Sequelize.STRING,
-        allowNull: true,
-      }, { transaction });
-      await queryInterface.addColumn('Resources', 'lastStatusCode', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Resources',
+        'mimeType',
+        {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        { transaction }
+      );
+      await queryInterface.addColumn(
+        'Resources',
+        'lastStatusCode',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
   down: async (queryInterface) => {

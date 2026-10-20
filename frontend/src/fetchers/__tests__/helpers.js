@@ -1,4 +1,8 @@
-import { getReportsDownloadURL, getAllReportsDownloadURL, getAllAlertsDownloadURL } from '../helpers';
+import {
+  getAllAlertsDownloadURL,
+  getAllReportsDownloadURL,
+  getReportsDownloadURL,
+} from '../helpers';
 
 describe('getReportsDownloadURL', () => {
   it('Creates a URL for downloading a single report', () => {

@@ -1,10 +1,10 @@
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
-import UserContext from '../../../UserContext';
+import PropTypes from 'prop-types';
+import React, { useContext, useMemo } from 'react';
 import { canChangeGoalStatus } from '../../../permissions';
-import STATUSES from './StatusDropdownStatuses';
+import UserContext from '../../../UserContext';
 import StatusDropdown from './StatusDropdown';
+import STATUSES from './StatusDropdownStatuses';
 
 export default function GoalStatusDropdown({
   goalId,
@@ -18,12 +18,15 @@ export default function GoalStatusDropdown({
   const { user } = useContext(UserContext);
   const { icon, display } = STATUSES[status] || STATUSES['Needs Status'];
 
-  const isReadOnly = useMemo(() => ((
-    status === GOAL_STATUS.DRAFT
-    || status === 'Completed'
-    || status === GOAL_STATUS.CLOSED)
-    || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE))
-    || showReadOnlyStatus), [status, user, regionId, showReadOnlyStatus]);
+  const isReadOnly = useMemo(
+    () =>
+      status === GOAL_STATUS.DRAFT ||
+      status === 'Completed' ||
+      status === GOAL_STATUS.CLOSED ||
+      !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE)) ||
+      showReadOnlyStatus,
+    [status, user, regionId, showReadOnlyStatus]
+  );
 
   if (isReadOnly) {
     return (
@@ -61,7 +64,20 @@ export default function GoalStatusDropdown({
       ];
     }
 
-    if (status === GOAL_STATUS.IN_PROGRESS || status === GOAL_STATUS.NOT_STARTED) {
+    if (status === GOAL_STATUS.NOT_STARTED) {
+      return [
+        {
+          label: GOAL_STATUS.CLOSED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
+        },
+        {
+          label: GOAL_STATUS.SUSPENDED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
+        },
+      ];
+    }
+
+    if (status === GOAL_STATUS.IN_PROGRESS) {
       return [
         {
           label: GOAL_STATUS.CLOSED,

@@ -1,7 +1,10 @@
 style
   include ../email.css
 p Hello,
-p Activity Report #{displayId} has been approved.
+if approverName
+  p Activity Report #{displayId} has been approved by #{approverName}.
+else
+  p Activity Report #{displayId} has been approved.
 a(href=reportPath) Access this report in the TTA Hub.
 p Best wishes,
   br

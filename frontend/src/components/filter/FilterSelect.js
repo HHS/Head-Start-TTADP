@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Select from 'react-select';
 import './FilterSelect.css';
 
@@ -10,14 +10,25 @@ export default function FilterSelect({
   options,
   selectedValues,
   mapByValue,
-  labelProp,
-  valueProp,
+  labelProp = 'label',
+  valueProp = 'value',
 }) {
   const key = mapByValue ? valueProp : labelProp;
 
-  const value = [selectedValues].flat().map((selection) => (
-    options.find((option) => option[key] === selection)
-  ));
+  // Compare as strings so numeric vs string ids (e.g. ids restored from session
+  // storage) still resolve to their matching option.
+  const findOption = (selection) =>
+    options.find((option) => String(option[key]) === String(selection));
+
+  const value = [selectedValues].flat().map(findOption);
+
+  // Resolve each selected value to its display label. When mapByValue is set the
+  // selectedValues are the valueProp (e.g. user ids), so we need to look up the
+  // labelProp to avoid showing raw ids in the truncated "+ X more tags" display.
+  const selectedLabels = [selectedValues].flat().map((selection) => {
+    const match = findOption(selection);
+    return match ? match[labelProp] : String(selection);
+  });
 
   const styles = {
     container: (provided, state) => {
@@ -87,7 +98,7 @@ export default function FilterSelect({
       let charCount = 0;
       let andMoreShown = false;
 
-      const truncated = [selectedValues].flat().map((selection, index) => {
+      const truncated = selectedLabels.map((selection, index) => {
         // if the "and x more tags" message has been shown
         if (andMoreShown) {
           return null;
@@ -95,13 +106,15 @@ export default function FilterSelect({
 
         // keep a running total of the characters, but we always have to show the first one
         if (index === 0 || (charCount + selection.length < 18 && index < 3)) {
-          const label = selection.length > 18
-            ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
+          const label =
+            selection.length > 18 ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
 
           charCount += label.length;
 
           return (
-            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">{label}</span>
+            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
+              {label}
+            </span>
           );
         }
 
@@ -109,11 +122,7 @@ export default function FilterSelect({
 
         return (
           <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
-            +
-            {' '}
-            {selectedValues.length - index}
-            {' '}
-            more tag
+            + {selectedValues.length - index} more tag
             {selectedValues.length - index > 1 ? 's' : ''}
           </span>
         );
@@ -123,12 +132,16 @@ export default function FilterSelect({
         <div className="ttahub-filter-select--cover-all position-absolute padding-x-1">
           {truncated}
         </div>
-      ) : <></>;
+      ) : (
+        <></>
+      );
     };
   }
 
   return (
-    <div className={`ttahub-filter-select position-relative ${coverAll().props.children ? 'ttahub-filter-select__has-cover-all' : ''}`}>
+    <div
+      className={`ttahub-filter-select position-relative ${coverAll().props.children ? 'ttahub-filter-select__has-cover-all' : ''}`}
+    >
       <Select
         placeholder={labelText}
         aria-label={labelText}
@@ -155,10 +168,7 @@ export default function FilterSelect({
 
 const option = PropTypes.shape({
   label: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]),
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 });
 
 FilterSelect.propTypes = {

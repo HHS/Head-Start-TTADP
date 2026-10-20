@@ -1,19 +1,17 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { render, screen } from '@testing-library/react';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
-import PrintGoals from '../PrintGoals';
+import { Router } from 'react-router';
+import { OBJECTIVE_STATUS } from '../../../../Constants';
+import FilterContext from '../../../../FilterContext';
 import UserContext from '../../../../UserContext';
 import { filtersToQueryString } from '../../../../utils';
-import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
-import { OBJECTIVE_STATUS } from '../../../../Constants';
+import PrintGoals from '../PrintGoals';
 
 const memoryHistory = createMemoryHistory();
 
@@ -82,7 +80,10 @@ describe('PrintGoals', () => {
   };
 
   const baseLocation = {
-    state: null, hash: '', pathname: '', search: '',
+    state: null,
+    hash: '',
+    pathname: '',
+    search: '',
   };
 
   const renderPrintGoals = (loc = {}) => {
@@ -92,14 +93,10 @@ describe('PrintGoals', () => {
       <Router history={memoryHistory}>
         <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID) }}>
           <UserContext.Provider value={{ user }}>
-            <PrintGoals
-              location={location}
-              recipientId={RECIPIENT_ID}
-              regionId={REGION_ID}
-            />
+            <PrintGoals location={location} recipientId={RECIPIENT_ID} regionId={REGION_ID} />
           </UserContext.Provider>
         </FilterContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -108,7 +105,8 @@ describe('PrintGoals', () => {
   const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
   // const filteredMockURLGoalOne = `${baseMock}&${filtersToQueryString(filterWithJustGoalOne)}`;
   // FIXME: PrintGoals doesn't build the query string with `goalIds.in[]=`
-  const filteredMockURLGoalOne = '/api/recipient/123456/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false&goalIds=4598&status.in[]=Closed';
+  const filteredMockURLGoalOne =
+    '/api/recipient/123456/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false&goalIds=4598&status.in[]=Closed';
 
   beforeEach(async () => {
     fetchMock.get(baseMock, { count: 5, goalRows: goals });

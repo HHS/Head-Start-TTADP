@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react-dom/test-utils';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import RecipientRecord, { PageWithHeading } from '../index';
-import { formatDateRange } from '../../../utils';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+import { Router } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
+import { formatDateRange } from '../../../utils';
+import RecipientRecord, { PageWithHeading } from '../index';
 import { GrantDataProvider } from '../pages/GrantDataContext';
 
 const { ADMIN } = SCOPE_IDS;
@@ -61,7 +61,7 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord() {
+  function renderRecipientRecord(currentUser = user) {
     const match = {
       path: '',
       url: '',
@@ -73,21 +73,20 @@ describe('recipient record page', () => {
 
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user }}>
+        <UserContext.Provider value={{ user: currentUser }}>
           <GrantDataProvider>
-            <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }
-          }
+            <AppLoadingContext.Provider
+              value={{
+                setIsAppLoading: jest.fn(),
+                setAppLoadingText: jest.fn(),
+                isAppLoading: false,
+              }}
             >
               <RecipientRecord match={match} hasAlerts={false} />
             </AppLoadingContext.Provider>
           </GrantDataProvider>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   }
 
@@ -107,20 +106,51 @@ describe('recipient record page', () => {
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/overview', overview);
     fetchMock.get('/api/widgets/overview?region.in[]=45&recipientId.ctn[]=1', overview);
-    fetchMock.get(`/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, overview);
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', { count: 0, rows: [] });
-    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, { count: 0, rows: [] });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.ctn[]=1', { count: 0, rows: [], topics: [] });
-    fetchMock.get(`/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`, { count: 0, rows: [], topics: [] });
+    fetchMock.get(
+      `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`,
+      overview
+    );
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10', {
+      count: 0,
+      rows: [],
+    });
+    fetchMock.get(
+      `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`,
+      { count: 0, rows: [] }
+    );
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=45&recipientId.ctn[]=1',
+      { count: 0, rows: [], topics: [] }
+    );
+    fetchMock.get(
+      `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}`,
+      {
+        count: 0,
+        rows: [],
+        topics: [],
+      }
+    );
     fetchMock.get('/api/widgets/frequencyGraph', 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
+    fetchMock.get(
+      `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`,
+      200
+    );
     fetchMock.get('/api/widgets/frequencyGraph?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}`, 200);
     fetchMock.get('/api/widgets/targetPopulationTable?region.in[]=45&recipientId.ctn[]=1', 200);
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`, 200);
+    fetchMock.get(
+      `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=45&recipientId.ctn[]=1`,
+      200
+    );
     fetchMock.get('/api/widgets/goalStatusGraph?region.in[]=45&recipientId.ctn[]=1', 200);
-    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
-    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
+    fetchMock.get(
+      '/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5',
+      []
+    );
+    fetchMock.get(
+      '/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10',
+      []
+    );
     fetchMock.get('/api/monitoring/class/1/region/45/grant/RECIPIENT_NUMBER', {});
     fetchMock.get('/api/monitoring/1/region/45/grant/RECIPIENT_NUMBER', {});
     fetchMock.get('/api/monitoring/undefined/region/45/grant/RECIPIENT_NUMBER', {});
@@ -201,16 +231,76 @@ describe('recipient record page', () => {
     memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
     act(() => renderRecipientRecord());
     await waitFor(() => {
-      const ar = screen.getByText(/the number of approved activity reports\. click to visually reveal this information/i);
+      const ar = screen.getByText(
+        /the number of approved activity reports\. click to visually reveal this information/i
+      );
       expect(ar).toBeInTheDocument();
     });
 
     const remove = screen.getByRole('button', {
-      name: /this button removes the filter: date started \(ar\) is within/i,
+      name: /this button removes the filter: date started is within/i,
     });
 
     userEvent.click(remove);
     await waitFor(() => expect(remove).not.toBeInTheDocument());
+  });
+
+  it('navigates to the feature-flagged TTA request page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request');
+
+    act(() => renderRecipientRecord());
+
+    expect(
+      await screen.findByRole('heading', { name: 'the Mighty Recipient - Region 45' })
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Add request' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
+  });
+
+  it('redirects an unflagged user away from the TTA request page', async () => {
+    const unflaggedUser = {
+      ...user,
+      flags: [],
+      permissions: user.permissions.filter(({ scopeId }) => scopeId !== ADMIN),
+    };
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request');
+
+    act(() => renderRecipientRecord(unflaggedUser));
+
+    await waitFor(() => {
+      expect(memoryHistory.location.pathname).toBe('/something-went-wrong/404');
+    });
+    expect(screen.queryByRole('button', { name: 'Add request' })).not.toBeInTheDocument();
+  });
+
+  it('navigates to the feature-flagged TTA timeline page', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('begin:/api/recipient/1/region/45/timeline', { count: 0, events: [] });
+    memoryHistory.push('/recipient-tta-records/1/region/45/timeline');
+
+    act(() => renderRecipientRecord());
+
+    expect(await screen.findByRole('heading', { name: 'TTA timeline' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'About this data' })).toBeVisible();
+  });
+
+  it('redirects an unflagged user away from the TTA timeline page', async () => {
+    const unflaggedUser = {
+      ...user,
+      flags: [],
+      permissions: user.permissions.filter(({ scopeId }) => scopeId !== ADMIN),
+    };
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/timeline');
+
+    act(() => renderRecipientRecord(unflaggedUser));
+
+    await waitFor(() => {
+      expect(memoryHistory.location.pathname).toBe('/something-went-wrong/404');
+    });
+    expect(screen.queryByRole('heading', { name: 'TTA timeline' })).not.toBeInTheDocument();
   });
 
   it('navigates to the goals & objectives page', async () => {
@@ -223,7 +313,12 @@ describe('recipient record page', () => {
 
   it('navigates to the print goals page', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false', { goalRows: [] });
+    fetchMock.get(
+      '/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false',
+      {
+        goalRows: [],
+      }
+    );
     memoryHistory.push('/recipient-tta-records/45/region/1/rttapa/print');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
@@ -250,7 +345,10 @@ describe('recipient record page', () => {
 
   it('navigates to the communication logs', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
+    fetchMock.get(
+      '/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
+      []
+    );
     memoryHistory.push('/recipient-tta-records/45/region/1/communication');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
@@ -259,7 +357,10 @@ describe('recipient record page', () => {
 
   it('renders communication log header with correct structure', async () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
+    fetchMock.get(
+      '/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
+      []
+    );
     memoryHistory.push('/recipient-tta-records/45/region/1/communication');
     act(() => renderRecipientRecord());
 
@@ -271,7 +372,9 @@ describe('recipient record page', () => {
 
     const addButton = screen.getByRole('link', { name: /add communication/i });
     expect(addButton).toHaveClass('usa-button', 'smart-hub--new-report-btn');
-    expect(addButton.getAttribute('href')).toBe('/recipient-tta-records/1/region/45/communication/new');
+    expect(addButton.getAttribute('href')).toBe(
+      '/recipient-tta-records/1/region/45/communication/new'
+    );
   });
 
   it('navigates to the goal name form', async () => {
@@ -330,20 +433,24 @@ describe('recipient record page', () => {
   describe('PageWithHeading', () => {
     const recipientNameWithRegion = 'Recipient 1 - Region 1';
 
-    const renderTest = (
-      backLink,
-      error = '',
-    ) => {
+    const renderTest = (backLink, error = '') => {
       render(
         <Router history={memoryHistory}>
           <UserContext.Provider value={{ user }}>
-            <PageWithHeading error={error} regionId="1" recipientId="1" recipientNameWithRegion={recipientNameWithRegion} slug="sadness" backLink={backLink}>
+            <PageWithHeading
+              error={error}
+              regionId="1"
+              recipientId="1"
+              recipientNameWithRegion={recipientNameWithRegion}
+              slug="sadness"
+              backLink={backLink}
+            >
               <div>
                 <h1>Test</h1>
               </div>
             </PageWithHeading>
           </UserContext.Provider>
-        </Router>,
+        </Router>
       );
     };
 

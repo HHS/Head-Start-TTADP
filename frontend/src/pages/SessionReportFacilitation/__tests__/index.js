@@ -1,14 +1,14 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-import SessionReportFacilitation from '../index';
-import UserContext from '../../../UserContext';
-import isAdmin from '../../../permissions';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
+import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
+import SessionReportFacilitation from '../index';
 
 jest.mock('../../../permissions', () => ({
   __esModule: true,
@@ -25,30 +25,33 @@ describe('SessionReportFacilitation', () => {
   const mockTrainingReport = {
     id: 1,
     collaboratorIds: [],
+    pocIds: [],
     owner: {
       id: 1,
     },
+    eventId: 'R01-TR-1234',
     data: {
       eventId: 'R01-TR-1234',
       eventName: 'Test Training Event',
     },
   };
 
-  const renderComponent = (reportId = trainingReportId) => render(
-    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-      <UserContext.Provider value={{ user: { id: 1 } }}>
-        <Router history={history}>
-          <SessionReportFacilitation
-            match={{
-              params: { trainingReportId: reportId },
-              path: '',
-              url: '',
-            }}
-          />
-        </Router>
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>,
-  );
+  const renderComponent = (reportId = trainingReportId) =>
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Router history={history}>
+            <SessionReportFacilitation
+              match={{
+                params: { trainingReportId: reportId },
+                path: '',
+                url: '',
+              }}
+            />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -147,7 +150,9 @@ describe('SessionReportFacilitation', () => {
     it('displays all radio options', () => {
       expect(screen.getByLabelText('National Center')).toBeInTheDocument();
       expect(screen.getByLabelText('Regional TTA staff')).toBeInTheDocument();
-      expect(screen.getByLabelText('Both (National Center and Regional TTA staff)')).toBeInTheDocument();
+      expect(
+        screen.getByLabelText('Both (National Center and Regional TTA staff)')
+      ).toBeInTheDocument();
     });
 
     it('displays create session button', () => {
@@ -314,7 +319,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(`/training-report/${trainingReportId}/session/3`);
+        expect(spy).toHaveBeenCalledWith('/training-report/R01-TR-1234/session/3');
       });
     });
   });

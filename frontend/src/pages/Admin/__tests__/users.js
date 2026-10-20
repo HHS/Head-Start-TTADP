@@ -1,20 +1,21 @@
 import '@testing-library/jest-dom';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
 import React from 'react';
 import { Router } from 'react-router';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render, screen, within,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import moment from 'moment';
 import Users, { setFeatureFromURL } from '../users';
 
 describe('User Page', () => {
   beforeEach(async () => {
-    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
+    fetchMock.get('/api/admin/roles', [
+      { fullName: 'Grantee Specialist', name: 'GS', id: 1 },
+      { fullName: 'COR', name: 'COR', id: 2 },
+    ]);
   });
   const usersUrl = join('/api', 'admin', 'users');
   const featuresUrl = join('/api', 'admin', 'users', 'features');
@@ -26,7 +27,11 @@ describe('User Page', () => {
   it('displays an error if users are not "fetch-able"', async () => {
     fetchMock.get(usersUrl, 500);
     fetchMock.get(featuresUrl, []);
-    render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+    render(
+      <Router history={history}>
+        <Users match={{ path: '', url: '', params: { userId: undefined } }} />
+      </Router>
+    );
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch users');
   });
@@ -40,11 +45,13 @@ describe('User Page', () => {
         homeRegionId: 1,
         roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
         lastLogin: moment().subtract(65, 'days').toISOString(),
-        permissions: [{
-          userId: 2,
-          scopeId: SCOPE_IDS.SITE_ACCESS,
-          regionId: 14,
-        }],
+        permissions: [
+          {
+            userId: 2,
+            scopeId: SCOPE_IDS.SITE_ACCESS,
+            regionId: 14,
+          },
+        ],
         flags: [],
       },
       {
@@ -54,11 +61,13 @@ describe('User Page', () => {
         homeRegionId: 1,
         roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
         lastLogin: moment().toISOString(),
-        permissions: [{
-          userId: 3,
-          scopeId: SCOPE_IDS.SITE_ACCESS,
-          regionId: 14,
-        }],
+        permissions: [
+          {
+            userId: 3,
+            scopeId: SCOPE_IDS.SITE_ACCESS,
+            regionId: 14,
+          },
+        ],
         flags: [],
       },
       {
@@ -68,17 +77,23 @@ describe('User Page', () => {
         homeRegionId: 1,
         roles: [{ fullName: 'Early Childhood Specialist', name: 'ECS', id: 2 }],
         lastLogin: moment().subtract(190, 'days').toISOString(),
-        permissions: [{
-          userId: 4,
-          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-          regionId: 1,
-        }],
+        permissions: [
+          {
+            userId: 4,
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
         flags: ['part_goat'],
       },
     ];
 
     const renderUsers = () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+      render(
+        <Router history={history}>
+          <Users match={{ path: '', url: '', params: { userId: undefined } }} />
+        </Router>
+      );
     };
 
     beforeEach(() => {
@@ -93,7 +108,7 @@ describe('User Page', () => {
         expect(spy).toHaveBeenCalled();
       });
 
-      it('doesn\'t filter with no params', () => {
+      it("doesn't filter with no params", () => {
         const spy = jest.fn();
         setFeatureFromURL('', spy);
         expect(spy).not.toHaveBeenCalled();
@@ -150,18 +165,22 @@ describe('User Page', () => {
         expect(links[0]).toHaveTextContent('Hermione Granger');
       });
 
-      it('User list feature \'all\' filter works', async () => {
+      it("User list feature 'all' filter works", async () => {
         renderUsers();
-        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        const featureSelect = await screen.findByRole('combobox', {
+          name: /filter users by feature/i,
+        });
         userEvent.selectOptions(featureSelect, 'all');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
         expect(links.length).toBe(1);
       });
 
-      it('User list feature \'none\' filter works', async () => {
+      it("User list feature 'none' filter works", async () => {
         renderUsers();
-        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        const featureSelect = await screen.findByRole('combobox', {
+          name: /filter users by feature/i,
+        });
         userEvent.selectOptions(featureSelect, 'none');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -170,7 +189,9 @@ describe('User Page', () => {
 
       it('User list feature specific filter works', async () => {
         renderUsers();
-        const featureSelect = await screen.findByRole('combobox', { name: /filter users by feature/i });
+        const featureSelect = await screen.findByRole('combobox', {
+          name: /filter users by feature/i,
+        });
         userEvent.selectOptions(featureSelect, 'part_goat');
         const sideNav = screen.getByTestId('sidenav');
         const links = within(sideNav).getAllByRole('link');
@@ -186,13 +207,21 @@ describe('User Page', () => {
     });
 
     it('displays an existing user', async () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+      render(
+        <Router history={history}>
+          <Users match={{ path: '', url: '', params: { userId: '3' } }} />
+        </Router>
+      );
       const userInfo = await screen.findByRole('group', { name: 'User Profile' });
       expect(userInfo).toBeVisible();
     });
 
     it('displays the "Download users" button', async () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+      render(
+        <Router history={history}>
+          <Users match={{ path: '', url: '', params: { userId: undefined } }} />
+        </Router>
+      );
       const download = await screen.findByRole('button', { name: 'Download users' });
       expect(download).toBeVisible();
     });
@@ -200,7 +229,11 @@ describe('User Page', () => {
     describe('saving', () => {
       it('handles errors by displaying an error message', async () => {
         fetchMock.put(userPatchUrl, 500);
-        render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+        render(
+          <Router history={history}>
+            <Users match={{ path: '', url: '', params: { userId: '3' } }} />
+          </Router>
+        );
         const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
         const alert = await screen.findByRole('alert');
@@ -217,7 +250,11 @@ describe('User Page', () => {
           permissions: [],
           flags: ['my_tummy_hurts'],
         });
-        render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+        render(
+          <Router history={history}>
+            <Users match={{ path: '', url: '', params: { userId: '3' } }} />
+          </Router>
+        );
         const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
         const alert = await screen.findByRole('link', { name: 'Potter Harry' });

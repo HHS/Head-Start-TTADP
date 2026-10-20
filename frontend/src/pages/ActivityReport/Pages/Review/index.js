@@ -1,12 +1,12 @@
-import React, { useState, useContext } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useContext, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
-import Submitter from './Submitter';
-import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
+import Approver from './Approver';
+import Submitter from './Submitter';
 import './index.scss';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
@@ -37,10 +37,10 @@ const ReviewSubmit = ({
 
   const isCreator = user.id === userId;
   const isDraft = calculatedStatus === REPORT_STATUSES.DRAFT;
-  const isCollaborator = activityReportCollaborators
-    && activityReportCollaborators.find((u) => u.userId === user.id);
+  const isCollaborator =
+    activityReportCollaborators && activityReportCollaborators.find((u) => u.userId === user.id);
 
-  const creatorOrCollaborator = (isCreator || !!isCollaborator);
+  const creatorOrCollaborator = isCreator || !!isCollaborator;
 
   const onFormSubmit = async (data) => {
     try {
@@ -67,15 +67,17 @@ const ReviewSubmit = ({
     }
   };
 
-  const editing = calculatedStatus === REPORT_STATUSES.DRAFT
-    || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  const items = editing ? reviewItems.map((ri) => ({
-    ...ri,
-    expanded: false,
-  })) : reviewItems.map((ri) => ({
-    ...ri,
-    expanded: true,
-  }));
+  const editing =
+    calculatedStatus === REPORT_STATUSES.DRAFT || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+  const items = editing
+    ? reviewItems.map((ri) => ({
+        ...ri,
+        expanded: false,
+      }))
+    : reviewItems.map((ri) => ({
+        ...ri,
+        expanded: true,
+      }));
 
   const formData = getValues();
 
@@ -85,33 +87,31 @@ const ReviewSubmit = ({
         <title>Review and Submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      {(!isApprover || (isDraft && creatorOrCollaborator))
-        && (
-          <Submitter
-            formData={formData}
-            availableApprovers={availableApprovers}
-            pages={pages}
-            onFormSubmit={onFormSubmit}
-            error={error}
-            onSaveForm={onSaveForm}
-            lastSaveTime={lastSaveTime}
-            reviewItems={items || []}
-          />
-        )}
-      {(isApprover && !isDraft)
-        && (
-          <Approver
-            availableApprovers={availableApprovers}
-            reviewed={reviewed}
-            pages={pages}
-            additionalNotes={additionalNotes}
-            onFormReview={onFormReview}
-            error={error}
-            isPendingApprover={isPendingApprover}
-            onFormSubmit={onFormSubmit}
-            reviewItems={items || []}
-          />
-        )}
+      {(!isApprover || (isDraft && creatorOrCollaborator)) && (
+        <Submitter
+          formData={formData}
+          availableApprovers={availableApprovers}
+          pages={pages}
+          onFormSubmit={onFormSubmit}
+          error={error}
+          onSaveForm={onSaveForm}
+          lastSaveTime={lastSaveTime}
+          reviewItems={items || []}
+        />
+      )}
+      {isApprover && !isDraft && (
+        <Approver
+          availableApprovers={availableApprovers}
+          reviewed={reviewed}
+          pages={pages}
+          additionalNotes={additionalNotes}
+          onFormReview={onFormReview}
+          error={error}
+          isPendingApprover={isPendingApprover}
+          onFormSubmit={onFormSubmit}
+          reviewItems={items || []}
+        />
+      )}
     </>
   );
 };
@@ -122,7 +122,7 @@ ReviewSubmit.propTypes = {
     PropTypes.shape({
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
@@ -137,13 +137,15 @@ ReviewSubmit.propTypes = {
       id: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       content: PropTypes.node.isRequired,
-    }),
+    })
   ).isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    review: PropTypes.bool,
-    state: PropTypes.string,
-    label: PropTypes.string,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      review: PropTypes.bool,
+      state: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
 };
 

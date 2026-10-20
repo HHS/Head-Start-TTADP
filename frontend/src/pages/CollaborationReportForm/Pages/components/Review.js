@@ -1,27 +1,21 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import { useHistory } from 'react-router';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useContext } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { useHistory } from 'react-router';
 import { Accordion } from '../../../../components/Accordion';
-import UserContext from '../../../../UserContext';
 import IndicatesRequiredField from '../../../../components/IndicatesRequiredField';
+import UserContext from '../../../../UserContext';
 import ApproverReview from './ApproverReview';
 import CreatorSubmit from './CreatorSubmit';
 import { draftValuesPropType } from './constants';
 
-const TopAlert = ({
-  author,
-  user,
-  isNeedsAction,
-  pendingApprovalCount,
-  approvers,
-}) => {
+const TopAlert = ({ author, user, isNeedsAction, pendingApprovalCount, approvers }) => {
   const formatNeedsActionApprovers = () => {
-    const approversList = Array.isArray(approvers) ? approvers : (approvers?.rows || []);
+    const approversList = Array.isArray(approvers) ? approvers : approvers?.rows || [];
     const needActionApprovers = approversList.filter(
-      (a) => a.status === REPORT_STATUSES.NEEDS_ACTION,
+      (a) => a.status === REPORT_STATUSES.NEEDS_ACTION
     );
 
     if (!needActionApprovers || needActionApprovers.length === 0) {
@@ -55,9 +49,7 @@ const TopAlert = ({
   if (isNeedsAction && !isApprover) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
-        <span className="text-bold">
-          {formatNeedsActionApprovers()}
-        </span>
+        <span className="text-bold">{formatNeedsActionApprovers()}</span>
         <br />
         Please review any manager notes below and resubmit for approval.
       </Alert>
@@ -68,13 +60,10 @@ const TopAlert = ({
     <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
       <>
         <span className="text-bold">
-          {author.fullName}
-          {' '}
-          has requested approval for this Collaboration report (
+          {author.fullName} has requested approval for this Collaboration report (
           <strong>
             {`${pendingApprovalCount} of
-               ${approvers?.length || 0}`}
-            {' '}
+               ${approvers?.length || 0}`}{' '}
             reviews pending
           </strong>
           ).
@@ -95,12 +84,14 @@ TopAlert.propTypes = {
   }).isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   pendingApprovalCount: PropTypes.number.isRequired,
-  approvers: PropTypes.arrayOf(PropTypes.shape({
-    status: PropTypes.string,
-    user: PropTypes.shape({
-      fullName: PropTypes.string,
-    }),
-  })).isRequired,
+  approvers: PropTypes.arrayOf(
+    PropTypes.shape({
+      status: PropTypes.string,
+      user: PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
+    })
+  ).isRequired,
 };
 
 const Review = ({
@@ -124,7 +115,7 @@ const Review = ({
   author,
   approvers,
 }) => {
-  const FormComponent = (isApprover && isSubmitted) ? ApproverReview : CreatorSubmit;
+  const FormComponent = isApprover && isSubmitted ? ApproverReview : CreatorSubmit;
 
   const { watch, getValues } = useFormContext();
   const { user } = useContext(UserContext);
@@ -132,20 +123,26 @@ const Review = ({
   const history = useHistory();
 
   const otherManagerNotes = approverStatusList
-    ? approverStatusList.filter((a) => a.note && a.user.id !== user.id) : null;
+    ? approverStatusList.filter((a) => a.note && a.user.id !== user.id)
+    : null;
   const thisApprovingManager = approverStatusList
-    ? approverStatusList.filter((a) => a.user.id === user.id) : null;
-  const hasBeenReviewed = thisApprovingManager
-    && thisApprovingManager.length > 0
-    && thisApprovingManager[0].status !== null;
-  const hasReviewNote = thisApprovingManager
-    && thisApprovingManager.length > 0
-    && thisApprovingManager[0].note;
+    ? approverStatusList.filter((a) => a.user.id === user.id)
+    : null;
+  const hasBeenReviewed =
+    thisApprovingManager &&
+    thisApprovingManager.length > 0 &&
+    thisApprovingManager[0].status !== null;
+  const hasReviewNote =
+    thisApprovingManager && thisApprovingManager.length > 0 && thisApprovingManager[0].note;
 
   const pageState = watch('pageState');
-  const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
+  const filtered = Object.entries(pageState || {})
+    .filter(([, status]) => status !== 'Complete')
+    .map(([position]) => Number(position));
   // eslint-disable-next-line max-len
-  const incompletePages = pages.filter((page) => filtered.includes(page.position)).map(({ label }) => label);
+  const incompletePages = pages
+    .filter((page) => filtered.includes(page.position))
+    .map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
 
   return (
@@ -155,18 +152,18 @@ const Review = ({
       <IndicatesRequiredField />
       {!isSubmitted && (
         <p className="usa-prose" style={{ maxWidth: '700px' }}>
-          Review the information in each section before submitting for approval.
-          Once submitted, you will no longer be able to edit the report.
+          Review the information in each section before submitting for approval. Once submitted, you
+          will no longer be able to edit the report.
         </p>
       )}
       {isSubmitted && (
-      <TopAlert
-        pendingApprovalCount={pendingApprovalCount}
-        isNeedsAction={isNeedsAction}
-        author={author}
-        user={user}
-        approvers={approvers}
-      />
+        <TopAlert
+          pendingApprovalCount={pendingApprovalCount}
+          isNeedsAction={isNeedsAction}
+          author={author}
+          user={user}
+          approvers={approvers}
+        />
       )}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-4">
@@ -214,24 +211,32 @@ Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
-  approverStatusList: PropTypes.arrayOf(PropTypes.shape({
-    approver: PropTypes.string,
-    status: PropTypes.string,
-  })),
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    state: PropTypes.string,
-    review: PropTypes.bool,
-    label: PropTypes.string,
-  })).isRequired,
-  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  })).isRequired,
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    content: PropTypes.node.isRequired,
-  })).isRequired,
+  approverStatusList: PropTypes.arrayOf(
+    PropTypes.shape({
+      approver: PropTypes.string,
+      status: PropTypes.string,
+    })
+  ),
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string,
+      review: PropTypes.bool,
+      label: PropTypes.string,
+    })
+  ).isRequired,
+  availableApprovers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    })
+  ).isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    })
+  ).isRequired,
   isCollaborator: PropTypes.bool.isRequired,
   isCreator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
@@ -245,12 +250,14 @@ Review.propTypes = {
     fullName: PropTypes.string,
   }).isRequired,
   pendingApprovalCount: PropTypes.number.isRequired,
-  approvers: PropTypes.arrayOf(PropTypes.shape({
-    status: PropTypes.string,
-    user: PropTypes.shape({
-      fullName: PropTypes.string,
-    }),
-  })).isRequired,
+  approvers: PropTypes.arrayOf(
+    PropTypes.shape({
+      status: PropTypes.string,
+      user: PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
+    })
+  ).isRequired,
 };
 
 Review.defaultProps = {

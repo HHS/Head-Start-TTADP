@@ -1,8 +1,12 @@
-import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect } from 'react';
 
 function DismissingComponentWrapper({
-  shown, timeVisibleInSec, hideFromScreenReader, children, updateShown,
+  shown,
+  timeVisibleInSec,
+  hideFromScreenReader,
+  children,
+  updateShown,
 }) {
   useEffect(() => {
     let id;
@@ -19,15 +23,7 @@ function DismissingComponentWrapper({
     };
   });
 
-  return (
-    <>
-      {shown && (
-      <div aria-hidden={hideFromScreenReader}>
-        {children}
-      </div>
-      )}
-    </>
-  );
+  return <>{shown && <div aria-hidden={hideFromScreenReader}>{children}</div>}</>;
 }
 
 DismissingComponentWrapper.propTypes = {

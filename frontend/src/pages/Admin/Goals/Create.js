@@ -1,22 +1,29 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useForm, useController, FormProvider } from 'react-hook-form';
-import { Helmet } from 'react-helmet';
 import {
   Alert,
   Button,
-  Checkbox, Dropdown, FormGroup, Label, Textarea,
+  Checkbox,
+  Dropdown,
+  FormGroup,
+  Label,
+  Textarea,
 } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import React, { useContext, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { FormProvider, useController, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import AppLoadingContext from '../../../AppLoadingContext';
 import Container from '../../../components/Container';
-import Req from '../../../components/Req';
 import GoalSource from '../../../components/GoalForm/GoalSource';
+import Req from '../../../components/Req';
 import {
-  getCreatorsByRegion, getGroupsByRegion, getCuratedTemplates, createMultiRecipientGoalsFromAdmin,
+  createMultiRecipientGoalsFromAdmin,
+  getCreatorsByRegion,
+  getCuratedTemplates,
+  getGroupsByRegion,
 } from '../../../fetchers/Admin';
 import { getGoalTemplatePrompts } from '../../../fetchers/goalTemplates';
 import ConditionalFieldsForHookForm from '../../ActivityReport/Pages/components/ConditionalFieldsForHookForm';
-import AppLoadingContext from '../../../AppLoadingContext';
 import { REGIONS } from './constants';
 
 export default function Create() {
@@ -43,13 +50,7 @@ export default function Create() {
   });
 
   const { register, watch } = hookForm;
-  const {
-    region,
-    createReport,
-    useCuratedGoal,
-    group,
-    templateId,
-  } = watch();
+  const { region, createReport, useCuratedGoal, group, templateId } = watch();
 
   const {
     field: {
@@ -130,7 +131,7 @@ export default function Create() {
     } else {
       hookForm.setValue('templateId', null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useCuratedGoal]); // I am not adding hookForm to this, it makes no sense to work around that
 
   const onSubmit = async (data) => {
@@ -150,7 +151,7 @@ export default function Create() {
     }
   };
 
-  const selectedGroup = groupOptions.find((g) => g.id === (Number(group)));
+  const selectedGroup = groupOptions.find((g) => g.id === Number(group));
 
   if (response && !response.isError) {
     return (
@@ -160,22 +161,11 @@ export default function Create() {
         </Helmet>
         <Container>
           <h2>Create goals</h2>
-          <p className="usa-prose">
-            Successfully created
-            {' '}
-            {response.goals.length}
-            {' '}
-            goals.
-          </p>
-          {response.message && (
-            <p className="usa-prose">
-              {response.message}
-            </p>
-          )}
+          <p className="usa-prose">Successfully created {response.goals.length} goals.</p>
+          {response.message && <p className="usa-prose">{response.message}</p>}
           {response.activityReport && (
             <p className="usa-prose">
-              Successfully created activity report
-              {' '}
+              Successfully created activity report{' '}
               <Link to={`/activity-reports/${response.activityReport.id}`}>
                 {response.activityReport.displayId}
               </Link>
@@ -211,45 +201,47 @@ export default function Create() {
           <form className="usa-form maxw-tablet" onSubmit={hookForm.handleSubmit(onSubmit)}>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="region">
-                Region
-                {' '}
-                <Req />
+                Region <Req />
               </Label>
               <Dropdown id="region" name="region" inputRef={register({ required: true })} required>
-                <option value="" disabled selected hidden>Select</option>
+                <option value="" disabled selected hidden>
+                  Select
+                </option>
                 {REGIONS.map((r) => (
                   <option key={`region${r}`} value={r}>
-                    Region
-                    {' '}
-                    {r}
+                    Region {r}
                   </option>
                 ))}
               </Dropdown>
             </FormGroup>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="group">
-                Recipient group
-                {' '}
-                <Req />
+                Recipient group <Req />
               </Label>
               <Dropdown id="group" name="group" inputRef={register({ required: true })} required>
-                <option value="" disabled selected hidden>Select</option>
+                <option value="" disabled selected hidden>
+                  Select
+                </option>
                 {groupOptions.map((g) => (
                   <option key={`group${g.id}`} value={g.id}>
                     {g.name}
                   </option>
                 ))}
               </Dropdown>
-              {(group && selectedGroup) && (
+              {group && selectedGroup && (
                 <>
                   <ul className="usa-list">
                     {selectedGroup.grants.map((g) => (
-                      <li key={`grant${g.id}`}>
-                        {g.recipientInfo}
-                      </li>
+                      <li key={`grant${g.id}`}>{g.recipientInfo}</li>
                     ))}
                   </ul>
-                  <input type="hidden" name="selectedGrants" id="selectedGrants" value={JSON.stringify(selectedGroup.grants)} ref={register()} />
+                  <input
+                    type="hidden"
+                    name="selectedGrants"
+                    id="selectedGrants"
+                    value={JSON.stringify(selectedGroup.grants)}
+                    ref={register()}
+                  />
                 </>
               )}
             </FormGroup>
@@ -262,32 +254,40 @@ export default function Create() {
               />
             </FormGroup>
             {createReport && (
-            <FormGroup className="usa-form-group" required>
-              <Label htmlFor="creator">
-                Activity report creator
-                {' '}
-                <Req />
-              </Label>
-              <Dropdown id="creator" name="creator" inputRef={register({ required: true })} required>
-                <option value="" disabled selected hidden>Select</option>
-                {creatorOptions.map((c) => (
-                  <option key={`user${c.id}`} value={c.id}>
-                    {c.name}
+              <FormGroup className="usa-form-group" required>
+                <Label htmlFor="creator">
+                  Activity report creator <Req />
+                </Label>
+                <Dropdown
+                  id="creator"
+                  name="creator"
+                  inputRef={register({ required: true })}
+                  required
+                >
+                  <option value="" disabled selected hidden>
+                    Select
                   </option>
-                ))}
-              </Dropdown>
-            </FormGroup>
+                  {creatorOptions.map((c) => (
+                    <option key={`user${c.id}`} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Dropdown>
+              </FormGroup>
             )}
 
             <FormGroup className="usa-form-group" required>
               {useCuratedGoal ? (
                 <>
                   <Label htmlFor="templateId">
-                    OHS standard goal
-                    {' '}
-                    <Req />
+                    OHS standard goal <Req />
                   </Label>
-                  <Dropdown id="templateId" name="templateId" inputRef={register({ required: true })} required>
+                  <Dropdown
+                    id="templateId"
+                    name="templateId"
+                    inputRef={register({ required: true })}
+                    required
+                  >
                     {curatedGoalOptions.map((g) => (
                       <option key={`curatedGoalOption${g.id}`} value={g.id}>
                         {g.label}
@@ -298,9 +298,7 @@ export default function Create() {
               ) : (
                 <>
                   <Label htmlFor="goalText">
-                    Goal
-                    {' '}
-                    <Req />
+                    Goal <Req />
                   </Label>
                   <Textarea id="goalText" name="goalText" inputRef={register({ required: true })} />
                 </>
@@ -315,12 +313,7 @@ export default function Create() {
               />
             </FormGroup>
 
-            {prompts && (
-            <ConditionalFieldsForHookForm
-              prompts={prompts}
-              userCanEdit
-            />
-            )}
+            {prompts && <ConditionalFieldsForHookForm prompts={prompts} userCanEdit />}
 
             <GoalSource
               error={<></>}
@@ -344,23 +337,16 @@ export default function Create() {
               />
 
               <div className="usa-hint">
-                Checking this box means instead of showing an error,
-                existing goals will be skipped.
+                Checking this box means instead of showing an error, existing goals will be skipped.
                 (Existing goals will not be updated)
               </div>
             </FormGroup>
 
-            {(response && response.isError) && (
-            <Alert type="error">
-              {response.message}
-            </Alert>
-            )}
+            {response && response.isError && <Alert type="error">{response.message}</Alert>}
 
             <Button type="submit">Submit</Button>
-
           </form>
         </FormProvider>
-
       </Container>
     </>
   );

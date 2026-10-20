@@ -1,13 +1,12 @@
 /* eslint-disable import/prefer-default-export */
+
+import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
-import {
-  DECIMAL_BASE,
-} from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
+import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 
 const namespace = 'SERVICE:CITATIONS';
 

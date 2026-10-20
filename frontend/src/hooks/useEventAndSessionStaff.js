@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import useFetch from './useFetch';
-import { getRegionalTrainerOptions, getNationalCenterTrainerOptions } from '../fetchers/users';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../fetchers/users';
+import useFetch from './useFetch';
 
 export default function useEventAndSessionStaff(event, isEvent = false) {
   const { watch } = useFormContext();
@@ -10,31 +10,27 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
   const facilitation = watch('facilitation');
 
   const eventOrganizer = useMemo(() => {
-    if (event && event.data && event.data.eventOrganizer) {
+    if (event?.data?.eventOrganizer) {
       return event.data.eventOrganizer;
     }
 
-    if (event && event.eventOrganizer) {
+    if (event?.eventOrganizer) {
       return event.eventOrganizer;
     }
 
     return '';
   }, [event]);
 
-  const {
-    data: regionalTrainers,
-  } = useFetch(
+  const { data: regionalTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
 
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
+  const { data: nationalCenterTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
 
   // Filter out AA users for session trainers (isEvent=false)
@@ -43,16 +39,14 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     if (isEvent) {
       return regionalTrainers;
     }
-    return regionalTrainers.filter(
-      (user) => {
-        // only filter out users whose ONLY ROLE is AA
-        if (user.roles?.length === 1) {
-          return user.roles[0].name !== 'AA';
-        }
+    return regionalTrainers.filter((user) => {
+      // only filter out users whose ONLY ROLE is AA
+      if (user.roles?.length === 1) {
+        return user.roles[0].name !== 'AA';
+      }
 
-        return true;
-      },
-    );
+      return true;
+    });
   }, [regionalTrainers, isEvent]);
 
   return useMemo(() => {
@@ -61,18 +55,33 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
       optionsForValue = regionalTrainersForDisplay;
-      trainerOptions = regionalTrainersForDisplay;
+      trainerOptions = [
+        {
+          label: 'Regional trainers',
+          options: regionalTrainersForDisplay,
+        },
+      ];
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
       if (facilitation === 'regional_tta_staff') {
         optionsForValue = regionalTrainersForDisplay;
-        trainerOptions = regionalTrainersForDisplay;
+        trainerOptions = [
+          {
+            label: 'Regional trainers',
+            options: regionalTrainersForDisplay,
+          },
+        ];
       }
 
       if (facilitation === 'national_center' || isEvent) {
         optionsForValue = nationalCenterTrainers;
-        trainerOptions = nationalCenterTrainers;
+        trainerOptions = [
+          {
+            label: 'National Center trainers',
+            options: nationalCenterTrainers,
+          },
+        ];
       }
 
       if (facilitation === 'both') {

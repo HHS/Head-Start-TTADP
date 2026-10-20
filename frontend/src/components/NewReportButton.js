@@ -1,19 +1,11 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import './NewReportButton.scss';
 
-export default function NewReportButton({
-  to,
-  children,
-  onClick,
-}) {
+export default function NewReportButton({ to, children, onClick }) {
   return (
-    <Link
-      to={to}
-      className="usa-button smart-hub--new-report-btn"
-      onClick={onClick}
-    >
+    <Link to={to} className="usa-button smart-hub--new-report-btn" onClick={onClick}>
       <span className="smart-hub--plus">+</span>
       <span className="smart-hub--new-report">{children}</span>
     </Link>

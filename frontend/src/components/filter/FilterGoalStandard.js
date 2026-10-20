@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getGoalTemplateFilterStandards } from '../../fetchers/goalTemplates';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
-import useGoalTemplates from '../../hooks/useGoalTemplates';
 
-export default function FilterGoalStandard({
-  onApply,
-  inputId,
-  query,
-}) {
-  const goalTemplates = useGoalTemplates([]);
+export default function FilterGoalStandard({ onApply, inputId, query }) {
+  const [standards, setStandards] = useState([]);
 
-  const standards = (goalTemplates || []).map((template) => ({
-    label: template.standard,
-    value: template.id,
-  })).filter(({ label }) => label !== 'Monitoring');
+  useEffect(() => {
+    getGoalTemplateFilterStandards()
+      .then((data) => {
+        setStandards((data || []).map((standard) => ({ label: standard, value: standard })));
+      })
+      .catch(() => setStandards([]));
+  }, []);
 
   return (
     <FilterSelect

@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 
 // WARNING: Do not interpolate unvalidated input. Escaping is critical here.
@@ -7,7 +7,7 @@ function getSql(responses: string[]) {
     .filter((s) => typeof s === 'string' && s.trim().length > 0)
     .map((s) => `'${s.replace(/'/g, "''")}'`); // escape single quotes
 
-  const placeholders = validatedResponses.length > 0 ? validatedResponses.join(', ') : '\'\'';
+  const placeholders = validatedResponses.length > 0 ? validatedResponses.join(', ') : "''";
 
   return sequelize.literal(`(
     WITH unnested_responses AS (

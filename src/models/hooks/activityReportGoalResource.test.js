@@ -1,13 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
-  sequelize,
   ActivityReport,
-  Goal,
   ActivityReportGoal,
   ActivityReportGoalResource,
-  User,
+  Goal,
   Resource,
+  sequelize,
+  User,
 } from '..';
 import { recalculateOnAR } from './activityReportGoalResource';
 
@@ -48,10 +48,10 @@ describe('activityReportGoalResource hooks', () => {
 
   beforeEach(async () => {
     mockUser = await User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.string.sample(),
+      hsesUserId: faker.string.sample(),
       lastLogin: new Date(),
     });
 
@@ -183,7 +183,7 @@ describe('activityReportGoalResource hooks', () => {
         SET "onAR" = rr."onAR"
         FROM "ResourceOnReport" rr
         WHERE r.id = rr.id;`.trim();
-        expect(call).toEqual((expected.replace(/\s+/g, ' ')));
+        expect(call).toEqual(expected.replace(/\s+/g, ' '));
       });
       it('recalculates when goalIds are not in the metadata', async () => {
         const mockOptions = {
@@ -215,7 +215,7 @@ describe('activityReportGoalResource hooks', () => {
         SET "onAR" = rr."onAR"
         FROM "ResourceOnReport" rr
         WHERE r.id = rr.id;`.trim();
-        expect(call).toEqual((expected.replace(/\s+/g, ' ')));
+        expect(call).toEqual(expected.replace(/\s+/g, ' '));
       });
     });
   });

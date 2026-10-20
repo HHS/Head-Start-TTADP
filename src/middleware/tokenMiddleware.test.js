@@ -36,8 +36,9 @@ const { currentUserId, retrieveUserDetails } = require('../services/currentUser'
 const { unauthorized } = require('../serializers/errorResponses');
 
 describe('tokenMiddleware', () => {
-  let req; let res; let
-    next;
+  let req;
+  let res;
+  let next;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -77,7 +78,7 @@ describe('tokenMiddleware', () => {
     expect(next).not.toHaveBeenCalled();
     expect(unauthorized).toHaveBeenCalledWith(
       res,
-      'User does not have appropriate permissions to view this resource',
+      'User does not have appropriate permissions to view this resource'
     );
   });
 
@@ -105,7 +106,7 @@ describe('tokenMiddleware', () => {
     await tokenMiddleware(req, res, next);
 
     expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error when retrieving user details from HSES: Error: test error',
+      'Error when retrieving user details from HSES: Error: test error'
     );
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
@@ -114,7 +115,7 @@ describe('tokenMiddleware', () => {
         status: '401',
         title: 'Unauthenticated User',
         detail: expect.any(String),
-      }),
+      })
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -126,7 +127,7 @@ describe('tokenMiddleware', () => {
     await tokenMiddleware(req, res, next);
 
     expect(auditLogger.warn).toHaveBeenCalledWith(
-      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup',
+      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup'
     );
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
@@ -144,7 +145,7 @@ describe('tokenMiddleware', () => {
     await tokenMiddleware(req, res, next);
 
     expect(auditLogger.warn).toHaveBeenCalledWith(
-      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup',
+      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup'
     );
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
@@ -165,14 +166,9 @@ describe('tokenMiddleware', () => {
 
     await tokenMiddleware(req, res, next);
 
-    expect(handleErrors).toHaveBeenCalledWith(
-      req,
-      res,
-      expect.any(Error),
-      'MIDDLEWARE:TOKEN',
-    );
+    expect(handleErrors).toHaveBeenCalledWith(req, res, expect.any(Error), 'MIDDLEWARE:TOKEN');
     expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('Unrecoverable error in tokenMiddleware: Error: db down'),
+      expect.stringContaining('Unrecoverable error in tokenMiddleware: Error: db down')
     );
 
     expect(next).not.toHaveBeenCalled();

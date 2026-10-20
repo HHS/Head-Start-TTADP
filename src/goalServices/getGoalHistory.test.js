@@ -1,8 +1,8 @@
-import crypto from 'crypto';
-import faker from '@faker-js/faker';
-import httpContext from 'express-http-context';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { getUniqueId } from '../testUtils';
+import crypto from 'crypto';
+import httpContext from 'express-http-context';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
   ActivityReport,
   ActivityReportCollaborator,
@@ -17,7 +17,7 @@ import db, {
   Role,
   User,
 } from '../models';
-import SCOPES from '../middleware/scopeConstants';
+import { getUniqueId } from '../testUtils';
 import { getGoalHistory } from './goals';
 
 jest.mock('bull');
@@ -56,15 +56,15 @@ describe('getGoalHistory (database-backed)', () => {
     user = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.datatype.number({ min: 1, max: 100000 })}`,
+      hsesUserId: `fake${faker.number.int({ min: 1, max: 100000 })}`,
       email: faker.internet.email(),
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       role: ['Grants Specialist'],
       lastLogin: new Date(),
     });
 
     // Point the httpContext mock to the real user so Goal afterCreate hooks can set collaborators.
-    httpContext.get.mockReturnValue(user.id);
+    httpContext.get.mockImplementation((key) => (key === 'loggedUser' ? user.id : undefined));
 
     permission = await Permission.create({
       userId: user.id,
@@ -73,14 +73,14 @@ describe('getGoalHistory (database-backed)', () => {
     });
 
     recipient = await Recipient.create({
-      id: faker.datatype.number({ min: 10000, max: 99999 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 99999 }),
+      name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     grant = await Grant.create({
       id: getUniqueId(),
-      number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
+      number: `0${faker.number.int({ min: 1, max: 9999 })}${faker.animal.type()}`,
       regionId: REGION_ID,
       status: 'Active',
       startDate: new Date('2021/01/01'),
@@ -88,7 +88,7 @@ describe('getGoalHistory (database-backed)', () => {
       recipientId: recipient.id,
     });
 
-    const templateName = faker.random.words(5);
+    const templateName = faker.word.words(5);
     const hash = crypto.createHmac('md5', templateName).update(templateName).digest('hex');
     goalTemplate = await GoalTemplate.create({
       hash,
@@ -99,7 +99,7 @@ describe('getGoalHistory (database-backed)', () => {
     // The Closed goal is created first so it doesn't conflict with the partial unique index.
     // (index only constrains non-Closed goals with goalTemplateId IS NOT NULL)
     goalClosed = await Goal.create({
-      name: faker.random.words(5),
+      name: faker.word.words(5),
       status: 'Closed',
       grantId: grant.id,
       goalTemplateId: goalTemplate.id,
@@ -109,7 +109,7 @@ describe('getGoalHistory (database-backed)', () => {
 
     // One non-Closed goal (Suspended) is allowed alongside Closed goals.
     goalSuspended = await Goal.create({
-      name: faker.random.words(5),
+      name: faker.word.words(5),
       status: 'Suspended',
       grantId: grant.id,
       goalTemplateId: goalTemplate.id,
@@ -120,13 +120,13 @@ describe('getGoalHistory (database-backed)', () => {
     // Two objectives on the Suspended goal
     [objective1, objective2] = await Promise.all([
       Objective.create({
-        title: faker.random.words(5),
+        title: faker.word.words(5),
         goalId: goalSuspended.id,
         status: 'Suspended',
         createdVia: 'rtr',
       }),
       Objective.create({
-        title: faker.random.words(5),
+        title: faker.word.words(5),
         goalId: goalSuspended.id,
         status: 'Suspended',
         createdVia: 'rtr',
@@ -139,6 +139,7 @@ describe('getGoalHistory (database-backed)', () => {
         activityRecipientType: 'recipient',
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2021-01-01T13:00:00Z',
         numberOfParticipants: 1,
         deliveryMethod: 'in-person',
         duration: 1,
@@ -158,6 +159,7 @@ describe('getGoalHistory (database-backed)', () => {
         activityRecipientType: 'recipient',
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2021-01-02T13:00:00Z',
         numberOfParticipants: 1,
         deliveryMethod: 'in-person',
         duration: 1,
@@ -198,9 +200,9 @@ describe('getGoalHistory (database-backed)', () => {
     collaboratorUser = await User.create({
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.datatype.number({ min: 100001, max: 200000 })}`,
+      hsesUserId: `fake${faker.number.int({ min: 100001, max: 200000 })}`,
       email: faker.internet.email(),
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       role: ['Health Specialist'],
       lastLogin: new Date(),
     });
@@ -280,7 +282,7 @@ describe('getGoalHistory (database-backed)', () => {
   it('only includes objectives created via RTR or on approved ARs', async () => {
     // Create an objective that should NOT be included by the service filter
     const excludedObjective = await Objective.create({
-      title: faker.random.words(5),
+      title: faker.word.words(5),
       goalId: goalSuspended.id,
       status: 'Suspended',
       createdVia: 'activityReport',
@@ -290,9 +292,7 @@ describe('getGoalHistory (database-backed)', () => {
     try {
       const result = await getGoalHistory(goalSuspended.id);
 
-      const returnedObjectiveIds = result.goals
-        .flatMap((g) => g.objectives || [])
-        .map((o) => o.id);
+      const returnedObjectiveIds = result.goals.flatMap((g) => g.objectives || []).map((o) => o.id);
 
       expect(returnedObjectiveIds).not.toContain(excludedObjective.id);
     } finally {
@@ -339,7 +339,7 @@ describe('getGoalHistory (database-backed)', () => {
           .flatMap((g) => g.objectives || [])
           .flatMap((o) => o.activityReportObjectives || [])
           .map((aro) => aro.activityReport?.id)
-          .filter(Boolean),
+          .filter(Boolean)
       );
 
       // Still only the two APPROVED reports from the main fixture
@@ -348,6 +348,117 @@ describe('getGoalHistory (database-backed)', () => {
     } finally {
       await ActivityReportObjective.destroy({ where: { id: extraAro.id } });
       await ActivityReport.destroy({ where: { id: extraReport.id } });
+    }
+  });
+
+  it('orders objective activity reports by approvedAt from most recent to oldest', async () => {
+    const [oldestReport, middleReport, newestReport] = await Promise.all([
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-10T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-10T12:00:00Z',
+        startDate: '2025-01-10T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-11T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-11T12:00:00Z',
+        startDate: '2025-01-11T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-12T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-12T12:00:00Z',
+        startDate: '2025-01-12T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+    ]);
+
+    const [oldestAro, middleAro, newestAro] = await Promise.all([
+      ActivityReportObjective.create({
+        activityReportId: oldestReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+      ActivityReportObjective.create({
+        activityReportId: middleReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+      ActivityReportObjective.create({
+        activityReportId: newestReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+    ]);
+
+    try {
+      const result = await getGoalHistory(goalSuspended.id);
+
+      const suspendedGoal = result.goals.find((g) => g.id === goalSuspended.id);
+      const targetObjective = (suspendedGoal.objectives || []).find((o) => o.id === objective1.id);
+      const orderedReportIds = (targetObjective.activityReportObjectives || [])
+        .filter((aro) => aro.activityReport)
+        .map((aro) => aro.activityReport.id);
+
+      expect(orderedReportIds.slice(0, 3)).toEqual([
+        newestReport.id,
+        middleReport.id,
+        oldestReport.id,
+      ]);
+    } finally {
+      await ActivityReportObjective.destroy({
+        where: {
+          id: [oldestAro.id, middleAro.id, newestAro.id],
+        },
+      });
+
+      await ActivityReport.destroy({
+        where: {
+          id: [oldestReport.id, middleReport.id, newestReport.id],
+        },
+      });
     }
   });
 
@@ -394,16 +505,81 @@ describe('getGoalHistory (database-backed)', () => {
     expect(targetObjective.ttaSpecialists).toHaveLength(2);
 
     // Backend processing guarantees both distinct and sorted specialist strings.
-    expect(new Set(targetObjective.ttaSpecialists).size)
-      .toBe(targetObjective.ttaSpecialists.length);
-    const sortedSpecialists = [...targetObjective.ttaSpecialists]
-      .sort((a, b) => a.localeCompare(b));
+    expect(new Set(targetObjective.ttaSpecialists).size).toBe(
+      targetObjective.ttaSpecialists.length
+    );
+    const sortedSpecialists = [...targetObjective.ttaSpecialists].sort((a, b) =>
+      a.localeCompare(b)
+    );
     expect(targetObjective.ttaSpecialists).toEqual(sortedSpecialists);
 
-    const authorMatches = targetObjective.ttaSpecialists
-      .filter((entry) => entry.includes(user.name));
+    const authorMatches = targetObjective.ttaSpecialists.filter((entry) =>
+      entry.includes(user.name)
+    );
     expect(authorMatches).toHaveLength(1);
 
     expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);
+  });
+
+  it('returns goal history for a Not Started goal created via a draft activity report (createdVia: activityReport, onApprovedAR: false)', async () => {
+    // This is the bug case: a goal with createdVia='activityReport' and onApprovedAR=false
+    // was previously filtered out of the query entirely, causing "No goal history found" in the UI
+    // even though a GoalStatusChange record was created by the afterCreate hook.
+    //
+    // We use a dedicated grant + template to avoid the partial unique index that allows only
+    // one non-Closed goal per (grantId, goalTemplateId).
+    const isolatedGrant = await Grant.create({
+      id: getUniqueId(),
+      number: `0${faker.number.int({ min: 10000, max: 99999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    });
+
+    const isolatedTemplateName = faker.word.words(5);
+    const isolatedHash = crypto
+      .createHmac('md5', isolatedTemplateName)
+      .update(isolatedTemplateName)
+      .digest('hex');
+    const isolatedTemplate = await GoalTemplate.create({
+      hash: isolatedHash,
+      templateName: isolatedTemplateName,
+      creationMethod: 'Automatic',
+    });
+
+    const draftArGoal = await Goal.create({
+      name: faker.word.words(5),
+      status: 'Not Started',
+      grantId: isolatedGrant.id,
+      goalTemplateId: isolatedTemplate.id,
+      createdVia: 'activityReport',
+      onApprovedAR: false,
+      prestandard: false,
+    });
+
+    try {
+      const result = await getGoalHistory(draftArGoal.id);
+
+      expect(result).not.toBeNull();
+      expect(result.goals).not.toHaveLength(0);
+
+      const returnedGoal = result.goals.find((g) => g.id === draftArGoal.id);
+      expect(returnedGoal).toBeDefined();
+
+      // The goal should have a createdAt date so the UI can display "Added on {date}"
+      expect(returnedGoal.createdAt).toBeDefined();
+
+      // The afterCreate hook always writes an initial GoalStatusChange (oldStatus: null),
+      // so when statusChanges is empty the UI falls back to createdAt — but with the fix
+      // we also verify the change record exists and can be returned.
+      const initialChange = (returnedGoal.statusChanges || []).find((sc) => sc.oldStatus === null);
+      expect(initialChange).toBeDefined();
+    } finally {
+      await Goal.destroy({ where: { id: draftArGoal.id }, force: true });
+      await GoalTemplate.destroy({ where: { id: isolatedTemplate.id }, force: true });
+      await Grant.destroy({ where: { id: isolatedGrant.id }, individualHooks: true });
+    }
   });
 });

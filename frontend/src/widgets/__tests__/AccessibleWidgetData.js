@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import AccessibleWidgetData from '../AccessibleWidgetData';
 
 describe('accessible widget data table', () => {
@@ -18,11 +18,13 @@ describe('accessible widget data table', () => {
       },
     ];
 
-    render(<AccessibleWidgetData
-      caption="This table is not what it seems"
-      columnHeadings={['Person', 'Favorite Pie']}
-      rows={data}
-    />);
+    render(
+      <AccessibleWidgetData
+        caption="This table is not what it seems"
+        columnHeadings={['Person', 'Favorite Pie']}
+        rows={data}
+      />
+    );
 
     const els = [
       screen.getByText(/this table is not what it seems/i),

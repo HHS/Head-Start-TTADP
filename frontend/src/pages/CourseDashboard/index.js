@@ -1,29 +1,26 @@
 /* eslint-disable no-alert */
 /* eslint-disable no-console */
-import React, {
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { showFilterWithMyRegions } from '../regionHelpers';
 import { expandFilters, filtersToQueryString } from '../../utils';
+import { showFilterWithMyRegions } from '../regionHelpers';
 import './index.scss';
-import { fetchCourseDashboardData } from '../../fetchers/courses';
-import UserContext from '../../UserContext';
-import { COURSE_DASHBOARD_FILTER_CONFIG } from './constants';
-import RegionPermissionModal from '../../components/RegionPermissionModal';
-import CoursesAssociatedWithActivityReports from '../../widgets/CoursesAssociatedWithActivityReports';
-import colors from '../../colors';
-import useFilters from '../../hooks/useFilters';
 import { REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY } from '../../Constants';
+import colors from '../../colors';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { fetchCourseDashboardData } from '../../fetchers/courses';
+import useFilters from '../../hooks/useFilters';
+import UserContext from '../../UserContext';
+import CoursesAssociatedWithActivityReports from '../../widgets/CoursesAssociatedWithActivityReports';
+import { COURSE_DASHBOARD_FILTER_CONFIG } from './constants';
 
 export default function CourseDashboard() {
   const { user } = useContext(UserContext);
@@ -31,6 +28,7 @@ export default function CourseDashboard() {
   const [courseData, setCourseData] = useState({});
   const [error, updateError] = useState();
   const [resetPagination, setResetPagination] = useState(false);
+  const onFiltersChange = useCallback(() => setResetPagination(true), []);
 
   const {
     // from useUserDefaultRegionFilters
@@ -48,6 +46,7 @@ export default function CourseDashboard() {
     true,
     [],
     COURSE_DASHBOARD_FILTER_CONFIG,
+    onFiltersChange
   );
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
@@ -58,12 +57,10 @@ export default function CourseDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        const data = await fetchCourseDashboardData(
-          filterQuery,
-        );
+        const data = await fetchCourseDashboardData(filterQuery);
         setCourseData(data);
         updateError('');
-      } catch (e) {
+      } catch (_e) {
         updateError('Unable to fetch course data');
       } finally {
         setIsLoading(false);
@@ -71,29 +68,33 @@ export default function CourseDashboard() {
     }
     // Call courses fetch.
     fetchCourseData();
-  }, [
-    filtersToApply,
-  ]);
+  }, [filtersToApply]);
 
   return (
     <div className="ttahub-course-dashboard">
       <Helmet>
-        <title>iPD courses</title>
+        <title>EEP courses</title>
       </Helmet>
       <RegionPermissionModal
         filters={filters}
         user={user}
-        showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-          }
+        showFilterWithMyRegions={() =>
+          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        }
       />
-      <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="resources-dashboard">
+      <FontAwesomeIcon
+        className="margin-right-1"
+        data-testid="back-link-icon"
+        color={colors.ttahubMediumBlue}
+        icon={faArrowLeft}
+      />
+      <Link
+        className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
+        to="resources-dashboard"
+      >
         Back to Resource Dashboard
       </Link>
-      <h1 className="landing margin-top-0">
-        iPD courses
-      </h1>
+      <h1 className="landing margin-top-0">EEP courses</h1>
       <Grid row>
         {error && (
           <Alert className="margin-bottom-2" type="error" role="alert">
@@ -127,11 +128,13 @@ CourseDashboard.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

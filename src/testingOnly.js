@@ -1,5 +1,5 @@
-import express from 'express';
 import {} from 'dotenv/config';
+import express from 'express';
 import { auditLogger } from './logger';
 import { testingRouter } from './routes/testingOnly';
 

@@ -1,6 +1,4 @@
-import {
-  Topic,
-} from '../models';
+import { Topic } from '../models';
 
 /* eslint-disable import/prefer-default-export */
 export async function getAllTopics() {

@@ -5,16 +5,21 @@ export default function useWidgetMenuItems(
   setShowTabularData,
   capture,
   checkboxes,
-  exportRows,
+  exportRows
 ) {
   // eslint-disable-next-line max-len
-  const atLeastOneRowIsSelected = useMemo(() => Object.values(checkboxes).some((v) => v), [checkboxes]);
+  const atLeastOneRowIsSelected = useMemo(
+    () => Object.values(checkboxes).some((v) => v),
+    [checkboxes]
+  );
 
   const menuItems = useMemo(() => {
-    const menu = [{
-      label: showTabularData ? 'Display graph' : 'Display table',
-      onClick: () => setShowTabularData(!showTabularData),
-    }];
+    const menu = [
+      {
+        label: showTabularData ? 'Display graph' : 'Display table',
+        onClick: () => setShowTabularData(!showTabularData),
+      },
+    ];
 
     if (!showTabularData) {
       menu.push({

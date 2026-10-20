@@ -1,30 +1,36 @@
-import {} from 'dotenv/config';
-import fs from 'fs';
-import express from 'express';
-import helmet from 'helmet';
-import path from 'path';
-import join from 'url-join';
-import { omit } from 'lodash';
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
-
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-
-import { registerEventListener } from './processHandler';
+import {} from 'dotenv/config';
+import express from 'express';
+import fs from 'fs';
+import helmet from 'helmet';
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { omit } from 'lodash';
+import path from 'path';
+import qs from 'qs';
+import join from 'url-join';
+import { v4 as uuidv4 } from 'uuid';
+import { runCronJobs } from './lib/cron';
+import { auditLogger, logger, requestLogger } from './logger';
 import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
 import { getPublicJwk } from './middleware/jwkKeyManager';
-import { retrieveUserDetails } from './services/currentUser';
-import sessionMiddleware from './middleware/sessionMiddleware';
-
-import { logger, auditLogger, requestLogger } from './logger';
-import runCronJobs from './lib/cron';
 import sanitizeUrlParams from './middleware/sanitizeUrlParams';
+import sessionMiddleware from './middleware/sessionMiddleware';
+import { registerEventListener } from './processHandler';
+import { retrieveUserDetails } from './services/currentUser';
 
 const app = express();
 
 // Behind cloud.gov’s router/LB the app sees HTTP from the proxy even though the client used HTTPS.
 // Tell Express to trust the first proxy so req.secure reflects X-Forwarded-Proto === 'https'.
 app.set('trust proxy', 1);
+
+// Express's default `qs` query parser converts bracket-notation arrays with more
+// than 20 elements into objects keyed by index. That silently breaks filters
+// that can have many selected values (e.g. `stateCode.nin[]=...` with all 60+
+// states/territories selected on the goal dashboard), because downstream filter
+// code expects an array. Raise the limit so large multi-select filters parse as
+// arrays. `parameterLimit` already bounds the overall payload size.
+app.set('query parser', (str) => qs.parse(str, { arrayLimit: 1000 }));
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
@@ -68,7 +74,7 @@ app.use((req, res, next) => {
         'img-src',
         'default-src',
         'style-src',
-        'font-src',
+        'font-src'
       ),
       styleSrc: ["'self'", "'unsafe-inline'"],
       // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`,
@@ -78,7 +84,12 @@ app.use((req, res, next) => {
       scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`, '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", `'nonce-${res.locals.nonce}'`, 'https://*.googletagmanager.com'],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
-      connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
+      connectSrc: [
+        "'self'",
+        '*.google-analytics.com',
+        '*.analytics.google.com',
+        '*.googletagmanager.com',
+      ],
       defaultSrc: [
         "'self'",
         'wss://tta-smarthub-dev-green.app.cloud.gov',
@@ -115,12 +126,12 @@ app.get(oauth2CallbackPath, async (req, res) => {
   try {
     const accessToken = await getAccessToken(req);
     if (!accessToken) {
-      auditLogger.error('No access token retrieved');
+      auditLogger.alertError('No access token retrieved', 'auth_access_token_missing');
       return res.status(INTERNAL_SERVER_ERROR).end();
     }
     const subject = req.session?.claims?.sub;
     if (!subject) {
-      auditLogger.error('No subject retrieved');
+      auditLogger.alertError('No subject retrieved', 'auth_subject_missing');
       return res.status(INTERNAL_SERVER_ERROR).end();
     }
     const data = await getUserInfo(accessToken, subject);
@@ -133,7 +144,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     await new Promise((resolve) => {
       req.session.regenerate((err) => {
         if (err) {
-          auditLogger(`Session regenerate failed: ${err}`);
+          auditLogger.alertError(`Session regenerate failed: ${err}`, 'auth_login_failure', err);
           res.status(INTERNAL_SERVER_ERROR).end();
           return resolve();
         }
@@ -145,9 +156,10 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.id_token = idToken;
         req.session.pkce = prevPkce;
 
-        const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
-          ? req.session.referrerPath
-          : '/';
+        const redirectPath =
+          req.session.referrerPath && req.session.referrerPath !== '/logout'
+            ? req.session.referrerPath
+            : '/';
 
         logger.debug(`referrer path: ${req.session.referrerPath}`);
         auditLogger.info(`User ${dbUser.id} logged in`);
@@ -159,7 +171,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     return undefined;
   } catch (error) {
-    auditLogger.error(`Error logging in: ${error}`);
+    auditLogger.alertError(`Error logging in: ${error}`, 'auth_login_failure', error);
     return res.status(INTERNAL_SERVER_ERROR).end();
   }
 });

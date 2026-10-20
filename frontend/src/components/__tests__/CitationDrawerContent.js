@@ -1,12 +1,9 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import CitationDrawerContent from '../CitationDrawerContent';
+import React from 'react';
 import AppLoadingContext from '../../AppLoadingContext';
+import CitationDrawerContent from '../CitationDrawerContent';
 
 describe('CitationDrawerContent', () => {
   const citationUrl = '/api/citations/text?citationIds=citation1&citationIds=citation2';
@@ -23,20 +20,20 @@ describe('CitationDrawerContent', () => {
 
   afterEach(() => fetchMock.restore());
 
-  const renderTest = () => {
+  const renderTest = () =>
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <CitationDrawerContent citations={['citation1', 'citation2']} />
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
-  };
 
   it('fetches citations', async () => {
     fetchMock.get(citationUrl, mockCitations);
 
-    renderTest();
+    const { container } = renderTest();
 
     expect(fetchMock.called(citationUrl)).toBe(true);
+    expect(container.querySelector('.ttahub-citation-drawer-content')).toHaveClass('text-wrap');
 
     expect(await screen.findByText('citation1')).toBeInTheDocument();
     expect(await screen.findByText('text1')).toBeInTheDocument();

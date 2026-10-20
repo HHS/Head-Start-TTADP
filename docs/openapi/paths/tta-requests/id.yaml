@@ -1,0 +1,64 @@
+get:
+  tags:
+    - tta request
+  summary: Get a TTA request by its ID
+  description: >-
+    A draft is available only to its creator. Once submitted, it is also
+    available to users who can read its region, and admins.
+  parameters:
+    - name: ttaRequestId
+      in: path
+      description: ID of the TTA request
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: The ID is not an integer
+    '403':
+      description: Not authorized to view the request
+    '404':
+      description: TTA request not found
+put:
+  tags:
+    - tta request
+  summary: Save changes to a draft TTA request
+  description: >-
+    Available only to the request's creator, while it is a draft and they can
+    write in its region. Only the fields in the body change; grantIds and
+    citations replace the current lists when sent. Changing the recipient
+    without sending grantIds clears the grants. regionId is ignored.
+  parameters:
+    - name: ttaRequestId
+      in: path
+      description: ID of the TTA request
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../index.yaml#/components/schemas/ttaRequestInput'
+  responses:
+    '200':
+      description: Saved draft TTA request
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: >-
+        Malformed ID or body, or grants and a recipient that do not belong
+        together in the request's region
+    '403':
+      description: Not the creator, not a draft, or no write permission in the region
+    '404':
+      description: TTA request not found

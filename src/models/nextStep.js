@@ -10,16 +10,19 @@ const {
   afterUpdate,
 } = require('./hooks/goal');
  */
-const {
-  afterCreate,
-  afterUpdate,
-} = require('./hooks/nextStep');
+const { afterCreate, afterUpdate } = require('./hooks/nextStep');
 
 export default (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
-      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
-      NextStep.hasMany(models.NextStepResource, { foreignKey: 'nextStepId', as: 'nextStepResources' });
+      NextStep.belongsTo(models.ActivityReport, {
+        foreignKey: 'activityReportId',
+        as: 'activityReport',
+      });
+      NextStep.hasMany(models.NextStepResource, {
+        foreignKey: 'nextStepId',
+        as: 'nextStepResources',
+      });
       NextStep.belongsToMany(models.Resource, {
         through: models.NextStepResource,
         foreignKey: 'nextStepId',
@@ -28,34 +31,37 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  NextStep.init({
-    activityReportId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    note: {
-      allowNull: false,
-      type: DataTypes.TEXT,
-      validate: {
-        notNull: true,
-        notEmpty: true,
+  NextStep.init(
+    {
+      activityReportId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      note: {
+        allowNull: false,
+        type: DataTypes.TEXT,
+        validate: {
+          notNull: true,
+          notEmpty: true,
+        },
+      },
+      noteType: {
+        allowNull: false,
+        type: DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
+      },
+      completeDate: {
+        type: DataTypes.DATEONLY,
+        get: formatDate,
       },
     },
-    noteType: {
-      allowNull: false,
-      type: DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
-    },
-    completeDate: {
-      type: DataTypes.DATEONLY,
-      get: formatDate,
-    },
-  }, {
-    sequelize,
-    modelName: 'NextStep',
-    hooks: {
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
-    },
-  });
+    {
+      sequelize,
+      modelName: 'NextStep',
+      hooks: {
+        afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+        afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      },
+    }
+  );
   return NextStep;
 };

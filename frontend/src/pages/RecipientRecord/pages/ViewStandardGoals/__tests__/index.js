@@ -1,20 +1,18 @@
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  within,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route } from 'react-router-dom';
 import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import moment from 'moment';
-import ViewGoalDetails from '..';
-import UserContext from '../../../../../UserContext';
+import React from 'react';
+import { MemoryRouter, Route } from 'react-router-dom';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
+import UserContext from '../../../../../UserContext';
+import ViewGoalDetails, {
+  formatRecipientGrantDisplay,
+  StatusActionTag,
+  userDisplayFromStatus,
+} from '..';
 
 const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
 
@@ -33,6 +31,7 @@ const mockGoalHistory = [
     grant: {
       id: 1,
       number: '012345 HS',
+      numberWithProgramTypes: '012345 HS - EHS, HS',
     },
     goalCollaborators: [
       {
@@ -54,8 +53,9 @@ const mockGoalHistory = [
         activityReportObjectives: [
           {
             activityReport: {
-              id: 101,
-              displayId: 'R-101',
+              id: 102,
+              displayId: 'R-102',
+              approvedAt: '2025-01-12T00:00:00.000Z',
               author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
               activityReportCollaborators: [
                 {
@@ -66,7 +66,10 @@ const mockGoalHistory = [
                 },
               ],
             },
-            topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
+            topics: [
+              { id: 1, name: 'Topic A' },
+              { id: 2, name: 'Topic B' },
+            ],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
             files: [
               { id: 201, originalFileName: 'report101-file1.pdf' },
@@ -78,16 +81,18 @@ const mockGoalHistory = [
           },
           {
             activityReport: {
-              id: 102,
-              displayId: 'R-102',
+              id: 101,
+              displayId: 'R-101',
+              approvedAt: '2025-01-10T00:00:00.000Z',
               author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
               activityReportCollaborators: [],
             },
-            topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
-            resources: [{ id: 2, url: 'http://example.com/resource2' }],
-            files: [
-              { id: 203, originalFileName: 'report102-file1.xlsx' },
+            topics: [
+              { id: 2, name: 'Topic B' },
+              { id: 3, name: 'Topic C' },
             ],
+            resources: [{ id: 2, url: 'http://example.com/resource2' }],
+            files: [{ id: 203, originalFileName: 'report102-file1.xlsx' }],
             activityReportObjectiveCourses: [
               { course: { id: 302, name: 'Classroom Management' } },
               { course: { id: 303, name: 'Family Engagement Strategies' } },
@@ -118,27 +123,61 @@ const mockGoalHistory = [
     // status changes sorted by backend
     statusChanges: [
       {
-        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 1,
+        goalId: 1,
+        userId: 1,
+        oldStatus: null,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 2, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 2,
+        goalId: 1,
+        userId: 1,
+        oldStatus: GOAL_STATUS.NOT_STARTED,
+        newStatus: GOAL_STATUS.IN_PROGRESS,
+        createdAt: '2025-01-02T00:00:00.000Z',
+        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 3, goalId: 1, userId: 2, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: GOAL_STATUS.SUSPENDED, createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 3,
+        goalId: 1,
+        userId: 2,
+        oldStatus: GOAL_STATUS.IN_PROGRESS,
+        newStatus: GOAL_STATUS.SUSPENDED,
+        createdAt: '2025-01-10T00:00:00.000Z',
+        user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 4, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.SUSPENDED, newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
+        id: 4,
+        goalId: 1,
+        userId: 1,
+        oldStatus: GOAL_STATUS.SUSPENDED,
+        newStatus: 'Complete',
+        createdAt: '2025-01-12T00:00:00.000Z',
+        user: null,
       },
       {
-        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: GOAL_STATUS.CLOSED, createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        id: 6,
+        goalId: 1,
+        userId: 2,
+        oldStatus: 'Complete',
+        newStatus: GOAL_STATUS.CLOSED,
+        createdAt: '2025-01-13T00:00:00.000Z',
+        user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 5, goalId: 1, userId: 1, oldStatus: GOAL_STATUS.CLOSED, newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        id: 5,
+        goalId: 1,
+        userId: 1,
+        oldStatus: GOAL_STATUS.CLOSED,
+        newStatus: 'Unknown Status',
+        createdAt: '2025-01-14T00:00:00.000Z',
+        user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
     ],
-    responses: [
-      { id: 1, goalId: 1, response: ['Root cause 1', 'Root cause 2'] },
-    ],
+    responses: [{ id: 1, goalId: 1, response: ['Root cause 1', 'Root cause 2'] }],
   },
   {
     id: 2,
@@ -152,7 +191,13 @@ const mockGoalHistory = [
     objectives: [],
     statusChanges: [
       {
-        id: 10, goalId: 2, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-12-01T00:00:00.000Z', user: null,
+        id: 10,
+        goalId: 2,
+        userId: null,
+        oldStatus: null,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        createdAt: '2024-12-01T00:00:00.000Z',
+        user: null,
       },
     ],
     goalCollaborators: [],
@@ -168,7 +213,13 @@ const mockGoalHistory = [
     objectives: [],
     statusChanges: [
       {
-        id: 11, goalId: 4, userId: null, oldStatus: null, newStatus: GOAL_STATUS.NOT_STARTED, createdAt: '2024-11-01T00:00:00.000Z', user: null,
+        id: 11,
+        goalId: 4,
+        userId: null,
+        oldStatus: null,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        createdAt: '2024-11-01T00:00:00.000Z',
+        user: null,
       },
     ],
     goalCollaborators: [
@@ -244,21 +295,35 @@ describe('ViewGoalDetails', () => {
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
   };
 
-  const renderViewGoalDetails = (user = DEFAULT_USER, search = `?goalId=${goalId}`) => render(
-    <UserContext.Provider value={{ user }}>
-      <AppLoadingContext.Provider value={{
-        setIsAppLoading: jest.fn(),
-        setAppLoadingText: jest.fn(),
-      }}
-      >
-        <MemoryRouter initialEntries={[`/recipient-tta-records/1/region/1/goals/standard${search}`]}>
-          <Route path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard">
-            <ViewGoalDetails recipient={recipient} regionId={regionId} />
-          </Route>
-        </MemoryRouter>
-      </AppLoadingContext.Provider>
-    </UserContext.Provider>,
-  );
+  const renderViewGoalDetails = (
+    user = DEFAULT_USER,
+    search = `?goalId=${goalId}`,
+    state = undefined
+  ) =>
+    render(
+      <UserContext.Provider value={{ user }}>
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
+        >
+          <MemoryRouter
+            initialEntries={[
+              {
+                pathname: '/recipient-tta-records/1/region/1/goals/standard',
+                search,
+                state,
+              },
+            ]}
+          >
+            <Route path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard">
+              <ViewGoalDetails recipient={recipient} regionId={regionId} />
+            </Route>
+          </MemoryRouter>
+        </AppLoadingContext.Provider>
+      </UserContext.Provider>
+    );
 
   afterEach(() => fetchMock.restore());
 
@@ -268,7 +333,10 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
     await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
-    const heading = await screen.findByRole('heading', { name: /TTA Goals for John Doe - Region 1/i, level: 1 });
+    const heading = await screen.findByRole('heading', {
+      name: /TTA Goals for John Doe - Region 1/i,
+      level: 1,
+    });
     expect(heading).toBeInTheDocument();
   });
 
@@ -290,13 +358,15 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(screen.getByText('Standard Goal')).toBeInTheDocument());
   });
 
-  test('renders the grant number or N/A in summary', async () => {
-    // test case 1: first goal has grant number
+  test('renders the grant display value or N/A in summary', async () => {
+    // test case 1: first goal has recipient, number, and program types
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
-    await waitFor(() => expect(screen.getByText('012345 HS')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('John Doe - 012345 HS - EHS, HS')).toBeInTheDocument()
+    );
     fetchMock.restore();
 
     // test case 2: first goal has null grant -> shows N/A
@@ -350,10 +420,25 @@ describe('ViewGoalDetails', () => {
     // setup mock for empty response
     fetchMock.get(goalHistoryUrl, { goals: [], overview: emptyOverview });
     await act(async () => {
-      renderViewGoalDetails();
+      renderViewGoalDetails(DEFAULT_USER, `?goalId=${goalId}`, {
+        goalSummary: {
+          id: 1,
+          name: 'Fallback goal summary',
+          status: GOAL_STATUS.NOT_STARTED,
+          createdAt: '2025-01-15T00:00:00.000Z',
+          grant: {
+            number: '012345 HS',
+          },
+        },
+      });
     });
     await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
     expect(await screen.findByText('No goal history found')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /TTA Goals for John Doe - Region 1/i, level: 1 })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Fallback goal summary')).toBeInTheDocument();
+    expect(screen.getByText('John Doe - 012345 HS')).toBeInTheDocument();
   });
 
   test('handles permissions mismatch', async () => {
@@ -362,7 +447,9 @@ describe('ViewGoalDetails', () => {
     });
     // fetch shouldn't happen because of early return
     expect(fetchMock.called(goalHistoryUrl)).toBe(false);
-    expect(await screen.findByText(/You don't have permission to view this page/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/You don't have permission to view this page/i)
+    ).toBeInTheDocument();
   });
 
   test('renders the back to RTTAPA link', async () => {
@@ -375,6 +462,43 @@ describe('ViewGoalDetails', () => {
     expect(link).toHaveAttribute('href', '/recipient-tta-records/1/region/1/rttapa/');
   });
 
+  test('renders the goal dashboard back link from location state', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, `?goalId=${goalId}`, {
+        backLinkTo: '/dashboards/goal-dashboard',
+        backLinkText: 'Back to Goal Dashboard',
+      });
+    });
+
+    const link = await screen.findByRole('link', { name: /Back to Goal Dashboard/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/dashboards/goal-dashboard');
+  });
+
+  test('shows actions menu and prints goal summary', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+
+    const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const actionsButton = await screen.findByRole('button', { name: /Actions for goal 1/i });
+    await act(async () => {
+      await userEvent.click(actionsButton);
+    });
+
+    const printGoalSummaryItem = await screen.findByRole('button', { name: 'Print goal summary' });
+    await act(async () => {
+      await userEvent.click(printGoalSummaryItem);
+    });
+
+    expect(printSpy).toHaveBeenCalled();
+    printSpy.mockRestore();
+  });
+
   test('renders goal status updates correctly sorted and formatted', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
@@ -384,18 +508,177 @@ describe('ViewGoalDetails', () => {
     // ensure accordion is expanded if needed (it should be by default for the first item)
     await waitFor(() => expect(firstAccordionItem).toHaveAttribute('aria-expanded', 'true'));
 
-    const accordionContent = document.getElementById(firstAccordionItem.getAttribute('aria-controls'));
-    const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
+    const accordionContent = document.getElementById(
+      firstAccordionItem.getAttribute('aria-controls')
+    );
+    expect(
+      within(accordionContent).getByRole('heading', { name: 'Goal updates', level: 4 })
+    ).toBeInTheDocument();
+    const updatesList = within(accordionContent).getByRole('list', {
+      name: /Goal status updates/i,
+    });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // check ordering and formatting
     expect(updates).toHaveLength(6);
-    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
-    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
-    expect(updates[2]).toHaveTextContent(`Suspended on ${formatDate('2025-01-10T00:00:00.000Z')} by Another User`);
+    expect(updates[0]).toHaveTextContent(
+      `Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`
+    );
+    expect(updates[1]).toHaveTextContent(
+      `Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`
+    );
+    expect(updates[2]).toHaveTextContent(
+      `Suspended on ${formatDate('2025-01-10T00:00:00.000Z')} by Another User`
+    );
     expect(updates[3]).toHaveTextContent(`Completed on ${formatDate('2025-01-12T00:00:00.000Z')}`); // User is null, so no 'by'
-    expect(updates[4]).toHaveTextContent(`Closed on ${formatDate('2025-01-13T00:00:00.000Z')} by Another User`); // Check Closed status
-    expect(updates[5]).toHaveTextContent(`Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`);
+    expect(updates[4]).toHaveTextContent(
+      `Closed on ${formatDate('2025-01-13T00:00:00.000Z')} by Another User`
+    ); // Check Closed status
+    expect(updates[5]).toHaveTextContent(
+      `Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`
+    );
+  });
+
+  test('renders the suspended reason (not the goal-created reason) for a suspended goal', async () => {
+    const suspendedGoal = {
+      id: 7,
+      name: 'Suspended Standard Goal',
+      status: GOAL_STATUS.SUSPENDED,
+      createdAt: '2025-02-01T00:00:00.000Z',
+      goalTemplateId: 1,
+      grantId: 1,
+      goalTemplate: { id: 1, templateName: 'Improve Child Development' },
+      grant: { id: 1, number: '012345 HS', numberWithProgramTypes: '012345 HS - EHS, HS' },
+      goalCollaborators: [],
+      objectives: [],
+      // Reproduces the bug: backend attaches an arbitrary status change reason.
+      reason: 'Goal created',
+      statusChanges: [
+        {
+          id: 70,
+          goalId: 7,
+          userId: 1,
+          oldStatus: null,
+          newStatus: GOAL_STATUS.NOT_STARTED,
+          reason: 'Goal created',
+          createdAt: '2025-02-01T00:00:00.000Z',
+          performedAt: '2025-02-01T00:00:00.000Z',
+          user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        },
+        {
+          id: 71,
+          goalId: 7,
+          userId: 2,
+          oldStatus: GOAL_STATUS.NOT_STARTED,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Recipient request',
+          createdAt: '2025-02-05T00:00:00.000Z',
+          performedAt: '2025-02-05T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+      ],
+      responses: null,
+    };
+
+    fetchMock.get(goalHistoryUrl, { goals: [suspendedGoal], overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-7 \| Suspended/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    expect(within(accordionContent).getByText('Suspended - Recipient request')).toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Goal created')
+    ).not.toBeInTheDocument();
+  });
+
+  test('renders the most recent suspended reason regardless of statusChanges order', async () => {
+    const suspendedGoal = {
+      id: 8,
+      name: 'Repeatedly Suspended Goal',
+      status: GOAL_STATUS.SUSPENDED,
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplateId: 1,
+      grantId: 1,
+      goalTemplate: { id: 1, templateName: 'Improve Child Development' },
+      grant: { id: 1, number: '012345 HS', numberWithProgramTypes: '012345 HS - EHS, HS' },
+      goalCollaborators: [],
+      objectives: [],
+      reason: 'Goal created',
+      // Intentionally NOT ordered by createdAt to prove the FE sorts independently
+      // of whatever order the backend returns the status changes in. The goal was
+      // suspended, resumed, then suspended again with a different (later) reason.
+      statusChanges: [
+        {
+          id: 83,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Key staff turnover / vacancies',
+          createdAt: '2025-03-15T00:00:00.000Z',
+          performedAt: '2025-03-15T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+        {
+          id: 80,
+          goalId: 8,
+          userId: 1,
+          oldStatus: null,
+          newStatus: GOAL_STATUS.NOT_STARTED,
+          reason: 'Goal created',
+          createdAt: '2025-03-01T00:00:00.000Z',
+          performedAt: '2025-03-01T00:00:00.000Z',
+          user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        },
+        {
+          id: 81,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.NOT_STARTED,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Recipient request',
+          createdAt: '2025-03-05T00:00:00.000Z',
+          performedAt: '2025-03-05T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+        {
+          id: 82,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.SUSPENDED,
+          newStatus: GOAL_STATUS.IN_PROGRESS,
+          reason: 'Unknown',
+          createdAt: '2025-03-10T00:00:00.000Z',
+          performedAt: '2025-03-10T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+      ],
+      responses: null,
+    };
+
+    fetchMock.get(goalHistoryUrl, { goals: [suspendedGoal], overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-8 \| Suspended/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    // Should show the most recent suspension reason, not the earlier one.
+    expect(
+      within(accordionContent).getByText('Suspended - Key staff turnover / vacancies')
+    ).toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Recipient request')
+    ).not.toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Goal created')
+    ).not.toBeInTheDocument();
   });
 
   test('renders objective information including reports, topics, and resources', async () => {
@@ -405,30 +688,38 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+    const firstAccordionContent = document.getElementById(
+      firstAccordionButton.getAttribute('aria-controls')
+    );
 
     // objective 1: has reports, topics, resources
-    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
-    expect(within(objective1).getByText('Objective summary')).toBeInTheDocument();
+    const objective1 = within(firstAccordionContent)
+      .getByText('Implement new curriculum')
+      .closest('div.margin-bottom-3');
+    expect(
+      within(objective1).getByRole('heading', { name: 'Objective summary', level: 4 })
+    ).toBeInTheDocument();
     expect(within(objective1).getByText('Implement new curriculum')).toBeInTheDocument();
     expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
 
     // reports
     const reportsLabel = within(objective1).getByText('Reports');
     const reportsContainer = reportsLabel.closest('div').parentElement;
-    const reportsValue = within(reportsContainer).getAllByTestId('read-only-value')
-      .find((el) => el.textContent.includes('R-101'));
+    const reportsValue = within(reportsContainer)
+      .getAllByTestId('read-only-value')
+      .find((el) => el.textContent.includes('R-102'));
 
     const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
     const reportLink2 = within(reportsValue).getByRole('link', { name: 'R-102' });
     expect(reportLink1).toHaveAttribute('href', '/activity-reports/view/101');
     expect(reportLink2).toHaveAttribute('href', '/activity-reports/view/102');
-    expect(reportsValue).toHaveTextContent('R-101, R-102'); // check comma separation
+    expect(reportsValue).toHaveTextContent('R-102, R-101'); // newest approved report first
 
     // topics (unique and sorted)
     const topicsLabel = within(objective1).getByText('Topics');
     const topicsContainer = topicsLabel.closest('div').parentElement;
-    const topicsValue = within(topicsContainer).getAllByTestId('read-only-value')
+    const topicsValue = within(topicsContainer)
+      .getAllByTestId('read-only-value')
       .find((el) => el.textContent.includes('Topic'));
 
     expect(topicsValue).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
@@ -447,24 +738,31 @@ describe('ViewGoalDetails', () => {
     const coursesList = within(resourcesContainer).getAllByRole('list');
     expect(coursesList.length).toBeGreaterThanOrEqual(1);
 
-    const courses = within(resourcesContainer).getAllByText((content, element) => (
-      ['Early Childhood Development Course', 'Classroom Management', 'Family Engagement Strategies'].includes(content)
-      && element.tagName.toLowerCase() === 'li'
-    ));
+    const courses = within(resourcesContainer).getAllByText(
+      (content, element) =>
+        [
+          'Early Childhood Development Course',
+          'Classroom Management',
+          'Family Engagement Strategies',
+        ].includes(content) && element.tagName.toLowerCase() === 'li'
+    );
     expect(courses).toHaveLength(3);
     expect(courses[0]).toHaveTextContent('Early Childhood Development Course');
 
     // Check resource links
     const resourceLink1 = within(resourcesContainer).getByRole('link', { name: 'Resource 1' });
-    const resourceLink2 = within(resourcesContainer).getByRole('link', { name: 'http://example.com/resource2' });
+    const resourceLink2 = within(resourcesContainer).getByRole('link', {
+      name: 'http://example.com/resource2',
+    });
     expect(resourceLink1).toHaveAttribute('href', 'http://example.com/resource1');
     expect(resourceLink2).toHaveAttribute('href', 'http://example.com/resource2');
 
     // Check files
-    const files = within(resourcesContainer).getAllByText((content, element) => (
-      ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content)
-      && element.tagName.toLowerCase() === 'li'
-    ));
+    const files = within(resourcesContainer).getAllByText(
+      (content, element) =>
+        ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content) &&
+        element.tagName.toLowerCase() === 'li'
+    );
     expect(files).toHaveLength(3);
     expect(files[0]).toHaveTextContent('report101-file1.pdf');
     expect(files[1]).toHaveTextContent('report101-file2.docx');
@@ -478,11 +776,15 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+    const firstAccordionContent = document.getElementById(
+      firstAccordionButton.getAttribute('aria-controls')
+    );
 
-    // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
+    // objective 1 has two ARs: both with author Alice (id 10) and AR-102 has collaborator Bob
     // Alice should appear once (deduplicated), Bob should appear once
-    const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
+    const objective1 = within(firstAccordionContent)
+      .getByText('Implement new curriculum')
+      .closest('div.margin-bottom-3');
     const specialistsLabel = within(objective1).getByText('TTA specialists');
     expect(specialistsLabel).toBeInTheDocument();
 
@@ -493,7 +795,9 @@ describe('ViewGoalDetails', () => {
     // Check that both specialists are present with their roles
     expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist');
     expect(specialistsValue).toHaveTextContent('Bob Collaborator, Grants Specialist');
-    expect(specialistsValue).toHaveTextContent('Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist');
+    expect(specialistsValue).toHaveTextContent(
+      'Alice Specialist, Program Specialist; Bob Collaborator, Grants Specialist'
+    );
     // Verify Alice only appears once (deduplicated even though she's author on both ARs)
     const aliceMatches = specialistsValue.textContent.match(/Alice Specialist/g);
     expect(aliceMatches).toHaveLength(1);
@@ -506,10 +810,14 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+    const firstAccordionContent = document.getElementById(
+      firstAccordionButton.getAttribute('aria-controls')
+    );
 
     // objective 2 has no activityReportObjectives
-    const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
+    const objective2 = within(firstAccordionContent)
+      .getByText('Objective with no reports/topics/resources')
+      .closest('div.margin-bottom-3');
     expect(within(objective2).queryByText('TTA specialists')).not.toBeInTheDocument();
   });
 
@@ -536,10 +844,14 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+    const firstAccordionContent = document.getElementById(
+      firstAccordionButton.getAttribute('aria-controls')
+    );
 
     // Objective has no AROs because backend filtered out all non-approved ARs
-    const objective = within(firstAccordionContent).getByText('Objective with only non-approved ARs').closest('div.margin-bottom-3');
+    const objective = within(firstAccordionContent)
+      .getByText('Objective with only non-approved ARs')
+      .closest('div.margin-bottom-3');
     // TTA specialists should not appear because there are no approved ARs
     expect(within(objective).queryByText('TTA specialists')).not.toBeInTheDocument();
     // Reports section should also not appear since no approved ARs exist
@@ -553,10 +865,16 @@ describe('ViewGoalDetails', () => {
     });
     const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
     await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
+    const firstAccordionContent = document.getElementById(
+      firstAccordionButton.getAttribute('aria-controls')
+    );
 
     expect(within(firstAccordionContent).getByText('Root causes')).toBeInTheDocument();
-    expect(within(firstAccordionContent).getByText('Root cause 1, Root cause 2')).toBeInTheDocument();
+    const rootCausesList = within(firstAccordionContent).getByRole('list', {
+      name: /Root causes list/i,
+    });
+    expect(within(rootCausesList).getByText('Root cause 1')).toBeInTheDocument();
+    expect(within(rootCausesList).getByText('Root cause 2')).toBeInTheDocument();
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
@@ -566,9 +884,13 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
     const accordionButtonNull = await screen.findByRole('button', { name: /G-2 \| Closed/i });
-    await act(async () => { userEvent.click(accordionButtonNull); });
+    await act(async () => {
+      userEvent.click(accordionButtonNull);
+    });
     await waitFor(() => expect(accordionButtonNull).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContentNull = document.getElementById(accordionButtonNull.getAttribute('aria-controls'));
+    const accordionContentNull = document.getElementById(
+      accordionButtonNull.getAttribute('aria-controls')
+    );
     await waitFor(() => {
       expect(within(accordionContentNull).queryByText('Root causes')).not.toBeInTheDocument();
     });
@@ -582,7 +904,9 @@ describe('ViewGoalDetails', () => {
     });
     const accordionButtonEmpty = await screen.findByRole('button', { name: /G-3 \| In Progress/i });
     await waitFor(() => expect(accordionButtonEmpty).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContentEmpty = document.getElementById(accordionButtonEmpty.getAttribute('aria-controls'));
+    const accordionContentEmpty = document.getElementById(
+      accordionButtonEmpty.getAttribute('aria-controls')
+    );
     await waitFor(() => {
       expect(within(accordionContentEmpty).queryByText('Root causes')).not.toBeInTheDocument();
     });
@@ -596,17 +920,25 @@ describe('ViewGoalDetails', () => {
 
     // find the accordion button for G-5
     const accordionButtonG5 = await screen.findByRole('button', { name: /G-5 \| Not Started/i });
-    await act(async () => { userEvent.click(accordionButtonG5); });
+    await act(async () => {
+      userEvent.click(accordionButtonG5);
+    });
     await waitFor(() => expect(accordionButtonG5).toHaveAttribute('aria-expanded', 'true'));
 
-    const accordionContentG5 = document.getElementById(accordionButtonG5.getAttribute('aria-controls'));
-    const updatesList = within(accordionContentG5).getByRole('list', { name: /Goal status updates/i });
+    const accordionContentG5 = document.getElementById(
+      accordionButtonG5.getAttribute('aria-controls')
+    );
+    const updatesList = within(accordionContentG5).getByRole('list', {
+      name: /Goal status updates/i,
+    });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // G-5 has no statusChanges, so it uses the fallback rendering
     // It has a creator with a user object, so it should display 'by Pizza Man'
     expect(updates).toHaveLength(1);
-    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`);
+    expect(updates[0]).toHaveTextContent(
+      `Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`
+    );
   });
 
   test('renders by ohs tool tip if goal is monitoring and status is Not Started', async () => {
@@ -617,10 +949,10 @@ describe('ViewGoalDetails', () => {
       standard: 'Monitoring',
     };
 
-    fetchMock.get(
-      goalHistoryUrl,
-      { goals: [monitoringGoal, ...mockGoalHistory], overview: mockOverview },
-    );
+    fetchMock.get(goalHistoryUrl, {
+      goals: [monitoringGoal, ...mockGoalHistory],
+      overview: mockOverview,
+    });
     await act(async () => {
       renderViewGoalDetails();
     });
@@ -640,10 +972,22 @@ describe('ViewGoalDetails', () => {
       objectives: [],
       statusChanges: [
         {
-          id: 70, goalId: 7, userId: 10, oldStatus: GOAL_STATUS.NOT_STARTED, newStatus: GOAL_STATUS.IN_PROGRESS, createdAt: '2025-02-03T00:00:00.000Z', user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
+          id: 70,
+          goalId: 7,
+          userId: 10,
+          oldStatus: GOAL_STATUS.NOT_STARTED,
+          newStatus: GOAL_STATUS.IN_PROGRESS,
+          createdAt: '2025-02-03T00:00:00.000Z',
+          user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
         },
         {
-          id: 71, goalId: 7, userId: 11, oldStatus: GOAL_STATUS.IN_PROGRESS, newStatus: 'Complete', createdAt: '2025-02-10T00:00:00.000Z', user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
+          id: 71,
+          goalId: 7,
+          userId: 11,
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: 'Complete',
+          createdAt: '2025-02-10T00:00:00.000Z',
+          user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
         },
       ],
       goalCollaborators: [
@@ -657,7 +1001,10 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/7/history', { goals: [goalWithMissingAdded], overview: emptyOverview });
+    fetchMock.get('/api/goals/7/history', {
+      goals: [goalWithMissingAdded],
+      overview: emptyOverview,
+    });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=7');
     });
@@ -665,14 +1012,22 @@ describe('ViewGoalDetails', () => {
     const accordionButton = await screen.findByRole('button', { name: /G-7 \| In Progress/i });
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
-    const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
+    const updatesList = within(accordionContent).getByRole('list', {
+      name: /Goal status updates/i,
+    });
     const updates = within(updatesList).getAllByRole('listitem');
 
     // Should synthesize the first entry as Added on <createdAt> by Tom Jones
-    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-02-01T00:00:00.000Z')} by Tom Jones`);
+    expect(updates[0]).toHaveTextContent(
+      `Added on ${formatDate('2025-02-01T00:00:00.000Z')} by Tom Jones`
+    );
     // Followed by the existing updates in ascending order
-    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`);
-    expect(updates[2]).toHaveTextContent(`Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`);
+    expect(updates[1]).toHaveTextContent(
+      `Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`
+    );
+    expect(updates[2]).toHaveTextContent(
+      `Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`
+    );
   });
 
   test('hides resource section when no courses, links, or files exist', async () => {
@@ -705,7 +1060,10 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/8/history', { goals: [goalWithEmptyResources], overview: emptyOverview });
+    fetchMock.get('/api/goals/8/history', {
+      goals: [goalWithEmptyResources],
+      overview: emptyOverview,
+    });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=8');
     });
@@ -714,7 +1072,9 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent).getByText('Objective with no resources').closest('div.margin-bottom-3');
+    const objective = within(accordionContent)
+      .getByText('Objective with no resources')
+      .closest('div.margin-bottom-3');
 
     // The 'Resources' heading should not be present
     expect(within(objective).queryByText('Resources')).not.toBeInTheDocument();
@@ -740,9 +1100,7 @@ describe('ViewGoalDetails', () => {
               topics: [{ id: 901, name: 'Topic Y' }],
               resources: [], // Empty resources
               files: [], // Empty files
-              activityReportObjectiveCourses: [
-                { course: { id: 901, name: 'Course Only Test' } },
-              ],
+              activityReportObjectiveCourses: [{ course: { id: 901, name: 'Course Only Test' } }],
             },
           ],
         },
@@ -752,7 +1110,10 @@ describe('ViewGoalDetails', () => {
       responses: null,
     };
 
-    fetchMock.get('/api/goals/9/history', { goals: [goalWithOnlyCourses], overview: emptyOverview });
+    fetchMock.get('/api/goals/9/history', {
+      goals: [goalWithOnlyCourses],
+      overview: emptyOverview,
+    });
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, '?goalId=9');
     });
@@ -761,7 +1122,9 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent).getByText('Objective with only courses').closest('div.margin-bottom-3');
+    const objective = within(accordionContent)
+      .getByText('Objective with only courses')
+      .closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();
@@ -790,7 +1153,9 @@ describe('ViewGoalDetails', () => {
             {
               activityReport: { id: 1001, displayId: 'R-1001' },
               topics: [{ id: 1001, name: 'Topic Z' }],
-              resources: [{ id: 1001, url: 'http://example.com/resource-only', title: 'Resource Only Test' }],
+              resources: [
+                { id: 1001, url: 'http://example.com/resource-only', title: 'Resource Only Test' },
+              ],
               files: [], // Empty files
               activityReportObjectiveCourses: [], // Empty courses
             },
@@ -811,14 +1176,18 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent).getByText('Objective with only links').closest('div.margin-bottom-3');
+    const objective = within(accordionContent)
+      .getByText('Objective with only links')
+      .closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();
 
     // And the resource link should be visible
     const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
-    const resourceLink = within(resourceContainer).getByRole('link', { name: 'Resource Only Test' });
+    const resourceLink = within(resourceContainer).getByRole('link', {
+      name: 'Resource Only Test',
+    });
     expect(resourceLink).toHaveAttribute('href', 'http://example.com/resource-only');
   });
 
@@ -861,7 +1230,9 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
     const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
-    const objective = within(accordionContent).getByText('Objective with only files').closest('div.margin-bottom-3');
+    const objective = within(accordionContent)
+      .getByText('Objective with only files')
+      .closest('div.margin-bottom-3');
 
     // The 'Resources' heading should be present
     expect(within(objective).getByText('Resources')).toBeInTheDocument();
@@ -913,5 +1284,149 @@ describe('ViewGoalDetails', () => {
     const zeroSpans = await screen.findAllByText('0');
     // All four widgets should show 0
     expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+
+  test('renders print goal information values from overview', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('Goal information:');
+    expect(normalizedText).toContain('2 Activity Reports');
+    expect(normalizedText).toContain('3 goal objectives');
+    expect(normalizedText).toContain('1 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+  });
+
+  test('renders a print goal number heading for each goal history item', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const goalNumberHeadings = await screen.findAllByRole('heading', {
+      name: 'Goal number',
+      level: 2,
+      hidden: true,
+    });
+
+    expect(goalNumberHeadings).toHaveLength(mockGoalHistory.length);
+  });
+
+  test('falls back to zero counts when overview is omitted from response', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('0 Activity Reports');
+    expect(normalizedText).toContain('0 goal objectives');
+    expect(normalizedText).toContain('0 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+
+    const zeroSpans = await screen.findAllByText('0');
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('ViewStandardGoals helpers', () => {
+  test('StatusActionTag renders Reopened on when monitoring citation goal appears after a closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Active monitoring citations', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[{ status: GOAL_STATUS.IN_PROGRESS }, { status: GOAL_STATUS.CLOSED }]}
+        currentGoalIndex={0}
+      />
+    );
+
+    expect(screen.getByText('Reopened on')).toBeInTheDocument();
+  });
+
+  test('StatusActionTag renders Added on when monitoring citation goal has no later closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Goal created', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[{ status: GOAL_STATUS.IN_PROGRESS }, { status: GOAL_STATUS.IN_PROGRESS }]}
+        currentGoalIndex={0}
+      />
+    );
+
+    expect(screen.getByText('Added on')).toBeInTheDocument();
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal closure due to no active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.CLOSED,
+      reason: 'No active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal creation from active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.NOT_STARTED,
+      reason: 'Active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('formatRecipientGrantDisplay falls back to recipient grant lookup by goalGrantId', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipient: { name: 'Recipient A' }, numberWithProgramTypes: null },
+      'Recipient B',
+      [{ id: 22, numberWithProgramTypes: '22CH00001 - HS' }],
+      22
+    );
+
+    expect(output).toBe('Recipient A - 22CH00001 - HS');
+  });
+
+  test('formatRecipientGrantDisplay returns numberWithProgramTypes without recipient name', () => {
+    const output = formatRecipientGrantDisplay(
+      { numberWithProgramTypes: '99CH12345 - EHS' },
+      '',
+      null,
+      null
+    );
+
+    expect(output).toBe('99CH12345 - EHS');
+  });
+
+  test('formatRecipientGrantDisplay returns recipient and plain number when program types are absent', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipientName: 'Recipient C', number: '12CH34567' },
+      '',
+      [],
+      null
+    );
+
+    expect(output).toBe('Recipient C - 12CH34567');
+  });
+
+  test('formatRecipientGrantDisplay returns plain number when recipient name is unavailable', () => {
+    const output = formatRecipientGrantDisplay({ number: '45CH99999' }, '', [], null);
+
+    expect(output).toBe('45CH99999');
+  });
+
+  test('formatRecipientGrantDisplay returns N/A when no usable grant values exist', () => {
+    const output = formatRecipientGrantDisplay({ id: 123 }, '', [], null);
+
+    expect(output).toBe('N/A');
   });
 });

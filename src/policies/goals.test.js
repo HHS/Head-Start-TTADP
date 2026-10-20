@@ -1,6 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
+import Goal from './goals';
 
 describe('Goals policies', () => {
   describe('isAdmin', () => {
@@ -34,9 +34,7 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [
           {
-            activityReports: [
-              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
-            ],
+            activityReports: [{ id: 1, calculatedStatus: REPORT_STATUSES.APPROVED }],
           },
         ],
         grant: { regionId: 2 },
@@ -54,7 +52,7 @@ describe('Goals policies', () => {
       expect(policy.canDelete()).toBe(false);
     });
 
-    it('returns false if user\'s permissions don\'t match the region', async () => {
+    it("returns false if user's permissions don't match the region", async () => {
       const goal = {
         objectives: [],
         grant: { regionId: 2 },
@@ -110,7 +108,7 @@ describe('Goals policies', () => {
   });
 
   describe('canCreate', () => {
-    it('returns false if they can\'t', async () => {
+    it("returns false if they can't", async () => {
       const goal = {};
       const regionId = 2;
       const user = {
@@ -187,9 +185,7 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [
           {
-            activityReports: [
-              { id: 1, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-            ],
+            activityReports: [{ id: 1, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION }],
           },
         ],
         grant: { regionId: 2 },
@@ -213,9 +209,7 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [
           {
-            activityReports: [
-              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
-            ],
+            activityReports: [{ id: 1, calculatedStatus: REPORT_STATUSES.APPROVED }],
           },
         ],
         grant: { regionId: 2 },

@@ -1,6 +1,6 @@
 import httpContext from 'express-http-context';
-import { sequelize, isConnectionOpen } from '..';
 import { auditLogger } from '../../logger';
+import { isConnectionOpen, sequelize } from '..';
 
 jest.mock('express-http-context', () => ({
   get: jest.fn(),

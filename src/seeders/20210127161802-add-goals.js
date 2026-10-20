@@ -17,8 +17,15 @@ module.exports = {
     const goalTemplates = [
       {
         id: 50, // 2,
-        hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.')),
-        templateName: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
+        hash: queryInterface.sequelize.fn(
+          'md5',
+          queryInterface.sequelize.fn(
+            'TRIM',
+            'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.'
+          )
+        ),
+        templateName:
+          'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
         createdAt: now,
         updatedAt: now,
         templateNameModifiedAt: now,
@@ -26,8 +33,15 @@ module.exports = {
       },
       {
         id: 51, // 3,
-        hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.')),
-        templateName: 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
+        hash: queryInterface.sequelize.fn(
+          'md5',
+          queryInterface.sequelize.fn(
+            'TRIM',
+            'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.'
+          )
+        ),
+        templateName:
+          'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
         createdAt: now,
         updatedAt: now,
         templateNameModifiedAt: now,
@@ -101,11 +115,18 @@ module.exports = {
       },
     ];
 
-    await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { validate: true, individualHooks: true });
+    await queryInterface.bulkInsert('GoalTemplates', goalTemplates, {
+      validate: true,
+      individualHooks: true,
+    });
     await queryInterface.bulkInsert('Goals', goals, { validate: true, individualHooks: true });
 
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH ${goalTemplates[goalTemplates.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "Goals_id_seq" RESTART WITH ${goals[goals.length - 1].id + 1};`);
+    await queryInterface.sequelize.query(
+      `ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH ${goalTemplates[goalTemplates.length - 1].id + 1};`
+    );
+    await queryInterface.sequelize.query(
+      `ALTER SEQUENCE "Goals_id_seq" RESTART WITH ${goals[goals.length - 1].id + 1};`
+    );
   },
 
   down: async (queryInterface) => {

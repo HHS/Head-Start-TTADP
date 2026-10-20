@@ -1,29 +1,23 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FilterRegionSelect from '../FilterRegionSelect';
+import React from 'react';
 import UserContext from '../../../UserContext';
+import FilterRegionSelect from '../FilterRegionSelect';
 
 const { findByRole } = screen;
 
 describe('FilterRegionSelect', () => {
-  const renderRegionSelect = (user, appliedRegion, onApply) => (
+  const renderRegionSelect = (user, appliedRegion, onApply) =>
     render(
-      <UserContext.Provider value={{
-        user,
-      }}
+      <UserContext.Provider
+        value={{
+          user,
+        }}
       >
-        <FilterRegionSelect
-          onApply={onApply}
-          inputId="curly"
-          appliedRegion={appliedRegion}
-        />
-      </UserContext.Provider>,
-    ));
+        <FilterRegionSelect onApply={onApply} inputId="curly" appliedRegion={appliedRegion} />
+      </UserContext.Provider>
+    );
 
   it('calls the onapply handler', async () => {
     const onApply = jest.fn();

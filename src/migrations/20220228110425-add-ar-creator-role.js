@@ -17,13 +17,10 @@ const USER_ROLES = [
 ];
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.addColumn(
-    'ActivityReports',
-    'creatorRole',
-    {
+  up: async (queryInterface, Sequelize) =>
+    queryInterface.addColumn('ActivityReports', 'creatorRole', {
       type: Sequelize.DataTypes.ENUM(USER_ROLES),
-    },
-  ),
+    }),
 
   down: async (queryInterface) => queryInterface.removeColumn('ActivityReports', 'creatorRole'),
 };

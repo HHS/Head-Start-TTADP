@@ -2,19 +2,17 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useForm, FormProvider, useFormContext } from 'react-hook-form';
-import Navigator from '..';
-import UserContext from '../../../UserContext';
-import { NOT_STARTED } from '../constants';
-import NetworkContext from '../../../NetworkContext';
+import React from 'react';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import AppLoadingContext from '../../../AppLoadingContext';
+import NetworkContext from '../../../NetworkContext';
+import UserContext from '../../../UserContext';
+import Navigator from '..';
 import NavigatorButtons from '../components/NavigatorButtons';
+import { COMPLETE, NOT_STARTED } from '../constants';
 
 // user mock
 const user = {
@@ -35,12 +33,7 @@ const Input = ({
   const { register } = useFormContext();
   return (
     <>
-      <input
-        type={type}
-        data-testid={name}
-        name={name}
-        ref={register({ required })}
-      />
+      <input type={type} data-testid={name} name={name} ref={register({ required })} />
       <NavigatorButtons
         isAppLoading={false}
         onContinue={onContinue}
@@ -66,7 +59,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -108,29 +101,37 @@ describe('Navigator', () => {
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
+    preFlightForNavigation = jest.fn(() => Promise.resolve(true)),
     editable = true,
     hideSideNav = false,
     autoSaveInterval = 500,
     shouldAutoSave = true,
   } = {}) => {
+    const [errorMessage, setErrorMessage] = React.useState('');
     const hookForm = useForm({
       defaultValues: formData,
     });
 
     const data = hookForm.watch();
+    const handleUpdateError = (message = '') => {
+      setErrorMessage(message);
+      onUpdateError(message);
+    };
 
     return (
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{
-          connectionActive: true,
-          localStorageAvailable: true,
-        }}
-        >
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+        <NetworkContext.Provider
+          value={{
+            connectionActive: true,
+            localStorageAvailable: true,
           }}
+        >
+          <AppLoadingContext.Provider
+            value={{
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }}
           >
             <FormProvider {...hookForm}>
               <Navigator
@@ -148,7 +149,8 @@ describe('Navigator', () => {
                 onFormSubmit={onSubmit}
                 updatePage={updatePage}
                 onSave={onSave}
-                updateErrorMessage={onUpdateError}
+                errorMessage={errorMessage}
+                updateErrorMessage={handleUpdateError}
                 onResetToDraft={() => {}}
                 updateLastSaveTime={() => {}}
                 isPendingApprover={false}
@@ -158,6 +160,7 @@ describe('Navigator', () => {
                 autoSaveInterval={autoSaveInterval}
                 shouldAutoSave={shouldAutoSave}
                 setShouldAutoSave={jest.fn()}
+                preFlightForNavigation={preFlightForNavigation}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
@@ -168,9 +171,7 @@ describe('Navigator', () => {
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (params) => {
-    render(
-      <NavigatorWithForm {...params} />,
-    );
+    render(<NavigatorWithForm {...params} />);
   };
 
   beforeEach(() => {
@@ -207,19 +208,63 @@ describe('Navigator', () => {
     expect(screen.getByTestId('side-nav')).toBeInTheDocument();
   });
 
+  describe('stale Complete guard for goals-objectives', () => {
+    const goalsObjectivesPage = (isPageComplete) => ({
+      position: 2,
+      path: 'goals-objectives',
+      label: 'Goals and objectives',
+      review: false,
+      isPageComplete,
+      render: () => <div>goals</div>,
+    });
+
+    const pagesWithGoals = (isPageComplete) => [
+      defaultPages[0],
+      goalsObjectivesPage(isPageComplete),
+    ];
+
+    it('downgrades a stored Complete to In progress when isPageComplete now returns false', async () => {
+      renderNavigator({
+        pages: pagesWithGoals(() => false),
+        formData: { ...initialData, pageState: { 1: NOT_STARTED, 2: COMPLETE } },
+      });
+
+      const goalsNav = await screen.findByRole('button', {
+        name: 'Goals and objectives In Progress',
+      });
+      expect(within(goalsNav).getByText('In Progress')).toBeVisible();
+    });
+
+    it('keeps a stored Complete when isPageComplete still returns true', async () => {
+      renderNavigator({
+        pages: pagesWithGoals(() => true),
+        formData: { ...initialData, pageState: { 1: NOT_STARTED, 2: COMPLETE } },
+      });
+
+      const goalsNav = await screen.findByRole('button', {
+        name: 'Goals and objectives Complete',
+      });
+      expect(within(goalsNav).getByText('Complete')).toBeVisible();
+    });
+  });
+
   it('autosaves when the shouldAutoSave prop is true', async () => {
     const onSaveDraft = jest.fn();
     renderNavigator({ shouldAutoSave: true, onSaveDraft });
 
     // mark the form as dirty so that onSave is called
-    await act(() => waitFor(() => {
-      userEvent.click(screen.getByTestId('first'));
-    }));
+    await act(() =>
+      waitFor(() => {
+        userEvent.click(screen.getByTestId('first'));
+      })
+    );
 
     // Fast-forward time to trigger the autosave interval
-    await act(() => waitFor(() => {
-      jest.advanceTimersByTime(800);
-    }));
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
 
     await waitFor(() => {
       expect(onSaveDraft).toHaveBeenCalledTimes(1);
@@ -231,16 +276,49 @@ describe('Navigator', () => {
     renderNavigator({ shouldAutoSave: false, onSaveDraft });
 
     // mark the form as dirty
-    await act(() => waitFor(() => {
-      userEvent.click(screen.getByTestId('first'));
-    }));
+    await act(() =>
+      waitFor(() => {
+        userEvent.click(screen.getByTestId('first'));
+      })
+    );
 
     // Fast-forward time to trigger the autosave interval
-    await act(() => waitFor(() => {
-      jest.advanceTimersByTime(800);
-    }));
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
 
     expect(onSaveDraft).toHaveBeenCalledTimes(0);
+  });
+
+  it('blocks side-nav navigation when preFlightForNavigation returns false', async () => {
+    const onSaveDraft = jest.fn();
+    const updatePage = jest.fn();
+    const onUpdateError = jest.fn();
+    const secondPage = {
+      position: 2,
+      path: 'second',
+      label: 'second page',
+      review: false,
+      render: () => <div>Second Page</div>,
+    };
+
+    renderNavigator({
+      currentPage: 'first',
+      onSaveDraft,
+      updatePage,
+      onUpdateError,
+      pages: [defaultPages[0], secondPage],
+      preFlightForNavigation: jest.fn(async () => false),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /second page/i }));
+
+    await waitFor(() => {
+      expect(onSaveDraft).not.toHaveBeenCalled();
+      expect(updatePage).not.toHaveBeenCalled();
+    });
   });
 
   describe('goalForEditing page state behavior', () => {

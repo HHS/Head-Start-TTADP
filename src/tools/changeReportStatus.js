@@ -1,8 +1,7 @@
 /* eslint-disable no-restricted-syntax */
-import {
-  ActivityReport,
-} from '../models';
+
 import { auditLogger } from '../logger';
+import { ActivityReport } from '../models';
 
 /**
  * changeReportStatus script changes status of activity reports based on ids and status.
@@ -20,7 +19,7 @@ export default async function changeReportStatus(ids, status) {
         {
           submissionStatus: status,
         },
-        { individualHooks: true },
+        { individualHooks: true }
       );
     } else {
       auditLogger.info(`Couldn't find any reports with the id: ${id}`);

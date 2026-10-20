@@ -14,10 +14,18 @@ function setupSessionMock() {
   });
   function MockStore() {}
   // provide minimal surface so static analysis doesn’t complain
-  MockStore.prototype.get = function get(_sid, _cb) { /* no-op for tests */ };
-  MockStore.prototype.set = function set(_sid, _sess, _cb) { /* no-op for tests */ };
-  MockStore.prototype.destroy = function destroy(_sid, _cb) { /* no-op for tests */ };
-  MockStore.prototype.touch = function touch(_sid, _sess, _cb) { /* no-op for tests */ };
+  MockStore.prototype.get = function get(_sid, _cb) {
+    /* no-op for tests */
+  };
+  MockStore.prototype.set = function set(_sid, _sess, _cb) {
+    /* no-op for tests */
+  };
+  MockStore.prototype.destroy = function destroy(_sid, _cb) {
+    /* no-op for tests */
+  };
+  MockStore.prototype.touch = function touch(_sid, _sess, _cb) {
+    /* no-op for tests */
+  };
 
   // emulate session.Store base class (used by connect-redis v6)
   fn.Store = MockStore;
@@ -36,11 +44,18 @@ function setupConnectRedisV6Mock() {
     }
     RedisStore.prototype = Object.create(session.Store.prototype, {
       constructor: {
-        value: RedisStore, enumerable: false, writable: true, configurable: true,
+        value: RedisStore,
+        enumerable: false,
+        writable: true,
+        configurable: true,
       },
     });
-    RedisStore.prototype.set = function set(_sid, _sess, _cb) { /* no-op */ };
-    RedisStore.prototype.get = function get(_sid, _cb) { /* no-op */ };
+    RedisStore.prototype.set = function set(_sid, _sess, _cb) {
+      /* no-op */
+    };
+    RedisStore.prototype.get = function get(_sid, _cb) {
+      /* no-op */
+    };
 
     RedisStoreCtor = RedisStore;
     return RedisStoreCtor;

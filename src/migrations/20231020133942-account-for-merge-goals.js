@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,17 +7,22 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      return queryInterface.addColumn('Goals', 'mapsToParentGoalId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        default: null,
-        references: {
-          model: {
-            tableName: 'Goals',
+      return queryInterface.addColumn(
+        'Goals',
+        'mapsToParentGoalId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          default: null,
+          references: {
+            model: {
+              tableName: 'Goals',
+            },
+            key: 'id',
           },
-          key: 'id',
         },
-      }, { transaction });
+        { transaction }
+      );
     });
   },
   async down(queryInterface) {

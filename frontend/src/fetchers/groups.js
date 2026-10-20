@@ -1,10 +1,5 @@
 import join from 'url-join';
-import {
-  get,
-  put,
-  post,
-  destroy,
-} from './index';
+import { destroy, get, post, put } from './index';
 
 const groupsUrl = join('/', 'api', 'groups');
 

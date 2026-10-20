@@ -1,10 +1,10 @@
 import React from 'react';
-import NewReportButton from './NewReportButton';
 import {
-  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../Constants';
+import NewReportButton from './NewReportButton';
 
 export default function NewActivityReportButton() {
   return (

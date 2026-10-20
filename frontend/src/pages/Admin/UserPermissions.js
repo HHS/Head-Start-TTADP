@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import _ from 'lodash';
-import {
-  Checkbox, Grid, Fieldset,
-} from '@trussworks/react-uswds';
+import { Checkbox, Fieldset, Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  REGIONAL_SCOPES, READ_ONLY_SCOPES, READ_WRITE_SCOPES, ALL_REGIONS,
-} from '../../Constants';
-import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
-import CurrentPermissions from './components/CurrentPermissions';
+import _ from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import { ALL_REGIONS, READ_ONLY_SCOPES, READ_WRITE_SCOPES, REGIONAL_SCOPES } from '../../Constants';
 import RegionDropdown from '../../components/RegionDropdown';
+import CurrentPermissions from './components/CurrentPermissions';
+import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
 
 /**
@@ -23,9 +19,7 @@ import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
  * @param {Object<string, {Object<string, bool>>}} permissions
  */
 function renderUserPermissions(permissions) {
-  const currentPermissions = _.mapValues(REGIONAL_SCOPES, () => (
-    []
-  ));
+  const currentPermissions = _.mapValues(REGIONAL_SCOPES, () => []);
 
   const allRegionPermissions = _.pickBy(_.pick(permissions, [ALL_REGIONS])[ALL_REGIONS]);
   const otherRegionPermissions = _.pickBy(_.omit(permissions, [ALL_REGIONS]));
@@ -43,9 +37,7 @@ function renderUserPermissions(permissions) {
 
   // regions.length being zero means the user does not have the scope in any region. Remove the
   // scope to keep the UI less cluttered
-  const prunedPermissions = _.pickBy(currentPermissions, (regions) => (
-    regions.length > 0
-  ));
+  const prunedPermissions = _.pickBy(currentPermissions, (regions) => regions.length > 0);
 
   return _.map(prunedPermissions, (regions, scope) => (
     <CurrentPermissions key={scope} regions={regions} scope={scope} />
@@ -94,9 +86,8 @@ function UserPermissions({
     updateSelectedRegion(parseInt(value, DECIMAL_BASE));
   };
 
-  const PermissionsCheckboxes = ({ scopeGroup }) => _.map(
-    _.pick(permissionsForRegion, scopeGroup),
-    (checked, scopeId) => {
+  const PermissionsCheckboxes = ({ scopeGroup }) =>
+    _.map(_.pick(permissionsForRegion, scopeGroup), (checked, scopeId) => {
       const { name, description } = scopeFromId(scopeId);
       return (
         <Grid key={name} col={12}>
@@ -104,15 +95,16 @@ function UserPermissions({
             id={name}
             name={scopeId}
             checked={checked}
-            onChange={(e) => { onRegionalPermissionChange(e, selectedRegion); }}
+            onChange={(e) => {
+              onRegionalPermissionChange(e, selectedRegion);
+            }}
             description={description}
             disabled={!enablePermissions}
-            label={(<PermissionCheckboxLabel name={name} description={description} />)}
+            label={<PermissionCheckboxLabel name={name} description={description} />}
           />
         </Grid>
       );
-    },
-  );
+    });
 
   PermissionsCheckboxes.propTypes = {
     scopeGroup: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -130,7 +122,7 @@ function UserPermissions({
                   checked={checked}
                   onChange={onGlobalPermissionChange}
                   id={name}
-                  label={(<PermissionCheckboxLabel name={name} description={description} />)}
+                  label={<PermissionCheckboxLabel name={name} description={description} />}
                   name={scopeId}
                   disabled={false}
                 />
@@ -141,9 +133,7 @@ function UserPermissions({
       </Fieldset>
       <Fieldset legend="Regional Permissions">
         <h2>Current Permissions</h2>
-        <ul>
-          {renderUserPermissions(regionalPermissions)}
-        </ul>
+        <ul>{renderUserPermissions(regionalPermissions)}</ul>
         <RegionDropdown
           id="permission-region"
           name="permission-region"

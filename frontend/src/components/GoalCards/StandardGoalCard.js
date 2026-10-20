@@ -1,37 +1,37 @@
-import React, {
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useHistory } from 'react-router-dom';
+import { Alert, Checkbox } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Checkbox, Alert } from '@trussworks/react-uswds';
-import moment from 'moment';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import { goalPropTypes } from './constants';
-import UserContext from '../../UserContext';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
-import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
-import DataCard from '../DataCard';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import GoalStatusDropdown from './components/GoalStatusDropdown';
-import ContextMenu from '../ContextMenu';
-import FlagStatus from './FlagStatus';
-import ExpanderButton from '../ExpanderButton';
-import ObjectiveCard from './ObjectiveCard';
-import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import isAdmin, { canEditOrCreateGoals, hasApproveActivityReportInRegion } from '../../permissions';
+import UserContext from '../../UserContext';
+import { parseDateStrict } from '../../utils';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import ContextMenu from '../ContextMenu';
+import DataCard from '../DataCard';
+import ExpanderButton from '../ExpanderButton';
+import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import GoalStatusDropdown from './components/GoalStatusDropdown';
+import { goalPropTypes } from './constants';
+import FlagStatus from './FlagStatus';
+import ObjectiveCard from './ObjectiveCard';
 
 export default function StandardGoalCard({
   goal,
   recipientId,
   regionId,
+  recipientName,
+  showRecipientColumn,
+  deletableStatuses,
+  onGoalDeleted,
+  backLinkState,
   handleGoalCheckboxSelect,
   isChecked,
   readonly,
@@ -49,10 +49,13 @@ export default function StandardGoalCard({
     isReopened,
     standard,
     createdAt,
+    hasActiveActivityReports = false,
   } = goal;
+  const cardRecipientName = recipientName || grant?.recipient?.name || '';
 
-  const lastStatusChange = statusChanges[statusChanges.length - 1]
-    || { oldStatus: GOAL_STATUS.NOT_STARTED };
+  const lastStatusChange = statusChanges[statusChanges.length - 1] || {
+    oldStatus: GOAL_STATUS.NOT_STARTED,
+  };
   const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
@@ -67,13 +70,20 @@ export default function StandardGoalCard({
   const [resetModalValues, setResetModalValues] = useState(false);
 
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
+  const [statusChangeBlockingReasons, setStatusChangeBlockingReasons] = useState({
+    activeActivityReport: false,
+    incompleteObjectives: false,
+    fromApi: false,
+  });
   const sortedObjectives = [...localObjectives];
-  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+  sortedObjectives.sort((a, b) => {
+    const aTime = parseDateStrict(a.endDate)?.valueOf() ?? -Infinity;
+    const bTime = parseDateStrict(b.endDate)?.valueOf() ?? -Infinity;
+    return aTime === bTime ? 0 : aTime < bTime ? 1 : -1;
+  });
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const {
-    atLeastOneObjectiveIsNotCompleted,
-    dispatchStatusChange,
-  } = useObjectiveStatusMonitor(objectives);
+  const { atLeastOneObjectiveIsNotCompleted, dispatchStatusChange } =
+    useObjectiveStatusMonitor(objectives);
 
   // Sync local status if goal prop changes externally
   useEffect(() => {
@@ -81,16 +91,37 @@ export default function StandardGoalCard({
   }, [status]);
 
   useEffect(() => {
-    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompleted) {
+    if (
+      invalidStatusChangeAttempted === true &&
+      !statusChangeBlockingReasons.fromApi &&
+      !hasActiveActivityReports &&
+      !atLeastOneObjectiveIsNotCompleted
+    ) {
       setInvalidStatusChangeAttempted(false);
+      setStatusChangeBlockingReasons({
+        activeActivityReport: false,
+        incompleteObjectives: false,
+        fromApi: false,
+      });
     }
-  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted]);
+  }, [
+    atLeastOneObjectiveIsNotCompleted,
+    hasActiveActivityReports,
+    invalidStatusChangeAttempted,
+    statusChangeBlockingReasons.fromApi,
+  ]);
 
   const [deleteError, setDeleteError] = useState(false);
 
   const lastTTA = useMemo(() => {
-    const latestDate = objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), '');
-    return latestDate ? moment(latestDate).format(DATE_DISPLAY_FORMAT) : '';
+    const latestDate = objectives.reduce((prev, curr) => {
+      const currDate = parseDateStrict(curr.endDate);
+      if (!currDate) {
+        return prev;
+      }
+      return !prev || currDate.isAfter(prev) ? currDate : prev;
+    }, null);
+    return latestDate ? latestDate.format(DATE_DISPLAY_FORMAT) : '';
   }, [objectives]);
   const history = useHistory();
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
@@ -98,6 +129,19 @@ export default function StandardGoalCard({
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
   const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
+  const viewLinkState = {
+    ...backLinkState,
+    goalSummary: {
+      id,
+      name,
+      status,
+      createdAt,
+      goalTemplateId: goal.goalTemplateId,
+      goalTemplateName: goal.goalTemplate?.templateName,
+      grant,
+      standard,
+    },
+  };
 
   const changeGoalStatus = async (newStatus, reason = null, context = null) => {
     try {
@@ -105,23 +149,33 @@ export default function StandardGoalCard({
       // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
       await updateGoalStatus(ids, newStatus, localStatus, reason, context);
       setLocalStatus(newStatus);
+      setInvalidStatusChangeAttempted(false);
       if (newStatus === GOAL_STATUS.SUSPENDED) {
-        const statusesNeedUpdating = [
-          GOAL_STATUS.NOT_STARTED,
-          GOAL_STATUS.IN_PROGRESS,
-        ];
-        setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
-          if (statusesNeedUpdating.includes(objective.status)) {
-            return {
-              ...objective,
-              status: GOAL_STATUS.SUSPENDED,
-            };
-          }
+        const statusesNeedUpdating = [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
+        setLocalObjectives((prevObjectives) =>
+          prevObjectives.map((objective) => {
+            if (statusesNeedUpdating.includes(objective.status)) {
+              return {
+                ...objective,
+                status: GOAL_STATUS.SUSPENDED,
+              };
+            }
 
-          return objective;
-        }));
+            return objective;
+          })
+        );
       }
     } catch (err) {
+      if (err.data?.code === 'GOAL_STATUS_CHANGE_BLOCKED' && Array.isArray(err.data.reasons)) {
+        setStatusChangeBlockingReasons({
+          activeActivityReport: err.data.reasons.includes('ACTIVE_ACTIVITY_REPORT'),
+          incompleteObjectives: err.data.reasons.includes('INCOMPLETE_OBJECTIVES'),
+          fromApi: true,
+        });
+        setInvalidStatusChangeAttempted(true);
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.error('Error updating goal status:', err);
       setStatusChangeError(true);
@@ -129,8 +183,17 @@ export default function StandardGoalCard({
   };
 
   const onUpdateGoalStatus = (newStatus) => {
-    // prevent closing if objectives aren't complete/suspended
-    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompleted) {
+    const blocksActiveReportStatusChange =
+      newStatus === GOAL_STATUS.CLOSED && hasActiveActivityReports;
+    const blocksIncompleteObjectiveStatusChange =
+      newStatus === GOAL_STATUS.CLOSED && atLeastOneObjectiveIsNotCompleted;
+
+    if (blocksActiveReportStatusChange || blocksIncompleteObjectiveStatusChange) {
+      setStatusChangeBlockingReasons({
+        activeActivityReport: blocksActiveReportStatusChange,
+        incompleteObjectives: blocksIncompleteObjectiveStatusChange,
+        fromApi: false,
+      });
       setInvalidStatusChangeAttempted(true);
       return;
     }
@@ -152,7 +215,7 @@ export default function StandardGoalCard({
     statusFromModal,
     oldStatusFromModal,
     reason,
-    context,
+    context
   ) => {
     changeGoalStatus(statusFromModal, reason, context);
     closeSuspendModalRef.current.toggleModal(false);
@@ -190,15 +253,28 @@ export default function StandardGoalCard({
     menuItems.push({
       label: 'Edit',
       onClick: () => {
+        if (backLinkState) {
+          history.push(editLink, backLinkState);
+          return;
+        }
+
         history.push(editLink);
       },
     });
-  } else if (localStatus === GOAL_STATUS.CLOSED
-    && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+  } else if (
+    localStatus === GOAL_STATUS.CLOSED &&
+    !isPreStandard &&
+    ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)
+  ) {
     // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
+        if (backLinkState) {
+          history.push(reopenLink, backLinkState);
+          return;
+        }
+
         history.push(reopenLink);
       },
     });
@@ -207,7 +283,7 @@ export default function StandardGoalCard({
   menuItems.push({
     label: 'View details',
     onClick: () => {
-      history.push(viewLink);
+      history.push(viewLink, viewLinkState);
     },
   });
 
@@ -218,21 +294,26 @@ export default function StandardGoalCard({
     }
 
     // Existing permission: Non-monitoring goals can be deleted by approvers
-    const canDeleteAsApprover = !isMonitoringGoal
-      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+    const canDeleteAsApprover =
+      !isMonitoringGoal && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
 
     // New permission: Goal creator can delete their own NOT_STARTED goals if they have
     // write permissions in the region
-    const canDeleteAsCreator = !isMonitoringGoal
-      && localStatus === GOAL_STATUS.NOT_STARTED
-      && canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
-      && isGoalCreator(goal, user);
+    const canDeleteAsCreator =
+      !isMonitoringGoal &&
+      localStatus === GOAL_STATUS.NOT_STARTED &&
+      canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)) &&
+      isGoalCreator(goal, user);
 
     return canDeleteAsApprover || canDeleteAsCreator;
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && !isPreStandard
-    && [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED].includes(localStatus)) {
+  if (
+    canDeleteQualifiedGoals &&
+    !onAR &&
+    !isPreStandard &&
+    deletableStatuses.includes(localStatus)
+  ) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
@@ -240,10 +321,14 @@ export default function StandardGoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(
-            `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`,
-            { message: 'Goal deleted successfully', refreshRecipient: true },
-          );
+          if (onGoalDeleted) {
+            onGoalDeleted(ids);
+          } else {
+            history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, {
+              message: 'Goal deleted successfully',
+              refreshRecipient: true,
+            });
+          }
         } catch (e) {
           setDeleteError(true);
         } finally {
@@ -297,10 +382,12 @@ export default function StandardGoalCard({
     if (isMonitoringGoal && (!lastStatusChange || !lastStatusChange.user)) {
       return (
         <SpecialistTags
-          specialists={[{
-            name: 'System-generated',
-            roles: ['OHS'],
-          }]}
+          specialists={[
+            {
+              name: 'System-generated',
+              roles: ['OHS'],
+            },
+          ]}
         />
       );
     }
@@ -308,10 +395,12 @@ export default function StandardGoalCard({
     if (lastStatusChange && lastStatusChange.user) {
       return (
         <SpecialistTags
-          specialists={[{
-            name: lastStatusChange.user.name,
-            roles: lastStatusChange.user.roles.map((r) => r.name),
-          }]}
+          specialists={[
+            {
+              name: lastStatusChange.user.name,
+              roles: lastStatusChange.user.roles.map((r) => r.name),
+            },
+          ]}
         />
       );
     }
@@ -324,8 +413,24 @@ export default function StandardGoalCard({
     return responses.map((r) => r).join(', ');
   };
 
+  const goalColumnClassName = showRecipientColumn
+    ? 'desktop:grid-col-3 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3'
+    : 'desktop:grid-col-4 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3';
+  const detailsColumnClassName = showRecipientColumn
+    ? 'desktop:grid-col-9 tablet:grid-col-12'
+    : 'desktop:grid-col-8 tablet:grid-col-12';
+  const compactDetailColumnClassName = 'mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2';
+  const wideDetailColumnClassName = 'mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3';
+  const standardDetailColumnClassName = showRecipientColumn
+    ? compactDetailColumnClassName
+    : wideDetailColumnClassName;
+
   return (
-    <DataCard testId="goalCard" className="ttahub-goal-card position-relative" errorBorder={erroneouslySelected || deleteError || statusChangeError}>
+    <DataCard
+      testId="goalCard"
+      className="ttahub-goal-card position-relative"
+      errorBorder={erroneouslySelected || deleteError || statusChangeError}
+    >
       <div className="display-flex">
         <div className="flex-0" style={{ visibility: readonly ? 'hidden' : 'visible' }}>
           <Checkbox
@@ -371,25 +476,18 @@ export default function StandardGoalCard({
           )}
           {/* Alert for invalid status change attempt */}
           <GoalStatusChangeAlert
-            internalLeftMargin="3rem"
             invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+            activeActivityReport={statusChangeBlockingReasons.activeActivityReport}
+            incompleteObjectives={statusChangeBlockingReasons.incompleteObjectives}
           />
           <div className="grid-row mobile-tablet-space-y-2">
             {/* Left section - Goal number and name */}
-            <div className="desktop:grid-col-4 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3">
-              <p className="usa-prose text-bold margin-y-0">
-                Goal
-                {' '}
-                {goalNumber}
-              </p>
+            <div className={goalColumnClassName}>
+              <p className="usa-prose text-bold margin-y-0">Goal {goalNumber}</p>
               <p className="usa-prose text-wrap margin-y-0">
-                {name}
-                {' '}
+                {name}{' '}
                 {isMonitoringGoal && (
-                  <FlagStatus
-                    reasons={['Monitoring Goal']}
-                    goalNumbers={goalNumber}
-                  />
+                  <FlagStatus reasons={['Monitoring Goal']} goalNumbers={goalNumber} />
                 )}
               </p>
               {goal.responses && goal.responses.length ? (
@@ -397,39 +495,48 @@ export default function StandardGoalCard({
                   <p className="usa-prose text-bold margin-bottom-0 margin-top-0 margin-right-1">
                     Root cause:
                   </p>
-                  <p className="usa-prose margin-bottom-0 margin-top-0">
-                    {getResponses()}
-                  </p>
+                  <p className="usa-prose margin-bottom-0 margin-top-0">{getResponses()}</p>
                 </div>
               ) : null}
             </div>
 
             {/* Right section - Details */}
-            <div className="desktop:grid-col-8 tablet:grid-col-12">
+            <div className={detailsColumnClassName}>
               <div className="grid-container padding-0">
                 <div className="grid-row space-y-2 mobile-lg:space-y-0">
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  {showRecipientColumn && (
+                    <div
+                      className={`${wideDetailColumnClassName} ttahub-goal-card__recipient-column`}
+                    >
+                      <p className="usa-prose text-bold margin-y-0">Recipient</p>
+                      <p className="usa-prose margin-y-0 text-wrap">{cardRecipientName || 'N/A'}</p>
+                    </div>
+                  )}
+
+                  <div
+                    className={`${standardDetailColumnClassName} ttahub-goal-card__grant-number-column`}
+                  >
                     <p className="usa-prose text-bold margin-y-0">Grant number</p>
                     <p className="usa-prose margin-y-0 text-wrap">{grant.number || 'N/A'}</p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={standardDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
                     <p className="usa-prose margin-y-0">
-                      {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}
+                      {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(
+                        DATE_DISPLAY_FORMAT
+                      )}
                     </p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={standardDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">Last TTA</p>
                     <p className="usa-prose margin-y-0">{lastTTA}</p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={wideDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeBy()}</p>
-                    <div className="usa-prose margin-y-0">
-                      {renderEnteredBy()}
-                    </div>
+                    <div className="usa-prose margin-y-0">{renderEnteredBy()}</div>
                   </div>
                 </div>
               </div>
@@ -475,6 +582,31 @@ StandardGoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
+  recipientName: PropTypes.string,
+  showRecipientColumn: PropTypes.bool,
+  deletableStatuses: PropTypes.arrayOf(PropTypes.string),
+  onGoalDeleted: PropTypes.func,
+  backLinkState: PropTypes.shape({
+    backLinkTo: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        pathname: PropTypes.string,
+        state: PropTypes.shape({
+          goalDashboardState: PropTypes.shape({
+            perPage: PropTypes.number,
+            selectedGoalIds: PropTypes.arrayOf(PropTypes.number),
+            sortConfig: PropTypes.shape({
+              sortBy: PropTypes.string,
+              direction: PropTypes.string,
+              activePage: PropTypes.number,
+              offset: PropTypes.number,
+            }),
+          }),
+        }),
+      }),
+    ]),
+    backLinkText: PropTypes.string,
+  }),
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
@@ -484,6 +616,11 @@ StandardGoalCard.propTypes = {
 StandardGoalCard.defaultProps = {
   readonly: false,
   erroneouslySelected: false,
+  recipientName: '',
+  showRecipientColumn: false,
+  deletableStatuses: [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED],
+  onGoalDeleted: null,
+  backLinkState: null,
 };
 
 export const ObjectiveSwitch = ({

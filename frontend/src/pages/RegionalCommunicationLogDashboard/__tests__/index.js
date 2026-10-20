@@ -1,57 +1,81 @@
-import React from 'react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
+import React from 'react';
 import { MemoryRouter, Route } from 'react-router';
-import {
-  render, waitFor, screen, act,
-  within,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import { COMMUNICATION_RESULTS, SCOPE_IDS } from '@ttahub/common';
+import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
-import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('RegionalCommunicationLogDashboard', () => {
   const userCentralOffice = {
     id: 1,
     homeRegionId: 14,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
 
   const userOneRegionNoCentralOffice = {
     homeRegionId: 1,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
 
   const userWithTwoRegions = {
     homeRegionId: 14,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }, {
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
 
   const userWithTwoRegionsAndNoCentralOffice = {
     homeRegionId: 1,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }, {
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
+  // Mirrors an "Anchor TTAC" whose home region (4) is not the first region in
+  // their permission list (2). They have read/write in their home region but only
+  // read access in the lower-numbered region.
+  const userHomeRegionNotFirstPermission = {
+    homeRegionId: 4,
+    permissions: [
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 4,
+        scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+      },
+    ],
+  };
+
   const history = createMemoryHistory();
 
   const renderComm = (u, route) => {
@@ -59,10 +83,11 @@ describe('RegionalCommunicationLogDashboard', () => {
     const user = u || userCentralOffice;
     render(
       <MemoryRouter initialEntries={[route]}>
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(),
-          setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <UserContext.Provider value={{ user }}>
             <Route path="/communication-log">
@@ -70,7 +95,7 @@ describe('RegionalCommunicationLogDashboard', () => {
             </Route>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 
@@ -95,15 +120,21 @@ describe('RegionalCommunicationLogDashboard', () => {
             communicationDate: '2023-01-01',
             purpose: 'Purpose',
             goals: [{ label: 'Goal' }],
-            otherStaff: [{ label: 'Other Staff' }],
             result: 'A great result',
           },
+          otherStaff: [{ label: 'Other Staff', value: 1 }],
           authorName: 'Author',
           recipients: [{ id: 1 }],
         },
       ],
     };
     fetchMock.get(defaultURL, logs);
+    fetchMock.get('express:/api/communication-logs/region/:regionId/additional-data', {
+      regionalUsers: [{ label: 'Other Staff', value: 1 }],
+      standardGoals: [],
+      recipients: [],
+      groups: [],
+    });
   });
 
   afterEach(() => {
@@ -112,24 +143,32 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('renders the page - user with one region', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Communication logs - your region/i })
+    ).toBeInTheDocument();
   });
 
   it('renders the page - user with two regions', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
-    expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Communication logs - your regions/i })
+    ).toBeInTheDocument();
   });
 
   // Really just for coverage purposes (see @createDefaultFilters)
   it('renders the page - user with one region and no central office', async () => {
     act(() => renderComm(userOneRegionNoCentralOffice, '/communication-log'));
-    expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Communication logs - your region/i })
+    ).toBeInTheDocument();
   });
 
   // Really just for coverage purposes (see @createDefaultFilters)
   it('renders the page - user with two regions and no central office', async () => {
     act(() => renderComm(userWithTwoRegionsAndNoCentralOffice, '/communication-log'));
-    expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Communication logs - your regions/i })
+    ).toBeInTheDocument();
   });
 
   it('tries to fetch data', async () => {
@@ -139,25 +178,45 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('shows the table, and the table has data', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /log id\. activate to sort ascending/i })
+      ).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument()
+    );
   });
 
   it('has the communication date filter applied by default', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is within/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /this button removes the filter: communication date is within/i,
+        })
+      ).toBeInTheDocument()
+    );
   });
 
   it('shows an empty state for no logs', async () => {
     fetchMock.get(defaultURL, { count: 0, rows: [] }, { overwriteRoutes: true });
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument()
+    );
   });
 
   it('has an actions menu with View and Delete - can Delete', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /log id\. activate to sort ascending/i })
+      ).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument()
+    );
 
     const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
@@ -165,16 +224,26 @@ describe('RegionalCommunicationLogDashboard', () => {
     const menu = await screen.findByRole('menu');
     expect(menu).toBeVisible();
 
-    await waitFor(() => expect(within(menu).getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
-    await waitFor(() => expect(within(menu).getByRole('button', { name: /delete/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(within(menu).getByRole('menuitem', { name: /view/i })).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(within(menu).getByRole('button', { name: /delete/i })).toBeInTheDocument()
+    );
 
     // click delete
     const deleteMenuItemButton = within(menu).getByRole('button', { name: /delete/i });
     act(() => userEvent.click(deleteMenuItemButton));
 
     // handle modal
-    await waitFor(() => expect(screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })).toBeInTheDocument());
-    const confirmDeleteButton = await screen.findByRole('button', { name: /confirm delete and reload page/i });
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })
+      ).toBeInTheDocument()
+    );
+    const confirmDeleteButton = await screen.findByRole('button', {
+      name: /confirm delete and reload page/i,
+    });
     expect(confirmDeleteButton).toBeVisible();
 
     const deleteURL = '/api/communication-logs/log/1';
@@ -187,8 +256,14 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('handles delete error', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /log id\. activate to sort ascending/i })
+      ).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument()
+    );
 
     const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
@@ -201,8 +276,14 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => userEvent.click(deleteMenuItemButton));
 
     // handle modal
-    await waitFor(() => expect(screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })).toBeInTheDocument());
-    const confirmDeleteButton = await screen.findByRole('button', { name: /confirm delete and reload page/i });
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })
+      ).toBeInTheDocument()
+    );
+    const confirmDeleteButton = await screen.findByRole('button', {
+      name: /confirm delete and reload page/i,
+    });
     expect(confirmDeleteButton).toBeVisible();
 
     const deleteURL = '/api/communication-logs/log/1';
@@ -219,14 +300,24 @@ describe('RegionalCommunicationLogDashboard', () => {
     jest.spyOn(require('react-router'), 'useHistory').mockReturnValue({ push });
 
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /log id\. activate to sort ascending/i })
+      ).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument()
+    );
 
     const actions = screen.getByRole('button', { name: 'Actions for R01-CL-0001' });
     act(() => userEvent.click(actions));
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /view/i })[0]).toBeInTheDocument());
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /delete/i })[0]).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /view/i })[0]).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /delete/i })[0]).toBeInTheDocument()
+    );
 
     const viewMenuItemButton = screen.getAllByRole('button', { name: /view/i })[0];
     act(() => userEvent.click(viewMenuItemButton));
@@ -238,7 +329,13 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
-    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /apply filters for regional communication log dashboard/i,
+        })
+      ).toBeInTheDocument()
+    );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     act(() => userEvent.selectOptions(lastTopic, 'communicationDate'));
@@ -252,7 +349,9 @@ describe('RegionalCommunicationLogDashboard', () => {
     const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&communicationDate.in[]=${currentYear}%2F01%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
     fetchMock.get(filterURL, { count: 0, rows: [] });
 
-    const apply = screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i });
+    const apply = screen.getByRole('button', {
+      name: /apply filters for regional communication log dashboard/i,
+    });
     act(() => userEvent.click(apply));
 
     expect(fetchMock.called(filterURL)).toBe(true);
@@ -263,7 +362,13 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
-    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /apply filters for regional communication log dashboard/i,
+        })
+      ).toBeInTheDocument()
+    );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     act(() => userEvent.selectOptions(lastTopic, 'result'));
@@ -277,7 +382,42 @@ describe('RegionalCommunicationLogDashboard', () => {
     const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&result.in[]=${encodeURIComponent(COMMUNICATION_RESULTS[0])}`;
     fetchMock.get(filterURL, response);
 
-    const apply = screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i });
+    const apply = screen.getByRole('button', {
+      name: /apply filters for regional communication log dashboard/i,
+    });
+    act(() => userEvent.click(apply));
+
+    await waitFor(() => expect(fetchMock.called(filterURL)).toBe(true));
+  });
+
+  it('lets you apply a purpose filter', async () => {
+    const response = { count: 0, rows: [] };
+    act(() => renderComm(userCentralOffice, '/communication-log'));
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /apply filters for regional communication log dashboard/i,
+        })
+      ).toBeInTheDocument()
+    );
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'purpose'));
+
+    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
+
+    const select = await screen.findByText(/select purpose to filter by/i);
+    await selectEvent.select(select, [COMMUNICATION_PURPOSES[0]]);
+
+    const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&purpose.in[]=${encodeURIComponent(COMMUNICATION_PURPOSES[0])}`;
+    fetchMock.get(filterURL, response);
+
+    const apply = screen.getByRole('button', {
+      name: /apply filters for regional communication log dashboard/i,
+    });
     act(() => userEvent.click(apply));
 
     await waitFor(() => expect(fetchMock.called(filterURL)).toBe(true));
@@ -287,33 +427,90 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
-    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /apply filters for regional communication log dashboard/i,
+        })
+      ).toBeInTheDocument()
+    );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     expect(lastTopic.innerHTML).not.toContain('region');
   });
 
-  it('does show the region filter when the user has two regions', async () => {
+  it('shows alphabetized filters including region when the user has two regions', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
-    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {
+          name: /apply filters for regional communication log dashboard/i,
+        })
+      ).toBeInTheDocument()
+    );
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
-    expect(lastTopic.innerHTML).toContain('region');
+    const topicDisplays = Array.from(lastTopic.options)
+      .map((option) => option.textContent)
+      .filter((display) => display !== '- Select -');
+
+    expect(topicDisplays).toContain('Region');
+    expect(topicDisplays).toEqual(
+      [...topicDisplays].sort((first, second) => first.localeCompare(second))
+    );
   });
 
   it('allows you to remove a filter', async () => {
     act(() => renderComm(userWithTwoRegions, '/communication-log'));
-    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /this button removes the filter/i })
+      ).toBeInTheDocument()
+    );
     const remove = screen.getByRole('button', { name: /this button removes the filter/i });
     act(() => userEvent.click(remove));
-    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter/i })).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: /this button removes the filter/i })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it('shows an error message if the fetch fails', async () => {
     fetchMock.get(defaultURL, 404, { overwriteRoutes: true });
     act(() => renderComm(userCentralOffice, '/communication-log'));
-    await waitFor(() => expect(screen.getByText(/error fetching communication logs/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/error fetching communication logs/i)).toBeInTheDocument()
+    );
+  });
+
+  it('defaults the add communication button to the home region, not the first permission region', async () => {
+    window.sessionStorage.clear();
+    const regionURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&region.in[]=4&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(regionURL, { count: 0, rows: [] });
+
+    act(() => renderComm(userHomeRegionNotFirstPermission, '/communication-log'));
+
+    const addButton = await screen.findByRole('link', { name: /add communication/i });
+    // The button must target the user's home region (4) where they have
+    // read/write access, not the first region in their permission list (2).
+    expect(addButton).toHaveAttribute('href', '/communication-log/region/4/log/new');
+  });
+
+  it('defaults the region filter to the home region, not the first permission region', async () => {
+    // This hook persists filters in session storage across tests; clear it so we
+    // assert against the freshly-computed default rather than a prior test's state.
+    window.sessionStorage.clear();
+    const regionURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&region.in[]=4&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(regionURL, { count: 0, rows: [] });
+
+    act(() => renderComm(userHomeRegionNotFirstPermission, '/communication-log'));
+
+    const removeRegionFilter = await screen.findByRole('button', {
+      name: /this button removes the filter: region is 4/i,
+    });
+    expect(removeRegionFilter).toBeInTheDocument();
   });
 });

@@ -9,11 +9,13 @@ const creatorQuery = (userId: number, exclude = false) => ({
 
 const OTHER_STAFF_ROLE = 'Other TTA staff';
 
-const otherStaffQuery = (userId: number, exclude = false) => sequelize.literal(`
+const otherStaffQuery = (userId: number, exclude = false) =>
+  sequelize.literal(`
   ${exclude ? 'NOT ' : ''}EXISTS (
     SELECT 1
-    FROM jsonb_array_elements(COALESCE("CommunicationLog"."data"->'otherStaff', '[]'::jsonb)) AS staff
-    WHERE staff->>'value' = ${sequelize.escape(String(userId))}
+    FROM "CommunicationLogStaff" AS cls
+    WHERE cls."communicationLogId" = "CommunicationLog".id
+      AND cls."userId" = ${sequelize.escape(userId)}
   )
 `);
 
@@ -43,11 +45,11 @@ const myReportsQuery = (setNames: string[], userId: number, exclude = false) => 
 export function withMyReports(setNames: string[], _: unknown, userId: number) {
   // Split setNames by comma and trim whitespace, then flatten the resulting array
   // Needed because the frontend sends "Creator,Other TTA staff" as a single string
-  const splitSetNames = setNames.map((name) => name.split(',').map((n) => n.trim())).flat();
+  const splitSetNames = setNames.flatMap((name) => name.split(',').map((n) => n.trim()));
   return myReportsQuery(splitSetNames, userId, false);
 }
 
 export function withoutMyReports(setNames: string[], _: unknown, userId: number) {
-  const splitSetNames = setNames.map((name) => name.split(',').map((n) => n.trim())).flat();
+  const splitSetNames = setNames.flatMap((name) => name.split(',').map((n) => n.trim()));
   return myReportsQuery(splitSetNames, userId, true);
 }

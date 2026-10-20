@@ -1,6 +1,6 @@
 import { auditLogger } from '../logger';
-import { currentUserId } from '../services/currentUser';
 import ActivityReportPolicy from '../policies/activityReport';
+import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
 
 /**

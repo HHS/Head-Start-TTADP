@@ -2,17 +2,17 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   createSession,
-  getSessionBySessionId,
-  getSessionsByEventId,
-  updateSession,
   deleteSession,
-  uploadSessionObjectiveFiles,
   deleteSessionObjectiveFile,
-  getPossibleSessionParticipants,
   getGroupsForSession,
-  getSessionReportsTable,
+  getPossibleSessionParticipants,
+  getSessionBySessionId,
   getSessionReportsCSV,
   getSessionReportsCSVById,
+  getSessionReportsTable,
+  getSessionsByEventId,
+  updateSession,
+  uploadSessionObjectiveFiles,
 } from '../session';
 
 jest.mock('../../utils', () => ({
@@ -76,12 +76,20 @@ describe('session fetchers', () => {
     const result = await deleteSessionObjectiveFile(sessionId, fileId);
     expect(result).toEqual(200);
   });
-  it('getPossibleSessionParticipants', async () => {
-    const regionId = '1';
-    const response = [{ id: 1 }];
-    fetchMock.get(join(sessionsUrl, 'participants', regionId), response);
-    const result = await getPossibleSessionParticipants(regionId);
-    expect(result).toEqual(response);
+  describe('getPossibleSessionParticipants', () => {
+    afterEach(() => fetchMock.restore());
+
+    it('fetches participants by session report id', async () => {
+      const sessionReportId = 42;
+      const expectedUrl = join(sessionsUrl, 'participants', String(sessionReportId));
+      const response = [{ id: 1 }];
+      fetchMock.get(expectedUrl, response);
+
+      const result = await getPossibleSessionParticipants(sessionReportId);
+
+      expect(result).toEqual(response);
+      expect(fetchMock.lastUrl()).toBe(expectedUrl);
+    });
   });
   it('returns the groups', async () => {
     const expected = { id: 1 };
@@ -96,7 +104,11 @@ describe('session fetchers', () => {
     it('fetches session reports with sort config', async () => {
       const response = { rows: [{ id: 1 }], count: 1 };
       const sortConfig = {
-        direction: 'asc', sortBy: 'sessionName', perPage: 10, offset: 0, activePage: 1,
+        direction: 'asc',
+        sortBy: 'sessionName',
+        perPage: 10,
+        offset: 0,
+        activePage: 1,
       };
       fetchMock.get(`begin:${sessionsUrl}`, response);
       const result = await getSessionReportsTable(sortConfig);
@@ -110,6 +122,14 @@ describe('session fetchers', () => {
       fetchMock.get(`begin:${sessionsUrl}`, response);
       const result = await getSessionReportsTable(sortConfig, filters);
       expect(result).toEqual(response);
+    });
+
+    it('includes recipientId in the request URL', async () => {
+      const response = { rows: [], count: 0 };
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, response);
+      await getSessionReportsTable(sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
     });
   });
 
@@ -131,6 +151,14 @@ describe('session fetchers', () => {
       fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
       await getSessionReportsCSV(sortConfig, filters);
       expect(fetchMock.called()).toBeTruthy();
+    });
+
+    it('includes recipientId in the request URL', async () => {
+      const mockCsvData = 'id,name\n1,Report 1';
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
+      await getSessionReportsCSV(sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
     });
   });
 
@@ -154,6 +182,15 @@ describe('session fetchers', () => {
       fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
       await getSessionReportsCSVById(ids, sortConfig, filters);
       expect(fetchMock.called()).toBeTruthy();
+    });
+
+    it('includes recipientId in the request URL', async () => {
+      const mockCsvData = 'id,name\n1,Report 1';
+      const ids = [1];
+      const sortConfig = { direction: 'asc', sortBy: 'sessionName' };
+      fetchMock.get(`begin:${sessionsUrl}`, mockCsvData);
+      await getSessionReportsCSVById(ids, sortConfig, [], 42);
+      expect(fetchMock.lastUrl()).toContain('recipientId=42');
     });
   });
 });

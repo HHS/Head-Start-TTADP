@@ -1,4 +1,8 @@
-import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from '../constants';
+import {
+  DASHBOARD_FILTER_CONFIG,
+  MONITORING_FILTER_CONFIG,
+  RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
+} from '../constants';
 
 describe('RegionalDashboard constants', () => {
   describe('RECIPIENT_SPOTLIGHT_FILTER_CONFIG', () => {
@@ -47,12 +51,48 @@ describe('RegionalDashboard constants', () => {
 
     it('contains more filters than RECIPIENT_SPOTLIGHT_FILTER_CONFIG', () => {
       expect(DASHBOARD_FILTER_CONFIG.length).toBeGreaterThan(
-        RECIPIENT_SPOTLIGHT_FILTER_CONFIG.length,
+        RECIPIENT_SPOTLIGHT_FILTER_CONFIG.length
       );
     });
 
     it('filters are sorted alphabetically by display name', () => {
       const displays = DASHBOARD_FILTER_CONFIG.map((filter) => filter.display);
+      const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
+
+      expect(displays).toEqual(sortedDisplays);
+    });
+  });
+
+  describe('MONITORING_FILTER_CONFIG', () => {
+    it('exports MONITORING_FILTER_CONFIG', () => {
+      expect(MONITORING_FILTER_CONFIG).toBeDefined();
+    });
+
+    it('includes program specialist filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('programSpecialist');
+    });
+
+    it('includes state or territory filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('stateCode');
+    });
+
+    it('includes topics filtering', () => {
+      const filterIds = MONITORING_FILTER_CONFIG.map((filter) => filter.id);
+      expect(filterIds).toContain('topic');
+    });
+
+    it('restricts monitoring date filters to January 21, 2025', () => {
+      const startDateFilter = MONITORING_FILTER_CONFIG.find((filter) => filter.id === 'startDate');
+      expect(startDateFilter.minDate).toBe('2025-01-21');
+      expect(startDateFilter.minDateErrorMessage).toBe(
+        'Please enter a date on or after 01/21/2025'
+      );
+    });
+
+    it('filters are sorted alphabetically by display name', () => {
+      const displays = MONITORING_FILTER_CONFIG.map((filter) => filter.display);
       const sortedDisplays = [...displays].sort((a, b) => a.localeCompare(b));
 
       expect(displays).toEqual(sortedDisplays);

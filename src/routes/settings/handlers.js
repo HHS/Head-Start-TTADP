@@ -1,4 +1,7 @@
+import { IN_APP_NOTIFICATION_SETTING_KEYS } from '@ttahub/common';
+import { EMAIL_NOTIFICATION_SETTING_KEYS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
+import { currentUserId } from '../../services/currentUser';
 import {
   saveSettings,
   subscribeAll,
@@ -6,15 +9,19 @@ import {
   userEmailSettingsById,
   userSettingsById,
 } from '../../services/userSettings';
-import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:USER_SETTINGS';
+
+const CANONICAL_KEYS = new Set([
+  ...EMAIL_NOTIFICATION_SETTING_KEYS,
+  ...IN_APP_NOTIFICATION_SETTING_KEYS,
+]);
 
 const getUserSettings = async (req, res) => {
   const userId = await currentUserId(req, res);
   try {
     const settings = await userSettingsById(userId);
-    res.json(settings);
+    res.json(settings.filter(({ key }) => CANONICAL_KEYS.has(key)));
   } catch (error) {
     await handleErrors(req, res, error, { namespace });
   }
@@ -54,7 +61,7 @@ const updateSettings = async (req, res) => {
   }
 
   // Filter anything out that's missing a `key` or `value`:
-  pairs = pairs.filter(({ key, value }) => key && value);
+  pairs = pairs.filter(({ key, value }) => key && (value === false || value));
 
   try {
     await saveSettings(userId, pairs);
@@ -96,10 +103,4 @@ const subscribe = async (req, res) => {
   }
 };
 
-export {
-  getUserSettings,
-  getUserEmailSettings,
-  subscribe,
-  unsubscribe,
-  updateSettings,
-};
+export { getUserEmailSettings, getUserSettings, subscribe, unsubscribe, updateSettings };

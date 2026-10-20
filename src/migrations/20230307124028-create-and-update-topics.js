@@ -11,7 +11,7 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Add new topic,
@@ -22,7 +22,7 @@ module.exports = {
             VALUES
             ('Fatherhood / Male Caregiving', current_timestamp, current_timestamp);
           `,
-        { transaction },
+        { transaction }
       );
 
       // Insert & Change existing topic.
@@ -41,7 +41,7 @@ module.exports = {
         WHERE t1.name = 'Ongoing Monitoring Management System'
         AND t2.name = 'Ongoing Monitoring and Continuous Improvement'
         AND t1."deletedAt" IS NULL;`,
-        { transaction },
+        { transaction }
       );
     });
   },
@@ -57,7 +57,7 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Disable audit logging
@@ -65,7 +65,7 @@ module.exports = {
         `
             SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
             `,
-        { transaction },
+        { transaction }
       );
 
       // Revert topic to what it was before.
@@ -79,13 +79,13 @@ module.exports = {
             SELECT max("deletedAt")
             FROM "Topics"
             WHERE name = 'Ongoing Monitoring Management System');`,
-        { transaction },
+        { transaction }
       );
 
       // Delete new topics.
       await queryInterface.sequelize.query(
         'DELETE FROM "Topics" WHERE "name" IN (\'Fatherhood / Male Caregiving\', \'Ongoing Monitoring and Continuous Improvement\');',
-        { transaction },
+        { transaction }
       );
 
       // Enable audit logging
@@ -93,7 +93,7 @@ module.exports = {
         `
             SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
             `,
-        { transaction },
+        { transaction }
       );
     });
   },

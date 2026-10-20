@@ -8,7 +8,7 @@ module.exports = {
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
           },
-          { transaction },
+          { transaction }
         ),
         queryInterface.removeColumn('ActivityReports', 'resourcesUsed', { transaction }),
         queryInterface.addColumn(
@@ -17,7 +17,7 @@ module.exports = {
           {
             type: Sequelize.ARRAY(Sequelize.TEXT),
           },
-          { transaction },
+          { transaction }
         ),
       ]);
     });
@@ -28,7 +28,12 @@ module.exports = {
       await Promise.all([
         queryInterface.removeColumn('ActivityReports', 'nonECLKCResourcesUsed', { transaction }),
         queryInterface.removeColumn('ActivityReports', 'ECLKCResourcesUsed', { transaction }),
-        queryInterface.addColumn('ActivityReports', 'resourcesUsed', { type: Sequelize.TEXT }, { transaction }),
+        queryInterface.addColumn(
+          'ActivityReports',
+          'resourcesUsed',
+          { type: Sequelize.TEXT },
+          { transaction }
+        ),
       ]);
     });
   },

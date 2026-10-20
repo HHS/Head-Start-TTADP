@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { Alert } from '@trussworks/react-uswds';
 import { uniqueId } from 'lodash';
-import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
+import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
+import { OBJECTIVE_STATUS } from '../../Constants';
 import { updateObjectiveStatus } from '../../fetchers/objective';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
-import { OBJECTIVE_STATUS } from '../../Constants';
+import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
 import './ObjectiveCard.css';
 
 function ObjectiveCard({
@@ -46,9 +46,7 @@ function ObjectiveCard({
     dispatchStatusChange(objective.ids, localStatus);
   }, [dispatchStatusChange, localStatus, objective.ids]);
 
-  const onChangeStatus = async (
-    newStatus,
-  ) => {
+  const onChangeStatus = async (newStatus) => {
     try {
       setStatusChangeError(false);
       await updateObjectiveStatus(
@@ -56,7 +54,7 @@ function ObjectiveCard({
         regionId,
         newStatus,
         localCloseSuspendReason,
-        localCloseSuspendContext,
+        localCloseSuspendContext
       );
       setLocalStatus(newStatus);
     } catch (err) {
@@ -79,32 +77,32 @@ function ObjectiveCard({
   const modalIdentifier = uniqueId('objective-suspend-identifier-');
 
   return (
-    <ul data-testid="objectiveList" className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
+    <ul
+      data-testid="objectiveList"
+      className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg"
+      hidden={!objectivesExpanded}
+    >
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
         <div>{title}</div>
       </li>
-      {
-        isMonitoringGoal && (
-          <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-            <span className="margin-right-3 desktop:text-normal text-bold">Citations addressed </span>
-            <div>{citations.join(', ')}</div>
-          </li>
-        )
-      }
+      {isMonitoringGoal && (
+        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+          <span className="margin-right-3 desktop:text-normal text-bold">Citations addressed </span>
+          <div>{citations.join(', ')}</div>
+        </li>
+      )}
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Activity reports </span>
         <ul className="usa-list usa-list--unstyled">
           {activityReports.map((report) => {
             const viewOrEditLink = `/activity-reports/view/${report.id}`;
-            const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
+            const linkToAr = report.legacyId
+              ? `/activity-reports/legacy/${report.legacyId}`
+              : viewOrEditLink;
             return (
               <li key={`AR-${report.id}`}>
-                <Link
-                  to={linkToAr}
-                >
-                  {report.displayId}
-                </Link>
+                <Link to={linkToAr}>{report.displayId}</Link>
               </li>
             );
           })}
@@ -129,13 +127,12 @@ function ObjectiveCard({
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
         <div>
-          {(statusChangeError && (
+          {statusChangeError && (
             <Alert type="error" className="margin-top-1">
-              There was an error updating the status of this objective.
-              {' '}
-              For more assistance, please contact support.
+              There was an error updating the status of this objective. For more assistance, please
+              contact support.
             </Alert>
-          ))}
+          )}
           <ObjectiveStatusDropdown
             currentStatus={localStatus}
             goalStatus={goalStatus}
@@ -146,7 +143,7 @@ function ObjectiveCard({
             forceReadOnly={forceReadOnly}
             onApprovedAR={objective.onApprovedAR}
           />
-          {!(forceReadOnly) && (
+          {!forceReadOnly && (
             <ObjectiveSuspendModal
               objectiveId={modalIdentifier}
               modalRef={modalRef}
@@ -172,17 +169,21 @@ export const objectivePropTypes = PropTypes.shape({
   onApprovedAR: PropTypes.bool,
   endDate: PropTypes.string,
   status: PropTypes.string,
-  activityReports: PropTypes.arrayOf(PropTypes.shape({
-    legacyId: PropTypes.string,
-    number: PropTypes.string,
-    id: PropTypes.number,
-    endDate: PropTypes.string,
-  })),
-  topics: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.shape({
+  activityReports: PropTypes.arrayOf(
+    PropTypes.shape({
+      legacyId: PropTypes.string,
+      number: PropTypes.string,
       id: PropTypes.number,
-      name: PropTypes.string,
-    })),
+      endDate: PropTypes.string,
+    })
+  ),
+  topics: PropTypes.oneOfType([
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        name: PropTypes.string,
+      })
+    ),
     PropTypes.arrayOf(PropTypes.string),
   ]),
   citations: PropTypes.arrayOf(PropTypes.string),

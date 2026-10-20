@@ -1,12 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import _ from 'lodash';
-import { Link } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { Editor } from 'react-draft-wysiwyg';
+import { useFormContext } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import ExternalLink from '../../../../components/ExternalResourceModal';
 import {
-  isValidURL, isExternalURL, isInternalGovernmentLink, getEditorState,
+  getEditorState,
+  isExternalURL,
+  isInternalGovernmentLink,
+  isValidURL,
 } from '../../../../utils';
 
 const noneProvided = 'None provided';
@@ -27,7 +30,15 @@ export const mapUrlValue = (v) => {
 };
 
 const ReviewItem = ({
-  label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText, commaSeparateArray,
+  label,
+  name,
+  path,
+  sortValues,
+  customValue,
+  linkNamePath,
+  isFile,
+  isRichText,
+  commaSeparateArray,
 }) => {
   const { watch } = useFormContext();
   let value = null;
@@ -47,9 +58,11 @@ const ReviewItem = ({
   }
 
   // If we don't have a value set none provided.
-  if ((!value && !values)
-      || (Array.isArray(values) && !values.length)
-      || (value && typeof value === 'string' && value.trim() === '<p></p>')) {
+  if (
+    (!value && !values) ||
+    (Array.isArray(values) && !values.length) ||
+    (value && typeof value === 'string' && value.trim() === '<p></p>')
+  ) {
     values = [noneProvided];
     value = noneProvided;
   }
@@ -87,6 +100,7 @@ const ReviewItem = ({
       if (isRichText) {
         return (
           <Editor
+            key={`editor_${label}${v}_readonly`}
             readOnly
             toolbarHidden
             defaultEditorState={getEditorState(v)}
@@ -100,21 +114,25 @@ const ReviewItem = ({
     const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
     if (isFile) {
       return (
-        <a
-          href={v}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a key={`file_${label}${v}`} href={v} target="_blank" rel="noreferrer">
           {linkNameToUse}
         </a>
       );
     }
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {
-      return <ExternalLink to={v}>{linkNameToUse}</ExternalLink>;
+      return (
+        <ExternalLink key={`external_${label}${v}`} to={v}>
+          {linkNameToUse}
+        </ExternalLink>
+      );
     }
 
     const localLink = new URL(v);
-    return <Link to={localLink.pathname}>{linkNameToUse}</Link>;
+    return (
+      <Link key={`link_${label}${v}`} to={localLink.pathname}>
+        {linkNameToUse}
+      </Link>
+    );
   });
 
   const emptySelector = value && value !== noneProvided ? '' : 'smart-hub-review-item--empty';
@@ -127,12 +145,21 @@ const ReviewItem = ({
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {commaSeparateArray ? (
-          <div aria-label={label} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility
+          <div
+            aria-label={label}
+            className="desktop:flex-align-end display-flex flex-column flex-justify-center"
+          >
             {values.map((v) => (Number.isNaN(v) ? '' : v)).join(', ')}
           </div>
         ) : (
           values.map((v, index) => (
-            <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center resource-link-wrapper">
+            // biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility
+            <div
+              aria-label={`${label} ${index + 1}`}
+              key={`${label}${v}`}
+              className="desktop:flex-align-end display-flex flex-column flex-justify-center resource-link-wrapper"
+            >
               {Number.isNaN(v) ? '' : v}
             </div>
           ))

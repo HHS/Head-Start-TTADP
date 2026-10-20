@@ -1,20 +1,20 @@
 import {
-  Op,
-  filtersToScopes,
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
+  createGrant,
+  draftReport,
+  faker,
+  filtersToScopes,
   Grant,
   Group,
-  GroupGrant,
   GroupCollaborator,
-  draftReport,
-  createGrant,
-  faker,
+  GroupGrant,
   mockUser,
   mockUserTwo,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('groups filtersToScopes', () => {
@@ -37,7 +37,7 @@ describe('groups filtersToScopes', () => {
 
     beforeAll(async () => {
       group = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         isPublic: false,
       });
 
@@ -48,7 +48,7 @@ describe('groups filtersToScopes', () => {
       });
 
       publicGroup = await Group.create({
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
         isPublic: true,
       });
 
@@ -62,7 +62,7 @@ describe('groups filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Active',
-        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        name: `${faker.company.name()} - ${faker.animal.cetacean()} - ${faker.number.int({ min: 0, max: 99999 })}`,
       });
 
       await GroupGrant.create({
@@ -93,9 +93,7 @@ describe('groups filtersToScopes', () => {
     afterAll(async () => {
       await ActivityRecipient.destroy({
         where: {
-          activityReportId: [
-            reportIncluded.id, reportExcluded.id,
-          ],
+          activityReportId: [reportIncluded.id, reportExcluded.id],
         },
       });
       await ActivityReport.destroy({

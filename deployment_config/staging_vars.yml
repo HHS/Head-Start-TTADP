@@ -3,6 +3,8 @@ web_instances: 1
 web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
+worker_concurrency: 1
+worker_max_old_space_size: 192
 app_disk_quota: 4GB
 LOG_LEVEL: info
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov/oidc
@@ -48,6 +50,7 @@ ITAMS_MD_USERNAME: "${ITAMS_MD_USERNAME}"
 ITAMS_MD_PASSWORD: "${ITAMS_MD_PASSWORD}"
 SMARTSHEET_ACCESS_TOKEN: "${SMARTSHEET_ACCESS_TOKEN}"
 ENABLE_MONITORING_GOAL_CREATION: "${STAGING_GOAL_CREATION}"
+MONITORING_GATE_HALT_CHECKS: "${STAGING_GATE_HALT_CHECKS}"
 
 new_relic_app_id: "868729138"
 new_relic_license: ${NEW_RELIC_LICENSE_KEY}

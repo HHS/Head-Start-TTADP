@@ -1,27 +1,23 @@
-import React, {
-  useContext,
-  useState,
-  useRef,
-} from 'react';
-import { Link } from 'react-router-dom';
-import moment from 'moment';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Grid } from '@trussworks/react-uswds';
+import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+import { Link } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import colors from '../../../colors';
-import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Drawer from '../../../components/Drawer';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
-import useFilters from '../../../hooks/useFilters';
-import Drawer from '../../../components/Drawer';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import UserContext from '../../../UserContext';
-import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import useFilters from '../../../hooks/useFilters';
+import UserContext from '../../../UserContext';
+import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
+import { QA_DASHBOARD_FILTER_CONFIG, QA_DASHBOARD_FILTER_KEY } from '../constants';
 
 const ALLOWED_SUBFILTERS = [
   'region',
@@ -47,24 +43,17 @@ export default function RecipientsWithNoTta() {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(
-    user,
-    QA_DASHBOARD_FILTER_KEY,
-    true,
-    [],
-    QA_DASHBOARD_FILTER_CONFIG,
-  );
+  } = useFilters(user, QA_DASHBOARD_FILTER_KEY, true, [], QA_DASHBOARD_FILTER_CONFIG);
 
   useDeepCompareEffect(() => {
     async function fetchQaData() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        const data = await getSelfServiceData(
-          'recipients-with-no-tta',
-          filters,
-          ['no_tta_widget', 'no_tta_page'],
-        );
+        const data = await getSelfServiceData('recipients-with-no-tta', filters, [
+          'no_tta_widget',
+          'no_tta_page',
+        ]);
 
         // Get summary and row data.
         const pageData = data.filter((d) => d.data_set === 'no_tta_page');
@@ -79,15 +68,14 @@ export default function RecipientsWithNoTta() {
           const daysSinceLastTta = item['days since last tta'];
 
           const parsedDate = dateOfLastTta ? moment(dateOfLastTta) : null;
-          const formattedDate = parsedDate && parsedDate.isValid()
-            ? parsedDate.format('MM/DD/YYYY')
-            : null;
+          const formattedDate =
+            parsedDate && parsedDate.isValid() ? parsedDate.format('MM/DD/YYYY') : null;
 
           const numericDaysSinceLastTta = Number(daysSinceLastTta);
-          const safeDaysSinceLastTta = Number.isFinite(numericDaysSinceLastTta)
-            && numericDaysSinceLastTta >= 0
-            ? numericDaysSinceLastTta
-            : null;
+          const safeDaysSinceLastTta =
+            Number.isFinite(numericDaysSinceLastTta) && numericDaysSinceLastTta >= 0
+              ? numericDaysSinceLastTta
+              : null;
 
           return {
             id: recipientId,
@@ -139,18 +127,24 @@ export default function RecipientsWithNoTta() {
       <Helmet>
         <title>Recipients with no TTA</title>
       </Helmet>
-      <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
+      <FontAwesomeIcon
+        className="margin-right-1"
+        data-testid="back-link-icon"
+        color={colors.ttahubMediumBlue}
+        icon={faArrowLeft}
+      />
+      <Link
+        className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
+        to="/dashboards/qa-dashboard"
+      >
         Back to Quality Assurance Dashboard
       </Link>
-      <h1 className="landing margin-top-0">
-        Recipients with no TTA
-      </h1>
+      <h1 className="landing margin-top-0">Recipients with no TTA</h1>
       <Grid row>
         {error && (
-        <Alert className="margin-bottom-2" type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert className="margin-bottom-2" type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
       <FilterPanelContainer>
@@ -167,18 +161,10 @@ export default function RecipientsWithNoTta() {
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
+      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="QA dashboard filters">
         <ContentFromFeedByTag tagName="ttahub-qa-dash-recipients-no-tta-filter" />
       </Drawer>
-      <RecipientsWithNoTtaWidget
-        data={recipientsWithNoTTA}
-        loading={isLoading}
-      />
+      <RecipientsWithNoTtaWidget data={recipientsWithNoTTA} loading={isLoading} />
     </div>
   );
 }
@@ -189,11 +175,13 @@ RecipientsWithNoTta.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

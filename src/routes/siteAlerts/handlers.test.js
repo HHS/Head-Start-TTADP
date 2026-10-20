@@ -1,7 +1,7 @@
+import { faker } from '@faker-js/faker';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import moment from 'moment';
-import faker from '@faker-js/faker';
-import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common';
-import { SiteAlert, User, sequelize } from '../../models';
+import { SiteAlert, sequelize, User } from '../../models';
 import { getSiteAlerts } from './handlers';
 
 describe('site alerts', () => {
@@ -10,16 +10,16 @@ describe('site alerts', () => {
 
   beforeAll(async () => {
     mockUser = await User.create({
-      hsesUserId: faker.datatype.string(),
-      name: faker.name.findName(),
+      hsesUserId: faker.string.sample(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       homeRegionId: 1,
-      hsesUsername: faker.internet.userName(),
+      hsesUsername: faker.internet.username(),
       lastLogin: new Date(),
     });
 
     // Create a published alert
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -28,10 +28,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    });
 
     // create a second published alert, the newest one
-    newestAlert = await SiteAlert.create(({
+    newestAlert = await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -40,10 +40,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    });
 
     // create a draft alert
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -52,10 +52,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    });
 
     // create an alert that's already ended
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().subtract(1, 'day').format('YYYY-MM-DD'),
       startDate: moment().subtract(2, 'day').format('YYYY-MM-DD'),
@@ -64,10 +64,10 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.EMERGENCY,
       size: ALERT_SIZES.STANDARD,
-    }));
+    });
 
     // create an alert that hasn't started yet
-    await SiteAlert.create(({
+    await SiteAlert.create({
       userId: mockUser.id,
       endDate: moment().add(2, 'day').format('YYYY-MM-DD'),
       startDate: moment().add(1, 'day').format('YYYY-MM-DD'),
@@ -76,7 +76,7 @@ describe('site alerts', () => {
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
       size: ALERT_SIZES.STANDARD,
-    }));
+    });
   });
 
   afterAll(async () => {

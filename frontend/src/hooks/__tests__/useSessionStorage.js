@@ -1,11 +1,9 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useSessionStorage from '../useSessionStorage';
+import React from 'react';
 import { mockWindowProperty } from '../../testHelpers';
+import useSessionStorage from '../useSessionStorage';
 
 const StorageTest = () => {
   const [storage, setStorage] = useSessionStorage('test', 'this');
