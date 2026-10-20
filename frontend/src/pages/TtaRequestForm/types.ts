@@ -44,3 +44,48 @@ export interface Approver {
   id: number;
   name: string;
 }
+
+/** the form's values, as react-hook-form holds them */
+export interface TtaRequestFormValues {
+  recipient: TtaRequestRecipient | null;
+  grants: TtaRequestGrant[];
+  /** the radio's value: 'yes', 'no', or '' before either is chosen */
+  recipientAware: string;
+  originator: SelectOption | null;
+  goal: GoalTemplateOption | null;
+  citations: CitationOption[];
+  context: string;
+  creatorNotes: string;
+  reviewer: SelectOption | null;
+}
+
+/** what the TTA request API takes */
+export interface TtaRequestPayload {
+  regionId?: number;
+  recipientId: number | null;
+  grantIds: number[];
+  recipientAware: boolean | null;
+  originator: string | null;
+  goalTemplateId: number | null;
+  citations: { citation: string; findingType: string | null }[];
+  context: string;
+  creatorNotes: string;
+  reviewerId: number | null;
+}
+
+/** a saved TTA request, as the API returns it */
+export interface TtaRequestResponse {
+  id: number;
+  displayId: string;
+  regionId: number;
+  status: string;
+  recipientAware: boolean | null;
+  originator: string | null;
+  context: string | null;
+  creatorNotes: string | null;
+  recipient: { id: number; name: string } | null;
+  grants: TtaRequestGrant[];
+  goalTemplate: { id: number; templateName: string; standard?: string | null } | null;
+  citations: { citation: string; findingType: string | null }[];
+  reviewer: { id: number; name: string } | null;
+}

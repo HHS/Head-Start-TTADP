@@ -190,6 +190,7 @@ describe('reviewSubmit Page', () => {
     it('correctly identifies approver when user.id is in approvers list', () => {
       const formDataWithApprovers = {
         ...defaultProps.formData,
+        userId: 3,
         approvers: [
           { user: { id: 1 }, status: 'needs_action' },
           { user: { id: 2 }, status: 'approved' },
@@ -203,6 +204,58 @@ describe('reviewSubmit Page', () => {
       );
 
       expect(screen.getByTestId('review-is-approver')).toHaveTextContent('true');
+    });
+
+    it.each([
+      { userId: 1, collabReportSpecialists: [] },
+      { userId: 2, collabReportSpecialists: [{ specialistId: 1 }] },
+    ])('does not treat a participant as an approver: %o', (participants) => {
+      render(
+        <TestWrapper user={{ id: 1 }}>
+          <ReviewSubmit
+            {...defaultProps}
+            formData={{
+              ...defaultProps.formData,
+              ...participants,
+              approvers: [{ user: { id: 1 }, status: null }],
+            }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByTestId('review-is-approver')).toHaveTextContent('false');
+    });
+
+    it('updates eligible approvers when collaborators are added or removed', () => {
+      const { rerender } = render(
+        <TestWrapper>
+          <ReviewSubmit {...defaultProps} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByTestId('review-available-approvers')).toHaveTextContent('1 available');
+
+      rerender(
+        <TestWrapper>
+          <ReviewSubmit
+            {...defaultProps}
+            formData={{
+              ...defaultProps.formData,
+              collabReportSpecialists: [{ specialistId: 2 }],
+            }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByTestId('review-available-approvers')).toHaveTextContent('0 available');
+
+      rerender(
+        <TestWrapper>
+          <ReviewSubmit {...defaultProps} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByTestId('review-available-approvers')).toHaveTextContent('1 available');
     });
 
     it('correctly identifies non-approver when user.id is not in approvers list', () => {
@@ -400,9 +453,9 @@ describe('reviewSubmit Page', () => {
       expect(screen.getByTestId('review-is-creator')).toHaveTextContent('true');
       expect(screen.getByTestId('review-is-submitted')).toHaveTextContent('true');
       expect(screen.getByTestId('review-is-needs-action')).toHaveTextContent('true');
-      expect(screen.getByTestId('review-is-approver')).toHaveTextContent('true');
+      expect(screen.getByTestId('review-is-approver')).toHaveTextContent('false');
       expect(screen.getByTestId('review-date-submitted')).toHaveTextContent('2024-01-15T10:30:00Z');
-      expect(screen.getByTestId('review-available-approvers')).toHaveTextContent('2 available');
+      expect(screen.getByTestId('review-available-approvers')).toHaveTextContent('1 available');
       expect(screen.getByTestId('review-items')).toHaveTextContent('2 items');
     });
 
@@ -529,7 +582,7 @@ describe('reviewSubmit Page', () => {
       expect(screen.getByTestId('review-is-creator')).toHaveTextContent('true');
       expect(screen.getByTestId('review-is-submitted')).toHaveTextContent('true');
       expect(screen.getByTestId('review-is-needs-action')).toHaveTextContent('true');
-      expect(screen.getByTestId('review-is-approver')).toHaveTextContent('true');
+      expect(screen.getByTestId('review-is-approver')).toHaveTextContent('false');
       expect(screen.getByTestId('review-pending-other-approvals')).toHaveTextContent('false');
       expect(screen.getByTestId('review-pending-approval-count')).toHaveTextContent('2');
     });

@@ -192,6 +192,48 @@ services:
     volumes:
       - minio-data:/data
 
+  # Creates the S3_BUCKET bucket in minio if it does not exist yet, then idles. It stays running
+  # (instead of exiting) because `docker compose up --wait` treats an exited service as a failure.
+  # The healthcheck only passes once the bucket is ready, so `up --wait` blocks until then; if the
+  # bucket cannot be created the container exits non-zero and `up --wait` fails.
+  # It authenticates with minio's root credentials and defaults the bucket name, so an older .env
+  # that lacks the AWS_* or S3_BUCKET values still works.
+  minio-init:
+    profiles: ["fullstack"]
+    image: amazon/aws-cli
+    depends_on:
+      - minio
+    env_file:
+      - ../../.env
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/bucket-ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 45
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        BUCKET="$${S3_BUCKET:-ttadp-test}"
+        export AWS_ACCESS_KEY_ID="$${MINIO_ROOT_USER:-minioadmin}"
+        export AWS_SECRET_ACCESS_KEY="$${MINIO_ROOT_PASSWORD:-minioadmin}"
+        for i in $$(seq 1 30); do
+          if aws --endpoint-url http://minio:9000 s3api head-bucket --bucket "$$BUCKET" >/dev/null 2>&1 \
+            || aws --endpoint-url http://minio:9000 s3 mb "s3://$$BUCKET" >/dev/null 2>&1; then
+            echo "Bucket $$BUCKET is ready"
+            touch /tmp/bucket-ready
+            trap 'exit 0' TERM INT
+            sleep infinity &
+            wait $$!
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Could not create bucket $$BUCKET in minio" >&2
+        exit 1
+
   api-docs:
     profiles: ["fullstack"]
     image: redocly/redoc

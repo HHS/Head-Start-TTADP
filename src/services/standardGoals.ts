@@ -4,6 +4,7 @@ import { Op, UniqueConstraintError } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import { serviceError } from '../lib/serviceError';
+import { auditLogger } from '../logger';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import {
@@ -170,6 +171,51 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectivesFromReport(objectiveIdsToRemove, reportId);
 }
 
+/**
+ * Returns true when the submitted objective was deleted elsewhere (e.g. in another tab)
+ * while this form held stale data: none of its numeric ids are live, and the deleted
+ * record belonged to the same goal / other entity now being saved (or no longer exists).
+ * A deleted record on a different goal/entity means the objective is being carried over
+ * (e.g. the report's recipients changed), so it is not considered stale.
+ */
+export async function isStaleObjective(
+  ids: unknown,
+  scope: { goalId: number } | { otherEntityId: number }
+): Promise<boolean> {
+  const numericIds = (Array.isArray(ids) ? ids : [ids])
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+  if (!numericIds.length) {
+    return false;
+  }
+
+  const matches = await Objective.findAll({
+    attributes: ['id', 'goalId', 'otherEntityId', 'deletedAt'],
+    where: { id: numericIds },
+    paranoid: false,
+    raw: true,
+  });
+
+  if (matches.some((objective) => !objective.deletedAt)) {
+    return false;
+  }
+
+  const isStale =
+    !matches.length ||
+    matches.some((objective) =>
+      'goalId' in scope
+        ? objective.goalId === scope.goalId
+        : objective.otherEntityId === scope.otherEntityId
+    );
+
+  if (isStale) {
+    auditLogger.info(
+      `Skipping stale objective; objective ids no longer exist: ${numericIds.join(', ')}`
+    );
+  }
+  return isStale;
+}
+
 /** *
  * This function will create objectives for a goal.
  * It will only create objectives that have a title or other data.
@@ -188,7 +234,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     return [];
   }
 
-  return Promise.all(
+  const savedObjectives = await Promise.all(
     objectives
       .filter(
         (o) =>
@@ -240,6 +286,12 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
               goalId: goal.id,
             },
           });
+
+          // A stale form (e.g. another tab) can submit an objective that has since been
+          // deleted. If none of its ids exist anymore, honor the delete and skip it.
+          if (!savedObjective && (await isStaleObjective(idsToCheck, { goalId: goal.id }))) {
+            return null;
+          }
         }
 
         if (savedObjective) {
@@ -306,6 +358,8 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
         };
       })
   );
+
+  return savedObjectives.filter(Boolean);
 }
 
 export async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
