@@ -9,9 +9,33 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import FeedbackSurveys from '../FeedbackSurveys';
+import { MemoryRouter } from 'react-router-dom';
+import Responses from '../Responses';
+
+const SURVEY_DEFINITIONS = {
+  active: [{
+    id: 5, pageId: 'qa-dashboard', startDate: '2026-10-01', endDate: '2026-10-31', status: 'active', questions: [],
+  }],
+  closed: [{
+    id: 3, pageId: 'activity-reports-landing', startDate: '2026-04-01', endDate: '2026-04-30', status: 'closed', questions: [],
+  }],
+  pages: { 'qa-dashboard': 'QA dashboard', 'activity-reports-landing': 'Activity reports' },
+};
+
+// eslint-disable-next-line react/prop-types
+function FeedbackSurveys({ initialEntry = '/admin/feedback-surveys/responses' }) {
+  return (
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Responses />
+    </MemoryRouter>
+  );
+}
 
 describe('FeedbackSurveys', () => {
+  beforeEach(() => {
+    fetchMock.get('/api/admin/feedback-survey-definitions', SURVEY_DEFINITIONS);
+  });
+
   afterEach(() => fetchMock.restore());
 
   const pagedResponse = (rows, total = rows.length) => ({ rows, total });
@@ -254,7 +278,7 @@ describe('FeedbackSurveys', () => {
     const submittedButton = await screen.findByRole('button', { name: /submitted/i });
     const regionIdButton = screen.getByRole('button', { name: /region id/i });
     const pageIdButton = screen.getByRole('button', { name: /page id/i });
-    const responseButton = screen.getByRole('button', { name: /was this page helpful\?/i });
+    const responseButton = screen.getByRole('button', { name: /^response/i });
     await userEvent.click(regionIdButton);
     expect(regionIdButton.closest('th')).toHaveAttribute('aria-sort', 'ascending');
     await waitFor(() => {
@@ -304,7 +328,7 @@ describe('FeedbackSurveys', () => {
 
     const searchInput = await screen.findByLabelText(/^search$/i);
     const pageIdSelect = screen.getByLabelText(/^page id$/i);
-    const responseSelect = screen.getByLabelText(/^was this page helpful\?$/i);
+    const responseSelect = screen.getByLabelText(/^response$/i);
     const regionIdSelect = screen.getByLabelText(/^region id$/i);
     const userRoleSelect = screen.getByLabelText(/^user role$/i);
     const fromDate = screen.getByLabelText(/created at \(from\)/i);
@@ -323,7 +347,7 @@ describe('FeedbackSurveys', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/^search$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^page id$/i)).toHaveValue('');
-      expect(screen.getByLabelText(/^was this page helpful\?$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^response$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^region id$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^user role$/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
@@ -432,5 +456,45 @@ describe('FeedbackSurveys', () => {
     expect(await screen.findByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
     const regionCells = await screen.findAllByRole('cell', { name: 'Region 10' });
     expect(regionCells.length).toBeGreaterThan(0);
+  });
+
+  it('filters by survey and shows the question for each response', async () => {
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
+      {
+        id: 9,
+        regionId: 1,
+        userRoles: [],
+        pageId: 'qa-dashboard',
+        surveyId: 5,
+        question: { id: 2, questionText: 'Was the data easy to read?' },
+        response: 'yes',
+        comment: '',
+        createdAt: '2026-10-05T10:00:00.000Z',
+        submittedAt: '2026-10-05T10:00:00.000Z',
+      },
+    ]));
+
+    render(<FeedbackSurveys />);
+
+    expect(await screen.findByRole('cell', { name: 'Was the data easy to read?' })).toBeVisible();
+    const surveySelect = screen.getByLabelText(/^survey$/i);
+    expect(await within(surveySelect).findByRole('option', { name: 'QA dashboard: 10/01/2026 - 10/31/2026' })).toBeInTheDocument();
+    expect(within(surveySelect).getByRole('option', { name: 'Activity reports: 04/01/2026 - 04/30/2026 (closed)' })).toBeInTheDocument();
+
+    await userEvent.selectOptions(surveySelect, '3');
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?surveyId=3&sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
+    });
+  });
+
+  it('starts filtered to the survey in the URL', async () => {
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([]));
+
+    render(<FeedbackSurveys initialEntry="/admin/feedback-surveys/responses?surveyId=5" />);
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?surveyId=5&sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
+    });
   });
 });

@@ -61,6 +61,28 @@ export const saveRoles = async (roles) => {
   return updatedRoles.json();
 };
 
+const feedbackSurveyDefinitionsUrl = join('/', 'api', 'admin', 'feedback-survey-definitions');
+
+export const getFeedbackSurveyDefinitions = async () => {
+  const surveys = await get(feedbackSurveyDefinitionsUrl);
+  return surveys.json();
+};
+
+export const createFeedbackSurveyDefinition = async (survey) => {
+  const created = await post(feedbackSurveyDefinitionsUrl, survey);
+  return created.json();
+};
+
+export const closeFeedbackSurveyDefinition = async (surveyId) => {
+  const closed = await put(join(feedbackSurveyDefinitionsUrl, String(surveyId), 'close'), {});
+  return closed.json();
+};
+
+export const reopenFeedbackSurveyDefinition = async (surveyId, dates) => {
+  const reopened = await put(join(feedbackSurveyDefinitionsUrl, String(surveyId), 'reopen'), dates);
+  return reopened.json();
+};
+
 export const getSiteAlerts = async () => {
   const alerts = await get(join('/', 'api', 'admin', 'alerts'));
   return alerts.json();

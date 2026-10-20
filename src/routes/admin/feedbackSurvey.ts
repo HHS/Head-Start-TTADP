@@ -11,6 +11,7 @@ type SortDir = 'asc' | 'desc';
 
 type FeedbackSurveyQuery = {
   pageId?: string;
+  surveyId?: string;
   response?: 'yes' | 'no';
   q?: string;
   regionId?: string;
@@ -41,6 +42,7 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
   try {
     const {
       pageId,
+      surveyId,
       response,
       q,
       regionId,
@@ -85,6 +87,17 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       }
     }
 
+    let parsedSurveyId: number | undefined;
+    if (surveyId !== undefined && surveyId !== '') {
+      parsedSurveyId = Number(surveyId);
+
+      if (!Number.isInteger(parsedSurveyId) || parsedSurveyId < 1) {
+        return res.status(400).json({
+          error: 'surveyId must be a positive integer',
+        });
+      }
+    }
+
     if (createdAtFrom && createdAtTo && createdAtFrom > createdAtTo) {
       return res.status(400).json({
         error: 'createdAtFrom must be before or equal to createdAtTo',
@@ -93,6 +106,7 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
 
     const results = await getFeedbackSurveys({
       pageId,
+      surveyId: parsedSurveyId,
       response,
       q,
       regionId: parsedRegionId,

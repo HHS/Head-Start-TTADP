@@ -107,8 +107,8 @@ describe('Admin landing page', () => {
     expect(heading).toBeVisible();
   });
 
-  it('displays the feedback surveys page', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+  it('displays the feedback surveys page on the manage surveys tab', async () => {
+    fetchMock.get('/api/admin/feedback-survey-definitions', { active: [], closed: [], pages: {} });
     history.push('/admin/feedback-surveys');
     render(
       <Router history={history}>
@@ -116,7 +116,8 @@ describe('Admin landing page', () => {
       </Router>,
     );
 
-    const heading = await screen.findByRole('heading', { name: /feedback survey responses/i });
+    const heading = await screen.findByRole('heading', { name: /manage surveys/i });
     expect(heading).toBeVisible();
+    expect(history.location.pathname).toBe('/admin/feedback-surveys/manage');
   });
 });

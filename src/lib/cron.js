@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ } from '../constants';
 import { isTrue } from '../envParser';
 import { auditLogger, logger } from '../logger';
+import { closeExpiredSurveyDefinitions } from '../services/feedbackSurveyDefinitions';
 import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
 import {
@@ -133,6 +134,21 @@ const runNotificationCleanupJob = () =>
     }
   })();
 
+const runCloseExpiredFeedbackSurveysJob = () =>
+  (async () => {
+    logger.info('Starting expired feedback survey close');
+    try {
+      const closedCount = await closeExpiredSurveyDefinitions();
+      logger.info(`Completed expired feedback survey close (${closedCount} closed)`);
+    } catch (error) {
+      logCronError(
+        'Error processing Feedback Survey Close job',
+        'Feedback Survey Close Error',
+        error
+      );
+    }
+  })();
+
 /**
  * Runs the application's cron jobs
  */
@@ -164,6 +180,14 @@ function runCronJobs() {
       timezone
     );
     notificationCleanupJob.start();
+    const feedbackSurveyCloseJob = new CronJob(
+      dailyNightSched,
+      runCloseExpiredFeedbackSurveysJob,
+      null,
+      true,
+      timezone
+    );
+    feedbackSurveyCloseJob.start();
     logger.info('Cron jobs scheduled');
   }
 }

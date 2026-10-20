@@ -1,14 +1,34 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FeedbackSurvey from '../FeedbackSurvey';
-import { getSurveyFeedbackStatus } from '../../fetchers/feedback';
+import { getActiveFeedbackSurvey } from '../../fetchers/feedback';
 
 jest.mock('../../fetchers/feedback', () => ({
-  getSurveyFeedbackStatus: jest.fn(),
+  getActiveFeedbackSurvey: jest.fn(),
 }));
 
 const ALWAYS_SHOW_SURVEY_KEY = 'ttahub:alwaysShowFeedbackSurvey';
+
+const SURVEY = {
+  id: 7,
+  pageId: 'test-dashboard',
+  questions: [
+    { id: 11, questionText: 'Did you find this page helpful?', order: 1 },
+    { id: 12, questionText: 'Was the data easy to understand?', order: 2 },
+  ],
+};
+
+const openSurvey = async () => {
+  await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
+};
+
+const questionGroup = (name) => screen.getByRole('group', { name });
+
+const answerAll = async (response = /yes/i) => {
+  await userEvent.click(within(questionGroup(/did you find this page helpful/i)).getByRole('radio', { name: response }));
+  await userEvent.click(within(questionGroup(/was the data easy/i)).getByRole('radio', { name: response }));
+};
 
 describe('FeedbackSurvey', () => {
   const defaultProps = {
@@ -18,160 +38,135 @@ describe('FeedbackSurvey', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getSurveyFeedbackStatus.mockResolvedValue(false);
+    getActiveFeedbackSurvey.mockResolvedValue({ survey: SURVEY, completed: false });
     jest.useRealTimers();
     window.history.pushState({}, '', '/');
     window.localStorage.removeItem(ALWAYS_SHOW_SURVEY_KEY);
   });
 
-  it('shows the lower-right trigger button after completion check', async () => {
-    const { pageId, onSubmit } = defaultProps;
-    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+  it('shows the lower-right trigger button when a survey is active', async () => {
+    render(<FeedbackSurvey {...defaultProps} />);
 
     expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
+    expect(getActiveFeedbackSurvey).toHaveBeenCalledWith('test-dashboard');
   });
 
-  it('opens the modal with expected copy', async () => {
-    const { pageId, onSubmit } = defaultProps;
-    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+  it('does not render when no survey is active for the page', async () => {
+    getActiveFeedbackSurvey.mockResolvedValue({ survey: null, completed: false });
 
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await waitFor(() => expect(getActiveFeedbackSurvey).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
+  });
+
+  it('does not render when the active survey lookup fails', async () => {
+    getActiveFeedbackSurvey.mockRejectedValue(new Error('nope'));
+
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await waitFor(() => expect(getActiveFeedbackSurvey).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
+  });
+
+  it('renders every question with yes/no and its own comment box', async () => {
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await openSurvey();
 
     expect(await screen.findByRole('heading', { name: /how did we do\?/i, level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/select "yes" or "no\./i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/did you find this page helpful\?/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/optional comments/i)).toBeInTheDocument();
+    SURVEY.questions.forEach(({ questionText }) => {
+      const group = questionGroup(new RegExp(questionText.replace('?', '\\?'), 'i'));
+      expect(within(group).getByRole('radio', { name: /yes/i })).toBeInTheDocument();
+      expect(within(group).getByRole('radio', { name: /no/i })).toBeInTheDocument();
+      expect(within(group).getByLabelText(/optional comments/i)).toBeInTheDocument();
+    });
+    expect(screen.getAllByText(/140 characters remaining/i)).toHaveLength(2);
+  });
+
+  it('disables submit until every question has an answer', async () => {
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await openSurvey();
+    const submit = screen.getByRole('button', { name: /^submit$/i });
+    expect(submit).toBeDisabled();
+
+    await userEvent.click(within(questionGroup(/did you find this page helpful/i)).getByRole('radio', { name: /yes/i }));
+    expect(submit).toBeDisabled();
+
+    await userEvent.click(within(questionGroup(/was the data easy/i)).getByRole('radio', { name: /no/i }));
+    expect(submit).not.toBeDisabled();
+  });
+
+  it('submits one answer per question with trimmed comments', async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    render(<FeedbackSurvey pageId="test-dashboard" onSubmit={onSubmit} />);
+
+    await openSurvey();
+    await userEvent.click(within(questionGroup(/did you find this page helpful/i)).getByRole('radio', { name: /yes/i }));
+    await userEvent.click(within(questionGroup(/was the data easy/i)).getByRole('radio', { name: /no/i }));
+    await userEvent.type(
+      within(questionGroup(/was the data easy/i)).getByLabelText(/optional comments/i),
+      '  Too many charts  ',
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        surveyId: 7,
+        responses: [
+          { questionId: 11, response: 'yes', comment: '' },
+          { questionId: 12, response: 'no', comment: 'Too many charts' },
+        ],
+        timestamp: expect.any(String),
+      });
+    });
+  });
+
+  it('tracks remaining characters per comment box', async () => {
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await openSurvey();
+    await userEvent.type(within(questionGroup(/did you find this page helpful/i)).getByLabelText(/optional comments/i), 'abc');
+
+    expect(screen.getByText(/137 characters remaining/i)).toBeInTheDocument();
     expect(screen.getByText(/140 characters remaining/i)).toBeInTheDocument();
   });
 
-  it('disables submit until yes or no is selected', async () => {
-    const { pageId, onSubmit } = defaultProps;
-    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
-
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-
-    expect(screen.getByRole('button', { name: /^submit$/i })).toBeDisabled();
-
-    await userEvent.click(screen.getByRole('radio', { name: /yes/i }));
-    expect(screen.getByRole('button', { name: /^submit$/i })).not.toBeDisabled();
-  });
-
-  it('submits a comment-only payload', async () => {
-    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={mockOnSubmit}
-      />,
-    );
-
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
-    await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          pageId: 'test-dashboard',
-          response: 'yes',
-          comment: '',
-          timestamp: expect.any(String),
-        }),
-      );
-    });
-  });
-
-  it('submits with trimmed comments', async () => {
-    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={mockOnSubmit}
-      />,
-    );
-
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    await userEvent.click(await screen.findByRole('radio', { name: /no/i }));
-    await userEvent.type(screen.getByLabelText(/optional comments/i), '  Needs more examples  ');
-    await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          response: 'no',
-          comment: 'Needs more examples',
-        }),
-      );
-    });
-  });
-
-  it('updates remaining comment characters while typing', async () => {
-    const { pageId, onSubmit } = defaultProps;
-    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
-
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    const textarea = await screen.findByLabelText(/optional comments/i);
-
-    await userEvent.type(textarea, 'abc');
-
-    expect(screen.getByText(/137 characters remaining/i)).toBeInTheDocument();
-  });
-
   it('limits comment length to 140 characters', async () => {
-    const { pageId, onSubmit } = defaultProps;
-    render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
+    render(<FeedbackSurvey {...defaultProps} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    const textarea = await screen.findByLabelText(/optional comments/i);
-
+    await openSurvey();
+    const textarea = within(questionGroup(/did you find this page helpful/i)).getByLabelText(/optional comments/i);
     await userEvent.type(textarea, 'a'.repeat(180));
 
     expect(textarea.value).toHaveLength(140);
   });
 
-  it('does not render when the server reports completion for the user/page', async () => {
-    getSurveyFeedbackStatus.mockResolvedValue(true);
+  it('does not render when the user already completed the active survey', async () => {
+    getActiveFeedbackSurvey.mockResolvedValue({ survey: SURVEY, completed: true });
 
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={jest.fn()}
-      />,
-    );
+    render(<FeedbackSurvey {...defaultProps} />);
 
-    await waitFor(() => {
-      expect(getSurveyFeedbackStatus).toHaveBeenCalledWith('test-dashboard');
-    });
-
+    await waitFor(() => expect(getActiveFeedbackSurvey).toHaveBeenCalledWith('test-dashboard'));
     expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
   });
 
   it('renders when completed is true and local override is set', async () => {
-    getSurveyFeedbackStatus.mockResolvedValue(true);
+    getActiveFeedbackSurvey.mockResolvedValue({ survey: SURVEY, completed: true });
     window.localStorage.setItem(ALWAYS_SHOW_SURVEY_KEY, 'true');
 
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={jest.fn()}
-      />,
-    );
+    render(<FeedbackSurvey {...defaultProps} />);
 
     expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
   });
 
   it('hides trigger after successful submission', async () => {
-    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+    render(<FeedbackSurvey pageId="test-dashboard" onSubmit={onSubmit} />);
 
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={mockOnSubmit}
-      />,
-    );
-
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
+    await openSurvey();
+    await answerAll();
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
     expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
@@ -183,17 +178,12 @@ describe('FeedbackSurvey', () => {
 
   it('handles submission errors and keeps survey available', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const mockOnSubmit = jest.fn().mockRejectedValue(new Error('Network error'));
+    const onSubmit = jest.fn().mockRejectedValue(new Error('Network error'));
 
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={mockOnSubmit}
-      />,
-    );
+    render(<FeedbackSurvey pageId="test-dashboard" onSubmit={onSubmit} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
+    await openSurvey();
+    await answerAll();
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
     await waitFor(() => {
@@ -207,17 +197,12 @@ describe('FeedbackSurvey', () => {
 
   it('returns survey button after successful submission when local override is set', async () => {
     window.localStorage.setItem(ALWAYS_SHOW_SURVEY_KEY, 'true');
-    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
 
-    render(
-      <FeedbackSurvey
-        pageId="test-dashboard"
-        onSubmit={mockOnSubmit}
-      />,
-    );
+    render(<FeedbackSurvey pageId="test-dashboard" onSubmit={onSubmit} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
-    await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
+    await openSurvey();
+    await answerAll();
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
     expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
@@ -225,5 +210,70 @@ describe('FeedbackSurvey', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
     }, { timeout: 2200 });
+  });
+
+  describe('end date card', () => {
+    it('slides in after the button pulse when the survey has an end date', async () => {
+      getActiveFeedbackSurvey.mockResolvedValue({ survey: { ...SURVEY, endDate: '2026-11-05' }, completed: false });
+
+      render(<FeedbackSurvey {...defaultProps} />);
+
+      const button = await screen.findByRole('button', { name: /was this page helpful\?/i });
+      // Still pulsing: the card waits for the button animation to finish
+      expect(screen.queryByText(/ends on/i)).not.toBeInTheDocument();
+
+      const card = await screen.findByText('Ends on 11/05/2026', {}, { timeout: 2500 });
+      expect(card).toHaveClass('survey-feedback__end-date-card');
+      expect(button).toHaveAttribute('aria-describedby', card.id);
+    });
+
+    it('renders decorative sparkles above the card, hidden from screen readers', async () => {
+      getActiveFeedbackSurvey.mockResolvedValue({ survey: { ...SURVEY, endDate: '2026-11-05' }, completed: false });
+
+      render(<FeedbackSurvey {...defaultProps} />);
+
+      await screen.findByText('Ends on 11/05/2026', {}, { timeout: 2500 });
+      const sparkles = screen.getByTestId('survey-feedback-sparkles');
+      expect(sparkles).toHaveAttribute('aria-hidden', 'true');
+      expect(sparkles.querySelectorAll('.survey-feedback__sparkle')).toHaveLength(9);
+    });
+
+    it('is not shown for surveys that close manually', async () => {
+      getActiveFeedbackSurvey.mockResolvedValue({ survey: { ...SURVEY, endDate: null }, completed: false });
+
+      render(<FeedbackSurvey {...defaultProps} />);
+
+      const button = await screen.findByRole('button', { name: /was this page helpful\?/i });
+      await new Promise((resolve) => { setTimeout(resolve, 1900); });
+
+      expect(screen.queryByText(/ends on/i)).not.toBeInTheDocument();
+      expect(button).not.toHaveAttribute('aria-describedby');
+    });
+
+    it('is not shown when the user already completed the survey', async () => {
+      getActiveFeedbackSurvey.mockResolvedValue({ survey: { ...SURVEY, endDate: '2026-11-05' }, completed: true });
+
+      render(<FeedbackSurvey {...defaultProps} />);
+
+      await waitFor(() => expect(getActiveFeedbackSurvey).toHaveBeenCalled());
+      await new Promise((resolve) => { setTimeout(resolve, 1900); });
+
+      expect(screen.queryByText(/ends on/i)).not.toBeInTheDocument();
+    });
+
+    it('hides once the survey is submitted', async () => {
+      getActiveFeedbackSurvey.mockResolvedValue({ survey: { ...SURVEY, endDate: '2026-11-05' }, completed: false });
+      const onSubmit = jest.fn().mockResolvedValue(undefined);
+
+      render(<FeedbackSurvey pageId="test-dashboard" onSubmit={onSubmit} />);
+
+      await screen.findByText('Ends on 11/05/2026', {}, { timeout: 2500 });
+      await openSurvey();
+      await answerAll();
+      await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
+
+      expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
+      expect(screen.queryByText(/ends on/i)).not.toBeInTheDocument();
+    });
   });
 });

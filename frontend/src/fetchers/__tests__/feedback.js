@@ -1,7 +1,7 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
 
-import { getSurveyFeedbackStatus, submitSurveyFeedback } from '../feedback';
+import { getActiveFeedbackSurvey, submitSurveyFeedback } from '../feedback';
 
 const FORCE_SURVEY_SUBMIT_500_KEY = 'ttahub:forceSurveySubmit500';
 
@@ -62,13 +62,22 @@ describe('feedback fetchers', () => {
     });
   });
 
-  describe('getSurveyFeedbackStatus', () => {
-    it('returns whether the user completed a page survey', async () => {
-      fetchMock.get('/api/feedback/survey/completed?pageId=qa-dashboard', { completed: true });
+  describe('getActiveFeedbackSurvey', () => {
+    it('returns the active survey and completion for a page', async () => {
+      const survey = { id: 3, questions: [{ id: 1, questionText: 'Q?' }] };
+      fetchMock.get('/api/feedback/survey/active?pageId=qa-dashboard', { survey, completed: true });
 
-      const completed = await getSurveyFeedbackStatus('qa-dashboard');
+      const result = await getActiveFeedbackSurvey('qa-dashboard');
 
-      expect(completed).toBe(true);
+      expect(result).toEqual({ survey, completed: true });
+    });
+
+    it('returns a null survey when none is active', async () => {
+      fetchMock.get('/api/feedback/survey/active?pageId=qa-dashboard', { survey: null, completed: false });
+
+      const result = await getActiveFeedbackSurvey('qa-dashboard');
+
+      expect(result).toEqual({ survey: null, completed: false });
     });
   });
 });

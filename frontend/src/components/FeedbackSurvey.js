@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   Alert,
@@ -10,7 +11,7 @@ import {
   Textarea,
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
-import { getSurveyFeedbackStatus } from '../fetchers/feedback';
+import { getActiveFeedbackSurvey } from '../fetchers/feedback';
 import {
   ALWAYS_SHOW_SURVEY_KEY,
   getFeedbackSurveyDebugFlag,
@@ -24,6 +25,11 @@ const SURVEY_STATUS = {
 };
 
 const SUBMITTED_ANIMATION_DURATION_MS = 1200;
+const PULSE_START_MS = 450;
+// The end date card slides out once the pulse animation has finished
+const PULSE_END_MS = 1650;
+// Decorative sparkles that burst from the top of the end date card; each is positioned in SCSS
+const SPARKLE_COUNT = 9;
 
 const RESPONSE_VALUES = {
   NO: 'no',
@@ -36,34 +42,54 @@ function shouldAlwaysShowSurvey() {
 
 function FeedbackSurvey({ pageId, onSubmit }) {
   const [surveyStatus, setSurveyStatus] = useState('pending');
+  const [survey, setSurvey] = useState(null);
   const [showPulse, setShowPulse] = useState(false);
-  const [selectedResponse, setSelectedResponse] = useState('');
-  const [comment, setComment] = useState('');
+  const [showEndDateCard, setShowEndDateCard] = useState(false);
+  // Keyed by question id: { response, comment }
+  const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const modalRef = useRef(null);
-  const remainingCharacters = MAX_COMMENT_LENGTH - comment.length;
+
+  const questions = survey ? survey.questions : [];
+  const allAnswered = questions.length > 0 && questions.every((q) => answers[q.id]?.response);
+
+  const updateAnswer = (questionId, field, value) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...prev[questionId], [field]: value },
+    }));
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const checkSurveyStatus = async () => {
       try {
-        const completed = await getSurveyFeedbackStatus(pageId);
+        const { survey: activeSurvey, completed } = await getActiveFeedbackSurvey(pageId);
         if (!isMounted) {
           return;
         }
+
+        // Nothing to show when the page has no survey running or the user already answered it
+        if (!activeSurvey || !activeSurvey.questions?.length) {
+          setSurveyStatus(SURVEY_STATUS.COMPLETED);
+          return;
+        }
+
+        setSurvey(activeSurvey);
 
         if (completed && !shouldAlwaysShowSurvey()) {
           setSurveyStatus(SURVEY_STATUS.COMPLETED);
           return;
         }
-      } catch (error) {
-        // No-op: keep survey available if status check fails.
-      }
 
-      if (isMounted) {
         setSurveyStatus('ready');
+      } catch (error) {
+        // Without a survey definition there are no questions to ask, so stay hidden.
+        if (isMounted) {
+          setSurveyStatus(SURVEY_STATUS.COMPLETED);
+        }
       }
     };
 
@@ -80,8 +106,11 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     }
 
     // Trigger a quick pulse shortly after the button appears, then stop.
-    const startPulseTimer = setTimeout(() => setShowPulse(true), 450);
-    const stopPulseTimer = setTimeout(() => setShowPulse(false), 1650);
+    const startPulseTimer = setTimeout(() => setShowPulse(true), PULSE_START_MS);
+    const stopPulseTimer = setTimeout(() => {
+      setShowPulse(false);
+      setShowEndDateCard(true);
+    }, PULSE_END_MS);
 
     return () => {
       clearTimeout(startPulseTimer);
@@ -106,7 +135,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
   const handleSurveySubmit = async (event) => {
     event.preventDefault();
 
-    if (!selectedResponse || isSubmitting) {
+    if (!allAnswered || isSubmitting) {
       return;
     }
 
@@ -115,9 +144,12 @@ function FeedbackSurvey({ pageId, onSubmit }) {
 
     try {
       await onSubmit({
-        pageId,
-        response: selectedResponse,
-        comment: (comment || '').trim(),
+        surveyId: survey.id,
+        responses: questions.map((q) => ({
+          questionId: q.id,
+          response: answers[q.id].response,
+          comment: (answers[q.id].comment || '').trim(),
+        })),
         timestamp: new Date().toISOString(),
       });
 
@@ -140,17 +172,42 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     return null;
   }
 
+  // Surveys that close manually have no end date, so there is nothing to count down to
+  const endDateLabel = survey?.endDate ? moment(survey.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY') : null;
+  const endDateCardId = `survey-feedback-end-date-${pageId}`;
+  const showEndDate = Boolean(endDateLabel) && showEndDateCard && surveyStatus === 'ready';
+
   return (
     <>
-      <ModalToggleButton
-        opener
-        modalRef={modalRef}
-        type="button"
-        className={`usa-button survey-feedback__trigger-button ${showPulse ? 'survey-feedback__trigger-button--pulse' : ''} ${surveyStatus === SURVEY_STATUS.SUBMITTED ? 'survey-feedback__trigger-button--submitted' : ''} position-fixed right-2 bottom-2 margin-0`}
-        disabled={surveyStatus === SURVEY_STATUS.SUBMITTED}
-      >
-        {surveyStatus === SURVEY_STATUS.SUBMITTED ? 'Submitted' : 'Was this page helpful?'}
-      </ModalToggleButton>
+      <div className="survey-feedback__dock position-fixed right-2 bottom-2 display-flex flex-column flex-align-center">
+        {showEndDate && (
+          <div className="survey-feedback__end-date">
+            <span className="survey-feedback__sparkles" aria-hidden="true" data-testid="survey-feedback-sparkles">
+              {Array.from({ length: SPARKLE_COUNT }, (_, index) => (
+                <span key={index} className="survey-feedback__sparkle" />
+              ))}
+            </span>
+            <div
+              id={endDateCardId}
+              className="survey-feedback__end-date-card padding-x-105 padding-top-05 radius-top-md text-white text-bold font-sans-3xs"
+            >
+              Ends on
+              {' '}
+              {endDateLabel}
+            </div>
+          </div>
+        )}
+        <ModalToggleButton
+          opener
+          modalRef={modalRef}
+          type="button"
+          className={`usa-button survey-feedback__trigger-button ${showPulse ? 'survey-feedback__trigger-button--pulse' : ''} ${surveyStatus === SURVEY_STATUS.SUBMITTED ? 'survey-feedback__trigger-button--submitted' : ''} margin-0`}
+          disabled={surveyStatus === SURVEY_STATUS.SUBMITTED}
+          aria-describedby={showEndDate ? endDateCardId : undefined}
+        >
+          {surveyStatus === SURVEY_STATUS.SUBMITTED ? 'Submitted' : 'Was this page helpful?'}
+        </ModalToggleButton>
+      </div>
 
       <VanillaModal
         heading="How did we do?"
@@ -170,56 +227,62 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         </p>
 
         <form onSubmit={handleSurveySubmit} noValidate>
-          <Fieldset className="margin-top-0 margin-bottom-3">
-            <Label className="margin-top-0 text-bold" htmlFor={`survey-response-yes-${pageId}`}>
-              Did you find this page helpful?
-              {' '}
-              <span className="text-secondary-vivid">*</span>
-            </Label>
-            <Radio
-              id={`survey-response-yes-${pageId}`}
-              name={`survey-response-${pageId}`}
-              label="Yes"
-              value={RESPONSE_VALUES.YES}
-              checked={selectedResponse === RESPONSE_VALUES.YES}
-              onChange={(e) => setSelectedResponse(e.target.value)}
-            />
-            <Radio
-              id={`survey-response-no-${pageId}`}
-              name={`survey-response-${pageId}`}
-              label="No"
-              value={RESPONSE_VALUES.NO}
-              checked={selectedResponse === RESPONSE_VALUES.NO}
-              onChange={(e) => setSelectedResponse(e.target.value)}
-            />
-          </Fieldset>
+          {questions.map((question) => {
+            const answer = answers[question.id] || {};
+            const comment = answer.comment || '';
+            const idSuffix = `${pageId}-${question.id}`;
 
-          <div className="margin-bottom-3">
-            <Label
-              htmlFor={`feedback-comment-${pageId}`}
-              className="margin-top-0 survey-feedback__optional-comments-label"
-            >
-              Optional Comments
-            </Label>
-            <p className="margin-top-1 margin-bottom-1 font-sans-xs text-base-dark">
-              Want to tell us more? Please do not put Personal Identifiable
-              {' '}
-              Information (PII) in this field.
-            </p>
-            <Textarea
-              id={`feedback-comment-${pageId}`}
-              name="feedback-comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              maxLength={MAX_COMMENT_LENGTH}
-              aria-describedby={`char-count-${pageId}`}
-            />
-            <div id={`char-count-${pageId}`} className="font-sans-sm text-base margin-top-1">
-              {remainingCharacters}
-              {' '}
-              characters remaining
-            </div>
-          </div>
+            return (
+              <Fieldset key={question.id} className="margin-top-0 margin-bottom-3">
+                <legend className="usa-legend margin-top-0 text-bold">
+                  {question.questionText}
+                  {' '}
+                  <span className="text-secondary-vivid">*</span>
+                </legend>
+                <Radio
+                  id={`survey-response-yes-${idSuffix}`}
+                  name={`survey-response-${idSuffix}`}
+                  label="Yes"
+                  value={RESPONSE_VALUES.YES}
+                  checked={answer.response === RESPONSE_VALUES.YES}
+                  onChange={(e) => updateAnswer(question.id, 'response', e.target.value)}
+                />
+                <Radio
+                  id={`survey-response-no-${idSuffix}`}
+                  name={`survey-response-${idSuffix}`}
+                  label="No"
+                  value={RESPONSE_VALUES.NO}
+                  checked={answer.response === RESPONSE_VALUES.NO}
+                  onChange={(e) => updateAnswer(question.id, 'response', e.target.value)}
+                />
+
+                <Label
+                  htmlFor={`feedback-comment-${idSuffix}`}
+                  className="survey-feedback__optional-comments-label"
+                >
+                  Optional Comments
+                </Label>
+                <p className="margin-top-1 margin-bottom-1 font-sans-xs text-base-dark">
+                  Want to tell us more? Please do not put Personal Identifiable
+                  {' '}
+                  Information (PII) in this field.
+                </p>
+                <Textarea
+                  id={`feedback-comment-${idSuffix}`}
+                  name={`feedback-comment-${question.id}`}
+                  value={comment}
+                  onChange={(e) => updateAnswer(question.id, 'comment', e.target.value)}
+                  maxLength={MAX_COMMENT_LENGTH}
+                  aria-describedby={`char-count-${idSuffix}`}
+                />
+                <div id={`char-count-${idSuffix}`} className="font-sans-sm text-base margin-top-1">
+                  {MAX_COMMENT_LENGTH - comment.length}
+                  {' '}
+                  characters remaining
+                </div>
+              </Fieldset>
+            );
+          })}
 
           {submitError && (
             <Alert type="error" role="alert" className="margin-top-2 margin-bottom-2">
@@ -227,7 +290,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
             </Alert>
           )}
 
-          <Button type="submit" disabled={!selectedResponse || isSubmitting}>
+          <Button type="submit" disabled={!allAnswered || isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </form>

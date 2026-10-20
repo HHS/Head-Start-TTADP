@@ -1,0 +1,28 @@
+put:
+  tags:
+    - admin
+  operationId: reopenFeedbackSurveyDefinition
+  description: Reopens a closed feedback survey with a new date range.
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: './schemas.yaml#/dateRange'
+  responses:
+    200:
+      description: Survey reopened
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/surveyDefinition'
+    400:
+      description: Invalid dates, survey already active, or an overlapping active survey exists
+    404:
+      description: Survey not found

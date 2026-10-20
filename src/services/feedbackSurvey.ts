@@ -1,16 +1,25 @@
 import { Op } from 'sequelize';
-import db from '../models';
+import { FEEDBACK_SURVEY_STATUSES } from '../constants';
 import { auditLogger } from '../logger';
+import db from '../models';
+import { FeedbackSurveyDefinitionError, openOnDay, todayDateOnly } from './feedbackSurveyDefinitions';
 
-const { FeedbackSurvey, FeedbackSurveyCompletion } = db;
+const { FeedbackSurvey, FeedbackSurveyCompletion, FeedbackSurveyDefinition, FeedbackSurveyQuestion } = db;
+
+export type ResponseValue = 'yes' | 'no';
+
+export type SurveyAnswerInput = {
+  questionId: number;
+  response: ResponseValue;
+  comment?: string;
+};
 
 export type SaveFeedbackSurveyInput = {
-  pageId: string;
-  response: 'yes' | 'no';
+  surveyId: number;
+  responses: SurveyAnswerInput[];
   userId: number;
   regionId?: number | null;
   userRoles?: string[];
-  comment?: string;
   timestamp?: string;
 };
 
@@ -19,7 +28,8 @@ type SortDir = 'asc' | 'desc';
 
 export type GetFeedbackSurveysInput = {
   pageId?: string;
-  response?: 'yes' | 'no';
+  surveyId?: number;
+  response?: ResponseValue;
   q?: string;
   regionId?: number;
   userRole?: string;
@@ -37,72 +47,98 @@ export type GetFeedbackSurveysResult = {
 };
 
 type SaveFeedbackSurveyCompletionInput = {
+  surveyId: number;
   pageId: string;
   userId: number;
   timestamp?: string;
 };
 
-type GetFeedbackSurveyCompletionStatusInput = {
-  pageId: string;
-  userId: number;
-};
+/**
+ * Loads the survey a submission is for and confirms it is currently showing,
+ * and that the answers cover exactly the survey's questions
+ */
+async function getSurveyForSubmission(surveyId: number, responses: SurveyAnswerInput[]) {
+  const today = todayDateOnly();
+  const survey = await FeedbackSurveyDefinition.findOne({
+    where: {
+      id: surveyId,
+      status: FEEDBACK_SURVEY_STATUSES.ACTIVE,
+      ...openOnDay(today),
+    },
+    include: [{ model: FeedbackSurveyQuestion, as: 'questions', attributes: ['id'] }],
+  });
+
+  if (!survey) {
+    throw new FeedbackSurveyDefinitionError('Survey is not currently active');
+  }
+
+  const questionIds = survey.questions.map((q) => q.id).sort();
+  const answeredIds = responses.map((r) => r.questionId).sort();
+
+  if (questionIds.length !== answeredIds.length || questionIds.some((id, i) => id !== answeredIds[i])) {
+    throw new FeedbackSurveyDefinitionError('Every survey question must be answered exactly once');
+  }
+
+  return survey;
+}
 
 export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
-  const {
-    pageId,
-    response,
-    comment,
-    timestamp,
-    userId,
-    regionId,
-    userRoles,
-  } = feedbackData;
+  const { surveyId, responses, timestamp, userId, regionId, userRoles } = feedbackData;
+
+  const survey = await getSurveyForSubmission(surveyId, responses);
 
   const submittedAt = timestamp ? new Date(timestamp) : new Date();
-  const normalizedComment = comment || '';
   let normalizedRegionId = regionId ?? null;
   let normalizedUserRoles = Array.isArray(userRoles) ? userRoles.filter(Boolean) : [];
 
   if (normalizedRegionId === null || normalizedUserRoles.length === 0) {
     const user = await db.User.findByPk(userId, {
       attributes: ['homeRegionId'],
-      include: [{
-        model: db.Role,
-        as: 'roles',
-        attributes: ['name', 'fullName'],
-        through: { attributes: [] },
-      }],
+      include: [
+        {
+          model: db.Role,
+          as: 'roles',
+          attributes: ['name', 'fullName'],
+          through: { attributes: [] },
+        },
+      ],
     });
 
     normalizedRegionId = normalizedRegionId ?? user?.homeRegionId ?? null;
     if (normalizedUserRoles.length === 0) {
-      normalizedUserRoles = (user?.roles || [])
-        .map((role) => role.fullName || role.name)
-        .filter(Boolean);
+      normalizedUserRoles = (user?.roles || []).map((role) => role.fullName || role.name).filter(Boolean);
     }
   }
 
-  const feedback = await FeedbackSurvey.create({
-    pageId,
-    response,
-    regionId: normalizedRegionId,
-    userRoles: normalizedUserRoles,
-    comment: normalizedComment,
-    submittedAt,
-  });
+  const feedback = await FeedbackSurvey.bulkCreate(
+    responses.map(({ questionId, response, comment }) => ({
+      pageId: survey.pageId,
+      surveyId: survey.id,
+      questionId,
+      response,
+      regionId: normalizedRegionId,
+      userRoles: normalizedUserRoles,
+      comment: comment || '',
+      submittedAt,
+    }))
+  );
 
   // Log the feedback for analytics
   auditLogger.info('Survey feedback submitted', {
-    pageId,
-    response,
-    commentLength: normalizedComment.length,
+    pageId: survey.pageId,
+    surveyId: survey.id,
+    answers: responses.map(({ questionId, response, comment }) => ({
+      questionId,
+      response,
+      commentLength: (comment || '').length,
+    })),
     timestamp: submittedAt.toISOString(),
     regionId: normalizedRegionId,
     userRoles: normalizedUserRoles,
-    feedbackId: feedback.id,
+    feedbackIds: feedback.map((f) => f.id),
   });
 
-  return feedback;
+  return { survey, feedback };
 }
 
 export async function getFeedbackSurveys(
@@ -110,6 +146,7 @@ export async function getFeedbackSurveys(
 ): Promise<GetFeedbackSurveysResult> {
   const {
     pageId,
+    surveyId,
     response,
     q,
     regionId,
@@ -124,7 +161,8 @@ export async function getFeedbackSurveys(
 
   const where = {} as {
     pageId?: { [Op.iLike]: string };
-    response?: 'yes' | 'no';
+    surveyId?: number;
+    response?: ResponseValue;
     createdAt?: {
       [Op.gte]?: Date;
       [Op.lt]?: Date;
@@ -141,6 +179,10 @@ export async function getFeedbackSurveys(
 
   if (pageId) {
     where.pageId = { [Op.iLike]: `%${pageId}%` };
+  }
+
+  if (surveyId !== undefined) {
+    where.surveyId = surveyId;
   }
 
   if (response) {
@@ -183,6 +225,7 @@ export async function getFeedbackSurveys(
 
   const { rows, count } = await FeedbackSurvey.findAndCountAll({
     where,
+    include: [{ model: FeedbackSurveyQuestion, as: 'question', attributes: ['id', 'questionText'] }],
     order: [[normalizedSortBy, normalizedSortDir.toUpperCase()]],
     limit,
     offset,
@@ -194,23 +237,18 @@ export async function getFeedbackSurveys(
   };
 }
 
-export async function markFeedbackSurveyCompleted(
-  input: SaveFeedbackSurveyCompletionInput,
-) {
-  const {
-    pageId,
-    userId,
-    timestamp,
-  } = input;
+export async function markFeedbackSurveyCompleted(input: SaveFeedbackSurveyCompletionInput) {
+  const { surveyId, pageId, userId, timestamp } = input;
 
   const completedAt = timestamp ? new Date(timestamp) : new Date();
 
   const [completion] = await FeedbackSurveyCompletion.findOrCreate({
     where: {
-      pageId,
+      surveyId,
       userId,
     },
     defaults: {
+      surveyId,
       pageId,
       userId,
       completedAt,
@@ -218,20 +256,6 @@ export async function markFeedbackSurveyCompleted(
   });
 
   return completion;
-}
-
-export async function hasCompletedFeedbackSurvey(
-  input: GetFeedbackSurveyCompletionStatusInput,
-): Promise<boolean> {
-  const completion = await FeedbackSurveyCompletion.findOne({
-    where: {
-      pageId: input.pageId,
-      userId: input.userId,
-    },
-    attributes: ['id'],
-  });
-
-  return Boolean(completion);
 }
 
 export default saveFeedbackSurvey;
