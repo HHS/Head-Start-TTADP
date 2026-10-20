@@ -10,7 +10,7 @@ Given('I am logged in', async () => {
     const height = 1600;
     const launchOptions = {
       defaultViewport: { width, height },
-      headless: 'new',
+      headless: true,
       // slowMo: 250, // can be used in conjunction with headless: false to slow down the browser
     };
 
