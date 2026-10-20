@@ -3,7 +3,11 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"CommunicationLog"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
+  return searchTerms.map((term) =>
+    sequelize.literal(
+      `"CommunicationLog"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`
+    )
+  );
 }
 
 export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*') {

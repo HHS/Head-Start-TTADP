@@ -1,17 +1,17 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import {
-  eventById,
-  sessionsByEventId,
-  updateEvent,
-  getEventsByStatus,
-  deleteEvent,
-  getEventAlerts,
-  completeEvent,
-  suspendEvent,
-  resumeEvent,
-} from '../event';
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
+import {
+  completeEvent,
+  deleteEvent,
+  eventById,
+  getEventAlerts,
+  getEventsByStatus,
+  resumeEvent,
+  sessionsByEventId,
+  suspendEvent,
+  updateEvent,
+} from '../event';
 
 describe('eventById', () => {
   afterEach(() => {
@@ -70,8 +70,10 @@ describe('updateEvent', () => {
 });
 
 describe('sessionsByEventId', () => {
+  const eventDisplayId = 'R01-PD-25-25010';
+
   beforeEach(() => {
-    fetchMock.get('/api/session-reports/eventId/1', {
+    fetchMock.get(`/api/session-reports/eventId/${eventDisplayId}`, {
       id: 1,
       name: 'updated test event',
     });
@@ -82,10 +84,10 @@ describe('sessionsByEventId', () => {
   });
 
   it('updates the event on the server with the given id and data', async () => {
-    const event = await sessionsByEventId(1);
+    const event = await sessionsByEventId(eventDisplayId);
 
     expect(fetchMock.called()).toBe(true);
-    expect(fetchMock.lastUrl()).toBe('/api/session-reports/eventId/1');
+    expect(fetchMock.lastUrl()).toBe(`/api/session-reports/eventId/${eventDisplayId}`);
     expect(event).toEqual({ id: 1, name: 'updated test event' });
   });
 });

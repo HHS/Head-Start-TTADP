@@ -1,13 +1,14 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-import SessionReportFacilitation from '../index';
-import UserContext from '../../../UserContext';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import AppLoadingContext from '../../../AppLoadingContext';
 import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
+import SessionReportFacilitation from '../index';
 
 jest.mock('../../../permissions', () => ({
   __esModule: true,
@@ -18,34 +19,39 @@ const TRAINING_REPORT_URL = '/training-reports/not-started';
 const IN_PROGRESS = '/training-reports/in-progress';
 
 describe('SessionReportFacilitation', () => {
-  const trainingReportId = '1';
+  const trainingReportId = 'R01-TR-1234';
   const history = createMemoryHistory();
 
   const mockTrainingReport = {
     id: 1,
     collaboratorIds: [],
+    pocIds: [],
     owner: {
       id: 1,
     },
+    eventId: 'R01-TR-1234',
     data: {
       eventId: 'R01-TR-1234',
       eventName: 'Test Training Event',
     },
   };
 
-  const renderComponent = (reportId = trainingReportId) => render(
-    <UserContext.Provider value={{ user: { id: 1 } }}>
-      <Router history={history}>
-        <SessionReportFacilitation
-          match={{
-            params: { trainingReportId: reportId },
-            path: '',
-            url: '',
-          }}
-        />
-      </Router>
-    </UserContext.Provider>,
-  );
+  const renderComponent = (reportId = trainingReportId) =>
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Router history={history}>
+            <SessionReportFacilitation
+              match={{
+                params: { trainingReportId: reportId },
+                path: '',
+                url: '',
+              }}
+            />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -144,7 +150,9 @@ describe('SessionReportFacilitation', () => {
     it('displays all radio options', () => {
       expect(screen.getByLabelText('National Center')).toBeInTheDocument();
       expect(screen.getByLabelText('Regional TTA staff')).toBeInTheDocument();
-      expect(screen.getByLabelText('Both (National Center and Regional TTA staff)')).toBeInTheDocument();
+      expect(
+        screen.getByLabelText('Both (National Center and Regional TTA staff)')
+      ).toBeInTheDocument();
     });
 
     it('displays create session button', () => {
@@ -292,7 +300,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 3, eventId: 1 };
+      const sessionResponse = { id: 3, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -311,7 +319,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
+        expect(spy).toHaveBeenCalledWith('/training-report/R01-TR-1234/session/3');
       });
     });
   });
@@ -326,7 +334,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 1, eventId: 1 };
+      const sessionResponse = { id: 1, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -361,7 +369,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 2, eventId: 1 };
+      const sessionResponse = { id: 2, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -396,7 +404,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 3, eventId: 1 };
+      const sessionResponse = { id: 3, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -467,7 +475,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 1, eventId: 1 };
+      const sessionResponse = { id: 1, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -486,7 +494,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1');
+        expect(spy).toHaveBeenCalledWith(`/training-report/${trainingReportId}/session/1`);
       });
     });
 
@@ -495,7 +503,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 2, eventId: 1 };
+      const sessionResponse = { id: 2, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -514,7 +522,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2');
+        expect(spy).toHaveBeenCalledWith(`/training-report/${trainingReportId}/session/2`);
       });
     });
 
@@ -523,7 +531,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 3, eventId: 1 };
+      const sessionResponse = { id: 3, eventId: trainingReportId };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -542,7 +550,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
+        expect(spy).toHaveBeenCalledWith(`/training-report/${trainingReportId}/session/3`);
       });
     });
 

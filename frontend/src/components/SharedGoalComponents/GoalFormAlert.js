@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
 export default function GoalFormAlert({ alert }) {
   if (!alert) {
@@ -7,12 +7,12 @@ export default function GoalFormAlert({ alert }) {
   }
 
   return (
-    <div className={`usa-alert usa-alert--${alert.type || 'warning'} margin-top-2`} data-testid="alert">
-      <div className="usa-alert__body">
-        {alert.message}
-      </div>
+    <div
+      className={`usa-alert usa-alert--${alert.type || 'warning'} margin-top-2`}
+      data-testid="alert"
+    >
+      <div className="usa-alert__body">{alert.message}</div>
     </div>
-
   );
 }
 

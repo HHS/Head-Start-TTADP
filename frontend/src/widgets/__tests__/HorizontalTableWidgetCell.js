@@ -1,21 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import HorizontalTableWidgetCell from '../HorizontalTableWidgetCell';
 
-const renderTableCell = (props) => render(
-  <BrowserRouter>
-    <table>
-      <tbody>
-        <tr>
-          <HorizontalTableWidgetCell {...props} />
-        </tr>
-      </tbody>
-    </table>
-  </BrowserRouter>,
-);
+const renderTableCell = (props) =>
+  render(
+    <BrowserRouter>
+      <table>
+        <tbody>
+          <tr>
+            <HorizontalTableWidgetCell {...props} />
+          </tr>
+        </tbody>
+      </table>
+    </BrowserRouter>
+  );
 
 describe('TableCell', () => {
   it('renders basic cell content', () => {
@@ -137,5 +138,202 @@ describe('TableCell', () => {
 
     const td = container.querySelector('td');
     expect(td).toHaveClass('left-with-checkbox');
+  });
+
+  it('applies position-relative class to non-first column cells', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({ data, isFirstColumn: false });
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
+    expect(td).not.toHaveClass('smarthub-horizontal-table-first-column');
+  });
+
+  it('applies position-relative class to first column cells', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({ data, isFirstColumn: true });
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column');
+  });
+
+  it('applies sticky column classes when stickyFirstColumn is true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      stickyFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies sticky column checkbox class when both stickyFirstColumn and enableCheckboxes are true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      stickyFirstColumn: true,
+      enableCheckboxes: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column');
+    expect(td).toHaveClass('smarthub-horizontal-table--sticky-first-column-checkboxes-enabled');
+    expect(td).toHaveClass('left-with-checkbox');
+  });
+
+  it('applies border class when hideFirstColumnBorder is false (default)', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('does not apply border class when hideFirstColumnBorder is true and stickyFirstColumn is false', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      hideFirstColumnBorder: true,
+      stickyFirstColumn: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).not.toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies border class when stickyFirstColumn is true even if hideFirstColumnBorder is true', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      hideFirstColumnBorder: true,
+      stickyFirstColumn: true,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column-border');
+  });
+
+  it('applies left-0 class when enableCheckboxes is false', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      enableCheckboxes: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('left-0');
+    expect(td).not.toHaveClass('left-with-checkbox');
+  });
+
+  it('omits position-relative when isSticky is true on a non-first column cell', () => {
+    const data = {
+      title: 'Total',
+      value: '42',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: false,
+      isSticky: true,
+      className: 'smarthub-horizontal-table-last-column',
+    });
+
+    const td = container.querySelector('td');
+    expect(td).not.toHaveClass('position-relative');
+    expect(td).toHaveClass('smarthub-horizontal-table-last-column');
+  });
+
+  it('keeps position-relative on non-first column cells when isSticky is false', () => {
+    const data = {
+      title: 'Col',
+      value: '10',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: false,
+      isSticky: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
+  });
+
+  it('renders dash when isFirstColumn is true and heading is falsy with showDashForNullValue', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: null,
+    };
+
+    renderTableCell({ data, isFirstColumn: true, showDashForNullValue: true });
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
+
+  it('applies extra className to first-column td', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      className: 'extra-class',
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('extra-class');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column');
   });
 });

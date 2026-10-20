@@ -1,9 +1,8 @@
-import { test, expect } from '@playwright/test';
-import Joi from '@hapi/joi';
+import { expect, test } from '@playwright/test';
+import Joi from 'joi';
 import { root, validateSchema } from './common';
 
 test.describe('get /role', () => {
-
   test('/', async ({ request }) => {
     const response = await request.get(`${root}/role`);
 
@@ -17,8 +16,9 @@ test.describe('get /role', () => {
       createdAt: Joi.date().required(),
       updatedAt: Joi.date().required(),
     });
-    
-    const schema = Joi.array().items(specialistSchema).min(1);    expect(response.status()).toBe(200);
+
+    const schema = Joi.array().items(specialistSchema).min(1);
+    expect(response.status()).toBe(200);
 
     await validateSchema(response, schema, expect);
   });
@@ -36,10 +36,9 @@ test.describe('get /role', () => {
       createdAt: Joi.date().required(),
       updatedAt: Joi.date().required(),
     });
-    
+
     const schema = Joi.array().items(specialistSchema);
 
     await validateSchema(response, schema, expect);
   });
-
 });

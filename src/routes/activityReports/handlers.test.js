@@ -1,65 +1,75 @@
-import {
-  APPROVER_STATUSES,
-  REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  getReport,
-  saveReport,
-  createReport,
-  getActivityRecipients,
-  getApprovers,
-  submitReport,
-  reviewReport,
-  resetToDraft,
-  getReports,
-  getReportAlerts,
-  getLegacyReport,
-  downloadReports,
-  updateLegacyFields,
-  softDeleteReport,
-  unlockReport,
-  downloadAllReports,
-  downloadAllAlerts,
-  LEGACY_WARNING,
-  getReportsForLocalStorageCleanup,
-  saveOtherEntityObjectivesForReport,
-  setGoalAsActivelyEdited,
-  getReportsByManyIds,
-  getGroups,
-} from './handlers';
-import {
-  activityReportAndRecipientsById,
-  createOrUpdate,
-  possibleRecipients,
-  setStatus,
-  activityReports,
-  activityReportAlerts,
-  activityReportByLegacyId,
-  getDownloadableActivityReportsByIds,
-  getAllDownloadableActivityReports,
-  getAllDownloadableActivityReportAlerts,
-  activityReportsForCleanup,
-} from '../../services/activityReports';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
-import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
-import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-import { userById, usersWithPermissions } from '../../services/users';
-import { groupsByRegion } from '../../services/groups';
-import { userSettingOverridesById } from '../../services/userSettings';
-import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
-import User from '../../policies/user';
-import db, {
-  ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
-} from '../../models';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
-import { USER_SETTINGS } from '../../constants';
+import db, {
+  ActivityReportApprover,
+  ActivityReport as ActivityReportModel,
+  Permission,
+  User as UserModel,
+} from '../../models';
+import ActivityReport from '../../policies/activityReport';
+import User from '../../policies/user';
+import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
+import { syncApprovers, upsertApprover } from '../../services/activityReportApprovers';
+import {
+  activityReportAlerts,
+  activityReportAndRecipientsById,
+  activityReportByLegacyId,
+  activityReports,
+  activityReportsForCleanup,
+  assertApproversAreNotParticipants,
+  createOrUpdate,
+  getAllDownloadableActivityReportAlerts,
+  getAllDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
+  getObjectiveSupportTypeSubmissionError,
+  lockActivityReport,
+  possibleRecipients,
+  setStatus,
+} from '../../services/activityReports';
+import { groupsByRegion } from '../../services/groups';
+import {
+  archiveNotificationsByEntityAndType,
+  archiveNotificationsByUserEntityAndType,
+  createNotification,
+} from '../../services/notifications';
+import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
+import { userSettingOverridesById } from '../../services/userSettings';
+import { userById, usersWithPermissions } from '../../services/users';
+import {
+  createReport,
+  downloadAllAlerts,
+  downloadAllReports,
+  downloadReports,
+  getActivityRecipients,
+  getApprovers,
+  getGroups,
+  getLegacyReport,
+  getReport,
+  getReportAlerts,
+  getReports,
+  getReportsByManyIds,
+  getReportsForLocalStorageCleanup,
+  LEGACY_WARNING,
+  resetToDraft,
+  reviewReport,
+  saveOtherEntityObjectivesForReport,
+  saveReport,
+  setGoalAsActivelyEdited,
+  softDeleteReport,
+  submitReport,
+  unlockReport,
+  updateLegacyFields,
+} from './handlers';
 
 jest.mock('../../services/activityReports', () => ({
+  assertApproversAreNotParticipants: jest.fn(),
   activityReportAndRecipientsById: jest.fn(),
   createOrUpdate: jest.fn(),
+  lockActivityReport: jest.fn(),
   possibleRecipients: jest.fn(),
   review: jest.fn(),
   setStatus: jest.fn(),
@@ -69,6 +79,7 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReportAlerts: jest.fn(),
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
+  getObjectiveSupportTypeSubmissionError: jest.fn(),
   activityReportsForCleanup: jest.fn(),
   handleSoftDeleteReport: jest.fn(),
 }));
@@ -89,6 +100,12 @@ jest.mock('../../services/userSettings', () => ({
 jest.mock('../../services/activityReportApprovers', () => ({
   upsertApprover: jest.fn(),
   syncApprovers: jest.fn(),
+}));
+
+jest.mock('../../services/notifications', () => ({
+  archiveNotificationsByEntityAndType: jest.fn(),
+  archiveNotificationsByUserEntityAndType: jest.fn(),
+  createNotification: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -116,10 +133,10 @@ const mockResponse = {
   json: jest.fn(),
   send: jest.fn(),
   sendStatus: jest.fn(),
-  status: jest.fn(() => ({
-    end: jest.fn(),
-  })),
+  end: jest.fn(),
+  status: jest.fn(),
 };
+mockResponse.status.mockImplementation(() => mockResponse);
 
 const mockRequest = {
   session: {
@@ -269,6 +286,7 @@ describe('Activity Report handlers', () => {
         body: {
           status: REPORT_STATUSES.APPROVED,
           note: 'notes',
+          approvedAtTimezone: 'America/New_York',
         },
       },
     };
@@ -281,32 +299,53 @@ describe('Activity Report handlers', () => {
         },
       },
     };
-    userById.mockResolvedValue({});
+    userById.mockResolvedValue({ name: 'Approver Name' });
 
-    it('returns the new approved status', async () => { // here
+    it('returns the new approved status', async () => {
+      // here
       const mockApproverRecord = {
         id: 1,
         userId: approvedReportRequest.session.userId,
         activityReportId: approvedReportRequest.params.activityReportId,
         status: approvedReportRequest.body.status,
         note: approvedReportRequest.body.note,
-      };
-      activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        activityRecipientType: 'recipient',
-        author: {
-          id: 777,
+        user: {
+          name: 'Approver Name',
         },
-        activityReportCollaborators: [],
-        id: 999999,
-      }, [{
-        activityRecipientId: 10,
-      }]]);
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [
+            { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+            { user: { id: 222 }, status: APPROVER_STATUSES.APPROVED },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+        ],
+      ]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
       upsertApprover.mockResolvedValue(mockApproverRecord);
-      const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
         key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
@@ -316,36 +355,738 @@ describe('Activity Report handlers', () => {
       await reviewReport(approvedReportRequest, mockResponse);
 
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(updateTimezone).toHaveBeenCalledWith(
+        { approvedAtTimezone: 'America/New_York' },
+        { where: { id: approvedReportRequest.params.activityReportId } }
+      );
       expect(approvalNotification).toHaveBeenCalled();
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // TTAHUB-5581: the acting approver's own approver-approved notification is archived,
+      // and once fully approved the earlier approver-approved notifications are archived.
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
+        999999,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      // The acting approver's own "submitted for approval" CTA is archived.
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(999999, 1, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+      // The final approval creates the other approver's notification after archival, so it
+      // stays active until dismissed.
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.objectContaining({
+          metadata: expect.objectContaining({ approver: 'Approver Name', hasApproved: true }),
+        })
+      );
+      const approvalCall = createNotification.mock.calls.findIndex(
+        ([, , type]) => type === NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      const archiveCall = archiveNotificationsByEntityAndType.mock.calls.findIndex(([, types]) =>
+        types.includes(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER)
+      );
+      expect(
+        archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
+      ).toBeLessThan(createNotification.mock.invocationCallOrder[approvalCall]);
     });
-    it('returns the new needs action status', async () => { // here
+    it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: approvedReportRequest.body.status,
+        note: approvedReportRequest.body.note,
+        user: { name: 'Approver Name' },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: { id: 777 },
+          // one collaborator to notify, plus the acting approver as a collaborator (id 1)
+          activityReportCollaborators: [{ user: { id: 555 } }, { user: { id: 1 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // collaborator 555 receives the approved in-app notification
+      expect(createNotification).toHaveBeenCalledWith(
+        555,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // the acting approver (id 1) is never notified, even though listed as a collaborator
+      expect(createNotification).not.toHaveBeenCalledWith(
+        1,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it('notifies author and collaborators on each approver approval, naming the approver', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // not fully approved yet: a second approver is still pending
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999 }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // timezone update only happens on full approval
+      expect(updateTimezone).not.toHaveBeenCalled();
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [],
+        'Approver McApproverface'
+      );
+      expect(handleErrors).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+    });
+    it('emails other approvers opted into immediate approval emails, excluding the acting approver (TTAHUB-5583)', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // still awaiting other approvals
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        approvers: [
+          // acting approver (id 1) must be excluded
+          { user: { id: 1 }, status: REPORT_STATUSES.APPROVED },
+          // other approvers receive email regardless of their approval status
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          { user: { id: 333 }, status: null },
+          // approvers without immediate approval emails must be excluded
+          { user: { id: 444 }, status: null },
+          { user: { id: 555 }, status: null },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+      const approverEmail = jest
+        .spyOn(mailer, 'approverReportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockImplementation(async (id) => ({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value:
+          {
+            444: USER_SETTINGS.EMAIL.VALUES.NEVER,
+            555: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+          }[id] ?? USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      }));
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approverEmail).toHaveBeenCalledTimes(1);
+      expect(approverEmail).toHaveBeenCalledWith(
+        reviewedReport,
+        [
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          { user: { id: 333 }, status: null },
+        ],
+        'Approver McApproverface'
+      );
+      for (const id of [1, 222, 333, 444, 555]) {
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          id,
+          USER_SETTINGS.EMAIL.KEYS.APPROVAL
+        );
+      }
+      expect(handleErrors).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+    });
+    it('notifies the other approvers when an approver approves, with a CTA based on whether they have already approved or marked the report as needs action, excluding the acting approver (TTAHUB-5581)', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // still awaiting other approvals
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 777 },
+        activityReportCollaborators: [
+          { user: { id: 333 } },
+          { userId: 444 },
+          { user: { id: 555 } },
+        ],
+        approvers: [
+          // acting approver (id 1) must be excluded
+          { user: { id: 1 }, status: REPORT_STATUSES.APPROVED },
+          // another approver who has already approved -> informational "View AR"
+          { user: { id: 222 }, status: REPORT_STATUSES.APPROVED },
+          // an approver who has not approved yet -> actionable "Take action"
+          { user: { id: 333 }, status: null },
+          // an approver who marked the report as needs action -> informational "View AR"
+          { user: { id: 444 }, status: APPROVER_STATUSES.NEEDS_ACTION },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // approver 222 (already approved) is notified with hasApproved: true
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // approver 333 (not yet approved) is notified with hasApproved: false
+      expect(createNotification).toHaveBeenCalledWith(
+        333,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // approver 444 (marked the report as needs action) is notified with hasApproved: true
+      expect(createNotification).toHaveBeenCalledWith(
+        444,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // the acting approver (id 1) is never sent an approver-approved notification
+      expect(createNotification).not.toHaveBeenCalledWith(
+        1,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        expect.anything()
+      );
+      // the acting approver's own approver-approved notification is archived instead
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(
+        999999,
+        1,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+      // partial approval must not archive the whole report's approver-approved notifications
+      expect(archiveNotificationsByEntityAndType).not.toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+      // Approvers receive only their role-specific notification, even when collaborating.
+      for (const approverId of [333, 444]) {
+        expect(createNotification).not.toHaveBeenCalledWith(
+          approverId,
+          999999,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+          expect.anything()
+        );
+      }
+      expect(createNotification).toHaveBeenCalledWith(
+        555,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it("suppresses the author's approved notification when the author is also a non-acting approver", async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // still awaiting other approvals
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 222 },
+        activityReportCollaborators: [],
+        approvers: [
+          { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+          { user: { id: 222 }, status: null },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the author (222), who is also a non-acting approver, gets the approver-specific
+      // notification with the actionable CTA...
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: false,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // ...and not the duplicate author-facing notification
+      expect(createNotification).not.toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it("suppresses the author's approved notification on the final approval when the author is also an approver", async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const reviewedReport = {
+        // this is the final approval
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipientType: 'recipient',
+        displayId: 'R01-AR-999999',
+        author: { id: 222 },
+        activityReportCollaborators: [],
+        approvers: [
+          { user: { id: 1 }, status: APPROVER_STATUSES.APPROVED },
+          { user: { id: 222 }, status: APPROVER_STATUSES.APPROVED },
+        ],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // on the final approval, the author (222) gets the approver-specific notification, which
+      // stays active, and not the duplicate author-facing notification
+      expect(createNotification).toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver McApproverface',
+            hasApproved: true,
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).not.toHaveBeenCalledWith(
+        222,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        expect.anything()
+      );
+    });
+    it('creates an in-app ACTIVITY_REPORT_APPROVED notification for the creator when a second approver approves while the report is still pending overall', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver 2 Name' },
+      };
+      const reviewedReport = {
+        // acting approver approved, but the aggregate status is still SUBMITTED
+        // because a second approver is pending -- the in-app notification must
+        // not wait for full approval
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      // the creator receives the in-app approved notification even though the
+      // report is not yet fully approved (a second approver is still pending)
+      expect(createNotification).toHaveBeenCalledWith(
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A',
+            approver: 'Approver 2 Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      // full-approval-only side effects must not have fired
+      expect(updateTimezone).not.toHaveBeenCalled();
+    });
+    it('excludes the acting approver from the approved email collaborator recipients', async () => {
+      // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: approvedReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.APPROVED,
+        note: 'notes',
+        user: { name: 'Approver McApproverface' },
+      };
+      const keptCollaborator = { userId: 555, user: { email: 'kept@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [
+          keptCollaborator,
+          // this collaborator is the acting approver and must be excluded
+          { userId: 1, user: { email: 'self@test.gov' } },
+        ],
+        id: 999999,
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ activityRecipientId: 10 }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      const approvalNotification = jest
+        .spyOn(mailer, 'reportApprovedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(approvedReportRequest, mockResponse);
+
+      expect(approvalNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        reviewedReport.author,
+        [keptCollaborator],
+        'Approver McApproverface'
+      );
+    });
+    it('excludes the acting approver from the needs-action email collaborator recipients', async () => {
+      // currentUserId is mocked to resolve to 1, the acting approver's id.
+      const mockApproverRecord = {
+        id: 1,
+        userId: 1,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: REPORT_STATUSES.NEEDS_ACTION,
+        note: 'notes',
+        user: { id: 1, name: 'Approver Name' },
+      };
+      const keptCollaborator = { userId: 555, user: { id: 555, email: 'kept@test.gov' } };
+      const reviewedReport = {
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        activityRecipientType: 'recipient',
+        author: { id: 777 },
+        activityReportCollaborators: [
+          keptCollaborator,
+          { userId: 1, user: { id: 1, email: 'self@test.gov' } },
+        ],
+        approvers: [mockApproverRecord],
+        id: 999999,
+        toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        reviewedReport,
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(changesRequestedNotification).toHaveBeenCalledTimes(1);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        reviewedReport,
+        mockApproverRecord,
+        reviewedReport.author,
+        [keptCollaborator],
+        []
+      );
+    });
+    it('returns the new needs action status', async () => {
       const mockApproverRecord = {
         id: 1,
         userId: needsActionReportRequest.session.userId,
         activityReportId: needsActionReportRequest.params.activityReportId,
         status: needsActionReportRequest.body.status,
         note: needsActionReportRequest.body.note,
-      };
-      activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'recipient',
-        author: {
-          id: 777,
+        user: {
+          name: 'Approver Name',
         },
-        activityReportCollaborators: [],
-        id: 999999,
-      },
-      [{
-        activityRecipientId: 10,
-      },
-      ]]);
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [
+            {
+              user: {
+                id: 888,
+              },
+            },
+            {
+              user: {
+                id: 889,
+              },
+            },
+          ],
+          approvers: [
+            {
+              user: {
+                id: mockRequest.session.userId,
+                email: 'reviewing.approver@tta.gov',
+              },
+            },
+            {
+              user: {
+                id: secondMockManager.id,
+                email: 'other.approver@tta.gov',
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
 
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
 
       upsertApprover.mockResolvedValue(mockApproverRecord);
-      const changesRequestedNotification = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
         key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
@@ -355,15 +1096,657 @@ describe('Activity Report handlers', () => {
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
+      expect(createNotification).toHaveBeenCalledTimes(4);
+      // The acting approver's own "submitted for approval" CTA is archived (currentUserId is 1).
+      expect(archiveNotificationsByUserEntityAndType).toHaveBeenCalledWith(999999, 1, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+      ]);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        [
+          {
+            user: {
+              id: secondMockManager.id,
+              email: 'other.approver@tta.gov',
+            },
+          },
+        ]
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        2,
+        secondMockManager.id,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        3,
+        888,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        4,
+        889,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('deduplicates the in-app needs-action notification for a user who is both an approver and a collaborator', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          // 888 is both a collaborator and a (non-reviewing) approver.
+          activityReportCollaborators: [
+            {
+              user: {
+                id: 888,
+              },
+            },
+          ],
+          approvers: [
+            {
+              user: {
+                id: 1,
+              },
+            },
+            {
+              user: {
+                id: 888,
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      // creator (777) + a single notification for user 888 (deduped), reviewer (1) excluded.
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      const notificationsFor888 = createNotification.mock.calls.filter(
+        ([recipientId]) => recipientId === 888
+      );
+      expect(notificationsFor888).toHaveLength(1);
+      expect(createNotification).toHaveBeenCalledWith(
+        888,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('excludes approvers with non-immediate change requested email settings', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [
+            {
+              user: {
+                id: mockRequest.session.userId,
+                email: 'reviewing.approver@tta.gov',
+              },
+            },
+            {
+              user: {
+                id: secondMockManager.id,
+                email: 'other.approver@tta.gov',
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockImplementation((userId, key) => {
+        if (key === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED && userId === secondMockManager.id) {
+          return Promise.resolve({
+            key: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+            value: USER_SETTINGS.EMAIL.VALUES.NEVER,
+          });
+        }
+        return Promise.resolve({
+          key,
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(changesRequestedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        []
+      );
+    });
+    it('sends the in-app needs action notification when an approver requests changes but the report is not yet in needs action status', async () => {
+      // The reviewing approver submits NEEDS_ACTION, but the report's overall
+      // calculatedStatus is still SUBMITTED (e.g. other approvers are pending).
+      // The in-app notification should fire (keyed off the approver's status),
+      // while the change-requested email should not (keyed off calculatedStatus).
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [
+            {
+              user: {
+                id: 1,
+              },
+            },
+            {
+              user: {
+                id: 890,
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      // Email keyed off calculatedStatus (SUBMITTED) should not fire.
+      expect(changesRequestedNotification).not.toHaveBeenCalled();
+      // In-app notifications keyed off the approver's status should fire.
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        2,
+        890,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('archives resubmitted and approver-approved notifications when the approver requests changes', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [{ user: { id: 1 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [{ name: 'Recipient A' }],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+      ]);
+      expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(999999, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+      ]);
+    });
+    it('sends collaborator-type in-app needs-action notifications to collaborators', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [
+            {
+              user: {
+                id: 888,
+              },
+            },
+            {
+              user: {
+                id: 889,
+              },
+            },
+          ],
+          approvers: [
+            {
+              user: {
+                id: 1,
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledTimes(3);
+      expect(createNotification).toHaveBeenCalledWith(
+        888,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+      expect(createNotification).toHaveBeenCalledWith(
+        889,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('sends approver-type in-app needs-action notifications to non-reviewing approvers', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [{ user: { id: 1 } }, { user: { id: 890 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [{ name: 'Recipient A' }, { name: 'Recipient B' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledWith(
+        890,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('excludes the reviewing approver (userId 1) from needs-action in-app notifications', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          approvers: [{ user: { id: 1 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledTimes(1);
+      expect(createNotification).not.toHaveBeenCalledWith(
+        1,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.anything()
+      );
+    });
+    it('does not create in-app needs-action notifications when activity recipients are empty', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [{ user: { id: 888 } }],
+          approvers: [{ user: { id: 889 } }],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(createNotification).not.toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
-      activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        activityRecipientType: 'recipient',
-      }, [
+      activityReportAndRecipientsById.mockResolvedValue([
         {
-          activityRecipientId: 10,
-        }]]);
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+        },
+        [
+          {
+            activityRecipientId: 10,
+          },
+        ],
+      ]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
       }));
@@ -393,6 +1776,10 @@ describe('Activity Report handlers', () => {
       params: { activityReportId: 1 },
       body: { approverUserIds: [mockManager.id, secondMockManager.id], additionalNotes: 'notes' },
     };
+
+    beforeEach(() => {
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(null);
+    });
     it('calls correct functions and sends response', async () => {
       // Submit report for approval to firstMockManager
       // and secondMockManager
@@ -400,15 +1787,29 @@ describe('Activity Report handlers', () => {
         canUpdate: () => true,
       }));
       activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
-      const mockApprovers = [{
-        activityReportId: 1,
-        userId: mockManager.id,
-      }, {
-        activityReportId: 1,
-        userId: secondMockManager.id,
-      }];
+      const mockApprovers = [
+        {
+          activityReportId: 1,
+          userId: mockManager.id,
+        },
+        {
+          activityReportId: 1,
+          userId: secondMockManager.id,
+        },
+      ];
       syncApprovers.mockResolvedValue(mockApprovers);
-      const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+      userSettingOverridesById.mockResolvedValue({
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+      };
+      createOrUpdate.mockResolvedValueOnce(savedReport);
+      const assignedNotification = jest
+        .spyOn(mailer, 'approverAssignedNotification')
+        .mockImplementation();
       const reportAfterSubmit = {
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
@@ -417,10 +1818,19 @@ describe('Activity Report handlers', () => {
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
       const approverUpdate = jest.spyOn(ActivityReportApprover, 'update').mockImplementation();
       await submitReport(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder.at(-1)
+      );
+      expect(assertApproversAreNotParticipants).toHaveBeenCalledWith(
+        request.body.approverUserIds,
+        byIdResponse[0]
+      );
       const { displayId, ...r } = report;
       expect(createOrUpdate).toHaveBeenCalledWith(
         {
-          additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
+          additionalNotes: 'notes',
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
         },
         {
           dataValues: {
@@ -430,16 +1840,65 @@ describe('Activity Report handlers', () => {
           displayId,
           objectivesWithoutGoals: [],
         },
-        1,
+        1
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
-      expect(approverUpdate).toHaveBeenCalledWith({ status: null }, {
-        where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId: 1 },
-        individualHooks: true,
-      });
+      expect(assignedNotification).toHaveBeenCalledWith(savedReport, mockApprovers, false);
+      expect(approverUpdate).toHaveBeenCalledWith(
+        { status: null },
+        {
+          where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId: 1 },
+          individualHooks: true,
+        }
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(reportAfterSubmit);
     });
+
+    it('rejects report participants as approvers before submitting', async () => {
+      const validationError = new Error(
+        'The report creator and collaborators cannot be assigned as approvers.'
+      );
+      validationError.statusCode = 400;
+      validationError.responseBody = { error: validationError.message };
+      assertApproversAreNotParticipants.mockImplementationOnce(() => {
+        throw validationError;
+      });
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          ...byIdResponse[0],
+          activityReportCollaborators: [
+            { userId: secondMockManager.id, user: { id: secondMockManager.id } },
+          ],
+        },
+        activityRecipients,
+      ]);
+
+      const invalidRequest = {
+        ...request,
+        body: { approverUserIds: [mockUser.id] },
+      };
+      await submitReport(invalidRequest, mockResponse);
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        invalidRequest,
+        mockResponse,
+        expect.objectContaining({
+          statusCode: 400,
+          message: 'The report creator and collaborators cannot be assigned as approvers.',
+          responseBody: {
+            error: 'The report creator and collaborators cannot be assigned as approvers.',
+          },
+        }),
+        expect.anything()
+      );
+      expect(createOrUpdate).not.toHaveBeenCalled();
+      expect(syncApprovers).not.toHaveBeenCalled();
+    });
+
     it('handles unauthorizedRequests', async () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,
@@ -450,6 +1909,792 @@ describe('Activity Report handlers', () => {
       });
       await submitReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('returns 403 for an unauthorized user even when an objective is missing a support type', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      userById.mockResolvedValue({ id: mockUser.id });
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(
+        'all objectives must have a support type'
+      );
+
+      await submitReport(request, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      // The support-type check must not run (or leak) before authorization fails.
+      expect(getObjectiveSupportTypeSubmissionError).not.toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalledWith(400);
+    });
+
+    it('returns 400 for an authorized user when an objective is missing a support type', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      userById.mockResolvedValue({ id: mockUser.id });
+      getObjectiveSupportTypeSubmissionError.mockResolvedValue(
+        'all objectives must have a support type'
+      );
+
+      await submitReport(request, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.send).toHaveBeenCalledWith('all objectives must have a support type');
+      expect(createOrUpdate).not.toHaveBeenCalled();
+    });
+
+    describe('createNotification', () => {
+      const mockApprovers = [
+        { activityReportId: 1, userId: mockManager.id },
+        { activityReportId: 1, userId: secondMockManager.id },
+      ];
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
+      };
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue(mockApprovers);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: mockApprovers,
+        });
+      });
+
+      it('fires createNotification for every approver regardless of email setting', async () => {
+        // userSettingOverridesById returns undefined (no email setting) for both approvers
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledTimes(2);
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+          }
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          secondMockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+          }
+        );
+      });
+
+      it('email notification is gated by IMMEDIATELY setting but in-app notification fires for all', async () => {
+        // Only first approver has IMMEDIATELY email setting
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY })
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST });
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // Email notification only goes to the first approver (IMMEDIATELY setting)
+        expect(assignedNotification).toHaveBeenCalledWith(savedReport, [mockApprovers[0]], false);
+        // In-app notification goes to both approvers
+        expect(createNotification).toHaveBeenCalledTimes(2);
+      });
+
+      it('excludes the submitting approver (userId 1) from approver email recipients', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // Only the non-submitting approver receives the email
+        expect(assignedNotification).toHaveBeenCalledWith(
+          savedReport,
+          [approversIncludingSubmitter[0]],
+          false
+        );
+      });
+
+      it('excludes the submitting approver (userId 1) from in-app submitted notifications', async () => {
+        // The acting/submitting user (currentUserId mocked to 1) is also an approver
+        const approversIncludingSubmitter = [
+          { activityReportId: 1, userId: mockManager.id },
+          { activityReportId: 1, userId: 1 },
+        ];
+        syncApprovers.mockResolvedValue(approversIncludingSubmitter);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        // In-app notification only fires for the non-submitting approver
+        expect(createNotification).toHaveBeenCalledTimes(1);
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          1,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+      });
+
+      it('marks approver email as a resubmission when the report was previously needs_action', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponse[0],
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+            dataValues: {
+              ...byIdResponse[0].dataValues,
+              calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+            },
+          },
+        ]);
+        const assignedNotification = jest
+          .spyOn(mailer, 'approverAssignedNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(assignedNotification).toHaveBeenCalledWith(savedReport, mockApprovers, true);
+      });
+
+      it('does not call createNotification when syncApprovers returns no approvers', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        syncApprovers.mockResolvedValue([]);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).not.toHaveBeenCalled();
+      });
+
+      it('archives needs-action notifications for the report on (re)submission', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledTimes(1);
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(1, [
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_APPROVER,
+        ]);
+      });
+    });
+
+    describe('collaborator notifications', () => {
+      const mockCollaborator1 = { userId: 2001 };
+      const mockCollaborator2 = { userId: 2002 };
+
+      const mockApprovers = [{ activityReportId: 1, userId: mockManager.id }];
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+        author: { name: 'Author Name' },
+      };
+
+      const byIdResponseWithCollabs = [
+        {
+          displayId: report.displayId,
+          dataValues: report,
+          objectivesWithoutGoals: [],
+          activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
+        },
+        undefined,
+        undefined,
+      ];
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponseWithCollabs);
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue(mockApprovers);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: mockApprovers,
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+      });
+
+      it('notifies only collaborators with IMMEDIATELY email setting', async () => {
+        // approver setting, then collab1 IMMEDIATELY, collab2 WEEKLY_DIGEST
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1], false);
+        expect(collabNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([mockCollaborator2])
+        );
+      });
+
+      it('marks the collaborator email as a resubmission when the report was previously needs_action', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponseWithCollabs[0],
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(
+          savedReport,
+          [mockCollaborator1, mockCollaborator2],
+          true
+        );
+      });
+
+      it('excludes the submitting collaborator from the collaborator notification', async () => {
+        // currentUserId is mocked to 1, so a collaborator with userId 1 is the submitter
+        const submittingCollaborator = { userId: 1 };
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            ...byIdResponseWithCollabs[0],
+            activityReportCollaborators: [submittingCollaborator, mockCollaborator1],
+          },
+          undefined,
+          undefined,
+        ]);
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }); // collab1
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1], false);
+        expect(collabNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([submittingCollaborator]),
+          expect.anything()
+        );
+        // in-app collaborator notification skips the submitter (userId 1)
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          submittingCollaborator.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+      });
+
+      it('does not call collaborator notification when no collaborators have IMMEDIATELY setting', async () => {
+        // approver + both collabs have non-IMMEDIATELY settings
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [], false);
+      });
+
+      it('skips the collaborator notification block when activityReportCollaborators is empty', async () => {
+        const byIdResponseNoCollabs = [
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+          },
+          undefined,
+          undefined,
+        ];
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponseNoCollabs);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('resubmission collaborator in-app notifications', () => {
+      const mockCollaborator1 = { userId: 3001 };
+      const mockCollaborator2 = { userId: 3002 };
+      const mockApprovers = [{ activityReportId: 1, userId: mockManager.id }];
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
+        author: { name: 'Author Name' },
+      };
+
+      const byIdResponseResubmit = [
+        {
+          displayId: report.displayId,
+          dataValues: report,
+          objectivesWithoutGoals: [],
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          author: { id: 1 },
+          activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
+        },
+        undefined,
+        undefined,
+      ];
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponseResubmit);
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue(mockApprovers);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: mockApprovers,
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+        jest.spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification').mockImplementation();
+        userSettingOverridesById.mockResolvedValue(undefined);
+      });
+
+      it('archives earlier approver approvals before notifying recipients of resubmission', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(savedReport.id, [
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        ]);
+        const archiveCall = archiveNotificationsByEntityAndType.mock.calls.findIndex(([, types]) =>
+          types.includes(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER)
+        );
+        expect(
+          archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
+        ).toBeLessThan(createNotification.mock.invocationCallOrder[0]);
+      });
+
+      it('sends the resubmitted notification to each collaborator instead of the submitted one', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator2.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+      });
+
+      it('sends the resubmitted approver notification instead of the standard submitted one', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: 'Recipient A, Recipient B',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+      });
+
+      it('emails approvers with the revised (isResubmission) flag on resubmission', async () => {
+        await submitReport(request, mockResponse);
+
+        expect(mailer.approverAssignedNotification).toHaveBeenCalledWith(
+          savedReport,
+          expect.any(Array),
+          true
+        );
+      });
+
+      it('sends the standard submitted notification (not resubmitted) on first submission', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            activityReportCollaborators: [mockCollaborator1],
+          },
+          undefined,
+          undefined,
+        ]);
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+          expect.anything()
+        );
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+          expect.anything()
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockManager.id,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          expect.anything()
+        );
+        expect(createNotification).toHaveBeenCalledWith(
+          mockCollaborator1.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          expect.anything()
+        );
+      });
+    });
+
+    describe('creator submitted in-app notification', () => {
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+        author: { name: 'Collaborator Submitter' },
+      };
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue([]);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: [],
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+      });
+
+      it('notifies the creator when a collaborator submits', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          99,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              author: 'Collaborator Submitter',
+            },
+          }
+        );
+      });
+
+      it('does not notify the creator when the creator submits', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 1, name: 'Creator User' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Creator User' });
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.any(Number),
+          expect.any(Number),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+          expect.any(Object)
+        );
+      });
+
+      it('notifies the creator with the revised (resubmitted) type when a collaborator resubmits', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User' },
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+
+        await submitReport(request, mockResponse);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          99,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_CREATOR,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              author: 'Collaborator Submitter',
+            },
+            skipExisting: 'archived',
+          }
+        );
+        // On resubmission the creator must NOT also receive the standard submitted type
+        expect(createNotification).not.toHaveBeenCalledWith(
+          expect.any(Number),
+          expect.any(Number),
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_CREATOR,
+          expect.any(Object)
+        );
+      });
+    });
+
+    describe('creator submitted email notification', () => {
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+        author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+      };
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue([]);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: [],
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Collaborator Submitter' });
+      });
+
+      it('emails the creator when they are opted into IMMEDIATELY and a collaborator submits', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          false
+        );
+      });
+
+      it('marks the creator email as a resubmission when the report was previously needs_action', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 99, name: 'Creator User', email: 'creator@test.gov' },
+            calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          },
+          undefined,
+          undefined,
+        ]);
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).toHaveBeenCalledWith(
+          savedReport,
+          {
+            id: 99,
+            name: 'Creator User',
+            email: 'creator@test.gov',
+          },
+          true
+        );
+      });
+
+      it('does not email the creator when they are not opted into IMMEDIATELY', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
+      });
+
+      it('does not email the creator when the creator submits their own report', async () => {
+        activityReportAndRecipientsById.mockResolvedValue([
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+            author: { id: 1, name: 'Creator User', email: 'creator@test.gov' },
+          },
+          undefined,
+          undefined,
+        ]);
+        userById.mockResolvedValue({ id: 1, name: 'Creator User' });
+        userSettingOverridesById.mockResolvedValue({
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        });
+        const creatorNotification = jest
+          .spyOn(mailer, 'creatorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(creatorNotification).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -508,6 +2753,141 @@ describe('Activity Report handlers', () => {
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(expected);
+    });
+
+    it('locks the report before reading it', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({ id: mockUser.id });
+      await saveReport(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder.at(-1)
+      );
+    });
+
+    it('preserves citations monitoringReferences payload contract for PUT /api/activity-reports/:activityReportId', async () => {
+      const citationPayload = {
+        goals: [
+          {
+            goalTemplateId: 1,
+            goalIds: [7],
+            grantIds: [11],
+            objectives: [
+              {
+                id: 13,
+                title: 'objective title',
+                citations: [
+                  {
+                    citation: '1302.101(b)(2)',
+                    monitoringReferences: [
+                      {
+                        acro: '1302',
+                        findingId: 'monitoring-finding-id',
+                        findingSource: 'Source',
+                        findingType: 'Noncompliance',
+                        grantId: 11,
+                        grantNumber: '01CH000001',
+                        reviewName: 'REVIEW!!!',
+                        standardId: 20001,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+
+      await saveReport({ ...request, body: citationPayload }, mockResponse);
+
+      const [savedReportPayload] = createOrUpdate.mock.calls[0];
+      expect(savedReportPayload.lastUpdatedById).toBe(mockRequest.session.userId);
+      expect(savedReportPayload.goals[0].objectives[0].citations[0]).toEqual(
+        citationPayload.goals[0].objectives[0].citations[0]
+      );
+    });
+
+    it('sends collaborator-added in-app notification', async () => {
+      const newCollaboratorOne = {
+        userId: 202,
+        user: { email: 'new.one@test.gov' },
+      };
+      const newCollaboratorTwo = {
+        userId: 203,
+        user: { email: 'new.two@test.gov' },
+      };
+      const existingReport = {
+        ...report,
+        activityReportCollaborators: [],
+      };
+      const savedReport = {
+        ...report,
+        author: { name: 'Author Name' },
+        activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
+        activityReportCollaborators: [newCollaboratorOne, newCollaboratorTwo],
+      };
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          dataValues: existingReport,
+          activityReportCollaborators: existingReport.activityReportCollaborators,
+        },
+        activityRecipients,
+      ]);
+      createOrUpdate.mockResolvedValue(savedReport);
+      userById.mockResolvedValue({ id: mockUser.id });
+      userSettingOverridesById.mockResolvedValue({
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await saveReport(request, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        newCollaboratorOne.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: 'Recipient A, Recipient B',
+          },
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        2,
+        newCollaboratorTwo.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: 'Recipient A, Recipient B',
+          },
+        }
+      );
     });
 
     it('handles unauthorized requests', async () => {
@@ -741,7 +3121,7 @@ describe('Activity Report handlers', () => {
   describe('getReports', () => {
     const request = {
       ...mockRequest,
-      query: { },
+      query: {},
     };
 
     it('returns the reports', async () => {
@@ -764,7 +3144,7 @@ describe('Activity Report handlers', () => {
   describe('getReportAlerts', () => {
     const request = {
       ...mockRequest,
-      query: { },
+      query: {},
     };
 
     it('returns my alerts', async () => {
@@ -825,7 +3205,7 @@ describe('Activity Report handlers', () => {
   describe('downloadAllAlerts', () => {
     const request = {
       ...mockRequest,
-      query: { },
+      query: {},
     };
 
     it('returns a csv', async () => {
@@ -885,8 +3265,8 @@ describe('Activity Report handlers', () => {
       expect(mockResponse.send).toHaveBeenCalled();
       const [[value]] = mockResponse.send.mock.calls;
       /* eslint-disable no-useless-escape */
-      expect(value).toContain('\"Collaborators\"');
-      expect(value).toContain('\"Jarty, SS, GS\"');
+      expect(value).toContain('"Collaborators"');
+      expect(value).toContain('"Jarty, SS, GS"');
       expect(value).toContain(LEGACY_WARNING);
       /* eslint-enable no-useless-escape */
     });
@@ -915,7 +3295,8 @@ describe('Activity Report handlers', () => {
       };
 
       getDownloadableActivityReportsByIds.mockResolvedValue({
-        count: 1, rows: [downloadableReport],
+        count: 1,
+        rows: [downloadableReport],
       });
 
       await downloadReports(request, mockResponse);
@@ -961,7 +3342,9 @@ describe('Activity Report handlers', () => {
     };
     it('handlers errors', async () => {
       ActivityReport.mockImplementationOnce(() => ({
-        canUpdate: () => { throw new Error(); },
+        canUpdate: () => {
+          throw new Error();
+        },
       }));
 
       userById.mockResolvedValue({});
@@ -1013,7 +3396,7 @@ describe('Activity Report handlers', () => {
             region: 1,
           },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
@@ -1051,7 +3434,7 @@ describe('Activity Report handlers', () => {
             region: 1,
           },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
@@ -1078,17 +3461,15 @@ describe('getReportsByManyIds', () => {
   });
 
   it('should return reports with count if found', async () => {
-    const mockReportsWithCount = [{ id: 1, name: 'Report 1' }, { id: 2, name: 'Report 2' }];
+    const mockReportsWithCount = [
+      { id: 1, name: 'Report 1' },
+      { id: 2, name: 'Report 2' },
+    ];
     activityReports.mockResolvedValue(mockReportsWithCount);
     setReadRegions.mockResolvedValue({});
     await getReportsByManyIds(req, res);
 
-    expect(activityReports).toHaveBeenCalledWith(
-      {},
-      false,
-      expect.anything(),
-      req.body.reportIds,
-    );
+    expect(activityReports).toHaveBeenCalledWith({}, false, expect.anything(), req.body.reportIds);
     expect(res.json).toHaveBeenCalledWith(mockReportsWithCount);
     expect(res.sendStatus).not.toHaveBeenCalled();
   });
@@ -1098,12 +3479,7 @@ describe('getReportsByManyIds', () => {
     setReadRegions.mockResolvedValue({});
     await getReportsByManyIds(req, res);
 
-    expect(activityReports).toHaveBeenCalledWith(
-      {},
-      false,
-      expect.anything(),
-      req.body.reportIds,
-    );
+    expect(activityReports).toHaveBeenCalledWith({}, false, expect.anything(), req.body.reportIds);
     expect(res.json).not.toHaveBeenCalled();
     expect(res.sendStatus).toHaveBeenCalledWith(404);
   });

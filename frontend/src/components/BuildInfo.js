@@ -40,6 +40,9 @@ function BuildInfo() {
         Build Number:&nbsp;
         {buildInfo.buildNumber}
         <br />
+        Release Tag:&nbsp;
+        {buildInfo.releaseTag}
+        <br />
         Deployed on:&nbsp;
         {buildInfo.timestamp}
         <br />

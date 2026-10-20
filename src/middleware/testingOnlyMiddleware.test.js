@@ -3,8 +3,7 @@ import { testingOnly } from './testingOnlyMiddleware';
 describe('testingOnly', () => {
   let statusCode;
   let message;
-  const mockRequest = {
-  };
+  const mockRequest = {};
   const mockResponse = {
     status: jest.fn((num) => ({
       send: jest.fn((msg) => {

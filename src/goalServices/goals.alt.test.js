@@ -1,27 +1,22 @@
-import faker from '@faker-js/faker';
-import crypto from 'crypto';
+import { faker } from '@faker-js/faker';
 import { determineMergeGoalStatus } from '@ttahub/common';
+import crypto from 'crypto';
+import { AUTOMATIC_CREATION, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import fakerUnique from '../fakerUnique';
 import db, {
-  Recipient,
-  Grant,
+  ActivityRecipient,
+  ActivityReport,
+  ActivityReportGoal,
   Goal,
   GoalTemplate,
+  Grant,
   Objective,
-  ActivityReportGoal,
-  ActivityReport,
-  ActivityRecipient,
+  Recipient,
   User,
 } from '../models';
-import {
-  createMultiRecipientGoalsFromAdmin,
-} from './goals';
-import { reduceObjectives, reduceObjectivesForActivityReport } from './reduceGoals';
-import {
-  OBJECTIVE_STATUS,
-  AUTOMATIC_CREATION,
-  GOAL_STATUS,
-} from '../constants';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
+import { createMultiRecipientGoalsFromAdmin } from './goals';
+import { reduceObjectives, reduceObjectivesForActivityReport } from './reduceGoals';
 
 jest.mock('../services/goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),
@@ -45,7 +40,7 @@ const objectivesToReduce = [
   },
   {
     id: 4,
-    title: 'This doesn\'t leading and trailing spaces.',
+    title: "This doesn't leading and trailing spaces.",
     status: OBJECTIVE_STATUS.COMPLETE,
   },
 ];
@@ -62,7 +57,7 @@ describe('Goals DB service', () => {
     let secondGrant;
     let template;
 
-    const existingGoalName = faker.datatype.string(100);
+    const existingGoalName = faker.string.sample(100);
 
     let mockRequestData;
 
@@ -70,26 +65,26 @@ describe('Goals DB service', () => {
       user = await User.create({
         homeRegionId: 1,
         hsesUsername: faker.internet.email(),
-        hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+        hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
         email: faker.internet.email(),
-        phoneNumber: faker.phone.phoneNumber(),
-        name: faker.name.findName(),
+        phoneNumber: faker.phone.number(),
+        name: faker.person.fullName(),
         role: ['Grants Specialist'],
         lastLogin: new Date(),
       });
 
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
       });
 
       // Grant.
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -97,8 +92,8 @@ describe('Goals DB service', () => {
       });
 
       secondGrant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -113,12 +108,9 @@ describe('Goals DB service', () => {
         createdVia: 'rtr',
       });
 
-      const templateName = faker.name.firstName();
+      const templateName = faker.person.firstName();
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(templateName)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(templateName).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -220,12 +212,7 @@ describe('Goals DB service', () => {
         goalText: existingGoalName,
         createMissingGoals: true,
       });
-      const {
-        grantsForWhomGoalAlreadyExists,
-        isError,
-        message,
-        goals,
-      } = response;
+      const { grantsForWhomGoalAlreadyExists, isError, message, goals } = response;
       expect(grantsForWhomGoalAlreadyExists.length).toBe(1);
       expect(isError).toBe(false);
       expect(message).toBe(`A goal with that name already exists for grants ${grant.number}`);
@@ -260,11 +247,13 @@ describe('Goals DB service', () => {
       expect(response.data).toEqual(data);
       expect(response.goals.length).toBe(1);
       expect(response.goals[0].name).toBe(template.templateName);
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(expect.anything(), [{ promptId: 1, response: ['Workforce'] }]);
+      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(expect.anything(), [
+        { promptId: 1, response: ['Workforce'] },
+      ]);
     });
 
     it('creates a new goal', async () => {
-      const goalText = faker.datatype.string(100);
+      const goalText = faker.string.sample(100);
       const data = {
         ...mockRequestData,
         goalText,
@@ -278,7 +267,7 @@ describe('Goals DB service', () => {
     });
 
     it('creates a new report', async () => {
-      const goalText = faker.datatype.string(100);
+      const goalText = faker.string.sample(100);
       const data = {
         ...mockRequestData,
         goalText,
@@ -296,42 +285,27 @@ describe('Goals DB service', () => {
 
   describe('determineMergeGoalStatus', () => {
     it('at least one in progress', async () => {
-      const status = determineMergeGoalStatus([
-        GOAL_STATUS.IN_PROGRESS,
-        GOAL_STATUS.CLOSED,
-      ]);
+      const status = determineMergeGoalStatus([GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.CLOSED]);
       expect(status).toBe(GOAL_STATUS.IN_PROGRESS);
     });
 
     it('at least one closed', async () => {
-      const status = determineMergeGoalStatus([
-        GOAL_STATUS.CLOSED,
-        GOAL_STATUS.SUSPENDED,
-      ]);
+      const status = determineMergeGoalStatus([GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED]);
       expect(status).toBe(GOAL_STATUS.CLOSED);
     });
 
     it('at least one suspended', async () => {
-      const status = determineMergeGoalStatus([
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.NOT_STARTED,
-      ]);
+      const status = determineMergeGoalStatus([GOAL_STATUS.SUSPENDED, GOAL_STATUS.NOT_STARTED]);
       expect(status).toBe(GOAL_STATUS.SUSPENDED);
     });
 
     it('not started', async () => {
-      const status = determineMergeGoalStatus([
-        GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.DRAFT,
-      ]);
+      const status = determineMergeGoalStatus([GOAL_STATUS.NOT_STARTED, GOAL_STATUS.DRAFT]);
       expect(status).toBe(GOAL_STATUS.NOT_STARTED);
     });
 
     it('DRAFT', async () => {
-      const status = determineMergeGoalStatus([
-        GOAL_STATUS.DRAFT,
-        GOAL_STATUS.DRAFT,
-      ]);
+      const status = determineMergeGoalStatus([GOAL_STATUS.DRAFT, GOAL_STATUS.DRAFT]);
       expect(status).toBe(GOAL_STATUS.DRAFT);
     });
   });
@@ -348,16 +322,16 @@ describe('Goals DB service', () => {
     beforeAll(async () => {
       // Recipient.
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
         startDate: new Date(),
         endDate: new Date(),
       });
 
       // Grant.
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -394,7 +368,7 @@ describe('Goals DB service', () => {
     });
 
     afterAll(async () => {
-    // Objectives.
+      // Objectives.
       await Objective.destroy({
         where: {
           id: objectiveOne.id,
@@ -445,30 +419,27 @@ describe('Goals DB service', () => {
     });
 
     it('objective reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = reduceObjectives(
-        [
-          objectiveOne,
-          objectiveTwo,
-          objectiveThree,
-          objectiveFour,
-        ],
-      );
+      const reducedObjectives = reduceObjectives([
+        objectiveOne,
+        objectiveTwo,
+        objectiveThree,
+        objectiveFour,
+      ]);
       expect(reducedObjectives.length).toBe(2);
       expect(reducedObjectives[0].title.trim()).toBe('This has leading and trailing spaces.');
-      expect(reducedObjectives[1].title).toBe('This doesn\'t leading and trailing spaces.');
+      expect(reducedObjectives[1].title).toBe("This doesn't leading and trailing spaces.");
     });
 
     it('ar reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = reduceObjectivesForActivityReport(
-        [objectiveOne,
-          objectiveTwo,
-          objectiveThree,
-          objectiveFour,
-        ],
-      );
+      const reducedObjectives = reduceObjectivesForActivityReport([
+        objectiveOne,
+        objectiveTwo,
+        objectiveThree,
+        objectiveFour,
+      ]);
       expect(reducedObjectives.length).toBe(2);
       expect(reducedObjectives[0].title.trim()).toBe('This has leading and trailing spaces.');
-      expect(reducedObjectives[1].title).toBe('This doesn\'t leading and trailing spaces.');
+      expect(reducedObjectives[1].title).toBe("This doesn't leading and trailing spaces.");
     });
   });
 });

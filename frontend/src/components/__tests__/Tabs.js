@@ -1,10 +1,10 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import Tabs from '../Tabs';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import Tabs from '../Tabs';
 
 const history = createMemoryHistory();
 
@@ -23,20 +23,17 @@ const DEFAULT_USER = {
 const testTabs = [
   { key: 'Test Tab 1', value: 'test-tab-1' },
   { key: 'Test Tab 2', value: 'test-tab-2' },
-  { key: 'Test Tab 3', value: 'test-tab-3' }];
+  { key: 'Test Tab 3', value: 'test-tab-3' },
+];
 
 describe('Tabs', () => {
   const renderTabs = (backLink = null, user = DEFAULT_USER) => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <Tabs
-            tabs={testTabs}
-            ariaLabel="test label"
-            backLink={backLink}
-          />
+          <Tabs tabs={testTabs} ariaLabel="test label" backLink={backLink} />
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 

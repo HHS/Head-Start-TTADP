@@ -1,24 +1,25 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import { COLLAB_REPORT_PARTICIPANTS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  User,
   CollabReport,
-  CollabReportSpecialist,
-  CollabReportApprover,
-  CollabReportReason,
-  CollabReportStep,
-  CollabReportDataUsed,
   CollabReportActivityState,
+  CollabReportApprover,
+  CollabReportDataUsed,
+  CollabReportReason,
+  CollabReportSpecialist,
+  CollabReportStep,
+  User,
 } from '../models';
 import {
   collabReportById,
+  collabReportScopes,
   createOrUpdateReport,
   deleteReport,
-  orderCollabReportsBy,
-  collabReportScopes,
   getCSVReports,
+  getReports,
+  orderCollabReportsBy,
 } from './collabReports';
 
 const mockUser = {
@@ -61,6 +62,67 @@ const reportObject = {
   conductMethod: 'in_person',
 };
 
+describe('Collab Report participant approver validation', () => {
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects the creator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            approvers: [{ user: { id: String(mockUser.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+    }
+  );
+
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED])(
+    'rejects a collaborator as approver for a %s report before saving',
+    async (submissionStatus) => {
+      await expect(
+        createOrUpdateReport(
+          {
+            ...reportObject,
+            submissionStatus,
+            collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+            approvers: [{ user: { id: String(mockUserTwo.id) } }],
+          },
+          null
+        )
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        responseBody: {
+          error: 'The report creator and collaborators cannot be assigned as approvers.',
+        },
+      });
+    }
+  );
+
+  it('checks saved collaborators when an update omits them', async () => {
+    await expect(
+      createOrUpdateReport(
+        { approvers: [{ user: { id: mockUserTwo.id } }] },
+        {
+          ...reportObject,
+          collabReportSpecialists: [{ specialistId: mockUserTwo.id }],
+        }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('checks saved approvers when adding a collaborator', async () => {
+    await expect(
+      createOrUpdateReport(
+        { collabReportSpecialists: [{ specialistId: mockUserTwo.id }] },
+        { ...reportObject, approvers: [{ user: { id: mockUserTwo.id } }] }
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+});
+
 describe('Collab Reports Service', () => {
   beforeAll(async () => {
     // Delete any reports that were previously created
@@ -94,10 +156,7 @@ describe('Collab Reports Service', () => {
     const ids = reports.map(({ id }) => id);
     await CollabReport.destroy({
       where: {
-        [Op.or]: [
-          { id: ids },
-          { userId: userIds },
-        ],
+        [Op.or]: [{ id: ids }, { userId: userIds }],
       },
       force: true,
     });
@@ -138,11 +197,14 @@ describe('Collab Reports Service', () => {
         name: `${reportObject.name}-existing`,
       });
 
-      const result = await createOrUpdateReport({
-        ...reportObject,
-        id: existingReport.id,
-        name: `${reportObject.name}-new`,
-      }, null);
+      const result = await createOrUpdateReport(
+        {
+          ...reportObject,
+          id: existingReport.id,
+          name: `${reportObject.name}-new`,
+        },
+        null
+      );
 
       expect(result.id).not.toEqual(existingReport.id);
       expect(result.name).toEqual(`${reportObject.name}-new`);
@@ -281,10 +343,9 @@ describe('Collab Reports Service', () => {
       expect(deletedReport).toBeNull();
 
       // Verify report still exists with paranoid: false
-      const softDeleted = await CollabReport.findByPk(
-        testReportWithRelatedData.id,
-        { paranoid: false },
-      );
+      const softDeleted = await CollabReport.findByPk(testReportWithRelatedData.id, {
+        paranoid: false,
+      });
       expect(softDeleted).toBeTruthy();
       expect(softDeleted.deletedAt).toBeTruthy();
 
@@ -447,14 +508,55 @@ describe('Collab Reports Service', () => {
   });
 
   describe('getCSVReports', () => {
+    let csvReportIds = [];
+
+    beforeAll(async () => {
+      // Create 11 records — one more than REPORTS_PER_PAGE (10) — so that the
+      // "uses default parameters" test can only pass when the query has no limit.
+      const reports = await Promise.all(
+        Array.from({ length: 11 }, (_, i) =>
+          CollabReport.create({
+            ...reportObject,
+            name: `CSV export test report ${i + 1}`,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          })
+        )
+      );
+
+      const [report1] = reports;
+
+      await CollabReportSpecialist.create({
+        collabReportId: report1.id,
+        specialistId: mockUserTwo.id,
+      });
+
+      await CollabReportApprover.create({
+        collabReportId: report1.id,
+        userId: mockUserTwo.id,
+        status: 'approved',
+        note: 'Test approval',
+      });
+
+      csvReportIds = reports.map(({ id }) => id);
+    });
+
+    afterAll(async () => {
+      await CollabReportSpecialist.destroy({
+        where: { collabReportId: csvReportIds },
+        force: true,
+      });
+      await CollabReportApprover.destroy({ where: { collabReportId: csvReportIds }, force: true });
+      await CollabReport.destroy({ where: { id: csvReportIds }, force: true });
+    });
+
     it('returns all reports when no filters are provided', async () => {
-      const result = await getCSVReports();
+      const result = await getCSVReports({ 'id.in': csvReportIds });
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
 
     it('includes all required attributes for CSV export', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       expect(result.length).toBe(1);
 
       const report = result[0];
@@ -469,7 +571,7 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes author information with roles', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       const report = result[0];
 
       expect(report.author).toHaveProperty('fullName');
@@ -479,11 +581,11 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes collaborating specialists with roles', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
-      // Find a report with specialists
-      const reportWithSpecialists = result.find((r) => r.collaboratingSpecialists
-        && r.collaboratingSpecialists.length > 0);
+      const reportWithSpecialists = result.find(
+        (r) => r.collaboratingSpecialists && r.collaboratingSpecialists.length > 0
+      );
 
       expect(reportWithSpecialists).toBeTruthy();
       expect(Array.isArray(reportWithSpecialists.collaboratingSpecialists)).toBe(true);
@@ -496,9 +598,8 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes approvers with user information', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
-      // Find a report with approvers
       const reportWithApprovers = result.find((r) => r.approvers && r.approvers.length > 0);
 
       expect(reportWithApprovers).toBeTruthy();
@@ -514,37 +615,37 @@ describe('Collab Reports Service', () => {
     });
 
     it('respects limit parameter', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       expect(result).toHaveLength(1);
     });
 
     it('handles "all" limit parameter', async () => {
-      const result = await getCSVReports({ limit: 'all' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: 'all' });
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
 
     it('respects sortBy and sortDir parameters', async () => {
       const resultAsc = await getCSVReports({
+        'id.in': csvReportIds,
         sortBy: 'Activity_name',
         sortDir: 'asc',
-        limit: '2',
       });
       const resultDesc = await getCSVReports({
+        'id.in': csvReportIds,
         sortBy: 'Activity_name',
         sortDir: 'desc',
-        limit: '2',
       });
 
-      expect(resultAsc).toHaveLength(2);
-      expect(resultDesc).toHaveLength(2);
+      expect(resultAsc).toHaveLength(csvReportIds.length);
+      expect(resultDesc).toHaveLength(csvReportIds.length);
 
       // Names should be in opposite order
       expect(resultAsc[0].name).not.toBe(resultDesc[0].name);
     });
 
     it('includes steps data when available', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
       result.forEach((report) => {
         expect(report).toHaveProperty('steps');
@@ -552,12 +653,11 @@ describe('Collab Reports Service', () => {
       });
     });
 
-    it('uses default parameters when none provided', async () => {
-      const result = await getCSVReports();
+    it('uses default parameters when none provided, returning all matching records', async () => {
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
       expect(Array.isArray(result)).toBe(true);
-      // Should respect default limit of REPORTS_PER_PAGE (10)
-      expect(result.length).toBeLessThanOrEqual(10);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
   });
 
@@ -579,6 +679,10 @@ describe('Collab Reports Service', () => {
           where: { collabReportId: testReport.id },
           force: true,
         });
+        await CollabReportReason.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
         await testReport.destroy({ force: true });
         testReport = null;
       }
@@ -593,12 +697,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'First step completed',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: 'First step completed', collabStepCompleteDate: '2020-09-01' }; },
+              toJSON() {
+                return {
+                  collabStepDetail: 'First step completed',
+                  collabStepCompleteDate: '2020-09-01',
+                };
+              },
             },
             {
               collabStepDetail: 'Second step completed',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: 'Second step completed', collabStepCompleteDate: '2020-09-02' }; },
+              toJSON() {
+                return {
+                  collabStepDetail: 'Second step completed',
+                  collabStepCompleteDate: '2020-09-02',
+                };
+              },
             },
           ],
         };
@@ -652,7 +766,9 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Original step',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: 'Original step', collabStepCompleteDate: '2020-09-01' }; },
+              toJSON() {
+                return { collabStepDetail: 'Original step', collabStepCompleteDate: '2020-09-01' };
+              },
             },
           ],
         };
@@ -667,12 +783,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Updated step',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
             {
               collabStepDetail: 'New step',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -698,12 +824,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
             {
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -718,7 +854,12 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -742,7 +883,12 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -827,10 +973,7 @@ describe('Collab Reports Service', () => {
         // Update with new data used
         const updatedReport = {
           ...initialReport,
-          dataUsed: [
-            { collabReportDatum: 'pir' },
-            { collabReportDatum: 'other' },
-          ],
+          dataUsed: [{ collabReportDatum: 'pir' }, { collabReportDatum: 'other' }],
         };
 
         await createOrUpdateReport(updatedReport, testReport);
@@ -967,6 +1110,52 @@ describe('Collab Reports Service', () => {
       });
     });
 
+    describe('reasons functionality', () => {
+      it('updates reasons when updating a report', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Updates',
+          reportReasons: ['participate_work_groups', 'support_coordination'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport(
+          { ...initialReport, reportReasons: ['support_coordination', 'agg_regional_data'] },
+          testReport
+        );
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons.map((r) => r.reasonId).sort()).toEqual([
+          'agg_regional_data',
+          'support_coordination',
+        ]);
+      });
+
+      it('removes all reasons when array is empty', async () => {
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Reasons Removal',
+          reportReasons: ['participate_work_groups'],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        await createOrUpdateReport({ ...initialReport, reportReasons: [] }, testReport);
+
+        const reasons = await CollabReportReason.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(reasons).toHaveLength(0);
+      });
+    });
+
     describe('combined functionality', () => {
       it('handles all three data types together', async () => {
         const comprehensiveReport = {
@@ -976,13 +1165,15 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Planning phase',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
-          dataUsed: [
-            { collabReportDatum: 'census_data' },
-            { collabReportDatum: 'other' },
-          ],
+          dataUsed: [{ collabReportDatum: 'census_data' }, { collabReportDatum: 'other' }],
           statesInvolved: ['CA', 'NY'],
         };
 
@@ -1004,6 +1195,90 @@ describe('Collab Reports Service', () => {
         expect(dataUsed).toHaveLength(2);
         expect(activityStates).toHaveLength(2);
       });
+    });
+  });
+
+  describe('createOrUpdateReport with Participants', () => {
+    let testReport;
+
+    afterEach(async () => {
+      if (testReport) {
+        await testReport.destroy({ force: true });
+        testReport = null;
+      }
+    });
+
+    it('allows a report to be created with 1 participant', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: [COLLAB_REPORT_PARTICIPANTS[0]],
+      };
+
+      const result = await createOrUpdateReport(reportWithParticipants, null);
+      testReport = await CollabReport.findByPk(result.id);
+
+      expect(result.participants).toEqual([COLLAB_REPORT_PARTICIPANTS[0]]);
+    });
+
+    it('allows a report to be created with 2 participants', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: [COLLAB_REPORT_PARTICIPANTS[0], COLLAB_REPORT_PARTICIPANTS[1]],
+      };
+
+      const result = await createOrUpdateReport(reportWithParticipants, null);
+      testReport = await CollabReport.findByPk(result.id);
+
+      expect(result.participants).toEqual([
+        COLLAB_REPORT_PARTICIPANTS[0],
+        COLLAB_REPORT_PARTICIPANTS[1],
+      ]);
+    });
+
+    it('does not allow a report to be created with invalid participants', async () => {
+      const reportWithParticipants = {
+        ...reportObject,
+        name: 'Test Report with Participants',
+        participants: ['Not a valid participant'],
+      };
+
+      await expect(createOrUpdateReport(reportWithParticipants, null)).rejects.toThrow();
+    });
+
+    it('filters getReports by participants', async () => {
+      const matchingReport = await CollabReport.create({
+        ...reportObject,
+        name: 'Matching participants report',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        participants: [COLLAB_REPORT_PARTICIPANTS[0]],
+      });
+
+      const nonMatchingReport = await CollabReport.create({
+        ...reportObject,
+        name: 'Non-matching participants report',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        participants: [COLLAB_REPORT_PARTICIPANTS[1]],
+      });
+
+      const result = await getReports({
+        status: REPORT_STATUSES.APPROVED,
+        limit: 'all',
+        userId: mockUser.id,
+        'id.in': [matchingReport.id, nonMatchingReport.id],
+        'participants.in': [COLLAB_REPORT_PARTICIPANTS[0]],
+      });
+
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].id).toBe(matchingReport.id);
+
+      await Promise.all([
+        matchingReport.destroy({ force: true }),
+        nonMatchingReport.destroy({ force: true }),
+      ]);
     });
   });
 });

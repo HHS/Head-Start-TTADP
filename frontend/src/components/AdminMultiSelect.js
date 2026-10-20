@@ -1,8 +1,9 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import PropTypes from 'prop-types';
+
 import { Label } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Select, { components } from 'react-select';
 import colors from '../colors';
 import arrowBoth from '../images/arrow-both.svg';
@@ -36,13 +37,13 @@ const styles = {
   indicatorSeparator: () => ({ display: 'none' }),
 };
 
-const getValues = (value) => (value.map((v) => ({
-  value: v, label: v,
-})));
+const getValues = (value) =>
+  value.map((v) => ({
+    value: v,
+    label: v,
+  }));
 
-function AdminMultiSelect({
-  id, name, value, onChange, placeholder, label, options,
-}) {
+function AdminMultiSelect({ id, name, value, onChange, placeholder, label, options }) {
   return (
     <>
       <Label htmlFor={id}>{label}</Label>

@@ -1,33 +1,18 @@
-import React, {
-  useEffect, useMemo, useState, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
 import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
-import withWidgetData from './withWidgetData';
-import Container from '../components/Container';
-import AccessibleWidgetData from './AccessibleWidgetData';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import colors from '../colors';
-import VanillaModal from '../components/VanillaModal';
+import Container from '../components/Container';
 import DisplayTableToggle from '../components/DisplayTableToggleButton';
+import VanillaModal from '../components/VanillaModal';
+import AccessibleWidgetData from './AccessibleWidgetData';
+import withWidgetData from './withWidgetData';
 
-const GOAL_STATUSES = [
-  'Not started',
-  'In progress',
-  'Suspended',
-  'Closed',
-];
+const GOAL_STATUSES = ['Not started', 'In progress', 'Suspended', 'Closed'];
 
-const STATUS_COLORS = [
-  colors.ttahubOrange,
-  colors.ttahubMediumBlue,
-  colors.error,
-  colors.success,
-];
+const STATUS_COLORS = [colors.ttahubOrange, colors.ttahubMediumBlue, colors.error, colors.success];
 
-function Bar({
-  percentage,
-  color,
-}) {
+function Bar({ percentage, color }) {
   // 0/0 is NaN
   const percent = Number.isNaN(percentage) ? 0 : percentage * 100;
 
@@ -59,14 +44,12 @@ export function GoalStatusChart({ data, loading }) {
 
   // we only need to recompute this when the data changes, not when the
   // bars or display type are changed
-  const accessibleRows = useMemo(
-    () => {
-      if (!data) {
-        return [];
-      }
-      return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
-    }, [data],
-  );
+  const accessibleRows = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+    return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
+  }, [data]);
 
   const modalRef = useRef();
 
@@ -93,14 +76,23 @@ export function GoalStatusChart({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub--goal-status-graph width-full" loading={loading} loadingLabel="goal statuses by number loading">
+    <Container
+      className="ttahub--goal-status-graph width-full"
+      loading={loading}
+      loadingLabel="goal statuses by number loading"
+    >
       <Grid row className="position-relative margin-bottom-1">
-        <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
-          <h2 className="ttahub--dashboard-widget-heading margin-0">
-            Number of goals by status
-          </h2>
+        <Grid
+          className="flex-align-self-center desktop:display-flex flex-align-center"
+          desktop={{ col: 'auto' }}
+          mobileLg={{ col: 10 }}
+        >
+          <h2 className="ttahub--dashboard-widget-heading margin-0">Number of goals by status</h2>
         </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
+        <Grid
+          desktop={{ col: 'auto' }}
+          className="ttahub--show-accessible-data-button flex-align-self-center"
+        >
           <DisplayTableToggle
             title="goal statuses by number"
             displayTable={showAccessibleData}
@@ -109,13 +101,20 @@ export function GoalStatusChart({ data, loading }) {
         </Grid>
       </Grid>
       <Grid row className="margin-bottom-2">
-        <ModalToggleButton unstyled className="usa-button usa-button--unstyled usa-prose" modalRef={modalRef} opener>
+        <ModalToggleButton
+          unstyled
+          className="usa-button usa-button--unstyled usa-prose"
+          modalRef={modalRef}
+          opener
+        >
           What does each status mean?
         </ModalToggleButton>
         <VanillaModal modalRef={modalRef} heading="Goal status guide" className="maxw-tablet">
           <>
             <h3 className="margin-bottom-0">Not started</h3>
-            <p className="usa-prose margin-0">Goal is approved, but TTA hasn&apos;t begun. Goal cannot be edited.</p>
+            <p className="usa-prose margin-0">
+              Goal is approved, but TTA hasn&apos;t begun. Goal cannot be edited.
+            </p>
             <h3 className="margin-bottom-0">In progress</h3>
             <p className="usa-prose margin-0">
               TTA is being provided to the recipient. More TTA related to this goal is anticipated.
@@ -140,55 +139,45 @@ export function GoalStatusChart({ data, loading }) {
         </VanillaModal>
       </Grid>
 
-      { showAccessibleData
-        ? (
-          <AccessibleWidgetData
-            caption="Goal Statuses By Number"
-            columnHeadings={['Status', 'Count']}
-            rows={accessibleRows}
-          />
-        )
-        : (
-          <>
-            <div className="border-top border-gray-5" data-testid="goalStatusGraph">
-              <p className="usa-prose text-bold">
-                {data.total}
-                {' '}
-                goals
-              </p>
-              <div className="display-flex flex-justify">
-                <div>
-                  {bars.map(({ label, readableRatio }) => (
-                    <div key={label} className="display-flex height-6 margin-right-1">
-                      <span>{label}</span>
-                      <span className="usa-sr-only">{readableRatio}</span>
+      {showAccessibleData ? (
+        <AccessibleWidgetData
+          caption="Goal Statuses By Number"
+          columnHeadings={['Status', 'Count']}
+          rows={accessibleRows}
+        />
+      ) : (
+        <>
+          <div className="border-top border-gray-5" data-testid="goalStatusGraph">
+            <p className="usa-prose text-bold">{data.total} goals</p>
+            <div className="display-flex flex-justify">
+              <div>
+                {bars.map(({ label, readableRatio }) => (
+                  <div key={label} className="display-flex height-6 margin-right-1">
+                    <span>{label}</span>
+                    <span className="usa-sr-only">{readableRatio}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex-1" aria-hidden="true">
+                {bars.map(({ label, percentage, color }) => (
+                  <div key={label} className="display-flex height-6">
+                    <div className="display-flex width-full" key={color}>
+                      <Bar key={color} percentage={percentage} color={color} />
                     </div>
-                  ))}
-                </div>
-                <div className="flex-1" aria-hidden="true">
-                  {bars.map(({ label, percentage, color }) => (
-                    <div key={label} className="display-flex height-6">
-                      <div className="display-flex width-full" key={color}>
-                        <Bar
-                          key={color}
-                          percentage={percentage}
-                          color={color}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div aria-hidden="true">
-                  {bars.map(({ label, ratio }) => (
-                    <div key={label} className="display-flex height-6 margin-left-1">
-                      <span>{ratio}</span>
-                    </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+              </div>
+              <div aria-hidden="true">
+                {bars.map(({ label, ratio }) => (
+                  <div key={label} className="display-flex height-6 margin-left-1">
+                    <span>{ratio}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
     </Container>
   );
 }

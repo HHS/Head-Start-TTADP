@@ -1,8 +1,65 @@
-import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
+import moment from 'moment';
+import { Op, type WhereOptions } from 'sequelize';
 import db from '../models';
 
 const { Topic } = db;
+const YEAR_MONTH_PATTERN = /^\d{4}[-/]\d{1,2}$/;
+const YEAR_MONTH_FORMATS = ['YYYY-MM', 'YYYY-M', 'YYYY/MM', 'YYYY/M'];
+const FULL_DATE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-M-D',
+  'YYYY-MM-D',
+  'YYYY-M-DD',
+  'YYYY/MM/DD',
+  'YYYY/M/D',
+  'YYYY/MM/D',
+  'YYYY/M/DD',
+  'MM/DD/YYYY',
+  'M/D/YYYY',
+  'M/DD/YYYY',
+  'MM/D/YYYY',
+  'MM/DD/YY',
+  'M/D/YY',
+  'M/DD/YY',
+  'MM/D/YY',
+];
+
+const ALLOWED_PROGRAM_TYPE_MAP = {
+  EHS: ['EHS', 'AIAN EHS', 'Migrant EHS'],
+  HS: ['HS', 'AIAN HS', 'Migrant HS'],
+};
+
+export function dateInputForQuery(value: string, boundary: 'start' | 'end'): string | null {
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (YEAR_MONTH_PATTERN.test(trimmed)) {
+    const monthOnly = moment(trimmed, YEAR_MONTH_FORMATS, true);
+    if (!monthOnly.isValid()) {
+      return null;
+    }
+    const bounded = boundary === 'end' ? monthOnly.endOf('month') : monthOnly.startOf('month');
+    return bounded.format('YYYY-MM-DD');
+  }
+
+  const fullDate = moment(trimmed, FULL_DATE_FORMATS, true);
+  if (!fullDate.isValid()) {
+    return null;
+  }
+
+  if (boundary === 'end') {
+    return fullDate.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+  }
+
+  return fullDate.format('YYYY-MM-DD');
+}
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)
  * and attempts to turn them into something sequelize can understand
@@ -12,15 +69,27 @@ const { Topic } = db;
  * @param {string} Operator (a sequelize date operator)
  * @returns an array meant to be folded in an Op.and/Op.or sequelize expression
  */
-export function compareDate(dates: string[], property: string, operator: string): WhereOptions[] {
-  return dates.reduce((acc, date) => [
-    ...acc,
-    {
-      [property]: {
-        [operator]: date,
+export function compareDate(
+  dates: string[],
+  property: string,
+  operator: typeof Op.lte | typeof Op.lt | typeof Op.gte | typeof Op.gt
+): WhereOptions[] {
+  const boundary = operator === Op.lte || operator === Op.lt ? 'end' : 'start';
+  return dates.reduce((acc, date) => {
+    const queryDate = dateInputForQuery(date, boundary);
+    if (!queryDate) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        [property]: {
+          [operator]: queryDate,
+        },
       },
-    },
-  ], []);
+    ];
+  }, []);
 }
 
 /**
@@ -42,12 +111,18 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       return acc;
     }
 
+    const startDateForQuery = dateInputForQuery(startDate, 'start');
+    const endDateForQuery = dateInputForQuery(endDate, 'end');
+    if (!startDateForQuery || !endDateForQuery) {
+      return acc;
+    }
+
     return [
       ...acc,
       {
         [property]: {
-          [Op.gte]: startDate,
-          [Op.lte]: endDate,
+          [Op.gte]: startDateForQuery,
+          [Op.lte]: endDateForQuery,
         },
       },
     ];
@@ -97,7 +172,14 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId, va
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, callback, comparator = '~*', escape = true) {
+export function filterAssociation(
+  baseQuery,
+  searchTerms,
+  exclude,
+  callback,
+  comparator = '~*',
+  escape = true
+) {
   if (exclude) {
     return {
       where: {
@@ -113,9 +195,8 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
   };
 }
 
-export const validatedIdArray = (query: string[]): number[] => query
-  .map((id) => Number(id))
-  .filter((id) => Number.isInteger(id));
+export const validatedIdArray = (query: string[]): number[] =>
+  query.map((id) => Number(id)).filter((id) => Number.isInteger(id));
 
 /**
  * Extracts the WHERE clause from a Sequelize model's findAll query and replaces the model name
@@ -125,17 +206,15 @@ export const validatedIdArray = (query: string[]): number[] => query
  * @param scope - The WHERE options for the query.
  * @returns The modified WHERE clause as a string.
  */
-export const scopeToWhere = async (
-  model,
-  alias: string,
-  scope: WhereOptions,
-): Promise<string> => {
+export const scopeToWhere = async (model, alias: string, scope: WhereOptions): Promise<string> => {
   let sql = '';
   // The db is not connected for this query as the limit is set to zero, it just returns.
   await model.findAll({
     where: scope,
     limit: 0,
-    logging: (x) => { sql = x; },
+    logging: (x) => {
+      sql = x;
+    },
   });
 
   // Extract the WHERE clause from the SQL query
@@ -150,4 +229,42 @@ export const scopeToWhere = async (
 export async function getValidTopicsSet() {
   const rows = await Topic.findAll({ attributes: ['name'], raw: true });
   return new Set(rows.map((r) => r.name));
+}
+
+/**
+ * Given a sorted array of YYYY-MM-DD month strings, fills in any gaps to produce
+ * a continuous sequence from the first month to the last.
+ *
+ * @param months sorted array of YYYY-MM-DD strings (may have gaps)
+ * @returns fully-continuous YYYY-MM-DD month strings from months[0] to months[last]
+ */
+export function buildContinuousMonths(months: string[]): string[] {
+  if (!months.length) return [];
+  const continuousMonths: string[] = [];
+  const sortedMonths = [...months].sort();
+  const cursor = moment(sortedMonths[0]);
+
+  const end = moment(sortedMonths[sortedMonths.length - 1]);
+  while (cursor.isSameOrBefore(end, 'month')) {
+    continuousMonths.push(cursor.format('YYYY-MM-DD'));
+    cursor.add(1, 'month');
+  }
+  return continuousMonths;
+}
+
+/**
+ *
+ * Filters an array of program types to only those that are allowed,
+ * expanding any grouped types into their individual components.
+ *
+ * @param programTypes string[]
+ * @returns string[]
+ */
+export function filterToAllowedProgramTypes(programTypes: string[]): string[] {
+  // eslint-disable-next-line max-len
+  const allowedTypes = programTypes
+    .map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || null)
+    .filter(Boolean)
+    .flat();
+  return Array.from(new Set(allowedTypes));
 }

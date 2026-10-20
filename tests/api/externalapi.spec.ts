@@ -1,11 +1,9 @@
-import { test, expect } from '@playwright/test';
-import Joi from '@hapi/joi';
+import { expect, test } from '@playwright/test';
+import Joi from 'joi';
 import { root, validateSchema } from './common';
 
 test('get /v1/activity-reports/display/R01-AR-9999', async ({ request }) => {
-  const response = await request.get(
-    `${root}/v1/activity-reports/display/R01-AR-9999`,
-  );
+  const response = await request.get(`${root}/v1/activity-reports/display/R01-AR-9999`);
 
   expect(response.status()).toBe(200);
   const schema = Joi.object({

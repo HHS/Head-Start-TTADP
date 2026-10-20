@@ -1,45 +1,44 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import { uniq } from 'lodash';
-import UserPolicy from '../../policies/user';
-import EventPolicy from '../../policies/event';
-import SCOPES from '../../middleware/scopeConstants';
-import {
-  userById,
-  usersWithPermissions,
-  setFlag,
-  getTrainingReportUsersByRegion,
-  getUserNamesByIds,
-  usersByRoles,
-} from '../../services/users';
+import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
+import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
+import { auditLogger } from '../../logger';
+import SCOPES from '../../middleware/scopeConstants';
+import EventPolicy from '../../policies/event';
+import UserPolicy from '../../policies/user';
+import activeUsers from '../../services/activeUsers';
+import { currentUserId } from '../../services/currentUser';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
-import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
-import { currentUserId } from '../../services/currentUser';
-import { auditLogger } from '../../logger';
-import activeUsers from '../../services/activeUsers';
-import { FEATURE_FLAGS } from '../../constants';
+import {
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
+  setFlag,
+  userById,
+  usersByRoles,
+  usersWithPermissions,
+} from '../../services/users';
 
 const verifyTrViewPermissions = async (req, res) => {
   const user = await userById(await currentUserId(req, res));
 
   const { permissions } = user;
-  const trPermissions = permissions.filter(({ scopeId }) => (
+  const trPermissions = permissions.filter(({ scopeId }) =>
     [
       SCOPES.POC_TRAINING_REPORTS,
       SCOPES.READ_REPORTS,
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.ADMIN,
     ].includes(scopeId)
-  ));
+  );
+
+  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
+  const regionIds = uniq(trPermissions.map(({ regionId }) => regionId));
 
   if (!trPermissions.length) {
     res.sendStatus(403);
-    return null;
   }
-
-  const isAdmin = permissions.some(({ scopeId }) => scopeId === SCOPES.ADMIN);
-  const regionIds = uniq(permissions.map(({ regionId }) => regionId));
 
   return {
     isAdmin,
@@ -168,9 +167,7 @@ export async function getFeatureFlags(req, res) {
     const user = await userById(await currentUserId(req, res));
     const authorization = new UserPolicy(user);
 
-    res.json(authorization.isAdmin()
-      ? FEATURE_FLAGS
-      : user.flags);
+    res.json(authorization.isAdmin() ? FEATURE_FLAGS : user.flags);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
   }
@@ -184,7 +181,7 @@ export async function getTrainingReportUsers(req, res) {
     const { regionId, eventId } = req.query;
 
     const region = parseInt(regionId, DECIMAL_BASE);
-    const event = parseInt(eventId, DECIMAL_BASE);
+    const event = typeof eventId === 'string' ? eventId : undefined;
 
     if (!authorization.canGetTrainingReportUsersInRegion(region)) {
       res.sendStatus(403);
@@ -205,27 +202,28 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
       return;
     }
 
-    const regionalTrainers = await usersByRoles([
-      // roles pulled from this answer in Slack:
-      // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
-      // plus national center users
-      'HS',
-      'SS',
-      'ECS',
-      'GS',
-      'FES',
-      'TTAC',
-      'ECM',
-      'GSM',
-    // admins see all users
-    ], isAdmin ? null : regionIds);
+    const regionalTrainers = await usersByRoles(
+      [
+        // roles pulled from this answer in Slack:
+        // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
+        // plus national center users
+        'HS',
+        'SS',
+        'ECS',
+        'GS',
+        'FES',
+        'TTAC',
+        'ECM',
+        'GSM',
+        'AA',
+        // admins see all users
+      ],
+      isAdmin ? null : regionIds
+    );
 
     const nationalCenterTrainers = await usersByRoles(['NC']);
 
-    res.json([
-      ...regionalTrainers,
-      ...nationalCenterTrainers,
-    ]);
+    res.json([...regionalTrainers, ...nationalCenterTrainers]);
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
@@ -233,28 +231,39 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
 
 export async function getTrainingReportTrainersByRegion(req, res) {
   try {
-    const { regionIds } = await verifyTrViewPermissions(req, res);
+    const { regionId } = req.params;
+
+    const { regionIds, isAdmin } = await verifyTrViewPermissions(req, res);
     if (res.headersSent) {
       return;
     }
 
-    const regionalTrainers = await usersByRoles([
-      // roles pulled from this answer in Slack:
-      // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
-      // plus national center users
-      'HS',
-      'SS',
-      'ECS',
-      'GS',
-      'FES',
-      'TTAC',
-      'ECM',
-      'GSM',
-    ], regionIds);
+    const regionIdInt = parseInt(regionId, DECIMAL_BASE);
 
-    res.json([
-      ...regionalTrainers,
-    ]);
+    if (!regionIds.includes(regionIdInt) && !isAdmin) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const regionalTrainers = await usersByRoles(
+      [
+        // roles pulled from this answer in Slack:
+        // https://adhoc.slack.com/docs/T025UGMV9/F09LB5EQUN4?focus_section_id=temp:C:efWcf6d8bbdaef14ed6b85b02369
+        // plus national center users
+        'HS',
+        'SS',
+        'ECS',
+        'GS',
+        'FES',
+        'TTAC',
+        'ECM',
+        'GSM',
+        'AA',
+      ],
+      regionIdInt
+    );
+
+    res.json([...regionalTrainers]);
   } catch (err) {
     await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
@@ -262,7 +271,9 @@ export async function getTrainingReportTrainersByRegion(req, res) {
 
 export async function getTrainingReportNationalCenterUsers(req, res) {
   try {
+    // this fn sends a status of 403 if the user lacks permissions/is not an admin
     await verifyTrViewPermissions(req, res);
+
     if (res.headersSent) {
       return;
     }

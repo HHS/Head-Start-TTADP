@@ -21,19 +21,153 @@
 - There are multiple deployments within dev (blue, green, red, etc).  Each dev deployment consists of a single instance with dedicated database and redis, and has its own DNS entry.
 - Dev and staging databases are restored to an anonymized version of production data every night, via a schedule job that runs via CircleCI
 
+## Diagram
+
+```mermaid
+
+flowchart TB
+    subgraph org["cloud.gov, TTA organization"]
+        direction TB
+
+        subgraph prodspace["prod space"]
+            direction TB
+            subgraph prodapp["prod app"]
+                direction LR
+                p1["instance"]
+                p2["instance"]
+            end
+            proddb["prod db"]
+            prodredis["prod redis"]
+            prodapp --> proddb
+            prodapp --> prodredis
+        end
+
+        subgraph stagingspace["staging space"]
+            direction TB
+            subgraph stagingapp["staging app"]
+                direction LR
+                s1["instance"]
+                s2["instance"]
+            end
+            stagingdb["staging db"]
+            stagingredis["staging redis"]
+            stagingapp --> stagingdb
+            stagingapp --> stagingredis
+        end
+
+        subgraph devspace["dev space"]
+            direction TB
+            subgraph devblueapp["dev-blue app"]
+                b1["instance"]
+            end
+            subgraph devgreenapp["dev-green app"]
+                g1["instance"]
+            end
+            devbluedb["dev-blue db"]
+            devblueredis["dev-blue redis"]
+            devgreendb["dev-green db"]
+            devgreenredis["dev-green redis"]
+            devblueapp --> devbluedb
+            devblueapp --> devblueredis
+            devgreenapp --> devgreendb
+            devgreenapp --> devgreenredis
+        end
+    end
+```
+
 ## Continuous Integration (CI)
 
-The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file, the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/) variable files.  Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+The bulk of CI configurations can be found in this repo's [.circleci/config.yml](../../.circleci/config.yml) file, the [application manifest](../../manifest.yml) and the environment specific [deployment_config](../../deployment_config/) variable files. Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](../adr/0009-security-scans.md).
 
 ## Continuous Deployment (CD)
 
-- The `main` branch is automatically deployed to `staging` on merge, after tests pass 
+- The `main` branch is automatically deployed to `staging` on merge, after tests pass
 - The `production` branch is automatically deployed to `production` on merge, after tests pass
+
+### Approving and merging the production PR
+
+Reviewing, approving, or merging a production PR requires a GitHub account added to the HHS org with permission to approve and merge on the `production` branch. A new account can be created at [github.com/join](https://github.com/join). Confirm the required role with an existing repo admin.
+
+The production PR follows the checklist already captured in [.github/pull_request_template.md](../../.github/pull_request_template.md) under "Production Deploy":
+
+1. An engineer opens a PR from `main` into `production` as a Draft.
+2. A staging smoke test is completed.
+3. The PR is transitioned from Draft to Open. This automatically posts a notice in the `acf-ohs-ttahub--contractor-customer-team` Slack channel with the PR title, description, and linked issues (see [.github/workflows/pr-notifications.yml](../../.github/workflows/pr-notifications.yml)).
+4. A reviewer is added only after the PR is Open, so the Slack notice fires correctly.
+
+What the approver checks before signing off:
+
+- The "Staging smoke test completed" checkbox in the PR body is checked. The other checklist items belong to earlier steps in the process and are not the approver's responsibility.
+
+To approve and merge:
+
+1. Open the PR on GitHub and use "Review changes" then "Approve".
+2. Scroll down to the bottom of the PR page to find the "Merge" button. Merging to `production` triggers an automatic build, test, and deploy to the prod environment (see [.circleci/config.yml](../../.circleci/config.yml)).
+3. Watch for the deploy success notice in the same Slack channel once CircleCI finishes.
+
+Note that time can pass between the Slack notice that a production PR is ready and the approval. If another change is added to the PR in that window, the Merge button may not be available right after approving. Wait about 30 minutes, then come back to the PR to merge.
+
+If something fails after merge, notify someone in the `acf-ohs-ttahub--contractor-customer-team` Slack channel for help.
+
+### Production release provenance
+
+Production deploys keep the existing production branch deployment automation. At the start of the production branch pipeline, CircleCI creates a local annotated release tag, checks out that tag for the build, and continues through the existing production deploy job. Before deployment, CircleCI verifies that any existing remote release tag is annotated and points to the same commit. After the production deploy, migrations, and existing deploy notifications run, CircleCI publishes the annotated tag to GitHub and attaches release evidence to that tag's GitHub Release.
+
+The production release tag is created from the current `production` commit using this convention:
+
+```sh
+release_tag="prod-$(git rev-parse HEAD | cut -c1-10)"
+```
+
+CircleCI stores release evidence in both places:
+
+- CircleCI `release-artifacts`, including `release-manifest.json` and `build-checksums.txt`
+- the GitHub Release for the production release tag, with the same evidence files attached
+
+### Release inventory reconciliation
+
+`release/inventory.json` is the declared set of components a release is authorized to contain, established by [ADR 0029](../adr/0029-release-inventory-baseline-reconciliation.md). Release provenance records what was built; the inventory records what was approved, and reconciliation compares the two.
+
+Every branch build reconciles the declared inventory against repository state. Every production deploy additionally reconciles it against the live `ttahub-prod` space, comparing applications, bound services, routes, process types, the stack, and the staged buildpack. Results are written to `inventoryReconciliation.json`, summarized in the `inventory` section of `release-manifest.json`, and attached to the GitHub Release alongside the existing evidence.
+
+Production deploys also export the approved CI versions from `release/inventory.json` for configuration management audit evidence. The export is written as `cmsApprovedCiVersions.json` and `cmsApprovedCiVersions.csv`, summarized with SHA-256 hashes in the `cmsApprovedCiVersions` section of `release-manifest.json`, retained in CircleCI `release-artifacts`, and attached to the production GitHub Release. The export records each technical and programmatic CI's approved version or controlled value, owner, authorization reference, approval date when one is present in the inventory, production release tag, commit, and environment. It is derived from the approved inventory rather than from live observation; `inventoryReconciliation.json` is the companion artifact that proves the approved technical set was compared with the release and production space.
+
+The programmatic CI currently in scope is the approved TTA Hub PMP, version 2.4, referenced from the CMS document recorded in `release/inventory.json`. The CM Plan is part of the PMP.
+
+Both checks run in reporting mode. They record findings without failing the pipeline until the first clean production reconciliation is accepted as the starting baseline, at which point `--enforce` is added to the CI invocations.
+
+To reproduce the repository half of a past release from its tag:
+
+```sh
+yarn release:inventory:verify --tag prod-<commitShortSha>
+```
+
+That reads the declared inventory and the configuration files as they existed at the tag, so it returns the same result whenever it runs. The live space half cannot be replayed this way, because it compares against the space as it exists now rather than as it existed at release time. For historical proof, read the `inventoryReconciliation.json` attached to that release.
+
+To reconcile the current production space:
+
+```sh
+cf login -a https://api.fr.cloud.gov -o hhs-acf-ohs-tta -s ttahub-prod
+yarn release:inventory:verify:space
+```
+
+Reconciliation records component names, types, GUIDs, and service plans only. It never reads application environment or service keys, because the GitHub Release these records attach to is public.
+
+Components observed in the space but not declared, and declared components whose authorization reference is not yet resolvable, are tracked in `release/inventoryDispositions.json` using the `resolved`, `accepted`, and `deferred` vocabulary defined by [ADR 0027](../adr/0027-security-findings-register.md).
+
+To generate the CMS-style approved CI version export outside a deploy:
+
+```sh
+yarn release:inventory:cms-export
+```
+
+If publishing the remote release tag or GitHub Release evidence fails after a successful production deploy, CircleCI sends an alert to `acf-head-start-alerts`. The production deploy is already complete in that case, so the release record should be remediated from the retained CircleCI `release-artifacts` by verifying the manifest's release tag and commit, creating or correcting the GitHub Release for that tag, and attaching the retained evidence files.
 
 ### Deploy changes directly to a test environment
 
 You can deploy changes from any remote branch to a non-production environment by following these steps:
-- Log in to CircleCI, go to pipelines https://app.circleci.com/pipelines
+
+- Log in to CircleCI, go to pipelines <https://app.circleci.com/pipelines>
 - Select your branch from the dropdown on the top right side
 - Click "Trigger Pipeline" button in the top right
 - Select `deploy_manual`, choose the environment you want to deploy to (ie dev-blue) from the dropdown, then run the pipeline.
@@ -55,27 +189,28 @@ Exception:
 - The environment specific postgres database URI is automatically available in the relevant cloud.gov application environment (because they share a cloud.gov "space"). The URI is accessible to the application as POSTGRES_URL. Consequently, this secret does not need to be managed by developers.
 
 ### Adding environment variables to an application
+
 There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
-* First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
-* Next, add the value to each of the files under [deployment_config/](deployment_config/).
-  * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
-  * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
-* If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
-  * Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
+- First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
+- Next, add the value to each of the files under [deployment_config/](../../deployment_config/).
+  - If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
+  - If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
+- If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
+  - Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
 
 ## Interacting with a deployed application or database
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
 
-Our project includes four deployed Postgres databases, one to interact with each application environment (sandbox, dev, staging, prod). For instructions on how to create and modify databases instances within the cloud.gov ecosystem see the [terraform/README.md](terraform/README.md).
+Our project includes three deployed Postgres databases, one to interact with each application environment (dev, staging, prod).
 
 ### First, log into Cloud Foundry instance
 
-1. Install the lastest version (**Version 8** as of this writing) of the Cloud Foundry CLI tool
+1. Install Cloud Foundry CLI v8 or later.
 
    - On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
-   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8.x
+   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8 or later.
 
 1. Login to cloud.gov account
 
@@ -102,13 +237,13 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
 
    ```bash
    # Mac OSX ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_arm64 
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_darwin_arm64
    # Mac OSX non-ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_amd64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_darwin_amd64
    # Windows
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_windows_386
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_windows_386
    # Linux
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
    ```
 
 1. Connect to your desired database
@@ -117,10 +252,10 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    # list services (ie postgres, redis, etc)
    cf services
    cf connect-to-service <app_name> <service_instance_name>
-   # Example for sandbox pg
-   cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
-   # Example for sandbox redis
-   cf connect-to-service tta-smarthub-sandbox ttahub-redis-sandbox
+    # Example for dev pg
+    cf connect-to-service tta-smarthub-dev-blue ttahub-dev
+    # Example for dev redis
+    cf connect-to-service tta-smarthub-dev-blue ttahub-redis-dev
    # ctrl-d to disconnect
    ```
 
@@ -129,13 +264,14 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
    You will need to have the pg/redis client installed locally and findable in your $PATH.
    Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
-   Note: This plugin will not work for connecting to a replica database.  
+   Note: This plugin will not work for connecting to a replica database.
    Instead, use the script `./bin/replica-connect.sh` from this repo.
+
    ```
    ./bin/replica-connect.sh tta-smarthub-dev-blue
     Establishing SSH tunnel with PID: 38115
     Connecting to db replica for tta-smarthub-dev-blue on port 5432...
-    cgawsbrokerprodbt584djy6n6cnuz=> 
+    cgawsbrokerprodbt584djy6n6cnuz=>
    ```
 
 #### Accessing Redis in Cloud.gov (service key + SSH tunnel)
@@ -177,20 +313,20 @@ Notes:
 
    ```bash
    cf run-task <app_name> --command "<yarn command>"
-   # Example 1: running data validation script against sandbox
-   cf run-task tta-smarthub-sandbox --command "yarn db:validation"
+    # Example 1: running data validation script against dev
+    cf run-task tta-smarthub-dev-blue --command "yarn db:validation"
    # Example 2: undo most recent database migration
-   cf run-task tta-smarthub-sandbox --command "yarn db:migrate:undo:prod:last"
+    cf run-task tta-smarthub-dev-blue --command "yarn db:migrate:undo:prod:last"
    ```
 
 1. Check log output, including those from task
 
    ```bash
    cf logs <app_name> --recent
-   # Example 1: checking sandbox logs
-   cf logs tta-smarthub-sandbox --recent
-   # Example 2: checking sandbox logs, grep just for task logs
-   cf logs tta-smarthub-sandbox --recent | grep APP/TASK/
+    # Example 1: checking dev logs
+    cf logs tta-smarthub-dev-blue --recent
+    # Example 2: checking dev logs, grep just for task logs
+    cf logs tta-smarthub-dev-blue --recent | grep APP/TASK/
    ```
 
 #### Run script in an interactive shell
@@ -205,8 +341,8 @@ Notes:
 
    ```bash
    cf ssh <app_name>
-   # ssh example for sandbox application
-   cf ssh tta-smarthub-sandbox
+    # ssh example for dev application
+    cf ssh tta-smarthub-dev-blue
    ```
 
 1. Open shell
@@ -228,9 +364,39 @@ Notes:
    cf disallow-space-ssh ttahub-prod
    ```
 
-#### Example: Manual import of Monitoring data
+#### Manual Monitoring Import
 
-Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
+These are the steps to manually import monitoring and generate any Goals associated with new monitoring review findings.
+
+**Prerequisites:**
+
+- Cloud Foundry CLI (cf CLI) installed.
+- SSH access to the tta-smarthub-prod application in cloud.gov.
+- Be logged into the production environment using the following command before running the script:
+
+```bash
+cf login -a api.fr.cloud.gov --sso
+```
+
+and choose the production option (option 2 as of the writing of these instructions)
+
+**Basic command sequence:**
+
+1. `cf ssh tta-smarthub-prod` to connect to the app
+2. `/tmp/lifecycle/shell` to get a shell with the correct environment
+3. `node ./build/server/src/tools/importSystemCLI.js download 1` to fetch the next zip file from ITAMS
+4. `node ./build/server/src/tools/importSystemCLI.js process 1` to process the contents of the zip file into the database
+5. `yarn cli:create-monitoring-goals` to create any monitoring Goals indicated by the new data
+
+The download and process steps will need to be run once each per day that needs catchup, such as on a Monday after the weekend. Thus, the steps would go: 1,2,3,4,3,4,3,4,5.
+
+**Adding validation via the prod database:**
+
+These are easiest to do in a separate terminal window alongside the one you're using to run the basic command sequence. Otherwise you would have to exit out and rerun steps 1 and 2 above in order to resume.
+
+1. `cf connect-to-service tta-smarthub-prod ttahub-prod` to connect to the production database console
+2. `SELECT "ftpFileInfo"->>'name' filename ,status, "createdAt" FROM "ImportFiles" ORDER BY 3 DESC LIMIT 4;` to inspect the progress of steps 3 and 4 above. This will show the last four files downloaded. If only step 3 has been run, the process is finished if `status` has reached `COLLECTED`. If step 4 has been run, the process is finished if it reaches `PROCESSED`.
+3. `SELECT LEFT(r.name,35) recipient, "regionId" region, COUNT(*) cnt FROM "Goals" g JOIN "Grants" gr ON g."grantId" = gr.id JOIN "Recipients" r ON gr."recipientId" = r.id WHERE "createdVia" = 'monitoring' AND g."createdAt" > (NOW() - INTERVAL '1 hour') GROUP BY 1,2 ORDER BY 2,1;` creates a small report of monitoring goals created in the last hour. It is useful after step 5. This may be important information OHS will want to know if the import is being run manually for some reason.
 
 ## Taking a production backup via CircleCI
 
@@ -247,20 +413,7 @@ While process does run every night automatically, it can also be run on-demand v
 The script can be run using the following:
 
 ```
-yarn processData:local
-```
-
-The transformed database can then be restored in the non-production environments.
-For details on how to perform a backup and restore, there is information on the cloud.gov site:
-
-<https://cloud.gov/docs/management/database-backup-restore/>
-
-**Refreshing data in non-production environments**
-
-In order to keep the non-production environments as close to production as possible we developed a way to transform a restored version of the production database locally if using local database. The script can be run using the following:
-
-```
-yarn processData:local
+yarn cli:process-data
 ```
 
 The transformed database can then be restored in the non-production environments.
@@ -272,14 +425,14 @@ For details on how to perform a backup and restore, there is information on the 
 
 if you need to put the application into maintenance mode, you can run the maintenance script located at `bin/maintenance`.
 
-This script require that you have [Cloud Foundry's CLI v7](https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide) installed to run.
+This script requires Cloud Foundry CLI v8 or later. See [Download and install cf][cf-install].
 
 The script takes two flags
 
 - \-m | \-\-maintenance\-mode controls whether the script takes the app into maintenance mode or out of it.
   - Options are "on" or "off
 - \-e | \-\-environment controls which environment you are targeting.
-  - Options are "sandbox", "dev", "staging", and "prod"
+  - Options are "dev", "staging", and "prod"
 
 Ex.
 
@@ -288,8 +441,7 @@ Ex.
 ./bin/maintenance -e dev -m on
 ```
 
-If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
-
+If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at <https://login.fr.cloud.gov/passcode>. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 ## Creating a new environment
 
@@ -335,30 +487,23 @@ An automated script will run in that environment and run updates and migrations 
 
 <!-- Links -->
 
-[aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
-[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
-[cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
 [cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
-[cloudgov-service-keys]: https://cloud.gov/docs/services/s3/#interacting-with-your-s3-bucket-from-outside-cloudgov
 [cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
-[PR#71]: https://github.com/adhocteam/Head-Start-TTADP/pull/71
-[tf]: https://www.terraform.io/downloads.html
-[tf-vars]: https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files
-
-
+[cf-run-task]: https://docs.cloudfoundry.org/devguide/using-tasks.html#run-tasks-v7
+[cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 
 ## Creating and Applying a Deploy Key
 
 In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.  This has already been done for existing environments but documented here for future reference
 
 The following links outline the steps to take:
-https://circleci.com/docs/github-integration/#create-a-github-deploy-key
-https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+<https://circleci.com/docs/github-integration/#create-a-github-deploy-key>
+<https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>
 
 Steps to create and apply deploy token:
 
 1. Open the Git Bash CMD window
-2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "<your_email@example.com>"
 3. When prompted to enter a file name leave blank and press ENTER
 4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
 5. Search for the file created with the name "id_rsa"
@@ -373,7 +518,6 @@ Steps to create and apply deploy token:
 14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
 15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
 16. Click 'Add SSH Key'
-
 
 ## Removing, creating and binding a service from the command line
 
@@ -405,9 +549,9 @@ ex:
 ex:
 `cf bs ttahub-smarthub-staging ttahub-redis-staging`
 
-5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+1. Trigger a redeploy through the Circle CI UI (rather than restaging)
 
-6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+2. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
    `cf network-policies`
    If you see nothing there, you'll need to add an appropriate policy.
    `cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443`
@@ -416,3 +560,163 @@ ex:
    You may need to connect across spaces (for example, our clamav-api-ttahub-dev app is shared by all of our ephemeral environments). If so, use the -s flag.
    ex:
    `cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443`
+
+## Terraform
+
+The persistent AWS infrastructure is deployed as Cloud.gov assets via Terraform. For a description of persistent infrastructure and how it differs from ephemeral infrastructure see the root README.md.
+
+These docs are verbose because this is technology with which developers will rarely interact. I suggest you settle in for a nice long read with your favorite drink of choice.
+
+### Set up
+
+**Install Terraform**
+
+- On MacOS: `brew install terraform`
+- On other platforms: [Download and install terraform][tf]
+
+**Use githook for formatting**
+
+Terraform has a specific whitespace formatting style that is difficult to maintain. Terraform includes a formatting command, `terraform fmt`, to help developers maintain the correct style. This repository contains a pre-commit hook that runs `terraform fmt` on all staged files so you don't have to remember to run this command.
+
+If you are not using your own custom pre-commit hooks:
+
+```bash
+# start from repo root directory
+
+# make the pre-commit file executable
+chmod 755 .githooks/pre-commit
+
+# change your default hooks directory to `.githooks`.
+git config core.hooksPath .githooks
+```
+
+If you are already using git hooks, add the `.githooks/pre-commit` contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+
+**Install Cloud Foundry CLI v8 or later**
+
+- On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
+- On other platforms: [Download and install cf][cf-install]. Be sure to get version 8 or later.
+
+**Add target environment credentials**
+
+We are using Terraform to create Cloud Foundry resources in a Cloud.gov account. Creating infrastructure on the Cloud.gov platform requires a Cloud.gov service account username and password. These keys are specific to each cloud.gov organization/space, i.e. each deployment environment, and can be generated by developers who have proper Cloud.gov permissions at any time.
+
+Follow the steps below to generate a new set of credentials. If you need more information, check out the [service account docs][cloudgov-deployer].
+
+```bash
+# login
+cf login -a api.fr.cloud.gov --sso
+# follow temporary authorization code prompts
+# select org "hhs-acf-ohs-tta", and the space (env) within which you want to build infrastructure
+# dev = ttahub-dev
+# staging = ttahub-staging
+# prod = ttahub-prod
+
+# create a service instance that can provision service accounts
+# the value for < YOUR-NAME > can be any version of your name, it isn't significant
+cf create-service cloud-gov-service-account space-deployer < YOUR-NAME >
+
+# bind a service key to the service instance
+cf create-service-key < YOUR-NAME > space-deployer-key
+
+# return a username/password pair for the service instance
+cf service-key < YOUR-NAME > space-deployer-key
+```
+
+Add the username and password output from the last command to a `secrets.auto.tfvars` file in each environment directory. Terraform automatically loads this variable definition file. You can also provide variable values via environment variables. For more on this, check out [terraform variable definitions][tf-vars].
+
+For example, your `terraform/dev/secrets.auto.tfvars` file should look something like this:
+
+```
+cf_user = "some-dev-user"
+cf_password = "some-dev-password"
+```
+
+Additionally, for environments other than dev and production, we need to grant the space deployer
+credentials access to the dev space to enable setting up network policies to the dev ClamAV server.
+
+```
+# Grant some-dev-user from previous step SpaceDeveloper access to ttahub-dev
+cf set-space-role <some-dev-user from previous step> hhs-acf-ohs-tta ttahub-dev SpaceDeveloper
+```
+
+**Create S3 bucket credentials**
+
+We are using an S3 bucket created by Cloud Foundry in Cloud.gov as our remote backend for Terraform. The backend maintains the "state" of Terraform and makes it possible for multiple developers to implement changes in a linear fashion.
+
+Follow these directions to create a new service account and generate credentials. If you need more information check out the [services docs][cloudgov-service-keys].
+
+```bash
+# login
+cf login -a api.fr.cloud.gov --sso
+# follow temporary authorization code prompts
+# select org "hhs-acf-ohs-tta", space "infrastructure-config"
+
+# create a service instance
+# the value for < YOUR-NAME > can be any version of your name
+# it can be the same or different from the name you used for environment credentials in the previous step
+cf create-service-key ohs-ttahub-iac-state < YOUR-NAME >
+
+# return a username/password pair for the service instance
+cf service-key ohs-ttahub-iac-state < YOUR-NAME >
+```
+
+These credentials are for an S3 bucket that is used for holding the state of the dev, staging, and prod terraform environments; you only need to create one set of these `ohs-ttahub-iac-state` S3 bucket credentials. If you're already using AWS CLI you may simply add your newly generated `access_key_id`, `secret_access_key` values to `~/.aws/credentials`, and your `region` value to `~/.aws/config`. If this is your first time using AWS CLI [install the tool][aws-install] and then follow the [Quick Configuration with aws configure guide][aws-config].
+
+Your `~/.aws/credentials` file should look something like this:
+
+```
+[default]
+aws_access_key_id = foo
+aws_secret_access_key = bar
+```
+
+Your `~/.aws/config` file should look something like this:
+
+```
+[default]
+region = us-gov-west-1
+```
+
+### Workflow
+
+_Tip: You run terraform files from the directory in which they are stored. For example, to instantiate a database described in `terraform/dev/main.tf` you would run all the commands below from `terraform/dev`._
+
+**Initialize your working directory**
+
+The first time you are working in a new environment, for example, after cloning this repository, you will need to initialize a working directory containing Terraform configuration files using the `init` command. It is safe to run this command multiple times.
+
+```bash
+terraform init
+```
+
+**Check that your state is clean**
+
+Terraform configuration files committed to the `main` branch should describe the infrastructure that is currently in use. This is described as a "clean state". Use the `plan` command to display a list of infrastructure that Terraform will need to update, delete or create to match what is in your local Terraform configuration files.
+
+- If state is clean, `plan` will not display any changes.
+- If state is not clean and you are working on a feature branch try merging in the main branch; your local terraform files might be behind the current/applied state. If `plan` still shows an unclean state, reach out to your fellow developers for clarification and advice on how to proceed. It is very likely that changes were accidentally applied and a developer is currently working on a fix.
+
+```bash
+terraform plan
+```
+
+**Make changes and get feedback**
+
+Make any needed changes to your local Terraform configuration files. Open a PR for those changes. In your PR include the output from `terraform plan` so reviewers can see what resources will be updated, created and destroyed.
+
+**Merge and apply changes immediately**
+
+_Tip: Before you merge your PR ensure you have enough time to sit and work through any unexpected problems that could arise. Database changes can take upwards of ten minutes to apply._
+
+Merge your PR into `main` and then **immediately** apply your changes. Always merge and apply in one sitting.
+
+```bash
+terraform apply
+```
+
+**Bind the infrastructure to the application**
+
+Cloud Foundry/cloud.gov requires managed services to be bound to the application instance. In this repo, those bindings are declared in the [`services:` block of `manifest.yml`](../../manifest.yml), which is the source of truth for the current set of services bound during deployment. The `((env))` value comes from the environment-specific files under [deployment_config/](../../deployment_config/). If you add another managed service, add it to the manifest `services:` list so it is bound during deployment. See the [cloud.gov documentation][cloudgov-bind] for more direction on this.
+
+[cloudgov-bind]: https://cloud.gov/docs/getting-started/your-first-deploy/#bind-a-service

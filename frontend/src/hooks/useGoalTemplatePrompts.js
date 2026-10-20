@@ -5,7 +5,7 @@ import { getGoalTemplatePrompts } from '../fetchers/goalTemplates';
 export default function useGoalTemplatePrompts(
   goalTemplateId,
   goalIds = [],
-  isForActivityReport = false,
+  isForActivityReport = false
 ) {
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState(null);
   const [templatePrompts, setTemplatePrompts] = useState(null);
@@ -22,7 +22,7 @@ export default function useGoalTemplatePrompts(
         const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(
           goalTemplateId,
           goalIds,
-          isForActivityReport,
+          isForActivityReport
         );
         setTemplatePrompts(prompts);
         setGoalTemplatePrompts(isForActivityReport ? promptsWithResponses : prompts);
@@ -35,8 +35,7 @@ export default function useGoalTemplatePrompts(
       return;
     }
 
-    if ((!goalTemplatePrompts)
-      || (goalTemplateId !== currentGoalTemplateId)) {
+    if (!goalTemplatePrompts || goalTemplateId !== currentGoalTemplateId) {
       setCurrentGoalTemplateId(goalTemplateId);
       fetchGoalTemplatePrompts();
     }

@@ -1,26 +1,22 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import { CLOSE_SUSPEND_REASONS, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../../constants';
 import {
-  GOAL_STATUS,
-  CLOSE_SUSPEND_REASONS,
-  REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  sequelize,
-  GoalStatusChange,
-  Grant,
-  GrantNumberLink,
-  Goal,
-  Objective,
-  Recipient,
-  User,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
+  Goal,
+  GoalStatusChange,
+  Grant,
+  GrantNumberLink,
+  Objective,
+  Recipient,
+  sequelize,
+  User,
 } from '..';
-import { OBJECTIVE_STATUS } from '../../constants';
 import { preventCloseIfObjectivesOpen } from './goalStatusChange';
 
-const fakeName = faker.name.firstName() + faker.name.lastName();
+const fakeName = faker.person.firstName() + faker.person.lastName();
 
 describe('GoalStatusChange hooks', () => {
   afterAll(async () => {
@@ -37,22 +33,22 @@ describe('GoalStatusChange hooks', () => {
     let objective3;
 
     const mockUser = {
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
       name: fakeName,
       hsesUsername: fakeName,
-      hsesUserId: faker.datatype.number(),
+      hsesUserId: faker.number.int({ min: 0, max: 99999 }),
       lastLogin: new Date(),
     };
 
     beforeAll(async () => {
       recipient = await Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
         startDate: new Date(),
@@ -112,7 +108,7 @@ describe('GoalStatusChange hooks', () => {
       });
 
       it('should not update the goal status if the status is the same', async () => {
-      // Create a GoalStatusChange with the same oldStatus and newStatus
+        // Create a GoalStatusChange with the same oldStatus and newStatus
         goalStatusChange = await GoalStatusChange.create({
           goalId: goal.id,
           userId: user.id,
@@ -160,7 +156,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update reason with invalid text', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -189,7 +185,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update objectives when status is not changing to suspended', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -212,7 +208,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update objectives when oldStatus equals newStatus', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -250,28 +246,28 @@ describe('GoalStatusChange hooks', () => {
 
     beforeAll(async () => {
       mockUser = await User.create({
-        id: faker.datatype.number(),
+        id: faker.number.int({ min: 0, max: 99999 }),
         homeRegionId: 1,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
+        hsesUsername: faker.string.sample(),
+        hsesUserId: faker.string.sample(),
         lastLogin: new Date(),
       });
 
       recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 10000, max: 100000 }),
-        name: faker.datatype.string(),
-        number: faker.datatype.number({ min: 10000, max: 100000 }),
+        id: faker.number.int({ min: 10000, max: 100000 }),
+        name: faker.string.sample(),
+        number: faker.number.int({ min: 10000, max: 100000 }),
       });
 
       grant = await Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: 1,
       });
 
       goal = await Goal.create({
-        name: faker.datatype.string(),
+        name: faker.string.sample(),
         status: GOAL_STATUS.IN_PROGRESS,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
@@ -280,14 +276,14 @@ describe('GoalStatusChange hooks', () => {
       });
 
       objectiveArApproved = await Objective.create({
-        name: faker.datatype.string(),
+        name: faker.string.sample(),
         status: OBJECTIVE_STATUS.COMPLETE,
         goalId: goal.id,
         createdVia: 'activityReport',
         activityReportId: null,
       });
       objectiveArUnApproved = await Objective.create({
-        name: faker.datatype.string(),
+        name: faker.string.sample(),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         goalId: goal.id,
         createdVia: 'activityReport',
@@ -295,7 +291,7 @@ describe('GoalStatusChange hooks', () => {
       });
 
       objectiveRTR = await Objective.create({
-        name: faker.datatype.string(),
+        name: faker.string.sample(),
         status: OBJECTIVE_STATUS.COMPLETE,
         goalId: goal.id,
         createdVia: 'rtr',
@@ -371,7 +367,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     afterAll(async () => {
-    // Destroy activity report objectives.
+      // Destroy activity report objectives.
       await ActivityReportObjective.destroy({
         where: { activityReportId: [activityReportApproved.id, activityReportUnApproved.id] },
         force: true,
@@ -420,7 +416,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('correctly detects open objectives and finds objectives linked to unapproved reports preventing the close', async () => {
-    // Set the status of the objective objectiveArApproved to IN_PROGRESS.
+      // Set the status of the objective objectiveArApproved to IN_PROGRESS.
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.IN_PROGRESS });
 
       // Set the status of the goal to CLOSED to trigger the hook.
@@ -432,12 +428,12 @@ describe('GoalStatusChange hooks', () => {
       };
       // Call the function with the instance and real sequelize object
       await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${objectiveArApproved.id} is open.`,
+        `Cannot close a goal ${goal.id} with open objectives. ${objectiveArApproved.id} is open.`
       );
     });
 
     it('correctly detects open objectives and ignores objectives linked to unapproved reports allowing the close', async () => {
-    // Set the status of the objective objectiveArApproved to COMPLETE.
+      // Set the status of the objective objectiveArApproved to COMPLETE.
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.COMPLETE });
 
       // Set the status of the goal to CLOSED to trigger the hook.
@@ -452,7 +448,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('allows closing a goal when RTR objective is in progress but AR objective is complete', async () => {
-    // Ensure AR objective is complete
+      // Ensure AR objective is complete
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.COMPLETE });
 
       // Set RTR objective to IN_PROGRESS
@@ -467,7 +463,7 @@ describe('GoalStatusChange hooks', () => {
 
       // Should throw because RTR objectives should not be ignored when closing goals
       await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${objectiveRTR.id} is open.`,
+        `Cannot close a goal ${goal.id} with open objectives. ${objectiveRTR.id} is open.`
       );
 
       // Reset RTR objective status
@@ -475,7 +471,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('allows closing a goal when all approved AR objectives are suspended', async () => {
-    // Set the AR objective to SUSPENDED (which should allow goal to be closed)
+      // Set the AR objective to SUSPENDED (which should allow goal to be closed)
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.SUSPENDED });
 
       const instance = {
@@ -492,9 +488,9 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('correctly handles a mix of objective statuses', async () => {
-    // Create an additional approved AR objective for testing mixed statuses
+      // Create an additional approved AR objective for testing mixed statuses
       const mixedStatusObjective = await Objective.create({
-        name: faker.datatype.string(),
+        name: faker.string.sample(),
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         goalId: goal.id,
         createdVia: 'activityReport',
@@ -547,9 +543,13 @@ describe('GoalStatusChange hooks', () => {
         get: () => GOAL_STATUS.CLOSED,
       };
 
-      // Should throw because we have one IN_PROGRESS objective on approved AR
+      // Should throw because there are open objectives on an approved AR or RTR.
+      const expectedError = new RegExp(
+        `Cannot close a goal ${goal.id} with open objectives\\. ` +
+          `(${mixedStatusObjective.id}|${objectiveRTR.id}) is open\\.`
+      );
       await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${mixedStatusObjective.id} is open.`,
+        expectedError
       );
 
       // Clean up

@@ -1,7 +1,7 @@
 import {
+  convertReportToFormData,
   findWhatsChanged,
   unflattenResourcesUsed,
-  convertReportToFormData,
 } from '../formDataHelpers';
 
 describe('formDataHelpers', () => {
@@ -270,11 +270,13 @@ describe('formDataHelpers', () => {
 
       const result = convertReportToFormData(fetchedReport);
 
-      expect(result).toEqual(expect.objectContaining({
-        id: 1,
-        title: 'Test Report',
-        status: 'draft',
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 1,
+          title: 'Test Report',
+          status: 'draft',
+        })
+      );
     });
 
     it('should handle report with empty string dates', () => {
@@ -288,11 +290,13 @@ describe('formDataHelpers', () => {
 
       const result = convertReportToFormData(fetchedReport);
 
-      expect(result).toEqual(expect.objectContaining({
-        id: 1,
-        title: 'Test Report',
-        status: 'draft',
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 1,
+          title: 'Test Report',
+          status: 'draft',
+        })
+      );
     });
 
     it('should preserve all other fields', () => {
@@ -304,7 +308,9 @@ describe('formDataHelpers', () => {
         status: 'draft',
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
-        collabReportSpecialists: [{ id: 5, name: 'John Doe', specialist: { id: 1, fullName: 'John Doe, Specialist' } }],
+        collabReportSpecialists: [
+          { id: 5, name: 'John Doe', specialist: { id: 1, fullName: 'John Doe, Specialist' } },
+        ],
         calculatedStatus: 'submitted',
         isStateActivity: true,
         regionId: 1,
@@ -312,20 +318,22 @@ describe('formDataHelpers', () => {
 
       const result = convertReportToFormData(fetchedReport);
 
-      expect(result).toEqual(expect.objectContaining({
-        id: 1,
-        title: 'Test Report',
-        startDate: '2024-01-15',
-        endDate: '2024-01-20',
-        status: 'draft',
-        collabReportSpecialists: fetchedReport.collabReportSpecialists,
-        reportReasons: [],
-        isStateActivity: 'true',
-        approvers: [{ id: 2, name: 'Jane Smith' }],
-        additionalData: { notes: 'Important notes' },
-        calculatedStatus: 'submitted',
-        regionId: 1,
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 1,
+          title: 'Test Report',
+          startDate: '2024-01-15',
+          endDate: '2024-01-20',
+          status: 'draft',
+          collabReportSpecialists: fetchedReport.collabReportSpecialists,
+          reportReasons: [],
+          isStateActivity: 'true',
+          approvers: [{ id: 2, name: 'Jane Smith' }],
+          additionalData: { notes: 'Important notes' },
+          calculatedStatus: 'submitted',
+          regionId: 1,
+        })
+      );
     });
 
     describe('isStateActivity conversion', () => {
@@ -523,10 +531,7 @@ describe('formDataHelpers', () => {
       it('should convert dataUsed array to label/value format', () => {
         const fetchedReport = {
           id: 1,
-          dataUsed: [
-            { collabReportDatum: 'data1' },
-            { collabReportDatum: 'data2' },
-          ],
+          dataUsed: [{ collabReportDatum: 'data1' }, { collabReportDatum: 'data2' }],
         };
 
         const result = convertReportToFormData(fetchedReport);

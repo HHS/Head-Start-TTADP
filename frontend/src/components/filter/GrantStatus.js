@@ -1,17 +1,18 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 export function displayGrantsStatus(q) {
-  if (q === 'active') {
+  const val = Array.isArray(q) ? q[0] : q;
+  if (val === 'active') {
     return 'Active';
   }
 
-  if (q === 'inactive') {
+  if (val === 'inactive') {
     return 'Inactive';
   }
 
-  if (q === 'interim-management-cdi') {
+  if (val === 'interim-management-cdi') {
     return 'Interim management (CDI)';
   }
 
@@ -20,24 +21,22 @@ export function displayGrantsStatus(q) {
 
 export default function GrantStatus({ onApply, query, inputId }) {
   const onApplyTTAType = (e) => {
-    const { target: { value } } = e;
+    const {
+      target: { value },
+    } = e;
     onApply(value);
   };
 
   return (
     <>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="usa-sr-only" htmlFor={inputId}>Select grant status to filter by</label>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label className="usa-sr-only" htmlFor={inputId}>
+        Select grant status to filter by
+      </label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
-        <option value="active">
-          Active
-        </option>
-        <option value="inactive">
-          Inactive
-        </option>
-        <option value="interim-management-cdi">
-          Interim management (CDI)
-        </option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="interim-management-cdi">Interim management (CDI)</option>
       </Dropdown>
     </>
   );

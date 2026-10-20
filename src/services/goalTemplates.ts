@@ -1,16 +1,43 @@
-import { Sequelize, Op } from 'sequelize';
-import db from '../models';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { Op, Sequelize } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
+import { serviceError } from '../lib/serviceError';
+import db from '../models';
+import ActivityReportPolicy from '../policies/activityReport';
+import { userById } from './users';
 
 const {
   GoalTemplate: GoalTemplateModel,
   GoalTemplateFieldPrompt: GoalTemplateFieldPromptModel,
   GoalFieldResponse: GoalFieldResponseModel,
   Goal: GoalModel,
+  ActivityReport: ActivityReportModel,
+  ActivityReportApprover: ActivityReportApproverModel,
+  ActivityReportCollaborator: ActivityReportCollaboratorModel,
+  ActivityReportGoal: ActivityReportGoalModel,
   Grant,
   Region,
+  User: UserModel,
   sequelize,
 } = db;
+
+const BLOCKING_ACTIVITY_REPORT_STATUSES = [
+  REPORT_STATUSES.DRAFT,
+  REPORT_STATUSES.SUBMITTED,
+  REPORT_STATUSES.NEEDS_ACTION,
+];
+
+export interface BlockingActivityReportSummary {
+  creatorName: string;
+  displayId: string;
+  href: string | null;
+}
+
+interface CuratedTemplateOptions {
+  includeBlockingActivityReports?: boolean;
+  includeClosedAndSuspendedGoals?: boolean;
+  userId?: number;
+}
 
 interface GoalTemplate {
   id: number;
@@ -25,6 +52,13 @@ interface GoalTemplate {
   oldGrantIds: [];
   isNew: false;
   isCurated: true;
+  goals?: Array<{
+    id: number;
+    createdVia?: string;
+    onApprovedAR?: boolean;
+    prestandard?: boolean;
+  }>;
+  blockingActivityReports?: BlockingActivityReportSummary[];
 }
 interface Validation {
   [key: string]: number | string | boolean;
@@ -32,9 +66,9 @@ interface Validation {
 }
 
 interface FieldPrompts {
-  promptId: number,
-  ordinal: number,
-  title: string,
+  promptId: number;
+  ordinal: number;
+  title: string;
   question: string;
   hint: string;
   caution: string;
@@ -45,10 +79,122 @@ interface FieldPrompts {
 }
 
 interface PromptResponse {
-  promptId: number,
+  promptId: number;
   response: string[] | null;
   goalIds: number[];
   grantId: number;
+}
+
+async function authorizeGoalTemplateEnrichment(grantIds: number[], userId?: number) {
+  if (!Number.isInteger(userId) || grantIds.length === 0) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  const uniqueGrantIds = [...new Set(grantIds)];
+  const [user, grants] = await Promise.all([
+    userById(userId),
+    Grant.unscoped().findAll({
+      attributes: ['id', 'regionId'],
+      where: { id: uniqueGrantIds },
+    }),
+  ]);
+
+  if (!user || grants.length !== uniqueGrantIds.length) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  const canAccessAllGrants = grants.every((grant) => {
+    const policy = new ActivityReportPolicy(user, { regionId: grant.regionId });
+    return policy.isAdmin() || policy.canWriteInRegion();
+  });
+
+  if (!canAccessAllGrants) {
+    throw serviceError(403, 'User is not authorized to access the requested grants');
+  }
+
+  return user;
+}
+
+export function isHiddenActivityReportGoal(goal) {
+  return goal.createdVia === 'activityReport' && goal.onApprovedAR === false;
+}
+
+export async function getBlockingActivityReportsForGoals(
+  goals,
+  userId?: number,
+  authorizedUser = null
+): Promise<Map<number, BlockingActivityReportSummary[]>> {
+  const hiddenGoalIds = goals.filter(isHiddenActivityReportGoal).map((goal) => goal.id);
+  const reportsByGoalId = new Map<number, BlockingActivityReportSummary[]>();
+
+  if (hiddenGoalIds.length === 0) {
+    return reportsByGoalId;
+  }
+
+  const user = authorizedUser || (Number.isInteger(userId) ? await userById(userId) : null);
+  const activityReportGoals = await ActivityReportGoalModel.findAll({
+    attributes: ['activityReportId', 'goalId'],
+    where: { goalId: hiddenGoalIds },
+    include: [
+      {
+        model: ActivityReportModel,
+        as: 'activityReport',
+        attributes: [
+          'id',
+          'legacyId',
+          'regionId',
+          'userId',
+          'creatorRole',
+          'calculatedStatus',
+          'submissionStatus',
+        ],
+        required: true,
+        where: {
+          calculatedStatus: { [Op.in]: BLOCKING_ACTIVITY_REPORT_STATUSES },
+        },
+        include: [
+          {
+            model: UserModel,
+            as: 'author',
+            attributes: ['id', 'name'],
+          },
+          {
+            model: ActivityReportCollaboratorModel,
+            as: 'activityReportCollaborators',
+            attributes: ['id', 'userId'],
+            include: [{ model: UserModel, as: 'user', attributes: ['id'] }],
+          },
+          {
+            model: ActivityReportApproverModel,
+            as: 'approvers',
+            attributes: ['id', 'userId'],
+            include: [{ model: UserModel, as: 'user', attributes: ['id'] }],
+          },
+        ],
+      },
+    ],
+  });
+
+  const seenGoalReports = new Set<string>();
+  activityReportGoals.forEach((activityReportGoal) => {
+    const report = activityReportGoal.activityReport;
+    const deduplicationKey = `${activityReportGoal.goalId}:${report.id}`;
+    if (seenGoalReports.has(deduplicationKey)) {
+      return;
+    }
+    seenGoalReports.add(deduplicationKey);
+
+    const reports = reportsByGoalId.get(activityReportGoal.goalId) || [];
+    const canViewReport = user ? new ActivityReportPolicy(user, report).canGet() : false;
+    reports.push({
+      creatorName: report.creatorNameWithRole,
+      displayId: report.displayId,
+      href: canViewReport ? `/activity-reports/${report.id}` : null,
+    });
+    reportsByGoalId.set(activityReportGoal.goalId, reports);
+  });
+
+  return reportsByGoalId;
 }
 
 /**
@@ -59,8 +205,19 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
-  includeClosedAndSuspendedGoals = false,
+  options: CuratedTemplateOptions | boolean = {}
 ): Promise<GoalTemplate[]> {
+  const normalizedOptions =
+    typeof options === 'boolean' ? { includeClosedAndSuspendedGoals: options } : options;
+  const {
+    includeBlockingActivityReports = false,
+    includeClosedAndSuspendedGoals = false,
+    userId,
+  } = normalizedOptions;
+  const authorizedUser = includeBlockingActivityReports
+    ? await authorizeGoalTemplateEnrichment(grantIds || [], userId)
+    : null;
+
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
 
@@ -69,7 +226,9 @@ export async function getCuratedTemplates(
     attributes: ['id'],
     where: {
       goalTemplateId: {
-        [Op.in]: sequelize.literal('(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'),
+        [Op.in]: sequelize.literal(
+          '(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'
+        ),
       },
       grantId: grantIds,
     },
@@ -79,22 +238,19 @@ export async function getCuratedTemplates(
   const goalWhere = {
     grantId: grantIds,
   } as {
-    grantId: number[],
+    grantId: number[];
     status?: {
-      [Op.notIn]: string[]
-    },
+      [Op.notIn]: string[];
+    };
   };
 
   if (!includeClosedAndSuspendedGoals) {
     goalWhere.status = {
-      [Op.notIn]: [
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.CLOSED,
-      ],
+      [Op.notIn]: [GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED],
     };
   }
 
-  return GoalTemplateModel.findAll({
+  const templates = await GoalTemplateModel.findAll({
     attributes: [
       'id',
       'source',
@@ -118,14 +274,16 @@ export async function getCuratedTemplates(
         as: 'region',
         attributes: [],
         required: false,
-        include: [{
-          model: Grant.unscoped(), // remove recipient from response
-          as: 'grants',
-          attributes: [],
-          required: false,
-          where: { id: grantIds },
-          include: [],
-        }],
+        include: [
+          {
+            model: Grant.unscoped(), // remove recipient from response
+            as: 'grants',
+            attributes: [],
+            required: false,
+            where: { id: grantIds },
+            include: [],
+          },
+        ],
       },
       {
         model: GoalModel,
@@ -138,6 +296,8 @@ export async function getCuratedTemplates(
           'grantId',
           'goalTemplateId',
           'prestandard',
+          'createdVia',
+          'onApprovedAR',
         ],
         required: false,
         where: goalWhere,
@@ -147,10 +307,7 @@ export async function getCuratedTemplates(
       creationMethod: CREATION_METHOD.CURATED,
       [Op.and]: [
         {
-          [Op.or]: [
-            { '$"region.grants"."id"$': { [Op.not]: null } },
-            { regionId: null },
-          ],
+          [Op.or]: [{ '$"region.grants"."id"$': { [Op.not]: null } }, { regionId: null }],
         },
         {
           [Op.or]: [
@@ -166,12 +323,39 @@ export async function getCuratedTemplates(
     },
     order: [['templateName', 'ASC']],
   });
+
+  if (!includeBlockingActivityReports) {
+    return templates;
+  }
+
+  const hiddenGoals = templates.flatMap((template) =>
+    (template.goals || []).filter(isHiddenActivityReportGoal)
+  );
+  const reportsByGoalId = await getBlockingActivityReportsForGoals(
+    hiddenGoals,
+    userId,
+    authorizedUser
+  );
+
+  return templates.filter((template) => {
+    const reportsByDisplayId = new Map<string, BlockingActivityReportSummary>();
+    (template.goals || []).forEach((goal) => {
+      (reportsByGoalId.get(goal.id) || []).forEach((report) => {
+        reportsByDisplayId.set(report.displayId, report);
+      });
+    });
+    const blockingActivityReports = [...reportsByDisplayId.values()];
+    template.setDataValue('blockingActivityReports', blockingActivityReports);
+
+    const isAvailableTemplate =
+      !template.goals ||
+      template.goals.length === 0 ||
+      template.goals.every((goal) => goal.prestandard === true);
+    return isAvailableTemplate || blockingActivityReports.length > 0;
+  });
 }
 
-export async function getSourceFromTemplate(
-  goalTemplateId: number,
-  grantIds: number[],
-) {
+export async function getSourceFromTemplate(goalTemplateId: number, grantIds: number[]) {
   const goal = await GoalModel.findOne({
     where: {
       goalTemplateId,
@@ -198,7 +382,7 @@ Retrieves field prompts for a curated goal template and associated goals.
 */
 export async function getFieldPromptsForCuratedTemplate(
   goalTemplateId: number,
-  goalIds: number[] | null,
+  goalIds: number[] | null
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
 
@@ -225,28 +409,32 @@ export async function getFieldPromptsForCuratedTemplate(
         ['goalTemplateFieldPromptId', 'promptId'],
         'response',
         [
-          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          sequelize.fn(
+            'ARRAY_AGG',
+            sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))
+          ),
           'goalIds',
         ],
       ],
       where: { goalId: goalIds },
-      include: [{
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompt',
-        required: true,
-        attributes: [],
-        include: [{
-          model: GoalTemplateModel,
-          as: 'goalTemplate',
+      include: [
+        {
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompt',
           required: true,
           attributes: [],
-          where: { id: goalTemplateId },
-        }],
-      }],
-      group: [
-        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
-        '"GoalFieldResponse"."response"',
+          include: [
+            {
+              model: GoalTemplateModel,
+              as: 'goalTemplate',
+              required: true,
+              attributes: [],
+              where: { id: goalTemplateId },
+            },
+          ],
+        },
       ],
+      group: ['"GoalFieldResponse"."goalTemplateFieldPromptId"', '"GoalFieldResponse"."response"'],
       raw: true,
     }),
   ]);
@@ -255,12 +443,8 @@ export async function getFieldPromptsForCuratedTemplate(
   // any exists
 
   const restructuredPrompts = responses.reduce(
-    (
-      promptsWithResponses: FieldPrompts[],
-      response: PromptResponse,
-    ) => {
-      const exists = promptsWithResponses
-        .find((pwr) => pwr.promptId === response.promptId);
+    (promptsWithResponses: FieldPrompts[], response: PromptResponse) => {
+      const exists = promptsWithResponses.find((pwr) => pwr.promptId === response.promptId);
 
       if (exists) {
         exists.response = [...exists.response, ...response.response];
@@ -270,7 +454,7 @@ export async function getFieldPromptsForCuratedTemplate(
     // the inital set of prompts, which can't have a response yet
     // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
     // doesn't include a response and doesn't join with GoalFieldResponseModel.
-    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] }))
   );
   return restructuredPrompts;
 }
@@ -285,7 +469,7 @@ We need things a little bit differently for Activity Reports as we need it per g
 */
 export async function getFieldPromptsForActivityReports(
   goalTemplateId: number,
-  goalIds: number[] | null,
+  goalIds: number[] | null
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
   // and return the prompts with the responses for the passed goalIds
@@ -312,34 +496,38 @@ export async function getFieldPromptsForActivityReports(
         ['goalTemplateFieldPromptId', 'promptId'],
         'response',
         [
-          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          sequelize.fn(
+            'ARRAY_AGG',
+            sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))
+          ),
           'goalIds',
         ],
-        [
-          sequelize.col('"goal"."grantId"'),
-          'grantId',
-        ],
+        [sequelize.col('"goal"."grantId"'), 'grantId'],
       ],
       where: { goalId: goalIds },
-      include: [{
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompt',
-        required: true,
-        attributes: [],
-        include: [{
-          model: GoalTemplateModel,
-          as: 'goalTemplate',
+      include: [
+        {
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompt',
           required: true,
           attributes: [],
-          where: { id: goalTemplateId },
-        }],
-      },
-      {
-        model: GoalModel,
-        as: 'goal',
-        required: true,
-        attributes: [],
-      }],
+          include: [
+            {
+              model: GoalTemplateModel,
+              as: 'goalTemplate',
+              required: true,
+              attributes: [],
+              where: { id: goalTemplateId },
+            },
+          ],
+        },
+        {
+          model: GoalModel,
+          as: 'goal',
+          required: true,
+          attributes: [],
+        },
+      ],
       group: [
         '"GoalFieldResponse"."goalTemplateFieldPromptId"',
         '"GoalFieldResponse"."response"',
@@ -353,10 +541,7 @@ export async function getFieldPromptsForActivityReports(
   // any exists
 
   const restructuredPrompts = responses.reduce(
-    (
-      promptsWithResponses: FieldPrompts[],
-      response: PromptResponse,
-    ) => {
+    (promptsWithResponses: FieldPrompts[], response: PromptResponse) => {
       // Find the matching prompt for this response.
       const matchingPrompt = prompts.find((p) => p.promptId === response.promptId);
       if (matchingPrompt) {
@@ -368,9 +553,27 @@ export async function getFieldPromptsForActivityReports(
       }
       return promptsWithResponses;
     },
-    [],
+    []
   );
   return [restructuredPrompts, prompts];
+}
+
+/**
+ * Retrieves all distinct standard values from GoalTemplates for use in filters.
+ * Unlike getCuratedTemplates, this returns all standards including Monitoring.
+ * @returns A Promise that resolves to a sorted array of standard strings.
+ */
+export async function getGoalTemplateStandards(): Promise<string[]> {
+  const templates = await GoalTemplateModel.findAll({
+    attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('standard')), 'standard']],
+    where: {
+      standard: { [Op.not]: null },
+      creationMethod: CREATION_METHOD.CURATED,
+    },
+    order: [['standard', 'ASC']],
+    raw: true,
+  });
+  return (templates as unknown as { standard: string }[]).map((t) => t.standard).filter(Boolean);
 }
 
 /**
@@ -383,9 +586,10 @@ export function validatePromptResponse(response: string[], promptRequirements) {
   if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
     if (response && response.filter((r) => !promptRequirements.options.includes(r)).length > 0) {
       throw new Error(
-        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
-          response.filter((r) => !promptRequirements.options.includes(r)).map((r) => `'${r}'`).join(', ')
-        }.`,
+        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${response
+          .filter((r) => !promptRequirements.options.includes(r))
+          .map((r) => `'${r}'`)
+          .join(', ')}.`
       );
     }
 
@@ -403,7 +607,7 @@ export function validatePromptResponse(response: string[], promptRequirements) {
 
         if (maxSelections && response && response.length > maxSelections) {
           throw new Error(
-            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
+            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`
           );
         }
       }
@@ -423,7 +627,7 @@ Sets the field prompt response for a curated template for a list of goals.
 export async function setFieldPromptForCuratedTemplate(
   goalIds: number[],
   promptId: number,
-  response: string[] | null,
+  response: string[] | null
 ) {
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
@@ -441,31 +645,28 @@ export async function setFieldPromptForCuratedTemplate(
           { '$"responses"."id"$': null },
         ],
       },
-      include: [{
-        attributes: [],
-        model: GoalFieldResponseModel,
-        as: 'responses',
-        required: false,
-        where: {
-          goalTemplateFieldPromptId: promptId,
+      include: [
+        {
+          attributes: [],
+          model: GoalFieldResponseModel,
+          as: 'responses',
+          required: false,
+          where: {
+            goalTemplateFieldPromptId: promptId,
+          },
         },
-      }, {
-        attributes: [],
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompts',
-        required: true,
-        where: { id: promptId },
-      }],
+        {
+          attributes: [],
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompts',
+          required: true,
+          where: { id: promptId },
+        },
+      ],
       raw: true,
     }),
     GoalTemplateFieldPromptModel.findOne({
-      attributes: [
-        ['id', 'promptId'],
-        'title',
-        'fieldType',
-        'options',
-        'validations',
-      ],
+      attributes: [['id', 'promptId'], 'title', 'fieldType', 'options', 'validations'],
       where: { id: promptId },
       raw: true,
     }),
@@ -475,10 +676,10 @@ export async function setFieldPromptForCuratedTemplate(
   }
 
   // We always want to update the goal field response when saving the report.
-  const goalIdsToUpdate = currentResponses
-    .map((r) => r.goalId);
+  const goalIdsToUpdate = currentResponses.map((r) => r.goalId);
 
-  const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
+  const recordsToCreate = goalIds
+    .filter((id) => currentResponses.every((r) => r.goalId !== id))
     .map((goalId) => ({
       goalId,
       goalTemplateFieldPromptId: promptId,
@@ -497,7 +698,7 @@ export async function setFieldPromptForCuratedTemplate(
             goalId: goalIdsToUpdate,
           },
           individualHooks: true,
-        },
+        }
       ),
       ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
     ]);
@@ -516,14 +717,12 @@ Sets field prompts for a list of curated templates and their associated goals.
 */
 export async function setFieldPromptsForCuratedTemplate(
   goalIds: number[],
-  promptResponses: PromptResponse[],
+  promptResponses: PromptResponse[]
 ) {
   return Promise.all(
-    promptResponses
-      .map(({
-        promptId,
-        response,
-      }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
+    promptResponses.map(({ promptId, response }) =>
+      setFieldPromptForCuratedTemplate(goalIds, promptId, response)
+    )
   );
 }
 
@@ -533,7 +732,7 @@ Retrieves field prompts for template name.
 @returns An array of Field Prompts for the named goal template prompt.
 */
 export async function getOptionsByGoalTemplateFieldPromptName(
-  name: string,
+  name: string
 ): Promise<FieldPrompts[]> {
   return GoalTemplateFieldPromptModel.findOne({
     attributes: ['options'],

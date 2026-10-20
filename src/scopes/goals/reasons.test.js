@@ -1,11 +1,11 @@
 import {
-  Op,
   filtersToScopes,
   Goal,
+  Op,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('goals/reasons', () => {
@@ -37,14 +37,11 @@ describe('goals/reasons', () => {
   });
   it('filters by reason with recipient', async () => {
     const filters = { 'reason.in': 'Full Enrollment' };
-    const { goal: scope } = await filtersToScopes(
-      filters,
-      {
-        goal: {
-          recipientId: sharedTestData.reasonsGrant.recipientId,
-        },
+    const { goal: scope } = await filtersToScopes(filters, {
+      goal: {
+        recipientId: sharedTestData.reasonsGrant.recipientId,
       },
-    );
+    });
     const found = await Goal.findAll({
       where: {
         [Op.and]: [
@@ -64,10 +61,7 @@ describe('goals/reasons', () => {
     const { goal: scope } = await filtersToScopes(filters);
     const found = await Goal.findAll({
       where: {
-        [Op.and]: [
-          scope,
-          { id: sharedTestData.possibleGoalIds },
-        ],
+        [Op.and]: [scope, { id: sharedTestData.possibleGoalIds }],
       },
     });
 
@@ -76,20 +70,14 @@ describe('goals/reasons', () => {
   });
   it('filters out by reason with recipient', async () => {
     const filters = { 'reason.nin': 'Full Enrollment' };
-    const { goal: scope } = await filtersToScopes(
-      filters,
-      {
-        goal: {
-          recipientId: sharedTestData.reasonsGrant.recipientId,
-        },
+    const { goal: scope } = await filtersToScopes(filters, {
+      goal: {
+        recipientId: sharedTestData.reasonsGrant.recipientId,
       },
-    );
+    });
     const found = await Goal.findAll({
       where: {
-        [Op.and]: [
-          scope,
-          { id: sharedTestData.possibleGoalIds },
-        ],
+        [Op.and]: [scope, { id: sharedTestData.possibleGoalIds }],
       },
     });
 

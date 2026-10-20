@@ -11,7 +11,7 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Disable audit log
@@ -19,14 +19,14 @@ module.exports = {
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
         `,
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.sequelize.query(
         `
         DROP FUNCTION IF EXISTS "ZAFAddAuditingOnTable"(varchar(63));
         `,
-        { transaction },
+        { transaction }
       );
 
       // Modify creation function to make creation of audit log table optional
@@ -51,7 +51,7 @@ module.exports = {
           PERFORM "ZAFCreateALNoTruncate"(t_name);
         END
         $func$;`,
-        { transaction },
+        { transaction }
       );
 
       // Updating the audit log function to record the impersonation ID.
@@ -204,7 +204,7 @@ module.exports = {
               'ZAL' || t_name);
         END
         $func$;`,
-        { transaction },
+        { transaction }
       );
 
       // Updating the audit log function to record the impersonation ID.
@@ -233,7 +233,7 @@ module.exports = {
                   'ZAL' || t_name);
           END
           $func$;`,
-        { transaction },
+        { transaction }
       );
 
       // Modify removal function to remove triggers on auditing table
@@ -294,7 +294,7 @@ module.exports = {
               'ZALNoUpdateF' || t_name);
         END
         $func$;`,
-        { transaction },
+        { transaction }
       );
 
       // Remove the current audit system from all tables
@@ -334,7 +334,7 @@ module.exports = {
 
           END LOOP;
         END$$;`,
-        { transaction },
+        { transaction }
       );
       // -------------
 
@@ -343,7 +343,7 @@ module.exports = {
         `
         SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
         `,
-        { transaction },
+        { transaction }
       );
     });
   },
@@ -359,7 +359,7 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       //

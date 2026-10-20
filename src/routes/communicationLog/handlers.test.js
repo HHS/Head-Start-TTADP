@@ -1,38 +1,34 @@
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
+import SCOPES from '../../middleware/scopeConstants';
+import { GoalTemplate, Grant, Group, Recipient, sequelize, User } from '../../models';
 import {
-  User,
-  GoalTemplate,
-  Recipient,
-  Group,
-  Grant,
-  sequelize,
-} from '../../models';
+  getUserReadRegions,
+  setTrainingAndActivityReportReadRegions,
+} from '../../services/accessValidation';
 import {
+  createLog,
+  csvLogsByRecipientAndScopes,
+  csvLogsByScopes,
+  deleteLog,
   logById,
   logsByRecipientAndScopes,
-  csvLogsByRecipientAndScopes,
-  deleteLog,
-  updateLog,
-  createLog,
   logsByScopes,
-  csvLogsByScopes,
+  updateLog,
 } from '../../services/communicationLog';
-import { userById, usersByRoles } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
+import { userById, usersByRoles } from '../../services/users';
 import {
-  communicationLogById,
-  communicationLogsByRecipientId,
-  updateLogById,
-  deleteLogById,
-  createLogByRecipientId,
   communicationLogAdditionalData,
-  getAvailableUsersRecipientsAndGoals,
+  communicationLogById,
   communicationLogs,
+  communicationLogsByRecipientId,
+  createLogByRecipientId,
   createLogByRegionId,
+  deleteLogById,
+  getAvailableUsersRecipientsAndGoals,
+  updateLogById,
 } from './handlers';
-import SCOPES from '../../middleware/scopeConstants';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
@@ -103,6 +99,12 @@ describe('communicationLog handlers', () => {
 
   const unauthorized = {
     id: 3,
+    permissions: [],
+  };
+
+  const centralOffice = {
+    id: 5,
+    homeRegionId: 14,
     permissions: [],
   };
 
@@ -470,8 +472,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -540,6 +544,31 @@ describe('communicationLog handlers', () => {
   describe('updateLogById', () => {
     afterEach(() => jest.restoreAllMocks());
 
+    it('returns not found when log does not exist', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      logById.mockResolvedValue(null);
+
+      await updateLogById(mockRequest, { ...mockResponse });
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
+      expect(updateLog).not.toHaveBeenCalled();
+    });
+
     it('success', async () => {
       const mockRequest = {
         session: {
@@ -550,8 +579,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -559,6 +590,31 @@ describe('communicationLog handlers', () => {
       updateLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await updateLogById(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+    });
+
+    it('returns not found when update target no longer exists', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
+      updateLog.mockResolvedValue(null);
+
+      await updateLogById(mockRequest, { ...mockResponse });
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
     });
 
     it('error', async () => {
@@ -571,8 +627,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
@@ -592,8 +650,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
@@ -612,8 +672,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
         body: {
-          recipientId: 1,
-          message: 'test',
+          data: {
+            recipientId: 1,
+            message: 'test',
+          },
         },
       };
       userById.mockImplementation(() => Promise.resolve(admin));
@@ -626,6 +688,29 @@ describe('communicationLog handlers', () => {
 
   describe('deleteLogById', () => {
     afterEach(() => jest.restoreAllMocks());
+
+    it('returns not found when log does not exist', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          id: 1,
+          regionId: REGION_ID,
+        },
+        body: {
+          recipientId: 1,
+          message: 'test',
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      logById.mockResolvedValue(null);
+
+      await deleteLogById(mockRequest, { ...mockResponse });
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
+      expect(deleteLog).not.toHaveBeenCalled();
+    });
 
     it('success', async () => {
       const mockRequest = {
@@ -648,7 +733,7 @@ describe('communicationLog handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
     });
 
-    it('error', async () => {
+    it('returns not found when delete target no longer exists', async () => {
       const mockRequest = {
         session: {
           userId: authorizedToCreate.id,
@@ -666,7 +751,7 @@ describe('communicationLog handlers', () => {
       logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
       deleteLog.mockResolvedValue(0);
       await deleteLogById(mockRequest, { ...mockResponse });
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.NOT_FOUND);
     });
 
     it('unauthorized', async () => {
@@ -723,9 +808,18 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }];
-      const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }, { value: 2, label: 'RecipientB', grants: [] }];
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ];
+      const mockGoals = [
+        { value: 1, label: 'GoalA' },
+        { value: 2, label: 'GoalB' },
+      ];
+      const mockRecipients = [
+        { value: 1, label: 'RecipientA', grants: [] },
+        { value: 2, label: 'RecipientB', grants: [] },
+      ];
       userById.mockResolvedValue(authorizedToReadOnly);
       usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
@@ -974,6 +1068,36 @@ describe('communicationLog handlers', () => {
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       expect(result).toBeNull();
     });
+
+    it('returns users from all regions for central office users', async () => {
+      const mockRequest = {
+        session: {
+          userId: centralOffice.id,
+        },
+        params: {
+          regionId: 14,
+        },
+      };
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ];
+      userById.mockResolvedValue(centralOffice);
+      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      usersByRoles.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue([]);
+      Recipient.findAll.mockResolvedValue([]);
+      Group.findAll.mockResolvedValue([]);
+
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      // central office should be scoped to the regions they can read, not a single region
+      expect(usersByRoles).toHaveBeenCalledWith(
+        ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
+        [1, 2, 3]
+      );
+      expect(result.regionalUsers).toEqual(mockUsers.map((u) => ({ label: u.name, value: u.id })));
+    });
   });
 
   describe('communicationLogAdditionalData', () => {
@@ -998,8 +1122,7 @@ describe('communicationLog handlers', () => {
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({
         regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
-        standardGoals:
-        mockGoals,
+        standardGoals: mockGoals,
         groups: [],
         recipients: [],
       });

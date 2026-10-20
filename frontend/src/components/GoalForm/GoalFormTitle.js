@@ -1,11 +1,12 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
 const GoalFormTitle = ({ goalNumbers, isReopenedGoal }) => {
-  const formTitle = goalNumbers && goalNumbers.length && !isReopenedGoal ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
-  return (
-    <h2 className="font-serif-xl margin-0">{formTitle}</h2>
-  );
+  const formTitle =
+    goalNumbers && goalNumbers.length && !isReopenedGoal
+      ? `Goal ${goalNumbers.join(', ')}`
+      : 'Recipient TTA goal';
+  return <h2 className="font-serif-xl margin-0">{formTitle}</h2>;
 };
 
 GoalFormTitle.propTypes = {

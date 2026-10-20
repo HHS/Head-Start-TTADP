@@ -1,19 +1,19 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
   EventReportPilot,
-  SessionReportPilot,
-  Recipient,
-  NationalCenter,
   Grant,
+  NationalCenter,
+  Recipient,
+  SessionReportPilot,
   User,
 } from '../models';
 import {
-  createUser,
   createGrant,
   createRecipient,
   createSessionReport,
   createTrainingReport,
+  createUser,
 } from '../testUtils';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
 
@@ -125,10 +125,7 @@ describe('TR hours of training by national center', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          nationalCenter1.name,
-          nationalCenter2.name,
-        ],
+        objectiveTrainers: [nationalCenter1.name, nationalCenter2.name],
       },
     });
 
@@ -138,10 +135,7 @@ describe('TR hours of training by national center', () => {
       pocIds: [userPoc.id],
       ownerId: userCreator.id,
       data: {
-        reasons: [
-          'Monitoring | Area of Concern',
-          'Monitoring | Deficiency',
-        ],
+        reasons: ['Monitoring | Area of Concern', 'Monitoring | Deficiency'],
       },
     });
 
@@ -156,9 +150,7 @@ describe('TR hours of training by national center', () => {
         numberOfParticipantsInPerson: 13,
         numberOfParticipants: 0,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          `${nationalCenter1.name} ${userCreator.fullName}`,
-        ],
+        objectiveTrainers: [`${nationalCenter1.name} ${userCreator.fullName}`],
       },
     });
 
@@ -173,18 +165,19 @@ describe('TR hours of training by national center', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          nationalCenter2.name,
-        ],
+        objectiveTrainers: [nationalCenter2.name],
       },
     });
 
     // training report 3 (sessions not completed)
-    trainingReport3 = await createTrainingReport({
-      collaboratorIds: [userCollaborator.id],
-      pocIds: [userPoc.id],
-      ownerId: userCreator.id,
-    }, { individualHooks: false });
+    trainingReport3 = await createTrainingReport(
+      {
+        collaboratorIds: [userCollaborator.id],
+        pocIds: [userPoc.id],
+        ownerId: userCreator.id,
+      },
+      { individualHooks: false }
+    );
 
     // - session report 5
     await createSessionReport({
@@ -279,12 +272,8 @@ describe('TR hours of training by national center', () => {
   it('filters and calculates hours of training by national center', async () => {
     // Confine this to the grants and reports that we created
     const scopes = {
-      grant: [
-        { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-      ],
-      trainingReport: [
-        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
-      ],
+      grant: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
     };
 
     // run our function
@@ -295,5 +284,73 @@ describe('TR hours of training by national center', () => {
 
     const center2 = data.find((d) => nationalCenter2.name === d.name);
     expect(center2.count).toBe(3);
+  });
+
+  it('ignores trainers that do not match any national center', async () => {
+    // Create a session report with a trainer that doesn't match any national center
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 2,
+        recipients: [{ value: grant1.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 10,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        objectiveTrainers: [
+          'Unknown Trainer Name That Does Not Match',
+          'Another Unrecognized Center',
+        ],
+      },
+    });
+
+    const scopes = {
+      grant: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
+    };
+
+    // run our function
+    const data = await trHoursOfTrainingByNationalCenter(scopes);
+
+    // The unknown trainers should not cause any errors
+    // The counts for known centers should remain the same
+    const center1 = data.find((d) => nationalCenter1.name === d.name);
+    expect(center1.count).toBe(3);
+
+    const center2 = data.find((d) => nationalCenter2.name === d.name);
+    expect(center2.count).toBe(3);
+
+    // Verify the unmatched trainer names are not in the results
+    const unknownTrainer = data.find((d) => d.name === 'Unknown Trainer Name That Does Not Match');
+    expect(unknownTrainer).toBeUndefined();
+  });
+
+  it('handles session with null objectiveTrainers', async () => {
+    // Create a session report with null objectiveTrainers
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 10,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        objectiveTrainers: null,
+      },
+    });
+
+    const scopes = {
+      grant: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
+    };
+
+    // run our function - should not throw
+    const data = await trHoursOfTrainingByNationalCenter(scopes);
+
+    // Should return data without errors
+    expect(Array.isArray(data)).toBe(true);
   });
 });

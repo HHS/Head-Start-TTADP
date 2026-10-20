@@ -1,6 +1,4 @@
-const {
-  Model,
-} = require('sequelize');
+const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
   class Permission extends Model {
@@ -10,28 +8,31 @@ export default (sequelize, DataTypes) => {
       Permission.belongsTo(models.Scope, { foreignKey: 'scopeId', as: 'scope' });
     }
   }
-  Permission.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
+  Permission.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      regionId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      userId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      scopeId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
-    regionId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    userId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    scopeId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  }, {
-    sequelize,
-    modelName: 'Permission',
-  });
+    {
+      sequelize,
+      modelName: 'Permission',
+    }
+  );
   return Permission;
 };

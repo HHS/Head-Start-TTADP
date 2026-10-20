@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import './Pill.scss';
 
 export default function Pill({ children, className, type }) {
@@ -7,16 +7,9 @@ export default function Pill({ children, className, type }) {
     success: 'bg-success-darker text-white',
   };
 
-  const classNames = [
-    'ttahub-pill',
-    'radius-pill',
-    className,
-    typeClasses[type] || '',
-  ].join(' ');
+  const classNames = ['ttahub-pill', 'radius-pill', className, typeClasses[type] || ''].join(' ');
 
-  return (
-    <span className={classNames}>{children}</span>
-  );
+  return <span className={classNames}>{children}</span>;
 }
 
 Pill.propTypes = {

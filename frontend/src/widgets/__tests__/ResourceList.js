@@ -1,13 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import ResourceList from '../ResourceList';
 
 const renderResourceList = (data) => {
-  render(<ResourceList
-    data={data}
-    loading={false}
-  />);
+  render(<ResourceList data={data} loading={false} />);
 };
 
 describe('Resource List Widget', () => {
@@ -18,7 +15,9 @@ describe('Resource List Widget', () => {
     expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
     expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /number of participants/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
   });
 
@@ -44,7 +43,9 @@ describe('Resource List Widget', () => {
     expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
     expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /number of participants/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /resource one/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /4/i })).toBeInTheDocument();
@@ -134,9 +135,15 @@ describe('Resource List Widget', () => {
     expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
     expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /number of participants/i })
+    ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /resource 10 is a very very very long resource and should not cut off the text/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('cell', {
+        name: /resource 10 is a very very very long resource and should not cut off the text/i,
+      })
+    ).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /999,999/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /777,777/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /888,888/i })).toBeInTheDocument();

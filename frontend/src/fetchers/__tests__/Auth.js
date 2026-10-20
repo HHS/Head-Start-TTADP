@@ -1,7 +1,7 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 
-import { fetchUser, fetchLogout } from '../Auth';
+import { fetchLogout, fetchUser } from '../Auth';
 
 describe('Auth', () => {
   afterEach(() => fetchMock.restore());

@@ -1,27 +1,24 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
-import {
-  CURATED_CREATION,
-} from '../constants';
-import { saveStandardGoalsForReport } from '../services/standardGoals';
+import { CURATED_CREATION } from '../constants';
 import db, {
-  User,
-  Goal,
-  Grant,
-
   ActivityReportGoal,
-  Recipient,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
   ActivityReportGoalFieldResponse,
+  Goal,
+  GoalFieldResponse,
   GoalTemplate,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Recipient,
+  User,
 } from '../models';
-import { createReport, destroyReport } from '../testUtils';
 import goal from '../models/goal';
+import { saveStandardGoalsForReport } from '../services/standardGoals';
+import { createReport, destroyReport } from '../testUtils';
 
 const mockUser = {
-  id: faker.datatype.number({ min: 9999 }),
+  id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
   homeRegionId: 1,
   name: 'user942571',
   hsesUsername: 'user942571',
@@ -63,10 +60,7 @@ describe('saveGoalsForReport multi recipient', () => {
 
     // Create goal template.
     const secret = 'secret';
-    const hash = crypto
-      .createHmac('md5', secret)
-      .update(templateName)
-      .digest('hex');
+    const hash = crypto.createHmac('md5', secret).update(templateName).digest('hex');
 
     goalTemplate = await GoalTemplate.create({
       hash,
@@ -76,21 +70,21 @@ describe('saveGoalsForReport multi recipient', () => {
 
     // Create recipients.
     multiRecipientRecipientA = await Recipient.create({
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     multiRecipientRecipientB = await Recipient.create({
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      name: faker.company.name(),
       uei: 'NNA5N2KHMGN2',
     });
 
     // Create grants.
     multiRecipientGrantOneA = await Grant.create({
-      id: faker.datatype.number({ min: 9999 }),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      number: faker.string.sample(),
       recipientId: multiRecipientRecipientA.id,
       regionId: 1,
       startDate: new Date(),
@@ -99,8 +93,8 @@ describe('saveGoalsForReport multi recipient', () => {
     });
 
     multiRecipientGrantOneB = await Grant.create({
-      id: faker.datatype.number({ min: 9999 }),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      number: faker.string.sample(),
       recipientId: multiRecipientRecipientA.id,
       regionId: 1,
       startDate: new Date(),
@@ -109,8 +103,8 @@ describe('saveGoalsForReport multi recipient', () => {
     });
 
     multiRecipientGrantTwo = await Grant.create({
-      id: faker.datatype.number({ min: 9999 }),
-      number: faker.datatype.string(),
+      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      number: faker.string.sample(),
       recipientId: multiRecipientRecipientB.id,
       regionId: 1,
       startDate: new Date(),
@@ -283,11 +277,7 @@ describe('saveGoalsForReport multi recipient', () => {
           label: 'One fei goal to rule them all',
           isNew: false,
           goalTemplateId: goalTemplate.id,
-          goalIds: [
-            multiRecipientGoalOneA.id,
-            multiRecipientGoalOneB.id,
-            multiRecipientGoalTwo.id,
-          ],
+          goalIds: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
           grantIds: [
             multiRecipientGrantOneA.id,
             multiRecipientGrantOneB.id,
@@ -298,9 +288,9 @@ describe('saveGoalsForReport multi recipient', () => {
           regionId: 1,
           source: 'Regional office priority',
           createdVia: 'activityReport',
-        }],
-      user.id,
-      { id: multiRecipientActivityReport.id },
+        },
+      ],
+      { id: multiRecipientActivityReport.id }
     );
 
     // Retrieve ActivityReportGoals.
@@ -321,7 +311,11 @@ describe('saveGoalsForReport multi recipient', () => {
 
     // Check the response.
     const response = activityReportGoalFieldResponses.map((arg) => arg.response);
-    expect(response).toContainEqual(['Family Circumstance', 'Facilities', 'Other ECE Care Options']);
+    expect(response).toContainEqual([
+      'Family Circumstance',
+      'Facilities',
+      'Other ECE Care Options',
+    ]);
     expect(response).toContainEqual([]);
     expect(response).toContainEqual(['Facilities']);
 
@@ -363,8 +357,7 @@ describe('saveGoalsForReport multi recipient', () => {
           ],
         },
       ],
-      user.id,
-      { id: multiRecipientActivityReport.id },
+      { id: multiRecipientActivityReport.id }
     );
 
     activityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll({
@@ -384,11 +377,7 @@ describe('saveGoalsForReport multi recipient', () => {
     // We do expect the goal field responses to be updated.
     const updatedGoalFieldResponses = await GoalFieldResponse.findAll({
       where: {
-        goalId: [
-          multiRecipientGoalOneA.id,
-          multiRecipientGoalOneB.id,
-          multiRecipientGoalTwo.id,
-        ],
+        goalId: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
       },
     });
 

@@ -1,21 +1,16 @@
+import { Checkbox, Dropdown } from '@trussworks/react-uswds';
+import { isEqual, uniq, uniqBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Checkbox, Dropdown } from '@trussworks/react-uswds';
-import { uniqBy, isEqual, uniq } from 'lodash';
-import MultiSelect from '../../MultiSelect';
 import FormItem from '../../FormItem';
-import { useLogContext } from './LogContext';
 import GroupAlert from '../../GroupAlert';
+import MultiSelect from '../../MultiSelect';
+import { useLogContext } from './LogContext';
 
 export default function CommunicationRecipients() {
   const [showGroupAlert, setShowGroupAlert] = useState(false);
   const { recipients, groups } = useLogContext();
-  const {
-    register,
-    control,
-    setValue,
-    watch,
-  } = useFormContext();
+  const { register, control, setValue, watch } = useFormContext();
   const [useGroup, setUseGroup] = useState(false);
   const recipientsSelected = watch('recipients');
   const recipientGroup = watch('recipientGroup');
@@ -39,31 +34,36 @@ export default function CommunicationRecipients() {
     }
 
     if (
-      useGroup
-      && !isEqual(recipientsSelected.map((r) => r.value), recipientsInGroup)
-      && !showGroupAlert
+      useGroup &&
+      !isEqual(
+        recipientsSelected.map((r) => r.value),
+        recipientsInGroup
+      ) &&
+      !showGroupAlert
     ) {
       setShowGroupAlert(true);
-    } else if (useGroup && isEqual(recipientsSelected.map((r) => r.value), recipientsInGroup)) {
+    } else if (
+      useGroup &&
+      isEqual(
+        recipientsSelected.map((r) => r.value),
+        recipientsInGroup
+      )
+    ) {
       setShowGroupAlert(false);
     }
-  }, [
-    recipientGroup,
-    recipientsInGroup,
-    recipientsSelected,
-    setValue,
-    showGroupAlert,
-    useGroup,
-  ]);
+  }, [recipientGroup, recipientsInGroup, recipientsSelected, setValue, showGroupAlert, useGroup]);
 
   const handleGroupSelection = (groupId) => {
     const selectedGroup = groups.find((group) => group.id === groupId);
 
     if (selectedGroup) {
-      const selectedRecipients = uniqBy(selectedGroup.grants.map((gr) => {
-        const { id: value, name: label } = gr.recipient;
-        return { value, label };
-      }), 'value');
+      const selectedRecipients = uniqBy(
+        selectedGroup.grants.map((gr) => {
+          const { id: value, name: label } = gr.recipient;
+          return { value, label };
+        }),
+        'value'
+      );
 
       setValue('recipients', selectedRecipients);
     }
@@ -79,13 +79,10 @@ export default function CommunicationRecipients() {
 
   return (
     <div className="margin-top-2">
-      {showGroupAlert && (<GroupAlert resetGroup={onResetGroup} />)}
+      {showGroupAlert && <GroupAlert resetGroup={onResetGroup} />}
       {useGroup ? (
         <div className="margin-top-2">
-          <FormItem
-            label="Group name"
-            name="recipientGroup"
-          >
+          <FormItem label="Group name" name="recipientGroup">
             <Dropdown
               required
               control={control}
@@ -95,18 +92,19 @@ export default function CommunicationRecipients() {
               onChange={onSelectGroup}
               defaultValue=""
             >
-              <option value="" disabled>- Select -</option>
+              <option value="" disabled>
+                - Select -
+              </option>
               {groups.map((group) => (
-                <option key={group.id} value={group.id}>{group.name}</option>
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
               ))}
             </Dropdown>
           </FormItem>
         </div>
       ) : (
-        <FormItem
-          label="Recipients"
-          name="recipients"
-        >
+        <FormItem label="Recipients" name="recipients">
           <MultiSelect
             control={control}
             simple={false}
@@ -133,22 +131,18 @@ export default function CommunicationRecipients() {
       </div>
 
       {useGroup && (
-      <FormItem
-        label="Recipients"
-        name="recipients"
-      >
-        <MultiSelect
-          control={control}
-          simple={false}
-          name="recipients"
-          id="recipients"
-          options={recipientOptions}
-          required="Select at least one"
-          placeholderText="- Select -"
-        />
-      </FormItem>
+        <FormItem label="Recipients" name="recipients">
+          <MultiSelect
+            control={control}
+            simple={false}
+            name="recipients"
+            id="recipients"
+            options={recipientOptions}
+            required="Select at least one"
+            placeholderText="- Select -"
+          />
+        </FormItem>
       )}
-
     </div>
   );
 }

@@ -1,30 +1,22 @@
 /* eslint-disable react/prop-types */
+
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import RestartStandardGoalObjectives from '../RestartStandardGoalObjectives';
+import { FormProvider, useForm } from 'react-hook-form';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import RestartStandardGoalObjectives from '../RestartStandardGoalObjectives';
 
 const RTest = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
+    <FormProvider {...methods}>{children}</FormProvider>
   );
 };
 
-const renderWithFormProvider = (ui, formData = {}) => render(
-  <RTest defaultValues={formData}>
-    {ui}
-  </RTest>,
-);
+const renderWithFormProvider = (ui, formData = {}) =>
+  render(<RTest defaultValues={formData}>{ui}</RTest>);
 
 const mockOptions = [
   { id: 1, title: 'Objective 1' },
@@ -43,7 +35,7 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByText('Add new objective')).toBeInTheDocument();
@@ -62,7 +54,7 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
     expect(await screen.findByRole('heading', { name: 'Objectives' })).toBeInTheDocument();
@@ -72,7 +64,10 @@ describe('RestartStandardGoalObjectives', () => {
     const formData = {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [
         {
-          value: 'Test Objective', objectiveId: 1, label: 'Objective 1', onAR: true,
+          value: 'Test Objective',
+          objectiveId: 1,
+          label: 'Objective 1',
+          onAR: true,
         },
       ],
     };
@@ -82,7 +77,7 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
     expect(screen.getByText('Objectives used on reports cannot be edited.')).toBeInTheDocument();
@@ -92,7 +87,10 @@ describe('RestartStandardGoalObjectives', () => {
     const formData = {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [
         {
-          value: 'Test Objective', objectiveId: 1, label: 'Objective 1', onAR: false,
+          value: 'Test Objective',
+          objectiveId: 1,
+          label: 'Objective 1',
+          onAR: false,
         },
       ],
     };
@@ -102,10 +100,12 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
-    expect(screen.queryByText('Objectives used on reports cannot be edited.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Objectives used on reports cannot be edited.')
+    ).not.toBeInTheDocument();
   });
 
   it('adds new objective when plus button is clicked', () => {
@@ -118,7 +118,7 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
     const addButton = screen.getByText('Add new objective');
@@ -140,7 +140,7 @@ describe('RestartStandardGoalObjectives', () => {
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
         options={mockOptions}
       />,
-      formData,
+      formData
     );
 
     const removeButtons = screen.getAllByText('Remove this objective');

@@ -1,16 +1,11 @@
 import { Op } from 'sequelize';
-import {
-  remap,
-  collectChangedValues,
-  lowercaseKeys,
-  createRanges,
-} from '../dataObjectUtils';
+import { auditLogger } from '../../logger';
+import db from '../../models';
+import { collectChangedValues, createRanges, lowercaseKeys, remap } from '../dataObjectUtils';
 import { filterDataToModel, modelForTable } from '../modelUtils';
 import { getHash } from '../stream/hasher';
-import XMLStream from '../stream/xml';
-import db from '../../models';
-import { auditLogger } from '../../logger';
-import { ProcessDefinition } from './types';
+import type XMLStream from '../stream/xml';
+import type { ProcessDefinition } from './types';
 
 /**
  * Process records according to the given process definition and XML client.
@@ -27,21 +22,21 @@ const processRecords = async (
   xmlClient: XMLStream,
   fileDate: Date,
   recordActions: {
-    inserts,
-    updates,
-    deletes,
-    errors,
+    inserts;
+    updates;
+    deletes;
+    errors;
   } = {
     inserts: [],
     updates: [],
     deletes: [],
     errors: [],
-  },
+  }
 ): Promise<{
-  inserts,
-  updates,
-  deletes,
-  errors,
+  inserts;
+  updates;
+  deletes;
+  errors;
 }> => {
   let record;
   try {
@@ -53,7 +48,6 @@ const processRecords = async (
     auditLogger.log('error', ` processRecords getNextObject ${err.message}`, err);
   }
 
-  // @ts-ignore
   let model;
   try {
     model = modelForTable(db, processDefinition.tableName);
@@ -82,25 +76,21 @@ const processRecords = async (
 
       // Format the record data using the remap method
       // This changes the attribute names and structure into what will be saved
-      const { mapped: data } = remap(
-        record,
-        lowercaseKeys(processDefinition.remapDef),
-        {
-          keepUnmappedValues: false,
-          // defines a custom fuction that will replace the resulting structure
-          // with the result of each function.
-          targetFunctions: {
-            // take in an object and generate a hash of that object
-            'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
-          },
+      const { mapped: data } = remap(record, lowercaseKeys(processDefinition.remapDef), {
+        keepUnmappedValues: false,
+        // defines a custom fuction that will replace the resulting structure
+        // with the result of each function.
+        targetFunctions: {
+          // take in an object and generate a hash of that object
+          'toHash.*': (toHash) => ({ hash: getHash(toHash) }),
         },
-      );
+      });
 
       // Filter the data to match the expected model
-      const {
-        matched: filteredData,
-        unmatched: droppedData,
-      } = await filterDataToModel(data, model);
+      const { matched: filteredData, unmatched: droppedData } = await filterDataToModel(
+        data,
+        model
+      );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
@@ -135,7 +125,7 @@ const processRecords = async (
           {
             individualHooks: true,
             returning: true,
-          },
+          }
         );
         recordActions.inserts.push(insert);
       } else if (fileDate > currentData.sourceUpdatedAt) {
@@ -152,7 +142,7 @@ const processRecords = async (
             where: { id: currentData.id },
             individualHooks: true,
             returning: true,
-          },
+          }
         );
         recordActions.updates.push(update);
       }
@@ -169,10 +159,7 @@ const processRecords = async (
       // 3. recordActions.delete.push(promises)
       // 4. pass back recordActions
 
-      const [
-        affectedDataInserts,
-        affectedDataUpdates,
-      ] = await Promise.all([
+      const [affectedDataInserts, affectedDataUpdates] = await Promise.all([
         Promise.all(recordActions.inserts),
         Promise.all(recordActions.updates),
       ]);
@@ -180,14 +167,11 @@ const processRecords = async (
       // Flatten the affectedDataUpdates array and extract the objects
       const flattenedUpdates = affectedDataUpdates.flatMap(
         // Assuming the second element of each sub-array is the array of objects
-        (update) => (Array.isArray(update[1]) ? update[1] : []),
+        (update) => (Array.isArray(update[1]) ? update[1] : [])
       );
 
       // Combine the affected data from inserts and flattened updates
-      const affectedData = [
-        ...affectedDataInserts,
-        ...flattenedUpdates,
-      ];
+      const affectedData = [...affectedDataInserts, ...flattenedUpdates];
 
       const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || [];
       const affectedRanges = createRanges(affectedDataIds);
@@ -207,7 +191,7 @@ const processRecords = async (
               sourceDeletedAt: null,
             },
             individualHooks: true,
-          },
+          }
         );
 
         recordActions.deletes.push(destroys);
@@ -222,12 +206,7 @@ const processRecords = async (
   }
 
   // Recursively call the processRecords function to process the next record
-  return processRecords(
-    processDefinition,
-    xmlClient,
-    fileDate,
-    recordActions,
-  );
+  return processRecords(processDefinition, xmlClient, fileDate, recordActions);
 };
 
 export default processRecords;

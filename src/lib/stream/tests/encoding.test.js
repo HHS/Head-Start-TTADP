@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import * as chardet from 'chardet';
+import { Readable } from 'stream';
 import EncodingConverter from '../encoding';
 
 jest.mock('chardet');
@@ -64,8 +64,9 @@ describe('EncodingConverter', () => {
   it('should handle errors during conversion', () => {
     const invalidEncoding = 'invalid-encoding';
     // Wrap the instantiation in a function so that toThrow can catch the error.
-    expect(() => new EncodingConverter(invalidEncoding))
-      .toThrow(`Unsupported encoding detected: ${invalidEncoding}`);
+    expect(() => new EncodingConverter(invalidEncoding)).toThrow(
+      `Unsupported encoding detected: ${invalidEncoding}`
+    );
   });
 
   it('should process remaining buffer on flush', () => {
@@ -162,7 +163,9 @@ describe('EncodingConverter', () => {
         expect(error).toBeUndefined();
         expect(pushSpy).toHaveBeenCalled();
         // eslint-disable-next-line max-len
-        const result = Buffer.concat(pushSpy.mock.calls.map((call) => call[0])).toString(targetEncoding);
+        const result = Buffer.concat(pushSpy.mock.calls.map((call) => call[0])).toString(
+          targetEncoding
+        );
         expect(result).toBe('Hello, world!');
         resolve();
       });
@@ -214,8 +217,9 @@ describe('EncodingConverter', () => {
     const targetEncoding = 'utf-8';
     const unsupportedSourceEncoding = 'unsupported-encoding';
 
-    expect(() => new EncodingConverter(targetEncoding, unsupportedSourceEncoding))
-      .toThrow(`Unsupported encoding detected: ${unsupportedSourceEncoding}`);
+    expect(() => new EncodingConverter(targetEncoding, unsupportedSourceEncoding)).toThrow(
+      `Unsupported encoding detected: ${unsupportedSourceEncoding}`
+    );
   });
 
   it('should detect encoding when buffer length is >= 1024', () => {

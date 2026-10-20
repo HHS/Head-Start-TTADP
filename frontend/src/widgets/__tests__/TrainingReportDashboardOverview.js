@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { TrainingReportDashboardOverview } from '../TrainingReportDashboardOverview';
 
 describe('TrainingReportDashboardOverview', () => {
@@ -19,7 +19,11 @@ describe('TrainingReportDashboardOverview', () => {
     expect(screen.getAllByText('0')).toHaveLength(3);
     expect(screen.getByText('0 sessions')).toBeInTheDocument();
     expect(screen.getAllByText('0%')).toHaveLength(1);
-    expect(screen.getByText('Recipients have at least one active grant click to visually reveal this information')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Recipients have at least one active grant click to visually reveal this information'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Grants served')).toBeInTheDocument();
     expect(screen.getByText('across 0 Training Reports')).toBeInTheDocument();
     expect(screen.getByText('Participants')).toBeInTheDocument();
@@ -45,7 +49,11 @@ describe('TrainingReportDashboardOverview', () => {
     expect(screen.getByText('6')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
 
-    expect(screen.getByText('Recipients have at least one active grant click to visually reveal this information')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Recipients have at least one active grant click to visually reveal this information'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('Grants served')).toBeInTheDocument();
     expect(screen.getByText('across 2 Training Reports')).toBeInTheDocument();
     expect(screen.getByText('Participants')).toBeInTheDocument();

@@ -12,16 +12,12 @@ WHERE "Recipients".NAME`;
 
 export function withRecipientName(names) {
   return {
-    [Op.and]: [
-      filterAssociation(recipientName, names, false),
-    ],
+    [Op.and]: [filterAssociation(recipientName, names, false)],
   };
 }
 
 export function withoutRecipientName(names) {
   return {
-    [Op.and]: [
-      filterAssociation(recipientName, names, true),
-    ],
+    [Op.and]: [filterAssociation(recipientName, names, true)],
   };
 }

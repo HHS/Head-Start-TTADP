@@ -1,19 +1,17 @@
-import React from 'react';
-import moment from 'moment';
-import join from 'url-join';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TRAINING_REPORT_STATUSES, SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, SCOPE_IDS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import SessionForm from '..';
-import UserContext from '../../../UserContext';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
+import UserContext from '../../../UserContext';
+import SessionForm from '..';
 import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
@@ -47,6 +45,9 @@ const istAndPocFields = {
   supportingAttachments: [],
   recipientNextSteps: [],
   specialistNextSteps: [],
+  otherTrainers: '',
+  approvalStatus: '',
+  ttaType: [],
   pocComplete: false,
   collabComplete: false,
   istSelectionComplete: false,
@@ -102,8 +103,8 @@ const completeFormData = {
   deliveryMethod: 'In-person',
   numberOfParticipants: 1,
   ttaProvided: 'oH YEAH',
-  specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
-  recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+  specialistNextSteps: [{ note: 'A', completeDate: '01/02/2024' }],
+  recipientNextSteps: [{ note: 'B', completeDate: '01/02/2024' }],
 };
 
 describe('SessionReportForm', () => {
@@ -114,22 +115,25 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    user = { user: { id: 1, permissions: [], name: 'Ted User' } },
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={user}>
-          <SessionForm match={{
-            params: { currentPage, trainingReportId, sessionId },
-            isExact: true,
-            path: `/:trainingReportId/session/:sessionId/${currentPage}`,
-            url: `/${trainingReportId}/session/${sessionId}/${currentPage}`,
-          }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } },
+    setIsAppLoading = jest.fn()
+  ) =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
+          <UserContext.Provider value={user}>
+            <SessionForm
+              match={{
+                params: { currentPage, trainingReportId, sessionId },
+                isExact: true,
+                path: `/:trainingReportId/session/:sessionId/${currentPage}`,
+                url: `/${trainingReportId}/session/${sessionId}/${currentPage}`,
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -141,12 +145,10 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/topic', [{ id: 1, name: 'Behavioral Health' }]);
     fetchMock.get('/api/users/statistics', {});
     fetchMock.get('/api/courses', []);
-    fetchMock.get('/api/national-center', [
-      'DTL',
-      'HBHS',
-      'PFCE',
-      'PFMO',
-    ].map((name, id) => ({ id, name })));
+    fetchMock.get(
+      '/api/national-center',
+      ['DTL', 'HBHS', 'PFCE', 'PFMO'].map((name, id) => ({ id, name }))
+    );
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
@@ -163,6 +165,13 @@ describe('SessionReportForm', () => {
     ]);
     fetchMock.get('/api/session-reports/participants/1', []);
     fetchMock.get('/api/session-reports/groups?region=1', []);
+    fetchMock.get('/api/events/id/1?readOnly=true', {
+      data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -189,9 +198,84 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
 
-    await waitFor(() => {
-      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+  });
+
+  it.each([
+    ['owner', { ownerId: 1, collaboratorIds: [], pocIds: [] }],
+    ['collaborator', { ownerId: 2, collaboratorIds: [1], pocIds: [] }],
+    ['POC', { ownerId: 2, collaboratorIds: [], pocIds: [1] }],
+    ['admin', { ownerId: 2, collaboratorIds: [], pocIds: [] }],
+  ])(
+    'routes a %s through facilitation before creating an NC event session',
+    async (role, eventRoles) => {
+      history.replace('/training-report/1/session/new/');
+      fetchMock.get(
+        '/api/events/id/1?readOnly=true',
+        {
+          ...eventRoles,
+          data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+        },
+        { overwriteRoutes: true }
+      );
+      const user = {
+        user: {
+          id: 1,
+          roles: [],
+          permissions: role === 'admin' ? [{ scopeId: SCOPE_IDS.ADMIN }] : [],
+        },
+      };
+      const setIsAppLoading = jest.fn();
+      const redirect = jest.spyOn(history, 'replace');
+
+      renderSessionForm('1', undefined, 'new', user, setIsAppLoading);
+
+      await waitFor(() =>
+        expect(history.location.pathname).toBe('/training-report/1/session/new/choose-facilitation')
+      );
+      expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(false);
+      const clearLoaderCall = setIsAppLoading.mock.calls.findIndex(
+        ([loading]) => loading === false
+      );
+      const facilitationRedirectCall = redirect.mock.calls.findIndex(
+        ([path]) => path === '/training-report/1/session/new/choose-facilitation'
+      );
+      expect(clearLoaderCall).not.toBe(-1);
+      expect(facilitationRedirectCall).not.toBe(-1);
+      expect(setIsAppLoading.mock.invocationCallOrder[clearLoaderCall]).toBeLessThan(
+        redirect.mock.invocationCallOrder[facilitationRedirectCall]
+      );
+    }
+  );
+
+  it('still creates a session when the user cannot read the event', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', 403, { overwriteRoutes: true });
+    fetchMock.post(sessionsUrl, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: '1',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+    await act(async () => {
+      renderSessionForm('1', undefined, 'new');
+    });
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
   });
 
   it('handles an error creating a new report', async () => {
@@ -217,25 +301,23 @@ describe('SessionReportForm', () => {
     jest.useFakeTimers();
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventName: 'Tis an event',
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventName: 'Tis an event',
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -250,9 +332,7 @@ describe('SessionReportForm', () => {
   it('sets response error', async () => {
     const url = join(sessionsUrl, 'id', '1');
     const spy = jest.spyOn(history, 'push');
-    fetchMock.get(
-      url, 500,
-    );
+    fetchMock.get(url, 500);
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
     });
@@ -264,24 +344,22 @@ describe('SessionReportForm', () => {
   it('saves draft', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -297,27 +375,61 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
 
+  it('does not save a draft with a next step date on or before the session start date', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {
+        ...istAndPocFields,
+        startDate: '10/24/2026',
+        specialistNextSteps: [{ note: 'Follow up', completeDate: '10/01/2026' }],
+        recipientNextSteps: [{ note: 'Follow up', completeDate: '10/25/2026' }],
+      },
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    renderSessionForm('1', 'next-steps', '1');
+
+    await screen.findByLabelText(/When do you anticipate completing step 1/i);
+    userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+    expect(
+      await screen.findByText('Next step date must be after the session start date')
+    ).toBeInTheDocument();
+    expect(fetchMock.called(url, { method: 'put' })).toBe(false);
+  });
+
   it('handles error saving draft', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -334,27 +446,145 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/There was an error saving the session/i)).toBeInTheDocument();
   });
 
+  it.each([
+    ['', 'national_center'],
+    ['national_center', 'both'],
+    ['both', 'regional_tta_staff'],
+  ])(
+    'admin saves facilitation from "%s" to "%s" and restores approver options',
+    async (initial, next) => {
+      const url = join(sessionsUrl, 'id', '1');
+      let session = {
+        id: 1,
+        eventId: '1',
+        regionId: 1,
+        data: { ...istAndPocFields, facilitation: initial },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
+          data: {
+            eventId: '1',
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        },
+      };
+      fetchMock.get(url, () => session);
+      fetchMock.put(url, (_url, options) => {
+        const { data } = JSON.parse(options.body);
+        session = { ...session, data, updatedAt: new Date().toISOString() };
+        return session;
+      });
+      const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+      const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+      const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+      expect(field).toHaveValue(initial);
+      userEvent.selectOptions(field, next);
+      userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+      expect(session.data.facilitation).toBe(next);
+      expect(session.data.sessionName).toBe(istAndPocFields.sessionName);
+      expect(session.data.collabComplete).toBe(false);
+      expect(session.data.approverId).toBe('');
+
+      unmount();
+      renderSessionForm('1', 'review', '1', adminUser);
+      await screen.findByRole('option', { name: 'Approver Name' });
+      expect(screen.getByRole('combobox', { name: /approving manager/i })).toBeInTheDocument();
+    }
+  );
+
+  it('clears a regional approver and completion flags when an admin switches to NC facilitation', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    fetchMock.get(
+      '/api/users/trainers/regional/region/1',
+      [{ id: 4, fullName: 'Regional Manager', roles: [{ name: 'ECM' }] }],
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      '/api/users/trainers/national-center/region/1',
+      [{ id: 5, fullName: 'NC Approver', roles: [{ name: 'NC' }] }],
+      { overwriteRoutes: true }
+    );
+    let session = {
+      id: 1,
+      eventId: '1',
+      regionId: 1,
+      approverId: 4,
+      data: {
+        ...istAndPocFields,
+        facilitation: 'regional_tta_staff',
+        approverId: 4,
+        collabComplete: true,
+        pocComplete: true,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [],
+        data: { eventId: '1', eventOrganizer: 'Regional PD Event (with National Centers)' },
+      },
+    };
+    let putBody;
+    fetchMock.get(url, () => session);
+    fetchMock.put(url, (_url, options) => {
+      putBody = JSON.parse(options.body).data;
+      session = {
+        ...session,
+        approverId: null,
+        data: putBody,
+        updatedAt: new Date().toISOString(),
+      };
+      return session;
+    });
+    const adminUser = { user: { id: 1, permissions: [{ scopeId: SCOPE_IDS.ADMIN }], roles: [] } };
+    const { unmount } = renderSessionForm('1', 'session-summary', '1', adminUser);
+
+    const field = await screen.findByRole('combobox', { name: /training facilitation/i });
+    userEvent.selectOptions(field, 'national_center');
+    userEvent.click(screen.getByRole('button', { name: /save draft/i }));
+
+    await waitFor(() => expect(putBody).toBeDefined());
+    expect(putBody).toEqual(
+      expect.objectContaining({
+        facilitation: 'national_center',
+        approverId: '',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      })
+    );
+
+    unmount();
+    renderSessionForm('1', 'review', '1', adminUser);
+    await screen.findByRole('option', { name: 'NC Approver' });
+    expect(screen.queryByRole('option', { name: 'Regional Manager' })).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /approving manager/i })).toHaveValue('');
+  });
+
   it('saves on save and continue', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -374,26 +604,24 @@ describe('SessionReportForm', () => {
   it('redirects when user is a POC without regional facilitation', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {
+        facilitation: 'national_center',
+      },
+      event: {
         regionId: 1,
+        ownerId: 2,
+        pocIds: [1],
+        collaboratorIds: [],
         data: {
-          facilitation: 'national_center',
-        },
-        event: {
-          regionId: 1,
-          ownerId: 2,
-          pocIds: [1],
-          collaboratorIds: [],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional PD Event (with National Centers)',
-          },
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -409,26 +637,24 @@ describe('SessionReportForm', () => {
   it('renders all the pages for a POC without regional facilitation', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {
+        facilitation: 'national_center',
+      },
+      event: {
         regionId: 1,
+        ownerId: 2,
+        pocIds: [1],
+        collaboratorIds: [],
         data: {
-          facilitation: 'national_center',
-        },
-        event: {
-          regionId: 1,
-          ownerId: 2,
-          pocIds: [1],
-          collaboratorIds: [],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional PD Event (with National Centers)',
-          },
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'participants', '1');
@@ -445,25 +671,23 @@ describe('SessionReportForm', () => {
   it('automatically sets the status to "In progress" when the session is submitted and has a current status of "Not started"', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            status: 'Not started',
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          status: 'Not started',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -487,25 +711,23 @@ describe('SessionReportForm', () => {
   it('automatically sets the status to "In progress" when the session is saved and has a current status of "Not started"', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            status: 'Not started',
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          status: 'Not started',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -529,55 +751,53 @@ describe('SessionReportForm', () => {
   it('sets poc complete values on submit', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        ...completeFormData,
-        id: 1,
-        data: {
-          sessionName: 'Test session',
-          duration: 1,
-          context: 'test context',
-          objective: 'test objective',
-          objectiveTopics: ['topic'],
-          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
-          numberOfParticipants: 1,
-          deliveryMethod: 'In-person',
-          language: ['English'],
-          ttaType: ['training'],
-          recipients: [1],
-          participants: [1],
-          ttaProvided: 'test tta provided',
-          objectiveSupportType: 'Planning',
-          regionId: 1,
-          specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-          recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-          startDate: '01/01/2024',
-          endDate: '01/01/2024',
-          'pageVisited-supporting-attachments': true,
-          pageState: {
-            1: COMPLETE,
-            2: COMPLETE,
-            3: COMPLETE,
-            4: COMPLETE,
-          },
-        },
-        facilitation: 'regional_tta_staff',
-        author: { id: 1, fullName: 'Ted User' },
-        approverId: 3,
-        approver: { id: 3, fullName: 'Approver Name' },
-        status: 'In progress',
-        event: {
-          regionId: 1,
-          ownerId: 2,
-          pocIds: [1],
-          collaboratorIds: [],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional PD Event (with National Centers)',
-          },
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        numberOfParticipants: 1,
+        deliveryMethod: 'In-person',
+        language: ['English'],
+        ttaType: ['training'],
+        recipients: [1],
+        participants: [1],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        'pageVisited-supporting-attachments': true,
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
         },
       },
-    );
+      facilitation: 'regional_tta_staff',
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [1],
+        collaboratorIds: [],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
 
     act(() => {
       renderSessionForm('1', 'review', '1');
@@ -585,9 +805,12 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    await waitFor(() => {
-      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     fetchMock.put(url, { eventId: 1 });
 
@@ -604,54 +827,52 @@ describe('SessionReportForm', () => {
   it('sets owner complete values on submit', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        ...completeFormData,
-        id: 1,
-        data: {
-          sessionName: 'Test session',
-          duration: 1,
-          context: 'test context',
-          objective: 'test objective',
-          objectiveTopics: ['topic'],
-          trainers: [{ id: 1, fullName: 'Trainer, NC' }],
-          numberOfParticipants: 1,
-          deliveryMethod: 'In-person',
-          language: ['English'],
-          ttaType: ['training'],
-          recipients: [1],
-          participants: [1],
-          ttaProvided: 'test tta provided',
-          objectiveSupportType: 'Planning',
-          regionId: 1,
-          specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-          recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
-          startDate: '01/01/2024',
-          endDate: '01/01/2024',
-          'pageVisited-supporting-attachments': true,
-          pageState: {
-            1: COMPLETE,
-            2: COMPLETE,
-            3: COMPLETE,
-            4: COMPLETE,
-          },
-        },
-        author: { id: 1, fullName: 'Ted User' },
-        approverId: 3,
-        approver: { id: 3, fullName: 'Approver Name' },
-        status: 'In progress',
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [2],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        numberOfParticipants: 1,
+        deliveryMethod: 'In-person',
+        language: ['English'],
+        ttaType: ['training'],
+        recipients: [1],
+        participants: [1],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        'pageVisited-supporting-attachments': true,
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
         },
       },
-    );
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [2],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
 
     act(() => {
       renderSessionForm('1', 'review', '1');
@@ -659,9 +880,12 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    await waitFor(() => {
-      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     fetchMock.put(url, { eventId: 1 });
 
@@ -689,33 +913,205 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
 
+  it('sets ownerComplete (not collabComplete) for the Regional owner in the national center facilitation flow (TTAHUB-5502)', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        numberOfParticipants: 1,
+        deliveryMethod: 'In-person',
+        language: ['English'],
+        ttaType: ['training'],
+        recipients: [1],
+        participants: [1],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/02/2024' }],
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        'pageVisited-supporting-attachments': true,
+        facilitation: 'national_center',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
+        },
+      },
+      facilitation: 'national_center',
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      renderSessionForm('1', 'review', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    fetchMock.put(url, { eventId: 1 });
+
+    // confirm approver dropdown is not preset
+    const approverDropdown = screen.queryByTestId('approver');
+    expect(approverDropdown).toBeNull();
+
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    expect(screen.queryByText('Incomplete report')).not.toBeInTheDocument();
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Owner-side completion is tracked via ownerComplete so the NC
+    // collaborator can keep editing the session summary after the owner
+    // submits.
+    expect(putBodyJson.data.ownerComplete).toBe(true);
+    expect(putBodyJson.data.ownerCompleteId).toBe(1);
+    expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+
+    // collabComplete must NOT be flipped to true by the owner in the national center facilitation flow.
+    expect(putBodyJson.data.collabComplete).not.toBe(true);
+    // pocComplete is removed (POC isn't involved in the national center facilitation flow).
+    expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+  });
+
+  it('NC collaborator submit still writes collabComplete in the national center facilitation flow', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        facilitation: 'national_center',
+        ownerComplete: true,
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
+        },
+      },
+      facilitation: 'national_center',
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 99,
+        pocIds: [],
+        // user 1 is the collaborator (NC user). Owner is someone else.
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      renderSessionForm('1', 'review', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    fetchMock.put(url, { eventId: 1 });
+
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // NC collaborator's submit still writes collabComplete.
+    expect(putBodyJson.data.collabComplete).toBe(true);
+    expect(putBodyJson.data.collabCompleteId).toBe(1);
+    expect(putBodyJson.data.collabCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    // ownerComplete (already true from the owner's prior submit) must be preserved.
+    expect(putBodyJson.data.ownerComplete).toBe(true);
+  });
+
   it('renders all pages for the admin', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
-        eventId: 1,
+    fetchMock.get(url, {
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 2,
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 2,
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     const adminUser = {
       user: {
         id: 1,
-        permissions: [{
-          userId: 1,
-          regionId: 1,
-          scopeId: SCOPE_IDS.ADMIN,
-        }],
+        permissions: [
+          {
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
         name: 'Ted User',
       },
     };
@@ -736,34 +1132,34 @@ describe('SessionReportForm', () => {
     const adminUser = {
       user: {
         id: 1,
-        permissions: [{
-          userId: 1,
-          regionId: 1,
-          scopeId: SCOPE_IDS.ADMIN,
-        }],
+        permissions: [
+          {
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
         name: 'Ted User',
       },
     };
 
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
         eventId: 1,
+        ...istAndPocFields,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 1,
         data: {
           eventId: 1,
-          ...istAndPocFields,
-        },
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1', adminUser);
@@ -783,36 +1179,41 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
     const allKeys = [...istKeys, ...pocKeys];
     allKeys.forEach((key) => {
-      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
   });
 
-  it('calls the resetFormData function with IST and removes POC fields', async () => {
+  it('calls the resetFormData function with IST and removes POC fields for NC owner on national_center facilitation', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
         eventId: 1,
+        ...istAndPocFields,
+      },
+      facilitation: 'national_center',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
         data: {
           eventId: 1,
-          ...istAndPocFields,
-        },
-        facilitation: 'national_center',
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional PD Event (with National Centers)',
-          },
+          eventOrganizer: 'Regional PD Event (with National Centers)',
         },
       },
-    );
+    });
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1');
+      renderSessionForm('1', 'session-summary', '1', {
+        user: {
+          id: 1,
+          permissions: [],
+          name: 'Ted User',
+          roles: [{ name: 'NC' }],
+        },
+      });
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -828,41 +1229,157 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
     // Assert the body has istkey properties using the hasOwnProperty method
-    // Owner (not admin) should only get IST keys, and pocComplete should be removed.
+    // NC Owner (not admin) should only get IST keys, and pocComplete should be removed.
     const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
     istKeysWithoutPocComplete.forEach((key) => {
-      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
     // Assert POC-only fields are NOT present (fields in pocKeys but not in istKeys)
     const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
     pocOnlyKeys.forEach((key) => {
-      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
+    });
+  });
+
+  it('Regional (non-NC) owner on Regional PD w/ NC + national_center facilitation gets POC keys (TTAHUB-5502)', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
+        eventId: 1,
+        ...istAndPocFields,
+      },
+      facilitation: 'national_center',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    // Default mock user has no roles -> isNcUser=false -> Regional owner branch.
+    // Render the first page accessible to a Regional owner under this branch.
+    act(() => {
+      renderSessionForm('1', 'participants', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Regional owner edits POC-side pages now, so the body should contain POC keys.
+    // collabComplete is the owner's flag, so it must still be present.
+    // pocComplete is stripped because removeCompleteDataBaseOnRole deletes it for non-POC users.
+    const pocKeysOwnerWrites = pocKeys.filter(
+      (key) => key !== 'collabComplete' && key !== 'pocComplete'
+    );
+    pocKeysOwnerWrites.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
+    });
+
+    // pocComplete is tracked by POCs, so it must be stripped for a Regional owner.
+    expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+
+    // IST-only fields (Session Summary) must NOT be present for a Regional owner
+    // in this combo, since they no longer have access to the Session Summary page.
+    const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
+    istOnlyKeys.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
+    });
+  });
+
+  it('Regional (non-NC) collaborator on Regional PD w/ NC + national_center facilitation gets IST keys (TTAHUB-5502)', async () => {
+    // Collaborator-only access (TTAHUB-5502) restricts the user to the Session
+    // summary page, so the persisted payload should contain istKeys and exclude
+    // POC-only fields. pocComplete is stripped because the user is not a POC.
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
+        eventId: 1,
+        ...istAndPocFields,
+      },
+      facilitation: 'national_center',
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      // Default mock user has no roles -> isNcUser=false. Collaborator-only branch
+      // (TTAHUB-5502) applies regardless of NC role.
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Collaborator writes IST (session summary) keys. pocComplete is stripped
+    // because the user is not a POC.
+    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
+    istKeysWithoutPocComplete.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
+    });
+
+    // POC-only fields must NOT be persisted by a collaborator-only user.
+    const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
+    pocOnlyKeys.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
     });
   });
 
   it('calls the resetFormData function with POC and removes IST fields', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
-    fetchMock.get(
-      url, {
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
         eventId: 1,
+        ...istAndPocFields,
+        facilitation: 'national_center',
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
         data: {
           eventId: 1,
-          ...istAndPocFields,
-          facilitation: 'national_center',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
         },
-        event: {
-          regionId: 1,
-          ownerId: 2,
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional PD Event (with National Centers)',
-          },
-          pocIds: [1],
-          collaboratorIds: [],
-        },
+        pocIds: [1],
+        collaboratorIds: [],
       },
-    );
+    });
 
     act(() => {
       renderSessionForm('1', 'participants', '1');
@@ -885,13 +1402,15 @@ describe('SessionReportForm', () => {
     // POC (not admin) should only get POC keys, and collabComplete should be removed.
     const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
     pocKeysWithoutcollabComplete.forEach((key) => {
-      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
     // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
     const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
     istOnlyKeys.forEach((key) => {
-      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
     });
+    // POC loads startDate for validation but must not overwrite a newer IST value.
+    expect(Object.hasOwn(putBodyJson.data, 'startDate')).toBe(false);
   });
 
   it('sets reportId.current when session is created', async () => {
@@ -921,9 +1440,12 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
 
     // Verify the form rendered with the created session
-    await waitFor(() => {
-      expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(spy).toHaveBeenCalled();
 
@@ -933,75 +1455,27 @@ describe('SessionReportForm', () => {
     expect(history.location.pathname).toContain('/session/999');
   });
 
-  it('redirects when event owner creates session and user is not admin', async () => {
-    fetchMock.post(sessionsUrl, {
-      id: 999,
+  it('sets reportId.current when existing session is fetched', async () => {
+    jest.useFakeTimers();
+    const url = join(sessionsUrl, 'id', '777');
+
+    fetchMock.get(url, {
+      id: 777,
       eventId: 1,
       regionId: 1,
-      data: {
-        sessionName: 'Test Session Name',
-      },
+      data: {},
       event: {
         regionId: 1,
         ownerId: 1,
         pocIds: [],
         collaboratorIds: [1],
         data: {
-          eventId: 'R01-PD-1234',
+          eventName: 'Unique Event Name 777',
+          eventId: 1,
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
     });
-
-    const pushSpy = jest.spyOn(history, 'push');
-    const replaceSpy = jest.spyOn(history, 'replace');
-
-    await act(async () => {
-      renderSessionForm('1', 'session-summary', 'new');
-    });
-
-    await waitFor(() => expect(fetchMock.called(sessionsUrl, { method: 'POST' })).toBe(true));
-
-    // Verify redirect with message when event owner creates session
-    await waitFor(() => expect(pushSpy).toHaveBeenCalled());
-
-    // Assert history.push was called with correct path and message object
-    expect(pushSpy).toHaveBeenCalledWith('/training-reports/in-progress', {
-      message: expect.objectContaining({
-        messageTemplate: 'sessionCreated',
-        sessionName: 'Test Session Name',
-        eventId: 'R01-PD-1234',
-        dateStr: expect.stringMatching(/\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} [ap]m/),
-      }),
-    });
-
-    // Verify replace was NOT called (mutually exclusive paths)
-    expect(replaceSpy).not.toHaveBeenCalled();
-  });
-
-  it('sets reportId.current when existing session is fetched', async () => {
-    jest.useFakeTimers();
-    const url = join(sessionsUrl, 'id', '777');
-
-    fetchMock.get(
-      url, {
-        id: 777,
-        eventId: 1,
-        regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventName: 'Unique Event Name 777',
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
-        },
-      },
-    );
 
     act(() => {
       renderSessionForm('1', 'session-summary', '777');
@@ -1023,33 +1497,33 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
     const spy = jest.spyOn(history, 'replace');
 
-    fetchMock.get(
-      url, {
-        id: 1,
-        eventId: 1,
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      data: {},
+      event: {
         regionId: 1,
-        data: {},
-        event: {
-          regionId: 1,
-          ownerId: 1,
-          pocIds: [],
-          collaboratorIds: [1],
-          data: {
-            eventId: 1,
-            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-          },
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
       },
-    );
+    });
 
     const adminUser = {
       user: {
         id: 1,
-        permissions: [{
-          userId: 1,
-          regionId: 1,
-          scopeId: SCOPE_IDS.ADMIN,
-        }],
+        permissions: [
+          {
+            userId: 1,
+            regionId: 1,
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
         name: 'Ted User',
       },
     };
@@ -1069,60 +1543,107 @@ describe('SessionReportForm', () => {
     expect(spy).toHaveBeenCalledWith('/training-report/1/session/1/session-summary');
   });
 
+  it('keeps an assigned approver on the editable session section after submission', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const historySpy = jest.spyOn(history, 'push');
+
+    fetchMock.get(url, {
+      id: 1,
+      eventId: 1,
+      regionId: 1,
+      approverId: 3,
+      submitted: true,
+      collabComplete: true,
+      pocComplete: true,
+      data: {
+        ...istAndPocFields,
+        sessionName: 'Submitted session',
+        approverId: 3,
+        collabComplete: true,
+        pocComplete: true,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [],
+        data: {
+          eventName: 'Submitted event',
+          eventId: 1,
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      },
+    });
+
+    const approverUser = {
+      user: { id: 3, permissions: [], name: 'Session approver', roles: [] },
+    };
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1', approverUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+    expect(await screen.findByLabelText(/Session name/i)).toBeVisible();
+    expect(historySpy).not.toHaveBeenCalledWith('/training-report/1/session/1/review');
+  });
+
   describe('onReview approval workflow', () => {
     it('successfully approves session when approvalStatus is "approved"', async () => {
       const url = join(sessionsUrl, 'id', '1');
       const historySpy = jest.spyOn(history, 'push');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        reviewStatus: REPORT_STATUSES.SUBMITTED,
+        pocComplete: true,
+        collabComplete: true,
+        data: {
+          sessionName: 'Test Session',
+          duration: 2,
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          context: 'Test context',
+          objective: 'Test objective',
+          objectiveTopics: ['Topic 1'],
+          objectiveTrainers: ['DTL'],
+          numberOfParticipants: 10,
+          deliveryMethod: 'In-person',
+          status: 'In progress',
+          submitted: true,
+          approvalStatus: 'approved',
+          managerNotes: 'Looks good',
+          dateSubmitted: '01/15/2024',
+          submitter: 'Test Submitter',
+        },
+        approverId: 1,
+        approver: { id: 1, fullName: 'Test Approver' },
+        event: {
           regionId: 1,
-          reviewStatus: REPORT_STATUSES.SUBMITTED,
-          pocComplete: true,
-          collabComplete: true,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
+          eventId: '1',
           data: {
-            sessionName: 'Test Session',
-            duration: 2,
-            startDate: '01/01/2024',
-            endDate: '01/01/2024',
-            context: 'Test context',
-            objective: 'Test objective',
-            objectiveTopics: ['Topic 1'],
-            objectiveTrainers: ['DTL'],
-            numberOfParticipants: 10,
-            deliveryMethod: 'In-person',
-            status: 'In progress',
-            submitted: true,
-            approvalStatus: 'approved',
-            managerNotes: 'Looks good',
-            dateSubmitted: '01/15/2024',
-            submitter: 'Test Submitter',
-          },
-          approverId: 1,
-          approver: { id: 1, fullName: 'Test Approver' },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [],
-            data: {
-              eventId: '1',
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: '1',
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
           },
         },
-      );
+      });
 
       const adminUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.ADMIN,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.ADMIN,
+            },
+          ],
           name: 'Ted User',
         },
       };
@@ -1133,19 +1654,25 @@ describe('SessionReportForm', () => {
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      await waitFor(() => {
-        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Mock the PUT request
       fetchMock.put(url, { id: 1, eventId: 1 });
 
       // Wait for the Approve button to appear
       // It should show when component recognizes approver reviewing submitted report
-      await waitFor(() => {
-        const submitButton = document.querySelector('#approver-session-report-save-continue');
-        expect(submitButton).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const submitButton = document.querySelector('#approver-session-report-save-continue');
+          expect(submitButton).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');
@@ -1160,6 +1687,9 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
       expect(putBodyJson.data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
       expect(putBodyJson.data.approvalStatus).toBeUndefined(); // Should be destructured out
+      // Hydrated associations must not be sent back into the session data column
+      expect(putBodyJson.data.event).toBeUndefined();
+      expect(putBodyJson.data.approver).toBeUndefined();
 
       // Verify navigation with success message
       await waitFor(() => expect(historySpy).toHaveBeenCalled());
@@ -1180,58 +1710,59 @@ describe('SessionReportForm', () => {
       const url = join(sessionsUrl, 'id', '2');
       const historySpy = jest.spyOn(history, 'push');
 
-      fetchMock.get(
-        url, {
-          id: 2,
-          eventId: 1,
-          regionId: 1,
-          reviewStatus: REPORT_STATUSES.SUBMITTED,
-          pocComplete: true,
-          collabComplete: true,
-          data: {
-            sessionName: 'Test Session Needs Action',
-            duration: 2,
-            startDate: '01/01/2024',
-            endDate: '01/01/2024',
-            context: 'Test context',
-            objective: 'Test objective',
-            objectiveTopics: ['Topic 1'],
-            objectiveTrainers: ['DTL'],
-            numberOfParticipants: 10,
-            deliveryMethod: 'In-person',
-            status: 'In progress',
-            submitted: true,
-            approvalStatus: 'needs_action',
-            managerNotes: 'Please revise',
-            dateSubmitted: '01/15/2024',
-            submitter: 'Test Submitter',
-            event: {
-              eventId: '1',
-            },
-          },
-          approverId: 1,
-          approver: { id: 1, fullName: 'Test Approver' },
+      fetchMock.get(url, {
+        id: 2,
+        eventId: 1,
+        regionId: 1,
+        reviewStatus: REPORT_STATUSES.SUBMITTED,
+        pocComplete: true,
+        collabComplete: true,
+        data: {
+          sessionName: 'Test Session Needs Action',
+          duration: 2,
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          context: 'Test context',
+          objective: 'Test objective',
+          objectiveTopics: ['Topic 1'],
+          objectiveTrainers: ['DTL'],
+          numberOfParticipants: 10,
+          deliveryMethod: 'In-person',
+          status: 'In progress',
+          submitted: true,
+          approvalStatus: 'needs_action',
+          managerNotes: 'Please revise',
+          dateSubmitted: '01/15/2024',
+          submitter: 'Test Submitter',
           event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [],
-            data: {
-              eventId: '1',
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: '1',
           },
         },
-      );
+        approverId: 1,
+        approver: { id: 1, fullName: 'Test Approver' },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
+          eventId: '1',
+          data: {
+            eventId: '1',
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+          },
+        },
+      });
 
       const adminUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.ADMIN,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.ADMIN,
+            },
+          ],
           name: 'Ted User',
         },
       };
@@ -1242,9 +1773,12 @@ describe('SessionReportForm', () => {
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      await waitFor(() => {
-        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Wait for the specific session data to be loaded (unique to this test)
       await waitFor(() => {
@@ -1255,10 +1789,13 @@ describe('SessionReportForm', () => {
       fetchMock.put(url, { id: 2, eventId: 1, event: { data: { eventId: 1 } } });
 
       // Wait for the Approve button to appear
-      await waitFor(() => {
-        const submitButton = document.querySelector('#approver-session-report-save-continue');
-        expect(submitButton).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const submitButton = document.querySelector('#approver-session-report-save-continue');
+          expect(submitButton).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');
@@ -1287,55 +1824,55 @@ describe('SessionReportForm', () => {
       const url = join(sessionsUrl, 'id', '3');
       const historySpy = jest.spyOn(history, 'push');
 
-      fetchMock.get(
-        url, {
-          id: 3,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 3,
+        eventId: 1,
+        regionId: 1,
+        reviewStatus: REPORT_STATUSES.SUBMITTED,
+        pocComplete: true,
+        collabComplete: true,
+        data: {
+          sessionName: 'Test Session No Status',
+          duration: 2,
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          context: 'Test context',
+          objective: 'Test objective',
+          objectiveTopics: ['Topic 1'],
+          objectiveTrainers: ['DTL'],
+          numberOfParticipants: 10,
+          deliveryMethod: 'In-person',
+          status: 'In progress',
+          submitted: true,
+          approvalStatus: '', // Empty status
+          managerNotes: '',
+          dateSubmitted: '01/15/2024',
+          submitter: 'Test Submitter',
+        },
+        approverId: 1,
+        approver: { id: 1, fullName: 'Test Approver' },
+        event: {
           regionId: 1,
-          reviewStatus: REPORT_STATUSES.SUBMITTED,
-          pocComplete: true,
-          collabComplete: true,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
           data: {
-            sessionName: 'Test Session No Status',
-            duration: 2,
-            startDate: '01/01/2024',
-            endDate: '01/01/2024',
-            context: 'Test context',
-            objective: 'Test objective',
-            objectiveTopics: ['Topic 1'],
-            objectiveTrainers: ['DTL'],
-            numberOfParticipants: 10,
-            deliveryMethod: 'In-person',
-            status: 'In progress',
-            submitted: true,
-            approvalStatus: '', // Empty status
-            managerNotes: '',
-            dateSubmitted: '01/15/2024',
-            submitter: 'Test Submitter',
-          },
-          approverId: 1,
-          approver: { id: 1, fullName: 'Test Approver' },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
           },
         },
-      );
+      });
 
       const adminUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.ADMIN,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.ADMIN,
+            },
+          ],
           name: 'Ted User',
         },
       };
@@ -1346,9 +1883,12 @@ describe('SessionReportForm', () => {
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      await waitFor(() => {
-        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // DO NOT mock PUT request - we want to verify it's not called
 
@@ -1362,7 +1902,9 @@ describe('SessionReportForm', () => {
       }
 
       // Wait a bit to ensure PUT is not called
-      await new Promise((resolve) => { setTimeout(resolve, 500); });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500);
+      });
 
       // Verify PUT was NOT called (early return in onReview)
       expect(fetchMock.called(url, { method: 'put' })).toBe(false);
@@ -1375,55 +1917,55 @@ describe('SessionReportForm', () => {
       const url = join(sessionsUrl, 'id', '4');
       const historySpy = jest.spyOn(history, 'push');
 
-      fetchMock.get(
-        url, {
-          id: 4,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 4,
+        eventId: 1,
+        regionId: 1,
+        reviewStatus: REPORT_STATUSES.SUBMITTED,
+        pocComplete: true,
+        collabComplete: true,
+        data: {
+          sessionName: 'Test Session Error',
+          duration: 2,
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          context: 'Test context',
+          objective: 'Test objective',
+          objectiveTopics: ['Topic 1'],
+          objectiveTrainers: ['DTL'],
+          numberOfParticipants: 10,
+          deliveryMethod: 'In-person',
+          status: 'In progress',
+          submitted: true,
+          approvalStatus: 'approved',
+          managerNotes: 'Looks good',
+          dateSubmitted: '01/15/2024',
+          submitter: 'Test Submitter',
+        },
+        approverId: 1,
+        approver: { id: 1, fullName: 'Test Approver' },
+        event: {
           regionId: 1,
-          reviewStatus: REPORT_STATUSES.SUBMITTED,
-          pocComplete: true,
-          collabComplete: true,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [],
           data: {
-            sessionName: 'Test Session Error',
-            duration: 2,
-            startDate: '01/01/2024',
-            endDate: '01/01/2024',
-            context: 'Test context',
-            objective: 'Test objective',
-            objectiveTopics: ['Topic 1'],
-            objectiveTrainers: ['DTL'],
-            numberOfParticipants: 10,
-            deliveryMethod: 'In-person',
-            status: 'In progress',
-            submitted: true,
-            approvalStatus: 'approved',
-            managerNotes: 'Looks good',
-            dateSubmitted: '01/15/2024',
-            submitter: 'Test Submitter',
-          },
-          approverId: 1,
-          approver: { id: 1, fullName: 'Test Approver' },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
           },
         },
-      );
+      });
 
       const adminUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.ADMIN,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.ADMIN,
+            },
+          ],
           name: 'Ted User',
         },
       };
@@ -1434,18 +1976,24 @@ describe('SessionReportForm', () => {
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      await waitFor(() => {
-        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Mock the PUT request to fail with 500 error
       fetchMock.put(url, 500);
 
       // Wait for the Approve button to appear
-      await waitFor(() => {
-        const submitButton = document.querySelector('#approver-session-report-save-continue');
-        expect(submitButton).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const submitButton = document.querySelector('#approver-session-report-save-continue');
+          expect(submitButton).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Find and click the submit button using the specific ID
       const submitButton = document.querySelector('#approver-session-report-save-continue');
@@ -1457,7 +2005,9 @@ describe('SessionReportForm', () => {
 
       // Verify error message is displayed
       await waitFor(() => {
-        expect(screen.getByText(/There was an error saving the session report/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/There was an error saving the session report/i)
+        ).toBeInTheDocument();
       });
 
       // Verify no navigation occurred
@@ -1494,11 +2044,13 @@ describe('SessionReportForm', () => {
       const pocUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+            },
+          ],
           name: 'POC User',
         },
       };
@@ -1539,11 +2091,13 @@ describe('SessionReportForm', () => {
       const ownerUser = {
         user: {
           id: 1,
-          permissions: [{
-            userId: 1,
-            regionId: 1,
-            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-          }],
+          permissions: [
+            {
+              userId: 1,
+              regionId: 1,
+              scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+            },
+          ],
           name: 'Owner User',
         },
       };
@@ -1561,31 +2115,29 @@ describe('SessionReportForm', () => {
     it('POC loads existing IST data when facilitation is "both"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'both',
+          sessionName: 'Existing Session Name',
+          objective: 'Existing Objective',
+          startDate: '01/01/2024',
+          duration: 2,
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'both',
-            sessionName: 'Existing Session Name',
-            objective: 'Existing Objective',
-            startDate: '01/01/2024',
-            duration: 2,
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');
@@ -1605,28 +2157,26 @@ describe('SessionReportForm', () => {
     it('POC can save IST fields when facilitation is "both"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'both',
+          sessionName: 'Test Session',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'both',
-            sessionName: 'Test Session',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');
@@ -1649,42 +2199,40 @@ describe('SessionReportForm', () => {
       // Verify IST keys are included
       const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
       istKeysWithoutPocComplete.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
 
       // Verify POC keys are included
       const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
       pocKeysWithoutcollabComplete.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
     });
 
     it('POC loads existing IST data when facilitation is "regional_tta_staff"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'regional_tta_staff',
+          sessionName: 'Regional TTA Session',
+          objective: 'Regional Objective',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'regional_tta_staff',
-            sessionName: 'Regional TTA Session',
-            objective: 'Regional Objective',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');
@@ -1704,27 +2252,25 @@ describe('SessionReportForm', () => {
     it('POC can save IST fields when facilitation is "regional_tta_staff"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'regional_tta_staff',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'regional_tta_staff',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');
@@ -1734,7 +2280,11 @@ describe('SessionReportForm', () => {
 
       expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
-      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'regional_tta_staff' } });
+      fetchMock.put(url, {
+        id: 1,
+        eventId: 1,
+        data: { ...istAndPocFields, facilitation: 'regional_tta_staff' },
+      });
       const saveSession = screen.getByText(/Save draft/i);
       userEvent.click(saveSession);
 
@@ -1746,36 +2296,36 @@ describe('SessionReportForm', () => {
 
       // Verify both IST and POC keys are included
       const allKeys = [...istKeys, ...pocKeys];
-      const allKeysWithoutComplete = allKeys.filter((key) => key !== 'pocComplete' && key !== 'collabComplete');
+      const allKeysWithoutComplete = allKeys.filter(
+        (key) => key !== 'pocComplete' && key !== 'collabComplete'
+      );
       allKeysWithoutComplete.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
     });
 
     it('POC still gets POC-only fields when facilitation is "national_center"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'national_center',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'national_center',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'participants', '1');
@@ -1785,7 +2335,11 @@ describe('SessionReportForm', () => {
 
       expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
-      fetchMock.put(url, { id: 1, eventId: 1, data: { ...istAndPocFields, facilitation: 'national_center' } });
+      fetchMock.put(url, {
+        id: 1,
+        eventId: 1,
+        data: { ...istAndPocFields, facilitation: 'national_center' },
+      });
       const saveSession = screen.getByText(/Save draft/i);
       userEvent.click(saveSession);
 
@@ -1798,40 +2352,38 @@ describe('SessionReportForm', () => {
       // Verify POC keys are included
       const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
       pocKeysWithoutcollabComplete.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
 
       // Verify IST-only keys are NOT included
       const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
       istOnlyKeys.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
       });
     });
 
     it('Collaborator on REGIONAL_TTA_NO_NATIONAL_CENTERS event gets both key sets', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'both',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
           data: {
-            ...istAndPocFields,
-            facilitation: 'both',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [1],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');
@@ -1853,7 +2405,7 @@ describe('SessionReportForm', () => {
 
       const allKeys = [...istKeys, ...pocKeys];
       allKeys.forEach((key) => {
-        expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+        expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
     });
   });
@@ -1862,27 +2414,25 @@ describe('SessionReportForm', () => {
     it('POC can see approver dropdown when facilitation is "both"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'both',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'both',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'review', '1');
@@ -1904,27 +2454,25 @@ describe('SessionReportForm', () => {
     it('POC can see approver dropdown when facilitation is "regional_tta_staff"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'regional_tta_staff',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'regional_tta_staff',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'review', '1');
@@ -1946,27 +2494,25 @@ describe('SessionReportForm', () => {
     it('POC cannot see approver dropdown when facilitation is "national_center"', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          ...istAndPocFields,
+          facilitation: 'national_center',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [1],
+          collaboratorIds: [],
           data: {
-            ...istAndPocFields,
-            facilitation: 'national_center',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [1],
-            collaboratorIds: [],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'review', '1');
@@ -1987,90 +2533,140 @@ describe('SessionReportForm', () => {
   });
 
   describe('collaborator access with submitted forms', () => {
-    it('collaborator sees all pages when form is submitted on regional event with national centers', async () => {
+    it('NC collaborator sees only session summary + review when form is submitted on regional event with national centers', async () => {
+      // TTAHUB-5502: collaborator-only access is restricted to session summary + review,
+      // even when submitted. This overrides the legacy "full view on submit" for NC owners.
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          submitted: true,
+          facilitation: 'national_center',
+          sessionName: 'Test Session',
+          duration: 1,
+          startDate: '01/01/2024',
+          endDate: '01/01/2024',
+          context: 'Test context',
+          objective: 'Test objective',
+          objectiveTopics: ['topic'],
+          numberOfParticipants: 1,
+          deliveryMethod: 'In-person',
+          language: ['English'],
+          ttaProvided: 'test',
+          objectiveSupportType: 'Planning',
+          recipients: [1],
+          participants: [1],
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
           data: {
-            submitted: true,
-            facilitation: 'national_center',
-            sessionName: 'Test Session',
-            duration: 1,
-            startDate: '01/01/2024',
-            endDate: '01/01/2024',
-            context: 'Test context',
-            objective: 'Test objective',
-            objectiveTopics: ['topic'],
-            numberOfParticipants: 1,
-            deliveryMethod: 'In-person',
-            language: ['English'],
-            ttaProvided: 'test',
-            objectiveSupportType: 'Planning',
-            recipients: [1],
-            participants: [1],
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [1],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
-        renderSessionForm('1', 'session-summary', '1');
+        renderSessionForm('1', 'session-summary', '1', {
+          user: {
+            id: 1,
+            permissions: [],
+            name: 'Ted User',
+            roles: [{ name: 'NC' }],
+          },
+        });
       });
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // Collaborator should see all navigation items when form is submitted
+      // NC collaborator should only see session summary + review now, even when submitted.
       expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
-      expect(screen.getByText('Participants')).toBeInTheDocument();
-      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
-      expect(screen.getByText('Next steps')).toBeInTheDocument();
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
     });
 
-    it('collaborator sees only session summary when form is NOT submitted', async () => {
+    it('NC collaborator sees only session summary when form is NOT submitted', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          submitted: false,
+          facilitation: 'national_center',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
           data: {
-            submitted: false,
-            facilitation: 'national_center',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [1],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional PD Event (with National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
+        renderSessionForm('1', 'session-summary', '1', {
+          user: {
+            id: 1,
+            permissions: [],
+            name: 'Ted User',
+            roles: [{ name: 'NC' }],
+          },
+        });
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // NC collaborator should only see session summary when not submitted
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
+    });
+
+    it('Regional (non-NC) collaborator sees only session summary + review on Regional PD w/ NC + national_center facilitation (TTAHUB-5502)', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          submitted: false,
+          facilitation: 'national_center',
+        },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        },
+      });
+
+      act(() => {
+        // Default mock user has no roles -> isNcUser=false. Collaborator-only branch
+        // (TTAHUB-5502) restricts them to session summary + review regardless of NC role.
         renderSessionForm('1', 'session-summary', '1');
       });
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // Collaborator should only see session summary when not submitted
+      // Regional collaborator with Trainer=NC sees only session summary + review.
       expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
       expect(screen.queryByText('Participants')).not.toBeInTheDocument();
       expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
@@ -2080,27 +2676,25 @@ describe('SessionReportForm', () => {
     it('collaborator on regional_tta_no_national_centers event sees all pages regardless of submission status', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
-      fetchMock.get(
-        url, {
-          id: 1,
-          eventId: 1,
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          submitted: false,
+          facilitation: 'both',
+        },
+        event: {
           regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
           data: {
-            submitted: false,
-            facilitation: 'both',
-          },
-          event: {
-            regionId: 1,
-            ownerId: 2,
-            pocIds: [],
-            collaboratorIds: [1],
-            data: {
-              eventId: 1,
-              eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-            },
+            eventId: 1,
+            eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
           },
         },
-      );
+      });
 
       act(() => {
         renderSessionForm('1', 'session-summary', '1');

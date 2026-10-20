@@ -33,12 +33,12 @@ describe('migration', () => {
       await prepMigration(queryInterface, transaction, sessionSig, auditDescriptor, loggedUser);
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-        /* sql */`SELECT
+        /* sql */ `SELECT
       set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
       set_config('audit.transactionId', NULL, TRUE) as "transactionId",
       set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
     });
 
@@ -46,12 +46,12 @@ describe('migration', () => {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-        /* sql */`SELECT
+        /* sql */ `SELECT
       set_config('audit.loggedUser', '0', TRUE) as "loggedUser",
       set_config('audit.transactionId', NULL, TRUE) as "transactionId",
       set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
       set_config('audit.auditDescriptor', 'RUN MIGRATIONS', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
     });
   });
@@ -68,7 +68,7 @@ describe('migration', () => {
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
         `SELECT "ZAFSetTriggerState"(null, null, null, '${enable ? 'ENABLE' : 'DISABLE'}');`,
-        { transaction },
+        { transaction }
       );
     });
 
@@ -76,9 +76,9 @@ describe('migration', () => {
       await setAuditLoggingState(queryInterface, transaction);
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-      // eslint-disable-next-line @typescript-eslint/quotes
+        // eslint-disable-next-line @typescript-eslint/quotes
         `SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');`,
-        { transaction },
+        { transaction }
       );
     });
   });
@@ -104,14 +104,17 @@ describe('migration', () => {
       const tableNames = ['test_table_1', 'ZALtest_table_1', 'test_table_2', 'ZALtest_table_2'];
       expect(queryInterface.dropTable).toHaveBeenCalledTimes(4);
       expect(queryInterface.dropTable).toHaveBeenCalledWith(expect.any(String), { transaction });
-      expect.arrayContaining(tableNames.forEach((tableName) => {
-        expect(queryInterface.dropTable).toHaveBeenCalledWith(tableName, { transaction });
-      }));
+      expect.arrayContaining(
+        tableNames.forEach((tableName) => {
+          expect(queryInterface.dropTable).toHaveBeenCalledWith(tableName, { transaction });
+        })
+      );
 
       // Check that audit log tables were removed
       expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
-      expect(queryInterface.sequelize.query)
-        .toHaveBeenCalledWith(expect.any(String), { transaction });
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(expect.any(String), {
+        transaction,
+      });
     });
 
     it('should handle empty array of tables', async () => {
@@ -140,12 +143,12 @@ describe('migration', () => {
       await replaceValueInArray(queryInterface, null, table, column, oldValue, newValue);
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-        /* sql */`
+        /* sql */ `
   UPDATE "${table}"
   SET "${column}" = array_replace("${column}", '${oldValue}', '${newValue}')
   WHERE "${column}" @> ARRAY['${oldValue}']::VARCHAR[];
 `,
-        { transaction: null },
+        { transaction: null }
       );
     });
   });
@@ -165,10 +168,11 @@ describe('migration', () => {
         column,
         field,
         oldValue,
-        newValue,
+        newValue
       );
 
-      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(/* sql */`
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+        /* sql */ `
   UPDATE "${table}"
   SET
     "${column}" = (
@@ -190,7 +194,9 @@ describe('migration', () => {
         )
     )
   WHERE "${column}" -> '${field}' @> '["${oldValue}"]'::jsonb;
-`, { transaction: null });
+`,
+        { transaction: null }
+      );
     });
   });
 
@@ -208,19 +214,15 @@ describe('migration', () => {
 
     it('should remove specified values and recreate enum with FEATURE_FLAGS', async () => {
       // Mock the query function to resolve with a specific result
-      queryInterface.sequelize.query.mockResolvedValue([
-        [{ exists: true }],
-        [{ exists: true }],
-      ]);
+      queryInterface.sequelize.query.mockResolvedValue([[{ exists: true }], [{ exists: true }]]);
 
       // Call the function with the mock objects and values to remove
       await updateUsersFlagsEnum(queryInterface, transaction, ['FLAG_TO_REMOVE']);
 
       // Check if the queries were called with the expected SQL
-      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-        expect.any(String),
-        { transaction },
-      );
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(expect.any(String), {
+        transaction,
+      });
     });
 
     it('should use specificFlags for updating and recreating enum if provided', async () => {
@@ -234,10 +236,9 @@ describe('migration', () => {
       const valuesToRemove = ['nonExistentFlag'];
       queryInterface.sequelize.query.mockResolvedValue([[{ exists: false }]]);
       await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
-      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-        expect.any(String),
-        { transaction },
-      );
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(expect.any(String), {
+        transaction,
+      });
       expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(3); // Only the EXISTS check
     });
   });
@@ -261,7 +262,7 @@ describe('migration', () => {
         tableName,
         columnName,
         enumValues,
-        enumType,
+        enumType
       );
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(2);
@@ -300,17 +301,17 @@ describe('migration', () => {
         expect.objectContaining({
           replacements: { tableName: 'Goals' },
           transaction,
-        }),
+        })
       );
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
         expect.stringContaining('MAX'),
-        expect.objectContaining({ transaction }),
+        expect.objectContaining({ transaction })
       );
 
       expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
         expect.stringContaining('setval'),
-        expect.objectContaining({ transaction }),
+        expect.objectContaining({ transaction })
       );
     });
 
@@ -320,7 +321,7 @@ describe('migration', () => {
 
       // Expect the function to throw when called with a table that has no sequences
       await expect(updateSequence(queryInterface, 'SequelizeMeta', transaction)).rejects.toThrow(
-        'No sequences found for table SequelizeMeta',
+        'No sequences found for table SequelizeMeta'
       );
     });
   });
@@ -340,8 +341,10 @@ describe('migration', () => {
       // trimming for any unintentional whitespace
       enumValues.forEach((enumValue) => {
         expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
-          expect.stringContaining(`ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';`.trim()),
-          { transaction },
+          expect.stringContaining(
+            `ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';`.trim()
+          ),
+          { transaction }
         );
       });
 

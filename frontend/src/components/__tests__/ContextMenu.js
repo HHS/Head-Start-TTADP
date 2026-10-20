@@ -1,9 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import ContextMenu from '../ContextMenu';
 
@@ -96,7 +94,7 @@ describe('ContextMenu', () => {
         <>
           <ContextMenu menuItems={menuItems()} label="label" />
           <div data-testid="other" />
-        </>,
+        </>
       );
       const button = await screen.findByTestId('context-menu-actions-btn');
       userEvent.click(button);
@@ -106,6 +104,39 @@ describe('ContextMenu', () => {
 
       await waitFor(() => expect(screen.queryByText('one')).toBeNull());
       await waitFor(() => expect(screen.queryByText('two')).toBeNull());
+    });
+
+    it('renders menu in a portal when fixed prop is true', async () => {
+      const { baseElement } = render(
+        <div data-testid="container">
+          <ContextMenu fixed menuItems={menuItems()} label="label" />
+        </div>
+      );
+      const button = await screen.findByTestId('context-menu-actions-btn');
+      userEvent.click(button);
+
+      const menu = await screen.findByTestId('menu');
+      expect(menu).toBeVisible();
+      // When using portal, menu should be rendered as direct child of body, not inside container
+      const container = baseElement.querySelector('[data-testid="container"]');
+      expect(container.contains(menu)).toBe(false);
+      expect(document.body.contains(menu)).toBe(true);
+    });
+
+    it('renders menu inside container when fixed prop is false', async () => {
+      render(
+        <div data-testid="container">
+          <ContextMenu fixed={false} menuItems={menuItems()} label="label" />
+        </div>
+      );
+      const button = await screen.findByTestId('context-menu-actions-btn');
+      userEvent.click(button);
+
+      const menu = await screen.findByTestId('menu');
+      expect(menu).toBeVisible();
+      // When not using portal, menu should be inside container
+      const container = screen.getByTestId('container');
+      expect(container.contains(menu)).toBe(true);
     });
   });
 });

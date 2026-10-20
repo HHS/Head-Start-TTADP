@@ -1,16 +1,10 @@
-import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import { MemoryRouter, Route } from 'react-router';
-import AccountManagement from '../..';
-import UserContext from '../../../../UserContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
+import AccountManagement from '../..';
 
 describe('AccountManagement', () => {
   const now = new Date();
@@ -48,7 +42,7 @@ describe('AccountManagement', () => {
             </UserContext.Provider>
           </Route>
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 

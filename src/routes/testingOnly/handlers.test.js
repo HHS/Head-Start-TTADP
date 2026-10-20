@@ -1,6 +1,6 @@
-import { reseedDB, queryDB, health } from './handlers';
-import { reseed, query } from '../../../tests/utils/dbUtils';
+import { query, reseed } from '../../../tests/utils/dbUtils';
 import handleErrors from '../../lib/apiErrorHandler';
+import { health, queryDB, reseedDB } from './handlers';
 
 jest.mock('../../../tests/utils/dbUtils');
 jest.mock('../../lib/apiErrorHandler');
@@ -60,13 +60,23 @@ describe('handlers', () => {
     it('should throw error if req.body is missing', async () => {
       req.body = null;
       await queryDB(req, res);
-      expect(handleErrors).toHaveBeenCalledWith(req, res, new Error('req.body is required'), 'queryDB');
+      expect(handleErrors).toHaveBeenCalledWith(
+        req,
+        res,
+        new Error('req.body is required'),
+        'queryDB'
+      );
     });
 
     it('should throw error if command is missing', async () => {
       req.body = { options: {} };
       await queryDB(req, res);
-      expect(handleErrors).toHaveBeenCalledWith(req, res, new Error('command is required'), 'queryDB');
+      expect(handleErrors).toHaveBeenCalledWith(
+        req,
+        res,
+        new Error('command is required'),
+        'queryDB'
+      );
     });
 
     it('should handle errors', async () => {

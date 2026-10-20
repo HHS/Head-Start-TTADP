@@ -18,7 +18,6 @@
     overflow-y: visible;
     text-overflow: ellipsis;
     vertical-align: middle;
-    white-space: nowrap;
 }
 
 .smart-hub--ellipsis > span {
@@ -27,11 +26,12 @@
 
 /* CSS-based dashed underline */
 .smart-hub-tooltip__underlined-text {
-  text-decoration: underline;
-  text-decoration-style: dashed;
-  text-decoration-thickness: 1px;
-  text-decoration-color: $base-darkest; /* Lighter grey to match original appearance */
-  text-underline-offset: 6px; /* Space between text and underline */
+    color: #1b1b1b;
+    text-decoration: underline;
+    text-decoration-color: #1b1b1b;
+    text-decoration-style: dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
 }
 
 .smart-hub-tooltip {

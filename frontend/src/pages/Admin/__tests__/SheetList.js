@@ -1,9 +1,7 @@
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render, waitFor, screen, act,
-} from '@testing-library/react';
-import SheetList from '../SheetList';
 import { getSheets } from '../../../fetchers/ss';
+import SheetList from '../SheetList';
 
 jest.mock('../../../fetchers/ss', () => ({
   getSheets: jest.fn(),
@@ -22,7 +20,10 @@ describe('SheetList', () => {
 
   it('should render sheet list when data is fetched', async () => {
     const mockSheetData = {
-      data: [{ id: '1', name: 'Sheet 1' }, { id: '2', name: 'Sheet 2' }],
+      data: [
+        { id: '1', name: 'Sheet 1' },
+        { id: '2', name: 'Sheet 2' },
+      ],
     };
     getSheets.mockResolvedValueOnce(mockSheetData);
 
@@ -40,7 +41,7 @@ describe('SheetList', () => {
     getSheets.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
-      render(<SheetList onSelectSheet={() => { }} />);
+      render(<SheetList onSelectSheet={() => {}} />);
     });
 
     expect(getSheets).toHaveBeenCalled();

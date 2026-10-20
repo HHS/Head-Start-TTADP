@@ -1,27 +1,20 @@
-import React, {
-  useRef,
-  useEffect,
-  useState,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { EMPTY_ARRAY } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
-import HorizontalTableWidget from './HorizontalTableWidget';
+import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import useMediaCapture from '../hooks/useMediaCapture';
-import useWidgetSorting from '../hooks/useWidgetSorting';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
-import { EMPTY_ARRAY } from '../Constants';
+import useWidgetSorting from '../hooks/useWidgetSorting';
 import BarGraph from './BarGraph';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import HorizontalTableWidget from './HorizontalTableWidget';
 import './RootCauseFeiGoals.css';
 
 const FIRST_COLUMN = 'Root cause';
 
-const TABLE_HEADINGS = [
-  'Number',
-  'Percentage',
-];
+const TABLE_HEADINGS = ['Number', 'Percentage'];
 
 const DEFAULT_SORT_CONFIG = {
   sortBy: 'Root_cause',
@@ -48,17 +41,14 @@ export default function RootCauseFeiGoals({ data }) {
   });
   const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
 
-  const {
-    requestSort,
-    sortConfig,
-  } = useWidgetSorting(
+  const { requestSort, sortConfig } = useWidgetSorting(
     'qa-dashboard-percentage-ars-by-role', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
     ['Root_cause'], // stringColumns
     EMPTY_ARRAY, // dateColumns
-    EMPTY_ARRAY, // keyColumns
+    EMPTY_ARRAY // keyColumns
   );
 
   const { exportRows } = useWidgetExport(
@@ -66,7 +56,7 @@ export default function RootCauseFeiGoals({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   // records is an array of objects
@@ -137,14 +127,12 @@ export default function RootCauseFeiGoals({ data }) {
     setShowTabularData,
     capture,
     checkboxes,
-    exportRows,
+    exportRows
   );
 
   const subtitle = (
     <div className="margin-bottom-3">
-      <WidgetContainerSubtitle>
-        Each goal can have up to 2 root causes
-      </WidgetContainerSubtitle>
+      <WidgetContainerSubtitle>Each goal can have up to 2 root causes</WidgetContainerSubtitle>
       <SecondarySubtitleWithFilterWarning showFiltersNotApplicable={showFiltersNotApplicable}>
         {`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
       </SecondarySubtitleWithFilterWarning>
@@ -207,11 +195,13 @@ RootCauseFeiGoals.propTypes = {
     totalNumberOfGoals: PropTypes.number,
     totalNumberOfRootCauses: PropTypes.number,
     showDashboardFiltersNotApplicable: PropTypes.bool,
-    records: PropTypes.arrayOf(PropTypes.shape({
-      rootCause: PropTypes.string,
-      response_count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
+    records: PropTypes.arrayOf(
+      PropTypes.shape({
+        rootCause: PropTypes.string,
+        response_count: PropTypes.number,
+        percentage: PropTypes.number,
+      })
+    ),
   }),
 };
 RootCauseFeiGoals.defaultProps = {

@@ -1,21 +1,19 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import moment from 'moment';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import selectEvent from 'react-select-event';
+import AppLoadingContext from '../../../../AppLoadingContext';
 import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
-import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
+import EventSummary from '../eventSummary';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS } = SCOPE_IDS;
 
@@ -31,10 +29,12 @@ describe('eventSummary', () => {
   beforeEach(() => {
     fetchMock.restore();
     fetchMock.get('/api/users/trainers/regional/region/1', []);
-    fetchMock.get('/api/users/trainers/national-center/region/1', [{
-      id: 2,
-      fullName: 'Tedwina User',
-    }]);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [
+      {
+        id: 2,
+        fullName: 'Tedwina User',
+      },
+    ]);
   });
   describe('render', () => {
     const onSaveDraft = jest.fn();
@@ -57,14 +57,17 @@ describe('eventSummary', () => {
     };
 
     const defaultCreators = [
-      { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
-      { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
+      { id: 1, name: 'IST 1', fullName: 'IST 1' },
+      { id: 2, name: 'IST 2', fullName: 'IST 2' },
     ];
 
     const RenderEventSummary = ({
       user = defaultUser,
       creators = defaultCreators,
       defaultValues = defaultFormValues,
+      onHookForm = () => {},
+      showSavedDraft = false,
+      lastSaveTime = null,
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
@@ -73,11 +76,13 @@ describe('eventSummary', () => {
 
       const additionalData = {
         users: {
-          pointOfContact: [{
-            id: 1,
-            fullName: 'Ted User',
-            nameWithNationalCenters: 'Ted User',
-          }],
+          pointOfContact: [
+            {
+              id: 1,
+              fullName: 'Ted User',
+              nameWithNationalCenters: 'Ted User',
+            },
+          ],
           collaborators: [
             {
               id: 2,
@@ -90,37 +95,47 @@ describe('eventSummary', () => {
       };
 
       // set the hook form data that is returned from getValues().
-      hookForm.getValues = () => defaultFormValues;
+      hookForm.getValues = () => defaultValues;
+      onHookForm(hookForm);
 
       return (
-        <FormProvider {...hookForm}>
-          <UserContext.Provider value={{ user }}>
-            <NetworkContext.Provider value={{ connectionActive: true }}>
-              <EventSummary
-                additionalData={additionalData}
-                reportId={1}
-                isAppLoading={false}
-                onFormSubmit={jest.fn()}
-                onSaveDraft={onSaveDraft}
-                onUpdatePage={jest.fn()}
-                weAreAutoSaving={false}
-                datePickerKey="key"
-                Alert={() => <></>}
-                showSubmitModal={jest.fn()}
-              />
-            </NetworkContext.Provider>
-          </UserContext.Provider>
-        </FormProvider>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <FormProvider {...hookForm}>
+            <UserContext.Provider value={{ user }}>
+              <NetworkContext.Provider value={{ connectionActive: true }}>
+                <EventSummary
+                  additionalData={additionalData}
+                  reportId={1}
+                  isAppLoading={false}
+                  onFormSubmit={jest.fn()}
+                  onSaveDraft={onSaveDraft}
+                  onUpdatePage={jest.fn()}
+                  weAreAutoSaving={false}
+                  datePickerKey="key"
+                  Alert={() => <></>}
+                  showSubmitModal={jest.fn()}
+                  showSavedDraft={showSavedDraft}
+                  lastSaveTime={lastSaveTime}
+                  updateShowSavedDraft={jest.fn()}
+                />
+              </NetworkContext.Provider>
+            </UserContext.Provider>
+          </FormProvider>
+        </AppLoadingContext.Provider>
       );
     };
 
+    const adminUser = {
+      ...defaultUser,
+      permissions: [{ regionId: 1, scopeId: ADMIN }],
+    };
+
+    const nonAdminUser = {
+      ...defaultUser,
+      permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
+    };
+
     it('renders event summary', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
-      };
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
@@ -131,7 +146,9 @@ describe('eventSummary', () => {
         fireEvent.blur(selection);
       });
 
-      const startDate = await screen.findByLabelText(/Event start Date/i, { selector: '#startDate' });
+      const startDate = await screen.findByLabelText(/Event start Date/i, {
+        selector: '#startDate',
+      });
       userEvent.type(startDate, '01/01/2021');
 
       const endDate = await screen.findByLabelText(/Event end Date/i, { selector: '#endDate' });
@@ -148,30 +165,87 @@ describe('eventSummary', () => {
       expect(await screen.findByText('Select at least one collaborator')).toBeInTheDocument();
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
-      await selectEvent.select(screen.getByLabelText(/event organizer/i), TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS);
+      await selectEvent.select(screen.getByLabelText(/target populations/i), [
+        'Expectant families',
+      ]);
+      await selectEvent.select(
+        screen.getByLabelText(/event organizer/i),
+        TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+      );
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('admin users can edit all fields', async () => {
+    it('shows the draft saved alert when showSavedDraft is true', async () => {
+      const lastSaveTime = moment('2023-08-01 09:14:00');
+      act(() => {
+        render(<RenderEventSummary user={adminUser} showSavedDraft lastSaveTime={lastSaveTime} />);
+      });
+
+      expect(
+        await screen.findByText(/Draft saved on 08\/01\/2023 at 9:14 am/i)
+      ).toBeInTheDocument();
+    });
+
+    it('does not show the draft saved alert when showSavedDraft is false', async () => {
+      act(() => {
+        render(
+          <RenderEventSummary
+            user={adminUser}
+            showSavedDraft={false}
+            lastSaveTime={moment('2023-08-01 09:14:00')}
+          />
+        );
+      });
+
+      expect(screen.queryByText(/Draft saved on/i)).not.toBeInTheDocument();
+    });
+
+    it('filters the event owner out of grouped collaborator options', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
+
+      fetchMock.restore();
+      fetchMock.get('/api/users/trainers/regional/region/1', []);
+      fetchMock.getOnce('/api/users/trainers/national-center/region/1', [
+        { id: 2, fullName: 'Owner Collaborator' },
+        { id: 3, fullName: 'Tedwina User' },
+      ]);
+
+      const formValues = {
+        ...defaultFormValues,
+        ownerId: 2,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={adminUser} defaultValues={formValues} />);
+      });
+
+      const collaborators = await screen.findByLabelText(/Event collaborators/i);
+      userEvent.click(collaborators);
+
+      expect(await screen.findByText('Tedwina User')).toBeVisible();
+      expect(screen.queryByText('Owner Collaborator')).not.toBeInTheDocument();
+    });
+
+    it('admin users can edit all fields', async () => {
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
 
       // Event ID.
-      expect(await screen.findByRole('textbox', { name: /event id required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event id required/i })
+      ).toBeInTheDocument();
 
       // Event Name.
-      expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event name required/i })
+      ).toBeInTheDocument();
 
       // Event creator.
       const creator = await screen.findByLabelText(/Event creator/i);
@@ -183,65 +257,58 @@ describe('eventSummary', () => {
       expect(await screen.findByRole('combobox', { name: /event organizer/i })).toBeInTheDocument();
 
       // Event Collaborator.
-      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })
+      ).toBeInTheDocument();
 
       // Event Point of Contact.
-      expect(await screen.findByRole('combobox', { name: /event region point of contact/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event region point of contact/i })
+      ).toBeInTheDocument();
 
       // Event Intended Audience.
-      expect(await screen.findByRole('group', { name: /event intended audience required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('group', { name: /event intended audience required/i })
+      ).toBeInTheDocument();
 
       // Event Training Type.
       expect(await screen.findByRole('combobox', { name: /training type/i })).toBeInTheDocument();
 
       // Event Target Population.
-      expect(await screen.findByRole('combobox', { name: /target populations addressed required target population1 target population2/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', {
+          name: /target populations addressed required target population1 target population2/i,
+        })
+      ).toBeInTheDocument();
 
       // Event Vision.
-      expect(await screen.findByRole('textbox', { name: /event vision required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event vision required/i })
+      ).toBeInTheDocument();
     });
 
     it('displays additional states', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
-      };
-
       act(() => {
-        render(<RenderEventSummary
-          user={nonAdminUser}
-        />);
+        render(<RenderEventSummary user={nonAdminUser} />);
       });
 
       expect(await screen.findByText(/Arizona/i)).toBeInTheDocument();
     });
 
     it('non admin users cant edit certain fields', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
-      };
       act(() => {
         render(<RenderEventSummary user={nonAdminUser} />);
       });
 
       // Event Collaborator.
-      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })
+      ).toBeInTheDocument();
 
       // Ten additional read only fields.
       expect(screen.queryAllByTestId('read-only-label').length).toBe(10);
     });
     it('handles null creators', async () => {
-      const adminUser = {
-        ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
-      };
       act(() => {
         render(<RenderEventSummary user={adminUser} creators={null} />);
       });
@@ -253,13 +320,6 @@ describe('eventSummary', () => {
     });
 
     it('hides poc readonly field when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
-      const nonAdminUser = {
-        ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
-      };
-
       const defaultValues = {
         ...defaultFormValues,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
@@ -274,6 +334,208 @@ describe('eventSummary', () => {
 
       // Confirm the intended audience readonly field is still present
       expect(await screen.findByText(/Event intended audience/i)).toBeInTheDocument();
+    });
+
+    it('hides poc editable field for admins when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const defaultValues = {
+        ...defaultFormValues,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={adminUser} defaultValues={defaultValues} />);
+      });
+
+      expect(
+        screen.queryByRole('combobox', { name: /event region point of contact/i })
+      ).not.toBeInTheDocument();
+      expect(
+        await screen.findByRole('group', { name: /event intended audience required/i })
+      ).toBeInTheDocument();
+    });
+
+    it('short-circuits pocIds validation when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
+      const defaultValues = {
+        ...defaultFormValues,
+      };
+
+      let hookForm;
+
+      act(() => {
+        render(
+          <RenderEventSummary
+            user={adminUser}
+            defaultValues={defaultValues}
+            onHookForm={(value) => {
+              hookForm = value;
+            }}
+          />
+        );
+      });
+
+      expect(
+        await screen.findByRole('combobox', { name: /event region point of contact/i })
+      ).toBeInTheDocument();
+
+      defaultValues.eventOrganizer = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
+
+      act(() => {
+        hookForm.setValue('pocIds', []);
+      });
+
+      let isValid;
+      await act(async () => {
+        isValid = await hookForm.trigger('pocIds');
+      });
+
+      expect(isValid).toBe(true);
+      expect(
+        screen.queryByText('Select at least one event region point of contact')
+      ).not.toBeInTheDocument();
+    });
+
+    describe('additionalRegions checkboxes', () => {
+      it('renders Region 11 checkbox', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
+        expect(checkbox).toBeInTheDocument();
+        expect(checkbox).toHaveAttribute('id', 'additionalRegions-11');
+        expect(checkbox).toHaveAttribute('value', '11');
+      });
+
+      it('renders Region 12 checkbox', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText(
+          'Region 12 (Migrant and Seasonal Head Start)'
+        );
+        expect(checkbox).toBeInTheDocument();
+        expect(checkbox).toHaveAttribute('id', 'additionalRegions-12');
+        expect(checkbox).toHaveAttribute('value', '12');
+      });
+
+      it('checkboxes register under additionalRegions field name', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toHaveAttribute(
+          'name',
+          'additionalRegions'
+        );
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toHaveAttribute('name', 'additionalRegions');
+      });
+
+      it('checking Region 11 checkbox updates form value', async () => {
+        act(() => {
+          render(<RenderEventSummary user={adminUser} />);
+        });
+
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
+        await userEvent.click(checkbox);
+
+        expect(checkbox).toBeChecked();
+      });
+
+      it('pre-populated additionalRegions renders checkboxes as checked', async () => {
+        act(() => {
+          render(
+            <RenderEventSummary
+              user={adminUser}
+              defaultValues={{
+                ...defaultFormValues,
+                additionalRegions: ['11', '12'],
+              }}
+            />
+          );
+        });
+
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toBeChecked();
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toBeChecked();
+      });
+    });
+
+    describe('optional chaining tidy-ups preserve behavior', () => {
+      it('renders gracefully when owner is null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  owner: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when pocs is empty array', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  pocIds: [],
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when reasons is empty/null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  reasons: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
+
+      it('renders gracefully when targetPopulations is empty/null', () => {
+        expect(() => {
+          act(() => {
+            render(
+              <RenderEventSummary
+                user={nonAdminUser}
+                defaultValues={{
+                  ...defaultFormValues,
+                  targetPopulations: null,
+                }}
+              />
+            );
+          });
+        }).not.toThrow();
+
+        expect(screen.getByText(/Event summary/i)).toBeInTheDocument();
+      });
     });
   });
 });

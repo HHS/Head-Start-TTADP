@@ -1,24 +1,25 @@
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import TrainingReportForm from '../index';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
+import UserContext from '../../../UserContext';
+import TrainingReportForm from '../index';
 
 const completedForm = {
   regionId: '1',
   reportId: 1,
   id: 1,
+  eventId: 'R01-PD-1234',
   collaboratorIds: [1, 2, 3],
   ownerId: 1,
   owner: {
-    id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+    id: 1,
+    name: 'Ted User',
+    email: 'ted.user@computers.always',
   },
   pocIds: [1],
   data: {
@@ -43,23 +44,26 @@ const completedForm = {
 
 describe('TrainingReportForm', () => {
   const history = createMemoryHistory();
-  const sessionsUrl = '/api/session-reports/eventId/1234';
+  const trainingReportDisplayId = 'R01-PD-1234';
+  const sessionsUrl = `/api/session-reports/eventId/${trainingReportDisplayId}`;
 
   const renderTrainingReportForm = (
     trainingReportId,
-    user = { id: 1, permissions: [], name: 'Ted User' },
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user }}>
-          <TrainingReportForm match={{
-            params: { trainingReportId },
-          }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+    user = { id: 1, permissions: [], name: 'Ted User' }
+  ) =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <TrainingReportForm
+              match={{
+                params: { trainingReportId },
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -68,7 +72,7 @@ describe('TrainingReportForm', () => {
     // the basic app before stuff
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/users/statistics', {});
-    fetchMock.get('/api/users/training-report-users?regionId=1', {
+    fetchMock.get(/\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/, {
       pointOfContact: [],
       collaborators: [],
       creators: [],
@@ -88,7 +92,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 
@@ -118,7 +124,9 @@ describe('TrainingReportForm', () => {
       pocIds: null,
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 
@@ -131,7 +139,7 @@ describe('TrainingReportForm', () => {
 
   it('displays an error when failing to fetch users', async () => {
     fetchMock.reset();
-    fetchMock.get('/api/users/training-report-users?regionId=1', 500);
+    fetchMock.get(/\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/, 500);
 
     fetchMock.get('/api/events/id/123', {
       regionId: '1',
@@ -139,14 +147,20 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
     });
 
-    await waitFor(() => expect(screen.getByText(/Error fetching collaborators and points of contact/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Error fetching collaborators and points of contact/i)
+      ).toBeInTheDocument()
+    );
   });
 
   it('fetches event report data', async () => {
@@ -156,7 +170,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     renderTrainingReportForm('123');
@@ -173,7 +189,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -190,7 +208,9 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -204,16 +224,21 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
-    const onSaveDraftButton = screen.getByText(/save draft/i);
+
+    const onSaveDraftButton = await screen.findByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
     });
 
     // check that fetch mock was called with a put request
-    await waitFor(() => expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true)
+    );
   });
 
   it('shows an error when failing to save', async () => {
@@ -223,7 +248,9 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -232,35 +259,48 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
 
     fetchMock.put('/api/events/id/123', 500);
-    const onSaveDraftButton = screen.getByText(/save draft/i);
+
+    const onSaveDraftButton = await screen.findByText(/save draft/i);
     act(() => {
       userEvent.click(onSaveDraftButton);
     });
 
-    await waitFor(() => expect(screen.getByText(/There was an error saving the training report. Please try again later./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/There was an error saving the training report. Please try again later./i)
+      ).toBeInTheDocument()
+    );
   });
 
   it('handles an error submitting the form', async () => {
-    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
 
-    fetchMock.put('/api/events/id/1', 500);
+    fetchMock.put(`/api/events/id/${trainingReportDisplayId}`, 500);
     fetchMock.get(sessionsUrl, [
       { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
       { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
     ]);
 
     act(() => {
-      renderTrainingReportForm('1');
+      renderTrainingReportForm(trainingReportDisplayId);
     });
 
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
+        true
+      )
+    );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
       userEvent.click(submitButton);
     });
 
     // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the event./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/You will not be able to make changes once you save the event./i)
+      ).toBeInTheDocument()
+    );
 
     // get the button with the text "Yes, continue".
     const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
@@ -268,24 +308,30 @@ describe('TrainingReportForm', () => {
       userEvent.click(yesContinueButton);
     });
 
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
-    await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(
+        true
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument()
+    );
   });
 
   it('displays the correct report view link', async () => {
-    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
     act(() => {
-      renderTrainingReportForm('1');
+      renderTrainingReportForm(trainingReportDisplayId);
     });
 
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
   it('passes correct values to backend and redirects with success message', async () => {
-    fetchMock.get('/api/events/id/1', completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
 
     // Return successful response with proper data structure
-    fetchMock.put('/api/events/id/1', {
+    fetchMock.put(`/api/events/id/${trainingReportDisplayId}`, {
       ...completedForm,
       data: {
         ...completedForm.data,
@@ -301,17 +347,25 @@ describe('TrainingReportForm', () => {
     const pushSpy = jest.spyOn(history, 'push');
 
     act(() => {
-      renderTrainingReportForm('1');
+      renderTrainingReportForm(trainingReportDisplayId);
     });
 
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
+        true
+      )
+    );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
       userEvent.click(submitButton);
     });
 
     // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the event./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/You will not be able to make changes once you save the event./i)
+      ).toBeInTheDocument()
+    );
 
     // get the button with the text "Yes, continue".
     const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
@@ -319,10 +373,16 @@ describe('TrainingReportForm', () => {
       userEvent.click(yesContinueButton);
     });
 
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(
+        true
+      )
+    );
 
     // expect the data to contain "eventSubmitted: true"
-    expect(fetchMock.lastOptions('/api/events/id/1').body).toContain('"eventSubmitted":true');
+    expect(fetchMock.lastOptions(`/api/events/id/${trainingReportDisplayId}`).body).toContain(
+      '"eventSubmitted":true'
+    );
 
     // Verify redirect with message after successful submission
     await waitFor(() => expect(pushSpy).toHaveBeenCalled());
@@ -343,7 +403,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 

@@ -1,27 +1,22 @@
 /* eslint-disable react/jsx-no-bind */
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useMemo,
-  useContext,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { Grid } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import RecipientResults from './components/RecipientResults';
-import { getUserRegions } from '../../permissions';
-import { searchRecipients } from '../../fetchers/recipient';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { RECIPIENTS_PER_PAGE } from '../../Constants';
+import { searchRecipients } from '../../fetchers/recipient';
+import { getUserRegions } from '../../permissions';
+import RecipientResults from './components/RecipientResults';
 import './index.css';
-import useSession from '../../hooks/useSession';
-import FilterPanel from '../../components/filter/FilterPanel';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
-import { expandFilters } from '../../utils';
 import AppLoadingContext from '../../AppLoadingContext';
+import FilterPanel from '../../components/filter/FilterPanel';
+import useSession from '../../hooks/useSession';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import { expandFilters } from '../../utils';
+import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -33,12 +28,14 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
   direction: 'asc',
 };
 
-export const determineDefaultSort = (userHasCentralOffice) => (
-  userHasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT
-);
+export const determineDefaultSort = (userHasCentralOffice) =>
+  userHasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT;
 
 function RecipientSearch({ user }) {
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    'recipient-search-filters',
+    []
+  );
 
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
@@ -113,11 +110,10 @@ function RecipientSearch({ user }) {
       setIsAppLoading(true);
 
       try {
-        const response = await searchRecipients(
-          query,
-          expandFilters(filters),
-          { ...sortConfig, offset },
-        );
+        const response = await searchRecipients(query, expandFilters(filters), {
+          ...sortConfig,
+          offset,
+        });
         setResults(response);
       } catch (err) {
         setResults({ count: 0, rows: [] });
@@ -127,17 +123,7 @@ function RecipientSearch({ user }) {
     }
 
     fetchRecipients();
-  }, [
-    offset,
-    sortConfig,
-    user,
-    queryAndSort,
-    query,
-    setQueryAndSort,
-    filters,
-    defaultSort,
-    setIsAppLoading,
-  ]);
+  }, [offset, sortConfig, query, setQueryAndSort, filters, defaultSort, setIsAppLoading]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -176,13 +162,21 @@ function RecipientSearch({ user }) {
       <div className="ttahub-recipient-search">
         <h1 className="landing margin-top-0 margin-bottom-3">Recipient Records</h1>
         <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
-          <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
-            { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-            <label htmlFor="recipientRecordSearch" className="usa-sr-only">Search recipient records by name or grant id</label>
-            <input defaultValue={query} id="recipientRecordSearch" type="search" name="search" className="ttahub-recipient-search--search-input" ref={inputRef} />
+          <form className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label htmlFor="recipientRecordSearch" className="usa-sr-only">
+              Search recipient records by name or grant id
+            </label>
+            <input
+              defaultValue={query}
+              id="recipientRecordSearch"
+              type="search"
+              name="search"
+              className="ttahub-recipient-search--search-input"
+              ref={inputRef}
+            />
             <button type="submit" className="ttahub-recipient-search--submit-button usa-button">
-              <FontAwesomeIcon color="white" icon={faSearch} />
-              {' '}
+              <FontAwesomeIcon color="white" icon={faSearch} />{' '}
               <span className="usa-sr-only">Search for matching recipients</span>
             </button>
           </form>
@@ -220,11 +214,13 @@ RecipientSearch.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

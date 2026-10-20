@@ -1,23 +1,20 @@
-import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import CitationDrawerContent from '../../../../../components/CitationDrawerContent';
 import Drawer from '../../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../../components/DrawerTriggerButton';
-import CitationDrawerContent from '../../../../../components/CitationDrawerContent';
 
 export default function CitationDrawer({ citationNumber, bolded }) {
   const drawerTriggerRef = useRef(null);
-
   return (
     <>
-      <DrawerTriggerButton customClass={bolded ? 'text-bold' : ''} drawerTriggerRef={drawerTriggerRef}>
+      <DrawerTriggerButton
+        customClass={bolded ? 'text-bold' : ''}
+        drawerTriggerRef={drawerTriggerRef}
+      >
         {citationNumber}
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={drawerTriggerRef}
-        stickyHeader
-        stickyFooter
-        title="Monitoring citations"
-      >
+      <Drawer triggerRef={drawerTriggerRef} stickyHeader stickyFooter title="Monitoring citations">
         <CitationDrawerContent citations={[citationNumber]} />
       </Drawer>
     </>

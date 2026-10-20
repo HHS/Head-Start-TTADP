@@ -6,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -------------------------------------------------------------------
         -- 0 Correct all Objective template title hashes (one root cause of
         --   the whole issue is some were not trimmed before hashing)
@@ -129,7 +130,9 @@ module.exports = {
         UNION
         SELECT 5,'retargeted Objectives', (SELECT COUNT(*) FROM obj_updates)
         ORDER BY 1;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 
@@ -137,10 +140,13 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         ALTER TABLE "ObjectiveTemplates"
         DROP CONSTRAINT objective_templates_template_title_region_id_uniq;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 };

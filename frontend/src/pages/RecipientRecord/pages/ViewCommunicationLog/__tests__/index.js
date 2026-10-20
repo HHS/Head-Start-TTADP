@@ -1,51 +1,44 @@
-import React from 'react';
-import join from 'url-join';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import UserContext from '../../../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../../../AppLoadingContext';
-import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
+import { COMPLETE, NOT_STARTED } from '../../../../../components/Navigator/constants';
+import UserContext from '../../../../../UserContext';
 import ViewCommunicationForm from '../index';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
 const RECIPIENT_NAME = 'Little Lord Wigglytoes';
 
-const communicationLogUrl = join(
-  '/',
-  'api',
-  'communication-logs',
-);
+const communicationLogUrl = join('/', 'api', 'communication-logs');
 
 describe('ViewCommunicationForm', () => {
   const history = createMemoryHistory();
 
-  const renderTest = (
-    communicationLogId = '1',
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <ViewCommunicationForm
-            recipientName={RECIPIENT_NAME}
-            match={{
-              params: {
-                communicationLogId,
-                recipientId: RECIPIENT_ID,
-                regionId: REGION_ID,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+  const renderTest = (communicationLogId = '1') =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+            <ViewCommunicationForm
+              recipientName={RECIPIENT_NAME}
+              match={{
+                params: {
+                  communicationLogId,
+                  recipientId: RECIPIENT_ID,
+                  regionId: REGION_ID,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -109,14 +102,19 @@ describe('ViewCommunicationForm', () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, formData);
 
-    await act(() => waitFor(() => {
-      renderTest();
-    }));
+    await act(() =>
+      waitFor(() => {
+        renderTest();
+      })
+    );
 
     expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
     const edit = await screen.findByRole('link', { name: 'Edit' });
     expect(edit).toBeInTheDocument();
-    expect(edit).toHaveAttribute('href', `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/log`);
+    expect(edit).toHaveAttribute(
+      'href',
+      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/log`
+    );
   });
 
   it('should render the view & edit button for regional logs', async () => {
@@ -180,9 +178,11 @@ describe('ViewCommunicationForm', () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, formData);
 
-    await act(() => waitFor(() => {
-      renderTest();
-    }));
+    await act(() =>
+      waitFor(() => {
+        renderTest();
+      })
+    );
 
     expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
     const edit = await screen.findByRole('link', { name: 'Edit' });
@@ -193,10 +193,12 @@ describe('ViewCommunicationForm', () => {
   it('hides notes section when empty', async () => {
     const formData = {
       id: 1,
-      recipients: [{
-        id: 1,
-        name: 'Little Lord Wigglytoes',
-      }],
+      recipients: [
+        {
+          id: 1,
+          name: 'Little Lord Wigglytoes',
+        },
+      ],
       userId: '1',
       updatedAt: new Date(),
       author: {
@@ -226,9 +228,11 @@ describe('ViewCommunicationForm', () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, formData);
 
-    await act(() => waitFor(() => {
-      renderTest();
-    }));
+    await act(() =>
+      waitFor(() => {
+        renderTest();
+      })
+    );
 
     expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
     expect(screen.queryByText('Notes')).toBeNull();
@@ -293,9 +297,11 @@ describe('ViewCommunicationForm', () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, formData);
 
-    await act(() => waitFor(() => {
-      renderTest();
-    }));
+    await act(() =>
+      waitFor(() => {
+        renderTest();
+      })
+    );
 
     expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();

@@ -1,22 +1,26 @@
 /* eslint-disable max-len */
 /* istanbul ignore file: most of what is needed to be tested here is already tested in Navigator component */
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
+
 import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
-import { getCommunicationLogById, updateCommunicationLogById } from '../../../fetchers/communicationLog';
-import { resetFormData } from '../constants';
-import useHookFormPageState from '../../../hooks/useHookFormPageState';
 import AppLoadingContext from '../../../AppLoadingContext';
-import UserContext from '../../../UserContext';
-import { LogProvider } from './LogContext';
-import Navigator from '../../Navigator';
 import { NOOP } from '../../../Constants';
+import {
+  getCommunicationLogById,
+  updateCommunicationLogById,
+} from '../../../fetchers/communicationLog';
+import useHookFormPageState from '../../../hooks/useHookFormPageState';
+import UserContext from '../../../UserContext';
+import Navigator from '../../Navigator';
+import {
+  GENERIC_SAVE_ERROR,
+  isCommunicationLogNotFoundError,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  resetFormData,
+} from '../constants';
+import { LogProvider } from './LogContext';
 
 const LogFormNavigator = ({
   shouldFetch,
@@ -50,11 +54,7 @@ const LogFormNavigator = ({
   /* ============ */
 
   const hookForm = useFormContext();
-  const {
-    getValues,
-    reset,
-    register,
-  } = hookForm;
+  const { getValues, reset, register } = hookForm;
 
   const formData = getValues();
 
@@ -67,14 +67,16 @@ const LogFormNavigator = ({
       // 1. reportFetched flag prevents refetching after initial load
       // 2. This effect only runs when meaningful dependencies change (reportId, currentPage, etc.)
       // 3. Not checking isAppLoading prevents unnecessary effect re-runs during saves
-      if (!shouldFetch({
-        communicationLogId: reportId.current,
-        regionId,
-        reportFetched,
-        isAppLoading: false, // Always pass false - reportFetched handles preventing concurrent fetches
-        currentPage,
-        recipientId,
-      })) {
+      if (
+        !shouldFetch({
+          communicationLogId: reportId.current,
+          regionId,
+          reportFetched,
+          isAppLoading: false, // Always pass false - reportFetched handles preventing concurrent fetches
+          currentPage,
+          recipientId,
+        })
+      ) {
         return;
       }
 
@@ -116,7 +118,10 @@ const LogFormNavigator = ({
   const reportCreator = useMemo(() => ({ name: user.name, roles: user.roles }), [user]);
 
   // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = useMemo(() => (formData ? formData.savedToStorageTime : null), [formData]);
+  const savedToStorageTime = useMemo(
+    () => (formData ? formData.savedToStorageTime : null),
+    [formData]
+  );
 
   const updatePage = (position) => {
     const state = {};
@@ -159,6 +164,9 @@ const LogFormNavigator = ({
 
   const onFormSubmit = async () => {
     try {
+      setError(null);
+      updateErrorMessage('');
+
       const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
 
       if (!allPagesComplete) {
@@ -171,17 +179,17 @@ const LogFormNavigator = ({
       const data = hookForm.getValues();
 
       // PUT it to the backend
-      await updateCommunicationLogById(
-        reportId.current,
-        data,
-      );
+      await updateCommunicationLogById(reportId.current, data);
 
-      history.push(
-        redirectToOnSubmit,
-        { message: 'You successfully saved the communication log.' },
-      );
+      history.push(redirectToOnSubmit, {
+        message: 'You successfully saved the communication log.',
+      });
     } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
+      const isMissingLog = isCommunicationLogNotFoundError(err);
+      const message = isMissingLog ? LOG_NOT_FOUND_SAVE_ERROR : GENERIC_SAVE_ERROR;
+      setError(message);
+      updateErrorMessage(message);
+      window.scrollTo(0, 0);
     } finally {
       setIsAppLoading(false);
     }
@@ -230,10 +238,12 @@ LogFormNavigator.propTypes = {
   reportId: PropTypes.shape({
     current: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    position: PropTypes.number.isRequired,
-    label: PropTypes.string.isRequired,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      position: PropTypes.number.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
   currentPage: PropTypes.string.isRequired,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

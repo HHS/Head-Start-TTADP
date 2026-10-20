@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 
 import './Tooltip.scss';
 
@@ -12,11 +12,14 @@ export default function Tooltip({
   className,
   position,
   buttonClassName,
+  buttonTextClassName,
   maxWidth,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const cssClasses = showTooltip ? `smart-hub-tooltip show-tooltip ${className}` : `smart-hub-tooltip ${className}`;
+  const cssClasses = showTooltip
+    ? `smart-hub-tooltip show-tooltip ${className}`
+    : `smart-hub-tooltip ${className}`;
 
   const onClick = () => {
     setShowTooltip(!showTooltip);
@@ -24,20 +27,28 @@ export default function Tooltip({
 
   return (
     <span className={cssClasses} data-testid="tooltip">
-      <button type="button" className={`usa-button usa-button--unstyled ${buttonClassName}`} onClick={onClick}>
+      <button
+        type="button"
+        className={`usa-button usa-button--unstyled ${buttonClassName}`}
+        onClick={onClick}
+      >
         <span className="smart-hub--ellipsis" style={{ maxWidth: `${maxWidth}px` }}>
           <span
-            className={hideUnderline ? '' : 'smart-hub-tooltip__underlined-text'}
+            className={`${hideUnderline ? '' : 'smart-hub-tooltip__underlined-text'} ${buttonTextClassName}`.trim()}
             aria-hidden={!screenReadDisplayText}
           >
             {displayText}
           </span>
         </span>
-        <span className="usa-sr-only">
-          {buttonLabel}
-        </span>
+        <span className="usa-sr-only">{buttonLabel}</span>
       </button>
-      <div role="tooltip" aria-hidden={!showTooltip} className={`usa-tooltip__body usa-tooltip__body--${position}`}>{tooltipText}</div>
+      <div
+        role="tooltip"
+        aria-hidden={!showTooltip}
+        className={`usa-tooltip__body usa-tooltip__body--${position}`}
+      >
+        {tooltipText}
+      </div>
     </span>
   );
 }
@@ -53,15 +64,13 @@ Tooltip.propTypes = {
     PropTypes.string,
     PropTypes.arrayOf(PropTypes.node),
   ]).isRequired,
-  buttonLabel: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.node,
-  ]).isRequired,
+  buttonLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   screenReadDisplayText: PropTypes.bool,
   hideUnderline: PropTypes.bool,
   className: PropTypes.string,
   position: PropTypes.string,
   buttonClassName: PropTypes.string,
+  buttonTextClassName: PropTypes.string,
   maxWidth: PropTypes.number,
 };
 
@@ -71,5 +80,6 @@ Tooltip.defaultProps = {
   className: '',
   position: 'top',
   buttonClassName: '',
+  buttonTextClassName: '',
   maxWidth: 175,
 };

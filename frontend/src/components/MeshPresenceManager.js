@@ -1,9 +1,10 @@
 /* istanbul ignore file: too hard to test websockets */
-import { useState, useEffect, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { groupBy } from 'lodash';
+
 // eslint-disable-next-line import/no-unresolved
 import { MeshClient } from '@mesh-kit/core/client';
+import { groupBy } from 'lodash';
+import PropTypes from 'prop-types';
+import { useContext, useEffect, useState } from 'react';
 import UserContext from '../UserContext';
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
@@ -53,15 +54,12 @@ function MeshPresenceManager({ room, onPresenceUpdate, onRevisionUpdate }) {
 
       // let other clients know who I am...
       // this is how we track which ws connection is which system user
-      await meshClient.publishPresenceState(
-        room,
-        {
-          state: {
-            userId: userContext.user.id,
-            username: userContext.user.name,
-          },
+      await meshClient.publishPresenceState(room, {
+        state: {
+          userId: userContext.user.id,
+          username: userContext.user.name,
         },
-      );
+      });
 
       // this function takes the result of a presence state request
       // and formats it into a structure that makes sense for this feature
@@ -102,14 +100,17 @@ function MeshPresenceManager({ room, onPresenceUpdate, onRevisionUpdate }) {
         window.removeEventListener('beforeunload', cleanup);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
-  useEffect(() => () => {
-    if (client) {
-      client.close();
-    }
-  }, [client]);
+  useEffect(
+    () => () => {
+      if (client) {
+        client.close();
+      }
+    },
+    [client]
+  );
 
   if (!client) {
     return null;

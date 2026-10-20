@@ -1,13 +1,7 @@
+import { download, getImportSchedules, moreToDownload, moreToProcess, process } from '..';
 import * as downloadModule from '../download';
 import * as processModule from '../process';
 import * as recordModule from '../record';
-import {
-  download,
-  process,
-  moreToDownload,
-  moreToProcess,
-  getImportSchedules,
-} from '..';
 
 jest.mock('../download');
 jest.mock('../process');
@@ -18,7 +12,7 @@ describe('index', () => {
     it('should initiate the download of files for the given import ID', async () => {
       const importId = 123;
       const mockDownloadResult = { success: true };
-      (downloadModule.downloadFilesFromSource).mockResolvedValue(mockDownloadResult);
+      downloadModule.downloadFilesFromSource.mockResolvedValue(mockDownloadResult);
 
       const result = await download(importId);
 
@@ -33,7 +27,7 @@ describe('index', () => {
     it('should process the ZIP file from S3 for the given import ID', async () => {
       const importId = 456;
       const mockProcessResult = { processed: true };
-      (processModule.processZipFileFromS3).mockResolvedValue(mockProcessResult);
+      processModule.processZipFileFromS3.mockResolvedValue(mockProcessResult);
 
       const result = await process(importId);
 
@@ -47,7 +41,7 @@ describe('index', () => {
   describe('moreToDownload', () => {
     it('should check if there are more files to download for the given import ID', async () => {
       const importId = 789;
-      (recordModule.importHasMoreToDownload).mockResolvedValue(true);
+      recordModule.importHasMoreToDownload.mockResolvedValue(true);
 
       const result = await moreToDownload(importId);
 
@@ -61,7 +55,7 @@ describe('index', () => {
   describe('moreToProcess', () => {
     it('should check if there is more processing to be done for the given import ID', async () => {
       const importId = 1011;
-      (recordModule.importHasMoreToProcess).mockResolvedValue(false);
+      recordModule.importHasMoreToProcess.mockResolvedValue(false);
 
       const result = await moreToProcess(importId);
 
@@ -74,8 +68,11 @@ describe('index', () => {
 
   describe('getImportSchedules', () => {
     it('should retrieve the import schedules', async () => {
-      const mockSchedules = [{ id: 1, name: 'Schedule 1' }, { id: 2, name: 'Schedule 2' }];
-      (recordModule.importSchedules).mockResolvedValue(mockSchedules);
+      const mockSchedules = [
+        { id: 1, name: 'Schedule 1' },
+        { id: 2, name: 'Schedule 2' },
+      ];
+      recordModule.importSchedules.mockResolvedValue(mockSchedules);
 
       const result = await getImportSchedules();
 

@@ -1,0 +1,55 @@
+import { createFiltersToScopes } from '../utils';
+import { withCitationRecipient } from './citationRecipient';
+import { withFindingCategory, withoutFindingCategory } from './findingCategory';
+import { withFindingType, withoutFindingType } from './findingType';
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
+import { withoutRegion, withRegion } from './regionId';
+import {
+  afterReportDeliveryDate,
+  beforeReportDeliveryDate,
+  withinReportDeliveryDates,
+} from './reportDeliveryDate';
+import { withStateCode } from './stateCode';
+import { withoutTopics, withTopics } from './topic';
+
+export const topicToQuery = {
+  citationRecipient: {
+    in: (query: string[]) => withCitationRecipient(query),
+  },
+  region: {
+    in: (query: string[]) => withRegion(query),
+    nin: (query: string[]) => withoutRegion(query),
+  },
+  findingType: {
+    in: (query: string[]) => withFindingType(query),
+    nin: (query: string[]) => withoutFindingType(query),
+  },
+  findingCategory: {
+    in: (query: string[]) => withFindingCategory(query),
+    nin: (query: string[]) => withoutFindingCategory(query),
+  },
+  programSpecialist: {
+    ctn: (query: string[]) => withProgramSpecialist(query),
+    nctn: (query: string[]) => withoutProgramSpecialist(query),
+  },
+  stateCode: {
+    ctn: (query: string[]) => withStateCode(query),
+  },
+  topic: {
+    in: (query: string[], options, userId, validTopics) =>
+      withTopics(query, options, userId, validTopics),
+    nin: (query: string[], options, userId, validTopics) =>
+      withoutTopics(query, options, userId, validTopics),
+  },
+  reportDeliveryDate: {
+    bef: (query: string[]) => beforeReportDeliveryDate(query),
+    aft: (query: string[]) => afterReportDeliveryDate(query),
+    win: (query: string[]) => withinReportDeliveryDates(query),
+    in: (query: string[]) => withinReportDeliveryDates(query),
+  },
+};
+
+export async function grantCitationFiltersToScopes(filters, options, userId, validTopics) {
+  const scopes = createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
+  return Promise.all(scopes);
+}

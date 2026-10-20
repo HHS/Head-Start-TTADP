@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 import { shouldUpdateFormData } from './formRichTextEditorHelper';
 
@@ -24,14 +24,14 @@ describe('shouldUpdateFormData', () => {
   });
 
   it('returns false during autosave when cursor IS in a rich text editor', async () => {
-    const previousContains = HTMLDivElement.prototype.contains;
-    HTMLDivElement.prototype.contains = () => true;
+    const previousContains = HTMLTextAreaElement.prototype.contains;
+    HTMLTextAreaElement.prototype.contains = () => true;
 
     // Render a rich editor to create the DOM structure
     render(
-      <div className="rdw-editor-main" role="textbox" aria-label="rich editor">
+      <textarea className="rdw-editor-main" aria-label="rich editor">
         test
-      </div>,
+      </textarea>
     );
 
     const richEditor = await screen.findByRole('textbox', { name: 'rich editor' });
@@ -42,7 +42,7 @@ describe('shouldUpdateFormData', () => {
     // When cursor is in rich text editor, should return false to prevent form reset
     expect(shouldUpdateFormData(true)).toBe(false);
 
-    HTMLDivElement.prototype.contains = previousContains;
+    HTMLTextAreaElement.prototype.contains = previousContains;
   });
 
   it('returns false during autosave when cursor is in any of multiple rich text editors', () => {
@@ -56,11 +56,9 @@ describe('shouldUpdateFormData', () => {
       contains: jest.fn(() => false),
     };
 
-    jest.spyOn(document, 'querySelectorAll').mockReturnValue([
-      mockEditor1,
-      mockEditor2,
-      mockEditor3,
-    ]);
+    jest
+      .spyOn(document, 'querySelectorAll')
+      .mockReturnValue([mockEditor1, mockEditor2, mockEditor3]);
     jest.spyOn(document, 'getSelection').mockReturnValue({
       anchorNode: document.createElement('div'),
     });
@@ -131,11 +129,9 @@ describe('shouldUpdateFormData', () => {
       contains: jest.fn(() => false),
     };
 
-    jest.spyOn(document, 'querySelectorAll').mockReturnValue([
-      mockEditor1,
-      mockEditor2,
-      mockEditor3,
-    ]);
+    jest
+      .spyOn(document, 'querySelectorAll')
+      .mockReturnValue([mockEditor1, mockEditor2, mockEditor3]);
     jest.spyOn(document, 'getSelection').mockReturnValue({
       anchorNode: document.createElement('div'),
     });

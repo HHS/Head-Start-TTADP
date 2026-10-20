@@ -1,29 +1,41 @@
-import { Request, Response } from 'express';
-import stringify from 'csv-stringify/lib/sync';
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
+import stringify from 'csv-stringify/lib/sync';
+import type { Request, Response } from 'express';
+import httpCodes from 'http-codes';
+import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import EventReport from '../../policies/event';
+import RecipientPolicy from '../../policies/recipient';
+import { setTrainingReportReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
+import { findEventBySmartsheetId } from '../../services/event';
+import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from '../../services/eventFlow';
+import { groupsByRegion } from '../../services/groups';
+import { recipientById } from '../../services/recipient';
 import {
   createSession,
-  findSessionsByEventId,
-  findSessionById,
-  updateSession,
   destroySession,
+  findSessionById,
+  findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
+  updateSession,
 } from '../../services/sessionReports';
-import { SessionReportTableRow, GetSessionReportsResponse } from '../../services/types/sessionReport';
-import EventReport from '../../policies/event';
+import type {
+  GetSessionReportsResponse,
+  SessionReportTableRow,
+} from '../../services/types/sessionReport';
 import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
-import { currentUserId } from '../../services/currentUser';
-import { groupsByRegion } from '../../services/groups';
-import { getUserReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
+
+const facilitationSchema = Joi.string()
+  .valid('national_center', 'regional_tta_staff', 'both')
+  .required();
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -38,6 +50,10 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
       {
         key: 'eventName',
         header: 'Event Title',
+      },
+      {
+        key: 'goalTemplates',
+        header: 'Supporting Goals',
       },
       {
         key: 'sessionName',
@@ -55,10 +71,41 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'objectiveTopics',
         header: 'Topics',
       },
+      {
+        key: 'recipients',
+        header: 'Recipients',
+      },
+      {
+        key: 'participants',
+        header: 'Recipient Participants',
+      },
+      {
+        key: 'duration',
+        header: 'Duration (hours)',
+      },
+      {
+        key: 'participantCount',
+        header: 'Participant Count',
+      },
+      {
+        key: 'deliveryMethod',
+        header: 'Delivery type',
+      },
     ],
   };
 
-  const csvData = stringify(rows, options);
+  // Transform goalTemplates array to comma-separated string of standard values
+  const transformedRows = rows.map((row) => ({
+    ...row,
+    objectiveTopics: Array.isArray(row.objectiveTopics) ? row.objectiveTopics.join(', ') : '',
+    goalTemplates: Array.isArray(row.goalTemplates)
+      ? row.goalTemplates.map((gt) => gt.standard).join(', ')
+      : '',
+    recipients: Array.isArray(row.recipients) ? row.recipients.map((r) => r.label).join(', ') : '',
+    participants: Array.isArray(row.participants) ? row.participants.join(', ') : '',
+  }));
+
+  const csvData = stringify(transformedRows, options);
 
   res.attachment('training-reports.csv');
   return res.send(`\ufeff${csvData}`);
@@ -68,10 +115,7 @@ export const getHandler = async (req: Request, res: Response) => {
   try {
     let session;
 
-    const {
-      id,
-      eventId,
-    } = req.params;
+    const { id, eventId } = req.params;
 
     let sessionEventId = eventId;
     const params = [id, eventId];
@@ -82,8 +126,10 @@ export const getHandler = async (req: Request, res: Response) => {
 
     if (id) {
       session = await findSessionById(Number(id));
-      if (session.event && session.event && session.event.data && session.event.data.status === 'Complete') {
-        return res.status(httpCodes.FORBIDDEN).send({ message: 'Sessions on completed training events cannot be edited.' });
+      if (session?.event?.data?.status === 'Complete') {
+        return res
+          .status(httpCodes.FORBIDDEN)
+          .send({ message: 'Sessions on completed training events cannot be edited.' });
       }
 
       sessionEventId = session.eventId;
@@ -92,11 +138,15 @@ export const getHandler = async (req: Request, res: Response) => {
     }
 
     // Event auth.
-    const event = await findEventBySmartsheetIdSuffix(sessionEventId);
+    const event = await findEventBySmartsheetId(sessionEventId);
     if (event.data && event.data.status === 'Complete') {
-      return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
+      return res
+        .status(httpCodes.FORBIDDEN)
+        .send({ message: 'Completed training events cannot be edited.' });
     }
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
     const eventAuth = await getEventAuthorization(req, res, event, session);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
@@ -137,17 +187,31 @@ export const createHandler = async (req: Request, res: Response) => {
     }
 
     // Get associated event to use for authorization for region write
-    const event = await findEventBySmartsheetIdSuffix(eventId);
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    const event = await findEventBySmartsheetId(eventId);
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canCreateSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
+    if (!auth.canCreateSession()) {
+      return res.sendStatus(httpCodes.FORBIDDEN);
+    }
+
+    if (event.data.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+      const { error } = facilitationSchema.validate(data?.facilitation);
+      if (error) {
+        return res.status(httpCodes.BAD_REQUEST).send({
+          message:
+            'Select who is providing the training: national_center, regional_tta_staff, or both',
+        });
+      }
+    }
 
     const session = await createSession({
       eventId: event.id,
       data: {
         ...data,
         eventName: event.data.eventName,
-        eventDisplayId: event.data.eventId,
+        eventDisplayId: event.eventId,
         regionId: event.regionId,
         eventOwner: event.ownerId,
       },
@@ -176,12 +240,16 @@ export const updateHandler = async (req: Request, res: Response) => {
     }
 
     // Authorization is through the associated event
-    const event = await findEventBySmartsheetIdSuffix(eventId);
+    const event = await findEventBySmartsheetId(eventId);
     const session = await findSessionById(Number(id));
-    if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
     const eventAuth = await getEventAuthorization(req, res, event, session);
 
-    if (!eventAuth.canEditSession()) { return res.sendStatus(httpCodes.FORBIDDEN); }
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(httpCodes.FORBIDDEN);
+    }
 
     const updatedSession = await updateSession(Number(id), req.body);
     return res.status(httpCodes.CREATED).send(updatedSession);
@@ -199,13 +267,17 @@ export const deleteHandler = async (req: Request, res: Response) => {
     }
 
     const session = await findSessionById(Number(id));
-    if (!session) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' }); }
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
+    }
 
     // Authorization is through the associated event
     // so we need to get the event first
-    const event = await findEventBySmartsheetIdSuffix(String(session.eventId));
+    const event = await findEventBySmartsheetId(String(session.eventId));
     const eventAuth = await getEventAuthorization(req, res, event);
-    if (!eventAuth.canDeleteSession()) { return res.sendStatus(403); }
+    if (!eventAuth.canDeleteSession()) {
+      return res.sendStatus(403);
+    }
 
     // Delete the session
     await destroySession(Number(id));
@@ -217,10 +289,28 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const participants = await getPossibleSessionParticipants(Number(regionId));
+    const { sessionReportId } = req.params; // checked by middleware
+    const sessionId = Number(sessionReportId);
+    const session = await findSessionById(sessionId);
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
+    }
+
+    const event = await findEventBySmartsheetId(String(session.eventId));
+
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    const eventAuth = await getEventAuthorization(req, res, event, session);
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(403);
+    }
+
+    const participants = await getPossibleSessionParticipants(sessionId);
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
+    console.log(error);
     return handleErrors(req, res, error, logContext);
   }
 };
@@ -232,9 +322,7 @@ export async function getGroups(req: Request, res: Response): Promise<void> {
   const regionNumber = parseInt(region, DECIMAL_BASE);
   const eventPolicy = new EventReport(user, { regionId: regionNumber });
   // Has correct TR permissions.
-  if (
-    !eventPolicy.canGetGroupsForEditingSession()
-  ) {
+  if (!eventPolicy.canGetGroupsForEditingSession()) {
     res.sendStatus(403);
     return;
   }
@@ -251,36 +339,75 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
   try {
     const userId = await currentUserId(req, res);
 
-    // Get user's readable regions for authorization
-    const userReadRegions = await getUserReadRegions(userId);
+    // Extract query parameters
+    const { sortBy, sortDir, offset, limit, format, ...filterParams } = req.query as Record<
+      string,
+      string | string[] | undefined
+    >;
 
-    // Return FORBIDDEN if user has no readable regions
-    if (!userReadRegions.length) {
-      return res.sendStatus(httpCodes.FORBIDDEN);
+    const normalizedFilterParams = { ...filterParams };
+
+    if (typeof normalizedFilterParams['region.in'] === 'string') {
+      normalizedFilterParams['region.in'] = [normalizedFilterParams['region.in']];
     }
 
-    // Extract query parameters
-    const {
-      sortBy,
-      sortDir,
-      offset,
-      limit,
-      format,
-      ...filterParams
-    } = req.query as Record<string, string | undefined>;
+    if (typeof normalizedFilterParams['region.in[]'] === 'string') {
+      normalizedFilterParams['region.in[]'] = [normalizedFilterParams['region.in[]']];
+    }
+
+    const recipientId = [req.query.recipientId].flat()[0];
+
+    if (recipientId) {
+      // Cross-region by design (all of the recipient's sessions regardless of TR region),
+      // but the caller must still be authorized to view this recipient's record.
+      const recipient = await recipientById(recipientId, {});
+      if (!recipient) {
+        return res.status(httpCodes.NOT_FOUND).send({ message: 'Recipient not found' });
+      }
+      const user = await userById(userId);
+      const recipientAuth = new RecipientPolicy(user, recipient);
+      if (!recipientAuth.canViewTrainingReports()) {
+        return res.sendStatus(httpCodes.FORBIDDEN);
+      }
+    }
+
+    // Previously, we returned a FORBIDDEN (403) error after checking to see if
+    // a user had regions, however, missing region URL params would cause
+    // overly permissive access to session reports.
+    // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
+    // of our application/handlers (the user experience will be the same: an empty sessions table)
+    const filteredFilterParams = recipientId
+      ? normalizedFilterParams
+      : await setTrainingReportReadRegions(normalizedFilterParams, userId);
 
     // Build params object for service
-    // Service layer filters will handle region filtering based on userReadRegions
+    // Region filtering has already been applied via setTrainingReportReadRegions
+    // For CSV export, don't apply limit/offset to get all rows
+
+    let offsetValue = offset ? Number(offset) : 0;
+    let limitValue: number | 'all' = limit ? Number(limit) : 10;
+
+    const formatValue = format ? [format].flat()[0].toLowerCase() : 'json';
+    const isCSV = format === 'csv';
+
+    if (isCSV) {
+      offsetValue = 0;
+      limitValue = 'all';
+    }
+
     const serviceParams = {
       sortBy: sortBy || 'id',
       sortDir: sortDir || 'DESC',
-      offset: offset ? Number(offset) : 0,
-      limit: limit ? Number(limit) : 10,
-      format: (format === 'csv' ? 'csv' : 'json') as 'json' | 'csv',
-      ...filterParams,
+      offset: offsetValue,
+      limit: limitValue,
+      format: formatValue as 'json' | 'csv',
+      ...filteredFilterParams,
+      userId,
     };
 
-    const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
+    const result: GetSessionReportsResponse = recipientId
+      ? await getSessionReportsByRecipient({ ...serviceParams, recipientId })
+      : await getSessionReports(serviceParams);
 
     // Handle CSV response
     if (format === 'csv') {

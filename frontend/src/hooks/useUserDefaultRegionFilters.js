@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { allRegionsUserHasPermissionTo } from '../permissions';
 import { buildDefaultRegionFilters } from '../pages/regionHelpers';
+import { allRegionsUserHasPermissionTo } from '../permissions';
 
 const ADMIN_REGION = 14;
 
@@ -14,16 +14,17 @@ export default function useUserDefaultRegionFilters(user, manageRegions) {
 
   let defaultFilters = () => [];
   if (manageRegions) {
-    defaultFilters = () => ((defaultRegion !== ADMIN_REGION
-    && defaultRegion !== 0
-    && hasMultipleRegions)
-      ? [{
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      }]
-      : allRegionsFilters);
+    defaultFilters = () =>
+      defaultRegion !== ADMIN_REGION && defaultRegion !== 0 && hasMultipleRegions
+        ? [
+            {
+              id: uuidv4(),
+              topic: 'region',
+              condition: 'is',
+              query: defaultRegion,
+            },
+          ]
+        : allRegionsFilters;
   }
 
   return {

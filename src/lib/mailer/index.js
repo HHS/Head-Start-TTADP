@@ -1,29 +1,30 @@
 /* istanbul ignore file: tested but not showing up in coverage */
 /* eslint-disable @typescript-eslint/return-await */
-import { createTransport } from 'nodemailer';
-import moment from 'moment';
-import { uniq, lowerCase } from 'lodash';
-import { QueryTypes } from 'sequelize';
+
 import Email from 'email-templates';
+import { lowerCase, uniq } from 'lodash';
+import moment from 'moment';
+import { createTransport } from 'nodemailer';
 import * as path from 'path';
-import {
-  sequelize,
-} from '../../models';
-import { auditLogger, logger } from '../../logger';
-import newQueue, { increaseListeners } from '../queue';
+import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
-import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
+import { auditLogger, logger } from '../../logger';
+import { sequelize } from '../../models';
+import safeParse from '../../models/helpers/safeParse';
 import {
-  activityReportsWhereCollaboratorByDate,
+  activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
-  activityReportsApprovedByDate,
+  activityReportsSubmittedWhereCollaboratorByDate,
+  activityReportsSubmittedWhereCreatorByDate,
+  activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
-import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
-import transactionQueueWrapper from '../../workers/transactionWrapper';
 import referenceData from '../../workers/referenceData';
-import safeParse from '../../models/helpers/safeParse';
+import transactionQueueWrapper from '../../workers/transactionWrapper';
+import newQueue, { increaseListeners } from '../queue';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -55,7 +56,33 @@ const defaultTransport = createTransport({
 
 const send = NODE_ENV === 'production' || SEND_NON_PRODUCTION_NOTIFICATIONS === 'true';
 
+const createEmailSender = (transport = defaultTransport) => {
+  const { FROM_EMAIL_ADDRESS } = process.env;
+  return new Email({
+    message: { from: FROM_EMAIL_ADDRESS },
+    send,
+    transport,
+    htmlToText: { wordwrap: 120 },
+    preview: false,
+  });
+};
+
+const sendIfEnabled = (emailAddresses, sendFn) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+  const toEmails = filterAndDeduplicateEmails(emailAddresses);
+  if (toEmails.length === 0) return null;
+  return sendFn(toEmails);
+};
+
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
+
+const enqueueNotification = (action, data) => {
+  try {
+    notificationQueue.add(action, { ...data, ...referenceData() });
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
 
 /**
  * Converts the timeframe to SQL friendly string.
@@ -67,13 +94,13 @@ export const frequencyToInterval = (freq) => {
   let date = null;
   switch (freq) {
     case EMAIL_DIGEST_FREQ.DAILY:
-      date = 'NOW() - INTERVAL \'1 DAY\'';
+      date = "NOW() - INTERVAL '1 DAY'";
       break;
     case EMAIL_DIGEST_FREQ.WEEKLY:
-      date = 'NOW() - INTERVAL \'1 WEEK\'';
+      date = "NOW() - INTERVAL '1 WEEK'";
       break;
     case EMAIL_DIGEST_FREQ.MONTHLY:
-      date = 'NOW() - INTERVAL \'1 MONTH\'';
+      date = "NOW() - INTERVAL '1 MONTH'";
       break;
     default:
       break;
@@ -89,7 +116,8 @@ export const frequencyToInterval = (freq) => {
  * @returns {string[]} - A deduplicated and filtered array of email addresses.
  */
 export const filterAndDeduplicateEmails = (emails) => {
-  const filteredEmails = emails.flat()
+  const filteredEmails = emails
+    .flat()
     .filter((email) => typeof email === 'string' && !email.startsWith('no-send_'))
     .filter((email, index, array) => array.indexOf(email) === index);
 
@@ -99,11 +127,15 @@ export const filterAndDeduplicateEmails = (emails) => {
 export const onFailedNotification = (job, error) => {
   if (job.data.reports && Array.isArray(job.data.reports)) {
     job.data.reports.forEach((report) => {
-      auditLogger.error(`job ${job.name} failed for report ${report.displayId} with error ${error}`);
+      auditLogger.error(
+        `job ${job.name} failed for report ${report.displayId} with error ${error}`
+      );
     });
     logDigestEmailNotification(job, false, error);
   } else {
-    auditLogger.error(`job ${job.name} failed for report ${(job.data.report?.displayId) || 'unknown'} with error ${error}`);
+    auditLogger.error(
+      `job ${job.name} failed for report ${job.data.report?.displayId || 'unknown'} with error ${error}`
+    );
     logEmailNotification(job, false, error);
   }
 };
@@ -115,14 +147,20 @@ export const onCompletedNotification = (job, result) => {
         logger.info(`Successfully sent ${job.name} notification for ${report.displayId}`);
         logDigestEmailNotification(job, true, result);
       } else {
-        logger.info(`Did not send ${job.name} notification for ${report.displayId} preferences are not set or marked as "no-send"`);
+        logger.info(
+          `Did not send ${job.name} notification for ${report.displayId} preferences are not set or marked as "no-send"`
+        );
       }
     });
   } else if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data}`);
+    logger.info(
+      `Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data}`
+    );
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data} preferences are not set or marked as "no-send"`);
+    logger.info(
+      `Did not send ${job.name} notification for ${job.data.report.displayId || job.data} preferences are not set or marked as "no-send"`
+    );
   }
 };
 
@@ -131,61 +169,71 @@ export const onCompletedNotification = (job, result) => {
  * Sends group email to report author and collaborators about a single approver's requested changes
  */
 export const notifyChangesRequested = (job, transport = defaultTransport) => {
-  const addresses = [];
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
   const {
-    report, approver, authorWithSetting, collabsWithSettings,
+    report,
+    approver,
+    authorWithSetting,
+    collabsWithSettings = [],
+    approversWithSettings = [],
   } = job.data;
-  // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
-  if (SEND_NOTIFICATIONS === 'true') {
-    const {
-      id,
-      displayId,
-    } = report;
-    const approverEmail = approver.user.email;
-    const approverName = approver.user.name;
-    const approverNote = approver.note;
-    logger.debug(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
+  const { id, displayId } = report;
+  const approverEmail = approver.user.email;
+  const approverName = approver.user.name;
+  const approverNote = approver.note;
+  logger.debug(
+    `MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`
+  );
 
-    const collabArray = collabsWithSettings.map((c) => c.user.email);
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    if (authorWithSetting) {
-      addresses.push(authorWithSetting.email);
-    }
-    if (collabArray && collabArray.length > 0) {
-      addresses.push(collabArray);
-    }
+  const collabArray = collabsWithSettings.map((c) => c.user.email);
+  const approverArray = approversWithSettings.map((a) => a.user.email);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
 
-    const toEmails = filterAndDeduplicateEmails(addresses);
+  const locals = {
+    managerName: approverName,
+    reportPath,
+    displayId,
+    comments: approverNote,
+  };
 
-    if (toEmails.length === 0) {
-      return null;
-    }
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-    return email.send({
-      template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
-      message: {
-        to: toEmails,
-      },
-      locals: {
-        managerName: approverName,
-        reportPath,
-        displayId,
-        comments: approverNote,
-      },
-    });
+  // The author, collaborators, and remaining approvers each get their own template:
+  // the author and collaborators need to make changes and resubmit (with distinct copy so
+  // collaborators are told they are a collaborator), while the approvers review/approve.
+  const authorAddresses = [];
+  if (authorWithSetting) {
+    authorAddresses.push(authorWithSetting.email);
   }
 
-  return null;
+  return Promise.all([
+    sendIfEnabled(authorAddresses, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(collabArray, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager_collaborator'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+    sendIfEnabled(approverArray, (toEmails) =>
+      createEmailSender(transport).send({
+        template: path.resolve(emailTemplatePath, 'changes_requested_by_manager_approver'),
+        message: {
+          to: toEmails,
+        },
+        locals,
+      })
+    ),
+  ]);
 };
 
 /**
@@ -193,41 +241,23 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
  * Sends group email to report author and collaborators about approved status
  */
 export const notifyReportApproved = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
   const addresses = [];
-  const { report, authorWithSetting, collabsWithSettings } = job.data;
-  // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
-  if (SEND_NOTIFICATIONS === 'true') {
-    const {
-      id,
-      displayId,
-    } = report;
-    logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
-    const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    if (authorWithSetting) {
-      addresses.push(authorWithSetting.email);
-    }
-    if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
-      addresses.push(collaboratorEmailAddresses);
-    }
-    const toEmails = filterAndDeduplicateEmails(addresses);
+  const { report, authorWithSetting, collabsWithSettings = [], approverName } = job.data;
+  const { id, displayId } = report;
+  logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
+  const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  if (authorWithSetting) {
+    addresses.push(authorWithSetting.email);
+  }
+  if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
+    addresses.push(collaboratorEmailAddresses);
+  }
 
-    if (toEmails.length === 0) {
-      return null; // Don't send anything if the "to" array is empty
-    }
-
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-    return email.send({
+  return sendIfEnabled(addresses, (toEmails) =>
+    createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'report_approved'),
       message: {
         to: toEmails,
@@ -235,80 +265,88 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
       locals: {
         reportPath,
         displayId,
+        approverName,
       },
-    });
-  }
-  return null;
+    })
+  );
+};
+
+/**
+ * Process function for approverReportApproved jobs added to the notification queue.
+ * Sends an email to the report's other approvers telling them that an approver approved it.
+ */
+export const notifyApproverReportApproved = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, approversWithSettings = [], approverName } = job.data;
+  const { id, displayId } = report;
+  logger.info(
+    `MAILER: Notifying approvers that report ${displayId} was approved by ${approverName}.`
+  );
+  const approverEmailAddresses = approversWithSettings.map((a) => a.user.email);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+
+  return sendIfEnabled(approverEmailAddresses, (toEmails) =>
+    createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'report_approved_approver'),
+      message: {
+        to: toEmails,
+      },
+      locals: {
+        reportPath,
+        displayId,
+        approverName,
+      },
+    })
+  );
 };
 
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
   const { report, programSpecialists, recipients } = job.data;
-  // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { id, displayId } = report;
+  const recipientNames = recipients.map((r) => r.name);
+  const recipientNamesDisplay = recipientNames.join(', ').trim();
 
-  if (SEND_NOTIFICATIONS === 'true') {
-    const { id, displayId } = report;
-    const recipientNames = recipients.map((r) => r.name);
-    const recipientNamesDisplay = recipientNames.join(', ').trim();
+  logger.info(
+    `MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`
+  );
+  const addresses = programSpecialists.map((c) => c.email);
 
-    logger.info(`MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`);
-    const addresses = programSpecialists.map((c) => c.email);
-    const toEmails = filterAndDeduplicateEmails(addresses);
-
-    if (toEmails.length === 0) {
-      return null;
-    }
-    logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
+  return sendIfEnabled(addresses, (toEmails) => {
+    logger.info(
+      `MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`
+    );
 
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    const email = new Email({
-      message: { from: FROM_EMAIL_ADDRESS },
-      send,
-      transport,
-      htmlToText: { wordWrap: 120 },
-    });
-    return email.send({
+    return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
       message: { to: toEmails },
       locals: { reportPath, displayId, recipientNamesDisplay },
     });
-  }
-
-  return null;
+  });
 };
 /**
  * Process function for approverAssigned jobs added to notification queue
  * Sends email to user about new ability to approve a report
  */
 export const notifyApproverAssigned = (job, transport = defaultTransport) => {
-  // Set these inside the function to allow easier testing
-  const { report, newApprover } = job.data;
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
-  if (SEND_NOTIFICATIONS === 'true') {
-    const {
-      id,
-      displayId,
-    } = report;
-    const approverEmail = newApprover.user.email;
-    logger.debug(`MAILER: Attempting to notify ${approverEmail} that they were requested to approve report ${displayId}`);
-    const toEmails = filterAndDeduplicateEmails([approverEmail]);
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-    if (toEmails.length === 0) {
-      return null;
-    }
-    logger.debug(`MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`);
+  const { report, newApprover, isResubmission = false } = job.data;
+  const { id, displayId } = report;
+  const approverEmail = newApprover.user.email;
+  logger.debug(
+    `MAILER: Attempting to notify ${approverEmail} that they were requested to approve report ${displayId}`
+  );
+
+  return sendIfEnabled([approverEmail], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${approverEmail} that they were requested to approve report ${displayId}`
+    );
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-    return email.send({
+    return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'manager_approval_requested'),
       message: {
         to: toEmails,
@@ -316,10 +354,10 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
       locals: {
         reportPath,
         displayId,
+        isResubmission,
       },
     });
-  }
-  return null;
+  });
 };
 
 /**
@@ -327,37 +365,21 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
  * Sends email to user about new ability to edit a report
  */
 export const notifyCollaboratorAssigned = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
   const { report, newCollaborator } = job.data;
-  const {
-    id,
-    displayId,
-  } = report;
-  // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`
+  );
 
-  if (SEND_NOTIFICATIONS === 'true') {
-    logger.debug(`MAILER: Attempting to notify ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([newCollaborator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`
+    );
 
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    const toEmails = filterAndDeduplicateEmails([newCollaborator.email]);
-
-    if (toEmails.length === 0) {
-      return null;
-    }
-    logger.debug(`MAILER: Notifying ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
-
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-
-    return email.send({
+    return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'collaborator_added'),
       message: {
         to: toEmails,
@@ -367,114 +389,173 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
         displayId,
       },
     });
-  }
-  return null; // Don't send anything if SEND_NOTIFICATIONS is not 'true'
+  });
+};
+
+/**
+ * Process function for collaboratorReportSubmittedForReview jobs added to notification queue.
+ * Sends email to a collaborator when the report they are on is submitted for approval.
+ */
+export const notifyCollaboratorReportSubmittedForReview = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, collaborator, isResubmission = false } = job.data;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${collaborator.email} that report ${displayId} was submitted for approval`
+  );
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([collaborator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${collaborator.email} that report ${displayId} was submitted for approval`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'collaborator_report_submitted_for_review'),
+      message: { to: toEmails },
+      locals: { reportPath, displayId, isResubmission },
+    });
+  });
+};
+
+export const collaboratorReportSubmittedForReviewNotification = (
+  report,
+  collaborators,
+  isResubmission = false
+) => {
+  collaborators.forEach((collaborator) => {
+    enqueueNotification(EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW, {
+      report,
+      collaborator: collaborator.user,
+      isResubmission,
+    });
+  });
+};
+
+/**
+ * Process function for creatorReportSubmittedForReview jobs added to notification queue.
+ * Sends email to the report creator when a collaborator submits the report for approval.
+ */
+export const notifyCreatorReportSubmittedForReview = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, creator, isResubmission = false } = job.data;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${creator.email} that report ${displayId} was submitted for approval`
+  );
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([creator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${creator.email} that report ${displayId} was submitted for approval`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'creator_report_submitted_for_review'),
+      message: { to: toEmails },
+      locals: { reportPath, displayId, isResubmission },
+    });
+  });
+};
+
+export const creatorReportSubmittedForReviewNotification = (
+  report,
+  creator,
+  isResubmission = false
+) => {
+  enqueueNotification(EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, {
+    report,
+    creator,
+    isResubmission,
+  });
 };
 
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
-    try {
-      const data = {
-        report,
-        newCollaborator: collaborator.user,
-        ...referenceData(),
-      };
-      notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_ADDED, data);
-    } catch (err) {
-      auditLogger.error(err);
-    }
+    enqueueNotification(EMAIL_ACTIONS.COLLABORATOR_ADDED, {
+      report,
+      newCollaborator: collaborator.user,
+    });
   });
 };
 
-export const approverAssignedNotification = (report, newApprovers) => {
+export const approverAssignedNotification = (report, newApprovers, isResubmission = false) => {
   // Each approver will get an individual notification
   newApprovers.forEach((approver) => {
-    try {
-      const data = {
-        report,
-        newApprover: approver,
-        ...referenceData(),
-      };
-      notificationQueue.add(EMAIL_ACTIONS.SUBMITTED, data);
-    } catch (err) {
-      auditLogger.error(err);
-    }
+    enqueueNotification(EMAIL_ACTIONS.SUBMITTED, {
+      report,
+      newApprover: approver,
+      isResubmission,
+    });
   });
 };
 
-export const reportApprovedNotification = (report, authorWithSetting, collabsWithSettings) => {
-  // Send group notification to author and collaborators
-  try {
-    const data = {
-      report,
-      authorWithSetting,
-      collabsWithSettings,
-      ...referenceData(),
-    };
-    notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
-  } catch (err) {
-    auditLogger.error(err);
-  }
+export const reportApprovedNotification = (
+  report,
+  authorWithSetting,
+  collabsWithSettings,
+  approverName
+) => {
+  enqueueNotification(EMAIL_ACTIONS.APPROVED, {
+    report,
+    authorWithSetting,
+    collabsWithSettings,
+    approverName,
+  });
+};
+
+/**
+ * Notifies the report's other approvers, by email, that an approver approved the report.
+ * @param {ActivityReport} report
+ * @param {User[]} approversWithSettings The other approvers opted into immediate emails.
+ * @param {string} approverName The name of the approver who just approved.
+ */
+export const approverReportApprovedNotification = (report, approversWithSettings, approverName) => {
+  enqueueNotification(EMAIL_ACTIONS.APPROVER_APPROVED, {
+    report,
+    approversWithSettings,
+    approverName,
+  });
 };
 
 /**
  * @param {ActivityReport} report
  * @param {User[]} programSpecialists
-*  @param {Array<{ id: number, name: string }>} recipients
+ *  @param {Array<{ id: number, name: string }>} recipients
  */
 export const programSpecialistRecipientReportApprovedNotification = (
   report,
   programSpecialists,
-  recipients,
+  recipients
 ) => {
-  // Send group notification to program specialists
-  try {
-    const data = {
-      report,
-      programSpecialists,
-      recipients,
-      ...referenceData(),
-    };
-    notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
-  } catch (err) {
-    auditLogger.error(err);
-  }
+  enqueueNotification(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, {
+    report,
+    programSpecialists,
+    recipients,
+  });
 };
 
 export const sendTrainingReportNotification = async (job, transport = defaultTransport) => {
   // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS, CI } = process.env;
+  const { SEND_NOTIFICATIONS, CI } = process.env;
   const { data } = job;
 
-  const {
-    emailTo,
-    templatePath,
-    debugMessage,
-  } = data;
+  const { emailTo, templatePath, debugMessage } = data;
 
   const toEmails = filterAndDeduplicateEmails([emailTo]);
 
   if (!toEmails || toEmails.length === 0) {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
+    logger.info(
+      `Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`
+    );
     return null;
   }
 
   logger.debug(debugMessage);
 
   if (SEND_NOTIFICATIONS === 'true' && !CI) {
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-
-    return email.send({
+    return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, templatePath),
       message: {
         to: toEmails,
@@ -497,33 +578,37 @@ export const trSessionCreated = async (event, sessionId) => {
     }
 
     const { eventId } = event.data;
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
-    await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id, true);
-      const emailTo = filterAndDeduplicateEmails([user.email]);
+    await Promise.all(
+      event.pocIds.map(async (id) => {
+        const user = await userById(id, true);
+        const emailTo = filterAndDeduplicateEmails([user.email]);
 
-      if (emailTo.length === 0) {
-        logger.info(`Did not send tr session created notification for ${eId} preferences are not set or marked as "no-send"`);
-        return null;
-      }
+        if (emailTo.length === 0) {
+          logger.info(
+            `Did not send tr session created notification for ${eId} preferences are not set or marked as "no-send"`
+          );
+          return null;
+        }
 
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo,
-        debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
-        templatePath: 'tr_session_created',
-        report: {
-          ...event,
+        const data = {
           displayId: eventId,
-        },
-        ...referenceData(),
-      };
+          reportPath,
+          emailTo,
+          debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
+          templatePath: 'tr_session_created',
+          report: {
+            ...event,
+            displayId: eventId,
+          },
+          ...referenceData(),
+        };
 
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
-    }));
+        return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
+      })
+    );
   } catch (err) {
     auditLogger.error(err);
   }
@@ -534,27 +619,28 @@ export const trSessionCreated = async (event, sessionId) => {
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trCollaboratorAdded = async (
-  report,
-  newCollaboratorId,
-) => {
+export const trCollaboratorAdded = async (report, newCollaboratorId) => {
   if (process.env.CI) return;
   try {
     const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
-      throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
+      throw new Error(
+        `Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`
+      );
     }
 
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
     const emailTo = filterAndDeduplicateEmails([collaborator.email]);
 
     if (!emailTo || emailTo.length === 0) {
-      logger.info(`Did not send tr collaborator added notification for ${eId} preferences are not set or marked as "no-send"`);
+      logger.info(
+        `Did not send tr collaborator added notification for ${eId} preferences are not set or marked as "no-send"`
+      );
       return;
     }
 
@@ -582,10 +668,7 @@ export const trCollaboratorAdded = async (
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trOwnerAdded = async (
-  report,
-  ownerId,
-) => {
+export const trOwnerAdded = async (report, ownerId) => {
   if (process.env.CI) return;
   try {
     const owner = await userById(ownerId, true);
@@ -593,7 +676,12 @@ export const trOwnerAdded = async (
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    if (!eventId) {
+      throw new Error(
+        `Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`
+      );
+    }
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
       displayId: eventId,
@@ -618,31 +706,32 @@ export const trOwnerAdded = async (
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trEventComplete = async (
-  event,
-) => {
+export const trEventComplete = async (event) => {
   if (process.env.CI) return;
   try {
-    const userIds = uniq([
-      ...event.collaboratorIds,
-      ...event.pocIds,
-    ]).filter((id) => id && id !== event.ownerId);
+    const userIds = uniq([...event.collaboratorIds, ...event.pocIds]).filter(
+      (id) => id && id !== event.ownerId
+    );
 
     const parsedData = safeParse(event); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
+    const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
-    const emails = await Promise.all(userIds.map(async (id) => {
-      const user = await userById(id, true);
-      if (!user) return null;
-      return user.email;
-    }));
+    const emails = await Promise.all(
+      userIds.map(async (id) => {
+        const user = await userById(id, true);
+        if (!user) return null;
+        return user.email;
+      })
+    );
 
     const emailTo = filterAndDeduplicateEmails(emails.filter((email) => email));
 
     if (!emailTo || emailTo.length === 0) {
-      logger.info(`Did not send tr event complete notification for ${eId} preferences are not set or marked as "no-send"`);
+      logger.info(
+        `Did not send tr event complete notification for ${eId} preferences are not set or marked as "no-send"`
+      );
       return;
     }
 
@@ -669,21 +758,91 @@ export const changesRequestedNotification = (
   approver,
   authorWithSetting,
   collabsWithSettings,
+  approversWithSettings
 ) => {
-  // Send group notification to author and collaborators
-  try {
-    const data = {
-      report,
-      approver,
-      authorWithSetting,
-      collabsWithSettings,
-      ...referenceData(),
-    };
-    notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
-  } catch (err) {
-    auditLogger.error(err);
-  }
+  enqueueNotification(EMAIL_ACTIONS.NEEDS_ACTION, {
+    report,
+    approver,
+    authorWithSetting,
+    collabsWithSettings,
+    approversWithSettings,
+  });
 };
+
+// Registry: add one entry per digest type. The cron layer iterates this.
+export const DIGEST_CONFIG = {
+  [EMAIL_ACTIONS.COLLABORATOR_DIGEST]: {
+    settingKey: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+    reportFetcher: activityReportsWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    logKey: 'CollaboratorDigest',
+  },
+  [EMAIL_ACTIONS.NEEDS_ACTION_DIGEST]: {
+    settingKey: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+    reportFetcher: activityReportsChangesRequestedByDate,
+    actionType: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    logKey: 'ChangesRequestedDigest',
+  },
+  [EMAIL_ACTIONS.SUBMITTED_DIGEST]: {
+    settingKey: USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedByDate,
+    actionType: EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    logKey: 'SubmittedDigest',
+  },
+  [EMAIL_ACTIONS.APPROVED_DIGEST]: {
+    settingKey: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+    reportFetcher: activityReportsApprovedByDate,
+    actionType: EMAIL_ACTIONS.APPROVED_DIGEST,
+    logKey: 'ApprovedDigest',
+  },
+  [EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+    logKey: 'CollaboratorReportSubmittedForReviewDigest',
+  },
+  [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedWhereCreatorByDate,
+    actionType: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+    logKey: 'CreatorReportSubmittedForReviewDigest',
+  },
+};
+
+export async function digestForSetting({
+  settingKey,
+  reportFetcher,
+  actionType,
+  logKey,
+  freq,
+  subjectFreq,
+}) {
+  const date = frequencyToInterval(freq);
+  logger.info(`MAILER: Starting ${logKey} with freq ${freq}`);
+  try {
+    if (!date) {
+      throw new Error('date is null');
+    }
+    const users = await usersWithSetting(settingKey, [freq]);
+    const records = users.map(async (user) => {
+      const reports = await reportFetcher(user.id, date);
+      const data = {
+        user,
+        reports,
+        type: actionType,
+        freq,
+        subjectFreq,
+        ...referenceData(),
+      };
+      notificationQueue.add(actionType, data);
+      return data;
+    });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: ${logKey} with key ${settingKey} freq ${freq} error ${err}`);
+    throw err;
+  }
+}
 
 /**
  * Finds users that are subscribed to the collaborator digest.
@@ -693,35 +852,11 @@ export const changesRequestedNotification = (
  *
  */
 export async function collaboratorDigest(freq, subjectFreq) {
-  let data = null;
-  const date = frequencyToInterval(freq);
-  logger.info(`MAILER: Starting CollaboratorDigest with freq ${freq}`);
-  try {
-    if (!date) {
-      throw new Error('date is null');
-    }
-    // Find users having collaborator digest preferences
-    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED, [freq]);
-
-    const records = users.map(async (user) => {
-      const reports = await activityReportsWhereCollaboratorByDate(user.id, date);
-
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-        freq,
-        subjectFreq,
-        ...referenceData(),
-      };
-      notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
-  } catch (err) {
-    logger.info(`MAILER: CollaboratorDigest with key ${USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED} freq ${freq} error ${err}`);
-    throw err;
-  }
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 /**
@@ -732,35 +867,11 @@ export async function collaboratorDigest(freq, subjectFreq) {
  *
  */
 export async function changesRequestedDigest(freq, subjectFreq) {
-  let data;
-  const date = frequencyToInterval(freq);
-  logger.info(`MAILER: Starting ChangesRequestedDigest with freq ${freq}`);
-  try {
-    if (!date) {
-      throw new Error('date is null');
-    }
-    // Find Users with preference
-    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED, [freq]);
-    const records = users.map(async (user) => {
-      const reports = await activityReportsChangesRequestedByDate(user.id, date);
-
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-        freq,
-        subjectFreq,
-        ...referenceData(),
-      };
-
-      notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
-  } catch (err) {
-    logger.info(`MAILER: ChangesRequestedDigest with key ${USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED} freq ${freq} error ${err}`);
-    throw err;
-  }
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.NEEDS_ACTION_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 /**
@@ -771,35 +882,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
  *
  */
 export async function submittedDigest(freq, subjectFreq) {
-  let data = null;
-  const date = frequencyToInterval(freq);
-  logger.info(`MAILER: Starting SubmittedDigest with freq ${freq}`);
-  try {
-    if (!date) {
-      throw new Error('date is null');
-    }
-    // Find Users with preferences
-    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW, [freq]);
-    const records = users.map(async (user) => {
-      const reports = await activityReportsSubmittedByDate(user.id, date);
-
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
-        freq,
-        subjectFreq,
-        ...referenceData(),
-      };
-
-      notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
-  } catch (err) {
-    logger.info(`MAILER: submittedDigest with key ${USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW} freq ${freq} error ${err}`);
-    throw err;
-  }
+  return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.SUBMITTED_DIGEST], freq, subjectFreq });
 }
 
 /**
@@ -810,36 +893,39 @@ export async function submittedDigest(freq, subjectFreq) {
  *
  */
 export async function approvedDigest(freq, subjectFreq) {
-  let data = null;
-  const date = frequencyToInterval(freq);
-  logger.info(`MAILER: Starting ApprovedDigest with freq ${freq}`);
-  try {
-    if (!date) {
-      throw new Error('date is null');
-    }
-    // Find Users with preferences
-    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.APPROVAL, [freq]);
+  return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.APPROVED_DIGEST], freq, subjectFreq });
+}
 
-    const records = users.map(async (user) => {
-      const reports = await activityReportsApprovedByDate(user.id, date);
+/**
+ * Finds users subscribed to the collaborator-report-submitted-for-review digest.
+ * For each user retrieves reports where they are a collaborator and the report
+ * was submitted for approval within the given timeframe.
+ *
+ * @param {String} freq - frequency of the digests (daily/weekly/monthly)
+ *
+ */
+export async function collaboratorReportSubmittedForReviewDigest(freq, subjectFreq) {
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
+    freq,
+    subjectFreq,
+  });
+}
 
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.APPROVED_DIGEST,
-        freq,
-        subjectFreq,
-        ...referenceData(),
-      };
-
-      notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
-  } catch (err) {
-    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
-    throw err;
-  }
+/**
+ * Finds users subscribed to the creator-report-submitted-for-review digest.
+ * For each user retrieves reports where they are the creator and a collaborator
+ * (not the creator) submitted the report for approval within the given timeframe.
+ *
+ * @param {String} freq - frequency of the digests (daily/weekly/monthly)
+ *
+ */
+export async function creatorReportSubmittedForReviewDigest(freq, subjectFreq) {
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 export async function recipientApprovedDigest(freq, subjectFreq) {
@@ -856,7 +942,8 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 
     // Get all specialists that are subscribed to RECIPIENT_APPROVAL notifications given this freq.
     // FIXME: TTAHUB-1253
-    let specialists = await sequelize.query(`
+    let specialists = await sequelize.query(
+      `
       SELECT DISTINCT u.id
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar
@@ -866,24 +953,26 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
       JOIN "Users" u
       ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
       WHERE a.id in (${reportIds.join(',') || null})
-    `, { type: QueryTypes.SELECT });
+    `,
+      { type: QueryTypes.SELECT }
+    );
 
     // Filter to only those who have opted into this notification setting and freq.
-    specialists = await Promise.all(specialists.map(async (ps) => {
-      const setting = await userSettingOverridesById(
-        ps.id,
-        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
-      );
+    specialists = await Promise.all(
+      specialists.map(async (ps) => {
+        const setting = await userSettingOverridesById(
+          ps.id,
+          USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL
+        );
 
-      if (setting && setting.value === freq) return ps;
-      return null;
-    }));
+        if (setting && setting.value === freq) return ps;
+        return null;
+      })
+    );
 
     specialists = specialists.filter((s) => s !== null);
 
-    const users = await Promise.all(
-      specialists.map(async (s) => userById(s.id, true)),
-    );
+    const users = await Promise.all(specialists.map(async (s) => userById(s.id, true)));
 
     const records = users.map((user) => {
       const data = {
@@ -901,7 +990,9 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 
     return Promise.all(records);
   } catch (err) {
-    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    logger.info(
+      `MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`
+    );
     throw err;
   }
 }
@@ -909,64 +1000,74 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 const TR_NOTIFICATION_CONFIG_DICT = {
   noSessionsCreated: {
     toDiff: 'endDate',
-    debug: (email, eventId) => `MAILER: Notifying ${email} that no sessions have been created for TR ${eventId}`,
+    debug: (email, eventId) =>
+      `MAILER: Notifying ${email} that no sessions have been created for TR ${eventId}`,
     emails: [
       {
         templatePath: 'tr_owner_reminder_no_sessions',
         users: 'ownerId',
-        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
+        reportPath: ({ eventStatus }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_no_sessions',
         users: 'collaboratorIds',
-        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
+        reportPath: ({ eventStatus }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
       },
     ],
   },
   missingEventInfo: {
     toDiff: 'startDate',
-    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event info for TR ${eventId}`,
+    debug: (email, eventId) =>
+      `MAILER: Notifying ${email} that they need to complete event info for TR ${eventId}`,
     emails: [
       {
         templatePath: 'tr_owner_reminder_event',
         users: 'ownerId',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_event',
         users: 'collaboratorIds',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}`,
       },
     ],
   },
   missingSessionInfo: {
     toDiff: 'startDate',
-    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete session info for TR ${eventId}`,
+    debug: (email, eventId) =>
+      `MAILER: Notifying ${email} that they need to complete session info for TR ${eventId}`,
     emails: [
       {
         templatePath: 'tr_owner_reminder_session',
         users: 'ownerId',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_session',
         users: 'collaboratorIds',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_poc_reminder_session',
         users: 'pocIds',
-        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
+        reportPath: ({ eventId, sessionId }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${sessionId}`,
       },
     ],
   },
   eventNotCompleted: {
     toDiff: 'endDate',
-    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event ${eventId}`,
+    debug: (email, eventId) =>
+      `MAILER: Notifying ${email} that they need to complete event ${eventId}`,
     emails: [
       {
         templatePath: 'tr_owner_reminder_event_not_completed',
-        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId.split('-').pop()}`,
+        reportPath: ({ eventId }) =>
+          `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId}`,
         users: 'ownerId',
       },
     ],
@@ -1016,7 +1117,7 @@ export async function trainingReportTaskDueNotifications(freq) {
         }
 
         // if diff is 40 or ten days after 40...
-        if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
+        if (diff === 40 || (diff > 40 && diff % 10 === 0)) {
           prefix = 'Past due:';
         }
       }
@@ -1033,7 +1134,10 @@ export async function trainingReportTaskDueNotifications(freq) {
         const { users, templatePath, reportPath } = emailConfig;
 
         // flatten the array and remove any nulls
-        const userIds = [alert[users]].flat().map((v) => Number(v)).filter((id) => id);
+        const userIds = [alert[users]]
+          .flat()
+          .map((v) => Number(v))
+          .filter((id) => id);
 
         userIds.forEach((id) => {
           const data = {
@@ -1059,45 +1163,49 @@ export async function trainingReportTaskDueNotifications(freq) {
     // for different reports (small user pool for TRs, lots of duplication)
     const userMap = new Map();
 
-    return Promise.all(emailData.map(async (mail) => {
-      // check our map to see if we have the user already
-      // if not, query the user and store it
-      const { userId } = mail;
-      let user = userMap.get(userId);
-      if (!user) {
-        user = await userById(userId, true);
-
+    return Promise.all(
+      emailData.map(async (mail) => {
+        // check our map to see if we have the user already
+        // if not, query the user and store it
+        const { userId } = mail;
+        let user = userMap.get(userId);
         if (!user) {
+          user = await userById(userId, true);
+
+          if (!user) {
+            return null;
+          }
+
+          userMap.set(userId, user);
+        }
+
+        const emailTo = filterAndDeduplicateEmails([user.email]);
+
+        if (!emailTo || emailTo.length === 0) {
           return null;
         }
 
-        userMap.set(userId, user);
-      }
-
-      const emailTo = filterAndDeduplicateEmails([user.email]);
-
-      if (!emailTo || emailTo.length === 0) {
-        return null;
-      }
-
-      const data = {
-        displayId: mail.displayId,
-        report: {
+        const data = {
           displayId: mail.displayId,
-        },
-        prefix: mail.prefix,
-        reportPath: mail.reportPath,
-        emailTo,
-        debugMessage: mail.debugMessage(user.email, mail.displayId),
-        templatePath: mail.templatePath,
-      };
+          report: {
+            displayId: mail.displayId,
+          },
+          prefix: mail.prefix,
+          reportPath: mail.reportPath,
+          emailTo,
+          debugMessage: mail.debugMessage(user.email, mail.displayId),
+          templatePath: mail.templatePath,
+        };
 
-      logger.info(`Sending ${mail.templatePath} to ${emailTo.join(', ')} for TR ${mail.displayId}`);
+        logger.info(
+          `Sending ${mail.templatePath} to ${emailTo.join(', ')} for TR ${mail.displayId}`
+        );
 
-      notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, data);
+        notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, data);
 
-      return data;
-    }));
+        return data;
+      })
+    );
   } catch (err) {
     logger.info(`MAILER: trainingReportTaskDueNotifications with freq ${freq} error ${err}`);
     throw err;
@@ -1112,36 +1220,19 @@ export async function trainingReportTaskDueNotifications(freq) {
  *
  */
 export const notifyDigest = (job, transport = defaultTransport) => {
-  const {
-    user, reports, type, freq, subjectFreq,
-  } = job.data;
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  // Set these inside the function to allow easier testing
-  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+  const { user, reports, type, freq, subjectFreq } = job.data;
 
-  if (SEND_NOTIFICATIONS === 'true') {
-    logger.debug(`MAILER: Attempting to create ${user.email}'s ${type} digest for ${freq}`);
-    const toEmails = filterAndDeduplicateEmails([user.email]);
+  logger.debug(`MAILER: Attempting to create ${user.email}'s ${type} digest for ${freq}`);
 
-    if (toEmails.length === 0) {
-      return null;
-    }
+  return sendIfEnabled([user.email], (toEmails) => {
     logger.debug(`MAILER: Creating ${user.email}'s ${type} digest for ${freq}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/`;
 
     const templateType = reports && reports.length > 0 ? 'digest' : 'digest_empty';
 
-    const email = new Email({
-      message: {
-        from: FROM_EMAIL_ADDRESS,
-      },
-      send,
-      transport,
-      htmlToText: {
-        wordwrap: 120,
-      },
-    });
-    return email.send({
+    return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, templateType),
       message: {
         to: toEmails,
@@ -1155,131 +1246,59 @@ export const notifyDigest = (job, transport = defaultTransport) => {
         subjectFreq,
       },
     });
-  }
-  return null;
+  });
 };
 
+// All TR notification actions use sendTrainingReportNotification
+const TR_EMAIL_ACTIONS = [
+  EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+  EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+  EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+  EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+  EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
+];
+
+// All digest actions use notifyDigest; derive from DIGEST_CONFIG so new entries auto-register
+const DIGEST_EMAIL_ACTIONS = [
+  ...Object.keys(DIGEST_CONFIG),
+  EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+];
+
 export const processNotificationQueue = () => {
-  // Notifications
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
   increaseListeners(notificationQueue, 10);
 
-  notificationQueue.process(
-    EMAIL_ACTIONS.NEEDS_ACTION,
-    transactionQueueWrapper(
-      notifyChangesRequested,
-      EMAIL_ACTIONS.NEEDS_ACTION,
-    ),
-  );
+  // Instant notifications
+  const instantProcessors = [
+    [EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested],
+    [EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned],
+    [EMAIL_ACTIONS.APPROVED, notifyReportApproved],
+    [EMAIL_ACTIONS.APPROVER_APPROVED, notifyApproverReportApproved],
+    [EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned],
+    [EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved],
+    [
+      EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+      notifyCollaboratorReportSubmittedForReview,
+    ],
+    [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, notifyCreatorReportSubmittedForReview],
+  ];
+  instantProcessors.forEach(([action, handler]) => {
+    notificationQueue.process(action, transactionQueueWrapper(handler, action));
+  });
 
-  notificationQueue.process(
-    EMAIL_ACTIONS.SUBMITTED,
-    transactionQueueWrapper(
-      notifyApproverAssigned,
-      EMAIL_ACTIONS.SUBMITTED,
-    ),
-  );
+  // Digest notifications (all use notifyDigest)
+  DIGEST_EMAIL_ACTIONS.forEach((action) => {
+    notificationQueue.process(action, transactionQueueWrapper(notifyDigest, action));
+  });
 
-  notificationQueue.process(
-    EMAIL_ACTIONS.APPROVED,
-    transactionQueueWrapper(
-      notifyReportApproved,
-      EMAIL_ACTIONS.APPROVED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.COLLABORATOR_ADDED,
-    transactionQueueWrapper(
-      notifyCollaboratorAssigned,
-      EMAIL_ACTIONS.COLLABORATOR_ADDED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
-    transactionQueueWrapper(
-      notifyRecipientReportApproved,
-      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-    transactionQueueWrapper(
-      notifyDigest,
-      EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-    ),
-  );
-  notificationQueue.process(
-    EMAIL_ACTIONS.SUBMITTED_DIGEST,
-    transactionQueueWrapper(
-      notifyDigest,
-      EMAIL_ACTIONS.SUBMITTED_DIGEST,
-    ),
-  );
-  notificationQueue.process(
-    EMAIL_ACTIONS.APPROVED_DIGEST,
-    transactionQueueWrapper(
-      notifyDigest,
-      EMAIL_ACTIONS.APPROVED_DIGEST,
-    ),
-  );
-  notificationQueue.process(
-    EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-    transactionQueueWrapper(
-      notifyDigest,
-      EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-    ),
-  );
-  notificationQueue.process(
-    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
-    transactionQueueWrapper(
-      notifyDigest,
-      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
-    ),
-  );
+  // Training report notifications (all use sendTrainingReportNotification)
+  TR_EMAIL_ACTIONS.forEach((action) => {
+    notificationQueue.process(
+      action,
+      transactionQueueWrapper(sendTrainingReportNotification, action)
+    );
+  });
 };
 
 /**
@@ -1290,7 +1309,7 @@ export const processNotificationQueue = () => {
 export const sendEmailVerificationRequestWithToken = (
   user,
   token,
-  transport = defaultTransport,
+  transport = defaultTransport
 ) => {
   const toEmails = filterAndDeduplicateEmails([user.email]);
 
@@ -1298,20 +1317,9 @@ export const sendEmailVerificationRequestWithToken = (
     return null;
   }
 
-  const email = new Email({
-    message: {
-      from: process.env.FROM_EMAIL_ADDRESS,
-    },
-    send,
-    transport,
-    htmlToText: {
-      wordwrap: 120,
-    },
-  });
+  const uri = `${process.env.TTA_SMART_HUB_URI}/notifications/verify-email/${token}`;
 
-  const uri = `${process.env.TTA_SMART_HUB_URI}/account/verify-email/${token}`;
-
-  return email.send({
+  return createEmailSender(transport).send({
     template: path.resolve(emailTemplatePath, 'email_verification'),
     message: {
       to: toEmails,

@@ -1,17 +1,18 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
-import importGoals from './importPlanGoals';
 import { logger } from '../logger';
+import importGoals from './importPlanGoals';
 
 const { argv } = option('file', {
   alias: 'f',
   description: 'Input .csv file',
   type: 'string',
-}).option('region', {
-  alias: 'r',
-  description: 'grant\'s region',
-  type: 'number',
 })
+  .option('region', {
+    alias: 'r',
+    description: "grant's region",
+    type: 'number',
+  })
   .help()
   .alias('help', 'h');
 

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "note": "Decisions about components that reconciliation reports as undocumented or missing, and about declared components whose authorization reference is not yet resolvable. Vocabulary and approval evidence follow the model ADR 0027 defines for the security findings register. Every entry below was created from the first production space reconciliation and carries provisional owners and closure targets that require team review before this control is promoted to blocking.",
+  "dispositions": [
+    {
+      "id": "INV-2026-0001",
+      "componentName": "tta-similarity-api-prod",
+      "componentClass": "application",
+      "finding": "The similarity API application is stopped but remains bound to ttahub-prod, the production database service.",
+      "status": "deferred",
+      "justification": "A stopped application retains its service binding and therefore retains live credentials to the production database. The application is authorized by ADR 0017, so the component itself is documented, but the binding on a stopped application is a standing access path with no operational need while the application is not running.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Either restart the application if it is still in use, or unbind the production database service while it is stopped.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0002",
+      "componentName": "tta-smarthub-maintenance-page-prod",
+      "componentClass": "application",
+      "finding": "The maintenance page application and its route were running in the production space with nothing recording their purpose or authorization. Both are now described in docs/boundary_diagram.md, but that diagram change has not yet been approved by the SSPO.",
+      "status": "deferred",
+      "justification": "The application serves a public route inside the accreditation boundary and is remapped over the primary hostname during incident response, so it belongs in the boundary documentation. The entry was added by TTAHUB-5245 and the inventory now cites it. Per the engineering process, boundary diagram changes require SSPO approval before they stand as authorization, so the reference is recorded but not yet ratified.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Obtain SSPO approval for the boundary diagram change at the next check-in, regenerate docs/boundary_diagram.svg from the updated source, then record the approval evidence here and close this disposition.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0003",
+      "componentName": "tta-automation.app.cloud.gov",
+      "componentClass": "route",
+      "finding": "A route exists for the automation application, which contradicts docs/boundary_diagram.md. The route is currently mapped to no application.",
+      "status": "resolved",
+      "justification": "The boundary diagram states explicitly that no routes are configured for the automation containers, and that connections are unbound when not in use. The route contradicted the approved boundary description even though it was unattached. It was not required, so it was deleted from the production space and docs/boundary_diagram.md remains accurate as written.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Route deleted from the production space. docs/boundary_diagram.md already states that no routes are configured for the automation application, so no documentation or inventory change was needed.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3989",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-09-30",
+        "decision": "Approved. Route confirmed deleted from the production space."
+      }
+    },
+    {
+      "id": "INV-2026-0004",
+      "componentName": "tta-smarthub-prod.app.cloud.gov",
+      "componentClass": "route",
+      "finding": "The route recorded as app_url in deployment_config/prod_vars.yml exists in the space but is mapped to no application. The application actually serves tta-smarthub-prod1.app.cloud.gov.",
+      "status": "deferred",
+      "justification": "The repository configuration names a hostname that no longer routes to the application, which means published configuration disagrees with the deployed state. The numeric suffix on the live route suggests a hostname collision at some point in the past that was worked around rather than resolved.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Delete the unmapped route and correct app_url in deployment_config/prod_vars.yml, or remap the intended hostname and retire the suffixed one.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0005",
+      "componentName": "nodejs-buildpack",
+      "componentClass": "platformRuntime",
+      "finding": "manifest.yml references the Node.js buildpack by git URL with no tag or commit, so the staged buildpack version can change without any repository change.",
+      "status": "resolved",
+      "justification": "Resolved by TTAHUB-5732 on 2026-10-01. manifest.yml now references the released v1.9.5 tag of the Node.js buildpack (a git buildpack ref must be a tag or branch name, not a commit SHA; the tag resolves to commit ec0fbc6a2ac4f08d9ad0120fefa2a209bb2d6d80), the first release shipping the Node 24.21.0 build required by package.json engines, and the platform.buildpack inventory entry is set to pinned true. Residual risk: upstream tags are mutable, so if cloudfoundry/nodejs-buildpack moves or deletes v1.9.5, staging could consume different code or fail to stage without a repository change. A tag is used because cloud.gov git buildpack refs do not accept commit SHAs.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5732",
+      "closureTarget": "2026-10-01",
+      "recommendation": "Pin the buildpack in manifest.yml to a released version, then set pinned to true on the inventory entry and close this disposition.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3996",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-01",
+        "decision": "Approved. Node.js buildpack pinned to the released v1.9.5 tag in manifest.yml."
+      }
+    },
+    {
+      "id": "INV-2026-0006",
+      "componentName": "Smartsheet",
+      "componentClass": "externalIntegration",
+      "finding": "The application carries Smartsheet configuration and an access token variable, but Smartsheet does not appear in docs/boundary_diagram.md and no ADR covers it.",
+      "status": "deferred",
+      "justification": "SMARTSHEET_ENDPOINT is empty in production, so the integration appears inactive there, but the configuration and credential variable are present in the deployed environment. An external integration that is configured but undocumented is exactly the category the audit finding concerns, even when it is not currently exercised.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-11-05",
+      "recommendation": "Confirm whether Smartsheet is still in use. If it is, add it to the boundary diagram and record its authorization. If it is not, remove the configuration and the credential variable from manifest.yml and deployment_config.",
+      "approval": null
+    },
+    {
+      "id": "INV-2026-0007",
+      "componentName": "adam.levin",
+      "componentClass": "service",
+      "finding": "A cloud.gov service account named after an individual, with the space-deployer plan, exists in the production space and is not declared in the inventory.",
+      "status": "resolved",
+      "justification": "The service instance adam.levin (cloud-gov-service-account, space-deployer plan) was created 2022-06-06 following the per-developer Terraform setup steps in docs/guides/infrastructure.md. It was unbound, not shared, and not referenced by any repository configuration or by CI, which uses a separate deployer account. It was deleted on 2026-09-30 (service key space-deployer-key, then the service instance). Afterward the instance no longer appeared in cf services for ttahub-prod and its UAA user no longer held a role in the space.",
+      "owner": "TTA Hub Tech Lead",
+      "trackingTicket": "TTAHUB-5245",
+      "closureTarget": "2026-09-05",
+      "recommendation": "Closed. The credential was confirmed to be no longer required and the service instance was deleted. No further action is needed for this disposition. Individual deployer credentials are not an intentional practice and are not declared in the inventory.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/3982",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-09-30",
+        "decision": "Approved. Service instance confirmed deleted from the production space."
+      }
+    }
+  ]
+}

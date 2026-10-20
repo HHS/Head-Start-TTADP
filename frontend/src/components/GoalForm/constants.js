@@ -1,6 +1,6 @@
+import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
 import { OBJECTIVE_STATUS } from '../../Constants';
 
 export const noDisallowedUrls = (value) => {
@@ -22,7 +22,7 @@ export const objectivesWithValidResourcesOnly = (objectives) => {
   }));
 };
 
-export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
+export const GOAL_NAME_ERROR = "Enter the recipient's goal";
 export const GOAL_DATE_ERROR = 'Enter a valid date';
 export const SELECT_GRANTS_ERROR = 'Select at least one recipient grant number';
 export const OBJECTIVES_EMPTY = 'Every report must have at least one objective';
@@ -113,19 +113,20 @@ export const grantsToGoals = ({
   objectives,
   ids,
   prompts,
-}) => selectedGrants.map((g) => {
-  const goalSource = source ? source[g.numberWithProgramTypes] : '';
-  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
-  return {
-    grantId: g.id,
-    name,
-    status,
-    source: goalSource || null,
-    isCurated,
-    regionId: parseInt(regionId, DECIMAL_BASE),
-    recipientId: recipient.id,
-    objectives,
-    ids,
-    prompts: goalPrompts,
-  };
-});
+}) =>
+  selectedGrants.map((g) => {
+    const goalSource = source ? source[g.numberWithProgramTypes] : '';
+    const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
+    return {
+      grantId: g.id,
+      name,
+      status,
+      source: goalSource || null,
+      isCurated,
+      regionId: parseInt(regionId, DECIMAL_BASE),
+      recipientId: recipient.id,
+      objectives,
+      ids,
+      prompts: goalPrompts,
+    };
+  });

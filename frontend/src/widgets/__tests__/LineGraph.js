@@ -1,13 +1,18 @@
 import '@testing-library/jest-dom';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import Plotly from 'plotly.js-basic-dist';
 import React, { createRef } from 'react';
-import {
-  render,
-  waitFor,
-  act,
-  screen,
-} from '@testing-library/react';
-import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
+import { useMediaQuery } from 'react-responsive';
 import LineGraph from '../LineGraph';
+
+jest.mock('plotly.js-basic-dist', () => ({
+  newPlot: jest.fn(),
+}));
+
+jest.mock('react-responsive', () => ({
+  useMediaQuery: jest.fn(() => false),
+}));
 
 const traces = [
   {
@@ -25,20 +30,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      80,
-      83,
-      83,
-      77,
-      77,
-      83,
-      84,
-      76,
-      73,
-      82,
-      79,
-      69,
-    ],
+    y: [80, 83, 83, 77, 77, 83, 84, 76, 73, 82, 79, 69],
     name: 'In person',
     traceOrder: 1,
     trace: 'circle',
@@ -59,20 +51,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      20,
-      17,
-      16,
-      16,
-      20,
-      13,
-      13,
-      21,
-      26,
-      17,
-      16,
-      29,
-    ],
+    y: [20, 17, 16, 16, 20, 13, 13, 21, 26, 17, 16, 29],
     name: 'Virtual',
     traceOrder: 2,
     trace: 'square',
@@ -93,20 +72,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      0,
-      0,
-      1,
-      1,
-      3,
-      4,
-      2,
-      2,
-      0,
-      1,
-      5,
-      2,
-    ],
+    y: [0, 0, 1, 1, 3, 4, 2, 2, 0, 1, 5, 2],
     name: 'Hybrid',
     traceOrder: 3,
     trace: 'triangle',
@@ -583,28 +549,28 @@ const tableConfig = {
   ],
   footer: {
     showFooter: true,
-    data: [
-      '',
-      'Total',
-      '8420',
-      '73',
-      '2734',
-      '24',
-      '356',
-      '3',
-    ],
+    data: ['', 'Total', '8420', '73', '2734', '24', '356', '3'],
   },
 };
 
 describe('LineGraph', () => {
-  const renderTest = (showTabularData = false, data = traces) => {
+  const renderTest = (
+    showTabularData = false,
+    data = traces,
+    yAxisTickStep = null,
+    onChartClick = null,
+    hasData = true
+  ) => {
     act(() => {
       render(
         <LineGraph
           data={data}
+          hasData={hasData}
           hideYAxis={false}
           xAxisTitle="Months"
           yAxisTitle="Percentage"
+          yAxisTickStep={yAxisTickStep}
+          onChartClick={onChartClick}
           legendConfig={[
             {
               label: 'In person',
@@ -628,10 +594,15 @@ describe('LineGraph', () => {
           tableConfig={tableConfig}
           widgetRef={createRef()}
           showTabularData={showTabularData}
-        />,
+        />
       );
     });
   };
+
+  beforeEach(() => {
+    Plotly.newPlot.mockClear();
+    useMediaQuery.mockImplementation(() => false);
+  });
 
   it('switches legends', () => {
     renderTest();
@@ -670,12 +641,50 @@ describe('LineGraph', () => {
   });
 
   it('shows no results found', async () => {
-    renderTest(false, []);
+    renderTest(false, [], null, null, false);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /no results found\./i })).toBeVisible();
       expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
       expect(screen.getByRole('button', { name: /get help using filters/i })).toBeInTheDocument();
     });
+  });
+
+  it('passes custom tick step to plotly layout', async () => {
+    renderTest(false, traces, 10);
+
+    await waitFor(() => {
+      expect(Plotly.newPlot).toHaveBeenCalled();
+    });
+
+    const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
+    const layoutArg = lastCall[2];
+    expect(layoutArg.yaxis.dtick).toBe(10);
+  });
+
+  it('uses nticks on small widget widths', async () => {
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+
+    renderTest();
+
+    await waitFor(() => {
+      expect(Plotly.newPlot).toHaveBeenCalled();
+    });
+
+    const lastCall = Plotly.newPlot.mock.calls[Plotly.newPlot.mock.calls.length - 1];
+    const layoutArg = lastCall[2];
+    expect(layoutArg.xaxis.autotick).toBe(true);
+    expect(layoutArg.xaxis.nticks).toBe(4);
+    expect(layoutArg.xaxis.dtick).toBeUndefined();
+  });
+
+  it('calls chart click callback when graph is clicked', async () => {
+    const onChartClick = jest.fn();
+    renderTest(false, traces, null, onChartClick);
+
+    const lineChart = await screen.findByTestId('lines');
+    fireEvent.click(lineChart, { clientX: 100 });
+
+    expect(onChartClick).toHaveBeenCalledTimes(1);
   });
 });

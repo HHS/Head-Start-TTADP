@@ -1,0 +1,21 @@
+get:
+  tags:
+    - widgets
+  operationId: trStandardGoalsList
+  description: Gets widget data for the training report standard goals list widget
+  responses:
+    200:
+      description: widget data for the training report standard goals list widget
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The goal template standard (i.e. "Child Safety")
+                count:
+                  type: number
+                  description: The count of distinct events (training reports) that have sessions associated with this standard goal

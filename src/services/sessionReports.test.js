@@ -1,23 +1,28 @@
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
+  Grant,
+  Recipient,
+  SessionReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  Grant, Recipient,
-  SessionReportPilot,
 } from '../models';
+import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
   destroySession,
   findSessionById,
-  findSessionsByEventId,
-  updateSession,
-  getPossibleSessionParticipants,
   findSessionHelper,
-  validateFields,
+  findSessionsByEventId,
+  getPossibleSessionParticipants,
   getSessionReports,
+  getSessionReportsByRecipient,
+  isFacilitationChange,
+  resetSessionCompletion,
+  updateSession,
+  validateFields,
 } from './sessionReports';
-import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
 jest.mock('bull');
 
@@ -25,7 +30,6 @@ describe('session reports service', () => {
   let event;
 
   const eventId = 'R01-PD-99_888';
-  const eventIdSubstring = '99_888';
 
   beforeAll(async () => {
     const eventData = {
@@ -52,16 +56,91 @@ describe('session reports service', () => {
 
       expect(created).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);
     });
 
     it('throws an error when the event is not found', async () => {
-      await expect(createSession({ eventId: 999999, data: { card: 'ace' } }))
-        .rejects
-        .toThrow('Event with id 999999 not found');
+      await expect(createSession({ eventId: 999999, data: { card: 'ace' } })).rejects.toThrow(
+        'Event with id 999999 not found'
+      );
+    });
+
+    it('does not persist hydrated event or approver associations into data', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: {
+          card: 'ace',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(created.data.card).toBe('ace');
+      expect(created.data.event).toBeUndefined();
+      expect(created.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+  });
+
+  describe('createSession additionalRegions', () => {
+    let createdEvent;
+    let createdEventWithoutAdditionalRegions;
+    let createdSession;
+    let createdSessionWithoutAdditionalRegions;
+
+    beforeAll(async () => {
+      createdEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: faker.number.int({ min: 0, max: 99999 }),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: ['11', '12'],
+        },
+      });
+
+      createdEventWithoutAdditionalRegions = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: faker.number.int({ min: 0, max: 99999 }),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      if (createdSession) {
+        await destroySession(createdSession.id);
+      }
+
+      if (createdSessionWithoutAdditionalRegions) {
+        await destroySession(createdSessionWithoutAdditionalRegions.id);
+      }
+
+      await destroyEvent(createdEvent.id);
+      await destroyEvent(createdEventWithoutAdditionalRegions.id);
+    });
+
+    it('copies additionalRegions from the event into the created session data', async () => {
+      createdSession = await createSession({ eventId: createdEvent.id, data: { card: 'ace' } });
+
+      expect(createdSession.data.additionalRegions).toEqual(['11', '12']);
+    });
+
+    it('defaults additionalRegions to an empty array when the event does not define it', async () => {
+      createdSessionWithoutAdditionalRegions = await createSession({
+        eventId: createdEventWithoutAdditionalRegions.id,
+        data: { card: 'ace' },
+      });
+
+      expect(createdSessionWithoutAdditionalRegions.data.additionalRegions).toEqual([]);
     });
   });
 
@@ -70,7 +149,7 @@ describe('session reports service', () => {
       const created = await createSession({ eventId: event.id, data: {} });
 
       const updatedData = {
-        eventId: eventIdSubstring,
+        eventId,
         data: {
           harry: 'potter',
         },
@@ -78,7 +157,7 @@ describe('session reports service', () => {
       const updated = await updateSession(created.id, updatedData);
 
       expect(updated).toMatchObject({
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
@@ -94,16 +173,184 @@ describe('session reports service', () => {
 
       expect(updated).toMatchObject({
         id: expect.anything(),
-        eventId: eventIdSubstring,
+        eventId,
         data: updatedData.data,
       });
 
       await destroySession(updated.id);
     });
+
+    it('strips hydrated event and approver associations from incoming data', async () => {
+      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: {
+          harry: 'potter',
+          event: { id: event.id, data: { eventId } },
+          approver: { id: 18, name: 'An Approver' },
+        },
+      });
+
+      expect(updated.data.harry).toBe('potter');
+      expect(updated.data.event).toBeUndefined();
+      expect(updated.data.approver).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+
+    // Schema validation lives in the route middleware
+    // (src/routes/sessionReports/middleware.ts), not here. A legacy key already
+    // stored on a session must survive a partial save that does not mention it,
+    // because the form only ever sends one role's subset of the fields.
+    it('keeps a stored legacy key when merging a partial update', async () => {
+      const created = await createSession({
+        eventId: event.id,
+        data: { sessionName: 'original', someLegacyKeyNoLongerInTheForm: 'still here' },
+      });
+
+      const updated = await updateSession(created.id, {
+        eventId,
+        data: { sessionName: 'renamed' },
+      });
+
+      expect(updated.data.sessionName).toBe('renamed');
+      expect(updated.data.someLegacyKeyNoLongerInTheForm).toBe('still here');
+
+      await destroySession(created.id);
+    });
+  });
+
+  describe('updateSession facilitation changes', () => {
+    let ncEvent;
+    let approver;
+    const ncEventId = `R01-PD-${faker.number.int({ min: 900_000, max: 999_999 })}`;
+    const completeData = {
+      ownerComplete: true,
+      ownerCompleteId: 1,
+      ownerCompleteDate: '2026-01-01',
+      collabComplete: true,
+      collabCompleteId: 2,
+      collabCompleteDate: '2026-01-01',
+    };
+
+    beforeAll(async () => {
+      [ncEvent, approver] = await Promise.all([
+        createEvent({
+          ownerId: faker.number.int({ min: 0, max: 99999 }),
+          regionId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: { eventId: ncEventId, eventOrganizer: 'Regional PD Event (with National Centers)' },
+        }),
+        createUser({}),
+      ]);
+    });
+
+    afterAll(async () => {
+      await destroyEvent(ncEvent.id);
+      await db.User.destroy({ where: { id: approver.id } });
+    });
+
+    const createSubmittedNcSession = async () => {
+      const created = await createSession({
+        eventId: ncEvent.id,
+        data: { facilitation: 'national_center', ...completeData },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+      return created;
+    };
+
+    it('resets completion flags and the approver when facilitation changes', async () => {
+      const created = await createSubmittedNcSession();
+      expect((await findSessionById(created.id)).submitted).toBe(true);
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        // Stale flags from the client must not survive the workflow change
+        data: { facilitation: 'regional_tta_staff', collabComplete: true, approverId: approver.id },
+      });
+
+      expect(updated.approverId).toBeNull();
+      expect(updated.submitted).toBe(false);
+      expect(updated.data).toMatchObject({
+        facilitation: 'regional_tta_staff',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      });
+      expect(updated.data.ownerCompleteId).toBeUndefined();
+      expect(updated.data.collabCompleteDate).toBeUndefined();
+
+      await destroySession(created.id);
+    });
+
+    it('keeps flags and the approver when facilitation is unchanged', async () => {
+      const created = await createSubmittedNcSession();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { facilitation: 'national_center', sessionName: 'Renamed', approverId: '' },
+      });
+
+      expect(updated.approverId).toBe(approver.id);
+      expect(updated.submitted).toBe(true);
+      expect(updated.data).toMatchObject(completeData);
+
+      await destroySession(created.id);
+    });
+
+    it('ignores a null approverId when facilitation is unchanged', async () => {
+      const created = await createSubmittedNcSession();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: null },
+      });
+
+      expect(updated.approverId).toBe(approver.id);
+
+      await destroySession(created.id);
+    });
+
+    it('does not treat stale ownerComplete as submitted outside the NC facilitation flow', async () => {
+      // Legacy state written before facilitation changes reset the workflow
+      const created = await createSession({
+        eventId: ncEvent.id,
+        data: { facilitation: 'regional_tta_staff', ...completeData },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+
+      expect((await findSessionById(created.id)).submitted).toBe(false);
+      const [listed] = await findSessionsByEventId(ncEvent.id);
+      expect(listed.submitted).toBe(false);
+
+      await destroySession(created.id);
+    });
+
+    it('detects facilitation changes, treating missing and blank as equal', () => {
+      expect(isFacilitationChange({ facilitation: 'both' }, { facilitation: 'both' })).toBe(false);
+      expect(isFacilitationChange({ facilitation: 'both' }, {})).toBe(false);
+      expect(isFacilitationChange({}, { facilitation: '' })).toBe(false);
+      expect(isFacilitationChange({ facilitation: '' }, { facilitation: 'both' })).toBe(true);
+    });
+
+    it('resets every completion flag and audit field', () => {
+      expect(
+        resetSessionCompletion({ sessionName: 'a', pocComplete: true, pocCompleteId: 3 })
+      ).toEqual({
+        sessionName: 'a',
+        ownerComplete: false,
+        collabComplete: false,
+        pocComplete: false,
+      });
+    });
   });
 
   describe('destroySession', () => {
-    let goal; let grant; let createdSession;
+    let goal;
+    let grant;
+    let createdSession;
     const grantData = {
       id: 5555555,
       number: '1234',
@@ -131,8 +378,12 @@ describe('session reports service', () => {
 
     it('should delete files and attachments associated with the session report pilot', async () => {
       const id = 1;
-      const destroyMock = jest.spyOn(SessionReportPilotFile, 'destroy').mockResolvedValue(undefined);
-      const destroyAttachmentMock = jest.spyOn(SessionReportPilotSupportingAttachment, 'destroy').mockResolvedValue(undefined);
+      const destroyMock = jest
+        .spyOn(SessionReportPilotFile, 'destroy')
+        .mockResolvedValue(undefined);
+      const destroyAttachmentMock = jest
+        .spyOn(SessionReportPilotSupportingAttachment, 'destroy')
+        .mockResolvedValue(undefined);
 
       await destroySession(id);
 
@@ -140,13 +391,13 @@ describe('session reports service', () => {
         {
           where: { sessionReportPilotId: id },
         },
-        { individualHooks: true },
+        { individualHooks: true }
       );
       expect(destroyAttachmentMock).toHaveBeenCalledWith(
         {
           where: { sessionReportPilotId: id },
         },
-        { individualHooks: true },
+        { individualHooks: true }
       );
     });
     it('should delete session', async () => {
@@ -170,7 +421,7 @@ describe('session reports service', () => {
 
       expect(found).toMatchObject({
         id: created.id,
-        eventId: eventIdSubstring,
+        eventId,
       });
 
       await destroySession(created.id);
@@ -194,7 +445,7 @@ describe('session reports service', () => {
             id: created2.id,
             eventId: event.id,
           }),
-        ]),
+        ])
       );
 
       await destroySession(created1.id);
@@ -203,62 +454,99 @@ describe('session reports service', () => {
   });
 
   describe('getPossibleSessionParticipants', () => {
-    const mockRegionId = faker.datatype.number({ min: 20 });
+    const mockRegionId = faker.number.int({ min: 20, max: 20 + 99999 });
 
     let program;
     let program2;
+    let program3;
     let recipient;
     let alternateRecipient;
+    let additionalRegionRecipient;
+    let arizonaGrantRecipient;
+
+    // Events and sessions created for each scenario.
+    let eventBase;
+    let eventWithAdditionalRegion;
+    let eventWithAdditionalState;
+    let eventWithBoth;
+    let sessionBase;
+    let sessionWithAdditionalRegion;
+    let sessionWithAdditionalState;
+    let sessionWithBoth;
 
     beforeAll(async () => {
-      await db.Region.create({
-        id: mockRegionId,
-        name: `Random test region ${mockRegionId}`,
-      });
-
+      await db.Region.create({ id: mockRegionId, name: `Random test region ${mockRegionId}` });
       await db.Region.create({
         id: mockRegionId + 1,
         name: `Random test region ${mockRegionId + 1}`,
       });
-
-      recipient = await db.Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+      await db.Region.create({
+        id: mockRegionId + 2,
+        name: `Random test region ${mockRegionId + 2}`,
       });
 
+      recipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
       alternateRecipient = await db.Recipient.create({
-        id: faker.datatype.number(),
-        name: faker.name.firstName(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
+      additionalRegionRecipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
+      });
+      arizonaGrantRecipient = await db.Recipient.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.person.firstName(),
       });
 
       const grant = await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
         status: 'Active',
       });
 
       await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: alternateRecipient.id,
         regionId: mockRegionId + 1,
         stateCode: 'CA',
         status: 'Active',
       });
 
+      const additionalRegionGrant = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: additionalRegionRecipient.id,
+        regionId: mockRegionId + 2,
+        status: 'Active',
+      });
+
       const oldGrant = await db.Grant.create({
-        id: faker.datatype.number(),
-        number: faker.datatype.string(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
         recipientId: recipient.id,
         regionId: mockRegionId,
         status: 'Inactive',
       });
 
+      await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: arizonaGrantRecipient.id,
+        regionId: mockRegionId + 2,
+        status: 'Active',
+        stateCode: 'AZ',
+      });
+
       program = await db.Program.create({
-        id: faker.datatype.number(),
-        name: faker.company.companyName() + faker.company.bsBuzz(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
         grantId: grant.id,
         programType: 'HS',
         startYear: 2016,
@@ -268,8 +556,8 @@ describe('session reports service', () => {
       });
 
       program2 = await db.Program.create({
-        id: faker.datatype.number(),
-        name: faker.company.companyName() + faker.company.bsBuzz(),
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
         grantId: oldGrant.id,
         programType: 'HS',
         startYear: 2016,
@@ -277,20 +565,97 @@ describe('session reports service', () => {
         endDate: null,
         status: 'Inactive',
       });
+
+      program3 = await db.Program.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        name: faker.company.name() + faker.company.buzzVerb(),
+        grantId: additionalRegionGrant.id,
+        programType: 'HS',
+        startYear: 2016,
+        startDate: '2016-11-01',
+        endDate: null,
+        status: 'Active',
+      });
+
+      // Event: base region only
+      eventBase = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+        },
+      });
+      sessionBase = await createSession({ eventId: eventBase.id, data: {} });
+
+      // Event: base region + additionalRegions
+      eventWithAdditionalRegion = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: [mockRegionId + 2],
+        },
+      });
+      sessionWithAdditionalRegion = await createSession({
+        eventId: eventWithAdditionalRegion.id,
+        data: {},
+      });
+
+      // Event: base region + additionalStates (state code parsed from "Name (CA)" format)
+      eventWithAdditionalState = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalStates: ['California (CA)', 'Arizona'],
+        },
+      });
+      sessionWithAdditionalState = await createSession({
+        eventId: eventWithAdditionalState.id,
+        data: {},
+      });
+
+      // Event: base region + additionalRegions + additionalStates
+      eventWithBoth = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.number.int({ min: 0, max: 99999 })}-PD-${faker.number.int({ min: 0, max: 99999 })}`,
+          additionalRegions: [mockRegionId + 2],
+          additionalStates: ['California (CA)'],
+        },
+      });
+      sessionWithBoth = await createSession({ eventId: eventWithBoth.id, data: {} });
     });
 
     afterAll(async () => {
-      await db.Program.destroy({
-        where: {
-          id: [program.id, program2.id],
-        },
-      });
+      await destroySession(sessionBase.id);
+      await destroySession(sessionWithAdditionalRegion.id);
+      await destroySession(sessionWithAdditionalState.id);
+      await destroySession(sessionWithBoth.id);
+
+      await destroyEvent(eventBase.id);
+      await destroyEvent(eventWithAdditionalRegion.id);
+      await destroyEvent(eventWithAdditionalState.id);
+      await destroyEvent(eventWithBoth.id);
+
+      await db.Program.destroy({ where: { id: [program.id, program2.id, program3.id] } });
 
       await db.Grant.destroy({
         where: {
           recipientId: [
             recipient.id,
             alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
           ],
         },
         individualHooks: true,
@@ -301,20 +666,19 @@ describe('session reports service', () => {
           id: [
             recipient.id,
             alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
           ],
         },
       });
+
       await db.Region.destroy({
-        where: {
-          id: [
-            mockRegionId,
-            mockRegionId + 1,
-          ],
-        },
+        where: { id: [mockRegionId, mockRegionId + 1, mockRegionId + 2] },
       });
     });
-    it('retrieves possible participants', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId);
+
+    it('retrieves participants for the base region derived from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionBase.id);
       expect(participants.length).toBe(1);
       expect(participants[0].id).toBe(recipient.id);
       expect(participants[0]).toHaveProperty('id');
@@ -322,20 +686,33 @@ describe('session reports service', () => {
       expect(participants[0].grants.length).toBe(1);
     });
 
-    it('ignores an empty states array', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, []);
-      expect(participants.length).toBe(1);
-      expect(participants[0].id).toBe(recipient.id);
-      expect(participants[0]).toHaveProperty('id');
-      expect(participants[0]).toHaveProperty('name');
-      expect(participants[0].grants.length).toBe(1);
-    });
-
-    it('retrieves participants from alternate states', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
-      expect(participants.length).toBe(2);
+    it('includes recipients from additionalRegions stored on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalRegion.id);
+      expect(participants).toHaveLength(3);
       expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, alternateRecipient.id]),
+        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
+      );
+      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
+    });
+
+    it('includes recipients matching state codes parsed from additionalStates on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalState.id);
+      expect(participants.length).toBe(3);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id, arizonaGrantRecipient.id])
+      );
+    });
+
+    it('combines additionalRegions and additionalStates from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithBoth.id);
+      expect(participants).toHaveLength(4);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([
+          recipient.id,
+          alternateRecipient.id,
+          additionalRegionRecipient.id,
+          arizonaGrantRecipient.id,
+        ])
       );
     });
   });
@@ -349,15 +726,24 @@ describe('session reports service', () => {
         pocIds: [18],
         collaboratorIds: [18],
         data: {
-          eventId,
+          eventId: `R01-PD-${faker.number.int({ min: 0, max: 99999 })}`,
         },
       };
       createdEvent = await createEvent(eventData);
 
       // Create Sessions.
-      const session1 = await createSession({ eventId: createdEvent.id, data: { startDate: '04/20/2022' } });
-      const session2 = await createSession({ eventId: createdEvent.id, data: { startDate: '01/01/2023' } });
-      const session3 = await createSession({ eventId: createdEvent.id, data: { startDate: '02/10/2022' } });
+      const session1 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '04/20/2022' },
+      });
+      const session2 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '01/01/2023' },
+      });
+      const session3 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '02/10/2022' },
+      });
       sessionIds = [session1.id, session2.id, session3.id];
     });
 
@@ -402,7 +788,8 @@ describe('session reports service', () => {
 
       const foundSession = await findSessionHelper({ id: createdSession.id });
 
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
 
@@ -414,9 +801,147 @@ describe('session reports service', () => {
       const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
       expect(foundSession).toHaveProperty('eventId', null);
       expect(foundSession).toHaveProperty('id', 999);
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null/undefined)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
+
+    it('returns eventId null when the session has no event', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1000,
+        data: {},
+      });
+
+      await expect(findSessionHelper({ id: 'missing event' })).resolves.toMatchObject({
+        id: 1000,
+        eventId: null,
+      });
+    });
+
+    it('returns eventId null when the event data has no eventId', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1001,
+        data: {},
+        event: {
+          data: {},
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'missing eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1001,
+        eventId: null,
+      });
+    });
+
+    it('returns the eventId when the event data includes it', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1002,
+        data: {},
+        event: {
+          eventId: 'R01-PD-1002',
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'with eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1002,
+        eventId: 'R01-PD-1002',
+      });
+    });
+  });
+
+  describe('session date columns (single source of truth)', () => {
+    let dateEvent;
+    const createdSessionIds = [];
+
+    beforeAll(async () => {
+      dateEvent = await createEvent({
+        ownerId: 99_777,
+        regionId: 99_777,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: 'R01-PD-99_777' },
+      });
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({ where: { id: createdSessionIds } });
+      await destroyEvent(dateEvent.id);
+    });
+
+    it('createSession writes dates to the startDate/endDate columns and strips them from data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '03/15/2024', endDate: '03/16/2024', sessionName: 'col test' },
+      });
+      createdSessionIds.push(created.id);
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      // Columns hold the parsed dates (DATEONLY -> YYYY-MM-DD string).
+      expect(raw.startDate).toBe('2024-03-15');
+      expect(raw.endDate).toBe('2024-03-16');
+      // The JSONB data no longer mirrors the dates on write.
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+    });
+
+    it('findSessionHelper re-derives data dates from the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '07/04/2024', endDate: '07/05/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      const found = await findSessionHelper({ id: created.id });
+      expect(found.data.startDate).toBe('07/04/2024');
+      expect(found.data.endDate).toBe('07/05/2024');
+    });
+
+    it('columns win even when stale dates linger in the JSONB data', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '01/01/2024', endDate: '01/02/2024' },
+      });
+      createdSessionIds.push(created.id);
+
+      // Simulate a legacy/stale JSONB value that disagrees with the columns.
+      await SessionReportPilot.update(
+        { data: { startDate: '12/31/1999', endDate: '12/31/1999' } },
+        { where: { id: created.id }, individualHooks: false }
+      );
+
+      const found = await findSessionHelper({ id: created.id });
+      // The column value (not the stale JSONB value) is surfaced.
+      expect(found.data.startDate).toBe('01/01/2024');
+      expect(found.data.endDate).toBe('01/02/2024');
+    });
+
+    it('updateSession persists new dates to the columns', async () => {
+      const created = await createSession({
+        eventId: dateEvent.id,
+        data: { startDate: '05/01/2024', endDate: '05/02/2024', sessionName: 'updated session' },
+      });
+      createdSessionIds.push(created.id);
+
+      await updateSession(created.id, {
+        eventId: 'R01-PD-99_777',
+        data: {
+          startDate: '06/10/2024',
+          endDate: '06/11/2024',
+          sessionName: 'updated session name',
+        },
+      });
+
+      const raw = await SessionReportPilot.findByPk(created.id);
+      expect(raw.startDate).toBe('2024-06-10');
+      expect(raw.endDate).toBe('2024-06-11');
+      expect(raw.data.startDate).toBeUndefined();
+      expect(raw.data.endDate).toBeUndefined();
+      expect(raw.data.sessionName).toBe('updated session name');
     });
   });
 
@@ -445,10 +970,15 @@ describe('session reports service', () => {
         data: {
           eventId: testEventLongId,
           eventName: 'Test Event for Sessions',
+          // Use IN_PROGRESS so sessions can be created (the beforeCreate hook blocks
+          // session creation on COMPLETE events). IN_PROGRESS still passes getSessionReports'
+          // event filter which accepts both COMPLETE and IN_PROGRESS.
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
       });
 
       // Create test sessions with varied data for sorting/filtering
+      // Sessions must have status: COMPLETE to be returned by getSessionReports
       testSessions = await Promise.all([
         createSession({
           eventId: testEvent.id,
@@ -457,6 +987,7 @@ describe('session reports service', () => {
             startDate: '01/15/2024',
             endDate: '01/16/2024',
             objectiveTopics: ['Topic A', 'Topic B'],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
         createSession({
@@ -466,6 +997,7 @@ describe('session reports service', () => {
             startDate: '01/10/2024',
             endDate: '01/11/2024',
             objectiveTopics: ['Topic C'],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
         createSession({
@@ -475,15 +1007,14 @@ describe('session reports service', () => {
             startDate: '01/20/2024',
             endDate: '01/21/2024',
             objectiveTopics: [],
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
       ]);
     });
 
     afterAll(async () => {
-      await Promise.all(
-        testSessions.map((session) => destroySession(session.id)),
-      );
+      await Promise.all(testSessions.map((session) => destroySession(session.id)));
       await destroyEvent(testEvent.id);
     });
 
@@ -534,8 +1065,16 @@ describe('session reports service', () => {
     });
 
     it('should skip records with offset parameter', async () => {
-      const firstPage = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
-      const secondPage = await getSessionReports({ limit: 1, offset: 1, 'eventId.ctn': [testEventLongId] });
+      const firstPage = await getSessionReports({
+        limit: 1,
+        offset: 0,
+        'eventId.ctn': [testEventLongId],
+      });
+      const secondPage = await getSessionReports({
+        limit: 1,
+        offset: 1,
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(firstPage.rows.length).toBe(1);
       expect(secondPage.rows.length).toBe(1);
@@ -552,7 +1091,11 @@ describe('session reports service', () => {
 
     it('should return accurate total count regardless of pagination', async () => {
       const allResults = await getSessionReports({ limit: 1000, 'eventId.ctn': [testEventLongId] });
-      const paginatedResults = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
+      const paginatedResults = await getSessionReports({
+        limit: 1,
+        offset: 0,
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(allResults.count).toBe(paginatedResults.count);
     });
@@ -562,10 +1105,7 @@ describe('session reports service', () => {
       const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.id,
-        result.rows[idx + 1].id,
-      ]);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [row.id, result.rows[idx + 1].id]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeGreaterThanOrEqual(next);
       });
@@ -580,10 +1120,7 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.id,
-        result.rows[idx + 1].id,
-      ]);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [row.id, result.rows[idx + 1].id]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -598,10 +1135,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.sessionName || '',
-        result.rows[idx + 1].sessionName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.sessionName || '', result.rows[idx + 1].sessionName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
       });
@@ -616,10 +1152,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.sessionName || '',
-        result.rows[idx + 1].sessionName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.sessionName || '', result.rows[idx + 1].sessionName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
       });
@@ -634,10 +1169,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.startDate || 0).getTime(),
-        new Date(result.rows[idx + 1].startDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.startDate || 0).getTime(),
+          new Date(result.rows[idx + 1].startDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -652,10 +1189,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.startDate || 0).getTime(),
-        new Date(result.rows[idx + 1].startDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.startDate || 0).getTime(),
+          new Date(result.rows[idx + 1].startDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeGreaterThanOrEqual(next);
       });
@@ -670,10 +1209,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.endDate || 0).getTime(),
-        new Date(result.rows[idx + 1].endDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.endDate || 0).getTime(),
+          new Date(result.rows[idx + 1].endDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -688,10 +1229,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.eventId || '',
-        result.rows[idx + 1].eventId || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.eventId || '', result.rows[idx + 1].eventId || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
       });
@@ -706,17 +1246,20 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.eventName || '',
-        result.rows[idx + 1].eventName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.eventName || '', result.rows[idx + 1].eventName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
       });
     });
 
     it('should fall back to id sort when sortBy is invalid', async () => {
-      const result = await getSessionReports({ sortBy: 'invalidField', sortDir: 'DESC', 'eventId.ctn': [testEventLongId] });
+      const result = await getSessionReports({
+        sortBy: 'invalidField',
+        sortDir: 'DESC',
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
       // Should not throw and should return results
@@ -797,6 +1340,665 @@ describe('session reports service', () => {
         expect(row).toHaveProperty('id');
         expect(row).toHaveProperty('sessionName');
       });
+    });
+
+    it('should apply sessionReportScopes consistently to both count and data queries', async () => {
+      // Get all sessions for the test event first
+      const allResults = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+        limit: 1000,
+      });
+
+      // Now filter by a specific session ID using sessionId.in filter
+      const specificSessionId = allResults.rows[0].id;
+      const filteredResults = await getSessionReports({
+        'eventId.ctn': [testEventLongId],
+        'sessionId.in': [String(specificSessionId)],
+      });
+
+      // The count should match the actual rows returned
+      expect(filteredResults.count).toBe(filteredResults.rows.length);
+      expect(filteredResults.count).toBe(1);
+      expect(filteredResults.rows[0].id).toBe(specificSessionId);
+    });
+
+    it('resolves the "TR event creator" myReports filter using the passed-in userId', async () => {
+      // testEvent is owned by uniqueOwnerId; a report by another owner must be excluded.
+      const otherOwnerEvent = await createEvent({
+        ownerId: 99_801,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: 'R01-PD-99801-myreports',
+          eventName: 'Other Owner Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+      const otherOwnerSession = await createSession({
+        eventId: otherOwnerEvent.id,
+        data: {
+          sessionName: 'Other Owner Session',
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+      });
+
+      try {
+        const result = await getSessionReports({
+          'myReports.in': ['TR event creator'],
+          userId: uniqueOwnerId,
+        });
+
+        expect(result.rows.map((r) => r.id)).toEqual(
+          expect.arrayContaining(testSessions.map((s) => s.id))
+        );
+        expect(result.rows.map((r) => r.id)).not.toEqual(
+          expect.arrayContaining([otherOwnerSession.id])
+        );
+      } finally {
+        await destroySession(otherOwnerSession.id);
+        await destroyEvent(otherOwnerEvent.id);
+      }
+    });
+
+    describe('sort by startDate with mixed date formats', () => {
+      // These three formats were all found in production data.
+      // MM/DD/YYYY is the dominant format (428 rows).
+      // YYYY-MM-DD (ISO) caused error 22008 when sorted — TO_DATE read '20' as month.
+      // M/D/YY (short two-digit year) silently sorted to year 0026 before the fix.
+      const mixedEventLongId = 'R01-PD-99801';
+      let mixedEvent;
+      let mixedSessions = [];
+
+      beforeAll(async () => {
+        mixedEvent = await createEvent({
+          ownerId: 99_801,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: mixedEventLongId,
+            eventName: 'Mixed Date Format Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        mixedSessions = await Promise.all([
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'US Format Session',
+              startDate: '11/20/2024', // MM/DD/YYYY — most common format in DB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'ISO Format Session',
+              startDate: '2026-03-13', // YYYY-MM-DD — was causing error 22008
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Short Year Session',
+              startDate: '4/21/26', // M/D/YY — was silently sorting to year 0026
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Empty String Session',
+              startDate: '', // empty string — NULLIF guards this
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Null Session',
+              // startDate absent — stored as null in JSONB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(mixedSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(mixedEvent.id);
+      });
+
+      it('should not throw and should return results sorted DESC when startDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_start_date',
+          sortDir: 'DESC',
+          limit: 100,
+          'eventId.ctn': [mixedEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // PostgreSQL sorts NULLs first on DESC; dated sessions follow newest-to-oldest
+        // DESC order: [null, empty string (both NULL)] then 4/21/26 > 2026-03-13 > 11/20/2024
+        expect(names.slice(0, 2)).toEqual(
+          expect.arrayContaining(['Null Session', 'Empty String Session'])
+        );
+        expect(names.slice(2)).toEqual([
+          'Short Year Session',
+          'ISO Format Session',
+          'US Format Session',
+        ]);
+      });
+
+      it('should not throw and should return results sorted ASC when startDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_start_date',
+          sortDir: 'ASC',
+          limit: 100,
+          'eventId.ctn': [mixedEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // PostgreSQL sorts NULLs last on ASC; dated sessions come first oldest-to-newest
+        // ASC order: 11/20/2024 < 2026-03-13 < 4/21/26 then [null, empty string]
+        expect(names.slice(0, 3)).toEqual([
+          'US Format Session',
+          'ISO Format Session',
+          'Short Year Session',
+        ]);
+        expect(names.slice(3)).toEqual(
+          expect.arrayContaining(['Null Session', 'Empty String Session'])
+        );
+      });
+    });
+    describe('sort by endDate with mixed date formats', () => {
+      // endDate shares the same CASE casting logic as startDate and had the same
+      // production-error surface.  These tests verify it is equally robust.
+      const mixedEndEventLongId = 'R01-PD-99802';
+      let mixedEndEvent;
+      let mixedEndSessions = [];
+
+      beforeAll(async () => {
+        mixedEndEvent = await createEvent({
+          ownerId: 99_802,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: mixedEndEventLongId,
+            eventName: 'Mixed End Date Format Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        mixedEndSessions = await Promise.all([
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'US Format End Session',
+              endDate: '11/20/2024', // MM/DD/YYYY
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'ISO Format End Session',
+              endDate: '2026-03-13', // YYYY-MM-DD
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Short Year End Session',
+              endDate: '4/21/26', // M/D/YY
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Malformed End Session',
+              endDate: 'not-a-date', // unrecognized — should sort as NULL
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Empty End Session',
+              endDate: '', // empty string — NULLIF guards this
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(mixedEndSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(mixedEndEvent.id);
+      });
+
+      it('should not throw and should return results sorted DESC when endDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_end_date',
+          sortDir: 'DESC',
+          limit: 100,
+          'eventId.ctn': [mixedEndEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // NULLs (empty, malformed) first on DESC; then newest-to-oldest
+        expect(names.slice(0, 2)).toEqual(
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
+        );
+        expect(names.slice(2)).toEqual([
+          'Short Year End Session',
+          'ISO Format End Session',
+          'US Format End Session',
+        ]);
+      });
+
+      it('should not throw and should return results sorted ASC when endDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_end_date',
+          sortDir: 'ASC',
+          limit: 100,
+          'eventId.ctn': [mixedEndEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // Dated sessions come first oldest-to-newest; NULLs (empty, malformed) last on ASC
+        expect(names.slice(0, 3)).toEqual([
+          'US Format End Session',
+          'ISO Format End Session',
+          'Short Year End Session',
+        ]);
+        expect(names.slice(3)).toEqual(
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
+        );
+      });
+    });
+
+    describe('participant counts with non-numeric data', () => {
+      // The session form writes '' into whichever participant fields don't apply to the
+      // selected delivery method, so these values are routine. Casting them to ::integer in
+      // SQL raised "invalid input syntax for type integer" and failed the whole table.
+      const participantEventLongId = 'R01-PD-99803';
+      let participantEvent;
+      let participantSessions = [];
+
+      beforeAll(async () => {
+        participantEvent = await createEvent({
+          ownerId: 99_803,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: participantEventLongId,
+            eventName: 'Participant Count Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        participantSessions = await Promise.all([
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'In Person Session',
+              deliveryMethod: 'in-person',
+              numberOfParticipants: 12,
+              // blanked by the form because they don't apply to this delivery method
+              numberOfParticipantsInPerson: '',
+              numberOfParticipantsVirtually: '',
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Empty Count Session',
+              deliveryMethod: 'virtual',
+              numberOfParticipants: '', // the row that was breaking the whole query
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Missing Count Session',
+              deliveryMethod: 'virtual',
+              // numberOfParticipants absent — stored as null in JSONB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: participantEvent.id,
+            data: {
+              sessionName: 'Hybrid Session',
+              deliveryMethod: 'hybrid',
+              numberOfParticipants: '',
+              numberOfParticipantsInPerson: 3,
+              numberOfParticipantsVirtually: 4,
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(participantSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(participantEvent.id);
+      });
+
+      it('should not throw and should derive participantCount the same way other pages do', async () => {
+        const result = await getSessionReports({
+          limit: 100,
+          'eventId.ctn': [participantEventLongId],
+        });
+
+        expect(result.rows.length).toBe(4);
+
+        const counts = result.rows.reduce(
+          (acc, row) => ({ ...acc, [row.sessionName]: row.participantCount }),
+          {}
+        );
+
+        expect(counts['In Person Session']).toBe(12);
+        expect(counts['Empty Count Session']).toBe(0);
+        expect(counts['Missing Count Session']).toBe(0);
+        expect(counts['Hybrid Session']).toBe(7);
+      });
+    });
+  });
+
+  describe('getSessionReports pagination stability', () => {
+    // Every session under an event shares that event's eventId, so sorting by Event ID -- the
+    // default for the training reports table -- is nothing but ties. Dates, topics and goals tie
+    // just as freely. Without a unique tiebreaker Postgres may order those ties differently for
+    // each LIMIT/OFFSET query, which served the same session on more than one page and hid
+    // others entirely.
+    let tiedEvent;
+    let tiedSessions = [];
+    const tiedEventLongId = 'R01-PD-99801';
+
+    beforeAll(async () => {
+      tiedEvent = await createEvent({
+        ownerId: 99_801,
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: tiedEventLongId,
+          eventName: 'Tied Sort Values Event',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      // enough rows that each page is a differently sized sort
+      tiedSessions = await Promise.all(
+        ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) =>
+          createSession({
+            eventId: tiedEvent.id,
+            data: {
+              sessionName: `Tied Session ${letter}`,
+              startDate: '02/01/2024',
+              endDate: '02/02/2024',
+              objectiveTopics: ['Shared Topic'],
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          })
+        )
+      );
+    });
+
+    afterAll(async () => {
+      await Promise.all(tiedSessions.map((session) => destroySession(session.id)));
+      await destroyEvent(tiedEvent.id);
+    });
+
+    const pageThrough = async (sortBy, sortDir, limit) => {
+      const offsets = tiedSessions
+        .map((_session, index) => index * limit)
+        .filter((offset) => offset < tiedSessions.length);
+
+      const pages = await Promise.all(
+        offsets.map((offset) =>
+          getSessionReports({
+            sortBy,
+            sortDir,
+            limit,
+            offset,
+            'eventId.ctn': [tiedEventLongId],
+          })
+        )
+      );
+
+      return pages.map((page) => page.rows.map((row) => row.id));
+    };
+
+    it('breaks ties on session id', async () => {
+      const ascending = await getSessionReports({
+        sortBy: 'Event_ID',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      });
+      const ascendingIds = ascending.rows.map((row) => row.id);
+
+      expect(ascendingIds.length).toBe(tiedSessions.length);
+      expect(ascendingIds).toEqual([...ascendingIds].sort((a, b) => a - b));
+
+      const descending = await getSessionReports({
+        sortBy: 'Event_ID',
+        sortDir: 'DESC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      });
+
+      expect(descending.rows.map((row) => row.id)).toEqual([...ascendingIds].reverse());
+    });
+
+    it('returns the same order for identical queries', async () => {
+      const query = {
+        sortBy: 'Session_start_date',
+        sortDir: 'ASC',
+        limit: 100,
+        'eventId.ctn': [tiedEventLongId],
+      };
+
+      const [first, second] = await Promise.all([
+        getSessionReports(query),
+        getSessionReports(query),
+      ]);
+
+      expect(first.rows.map((row) => row.id)).toEqual(second.rows.map((row) => row.id));
+    });
+
+    it('returns each session exactly once when paging through tied event ids', async () => {
+      const ids = (await pageThrough('Event_ID', 'DESC', 2)).flat();
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect([...ids].sort((a, b) => a - b)).toEqual(
+        tiedSessions.map((session) => session.id).sort((a, b) => a - b)
+      );
+    });
+
+    it('returns each session exactly once when paging through tied start dates', async () => {
+      const ids = (await pageThrough('Session_start_date', 'ASC', 3)).flat();
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect([...ids].sort((a, b) => a - b)).toEqual(
+        tiedSessions.map((session) => session.id).sort((a, b) => a - b)
+      );
+    });
+  });
+
+  describe('getSessionReportsByRecipient', () => {
+    let recipient;
+    let otherRecipient;
+    let recipientGrantInRegion1;
+    let recipientGrantInRegion2;
+    let otherRecipientGrant;
+    let regionOneEvent;
+    let regionTwoEvent;
+    let createdSessions = [];
+
+    beforeAll(async () => {
+      recipient = await createRecipient({
+        name: `Recipient-${faker.string.uuid()}`,
+      });
+
+      otherRecipient = await createRecipient({
+        name: `Recipient-${faker.string.uuid()}`,
+      });
+
+      recipientGrantInRegion1 = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: recipient.id,
+        regionId: 1,
+        status: 'Active',
+      });
+
+      recipientGrantInRegion2 = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: recipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      otherRecipientGrant = await db.Grant.create({
+        id: faker.number.int({ min: 0, max: 99999 }),
+        number: faker.string.sample(),
+        recipientId: otherRecipient.id,
+        regionId: 2,
+        status: 'Active',
+      });
+
+      regionOneEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: 1,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R01-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventName: 'Recipient Filter Region 1',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      regionTwoEvent = await createEvent({
+        ownerId: faker.number.int({ min: 0, max: 99999 }),
+        regionId: 2,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R02-PD-RECIPIENT-${faker.number.int({ min: 0, max: 99999 })}`,
+          eventName: 'Recipient Filter Region 2',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+
+      createdSessions = await Promise.all([
+        createSession({
+          eventId: regionOneEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 1',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Grant 1', value: recipientGrantInRegion1.id }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Recipient Session Region 2',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            // store as string to validate cast guard logic
+            recipients: [{ label: 'Grant 2', value: String(recipientGrantInRegion2.id) }],
+          },
+        }),
+        createSession({
+          eventId: regionTwoEvent.id,
+          data: {
+            sessionName: 'Other Recipient Session',
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+            recipients: [{ label: 'Other Grant', value: otherRecipientGrant.id }],
+          },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Promise.all((createdSessions || []).map((s) => destroySession(s.id)));
+
+      if (regionOneEvent) await destroyEvent(regionOneEvent.id);
+      if (regionTwoEvent) await destroyEvent(regionTwoEvent.id);
+
+      await db.Grant.destroy({
+        where: {
+          id: [
+            recipientGrantInRegion1?.id,
+            recipientGrantInRegion2?.id,
+            otherRecipientGrant?.id,
+          ].filter(Boolean),
+        },
+        individualHooks: true,
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: [recipient?.id, otherRecipient?.id].filter(Boolean),
+        },
+      });
+    });
+
+    it('returns sessions where the recipient grant ids are listed in session recipients', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
+      expect(names).not.toContain('Other Recipient Session');
+    });
+
+    it('ignores region restrictions and still returns sessions from all regions', async () => {
+      const result = await getSessionReportsByRecipient({
+        recipientId: recipient.id,
+        limit: 100,
+        sortBy: 'id',
+        sortDir: 'ASC',
+        // Deliberately restrictive; cloned function should ignore region filters.
+        'region.in': ['1'],
+      });
+
+      const names = result.rows.map((r) => r.sessionName);
+
+      expect(result.count).toBe(2);
+      expect(names).toEqual(
+        expect.arrayContaining(['Recipient Session Region 1', 'Recipient Session Region 2'])
+      );
     });
   });
 });

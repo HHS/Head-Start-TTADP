@@ -1,21 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from '../FilterSingleOrMultiRecipientsSelect';
+import React from 'react';
+import FilterSingleOrMultiRecipientsSelect, {
+  mapDisplayValue,
+} from '../FilterSingleOrMultiRecipientsSelect';
 
 describe('FilterSingleOrMultiSelect', () => {
-  const renderSingleOrMultiSelect = (onApply) => (
+  const renderSingleOrMultiSelect = (onApply) =>
     render(
-      <FilterSingleOrMultiRecipientsSelect
-        onApply={onApply}
-        inputId="single-or-multi"
-        query={[]}
-      />,
-    ));
+      <FilterSingleOrMultiRecipientsSelect onApply={onApply} inputId="single-or-multi" query={[]} />
+    );
 
   it('calls the onapply handler', async () => {
     const onApply = jest.fn();

@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { getWhatsNewFeedData, getSingleFeedData } from '../../services/feed';
+import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import { getSingleFeedData, getWhatsNewFeedData } from '../../services/feed';
 
 export async function whatsNewFeedHandler(req: Request, res: Response) {
   try {

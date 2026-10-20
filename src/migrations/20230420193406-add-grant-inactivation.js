@@ -11,19 +11,29 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
       const inactivationReasons = ['Replaced', 'Terminated', 'Relinquished', 'Unknown'];
 
-      await queryInterface.addColumn('Grants', 'inactivationDate', {
-        type: Sequelize.DATE,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Grants',
+        'inactivationDate',
+        {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('Grants', 'inactivationReason', {
-        type: Sequelize.ENUM(inactivationReasons),
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Grants',
+        'inactivationReason',
+        {
+          type: Sequelize.ENUM(inactivationReasons),
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
 
@@ -38,12 +48,14 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.removeColumn('Grants', 'inactivationDate', { transaction });
       await queryInterface.removeColumn('Grants', 'inactivationReason', { transaction });
-      await queryInterface.sequelize.query('DROP TYPE public."enum_Grants_inactivationReason";', { transaction });
+      await queryInterface.sequelize.query('DROP TYPE public."enum_Grants_inactivationReason";', {
+        transaction,
+      });
     });
   },
 };

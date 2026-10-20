@@ -1,8 +1,8 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';
@@ -24,17 +24,18 @@ describe('ttaType filtersToScopes', () => {
     let reportIds = [];
 
     beforeAll(async () => {
-      ttaReport = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
+      ttaReport = await ActivityReport.create({
+        ...draftReport,
+        ttaType: ['technical-assistance'],
+      });
       trainingReport = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
-      bothReport = await ActivityReport.create({ ...draftReport, ttaType: ['training,technical-assistance'] });
+      bothReport = await ActivityReport.create({
+        ...draftReport,
+        ttaType: ['training,technical-assistance'],
+      });
       reportExcluded = await ActivityReport.create({ ...draftReport, ttaType: ['balderdash'] });
 
-      reportIds = [
-        ttaReport.id,
-        trainingReport.id,
-        bothReport.id,
-        reportExcluded.id,
-      ];
+      reportIds = [ttaReport.id, trainingReport.id, bothReport.id, reportExcluded.id];
     });
 
     afterAll(async () => {
@@ -55,8 +56,7 @@ describe('ttaType filtersToScopes', () => {
         });
 
         expect(found.length).toBe(1);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([ttaReport.id]));
+        expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([ttaReport.id]));
       });
 
       it('does not contain', async () => {
@@ -79,8 +79,7 @@ describe('ttaType filtersToScopes', () => {
         });
 
         expect(found.length).toBe(1);
-        expect(found.map((f) => f.id))
-          .toEqual(expect.arrayContaining([trainingReport.id]));
+        expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([trainingReport.id]));
       });
       it('does not contain', async () => {
         const filters = { 'ttaType.nin': ['training'] };

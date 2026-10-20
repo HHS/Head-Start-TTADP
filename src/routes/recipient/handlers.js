@@ -1,22 +1,29 @@
 import httpCodes from 'http-codes';
-import {
-  getGoalsByActivityRecipient,
-  recipientById,
-  recipientsByName,
-  recipientsByUserId,
-  recipientLeadership,
-  missingStandardGoals,
-} from '../../services/recipient';
-import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
+import goalsByIdAndRecipient, {
+  goalRegionIdsByIdAndRecipient,
+} from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
-import filtersToScopes from '../../scopes';
+import CommunicationLogPolicy from '../../policies/communicationLog';
 import Recipient from '../../policies/recipient';
 import Users from '../../policies/user';
-import { userById } from '../../services/users';
+import filtersToScopes from '../../scopes';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
-import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
+import {
+  getGoalsByActivityRecipient,
+  missingStandardGoals,
+  recipientById,
+  recipientLeadership,
+  recipientsByName,
+  recipientsByUserId,
+} from '../../services/recipient';
+import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
+import { userById } from '../../services/users';
+import {
+  checkRecipientAccessAndExistence as checkAccessAndExistence,
+  checkUserRegionAccess,
+} from '../utils';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -29,10 +36,24 @@ export async function getGoalsByIdandRecipient(req, res) {
     const { recipientId } = req.params;
     const { goalIds } = req.query;
 
+    const regionIds = await goalRegionIdsByIdAndRecipient(goalIds, recipientId);
+
+    if (!regionIds.length) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const proceedQuestionMark = await checkUserRegionAccess(req, res, regionIds);
+
+    if (!proceedQuestionMark) {
+      return;
+    }
+
     const goals = await goalsByIdAndRecipient(goalIds, recipientId);
 
     if (!goals.length) {
       res.sendStatus(404);
+      return;
     }
 
     res.json(goals);
@@ -101,17 +122,12 @@ export async function getRecipient(req, res) {
 
 export async function searchRecipients(req, res) {
   try {
-    const {
-      s, sortBy, direction, offset,
-    } = req.query;
+    const { s, sortBy, direction, offset } = req.query;
 
     const userId = await currentUserId(req, res);
     const userRegions = await getUserReadRegions(userId);
 
-    const { grant: scopes } = await filtersToScopes(
-      req.query,
-      { userId },
-    );
+    const { grant: scopes } = await filtersToScopes(req.query, { userId });
     const recipients = await recipientsByName(s, scopes, sortBy, direction, offset, userRegions);
     if (!recipients) {
       res.sendStatus(404);
@@ -154,6 +170,32 @@ export async function getRecipientLeadership(req, res) {
     // Get goals for recipient.
     const leadership = await recipientLeadership(recipientId, regionId);
     res.json(leadership);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientTimeline(req, res) {
+  try {
+    const canAccessRecipient = await checkAccessAndExistence(req, res);
+
+    if (!canAccessRecipient) {
+      return;
+    }
+
+    const user = await userById(await currentUserId(req, res));
+    const { regionId } = res.locals.validatedParams;
+    const canReadCommunicationLogs = new CommunicationLogPolicy(user, regionId).canReadLog();
+
+    const timeline = await getRecipientTimelineService(
+      {
+        ...res.locals.validatedParams,
+        ...res.locals.recipientTimelineQuery,
+      },
+      { canReadCommunicationLogs }
+    );
+
+    res.json(timeline);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

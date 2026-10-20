@@ -1,11 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import RootCauseFeiGoals from '../RootCauseFeiGoals';
 
 const ROOT_CAUSE_FEI_GOALS_DATA = {

@@ -1,25 +1,21 @@
-import React, { useEffect, useState, useContext } from 'react';
-import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { Helmet } from 'react-helmet';
 import { Alert, Table } from '@trussworks/react-uswds';
 import { map, uniqueId } from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
 
 import Container from '../../components/Container';
-import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
-import { legacyReportById } from '../../fetchers/activityReports';
 import { updateLegacyUsers } from '../../fetchers/Admin';
-import reportColumns from './reportColumns';
-import UserContext from '../../UserContext';
+import { legacyReportById } from '../../fetchers/activityReports';
 import isAdmin from '../../permissions';
+import UserContext from '../../UserContext';
+import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
+import reportColumns from './reportColumns';
 
 const EditForm = ({ id, data }) => {
   const [message, setMessage] = useState(null);
-  const fields = [
-    'createdBy',
-    'modifiedBy',
-    'manager',
-  ];
+  const fields = ['createdBy', 'modifiedBy', 'manager'];
 
   const hints = {
     manager: 'You can enter multiple by separating them with a semicolon (;)',
@@ -32,7 +28,13 @@ const EditForm = ({ id, data }) => {
       const { messages } = await updateLegacyUsers(String(id), Object.fromEntries(formData));
       setMessage({
         type: 'success',
-        text: <ul className="usa-list margin-top-0">{messages.map((li) => <li key={uniqueId('message-')}>{li}</li>)}</ul>,
+        text: (
+          <ul className="usa-list margin-top-0">
+            {messages.map((li) => (
+              <li key={uniqueId('message-')}>{li}</li>
+            ))}
+          </ul>
+        ),
       });
     } catch (err) {
       setMessage({
@@ -51,17 +53,24 @@ const EditForm = ({ id, data }) => {
           const value = data[field];
           return (
             <div key={field}>
-              <label className="usa-label" htmlFor={field}>{field}</label>
-              <span className="usa-hint">
-                {hints[field] || 'Enter one email address'}
-              </span>
-              <input className="usa-input" type="text" name={field} id={field} defaultValue={value} />
+              <label className="usa-label" htmlFor={field}>
+                {field}
+              </label>
+              <span className="usa-hint">{hints[field] || 'Enter one email address'}</span>
+              <input
+                className="usa-input"
+                type="text"
+                name={field}
+                id={field}
+                defaultValue={value}
+              />
             </div>
           );
         })}
 
-        <button className="usa-button" type="submit">Save report users</button>
-
+        <button className="usa-button" type="submit">
+          Save report users
+        </button>
       </form>
     </div>
   );
@@ -77,7 +86,9 @@ EditForm.propTypes = {
 };
 
 function LegacyReport({ match }) {
-  const { params: { legacyId } } = match;
+  const {
+    params: { legacyId },
+  } = match;
   const [legacyReport, updateLegacyReport] = useState();
   const [loading, updateLoading] = useState(true);
   const [error, updateError] = useState(false);
@@ -102,19 +113,11 @@ function LegacyReport({ match }) {
   }, [legacyId]);
 
   if (loading) {
-    return (
-      <div>
-        loading...
-      </div>
-    );
+    return <div>loading...</div>;
   }
 
   if (error) {
-    return (
-      <Alert type="error">
-        {error}
-      </Alert>
-    );
+    return <Alert type="error">{error}</Alert>;
   }
 
   const { imported, attachments } = legacyReport;
@@ -127,16 +130,22 @@ function LegacyReport({ match }) {
     };
   });
 
-  const tableEntries = entries.filter((item) => item.value).map(({ field, display, value }) => (
-    <tr key={field}>
-      <th scope="row" className="text-top">
-        {display}
-      </th>
-      <td>
-        {value.split('\n').map((string) => <div key={string} className="margin-top-05">{string}</div>)}
-      </td>
-    </tr>
-  ));
+  const tableEntries = entries
+    .filter((item) => item.value)
+    .map(({ field, display, value }) => (
+      <tr key={field}>
+        <th scope="row" className="text-top">
+          {display}
+        </th>
+        <td>
+          {value.split('\n').map((string) => (
+            <div key={string} className="margin-top-05">
+              {string}
+            </div>
+          ))}
+        </td>
+      </tr>
+    ));
 
   return (
     <>
@@ -144,21 +153,17 @@ function LegacyReport({ match }) {
         <title>Legacy Report</title>
       </Helmet>
       <Container positionRelative>
-        <h2>
-          Legacy report
-          {' '}
-          {legacyId}
-        </h2>
+        <h2>Legacy report {legacyId}</h2>
 
         {hasAdminPermissions ? (
           <div className="position-absolute top-0 right-0 padding-2">
-            <button className="usa-button" type="button" onClick={() => setEditMode(!editMode)}>Edit report users</button>
+            <button className="usa-button" type="button" onClick={() => setEditMode(!editMode)}>
+              Edit report users
+            </button>
           </div>
         ) : null}
 
-        {editMode
-          ? <EditForm id={legacyReport.id} data={legacyReport.imported} />
-          : null}
+        {editMode ? <EditForm id={legacyReport.id} data={legacyReport.imported} /> : null}
 
         <Table className="usa-table">
           <thead>
@@ -166,24 +171,18 @@ function LegacyReport({ match }) {
               <th scope="col" className="width-card">
                 Field
               </th>
-              <th scope="col">
-                Value
-              </th>
+              <th scope="col">Value</th>
             </tr>
           </thead>
           <tbody>
             {tableEntries}
-            {attachments && attachments.length > 0
-              && (
+            {attachments && attachments.length > 0 && (
               <tr>
-                <th scope="row" className="text-top">Attachments</th>
+                <th scope="row" className="text-top">
+                  Attachments
+                </th>
                 <td>
-                  {attachments.map(({
-                    id,
-                    originalFileName,
-                    url: { url },
-                    status,
-                  }) => (
+                  {attachments.map(({ id, originalFileName, url: { url }, status }) => (
                     <FileReviewItem
                       key={id}
                       filename={originalFileName}
@@ -193,7 +192,7 @@ function LegacyReport({ match }) {
                   ))}
                 </td>
               </tr>
-              )}
+            )}
           </tbody>
         </Table>
       </Container>

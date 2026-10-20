@@ -1,13 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { auditLogger } from '../logger';
 import logicalDataModel, {
   isCamelCase,
-  processEnum,
-  processClassDefinition,
+  normalizeColumnDefault,
   processAssociations,
+  processClassDefinition,
+  processEnum,
   writeUml,
 } from './logicalDataModel';
-import { auditLogger } from '../logger';
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -99,9 +100,7 @@ describe('logicalDataModel', () => {
             },
           },
         },
-        attributes: [
-          { name: 'age', type: 'string', allowNull: false },
-        ],
+        attributes: [{ name: 'age', type: 'string', allowNull: false }],
       };
 
       const issue = processClassDefinition(schema, 'Person');
@@ -114,9 +113,7 @@ describe('logicalDataModel', () => {
         model: {
           rawAttributes: {},
         },
-        attributes: [
-          { name: 'email', type: 'string', allowNull: false },
-        ],
+        attributes: [{ name: 'email', type: 'string', allowNull: false }],
       };
 
       const issue = processClassDefinition(schema, 'User');
@@ -147,6 +144,128 @@ describe('logicalDataModel', () => {
       const issue = processClassDefinition(schema, 'Account');
       expect(issue).toContain("!issue='column default does not match model'");
     });
+
+    it('does not flag a text default that only differs by the Postgres ::text cast', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            severity: {
+              type: { toString: () => 'TEXT' },
+              defaultValue: 'alert',
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'severity',
+            type: 'text',
+            allowNull: false,
+            default: "'alert'::text",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'ValidationAlerts');
+      expect(issue).not.toContain("!issue='column default does not match model'");
+    });
+
+    it('still flags a genuine string default mismatch after normalization', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            severity: {
+              type: { toString: () => 'TEXT' },
+              defaultValue: 'alert',
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'severity',
+            type: 'text',
+            allowNull: false,
+            default: "'critical'::text",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'ValidationAlerts');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
+
+    it('does not flag an enum default declared via sequelize.literal (.val carries the cast)', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            status: {
+              type: { toString: () => 'ENUM' },
+              // sequelize.literal(...) exposes its raw SQL on `.val`
+              defaultValue: { val: '\'IDENTIFIED\'::"enum_ImportDataFiles_status"' },
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'status',
+            type: 'enum',
+            allowNull: false,
+            default: '\'IDENTIFIED\'::"enum_ImportDataFiles_status"',
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'ImportDataFiles');
+      expect(issue).not.toContain("!issue='column default does not match model'");
+    });
+  });
+
+  describe('normalizeColumnDefault', () => {
+    it('strips a ::text cast and surrounding quotes', () => {
+      expect(normalizeColumnDefault("'alert'::text")).toBe('alert');
+    });
+
+    it('strips a ::character varying cast', () => {
+      expect(normalizeColumnDefault("'draft'::character varying")).toBe('draft');
+    });
+
+    it('strips a length-qualified cast', () => {
+      expect(normalizeColumnDefault("'x'::character varying(255)")).toBe('x');
+    });
+
+    it('strips a quoted user-defined (enum) type cast', () => {
+      expect(normalizeColumnDefault('\'active\'::"enum_Table_status"')).toBe('active');
+    });
+
+    it('strips an unquoted underscored enum type cast', () => {
+      expect(normalizeColumnDefault("'active'::enum_table_status")).toBe('active');
+    });
+
+    it('normalizes a quoted date literal', () => {
+      expect(normalizeColumnDefault("'2024-01-01'::date")).toBe('2024-01-01');
+    });
+
+    it('unescapes doubled single quotes', () => {
+      expect(normalizeColumnDefault("'it''s'::text")).toBe("it's");
+    });
+
+    it('leaves function-call defaults untouched', () => {
+      expect(normalizeColumnDefault('now()')).toBe('now()');
+      expect(normalizeColumnDefault('CURRENT_TIMESTAMP')).toBe('CURRENT_TIMESTAMP');
+    });
+
+    it('does not reduce a parenthesized expression default to a bare literal', () => {
+      // A trailing cast may be stripped, but an expression must never collapse to a
+      // bare value that could collide with a plain string default.
+      const result = normalizeColumnDefault("('now'::text)::date");
+      expect(result).toBe("('now'::text)");
+      expect(result).not.toBe('now');
+    });
+
+    it('leaves booleans, numbers, and null untouched', () => {
+      expect(normalizeColumnDefault('true')).toBe('true');
+      expect(normalizeColumnDefault('5')).toBe('5');
+      expect(normalizeColumnDefault(null)).toBeNull();
+    });
   });
 
   describe('processAssociations', () => {
@@ -164,7 +283,7 @@ describe('logicalDataModel', () => {
       const result = processAssociations(associations, tables, schemas);
 
       expect(result).toContain('Associations');
-      expect(result).toContain('User o--[#yellow,bold,thickness=2]--o Profile : <color:#2491FF>missing-from-model</color>');
+      expect(result).toContain('User "1" --[#black,plain,thickness=2]-- "1" Profile');
     });
 
     it('should handle "defined both directions" associations', () => {
@@ -325,8 +444,10 @@ describe('logicalDataModel', () => {
 
       const result = processAssociations(associations, tables, schemas);
 
-      expect(result).toContain('!issue=\'associations need to be defined both directions\'');
-      expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
+      expect(result).toContain("!issue='associations need to be defined both directions'");
+      expect(result).toContain(
+        'Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments'
+      );
     });
   });
 
@@ -342,12 +463,15 @@ describe('logicalDataModel', () => {
 
     it('writes UML to the specified file', () => {
       writeUml(uml, dbRoot);
-      expect(fs.writeFileSync).toHaveBeenCalledWith(path.join(dbRoot, 'logical_data_model.puml'), uml);
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        path.join(dbRoot, 'logical_data_model.puml'),
+        uml
+      );
     });
 
     it('updates README.md if it exists and contains a plantuml code block', () => {
       fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue('```plantuml\noldUml\n\'db/uml.puml\n```');
+      fs.readFileSync.mockReturnValue("```plantuml\noldUml\n'db/uml.puml\n```");
       writeUml(uml, dbRoot);
       expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
     });

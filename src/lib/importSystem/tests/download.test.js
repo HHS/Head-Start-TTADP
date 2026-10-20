@@ -1,19 +1,11 @@
 import { Readable } from 'stream';
-import * as download from '../download';
-import {
-  logFileToBeCollected,
-  setImportFileStatus,
-} from '../record';
-import SftpClient from '../../stream/sftp';
-import {
-  updateStatusByKey,
-} from '../../../services/files';
+import { FILE_STATUSES, IMPORT_STATUSES } from '../../../constants';
 import { auditLogger } from '../../../logger';
-import {
-  FILE_STATUSES,
-  IMPORT_STATUSES,
-} from '../../../constants';
 import { Import } from '../../../models';
+import { updateStatusByKey } from '../../../services/files';
+import SftpClient from '../../stream/sftp';
+import * as download from '../download';
+import { logFileToBeCollected, setImportFileStatus } from '../record';
 
 const {
   collectNextFile,
@@ -88,7 +80,10 @@ describe('download', () => {
     });
     it('should return immediately if the current time is past the limit', async () => {
       const pastLimit = new Date(new Date().getTime() - 1000);
-      const result = await collectNextFile(1, [createMockFile('path/to/file', {})], { start: new Date(), limit: pastLimit });
+      const result = await collectNextFile(1, [createMockFile('path/to/file', {})], {
+        start: new Date(),
+        limit: pastLimit,
+      });
       expect(result).toEqual({
         collectedFiles: [],
         hasImportedFiles: false,
@@ -100,7 +95,11 @@ describe('download', () => {
       const start = new Date(new Date().getTime() - 4000);
       const limit = new Date(new Date().getTime() + 1000);
       const used = [1000, 2000, 3000]; // Average = 2000
-      const result = await collectNextFile(1, [createMockFile('path/to/file', {})], { start, limit, used });
+      const result = await collectNextFile(1, [createMockFile('path/to/file', {})], {
+        start,
+        limit,
+        used,
+      });
       expect(result).toHaveProperty('hasRemainingFiles', true);
     });
 
@@ -109,36 +108,39 @@ describe('download', () => {
       const mockImportedFile = createMockImportedFile(1, 'file-key', 6);
       logFileToBeCollected.mockResolvedValueOnce(mockImportedFile);
 
-      const result = await collectNextFile(
-        1,
-        [mockFile],
-        { start: new Date(), limit: new Date(new Date().getTime() + 10000) },
+      const result = await collectNextFile(1, [mockFile], {
+        start: new Date(),
+        limit: new Date(new Date().getTime() + 10000),
+      });
+      expect(updateStatusByKey).toHaveBeenCalledWith(
+        mockImportedFile.key,
+        FILE_STATUSES.UPLOAD_FAILED
       );
-      expect(updateStatusByKey)
-        .toHaveBeenCalledWith(mockImportedFile.key, FILE_STATUSES.UPLOAD_FAILED);
-      expect(setImportFileStatus)
-        .toHaveBeenCalledWith(mockImportedFile.importFileId, IMPORT_STATUSES.COLLECTION_FAILED);
+      expect(setImportFileStatus).toHaveBeenCalledWith(
+        mockImportedFile.importFileId,
+        IMPORT_STATUSES.COLLECTION_FAILED
+      );
       expect(result).toHaveProperty('hasRemainingFiles', false);
     });
 
     it('should handle successful file upload and queue for scanning', async () => {
       const mockFile = createMockFile('path/to/file', {}, Promise.resolve(mockStream));
       const mockImportedFile = createMockImportedFile(1, 'file-key', 0);
-      logFileToBeCollected
-        .mockResolvedValueOnce(mockImportedFile);
+      logFileToBeCollected.mockResolvedValueOnce(mockImportedFile);
       mockHashStream.getHash.mockResolvedValueOnce('file-hash');
 
-      const result = await collectNextFile(
-        1,
-        [mockFile],
-        { start: new Date(), limit: new Date(new Date().getTime() + 10000) },
-      );
+      const result = await collectNextFile(1, [mockFile], {
+        start: new Date(),
+        limit: new Date(new Date().getTime() + 10000),
+      });
       expect(mockS3Client.uploadFileAsStream).toHaveBeenCalled();
       // scanQueue has been disabled because it can not handle files large enough
       // expect(addToScanQueue).toHaveBeenCalledWith({ key: mockImportedFile.key });
       // expect(updateStatusByKey).toHaveBeenCalledWith(mockImportedFile.key, FILE_STATUSES.QUEUED);
-      expect(setImportFileStatus)
-        .toHaveBeenCalledWith(mockImportedFile.importFileId, IMPORT_STATUSES.COLLECTED);
+      expect(setImportFileStatus).toHaveBeenCalledWith(
+        mockImportedFile.importFileId,
+        IMPORT_STATUSES.COLLECTED
+      );
       expect(result).toHaveProperty('hasRemainingFiles', false);
     });
 
@@ -148,16 +150,19 @@ describe('download', () => {
       logFileToBeCollected.mockResolvedValue(mockImportedFile);
       mockS3Client.uploadFileAsStream.mockRejectedValueOnce(new Error('Upload failed'));
 
-      const result = await collectNextFile(
-        1,
-        [mockFile],
-        { start: new Date(), limit: new Date(new Date().getTime() + 10000) },
-      );
+      const result = await collectNextFile(1, [mockFile], {
+        start: new Date(),
+        limit: new Date(new Date().getTime() + 10000),
+      });
       expect(auditLogger.error).toHaveBeenCalled();
-      expect(updateStatusByKey)
-        .toHaveBeenCalledWith(mockImportedFile.key, FILE_STATUSES.UPLOAD_FAILED);
-      expect(setImportFileStatus)
-        .toHaveBeenCalledWith(mockImportedFile.importFileId, IMPORT_STATUSES.COLLECTION_FAILED);
+      expect(updateStatusByKey).toHaveBeenCalledWith(
+        mockImportedFile.key,
+        FILE_STATUSES.UPLOAD_FAILED
+      );
+      expect(setImportFileStatus).toHaveBeenCalledWith(
+        mockImportedFile.importFileId,
+        IMPORT_STATUSES.COLLECTION_FAILED
+      );
       expect(mockS3Client.uploadFileAsStream).toHaveBeenCalledTimes(2);
       expect(result).toHaveProperty('hasRemainingFiles', false);
     });
@@ -301,7 +306,7 @@ describe('download', () => {
           password: 'SFTP_PASS',
         });
       }).toThrowError(
-        new Error("importId: 1 settings not found in Env: 'SFTP_PASS' did not resolve to a value"),
+        new Error("importId: 1 settings not found in Env: 'SFTP_PASS' did not resolve to a value")
       );
     });
 
@@ -320,8 +325,8 @@ describe('download', () => {
         });
       }).toThrowError(
         new Error(
-          "importId: 1 settings not found in Env: 'SFTP_HOST' did not resolve to a value, 'SFTP_PORT' did not resolve to a value, 'SFTP_USER' did not resolve to a value, 'SFTP_PASS' did not resolve to a value",
-        ),
+          "importId: 1 settings not found in Env: 'SFTP_HOST' did not resolve to a value, 'SFTP_PORT' did not resolve to a value, 'SFTP_USER' did not resolve to a value, 'SFTP_PASS' did not resolve to a value"
+        )
       );
     });
 
@@ -356,7 +361,9 @@ describe('download', () => {
   // Setup SftpClient mock
   const mockConnect = jest.fn();
   const mockDisconnect = jest.fn();
-  const mockListFiles = jest.fn().mockImplementation(async () => Promise.resolve([{ name: 'file.txt', stream: {} }]));
+  const mockListFiles = jest
+    .fn()
+    .mockImplementation(async () => Promise.resolve([{ name: 'file.txt', stream: {} }]));
   SftpClient.prototype.connect = mockConnect;
   SftpClient.prototype.disconnect = mockDisconnect;
   SftpClient.prototype.listFiles = mockListFiles;
@@ -397,7 +404,7 @@ describe('download', () => {
       mockCollectServerSettings.mockResolvedValue(ftpSettings);
 
       await expect(collectFilesFromSource(importId, timeBox, ftpSettings)).rejects.toThrow(
-        `Failed to connect to FTP: ${errorMessage}`,
+        `Failed to connect to FTP: ${errorMessage}`
       );
     });
 
@@ -407,7 +414,7 @@ describe('download', () => {
       mockConnect.mockResolvedValue(undefined); // Simulate successful connection
 
       await expect(collectFilesFromSource(importId, timeBox, ftpSettings)).rejects.toThrow(
-        `Failed to list files from FTP: ${errorMessage}`,
+        `Failed to list files from FTP: ${errorMessage}`
       );
     });
 
@@ -447,7 +454,7 @@ describe('download', () => {
         timeBox,
         ftpSettings,
         path,
-        fileMask,
+        fileMask
       );
       expect(collectedFiles.length).toEqual(2);
       expect(mockConnect).toHaveBeenCalled();
@@ -467,7 +474,7 @@ describe('download', () => {
         timeBox,
         ftpSettings,
         path,
-        fileMask,
+        fileMask
       );
       expect(collectedFiles).toEqual([]);
       expect(mockConnect).toHaveBeenCalled();
@@ -515,12 +522,7 @@ describe('download', () => {
       mockImportFindOne.mockResolvedValue(mockImportFileData);
       await downloadFilesFromSource(mockImportId);
       expect(mockImportFindOne).toHaveBeenCalledWith({
-        attributes: [
-          ['id', 'importId'],
-          'ftpSettings',
-          'path',
-          'fileMask',
-        ],
+        attributes: [['id', 'importId'], 'ftpSettings', 'path', 'fileMask'],
         where: {
           id: mockImportId,
         },

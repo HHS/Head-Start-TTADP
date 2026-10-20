@@ -1,9 +1,9 @@
-import { getCitationsByGrants, getTextByCitation } from './handlers';
+import handleErrors from '../../lib/apiErrorHandler';
+import User from '../../policies/user';
+import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
-import User from '../../policies/user';
-import handleErrors from '../../lib/apiErrorHandler';
+import { getCitationsByGrants, getTextByCitation } from './handlers';
 
 jest.mock('../../models');
 jest.mock('../../services/currentUser');
@@ -73,6 +73,37 @@ describe('Citation handlers', () => {
       expect(textByCitation).toHaveBeenCalledWith([1]);
       expect(res.sendStatus).toHaveBeenCalledWith(500);
     });
+
+    it('converts object shaped citationIds to an array', async () => {
+      const req = {
+        query: {
+          citationIds: {
+            0: '1302.102(c)(1-2)',
+            1: '1302.102(d)(1)(ii)',
+          },
+        },
+      };
+
+      const res = {
+        sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const text = [
+        {
+          id: 1,
+        },
+      ];
+
+      textByCitation.mockResolvedValue(text);
+
+      await getTextByCitation(req, res);
+
+      expect(textByCitation).toHaveBeenCalledWith(['1302.102(c)(1-2)', '1302.102(d)(1)(ii)']);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(text);
+    });
   });
 
   describe('getCitationsByGrantS', () => {
@@ -81,7 +112,7 @@ describe('Citation handlers', () => {
     });
 
     it('should get citations by grant id', async () => {
-    // Mock request.
+      // Mock request.
       const req = {
         query: {
           grantIds: [1],
@@ -129,7 +160,7 @@ describe('Citation handlers', () => {
     });
 
     it('should handle errors', async () => {
-    // Mock request.
+      // Mock request.
       const req = {
         query: {
           grantIds: [1],
@@ -174,7 +205,7 @@ describe('Citation handlers', () => {
     });
 
     it('should return a 403 status code if the user cannot write in the region', async () => {
-    // Mock request.
+      // Mock request.
       const req = {
         query: {
           grantIds: [1],

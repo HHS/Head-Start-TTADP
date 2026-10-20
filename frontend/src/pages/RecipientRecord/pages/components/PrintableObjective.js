@@ -1,18 +1,18 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
+import React from 'react';
 import STATUSES from '../../../../components/GoalCards/components/StatusDropdownStatuses';
+import { FIRST_COLUMN_CLASS, ROW_CLASS, SECOND_COLUMN_CLASS } from './constants';
 import List from './List';
 
 const ActivityReports = ({ reports }) => (
   <ul className="usa-list usa-list--unstyled">
     {reports.map((report) => {
-      const link = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : `/activity-reports/view/${report.id}`;
+      const link = report.legacyId
+        ? `/activity-reports/legacy/${report.legacyId}`
+        : `/activity-reports/view/${report.id}`;
       return (
         <li key={report.id}>
-          <a href={link}>
-            {report.displayId}
-          </a>
+          <a href={link}>{report.displayId}</a>
         </li>
       );
     })}
@@ -20,10 +20,12 @@ const ActivityReports = ({ reports }) => (
 );
 
 ActivityReports.propTypes = {
-  reports: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    displayId: PropTypes.string,
-  })).isRequired,
+  reports: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      displayId: PropTypes.string,
+    })
+  ).isRequired,
 };
 export default function PrintableObjective({ objective }) {
   const key = objective.status || 'Needs Status';
@@ -64,10 +66,12 @@ export default function PrintableObjective({ objective }) {
 PrintableObjective.propTypes = {
   objective: PropTypes.shape({
     title: PropTypes.string,
-    activityReports: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number,
-      displayId: PropTypes.string,
-    })),
+    activityReports: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        displayId: PropTypes.string,
+      })
+    ),
     grantNumber: PropTypes.string,
     endDate: PropTypes.string,
     reasons: PropTypes.arrayOf(PropTypes.string),

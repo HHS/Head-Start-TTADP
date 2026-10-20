@@ -3,6 +3,7 @@ const { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } = require('@ttahub/common'
 const { sortBy } = require('lodash');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeUpdate } = require('./hooks/collabReport');
+const { convert } = require('html-to-text');
 
 export default (sequelize, DataTypes) => {
   class CollabReport extends Model {
@@ -82,14 +83,38 @@ export default (sequelize, DataTypes) => {
       },
       submissionStatus: {
         allowNull: false,
-        type: DataTypes.ENUM([
-          'draft',
-          'submitted',
-        ]),
+        type: DataTypes.ENUM(['draft', 'submitted']),
       },
       participants: {
         allowNull: true,
-        type: DataTypes.ARRAY(DataTypes.ENUM(COLLAB_REPORT_PARTICIPANTS)),
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        validate: {
+          participantsValid(value) {
+            if (value === null || value === undefined) {
+              return;
+            }
+            if (!Array.isArray(value)) {
+              throw new Error('Participants must be an array');
+            }
+            if (value.length === 0) {
+              return;
+            }
+            const allowed = new Set(COLLAB_REPORT_PARTICIPANTS);
+            const seen = new Set();
+            value.forEach((participant) => {
+              if (typeof participant !== 'string') {
+                throw new Error('Participants must be strings');
+              }
+              if (!allowed.has(participant)) {
+                throw new Error(`Invalid participant value: ${participant}`);
+              }
+              if (seen.has(participant)) {
+                throw new Error('Duplicate participants are not allowed');
+              }
+              seen.add(participant);
+            });
+          },
+        },
       },
       otherParticipants: {
         allowNull: true,
@@ -109,12 +134,7 @@ export default (sequelize, DataTypes) => {
       },
       calculatedStatus: {
         allowNull: true,
-        type: DataTypes.ENUM([
-          'draft',
-          'submitted',
-          'needs_action',
-          'approved',
-        ]),
+        type: DataTypes.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
       },
       startDate: {
         allowNull: true,
@@ -182,7 +202,9 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           if (!this.steps) return null;
-          return this.steps.map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`).join('\n');
+          return this.steps
+            .map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`)
+            .join('\n');
         },
       },
       purpose: {
@@ -198,6 +220,13 @@ export default (sequelize, DataTypes) => {
           return this.conductMethod;
         },
       },
+      descriptionFormatted: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.description) return null;
+          return convert(this.description);
+        },
+      },
       approvedAt: {
         type: DataTypes.VIRTUAL,
         get() {
@@ -205,7 +234,7 @@ export default (sequelize, DataTypes) => {
             return '';
           }
 
-          if (!this.approvers || !this.approvers.length) {
+          if (!this.approvers?.length) {
             return '';
           }
 
@@ -223,7 +252,7 @@ export default (sequelize, DataTypes) => {
       tableName: 'CollabReports',
       paranoid: true, // enables soft deletes with deletedAt
       timestamps: true, // enables createdAt and updatedAt
-    },
+    }
   );
 
   return CollabReport;

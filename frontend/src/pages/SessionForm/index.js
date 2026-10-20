@@ -1,67 +1,95 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {
-  useEffect,
-  useState,
-  useContext,
-  useRef,
-} from 'react';
-import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { Helmet } from 'react-helmet';
-import {
-  Alert, Grid,
-} from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
-import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+
+import { Alert, Grid } from '@trussworks/react-uswds';
+import { isValidResourceUrl, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
-import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
-import {
-  defaultValues, baseDefaultValues, istKeys, pocKeys,
-} from './constants';
+import moment from 'moment';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Redirect, useHistory } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import AppLoadingContext from '../../AppLoadingContext';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import BackLink from '../../components/BackLink';
+import Navigator from '../../components/Navigator';
+import { eventById } from '../../fetchers/event';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
+import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
+import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
-import Navigator from '../../components/Navigator';
-import BackLink from '../../components/BackLink';
-import AppLoadingContext from '../../AppLoadingContext';
-import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
+import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
+import { isNationalCenterFacilitator } from './sessionFlow';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
-const reduceDataToMatchKeys = (keys, data) => keys.reduce((acc, key) => {
-  if (data && Object.prototype.hasOwnProperty.call(data, key)) {
-    acc[key] = data[key];
-  }
-  return acc;
-}, {});
+const reduceDataToMatchKeys = (keys, data) =>
+  keys.reduce((acc, key) => {
+    if (data && Object.hasOwn(data, key)) {
+      acc[key] = data[key];
+    }
+    return acc;
+  }, {});
 
 const determineKeyArray = ({
   isAdminUser,
   isPoc,
   isCollaborator,
+  isOwner,
   eventOrganizer,
   isApprover,
   facilitation = '',
   isSubmitted = false,
+  isNcUser = false,
 }) => {
   // eslint-disable-next-line max-len
-  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+  const isRegionalNoNationalCenters =
+    TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
-  const facilitationIncludesRegion = facilitation === 'regional_tta_staff' || facilitation === 'both';
+  const isRegionalWithNationalCenters =
+    TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer;
+
+  const facilitationIncludesRegion =
+    facilitation === 'regional_tta_staff' || facilitation === 'both';
+
+  // Treat owner as collaborator for field access
+  const isOwnerOrCollaborator = isOwner || isCollaborator;
+  // Collaborator-only access (a user who is both owner and collaborator keeps the
+  // broader owner privileges).
+  const isCollaboratorOnly = isCollaborator && !isOwner;
 
   let keyArray;
-  if (isAdminUser || (isCollaborator && isRegionalNoNationalCenters) || isApprover) {
+  if (isAdminUser || (isOwnerOrCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc && facilitationIncludesRegion) {
     keyArray = [...istKeys, ...pocKeys];
-  } else if (isCollaborator && isSubmitted) {
+  } else if (isCollaboratorOnly && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+    // Collaborator-only (not also owner) on a Regional PD event with National Centers
+    // and Trainer = National Centers is restricted to the Session summary fields,
+    // even when submitted. Mirrors useSessionFormRoleAndPages.
+    keyArray = istKeys;
+  } else if (
+    isOwnerOrCollaborator &&
+    isSubmitted &&
+    !(isRegionalWithNationalCenters && !facilitationIncludesRegion && !isNcUser)
+  ) {
     keyArray = [...istKeys, ...pocKeys];
+  } else if (
+    isOwnerOrCollaborator &&
+    isRegionalWithNationalCenters &&
+    !facilitationIncludesRegion &&
+    !isNcUser
+  ) {
+    // Regional (non-NC) owner on a Regional PD event with National Centers
+    // and Trainer = National Centers fills the POC-side pages (participants,
+    // supporting attachments, next steps). Mirrors useSessionFormRoleAndPages.
+    keyArray = pocKeys;
   } else if (isPoc) {
     keyArray = pocKeys;
   } else {
@@ -71,38 +99,38 @@ const determineKeyArray = ({
 };
 
 /**
-   * this is just a simple handler to "flatten"
-   * the JSON column data into the form
-   *
-   * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
-   *  replaces the form with those values; it also calls the standard form.reset event
-   * @param {*} event - not an HTML event, but the event object from the database, which has some
-   * information stored at the top level of the object, and some stored in a data column
-   */
+ * this is just a simple handler to "flatten"
+ * the JSON column data into the form
+ *
+ * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+ *  replaces the form with those values; it also calls the standard form.reset event
+ * @param {*} event - not an HTML event, but the event object from the database, which has some
+ * information stored at the top level of the object, and some stored in a data column
+ */
 const resetFormData = ({
   reset,
   updatedSession,
   isPocFromSession,
   isAdminUser,
   isCollaborator,
+  isOwner,
   isApprover,
+  isNcUser = false,
   eventOrganizer = '',
 }) => {
   const keyArray = determineKeyArray({
     isAdminUser,
     isPoc: isPocFromSession,
     isCollaborator,
+    isOwner,
     eventOrganizer,
     isApprover,
+    isNcUser,
     facilitation: updatedSession?.data?.facilitation || '',
     isSubmitted: updatedSession.submitted,
   });
 
-  const {
-    data,
-    updatedAt,
-    ...fields
-  } = updatedSession;
+  const { data, updatedAt, ...fields } = updatedSession;
 
   // Get all the DEFAULT VALUES that appear in the keyAarray.
   let roleDefaultValues = reduceDataToMatchKeys(keyArray, defaultValues);
@@ -113,7 +141,8 @@ const resetFormData = ({
     ...roleDefaultValues,
   };
 
-  const roleData = reduceDataToMatchKeys(keyArray, data);
+  // Load startDate for next-steps validation even when the role's payload keys exclude it.
+  const roleData = reduceDataToMatchKeys([...keyArray, 'startDate'], data);
 
   const form = {
     ...roleDefaultValues,
@@ -125,7 +154,9 @@ const resetFormData = ({
 };
 
 export default function SessionForm({ match }) {
-  const { params: { sessionId, currentPage, trainingReportId } } = match;
+  const {
+    params: { sessionId, currentPage, trainingReportId },
+  } = match;
 
   const reportId = useRef(sessionId);
 
@@ -157,7 +188,7 @@ export default function SessionForm({ match }) {
   const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
 
   /* ============
-    */
+   */
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues,
@@ -172,26 +203,21 @@ export default function SessionForm({ match }) {
   const eventOrganizer = formData.event?.data?.eventOrganizer || '';
 
   // eslint-disable-next-line max-len
-  const isRegionalNoNationalCenters = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+  const isRegionalNoNationalCenters =
+    TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket(user);
+  const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
 
-  const {
+  const { isPoc, isAdminUser, isCollaborator, isOwner, isApprover, isNcUser, applicationPages } =
+    useSessionFormRoleAndPages(hookForm);
+
+  const canSelectApprover = useCanSelectApprover({
     isPoc,
-    isAdminUser,
-    isCollaborator,
     isOwner,
-    isApprover,
-    applicationPages,
-    isSessionNavigationDead,
-  } = useSessionFormRoleAndPages(hookForm);
-
-  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
+    user,
+    isAdmin: isAdminUser,
+    watch: hookForm.watch,
+  });
 
   const redirectPagePath = applicationPages[0]?.path || null;
 
@@ -206,7 +232,7 @@ export default function SessionForm({ match }) {
 
     const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
-  }, [sessionId, setSocketPath, trainingReportId, currentPage]);
+  }, [sessionId, setSocketPath, trainingReportId, currentPage, applicationPages]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
@@ -223,7 +249,9 @@ export default function SessionForm({ match }) {
     // we check to see if we have a session ID and aren't on a form page
     // if we aren't, redirect to the first form page
     if (reportFetched && sessionId && sessionId !== 'new' && !currentPage && redirectPagePath) {
-      history.replace(`/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`);
+      history.replace(
+        `/training-report/${trainingReportId}/session/${sessionId}/${redirectPagePath}`
+      );
     }
   }, [reportFetched, sessionId, currentPage, history, trainingReportId, redirectPagePath]);
 
@@ -235,11 +263,31 @@ export default function SessionForm({ match }) {
       }
 
       try {
+        // Alert links and direct URLs can reach this route without the event card.
+        // Resolve the organizer before creating anything so NC events cannot skip facilitation.
+        // Users who can create sessions but not read the event fall through; the create API
+        // still requires facilitation on NC events.
+        const event = await eventById(trainingReportId, true).catch(() => null);
+        if (
+          event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+        ) {
+          // This form unmounts on redirect, so its loading effect cannot clear the app loader.
+          setIsAppLoading(false);
+          history.replace(`/training-report/${trainingReportId}/session/new/choose-facilitation`);
+          return;
+        }
+
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
-        const isCollaboratorFromSession = session.event.collaboratorIds.includes(user.id) && !isAdminUser;
-        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+        const isCollaboratorFromSession =
+          session.event.collaboratorIds.includes(user.id) && !isAdminUser;
+        const isOwnerFromSession = session.event.ownerId === user.id;
+        const {
+          event: {
+            data: { eventOrganizer: eventOrganizerFromSession },
+          },
+        } = session;
         const { approverId } = session;
         const isApproverUser = user.id === Number(approverId);
         // we don't want to refetch if we've extracted the session data
@@ -250,25 +298,15 @@ export default function SessionForm({ match }) {
           isPocFromSession,
           isAdminUser,
           isCollaborator: isCollaboratorFromSession,
+          isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
         reportId.current = session.id;
 
-        const message = {
-          messageTemplate: 'sessionCreated',
-          sessionName: session.data.sessionName,
-          eventId: session.event.data.eventId,
-          dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
-        };
-
-        if (session.event.ownerId === user.id && !isAdminUser) {
-          history.push('/training-reports/in-progress', { message });
-          return;
-        }
-
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
-      } catch (e) {
+      } catch (_e) {
         setError('Error creating session');
       } finally {
         // in case an error is thrown, we don't want to be stuck in the loading screen
@@ -279,7 +317,17 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [
+    history,
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    trainingReportId,
+    isAdminUser,
+    user.id,
+    isNcUser,
+    setIsAppLoading,
+  ]);
 
   useEffect(() => {
     // fetch session data
@@ -310,28 +358,39 @@ export default function SessionForm({ match }) {
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
-        const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
+        const isCollaboratorFromSession =
+          (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
 
         const isOwnerFromSession = session.event.ownerId === user.id;
 
         // check the event organizer and user role
-        const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+        const {
+          event: {
+            data: { eventOrganizer: eventOrganizerFromSession },
+          },
+        } = session;
 
         // eslint-disable-next-line max-len
-        const isRegionalEventPoc = eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession && !isAdminUser;
+        const isRegionalEventPoc =
+          eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS &&
+          isPocFromSession &&
+          !isAdminUser;
         // eslint-disable-next-line max-len
-        const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
+        const isFormUser =
+          (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
 
         const submittedFormUser = submitted && isFormUser && !isNeedsAction && !isApproverUser;
         const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
+        const isRegionalEventPocAndNotApproverUser = isRegionalEventPoc && !isApproverUser;
 
         // when do we redirect to the "View" page?
         if (
-          notSubmittedApprover // approver, session not submitted yet
-          || submittedFormUser // when the form is submitted and we are a form-filler
-          || completeSessionFormUser // when the form is complete and we are a form-filler
-          || needsActionApprover // when we are an approver and the form is needs action
-          || isRegionalEventPoc // if it's a "regional" session and we are a POC (corner case)
+          notSubmittedApprover || // approver, session not submitted yet
+          submittedFormUser || // when the form is submitted and we are a form-filler
+          completeSessionFormUser || // when the form is complete and we are a form-filler
+          needsActionApprover || // when we are an approver and the form is needs action
+          isRegionalEventPocAndNotApproverUser // if it's a "regional" session and
+          //  we are a POC and not an approver (corner case)
         ) {
           history.push(viewTrUrl);
           return;
@@ -343,15 +402,11 @@ export default function SessionForm({ match }) {
           isPocFromSession,
           isAdminUser,
           isCollaborator: isCollaboratorFromSession,
+          isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
-
-        // we push approvers to the review page
-        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
-          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-          return;
-        }
 
         reportId.current = session.id;
       } catch (e) {
@@ -362,7 +417,16 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [hookForm.reset, reportFetched, sessionId, history]);
+  }, [
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    history,
+    isNcUser,
+    trainingReportId,
+    user.id,
+    isAdminUser,
+  ]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
@@ -382,7 +446,9 @@ export default function SessionForm({ match }) {
   const pageExists = currentPage && applicationPages.some((p) => p.path === currentPage);
   if (redirectPagePath && (!currentPage || !pageExists)) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
+      <Redirect
+        to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`}
+      />
     );
   }
 
@@ -406,15 +472,14 @@ export default function SessionForm({ match }) {
     const updatedRoleData = { ...roleData };
     if (!isAdminUser) {
       if (isPoc && roleData.facilitation === 'national_center') {
-      // Remove collabComplete as this is tracked from the owner.
+        // Remove collabComplete as this is tracked from the owner.
         delete updatedRoleData.collabComplete;
       } else if (
-        isPoc && eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+        isPoc &&
+        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
       ) {
         updatedRoleData.collabComplete = true;
-      } else if (
-        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
-      ) {
+      } else if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
         updatedRoleData.pocComplete = true;
       } else {
         // Remove pocComplete as this is tracked from the POC.
@@ -430,18 +495,31 @@ export default function SessionForm({ match }) {
       try {
         // reset the error message
         setError('');
-        setIsAppLoading(true);
         hookForm.clearErrors();
 
         // grab the newest data from the form
         const data = hookForm.getValues();
+        const invalidNextStepDateFields = getInvalidNextStepDateFields(data);
+        if (invalidNextStepDateFields.length) {
+          invalidNextStepDateFields.forEach((field) => {
+            hookForm.setError(field, {
+              type: 'validate',
+              message: 'Next step date must be after the session start date',
+            });
+          });
+          return;
+        }
+
+        setIsAppLoading(true);
 
         const keyArray = determineKeyArray({
           isAdminUser,
           isPoc,
           eventOrganizer,
           isCollaborator,
+          isOwner,
           isApprover,
+          isNcUser,
           facilitation: data?.facilitation || '',
           isSubmitted: data?.submitted,
         });
@@ -453,8 +531,9 @@ export default function SessionForm({ match }) {
         if (!isPoc && roleData.objectiveResources) {
           roleData = {
             ...roleData,
-            objectiveResources: data.objectiveResources.filter((r) => (
-              r && isValidResourceUrl(r.value))),
+            objectiveResources: data.objectiveResources.filter(
+              (r) => r && isValidResourceUrl(r.value)
+            ),
           };
         }
 
@@ -472,7 +551,7 @@ export default function SessionForm({ match }) {
 
         updateLastSaveTime(moment(updatedSession.updatedAt));
         updateShowSavedDraft(true);
-      } catch (err) {
+      } catch (_e) {
         setError('There was an error saving the session. Please try again later.');
       } finally {
         setIsAppLoading(false);
@@ -485,7 +564,7 @@ export default function SessionForm({ match }) {
       try {
         setError('');
         await onSave();
-      } catch (e) {
+      } catch (_e) {
         setError('There was an error saving the session report');
       }
       updateShowSavedDraft(false);
@@ -507,10 +586,7 @@ export default function SessionForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const {
-        approvalStatus,
-        ...data
-      } = hookForm.getValues();
+      const { approvalStatus, ...data } = hookForm.getValues();
 
       const status = (() => {
         if (approvalStatus === REPORT_STATUSES.APPROVED) {
@@ -528,10 +604,27 @@ export default function SessionForm({ match }) {
         return;
       }
 
+      // Narrow the payload to the fields for this role so hydrated associations
+      // (event, approver) that live on the form state are not persisted back into
+      // the session's JSONB data column. The unfiltered `data` is still used for
+      // the redirect message below.
+      const keyArray = determineKeyArray({
+        isAdminUser,
+        isPoc,
+        eventOrganizer,
+        isCollaborator,
+        isOwner,
+        isApprover,
+        isNcUser,
+        facilitation: data?.facilitation || '',
+        isSubmitted: data?.submitted,
+      });
+      const roleData = reduceDataToMatchKeys(keyArray, data);
+
       // PUT it to the backend
       await updateSession(sessionId, {
         data: {
-          ...data,
+          ...roleData,
           status,
         },
         trainingReportId,
@@ -541,12 +634,12 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionReviewSubmitted',
         sessionName: data.sessionName,
-        eventId: data.event.data.eventId,
+        eventId: data.event.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -560,9 +653,7 @@ export default function SessionForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const {
-        ...data
-      } = hookForm.getValues();
+      const { ...data } = hookForm.getValues();
 
       // Get form data based on role IST vs POC.
       const keyArray = determineKeyArray({
@@ -570,7 +661,9 @@ export default function SessionForm({ match }) {
         isPoc,
         eventOrganizer,
         isCollaborator,
+        isOwner,
         isApprover,
+        isNcUser,
         facilitation: data?.facilitation || '',
         isSubmitted: data?.submitted,
       });
@@ -583,11 +676,32 @@ export default function SessionForm({ match }) {
         roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
       }
 
-      // Owner, collaborator, and admin can submitted the session.
+      // In the flow (Regional PD w/ NC + facilitation = national_center) the
+      // Regional owner's submit is tracked separately from the NC collaborator's
+      // submit via ownerComplete. This prevents collabComplete from being set
+      // when the owner submits and lets the collaborator continue editing the
+      // session summary.
+      const facilitation = data?.facilitation || '';
+      const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
+
+      // Owner, collaborator, and admin can submit the session.
+      // Use separate booleans so a user in BOTH owner and collaborator roles
+      // (e.g. event owner who was also added as a collaborator) correctly
+      // writes both ownerComplete and collabComplete in the national center facilitation flow.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.collabComplete = true;
-        roleData.collabCompleteId = user.id;
-        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        const writeOwner = isNationalCenterFlow && (isOwner || isAdminUser);
+        const writeCollab = isCollaborator || isAdminUser || !isNationalCenterFlow;
+
+        if (writeOwner) {
+          roleData.ownerComplete = true;
+          roleData.ownerCompleteId = user.id;
+          roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        }
+        if (writeCollab) {
+          roleData.collabComplete = true;
+          roleData.collabCompleteId = user.id;
+          roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        }
       }
 
       // Remove complete property data based on current role.
@@ -609,12 +723,12 @@ export default function SessionForm({ match }) {
       const message = {
         messageTemplate: 'sessionSubmitted',
         sessionName: data.sessionName,
-        eventId: data.event.data.eventId,
+        eventId: data.event.eventId,
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -639,16 +753,16 @@ export default function SessionForm({ match }) {
 
   return (
     <div className="smart-hub-training-report--session">
-      { error
-        && (
+      {error && (
         <Alert type="error" className="margin-bottom-3">
           {error}
         </Alert>
-        )}
-      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Session - Training Report | TTA Hub" />
-      <BackLink to="/training-reports/in-progress">
-        Back to Training Reports
-      </BackLink>
+      )}
+      <Helmet
+        titleTemplate="%s - Training Report | TTA Hub"
+        defaultTitle="Session - Training Report | TTA Hub"
+      />
+      <BackLink to="/training-reports/in-progress">Back to Training Reports</BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-2 margin-bottom-4">
@@ -656,10 +770,7 @@ export default function SessionForm({ match }) {
               Training report - Session
             </h1>
             <div className="lead-paragraph">
-              {formData.eventId}
-              :
-              {' '}
-              {formData?.event?.data?.eventName || ''}
+              {formData.eventId}: {formData?.event?.data?.eventName || ''}
             </div>
           </div>
         </Grid>
@@ -668,7 +779,6 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
-            deadNavigation={isSessionNavigationDead}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}
@@ -701,7 +811,7 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="reviewStatus"
-            shouldAutoSave={false}
+            shouldAutoSave
           />
         </FormProvider>
       </NetworkContext.Provider>

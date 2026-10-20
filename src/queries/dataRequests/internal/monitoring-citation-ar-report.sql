@@ -253,10 +253,10 @@ SELECT DISTINCT
   gr.number grnumber,
   g."createdAt" g_created,
   gr."regionId" region,
-  mr.name rname,
-  mr."reviewType" rtype,
-  mr."reportDeliveryDate"::date rdelivery_date,
-  mr.outcome routcome,
+  mr.name initial_rname,
+  mr."reviewType" initial_rtype,
+  mr."reportDeliveryDate"::date initial_rdelivery_date,
+  mr.outcome initial_routcome,
   mr."reviewId" ruuid
 FROM "Goals" g
 JOIN "GoalTemplates" gt
@@ -277,8 +277,6 @@ WHERE gt.standard = 'Monitoring'
   AND mfh."sourceDeletedAt" IS NULL
   AND mf."findingType" IN ('Preliminary Area of Noncompliance', 'Noncompliance', 'Deficiency')
   AND mr."reportDeliveryDate" > '2025-01-20'
-  AND mr."reportDeliveryDate" < g."createdAt"
-  AND g."createdAt" - mr."reportDeliveryDate" < INTERVAL '30 days'
   AND (
     NULLIF(current_setting('ssdi.reportDeliveryDate', true), '') IS NULL
     OR (
@@ -329,10 +327,11 @@ SELECT
   grnumber,
   g_created,
   region,
-  rname,
-  rtype,
-  rdelivery_date,
-  routcome,
+  initial_rname,
+  initial_rtype,
+  initial_rdelivery_date,
+  initial_routcome,
+  mf."findingId" fuuid,
   mf."reportedDate"::date freport_date,
   mf."closedDate"::date fclosed_date,
   ms.citation,
@@ -371,10 +370,11 @@ SELECT DISTINCT
   grnumber,
   g_created,
   region,
-  rname,
-  rtype,
-  rdelivery_date,
-  routcome,
+  mr.name rname,
+  mr."reviewType" rtype,
+  mr."reportDeliveryDate"::date rdelivery_date,
+  mr.outcome routcome,
+  fuuid,
   freport_date,
   fclosed_date,
   findings.citation,
@@ -386,6 +386,12 @@ SELECT DISTINCT
   aro.id aroid,
   aroc.id arocid
 FROM findings
+JOIN "MonitoringFindingHistories" mfh
+  ON fuuid = mfh."findingId"
+JOIN "MonitoringReviews" mr
+  ON mfh."reviewId" = mr."reviewId"
+  AND mr."reportDeliveryDate" IS NOT NULL
+  AND mr."sourceDeletedAt" IS NULL
 LEFT JOIN orig_correction_deadlines
   ON mfid = data_id
 LEFT JOIN "Objectives" o
@@ -394,6 +400,7 @@ LEFT JOIN "ActivityReportGoals" arg
   ON arg."goalId" = gid
 LEFT JOIN "ActivityReports" ar
   ON arg."activityReportId" = ar.id
+  AND ar."startDate" > mr."reportDeliveryDate"
 LEFT JOIN "ActivityReportObjectives" aro
   ON ar.id = aro."activityReportId"
   AND o.id = aro."objectiveId"
@@ -440,6 +447,7 @@ FROM joined_ars
 LEFT JOIN "ActivityReports" ar
   ON arid = ar.id
   AND arocid IS NOT NULL
+  AND ar."startDate" >= rdelivery_date
 LEFT JOIN "ActivityReportObjectiveTopics" arot
   ON aroid = arot."activityReportObjectiveId"
 LEFT JOIN "Topics" t

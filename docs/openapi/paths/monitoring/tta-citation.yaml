@@ -1,0 +1,31 @@
+get:
+  tags:
+    - monitoring
+  summary: Retrieve TTA activity grouped by citation
+  operationId: getTtaByCitation
+  parameters:
+    - in: path
+      name: recipientId
+      required: true
+      schema:
+        type: integer
+      description: Recipient identifier
+    - in: path
+      name: regionId
+      required: true
+      schema:
+        type: integer
+      description: Region identifier
+  responses:
+    200:
+      description: Monitoring citations with associated TTA activity for the recipient and region
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../index.yaml#/components/schemas/monitoringTtaByCitation'
+    403:
+      description: User does not have read access to the requested region
+    404:
+      description: Recipient not found

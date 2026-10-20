@@ -94,7 +94,8 @@ function verify_file_hash() {
     local expected_hash="$2"
 
     log "INFO" "Verifying hash of the downloaded file..."
-    local computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
+    local computed_hash
+    computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
 
     if [ "$computed_hash" == "$expected_hash" ]; then
         log "INFO" "Hash verification successful."
@@ -131,7 +132,8 @@ function install_pg_tools() {
     validate_parameters "$bin_dir"
 
     # Starting in the current directory
-    local start_dir=$(pwd)
+    local start_dir
+    start_dir=$(pwd)
 
     # Trap to ensure returning to the starting directory on any exit
     cd "$(dirname "${deb_file}")"
@@ -192,8 +194,8 @@ function cleanup() {
     log "INFO" "Cleanup install files and temporary directories"
 
     # Derive the directory where the deb file is located
-    local deb_dir=$(dirname "$deb_file")
-    local deb_basename=$(basename "$deb_file")
+    local deb_dir
+    deb_dir=$(dirname "$deb_file")
 
     # Use the directory path to check and remove the deb file
     if [ -f "$deb_file" ]; then
@@ -221,9 +223,11 @@ function cleanup() {
 
 # Main function to control workflow
 function main() {
-    local deb_url="https://security.debian.org/debian-security/pool/updates/main/p/postgresql-15/postgresql-client-15_15.10-0+deb12u1_amd64.deb"
+    # snapshot.debian.org is used instead of security.debian.org because it retains all historical
+    # package builds permanently; security.debian.org prunes older point releases once superseded.
+    local deb_url="https://snapshot.debian.org/archive/debian-security/20260813T182349Z/pool/updates/main/p/postgresql-15/postgresql-client-15_15.19-0+deb12u1_amd64.deb"
     local deb_file="/tmp/postgresql.deb"
-    local deb_sha256="cb193447c404d85eed93cb0f61d2f189dd1c94c3f1af4d74afe861e06f8b34db"
+    local deb_sha256="73eea2d8ca54ecf025b820832712e4852b50f57b83b3216fe6061884761c8d0d"
     local bin_dir="/tmp/local/bin"
     local tools=("pg_dump" "pg_isready" "pg_restore" "psql" "reindexdb" "vacuumdb")
 

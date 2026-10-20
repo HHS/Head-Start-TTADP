@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ALL_STATES_FLATTENED, ALL_STATES } from '@ttahub/common';
+import { ALL_STATES, ALL_STATES_FLATTENED } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import FilterSelect from './FilterSelect';
-import UserContext from '../../UserContext';
+import React, { useContext, useEffect, useState } from 'react';
 import { getStateCodes } from '../../fetchers/users';
 import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
+import UserContext from '../../UserContext';
+import FilterSelect from './FilterSelect';
 
-export default function FilterStateSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+// territories served by a region that ALL_STATES files under a different region
+// (e.g. Virgin Islands is listed under region 9 but is also served by region 2)
+const ADDITIONAL_REGION_STATE_CODES = {
+  2: ['VI'],
+};
+
+export default function FilterStateSelect({ onApply, inputId, query }) {
   const { user } = useContext(UserContext);
   const [stateCodes, setStateCodes] = useState([]);
 
@@ -43,10 +45,11 @@ export default function FilterStateSelect({
 
       // and then, just in case they have permissions to other regions,
       // we loop through and add to the list
-      codes = [...codes, ...Array.from(
-        new Set(
-          allowedRegions.reduce(
-            (acc, curr) => {
+      codes = [
+        ...codes,
+        ...Array.from(
+          new Set(
+            allowedRegions.reduce((acc, curr) => {
               if (curr === 11 || curr === 12) {
                 // we've already handled these in the fetch above
                 return acc;
@@ -55,11 +58,16 @@ export default function FilterStateSelect({
               if (!ALL_STATES[curr - 1]) {
                 return acc;
               }
-              return [...acc, ...ALL_STATES[curr - 1]];
-            }, [],
-          ),
+
+              const additionalStates = (ADDITIONAL_REGION_STATE_CODES[curr] || []).map((code) =>
+                ALL_STATES_FLATTENED.find((c) => c.value === code)
+              );
+
+              return [...acc, ...ALL_STATES[curr - 1], ...additionalStates];
+            }, [])
+          )
         ),
-      )];
+      ];
 
       // de-dupe state codes
       codes = Array.from(new Set(codes));
@@ -105,8 +113,5 @@ export default function FilterStateSelect({
 FilterStateSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
 };

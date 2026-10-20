@@ -1,11 +1,12 @@
 /* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import { renderHook } from '@testing-library/react-hooks';
-import { useForm, FormProvider } from 'react-hook-form';
-import useEventAndSessionStaff from '../useEventAndSessionStaff';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
+import useEventAndSessionStaff from '../useEventAndSessionStaff';
 import useFetch from '../useFetch';
 
 jest.mock('../useFetch');
@@ -16,20 +17,44 @@ const mockRegionalTrainers = [
   { id: 2, fullName: 'Regional Trainer 2', nameWithNationalCenters: 'Regional Trainer 2' },
 ];
 
+// Mock data with roles for AA filtering tests
+const mockRegionalTrainersWithRoles = [
+  {
+    id: 1,
+    fullName: 'Regional Trainer 1',
+    nameWithNationalCenters: 'Regional Trainer 1',
+    roles: [{ name: 'HS' }],
+  },
+  {
+    id: 2,
+    fullName: 'Regional Trainer 2',
+    nameWithNationalCenters: 'Regional Trainer 2',
+    roles: [{ name: 'ECS' }],
+  },
+  {
+    id: 5,
+    fullName: 'AA User',
+    nameWithNationalCenters: 'AA User',
+    roles: [{ name: 'AA' }],
+  },
+];
+
 const mockNationalCenterTrainers = [
   { id: 3, fullName: 'National Trainer 1', nameWithNationalCenters: 'National Trainer 1' },
   { id: 4, fullName: 'National Trainer 2', nameWithNationalCenters: 'National Trainer 2' },
 ];
 
 // Wrapper component to provide form context
-const createWrapper = (facilitation = null) => (({ children }) => {
-  const methods = useForm({
-    defaultValues: {
-      facilitation,
-    },
-  });
-  return <FormProvider {...methods}>{children}</FormProvider>;
-});
+const createWrapper =
+  (facilitation = null) =>
+  ({ children }) => {
+    const methods = useForm({
+      defaultValues: {
+        facilitation,
+      },
+    });
+    return <FormProvider {...methods}>{children}</FormProvider>;
+  };
 
 describe('useEventAndSessionStaff', () => {
   beforeEach(() => {
@@ -54,7 +79,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
       expect(result.current.optionsForValue).toEqual([]);
     });
 
@@ -67,7 +97,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
       expect(result.current.optionsForValue).toEqual([]);
     });
 
@@ -107,7 +142,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
       expect(result.current.optionsForValue).toEqual([]);
     });
   });
@@ -128,11 +168,7 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(useFetch).toHaveBeenCalledWith(
-        [],
-        expect.any(Function),
-        [5],
-      );
+      expect(useFetch).toHaveBeenCalledWith([], expect.any(Function), [5]);
     });
 
     it('fetches national center trainers when event.regionId exists', () => {
@@ -150,11 +186,7 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('national_center');
       renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(useFetch).toHaveBeenCalledWith(
-        [],
-        expect.any(Function),
-        [5],
-      );
+      expect(useFetch).toHaveBeenCalledWith([], expect.any(Function), [5]);
     });
 
     it('returns empty arrays when event.regionId is null', () => {
@@ -166,7 +198,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
       expect(result.current.optionsForValue).toEqual([]);
     });
 
@@ -212,7 +249,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
     });
   });
 
@@ -233,7 +275,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
       expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
-      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: mockRegionalTrainers,
+        },
+      ]);
     });
 
     it('returns empty arrays when regional trainers are empty', () => {
@@ -252,7 +299,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
     });
 
     it('ignores facilitation value and uses only regional trainers', () => {
@@ -270,7 +322,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('national_center');
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
-      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: mockRegionalTrainers,
+        },
+      ]);
     });
   });
 
@@ -289,7 +346,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, true), { wrapper });
 
       expect(result.current.optionsForValue).toEqual(mockNationalCenterTrainers);
-      expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'National Center trainers',
+          options: mockNationalCenterTrainers,
+        },
+      ]);
     });
 
     it('returns national center trainers when isEvent=true with facilitation=regional_tta_staff', () => {
@@ -307,7 +369,12 @@ describe('useEventAndSessionStaff', () => {
 
       // facilitation=regional_tta_staff does not match the isEvent condition, so returns empty
       expect(result.current.optionsForValue).toEqual(mockNationalCenterTrainers);
-      expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'National Center trainers',
+          options: mockNationalCenterTrainers,
+        },
+      ]);
     });
 
     it('returns both trainers when isEvent=true with facilitation=both', () => {
@@ -354,10 +421,15 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual(mockNationalCenterTrainers);
-      expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'National Center trainers',
+          options: mockNationalCenterTrainers,
+        },
+      ]);
     });
 
-    it('returns national center trainers with flat array structure', () => {
+    it('returns national center trainers with grouped structure', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -371,8 +443,8 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
       expect(Array.isArray(result.current.trainerOptions)).toBe(true);
-      expect(result.current.trainerOptions).not.toContainEqual(
-        expect.objectContaining({ label: expect.any(String) }),
+      expect(result.current.trainerOptions).toContainEqual(
+        expect.objectContaining({ label: 'National Center trainers' })
       );
     });
   });
@@ -393,7 +465,12 @@ describe('useEventAndSessionStaff', () => {
 
       // regional_tta_staff no longer sets trainers - comment indicates "already set to correct values"
       expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
-      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: mockRegionalTrainers,
+        },
+      ]);
     });
 
     it('returns empty arrays in all scenarios for regional_tta_staff with empty trainer data', () => {
@@ -410,7 +487,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
     });
   });
 
@@ -596,7 +678,12 @@ describe('useEventAndSessionStaff', () => {
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
       expect(result.current.optionsForValue).toEqual([]);
-      expect(result.current.trainerOptions).toEqual([]);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: [],
+        },
+      ]);
     });
 
     it('handles both trainer arrays populated with REGIONAL_PD_WITH_NATIONAL_CENTERS and both facilitation', () => {
@@ -612,7 +699,10 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('both');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      expect(result.current.optionsForValue).toEqual([...mockNationalCenterTrainers, ...mockRegionalTrainers]);
+      expect(result.current.optionsForValue).toEqual([
+        ...mockNationalCenterTrainers,
+        ...mockRegionalTrainers,
+      ]);
       expect(result.current.trainerOptions).toEqual([
         {
           label: 'National Center trainers',
@@ -653,7 +743,7 @@ describe('useEventAndSessionStaff', () => {
   });
 
   describe('Return Value Structure Validation', () => {
-    it('validates flat array structure for national_center facilitation', () => {
+    it('validates grouped array structure for national_center facilitation', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
@@ -666,9 +756,13 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('national_center');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      // Flat array should not have label property
-      expect(result.current.trainerOptions).toEqual(mockNationalCenterTrainers);
-      expect(result.current.trainerOptions.every((t) => !('label' in t))).toBe(true);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'National Center trainers',
+          options: mockNationalCenterTrainers,
+        },
+      ]);
+      expect(result.current.trainerOptions.every((t) => 'label' in t)).toBe(true);
     });
 
     it('validates empty array structure for regional_tta_staff', () => {
@@ -684,8 +778,12 @@ describe('useEventAndSessionStaff', () => {
       const wrapper = createWrapper('regional_tta_staff');
       const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
 
-      // regional_tta_staff returns empty arrays
-      expect(result.current.trainerOptions).toEqual(mockRegionalTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: mockRegionalTrainers,
+        },
+      ]);
       expect(result.current.optionsForValue).toEqual(mockRegionalTrainers);
     });
 
@@ -707,27 +805,28 @@ describe('useEventAndSessionStaff', () => {
       expect(result.current.optionsForValue.every((t) => !('label' in t))).toBe(true);
     });
 
-    it('trainerOptions structure varies correctly by scenario', () => {
+    it('trainerOptions stays grouped for national_center and both scenarios', () => {
       const event = {
         regionId: 1,
         eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
       };
 
-      // Test flat structure (national_center)
+      // Test grouped structure (national_center)
       useFetch
         .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null })
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper1 = createWrapper('national_center');
-      const { result: result1 } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper: wrapper1 });
+      const { result: result1 } = renderHook(() => useEventAndSessionStaff(event, false), {
+        wrapper: wrapper1,
+      });
 
-      const isFlatArray = (
-        Array.isArray(result1.current.trainerOptions)
-        && result1.current.trainerOptions.length > 0
-        && !('label' in result1.current.trainerOptions[0])
-      );
+      const isGroupedNationalCenter =
+        Array.isArray(result1.current.trainerOptions) &&
+        result1.current.trainerOptions.length > 0 &&
+        'label' in result1.current.trainerOptions[0];
 
-      expect(isFlatArray).toBe(true);
+      expect(isGroupedNationalCenter).toBe(true);
 
       // Test grouped structure (both)
       useFetch
@@ -735,16 +834,14 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper2 = createWrapper('both');
-      const { result: result2 } = renderHook(
-        () => useEventAndSessionStaff(event, false),
-        { wrapper: wrapper2 },
-      );
+      const { result: result2 } = renderHook(() => useEventAndSessionStaff(event, false), {
+        wrapper: wrapper2,
+      });
 
-      const isGroupedArray = (
-        Array.isArray(result2.current.trainerOptions)
-        && result2.current.trainerOptions.length > 0
-        && ('label' in result2.current.trainerOptions[0])
-      );
+      const isGroupedArray =
+        Array.isArray(result2.current.trainerOptions) &&
+        result2.current.trainerOptions.length > 0 &&
+        'label' in result2.current.trainerOptions[0];
 
       expect(isGroupedArray).toBe(true);
     });
@@ -769,13 +866,10 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
 
       const wrapper = createWrapper('national_center');
-      const { result, rerender } = renderHook(
-        ({ event }) => useEventAndSessionStaff(event),
-        {
-          wrapper,
-          initialProps: { event: event1 },
-        },
-      );
+      const { result, rerender } = renderHook(({ event }) => useEventAndSessionStaff(event), {
+        wrapper,
+        initialProps: { event: event1 },
+      });
 
       const firstResult = result.current;
 
@@ -800,13 +894,10 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null });
 
       const wrapper = createWrapper();
-      const { result, rerender } = renderHook(
-        ({ event }) => useEventAndSessionStaff(event),
-        {
-          wrapper,
-          initialProps: { event: event1 },
-        },
-      );
+      const { result, rerender } = renderHook(({ event }) => useEventAndSessionStaff(event), {
+        wrapper,
+        initialProps: { event: event1 },
+      });
 
       const firstResult = result.current;
 
@@ -827,16 +918,112 @@ describe('useEventAndSessionStaff', () => {
         .mockReturnValueOnce({ data: [...mockRegionalTrainers], loading: false, error: null });
 
       const wrapper = createWrapper();
-      const { result, rerender } = renderHook(
-        () => useEventAndSessionStaff(event),
-        { wrapper },
-      );
+      const { result, rerender } = renderHook(() => useEventAndSessionStaff(event), { wrapper });
 
       const firstResult = result.current;
 
       rerender();
 
       expect(result.current).not.toBe(firstResult);
+    });
+  });
+
+  describe('AA Role Filtering', () => {
+    it('includes AA users when isEvent=true (Event Collaborators)', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: mockRegionalTrainersWithRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, true), { wrapper });
+
+      // AA user should be included for Event Collaborators
+      expect(result.current.optionsForValue).toEqual(mockRegionalTrainersWithRoles);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: mockRegionalTrainersWithRoles,
+        },
+      ]);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeDefined();
+    });
+
+    it('excludes AA users when isEvent=false (Session Trainers)', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: mockRegionalTrainersWithRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // AA user should NOT be included for Session Trainers
+      const expectedTrainers = mockRegionalTrainersWithRoles.filter((u) => u.id !== 5);
+      expect(result.current.optionsForValue).toEqual(expectedTrainers);
+      expect(result.current.trainerOptions).toEqual([
+        {
+          label: 'Regional trainers',
+          options: expectedTrainers,
+        },
+      ]);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeUndefined();
+    });
+
+    it('excludes AA users in regional trainers for REGIONAL_PD_WITH_NATIONAL_CENTERS with facilitation=both', () => {
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+      };
+
+      useFetch
+        .mockReturnValueOnce({ data: mockRegionalTrainersWithRoles, loading: false, error: null })
+        .mockReturnValueOnce({ data: mockNationalCenterTrainers, loading: false, error: null });
+
+      const wrapper = createWrapper('both');
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // AA user should NOT be in the regional trainers group for Session Trainers
+      const expectedRegionalTrainers = mockRegionalTrainersWithRoles.filter((u) => u.id !== 5);
+      expect(result.current.trainerOptions[1].options).toEqual(expectedRegionalTrainers);
+      expect(result.current.optionsForValue.find((u) => u.id === 5)).toBeUndefined();
+    });
+
+    it('handles users with no roles property gracefully', () => {
+      const trainersWithMissingRoles = [
+        { id: 1, fullName: 'Trainer 1' }, // No roles property
+        { id: 2, fullName: 'Trainer 2', roles: null }, // Null roles
+        { id: 3, fullName: 'Trainer 3', roles: [{ name: 'HS' }] }, // Valid roles
+      ];
+
+      const event = {
+        regionId: 1,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+      };
+
+      useFetch.mockReturnValue({
+        data: trainersWithMissingRoles,
+        loading: false,
+        error: null,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff(event, false), { wrapper });
+
+      // All trainers should be included since none have AA role
+      expect(result.current.optionsForValue).toEqual(trainersWithMissingRoles);
     });
   });
 });

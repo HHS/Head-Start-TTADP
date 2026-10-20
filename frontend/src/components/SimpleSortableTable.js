@@ -1,14 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useMemo, useState } from 'react';
 import './SimpleSortableTable.css';
 
-const SimpleSortableTable = ({
-  data,
-  columns,
-  className,
-  elementSortProp,
-}) => {
+const SimpleSortableTable = ({ data, columns, className, elementSortProp }) => {
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'asc',
@@ -17,6 +12,9 @@ const SimpleSortableTable = ({
   const sortedData = useMemo(() => {
     const sortableItems = [...data];
     if (sortConfig.key !== null) {
+      const column = columns.find((c) => c.key === sortConfig.key);
+      const { sortType } = column || {};
+
       sortableItems.sort((a, b) => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
@@ -25,6 +23,10 @@ const SimpleSortableTable = ({
         }
         if (React.isValidElement(bValue)) {
           bValue = bValue.props.children.props[elementSortProp];
+        }
+        if (sortType === 'number') {
+          aValue = Number(aValue);
+          bValue = Number(bValue);
         }
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -36,14 +38,11 @@ const SimpleSortableTable = ({
       });
     }
     return sortableItems;
-  }, [data, sortConfig, elementSortProp]);
+  }, [data, sortConfig, elementSortProp, columns]);
 
   const requestSort = (key) => {
     let direction = 'asc';
-    if (
-      sortConfig.key === key
-      && sortConfig.direction === 'asc'
-    ) {
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
@@ -57,7 +56,9 @@ const SimpleSortableTable = ({
           type="button"
           onClick={() => requestSort(column.key)}
           className={`sortable ${sortClassName} position-relative bg-white border-0 text-bold`}
-          aria-label={`${column.name} Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
+          aria-label={`${column.name} Activate to sort ${
+            sortClassName === 'asc' ? 'descending' : 'ascending'
+          }`}
         >
           <span>{column.name}</span>
         </button>
@@ -69,13 +70,11 @@ const SimpleSortableTable = ({
     <div className="ttahub-simple-sortable-table">
       <Table fullWidth striped stackedStyle="default" className={className}>
         <thead>
-          <tr>
-            {columns.map((column) => renderColumnHeader(column))}
-          </tr>
+          <tr>{columns.map((column) => renderColumnHeader(column))}</tr>
         </thead>
         <tbody>
           {sortedData.map((item, index) => (
-          // eslint-disable-next-line react/no-array-index-key
+            // biome-ignore lint/suspicious/noArrayIndexKey: lack other unique differentiator
             <tr key={index}>
               {columns.map((column) => (
                 <td key={column.key} data-label={column.name}>
@@ -97,7 +96,8 @@ SimpleSortableTable.propTypes = {
     PropTypes.shape({
       key: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
-    }),
+      sortType: PropTypes.oneOf(['string', 'number']),
+    })
   ).isRequired,
   className: PropTypes.string,
   elementSortProp: PropTypes.string,

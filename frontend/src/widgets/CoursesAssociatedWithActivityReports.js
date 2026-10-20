@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import HorizontalTableWidget from './HorizontalTableWidget';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import { COURSES_PER_PAGE } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
-import { COURSES_PER_PAGE } from '../Constants';
+import HorizontalTableWidget from './HorizontalTableWidget';
 
 export const parseValue = (value) => {
-  const noCommasValue = value.replaceAll(',', '');
+  const noCommasValue = String(value).replaceAll(',', '');
   const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
   if (Number.isNaN(parsedValue)) {
     return value;
@@ -24,11 +24,14 @@ function CoursesAssociatedWithActivityReports({
   const [courseUse, setCourseUse] = useState([]);
   const [courseCount, setCourseCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
-  const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: '1',
-    direction: 'desc',
-    activePage: 1,
-  }, 'activityReportsTable');
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: '1',
+      direction: 'desc',
+      activePage: 1,
+    },
+    'activityReportsTable'
+  );
   const [coursesPerPage, setCoursesPerPage] = useState([]);
   const [checkBoxes, setCheckBoxes] = useState({});
 
@@ -43,6 +46,7 @@ function CoursesAssociatedWithActivityReports({
       const courseToUse = data.courses || [];
       setCourseUse(courseToUse);
       setCourseCount(courseToUse.length);
+      setCheckBoxes({});
     } finally {
       setLocalLoading(false);
     }
@@ -53,9 +57,10 @@ function CoursesAssociatedWithActivityReports({
     if (resetPagination) {
       setSortConfig({ ...sortConfig, activePage: 1 });
       setOffset(0); // 0 times perpage = 0
+      setCheckBoxes({});
       setResetPagination(false);
     }
-  }, [activePage, resetPagination, setResetPagination, setSortConfig, sortConfig, data]);
+  }, [resetPagination, setResetPagination, setSortConfig, sortConfig]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -74,27 +79,25 @@ function CoursesAssociatedWithActivityReports({
   const requestSort = (sortBy) => {
     // Get sort direction.
     let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
+    if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
 
-    const sortingCourseName = sortBy === 'Course_name';
+    const sortingCourseName = sortBy === 'Course_name' || sortBy === 'Course name';
 
     // Set the value we want to sort by.
     const valuesToSort = sortingCourseName
       ? courseUse.map((t) => ({
-        ...t,
-        sortBy: t.heading,
-      }))
-      : courseUse.map((t) => (
-        {
           ...t,
-          sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
-        }));
+          sortBy: t.heading,
+        }))
+      : courseUse.map((t) => {
+          const sortCell = t.data.find((tp) => tp.title === sortBy);
+          return {
+            ...t,
+            sortBy: parseValue(sortCell ? sortCell.value : ''),
+          };
+        });
 
     // Value sort.
     const sortValueA = direction === 'asc' ? 1 : -1;
@@ -105,7 +108,8 @@ function CoursesAssociatedWithActivityReports({
 
       if (valueA > valueB) {
         return sortValueA;
-      } if (valueB > valueA) {
+      }
+      if (valueB > valueA) {
         return sortValueB;
       }
 
@@ -121,7 +125,7 @@ function CoursesAssociatedWithActivityReports({
     try {
       let coursesToExport = courseUse;
       if (exportType === 'selected') {
-      // Get all the ids of the rowsToExport that have a value of true.
+        // Get all the ids of the rowsToExport that have a value of true.
         const selectedRowsStrings = Object.keys(checkBoxes).filter((key) => checkBoxes[key]);
         // Loop all selected rows and parseInt to an array of integers.
         const selectedRowsIds = selectedRowsStrings.map((s) => parseInt(s, DECIMAL_BASE));
@@ -129,8 +133,12 @@ function CoursesAssociatedWithActivityReports({
         coursesToExport = courseUse.filter((row) => selectedRowsIds.includes(row.id));
       }
 
-      // Create a header row.
-      const headerData = data.headers.map((h) => ({ title: h, value: h }));
+      // Create a header row. Backend headers are { name, displayName } objects.
+      const headerData = data.headers.map((h) => {
+        const label = typeof h === 'string' ? h : h.displayName || h.name;
+        const value = label.includes(',') ? `"${label}"` : label;
+        return { title: label, value };
+      });
       headerData.push({ title: 'Total', value: 'Total' });
       coursesToExport = [
         {
@@ -191,8 +199,8 @@ function CoursesAssociatedWithActivityReports({
 
   return (
     <WidgetContainer
-      title="iPD courses cited on Activity Reports"
-      subtitle="Unique iPD courses cited within Activity Reports."
+      title="EEP courses cited on Activity Reports"
+      subtitle="Unique EEP courses cited within Activity Reports."
       loading={loading || localLoading}
       loadingLabel="Courses associated with Activity Reports loading"
       showPagingBottom
@@ -202,7 +210,7 @@ function CoursesAssociatedWithActivityReports({
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
       menuItems={menuItems}
-      footNote="* Collection of iPD courses in the TTA Hub began on March 7, 2024."
+      footNote="* Collection of EEP courses in the TTA Hub began on March 7, 2024."
       titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
@@ -228,7 +236,7 @@ CoursesAssociatedWithActivityReports.propTypes = {
         PropTypes.shape({
           title: PropTypes.string,
           value: PropTypes.number,
-        }),
+        })
       ),
     }),
     PropTypes.shape({}),

@@ -1,6 +1,6 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
         const loggedUser = '0';
         const sessionSig = __filename;
@@ -11,15 +11,16 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
       try {
         // Delete duplicate goals based on trimmed_hashes, keeping the one with the lowest id
-        await queryInterface.sequelize.query(`
+        await queryInterface.sequelize.query(
+          `
         -- Collect Pre Count Stats
         DROP TABLE IF EXISTS "PreCountStatsByRegion";
         CREATE TEMP TABLE "PreCountStatsByRegion" AS (
@@ -2269,13 +2270,26 @@ module.exports = {
         FROM "CollectStats"
         ORDER BY id;
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
-          `, { transaction });
+        -- Updated May 2026 to drop the tables explicitly, fixing intermittent test failures
+        -- Sequelize can reuse connections across migrations, resulting in inconsistent views of temp table artifacts
+        -- When a later migration runs on a different session, it won't see a temp table that was not dropped, so its DROP TABLE can't remove it, while Postgres can still block dropping the global enum type due to that other-session dependency
+        DROP TABLE IF EXISTS
+          "ObjectiveResourcesToModify",
+          "InsertObjectiveResources",
+          "UpdateObjectiveResources",
+          "DeleteObjectiveResources",
+          "ActivityReportObjectiveResourcesToModify",
+          "InsertActivityReportObjectiveResources",
+          "UpdateActivityReportObjectiveResources",
+          "DeleteActivityReportObjectiveResources";
+          `,
+          { transaction }
+        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
-    },
-  ),
+    }),
   // Reverting the deletion is not possible, as the deleted records are lost
   down: () => {},
 };

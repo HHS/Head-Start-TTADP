@@ -1,6 +1,6 @@
-import Objective from './objective';
-import SCOPES from '../middleware/scopeConstants';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import SCOPES from '../middleware/scopeConstants';
+import Objective from './objective';
 
 describe('Objective', () => {
   let objective;
@@ -15,15 +15,18 @@ describe('Objective', () => {
         },
       ],
     };
-    objective = new Objective({
-      status: OBJECTIVE_STATUS.ACTIVE,
-      goal: {
-        status: GOAL_STATUS.OPEN,
-        grant: {
-          regionId: 1,
+    objective = new Objective(
+      {
+        status: OBJECTIVE_STATUS.ACTIVE,
+        goal: {
+          status: GOAL_STATUS.OPEN,
+          grant: {
+            regionId: 1,
+          },
         },
       },
-    }, user);
+      user
+    );
   });
 
   describe('canWriteInRegion', () => {

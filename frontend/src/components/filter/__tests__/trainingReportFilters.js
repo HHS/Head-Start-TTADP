@@ -1,4 +1,4 @@
-import { startDateFilter, fixQueryWhetherStringOrArray } from '../trainingReportFilters';
+import { fixQueryWhetherStringOrArray, startDateFilter } from '../trainingReportFilters';
 
 describe('trainingReportFilters', () => {
   describe('startDateFilter', () => {

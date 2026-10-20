@@ -1,10 +1,6 @@
 /* eslint-disable global-require */
 const { sequelize } = require('..');
-const {
-  processForEmbeddedResources,
-  beforeCreate,
-  beforeUpdate,
-} = require('./goal');
+const { processForEmbeddedResources, beforeCreate, beforeUpdate } = require('./goal');
 const { GOAL_STATUS, OBJECTIVE_STATUS } = require('../../constants');
 
 jest.mock('../../services/resource');
@@ -61,14 +57,20 @@ describe('goal hooks', () => {
     afterEach(() => jest.clearAllMocks());
 
     it('should call processGoalForResourcesById if auto detection is true', async () => {
-      const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
+      const {
+        calculateIsAutoDetectedForGoal,
+        processGoalForResourcesById,
+      } = require('../../services/resource');
       calculateIsAutoDetectedForGoal.mockReturnValueOnce(true);
       await processForEmbeddedResources(sequelizeToPass, instance);
       expect(processGoalForResourcesById).toHaveBeenCalledWith(instance.id);
     });
 
     it('should not call processGoalForResourcesById if auto detection is false', async () => {
-      const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
+      const {
+        calculateIsAutoDetectedForGoal,
+        processGoalForResourcesById,
+      } = require('../../services/resource');
       calculateIsAutoDetectedForGoal.mockReturnValueOnce(false);
       await processForEmbeddedResources(sequelize, instance);
       expect(processGoalForResourcesById).not.toHaveBeenCalled();

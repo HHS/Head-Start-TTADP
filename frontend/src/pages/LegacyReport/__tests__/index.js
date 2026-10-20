@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom';
-import join from 'url-join';
-import React from 'react';
-import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import LegacyReport from '../index';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import UserContext from '../../../UserContext';
+import LegacyReport from '../index';
 
-const defaultUser = ({ id: 1, roles: [], permissions: [] });
+const defaultUser = { id: 1, roles: [], permissions: [] };
 
 // eslint-disable-next-line react/prop-types
 const RenderLegacyReport = ({ report, fail = false, user = defaultUser }) => {
@@ -39,12 +39,14 @@ const report = {
   imported: {
     granteeName: 'first\nsecond\nlast',
   },
-  attachments: [{
-    id: 1,
-    originalFileName: 'test',
-    url: { url: 'url' },
-    status: 'status',
-  }],
+  attachments: [
+    {
+      id: 1,
+      originalFileName: 'test',
+      url: { url: 'url' },
+      status: 'status',
+    },
+  ],
 };
 
 describe('LegacyReport', () => {
@@ -83,7 +85,9 @@ describe('LegacyReport', () => {
     fetchMock.put(url, 500);
     const saveButton = await screen.findByRole('button', { name: 'Save report users' });
     userEvent.click(saveButton);
-    expect(await screen.findByText('There was an error updating the report: Internal Server Error')).toBeVisible();
+    expect(
+      await screen.findByText('There was an error updating the report: Internal Server Error')
+    ).toBeVisible();
   });
 
   it('displays the report', async () => {

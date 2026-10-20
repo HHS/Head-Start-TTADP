@@ -2,19 +2,17 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React, { useContext } from 'react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, waitFor, within, act,
-} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useFormContext, useForm } from 'react-hook-form';
-import Navigator from '../ActivityReportNavigator';
-import UserContext from '../../../UserContext';
-import { NOT_STARTED, COMPLETE } from '../constants';
-import NetworkContext from '../../../NetworkContext';
+import React, { useContext } from 'react';
+import { useForm, useFormContext } from 'react-hook-form';
 import AppLoadingContext from '../../../AppLoadingContext';
 import GoalFormContext from '../../../GoalFormContext';
+import NetworkContext from '../../../NetworkContext';
+import UserContext from '../../../UserContext';
+import Navigator from '../ActivityReportNavigator';
+import { COMPLETE, NOT_STARTED } from '../constants';
 
 // user mock
 const user = {
@@ -30,9 +28,7 @@ const Input = ({
   onSaveDraft = jest.fn(),
 }) => {
   const { register } = useFormContext();
-  const {
-    isObjectiveFormClosed,
-  } = useContext(GoalFormContext);
+  const { isObjectiveFormClosed } = useContext(GoalFormContext);
 
   const onClick = () => {
     onUpdatePage(isObjectiveFormClosed ? 'Closed' : 'Open');
@@ -44,12 +40,7 @@ const Input = ({
 
   return (
     <>
-      <input
-        type={type}
-        data-testid={name}
-        name={name}
-        ref={register({ required })}
-      />
+      <input type={type} data-testid={name} name={name} ref={register({ required })} />
 
       <button onClick={onClick} type="button">
         Button
@@ -75,7 +66,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -130,16 +121,18 @@ describe('ActivityReportNavigator - recipient reports', () => {
 
     return (
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{
-          connectionActive: true,
-          localStorageAvailable: true,
-        }}
-        >
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+        <NetworkContext.Provider
+          value={{
+            connectionActive: true,
+            localStorageAvailable: true,
           }}
+        >
+          <AppLoadingContext.Provider
+            value={{
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }}
           >
             <Navigator
               editable
@@ -170,7 +163,7 @@ describe('ActivityReportNavigator - recipient reports', () => {
     updatePage = jest.fn(),
     onSave = jest.fn(),
     formData = initialData,
-    onUpdateError = jest.fn(),
+    onUpdateError = jest.fn()
   ) => {
     render(
       <NavigatorWrapper
@@ -178,7 +171,7 @@ describe('ActivityReportNavigator - recipient reports', () => {
         onSave={onSave}
         formData={formData}
         onUpdateError={onUpdateError}
-      />,
+      />
     );
   };
 

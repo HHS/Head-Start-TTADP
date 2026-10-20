@@ -1,8 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import AriaLiveRegion from '../AriaLiveRegion';
 
 describe('AriaLiveRegion', () => {
@@ -15,10 +13,7 @@ describe('AriaLiveRegion', () => {
   });
 
   it('renders messages as paragraphs', async () => {
-    const messages = [
-      'Message One',
-      'Message Two',
-    ];
+    const messages = ['Message One', 'Message Two'];
     render(<AriaLiveRegion messages={messages} />);
 
     expect(await screen.findByRole('status')).toBeInTheDocument();

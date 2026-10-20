@@ -168,14 +168,27 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
-        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('VACUUM ANALYZE')))
-        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 && log.data.messages[0].includes('VACUUM ANALYZE')) ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
     });
 
     it('should use default offset and limit values', async () => {
@@ -217,14 +230,26 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('REINDEX TABLE')))
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.REINDEX || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 && log.data.messages[0].includes('REINDEX TABLE')) ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
     });
 
     it('should use default offset and limit values', async () => {
@@ -268,25 +293,39 @@ describe('maintenance', () => {
       // + 1 for correctArFlags + 1 for dailyMaintenance
       expect(logs.length).toBe((numOfModels + 1) * 2 + 2);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
-        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-        || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-        || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM ANALYZE')))
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-          || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-          || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.REINDEX ||
+            log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 &&
+              (log.data.messages[0].includes('REINDEX TABLE') ||
+                log.data.messages[0].includes('VACUUM ANALYZE'))) ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
     });
 
     it('should use default offset and limit values', async () => {
@@ -295,7 +334,7 @@ describe('maintenance', () => {
       await dailyMaintenance();
 
       const logs = await MaintenanceLog.findAll({
-        where: { id: { [Op.gt]: (preLog?.id || 0) } },
+        where: { id: { [Op.gt]: preLog?.id || 0 } },
         order: [['id', 'DESC']],
         raw: true,
       });
@@ -334,14 +373,27 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
-        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('VACUUM ANALYZE')))
-        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 && log.data.messages[0].includes('VACUUM ANALYZE')) ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES
+        )
+      ).toBe(true);
     });
 
     it('test - reindex', async () => {
@@ -372,17 +424,34 @@ describe('maintenance', () => {
 
       expect(logs.length).toBe(numOfModels + 1);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM ANALYZE')))
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.REINDEX || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.REINDEX || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 &&
+              (log.data.messages[0].includes('REINDEX TABLE') ||
+                log.data.messages[0].includes('VACUUM ANALYZE'))) ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES
+        )
+      ).toBe(true);
     });
 
     it('test - daily maintenance', async () => {
@@ -403,32 +472,46 @@ describe('maintenance', () => {
       });
 
       const logs = await MaintenanceLog.findAll({
-        where: { id: { [Op.gt]: (preLog?.id || 0) } },
+        where: { id: { [Op.gt]: preLog?.id || 0 } },
         order: [['id', 'DESC']],
         raw: true,
       });
 
       expect(logs.length).toBe((numOfModels + 1) * 2 + 2);
       expect(logs.every((log) => log.isSuccessful)).toBe(true);
-      expect(logs.every((log) => log.type === MAINTENANCE_TYPE.REINDEX
-        || log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE
-        || log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-        || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-        || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-        || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS)).toBe(true);
-      expect(logs.every((log) => (log.data?.messages?.length > 0
-        && (log.data.messages[0].includes('REINDEX TABLE')
-          || log.data.messages[0].includes('VACUUM ANALYZE')))
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-          || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS))).toBe(true);
-      expect(logs.every((log) => (log.data?.benchmarks?.length > 0
-        && typeof log.data.benchmarks[0] === 'number')
-        || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES
-          || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
-          || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE
-          || log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS))).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            log.type === MAINTENANCE_TYPE.REINDEX ||
+            log.type === MAINTENANCE_TYPE.VACUUM_ANALYZE ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.messages?.length > 0 &&
+              (log.data.messages[0].includes('REINDEX TABLE') ||
+                log.data.messages[0].includes('VACUUM ANALYZE'))) ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
+      expect(
+        logs.every(
+          (log) =>
+            (log.data?.benchmarks?.length > 0 && typeof log.data.benchmarks[0] === 'number') ||
+            log.type === MAINTENANCE_TYPE.REINDEX_TABLES ||
+            log.type === MAINTENANCE_TYPE.VACUUM_TABLES ||
+            log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE ||
+            log.type === MAINTENANCE_TYPE.CORRECT_AR_FLAGS
+        )
+      ).toBe(true);
     });
 
     it('should log an error if dailyMaintenance fails', async () => {

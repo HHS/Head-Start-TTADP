@@ -3,38 +3,56 @@
   "version": "0.1.0",
   "private": true,
   "license": "ISC",
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": "24.21.0"
+  },
+  "scripts": {
+    "start": "vite",
+    "build:local": "cross-env VITE_LOCAL_BUILD=true vite build",
+    "build": "vite build",
+    "test": "cross-env TZ=America/New_York jest --watch",
+    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
+    "lint": "biome lint --diagnostic-level=error --no-errors-on-unmatched",
+    "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched",
+    "figma:parse": "figma connect parse",
+    "figma:publish": "figma connect publish"
+  },
   "dependencies": {
-    "@babel/runtime": "^7.26.10",
-    "@fortawesome/fontawesome-svg-core": "^6.4.2",
-    "@fortawesome/free-solid-svg-icons": "^6.4.2",
-    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@babel/runtime": "^7.29.10",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/pro-regular-svg-icons": "7.0.0",
+    "@fortawesome/pro-solid-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@hookform/error-message": "^0.0.5",
     "@mesh-kit/core": "^1.0.0",
     "@react-hook/resize-observer": "^1.2.6",
     "@silevis/reactgrid": "3.1",
-    "@trussworks/react-uswds": "5.1.0",
-    "@ttahub/common": "2.2.19",
+    "@trussworks/react-uswds": "5.5.0",
+    "@ttahub/common": "2.4.11",
     "@use-it/interval": "^1.0.0",
+    "@uswds/uswds": "3.14.0",
     "async": "^3.2.3",
-    "browserslist": "^4.16.5",
+    "brace-expansion": "^5.0.12",
     "classnames": "^2.5.1",
-    "csv-parse": "^4.14.1",
+    "csv-parse": ">=7.0.3",
     "detect-file-encoding-and-language": "^2.4.0",
-    "dompurify": "^3.3.0",
+    "dompurify": "^3.4.17",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "ejs": "^3.1.7",
     "focus-trap-react": "^10.3.0",
-    "follow-redirects": "^1.15.6",
+    "follow-redirects": "^1.16.1",
+    "history": "4.10.1",
     "html-react-parser": "^5.1.1",
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
-    "http-proxy-middleware": "^3.0.5",
-    "lodash": "^4.17.23",
-    "micromatch": "^4.0.8",
+    "immutable": "^4.3.9",
+    "lodash": "^4.18.1",
     "minimist": "^1.2.6",
-    "moment": "^2.29.4",
-    "moment-timezone": "^0.5.35",
+    "moment": "^2.31.0",
+    "moment-timezone": "^0.6.5",
     "nth-check": "^2.0.1",
     "plotly.js": "^2.34.0",
     "plotly.js-basic-dist": "^2.34.0",
@@ -60,113 +78,63 @@
     "react-select": "^5.7.4",
     "react-stickynode": "^4.0.0",
     "react-with-direction": "^1.3.1",
-    "sass": "^1.51.0",
+    "sass": "^1.105.2",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
-    "uuid": "^8.3.2"
+    "uuid": "^14.0.3"
   },
-  "engines": {
-    "node": "22.22.0"
-  },
-  "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
-    "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
-    "build": "INLINE_RUNTIME_CHUNK=false FAST_REFRESH=false craco build && mv build/ ../build/server/client",
-    "eject": "craco eject",
-    "test": "cross-env TZ=America/New_York craco test",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "eslint src",
-    "lint:fix": "eslint --fix src",
-    "lint:fix:single": "eslint --fix",
-    "lint:ci": "eslint -f eslint-formatter-multiple src"
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
+    "@biomejs/biome": "^2.5.15",
+    "@figma/code-connect": "^2",
+    "@sheerun/mutationobserver-shim": "^0.3.3",
+    "@testing-library/dom": "^8.11.1",
+    "@testing-library/jest-dom": "^5.11.9",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^17.0.89",
+    "@types/react-dom": "^17.0.26",
+    "@vitejs/plugin-react": "^5.0.4",
+    "babel-jest": "^29.7.0",
+    "cross-env": "^10.1.0",
+    "fetch-mock": "^9.11.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-fetch-mock": "^3.2.0",
+    "jest-junit": "^17.0.0",
+    "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.5.30",
+    "react-select-event": "^5.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.3.7"
   },
   "resolutions": {
-    "ansi-regex": "^5.0.1",
-    "async": "^3.2.3",
-    "braces": "^3.0.3",
-    "browserslist": "^4.16.5",
-    "cookie": "^0.7.2",
-    "cross-fetch": "^3.1.5",
-    "d3-color": "^3.1.0",
-    "decode-uri-component": "^0.2.1",
-    "dompurify": "^2.5.8",
-    "ejs": "^3.1.10",
-    "es5-ext": "^0.10.63",
-    "express": "^4.22.0",
-    "follow-redirects": "^1.15.6",
-    "glob-parent": "^6.0.2",
-    "json5": "^1.0.2",
-    "lodash": "^4.17.23",
-    "minimatch": "^3.0.5",
-    "minimist": "^1.2.6",
-    "moment": "^2.29.2",
-    "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "nth-check": "^2.0.1",
-    "on-headers": "1.1.0",
-    "path-to-regexp": "^1.9.0",
-    "postcss": "^8.4.31",
-    "semver": "^7.5.3",
-    "serialize-javascript": "^6.0.2",
-    "tar": "^7.5.3",
-    "tough-cookie": "^4.0.0",
-    "ua-parser-js": "^0.7.33",
-    "webpack": "^5.76.1",
-    "yaml": "^2.2.2"
-  },
-  "eslintConfig": {
-    "root": true,
-    "parserOptions": {
-      "ecmaVersion": "latest"
-    },
-    "plugins": [
-      "testing-library"
-    ],
-    "extends": [
-      "airbnb",
-      "plugin:jest/recommended",
-      "plugin:testing-library/react",
-      "plugin:react-hooks/recommended"
-    ],
-    "ignorePatterns": [
-      "build/*",
-      "node_modules/*",
-      "public/*"
-    ],
-    "rules": {
-      "react/jsx-filename-extension": [
-        1,
-        {
-          "extensions": [
-            ".js",
-            ".jsx"
-          ]
-        }
-      ],
-      "linebreak-style": 0
-    },
-    "env": {
-      "jest/globals": true,
-      "browser": true
-    }
-  },
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
-  },
-  "babel": {
-    "presets": [
-      "@babel/preset-react"
-    ]
+    "dompurify": "^3.4.17",
+    "draft-js/immutable": "~3.8.4",
+    "fetch-mock/path-to-regexp": "^3.3.0",
+    "ip-address": "^10.7.4",
+    "linkify-it": ">=5.0.2",
+    "lodash": "^4.18.1",
+    "maplibre-gl": ">=6.4.1",
+    "nanoid": "^3.3.18",
+    "react-error-overlay": "6.0.11",
+    "postcss": "^8.5.30",
+    "probe-image-size": "7.4.0",
+    "sass/immutable": ">=5.1.8",
+    "source-map-js": "^1.2.2",
+    "filelist": "^2.0.2",
+    "node-gyp": "^12.4.0",
+    "node-gyp/undici": "^6.28.1",
+    "postcss-selector-parser": "^7.1.6",
+    "sqlite3": "^5.1.7",
+    "test-exclude": "^8.0.0",
+    "tar": "^7.5.21",
+    "ws": "^8.21.0"
   },
   "browserslist": {
     "production": [
@@ -180,40 +148,10 @@
       "not op_mini all"
     ]
   },
-  "devDependencies": {
-    "@craco/craco": "^7.1.0",
-    "@sheerun/mutationobserver-shim": "^0.3.3",
-    "@testing-library/dom": "^8.11.1",
-    "@testing-library/jest-dom": "^5.11.9",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/react-hooks": "^8.0.1",
-    "@testing-library/user-event": "^13.5.0",
-    "cross-env": "^7.0.2",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb": "^18.2.0",
-    "eslint-formatter-multiple": "^1.0.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^24.1.5",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.5",
-    "eslint-plugin-react-hooks": "^4.0.8",
-    "eslint-plugin-testing-library": "^3.10.1",
-    "fetch-mock": "^9.11.0",
-    "history": "4.10.1",
-    "jest-fetch-mock": "^3.0.3",
-    "jest-junit": "^13.0.0",
-    "mutationobserver-shim": "^0.3.7",
-    "postcss": "^8.4.39",
-    "react-scripts": "^5.0.1",
-    "react-select-event": "^5.1.0"
-  },
-  "peerDependencies": {
-    "postcss": "^8.4.33"
-  },
   "jest": {
+    "clearMocks": true,
     "coveragePathIgnorePatterns": [
       "<rootDir>/src/index.js",
-      "<rootDir>/src/setupProxy.js",
       "<rootDir>/src/pages/NotFound/index.js",
       "<rootDir>/src/polyfills.js",
       "<rootDir>/src/pages/Widgets/index.js",
@@ -226,6 +164,26 @@
       "<rootDir>/src/testHelpers.js",
       "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
+    "moduleNameMapper": {
+      "\\.(css|less|sass|scss)$": "<rootDir>/scripts/jest/styleMock.cjs",
+      "\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$": "<rootDir>/scripts/jest/fileMock.cjs"
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.js"
+    ],
+    "testEnvironment": "jsdom",
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(?:@react-hook|@juggle|csv-parse|uuid)/)"
+    ],
+    "transform": {
+      "^.+\\.[jt]sx?$": [
+        "babel-jest",
+        {
+          "babelrc": false,
+          "configFile": "./babel.jest.config.cjs"
+        }
+      ]
+    },
     "coverageThreshold": {
       "global": {
         "statements": 90,

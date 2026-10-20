@@ -1,8 +1,6 @@
-import React from 'react';
+import { FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, Label,
-} from '@trussworks/react-uswds';
+import React from 'react';
 import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
 
 export default function ObjectiveTitle({
@@ -16,8 +14,7 @@ export default function ObjectiveTitle({
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
-        TTA objective
-        {' '}
+        TTA objective{' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
       </Label>
       <>

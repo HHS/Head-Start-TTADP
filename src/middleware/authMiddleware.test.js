@@ -1,8 +1,9 @@
 import {} from 'dotenv/config';
 import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
-import db, { User, Permission } from '../models';
+import { auditLogger, hashForLogging } from '../logger';
+import db, { Permission, User } from '../models';
+import { getAccessToken, getUserInfo, logoutOidc } from './authMiddleware';
 import SCOPES from './scopeConstants';
-import { getUserInfo, getAccessToken, logoutOidc } from './authMiddleware';
 
 jest.mock('openid-client', () => {
   /* eslint-disable global-require */
@@ -19,6 +20,9 @@ jest.mock('openid-client', () => {
     authorizationCodeGrant: jest.fn(async () => ({
       access_token: 'fake-access',
       id_token: 'fake-id',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: 'openid',
       claims: () => ({
         sub: 'user-123',
         email: 'user@example.com',
@@ -26,6 +30,11 @@ jest.mock('openid-client', () => {
         family_name: 'User',
         userId: '123',
         roles: [],
+        aal: 'urn:gov:gsa:ac:classes:sp:PasswordProtectedTransport:duo',
+        iss: 'https://hses.ohs.acf.hhs.gov/oidc',
+        sid: 'session-id',
+        nonce: 'nonce',
+        jti: 'token-id',
       }),
     })),
     fetchUserInfo: jest.fn(async () => ({
@@ -44,7 +53,10 @@ jest.mock('openid-client', () => {
 jest.mock('./jwkKeyManager', () => ({
   __esModule: true,
   getPrivateJwk: jest.fn(async () => ({
-    kty: 'RSA', kid: 'test', n: 'n', e: 'AQAB',
+    kty: 'RSA',
+    kid: 'test',
+    n: 'n',
+    e: 'AQAB',
   })),
 }));
 
@@ -126,7 +138,11 @@ describe('authMiddleware', () => {
     process.env.BYPASS_AUTH = 'false';
 
     const next = jest.fn();
-    const req = { path: '/api/endpoint', session: {}, headers: { referer: 'http://localhost:3000' } };
+    const req = {
+      path: '/api/endpoint',
+      session: {},
+      headers: { referer: 'http://localhost:3000' },
+    };
     const res = { redirect: jest.fn(), sendStatus: jest.fn() };
 
     await authMiddleware(req, res, next);
@@ -230,6 +246,11 @@ describe('authMiddleware', () => {
       family_name: 'User',
       userId: '123',
       roles: [],
+      aal: 'urn:gov:gsa:ac:classes:sp:PasswordProtectedTransport:duo',
+      iss: 'https://hses.ohs.acf.hhs.gov/oidc',
+      sid: 'session-id',
+      nonce: 'nonce',
+      jti: 'token-id',
     });
     expect(req.session.id_token).toBe('fake-id');
 
@@ -243,7 +264,7 @@ describe('authMiddleware', () => {
         expectedState: 'state',
         expectedNonce: 'nonce',
         idTokenExpected: true,
-      }),
+      })
     );
   });
 
@@ -262,6 +283,73 @@ describe('authMiddleware', () => {
 
     const oc = require('openid-client');
     expect(oc.authorizationCodeGrant).not.toHaveBeenCalled();
+  });
+
+  it('getAccessToken: does not log raw tokens or PII/session claims', async () => {
+    const infoSpy = jest.spyOn(auditLogger, 'info');
+    const req = {
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session: {
+        pkce: { codeVerifier: 'verifier', state: 'state', nonce: 'nonce' },
+      },
+    };
+
+    await getAccessToken(req);
+
+    expect(infoSpy).toHaveBeenCalledWith('Token Endpoint Response received', {
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: 'openid',
+    });
+    expect(infoSpy).toHaveBeenCalledWith('ID Token Claims', {
+      aal: 'urn:gov:gsa:ac:classes:sp:PasswordProtectedTransport:duo',
+      iss: 'https://hses.ohs.acf.hhs.gov/oidc',
+      subHash: hashForLogging('user-123'),
+    });
+
+    const loggedValues = infoSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/fake-access|fake-id|user@example\.com/);
+    expect(loggedValues.join('\n')).not.toMatch(/"sub"|"sid"|"nonce"|"jti"/);
+
+    infoSpy.mockRestore();
+  });
+
+  it('getAccessToken: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const errorSpy = jest.spyOn(auditLogger, 'error');
+    const oc = require('openid-client');
+
+    class FakeResponseBodyError extends Error {
+      constructor() {
+        super('invalid_grant');
+        this.name = 'ResponseBodyError';
+        this.cause = { error: 'invalid_grant', error_description: 'leaked-secret-detail' };
+        this.response = { status: 400 };
+      }
+    }
+    oc.authorizationCodeGrant.mockRejectedValueOnce(new FakeResponseBodyError());
+
+    const req = {
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session: {
+        pkce: { codeVerifier: 'verifier', state: 'state', nonce: 'nonce' },
+      },
+    };
+
+    await getAccessToken(req);
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'ResponseBodyError',
+      message: 'invalid_grant',
+      stack: expect.any(String),
+    });
+    const loggedValues = errorSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/leaked-secret-detail|"cause"|"response"/);
+
+    errorSpy.mockRestore();
   });
 
   it('getAccessToken: returns undefined on error', async () => {
@@ -293,19 +381,56 @@ describe('authMiddleware', () => {
     });
 
     const oc = require('openid-client');
-    expect(oc.fetchUserInfo).toHaveBeenCalledWith(
-      expect.anything(),
-      'fake-access',
-      'user-123',
-    );
+    expect(oc.fetchUserInfo).toHaveBeenCalledWith(expect.anything(), 'fake-access', 'user-123');
+  });
+
+  it('getUserInfo: does not log PII from the userinfo response', async () => {
+    const infoSpy = jest.spyOn(auditLogger, 'info');
+
+    await getUserInfo('fake-access', 'user-123');
+
+    expect(infoSpy).toHaveBeenCalledWith('UserInfo Response received', {
+      subHash: hashForLogging('user-123'),
+    });
+    const loggedValues = infoSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/user@example\.com|given_name|family_name/);
+
+    infoSpy.mockRestore();
+  });
+
+  it('getUserInfo: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const errorSpy = jest.spyOn(auditLogger, 'error');
+    const oc = require('openid-client');
+
+    class FakeWWWAuthError extends Error {
+      constructor() {
+        super('invalid_token');
+        this.name = 'WWWAuthenticateChallengeError';
+        this.cause = [{ scheme: 'bearer', parameters: { error: 'invalid_token' } }];
+        this.response = { status: 401 };
+      }
+    }
+    oc.fetchUserInfo.mockRejectedValueOnce(new FakeWWWAuthError());
+
+    await getUserInfo('fake-access', 'user-123');
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'WWWAuthenticateChallengeError',
+      message: 'invalid_token',
+      stack: expect.any(String),
+    });
+    const loggedValues = errorSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/"cause"|"response"/);
+
+    errorSpy.mockRestore();
   });
 
   it('getUserInfo: throws if accessToken or subject missing', async () => {
     await expect(getUserInfo(undefined, 'user-123')).rejects.toThrow(
-      'Access token and subject are required',
+      'Access token and subject are required'
     );
     await expect(getUserInfo('fake-access', undefined)).rejects.toThrow(
-      'Access token and subject are required',
+      'Access token and subject are required'
     );
   });
 
@@ -333,7 +458,7 @@ describe('authMiddleware', () => {
     expect(res.redirect).toHaveBeenCalledWith('https://auth.example/logout');
     expect(res.clearCookie).toHaveBeenCalledWith(
       'session',
-      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' })
     );
     // ensure local session destroy was attempted
     expect(req.session.destroy).toHaveBeenCalled();
@@ -353,6 +478,38 @@ describe('authMiddleware', () => {
     expect(res.redirect).toHaveBeenCalledWith('/logout');
     // in this branch, middleware does NOT clear session
     expect(req.session).toEqual({ id_token: 'fake-id', userId: 99 });
+  });
+
+  it('logoutOidc: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const warnSpy = jest.spyOn(auditLogger, 'warn');
+    const oc = require('openid-client');
+
+    class FakeWWWAuthError extends Error {
+      constructor() {
+        super('invalid_token');
+        this.name = 'WWWAuthenticateChallengeError';
+        this.cause = [{ scheme: 'bearer', parameters: { error: 'invalid_token' } }];
+        this.response = { status: 401 };
+      }
+    }
+    oc.buildEndSessionUrl.mockImplementationOnce(() => {
+      throw new FakeWWWAuthError();
+    });
+
+    const req = { session: { id_token: 'fake-id', userId: 99 } };
+    const res = { redirect: jest.fn(), clearCookie: jest.fn(), headersSent: false };
+
+    await logoutOidc(req, res);
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'WWWAuthenticateChallengeError',
+      message: 'invalid_token',
+      stack: expect.any(String),
+    });
+    const loggedValues = warnSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/"cause"|"response"/);
+
+    warnSpy.mockRestore();
   });
 
   it('logoutOidc: if headers already sent, clears session and sends 204', async () => {
@@ -378,7 +535,7 @@ describe('authMiddleware', () => {
     expect(req.session.destroy).toHaveBeenCalled();
     expect(res.clearCookie).toHaveBeenCalledWith(
       'session',
-      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' })
     );
   });
 
@@ -406,15 +563,52 @@ describe('authMiddleware', () => {
     expect(req.session.pkce?.codeVerifier).toBeDefined();
   });
 
+  it('login: sanitizes the error on failure (no raw cause/response leaked)', async () => {
+    const errorSpy = jest.spyOn(auditLogger, 'error');
+    const oc = require('openid-client');
+
+    class FakeResponseBodyError extends Error {
+      constructor() {
+        super('discovery_failed');
+        this.name = 'ResponseBodyError';
+        this.cause = { error: 'server_error', error_description: 'leaked-secret-detail' };
+        this.response = { status: 500 };
+      }
+    }
+    oc.calculatePKCECodeChallenge.mockRejectedValueOnce(new FakeResponseBodyError());
+
+    const req = {
+      path: '/api/login',
+      headers: { referer: 'http://localhost:3000/some/page' },
+      session: {},
+    };
+    const res = {
+      redirect: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+
+    await login(req, res);
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(String), {
+      name: 'ResponseBodyError',
+      message: 'discovery_failed',
+      stack: expect.any(String),
+    });
+    const loggedValues = errorSpy.mock.calls.map((call) => JSON.stringify(call));
+    expect(loggedValues.join('\n')).not.toMatch(/leaked-secret-detail|"cause"|"response"/);
+
+    errorSpy.mockRestore();
+  });
+
   it('calls handleErrors when validateUserAuthForAccess throws (catch path)', async () => {
     const req = { path: '/api/endpoint', session: { userId: 42 } };
     const res = { sendStatus: jest.fn(), headersSent: false };
     const next = jest.fn();
 
     const access = require('../services/accessValidation');
-    jest
-      .spyOn(access, 'validateUserAuthForAccess')
-      .mockRejectedValue(new Error('kaboom'));
+    jest.spyOn(access, 'validateUserAuthForAccess').mockRejectedValue(new Error('kaboom'));
 
     const handleErrors = require('../lib/apiErrorHandler').default;
 
@@ -422,12 +616,7 @@ describe('authMiddleware', () => {
     await underTest(req, res, next);
 
     expect(handleErrors).toHaveBeenCalledTimes(1);
-    expect(handleErrors).toHaveBeenCalledWith(
-      req,
-      res,
-      expect.any(Error),
-      'MIDDLEWARE:AUTH',
-    );
+    expect(handleErrors).toHaveBeenCalledWith(req, res, expect.any(Error), 'MIDDLEWARE:AUTH');
     expect(next).not.toHaveBeenCalled();
     expect(res.sendStatus).not.toHaveBeenCalled();
   });

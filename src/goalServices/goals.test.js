@@ -1,55 +1,54 @@
 import { Op } from 'sequelize';
+import { GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
+import { auditLogger } from '../logger';
 import {
-  goalsByIdsAndActivityReport,
-  goalByIdAndActivityReport,
-  goalsForGrants,
-  getReportCountForGoals,
-  verifyAllowedGoalStatusTransition,
-  updateGoalStatusById,
-  createMultiRecipientGoalsFromAdmin,
-  goalRegionsById,
-  removeRemovedRecipientsGoals,
-  setActivityReportGoalAsActivelyEdited,
-  createOrUpdateGoals,
-  goalByIdWithActivityReportsAndRegions,
-  destroyGoal,
-  mapGrantsWithReplacements,
-} from './goals';
-import { saveStandardGoalsForReport } from '../services/standardGoals';
-import {
-  sequelize,
+  ActivityRecipient,
+  ActivityReport,
+  ActivityReportGoal,
+  ActivityReportObjective,
+  File,
   Goal,
+  GoalTemplate,
   Grant,
   Objective,
-  ActivityReportObjective,
-  ActivityReportGoal,
-  ActivityReport,
-  ActivityRecipient,
-  GoalTemplate,
-  Resource,
-  Topic,
-  File,
-  User,
   Recipient,
+  Resource,
+  sequelize,
+  Topic,
+  User,
 } from '../models';
-import {
-  GOAL_STATUS,
-  OBJECTIVE_STATUS,
-  SOURCE_FIELD,
-} from '../constants';
-import changeGoalStatus from './changeGoalStatus';
-import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
-import { auditLogger } from '../logger';
-import extractObjectiveAssociationsFromActivityReportObjectives
-  from './extractObjectiveAssociationsFromActivityReportObjectives';
-import { reduceGoals } from './reduceGoals';
+import {} from '../models/helpers/genericCollaborator';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import * as reportCache from '../services/reportCache';
-import {} from '../models/helpers/genericCollaborator';
+import { saveStandardGoalsForReport } from '../services/standardGoals';
+import changeGoalStatus from './changeGoalStatus';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
+import {
+  createMultiRecipientGoalsFromAdmin,
+  createOrUpdateGoals,
+  destroyGoal,
+  getReportCountForGoals,
+  goalByIdAndActivityReport,
+  goalByIdWithActivityReportsAndRegions,
+  goalRegionsById,
+  goalsByIdsAndActivityReport,
+  goalsForGrants,
+  mapGrantsWithReplacements,
+  removeRemovedRecipientsGoals,
+  setActivityReportGoalAsActivelyEdited,
+  updateGoalStatusById,
+  verifyAllowedGoalStatusTransition,
+} from './goals';
+import { reduceGoals } from './reduceGoals';
+import { validateGoalStatusChange } from './validateGoalStatusChange';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
   default: jest.fn(),
+}));
+jest.mock('./validateGoalStatusChange', () => ({
+  validateGoalStatusChange: jest.fn(),
 }));
 
 jest.mock('../services/citations');
@@ -108,28 +107,29 @@ describe('Goals DB service', () => {
           id: mockGoalId,
           name: 'This is a test goal',
           status: 'Draft',
-          objectives: [{
-            id: 1,
-            title: 'This is a test objective',
-            status: GOAL_STATUS.IN_PROGRESS,
-            goalId: mockGoalId,
-            activityReportObjectives: [],
-            toJSON: jest.fn().mockReturnValue({
+          objectives: [
+            {
               id: 1,
               title: 'This is a test objective',
               status: GOAL_STATUS.IN_PROGRESS,
               goalId: mockGoalId,
-            }),
-          }],
+              activityReportObjectives: [],
+              toJSON: jest.fn().mockReturnValue({
+                id: 1,
+                title: 'This is a test objective',
+                status: GOAL_STATUS.IN_PROGRESS,
+                goalId: mockGoalId,
+              }),
+            },
+          ],
         },
       ]);
 
       wasGoalPreviouslyClosed.mockReturnValue(false);
-      extractObjectiveAssociationsFromActivityReportObjectives.mockImplementation((obj, field) => (
-        field === 'topics' ? ['Topic 1'] : []));
-      reduceGoals.mockReturnValue([
-        { id: mockGoalId, name: 'This is a test goal', rtrOrder: 1 },
-      ]);
+      extractObjectiveAssociationsFromActivityReportObjectives.mockImplementation((obj, field) =>
+        field === 'topics' ? ['Topic 1'] : []
+      );
+      reduceGoals.mockReturnValue([{ id: mockGoalId, name: 'This is a test goal', rtrOrder: 1 }]);
 
       const result = await goalsByIdsAndActivityReport(mockGoalId, mockActivityReportId);
 
@@ -151,12 +151,13 @@ describe('Goals DB service', () => {
       });
 
       expect(wasGoalPreviouslyClosed).toHaveBeenCalled();
-      expect(extractObjectiveAssociationsFromActivityReportObjectives).toHaveBeenCalledWith(expect.any(Array), 'topics');
+      expect(extractObjectiveAssociationsFromActivityReportObjectives).toHaveBeenCalledWith(
+        expect.any(Array),
+        'topics'
+      );
       expect(reduceGoals).toHaveBeenCalledWith(expect.any(Array));
 
-      expect(result).toEqual([
-        { id: mockGoalId, name: 'This is a test goal', rtrOrder: 1 },
-      ]);
+      expect(result).toEqual([{ id: mockGoalId, name: 'This is a test goal', rtrOrder: 1 }]);
     });
 
     it('includes topic id and name in objective topics', async () => {
@@ -165,19 +166,21 @@ describe('Goals DB service', () => {
           id: mockGoalId,
           name: 'This is a test goal',
           status: 'Draft',
-          objectives: [{
-            id: 1,
-            title: 'Test objective with topics',
-            status: GOAL_STATUS.IN_PROGRESS,
-            goalId: mockGoalId,
-            activityReportObjectives: [],
-            toJSON: jest.fn().mockReturnValue({
+          objectives: [
+            {
               id: 1,
               title: 'Test objective with topics',
               status: GOAL_STATUS.IN_PROGRESS,
               goalId: mockGoalId,
-            }),
-          }],
+              activityReportObjectives: [],
+              toJSON: jest.fn().mockReturnValue({
+                id: 1,
+                title: 'Test objective with topics',
+                status: GOAL_STATUS.IN_PROGRESS,
+                goalId: mockGoalId,
+              }),
+            },
+          ],
         },
       ]);
 
@@ -244,13 +247,22 @@ describe('Goals DB service', () => {
 
       expect(result).toEqual([
         {
-          id: 2, name: 'Goal 2', rtrOrder: 1, objectives: [],
+          id: 2,
+          name: 'Goal 2',
+          rtrOrder: 1,
+          objectives: [],
         },
         {
-          id: 1, name: 'Goal 1', rtrOrder: 2, objectives: [],
+          id: 1,
+          name: 'Goal 1',
+          rtrOrder: 2,
+          objectives: [],
         },
         {
-          id: 3, name: 'Goal 3', rtrOrder: 3, objectives: [],
+          id: 3,
+          name: 'Goal 3',
+          rtrOrder: 3,
+          objectives: [],
         },
       ]);
     });
@@ -262,17 +274,21 @@ describe('Goals DB service', () => {
         id: mockGoalId,
         name: 'This is a test goal',
         status: GOAL_STATUS.IN_PROGRESS,
-        objectives: [{
-          id: 1,
-          title: 'This is a test objective',
-          status: 'In Progress',
-          resources: [],
-          activityReportObjectives: [{
-            ttaProvided: 'Technical Assistance',
-          }],
-          topics: [],
-          files: [],
-        }],
+        objectives: [
+          {
+            id: 1,
+            title: 'This is a test objective',
+            status: 'In Progress',
+            resources: [],
+            activityReportObjectives: [
+              {
+                ttaProvided: 'Technical Assistance',
+              },
+            ],
+            topics: [],
+            files: [],
+          },
+        ],
       };
 
       Goal.findOne = jest.fn().mockResolvedValue(mockGoal);
@@ -280,13 +296,7 @@ describe('Goals DB service', () => {
       const result = await goalByIdAndActivityReport(mockGoalId, mockActivityReportId);
 
       expect(Goal.findOne).toHaveBeenCalledWith({
-        attributes: [
-          'status',
-          ['id', 'value'],
-          ['name', 'label'],
-          'id',
-          'name',
-        ],
+        attributes: ['status', ['id', 'value'], ['name', 'label'], 'id', 'name'],
         where: {
           id: mockGoalId,
         },
@@ -306,12 +316,7 @@ describe('Goals DB service', () => {
                 },
               ],
             },
-            attributes: [
-              'id',
-              'title',
-              'title',
-              'status',
-            ],
+            attributes: ['id', 'title', 'title', 'status'],
             model: Objective,
             as: 'objectives',
             required: false,
@@ -333,9 +338,7 @@ describe('Goals DB service', () => {
               {
                 model: ActivityReportObjective,
                 as: 'activityReportObjectives',
-                attributes: [
-                  'ttaProvided',
-                ],
+                attributes: ['ttaProvided'],
                 required: true,
                 where: {
                   activityReportId: mockActivityReportId,
@@ -375,24 +378,28 @@ describe('Goals DB service', () => {
       });
       ActivityReportGoal.destroy = jest.fn();
       ActivityReportGoal.update = jest.fn();
-      ActivityReportGoal.findOrCreate = jest.fn()
-        .mockResolvedValue([{
+      ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue([
+        {
           id: mockActivityReportGoalId,
           goalId: mockGoalId,
           activityReportId: mockActivityReportId,
           update: jest.fn(),
-        }, false]);
+        },
+        false,
+      ]);
       ActivityReportGoal.create = jest.fn();
 
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportObjective.findOne = jest.fn();
       ActivityReportObjective.destroy = jest.fn();
-      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{
-        id: mockActivityReportObjectiveId,
-        objectiveId: mockObjectiveId,
-        update: jest.fn(),
-        save: jest.fn(),
-      }]);
+      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([
+        {
+          id: mockActivityReportObjectiveId,
+          objectiveId: mockObjectiveId,
+          update: jest.fn(),
+          save: jest.fn(),
+        },
+      ]);
       ActivityReportObjective.create = jest.fn().mockResolvedValue({
         id: mockActivityReportObjectiveId,
         objectiveId: mockObjectiveId,
@@ -401,15 +408,17 @@ describe('Goals DB service', () => {
         save: jest.fn(),
       });
 
-      Goal.findAll = jest.fn().mockResolvedValue([{
-        goalTemplateId: mockGoalTemplateId,
-        update: existingGoalUpdate,
-        id: mockGoalId,
-        activityReports: [],
-        objectives: [],
-        set: jest.fn(),
-        save: jest.fn(),
-      }]);
+      Goal.findAll = jest.fn().mockResolvedValue([
+        {
+          goalTemplateId: mockGoalTemplateId,
+          update: existingGoalUpdate,
+          id: mockGoalId,
+          activityReports: [],
+          objectives: [],
+          set: jest.fn(),
+          save: jest.fn(),
+        },
+      ]);
       Goal.findOne = jest.fn();
       Goal.findByPk = jest.fn().mockResolvedValue({
         update: existingGoalUpdate,
@@ -418,11 +427,14 @@ describe('Goals DB service', () => {
         goalTemplateId: mockGoalTemplateId,
         save: jest.fn(),
       });
-      Goal.findOrCreate = jest.fn().mockResolvedValue([{
-        id: mockGoalId,
-        update: jest.fn(),
-        save: jest.fn(),
-      }, false]);
+      Goal.findOrCreate = jest.fn().mockResolvedValue([
+        {
+          id: mockGoalId,
+          update: jest.fn(),
+          save: jest.fn(),
+        },
+        false,
+      ]);
       Goal.destroy = jest.fn();
       Goal.update = jest.fn().mockResolvedValue([1, [{ id: mockGoalId }]]);
       Goal.create = jest.fn().mockResolvedValue({
@@ -486,13 +498,13 @@ describe('Goals DB service', () => {
             },
           },
         ]);
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([]);
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         // with an empty result set no db call will be made
         expect(ActivityReportObjective.destroy).not.toHaveBeenCalled();
       });
@@ -527,19 +539,21 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
 
         expect(Goal.destroy).toHaveBeenCalled();
       });
 
       it('does not delete goals not being used by ActivityReportGoals', async () => {
-        Goal.findAll = jest.fn().mockResolvedValue([{
-          goalTemplateId: mockGoalTemplateId,
-          update: existingGoalUpdate,
-          id: mockGoalId,
-          activityReports: [{ id: 1 }],
-          objectives: [],
-        }]);
+        Goal.findAll = jest.fn().mockResolvedValue([
+          {
+            goalTemplateId: mockGoalTemplateId,
+            update: existingGoalUpdate,
+            id: mockGoalId,
+            activityReports: [{ id: 1 }],
+            objectives: [],
+          },
+        ]);
 
         ActivityReportObjective.findAll.mockResolvedValue([
           {
@@ -570,18 +584,20 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
 
       it('does not delete goals not being used by Objectives', async () => {
-        Goal.findAll = jest.fn().mockResolvedValue([{
-          goalTemplateId: mockGoalTemplateId,
-          update: existingGoalUpdate,
-          id: mockGoalId,
-          activityReports: [],
-          objectives: [{ id: 1 }],
-        }]);
+        Goal.findAll = jest.fn().mockResolvedValue([
+          {
+            goalTemplateId: mockGoalTemplateId,
+            update: existingGoalUpdate,
+            id: mockGoalId,
+            activityReports: [],
+            objectives: [{ id: 1 }],
+          },
+        ]);
 
         ActivityReportObjective.findAll.mockResolvedValue([
           {
@@ -612,31 +628,44 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        await saveStandardGoalsForReport([], 1, { id: mockActivityReportId });
+        await saveStandardGoalsForReport([], { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
 
     it('creates new goals', async () => {
-      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ id: 1, templateName: 'template name', standard: 'Standard' });
+      GoalTemplate.findByPk = jest
+        .fn()
+        .mockResolvedValue({ id: 1, templateName: 'template name', standard: 'Standard' });
       ActivityReportGoal.create.mockResolvedValue([
         {
           goalId: mockGoalId,
         },
       ]);
 
-      await saveStandardGoalsForReport([
-        {
-          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [], goalTemplateId: 1,
-        },
-      ], 1, { id: mockActivityReportId });
-      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
-        createdVia: 'activityReport',
-        grantId: mockGrantId,
-        goalTemplateId: 1,
-        name: 'template name',
-        status: 'Not Started',
-      }), { individualHooks: true });
+      await saveStandardGoalsForReport(
+        [
+          {
+            isNew: true,
+            grantIds: [mockGrantId],
+            name: 'name',
+            status: 'Closed',
+            objectives: [],
+            goalTemplateId: 1,
+          },
+        ],
+        { id: mockActivityReportId }
+      );
+      expect(Goal.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          createdVia: 'activityReport',
+          grantId: mockGrantId,
+          goalTemplateId: 1,
+          name: 'template name',
+          status: 'Not Started',
+        }),
+        { individualHooks: true }
+      );
     });
 
     it('creates monitoring goal ar cache only when the grant has an existing monitoring goal', async () => {
@@ -652,11 +681,19 @@ describe('Goals DB service', () => {
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([{ ...mockMonitoringGoal }]);
 
-      await saveStandardGoalsForReport([
-        {
-          isNew: true, grantIds: [mockGrantId], name: 'Create Monitoring Goal', status: 'In progress', objectives: [], goalTemplateId: 1,
-        },
-      ], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport(
+        [
+          {
+            isNew: true,
+            grantIds: [mockGrantId],
+            name: 'Create Monitoring Goal',
+            status: 'In progress',
+            objectives: [],
+            goalTemplateId: 1,
+          },
+        ],
+        { id: mockActivityReportId }
+      );
 
       // Because there is already a monitoring goal for this grant, it should not create a new one.
       expect(Goal.create).not.toHaveBeenCalled();
@@ -669,11 +706,19 @@ describe('Goals DB service', () => {
     it('does not create a monitoring goal when the grant does not have an existing monitoring goal', async () => {
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([]);
-      await saveStandardGoalsForReport([
-        {
-          isNew: true, grantIds: [mockGrantId], name: 'Dont create a monitoring goal', status: 'In progress', objectives: [], goalTemplateId: 1,
-        },
-      ], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport(
+        [
+          {
+            isNew: true,
+            grantIds: [mockGrantId],
+            name: 'Dont create a monitoring goal',
+            status: 'In progress',
+            objectives: [],
+            goalTemplateId: 1,
+          },
+        ],
+        { id: mockActivityReportId }
+      );
 
       expect(Goal.create).not.toHaveBeenCalledWith();
       expect(reportCache.cacheGoalMetadata).not.toHaveBeenCalled();
@@ -695,11 +740,19 @@ describe('Goals DB service', () => {
         { ...mockMonitoringGoal, grantId: 3 },
       ]);
 
-      await saveStandardGoalsForReport([
-        {
-          isNew: true, grantIds: [1, 2, 3], name: 'Create some monitoring goals', status: 'In progress', objectives: [], goalTemplateId: 1,
-        },
-      ], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport(
+        [
+          {
+            isNew: true,
+            grantIds: [1, 2, 3],
+            name: 'Create some monitoring goals',
+            status: 'In progress',
+            objectives: [],
+            goalTemplateId: 1,
+          },
+        ],
+        { id: mockActivityReportId }
+      );
 
       expect(Goal.create).not.toHaveBeenCalledWith();
 
@@ -707,21 +760,31 @@ describe('Goals DB service', () => {
       expect(reportCache.cacheGoalMetadata).toHaveBeenNthCalledWith(
         1,
         {
-          goalTemplateId: 1, grantId: 2, id: 2, name: 'Monitoring Goal', objectives: [], status: 'In Progress',
+          goalTemplateId: 1,
+          grantId: 2,
+          id: 2,
+          name: 'Monitoring Goal',
+          objectives: [],
+          status: 'In Progress',
         },
         10000007,
         false,
-        [],
+        []
       );
 
       expect(reportCache.cacheGoalMetadata).toHaveBeenNthCalledWith(
         2,
         {
-          goalTemplateId: 1, grantId: 3, id: 2, name: 'Monitoring Goal', objectives: [], status: 'In Progress',
+          goalTemplateId: 1,
+          grantId: 3,
+          id: 2,
+          name: 'Monitoring Goal',
+          objectives: [],
+          status: 'In Progress',
         },
         10000007,
         false,
-        [],
+        []
       );
     });
 
@@ -756,16 +819,18 @@ describe('Goals DB service', () => {
 
       const goalWithNewObjective = {
         ...existingGoal,
-        objectives: [{
-          isNew: true,
-          goalId: mockGoalId,
-          title: 'title',
-          ttaProvided: '',
-          ActivityReportObjective: {},
-          status: '',
-        }],
+        objectives: [
+          {
+            isNew: true,
+            goalId: mockGoalId,
+            title: 'title',
+            ttaProvided: '',
+            ActivityReportObjective: {},
+            status: '',
+          },
+        ],
       };
-      await saveStandardGoalsForReport([goalWithNewObjective], 1, { id: mockActivityReportId });
+      await saveStandardGoalsForReport([goalWithNewObjective], { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
         createdVia: 'activityReport',
         goalId: mockGoalId,
@@ -786,22 +851,38 @@ describe('Goals DB service', () => {
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{
-          title: 'title', id: mockObjectiveId, status: 'Closed', goalId: mockGoalId,
-        }],
+        objectives: [
+          {
+            title: 'title',
+            id: mockObjectiveId,
+            ids: [mockObjectiveId],
+            status: 'Closed',
+            goalId: mockGoalId,
+          },
+        ],
         update: jest.fn(),
         grantIds: [mockGrantId],
         goalIds: [mockGoalId],
       };
 
-      Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
-      await saveStandardGoalsForReport([existingGoal], 1, { id: mockActivityReportId });
-      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
+      Objective.findOne.mockResolvedValue({
+        id: mockObjectiveId,
+        update: existingObjectiveUpdate,
+        save: jest.fn(),
+        toJSON: jest.fn().mockReturnValue({ id: mockObjectiveId }),
+      });
+      await saveStandardGoalsForReport([existingGoal], { id: mockActivityReportId });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith(
+        { title: 'title' },
+        { individualHooks: true }
+      );
     });
 
     it('creates a new goal when none exists by goalIds or goalTemplateId', async () => {
       // Mock GoalTemplate.findByPk to return a standard goal template
-      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ id: 1, standard: 'Standard', templateName: 'template name' });
+      GoalTemplate.findByPk = jest
+        .fn()
+        .mockResolvedValue({ id: 1, standard: 'Standard', templateName: 'template name' });
       const goals = [
         {
           goalIds: [], // no matching goal by ID
@@ -828,21 +909,27 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
-      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
-        goalTemplateId: 1,
-        createdVia: 'activityReport',
-        grantId: 1,
-        name: 'template name',
-        status: 'Not Started',
-      }), { individualHooks: true });
+      expect(Goal.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          goalTemplateId: 1,
+          createdVia: 'activityReport',
+          grantId: 1,
+          name: 'template name',
+          status: 'Not Started',
+        }),
+        { individualHooks: true }
+      );
     });
 
     it('creates a new goal when goalTemplateId exists and is curated', async () => {
       // Mock GoalTemplate.findByPk to return a curated goal template
       GoalTemplate.findByPk = jest.fn().mockResolvedValue({
-        id: 1, standard: 'Standard', templateName: 'template name', creationMethod: 'curated',
+        id: 1,
+        standard: 'Standard',
+        templateName: 'template name',
+        creationMethod: 'curated',
       });
       const goals = [
         {
@@ -871,14 +958,17 @@ describe('Goals DB service', () => {
         set: jest.fn(),
       });
 
-      await saveStandardGoalsForReport(goals, 1, report);
+      await saveStandardGoalsForReport(goals, report);
 
-      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
-        grantId: 1,
-        name: 'template name',
-        status: 'Not Started',
-        createdVia: 'activityReport',
-      }), { individualHooks: true });
+      expect(Goal.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          grantId: 1,
+          name: 'template name',
+          status: 'Not Started',
+          createdVia: 'activityReport',
+        }),
+        { individualHooks: true }
+      );
     });
   });
 
@@ -892,7 +982,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.DRAFT,
         GOAL_STATUS.IN_PROGRESS,
-        [],
+        []
       );
       expect(result).toBe(false);
     });
@@ -901,7 +991,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.NOT_STARTED,
         GOAL_STATUS.CLOSED,
-        [],
+        []
       );
       expect(result).toBe(true);
     });
@@ -910,7 +1000,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.NOT_STARTED,
         GOAL_STATUS.SUSPENDED,
-        [],
+        []
       );
       expect(result).toBe(true);
     });
@@ -919,7 +1009,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.IN_PROGRESS,
         GOAL_STATUS.CLOSED,
-        [],
+        []
       );
       expect(result).toBe(true);
     });
@@ -928,7 +1018,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.SUSPENDED,
         GOAL_STATUS.IN_PROGRESS,
-        [GOAL_STATUS.IN_PROGRESS],
+        [GOAL_STATUS.IN_PROGRESS]
       );
       expect(result).toBe(true);
     });
@@ -937,7 +1027,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.SUSPENDED,
         GOAL_STATUS.IN_PROGRESS,
-        [GOAL_STATUS.IN_PROGRESS],
+        [GOAL_STATUS.IN_PROGRESS]
       );
       expect(result).toBe(true);
     });
@@ -946,7 +1036,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.CLOSED,
         GOAL_STATUS.IN_PROGRESS,
-        [],
+        []
       );
       expect(result).toBe(false);
     });
@@ -957,11 +1047,9 @@ describe('Goals DB service', () => {
     });
 
     it('should allow transition from SUSPENDED to CLOSED', () => {
-      const result = verifyAllowedGoalStatusTransition(
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.CLOSED,
-        [GOAL_STATUS.IN_PROGRESS],
-      );
+      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED, [
+        GOAL_STATUS.IN_PROGRESS,
+      ]);
       expect(result).toBe(true);
     });
 
@@ -969,7 +1057,7 @@ describe('Goals DB service', () => {
       const result = verifyAllowedGoalStatusTransition(
         GOAL_STATUS.SUSPENDED,
         GOAL_STATUS.IN_PROGRESS,
-        [GOAL_STATUS.IN_PROGRESS],
+        [GOAL_STATUS.IN_PROGRESS]
       );
       expect(result).toBe(true);
     });
@@ -996,7 +1084,7 @@ describe('Goals DB service', () => {
         mockNewStatus,
         mockReason,
         mockContext,
-        mockPreviousStatus,
+        mockPreviousStatus
       );
 
       expect(changeGoalStatus).toHaveBeenCalledTimes(mockGoalIds.length);
@@ -1006,6 +1094,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: mockReason,
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
       expect(changeGoalStatus).toHaveBeenCalledWith({
         goalId: mockGoalIds[1],
@@ -1013,6 +1102,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: mockReason,
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
     });
 
@@ -1024,7 +1114,7 @@ describe('Goals DB service', () => {
         mockNewStatus,
         null,
         mockContext,
-        mockPreviousStatus,
+        mockPreviousStatus
       );
 
       expect(changeGoalStatus).toHaveBeenCalledWith({
@@ -1033,6 +1123,7 @@ describe('Goals DB service', () => {
         newStatus: mockNewStatus,
         reason: 'Unknown',
         context: mockContext,
+        skipGoalStatusValidation: true,
       });
     });
 
@@ -1045,13 +1136,13 @@ describe('Goals DB service', () => {
         GOAL_STATUS.IN_PROGRESS,
         mockReason,
         mockContext,
-        mockPreviousStatus,
+        mockPreviousStatus
       );
 
       expect(changeGoalStatus).not.toHaveBeenCalled();
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        `UPDATEGOALSTATUSBYID: Goal status transition from Not Started to In Progress not allowed for goal ${mockGoalIds}`,
+        `UPDATEGOALSTATUSBYID: Goal status transition from Not Started to In Progress not allowed for goal ${mockGoalIds}`
       );
 
       expect(result).toBe(false);
@@ -1065,10 +1156,36 @@ describe('Goals DB service', () => {
         mockNewStatus,
         mockReason,
         mockContext,
-        mockPreviousStatus,
+        mockPreviousStatus
       );
 
       expect(changeGoalStatus).toHaveBeenCalledTimes(2);
+    });
+
+    it('blocks closure before changing any goals when an active report exists', async () => {
+      validateGoalStatusChange.mockRejectedValueOnce(
+        Object.assign(new Error('Goal status change blocked'), {
+          code: 'GOAL_STATUS_CHANGE_BLOCKED',
+          reasons: ['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'],
+        })
+      );
+
+      await expect(
+        updateGoalStatusById(
+          mockGoalIds,
+          mockUserId,
+          mockOldStatus,
+          mockNewStatus,
+          mockReason,
+          mockContext,
+          mockPreviousStatus
+        )
+      ).rejects.toMatchObject({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT', 'INCOMPLETE_OBJECTIVES'],
+      });
+
+      expect(changeGoalStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -1118,9 +1235,7 @@ describe('Goals DB service', () => {
         },
         {
           grantId: 2,
-          activityReportGoals: [
-            { activityReportId: 103, goalId: 5 },
-          ],
+          activityReportGoals: [{ activityReportId: 103, goalId: 5 }],
         },
       ];
 
@@ -1155,15 +1270,17 @@ describe('Goals DB service', () => {
 
       expect(Grant.findAll).toHaveBeenCalledWith({
         attributes: ['regionId', 'id'],
-        include: [{
-          attributes: ['id', 'grantId'],
-          model: Goal,
-          as: 'goals',
-          required: true,
-          where: {
-            id: mockGoalIds,
+        include: [
+          {
+            attributes: ['id', 'grantId'],
+            model: Goal,
+            as: 'goals',
+            required: true,
+            where: {
+              id: mockGoalIds,
+            },
           },
-        }],
+        ],
       });
 
       expect(result).toEqual([1, 2]);
@@ -1272,7 +1389,7 @@ describe('Goals DB service', () => {
             goalTemplateId: null,
           },
         ],
-        { individualHooks: true },
+        { individualHooks: true }
       );
     });
 
@@ -1280,9 +1397,7 @@ describe('Goals DB service', () => {
       const data = {
         selectedGrants: JSON.stringify([{ id: 1 }]),
         goalText: 'This is a test goal',
-        goalPrompts: [
-          { promptId: 1, fieldName: 'promptResponse1' },
-        ],
+        goalPrompts: [{ promptId: 1, fieldName: 'promptResponse1' }],
         promptResponse1: 'Response 1',
         useCuratedGoal: true,
       };
@@ -1292,7 +1407,10 @@ describe('Goals DB service', () => {
 
       await createMultiRecipientGoalsFromAdmin(data);
 
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Response 1' }]);
+      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(
+        [1],
+        [{ promptId: 1, response: 'Response 1' }]
+      );
     });
 
     it('should create an activity report when createReport is true', async () => {
@@ -1312,10 +1430,12 @@ describe('Goals DB service', () => {
 
       await createMultiRecipientGoalsFromAdmin(data);
 
-      expect(ActivityReport.create).toHaveBeenCalledWith(expect.objectContaining({
-        regionId: 1,
-        userId: 1,
-      }));
+      expect(ActivityReport.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          regionId: 1,
+          userId: 1,
+        })
+      );
       expect(ActivityReportGoal.bulkCreate).toHaveBeenCalled();
       expect(ActivityRecipient.bulkCreate).toHaveBeenCalled();
     });
@@ -1351,7 +1471,7 @@ describe('Goals DB service', () => {
           expect.objectContaining({ goalId: 3 }),
           expect.objectContaining({ goalId: 4 }),
         ]),
-        { individualHooks: true },
+        { individualHooks: true }
       );
     });
   });
@@ -1403,7 +1523,7 @@ describe('Goals DB service', () => {
       const result = await setActivityReportGoalAsActivelyEdited();
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('unable to update ActivityReportGoals table'),
+        expect.stringContaining('unable to update ActivityReportGoals table')
       );
 
       expect(result).toEqual([]);
@@ -1416,20 +1536,22 @@ describe('Goals DB service', () => {
     });
 
     it('should find an objective when status is COMPLETE and objectiveIds are provided', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.COMPLETE,
-          },
-        ],
-        name: 'Test Goal Name',
-      }];
+      const goals = [
+        {
+          ids: [1],
+          grantId: 1,
+          recipientId: 1,
+          regionId: 14,
+          objectives: [
+            {
+              id: 2,
+              title: 'This is a test objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          ],
+          name: 'Test Goal Name',
+        },
+      ];
 
       const mockGoal = {
         id: 1,
@@ -1472,15 +1594,7 @@ describe('Goals DB service', () => {
       const result = await createOrUpdateGoals(goals);
 
       expect(Objective.findOne).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          'title',
-          'status',
-          'goalId',
-          'onApprovedAR',
-          'onAR',
-          'rtrOrder',
-        ],
+        attributes: ['id', 'title', 'status', 'goalId', 'onApprovedAR', 'onAR', 'rtrOrder'],
         where: {
           id: [2],
           goalId: 1,
@@ -1492,21 +1606,23 @@ describe('Goals DB service', () => {
     });
 
     it('should update the source if provided and different from existing', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.COMPLETE,
-          },
-        ],
-        name: 'Test Goal Name',
-        source: 'Test Source',
-      }];
+      const goals = [
+        {
+          ids: [1],
+          grantId: 1,
+          recipientId: 1,
+          regionId: 14,
+          objectives: [
+            {
+              id: 2,
+              title: 'This is a test objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          ],
+          name: 'Test Goal Name',
+          source: 'Test Source',
+        },
+      ];
 
       const mockGoal = {
         id: 1,
@@ -1523,22 +1639,24 @@ describe('Goals DB service', () => {
       expect(mockGoal.set).toHaveBeenCalledWith({ source: 'Test Source' });
       expect(mockGoal.save).toHaveBeenCalled();
     });
-    it('should set the source if it is different from the new goal\'s current source', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.COMPLETE,
-          },
-        ],
-        name: 'Test Goal Name',
-        source: 'Updated Source',
-      }];
+    it("should set the source if it is different from the new goal's current source", async () => {
+      const goals = [
+        {
+          ids: [1],
+          grantId: 1,
+          recipientId: 1,
+          regionId: 14,
+          objectives: [
+            {
+              id: 2,
+              title: 'This is a test objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          ],
+          name: 'Test Goal Name',
+          source: 'Updated Source',
+        },
+      ];
 
       const mockGoal = {
         id: 1,
@@ -1557,22 +1675,24 @@ describe('Goals DB service', () => {
     });
 
     it('should set the goalTemplateId if isCurated is true, newGoal.goalTemplateId is missing, and goalTemplateId is provided', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.COMPLETE,
-          },
-        ],
-        name: 'Test Goal Name',
-        isCurated: true,
-        goalTemplateId: 5,
-      }];
+      const goals = [
+        {
+          ids: [1],
+          grantId: 1,
+          recipientId: 1,
+          regionId: 14,
+          objectives: [
+            {
+              id: 2,
+              title: 'This is a test objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          ],
+          name: 'Test Goal Name',
+          isCurated: true,
+          goalTemplateId: 5,
+        },
+      ];
 
       const mockGoal = {
         id: 1,
@@ -1591,22 +1711,24 @@ describe('Goals DB service', () => {
     });
 
     it('should call setFieldPromptsForCuratedTemplate if isCurated is true and prompts are provided', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.COMPLETE,
-          },
-        ],
-        name: 'Test Goal Name',
-        isCurated: true,
-        prompts: [{ promptId: 1, response: 'Test Response' }],
-      }];
+      const goals = [
+        {
+          ids: [1],
+          grantId: 1,
+          recipientId: 1,
+          regionId: 14,
+          objectives: [
+            {
+              id: 2,
+              title: 'This is a test objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          ],
+          name: 'Test Goal Name',
+          isCurated: true,
+          prompts: [{ promptId: 1, response: 'Test Response' }],
+        },
+      ];
 
       const mockGoal = {
         id: 1,
@@ -1622,7 +1744,10 @@ describe('Goals DB service', () => {
 
       await createOrUpdateGoals(goals);
 
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Test Response' }]);
+      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(
+        [1],
+        [{ promptId: 1, response: 'Test Response' }]
+      );
     });
   });
 
@@ -1637,10 +1762,7 @@ describe('Goals DB service', () => {
         name: 'Test Goal Name',
         status: 'In Progress',
         createdVia: 'admin',
-        statusChanges: [
-          { oldStatus: 'Not Started' },
-          { oldStatus: 'In Progress' },
-        ],
+        statusChanges: [{ oldStatus: 'Not Started' }, { oldStatus: 'In Progress' }],
         grant: { regionId: 1 },
         objectives: [],
       };
@@ -1688,10 +1810,7 @@ describe('Goals DB service', () => {
       const goalIds = [1, 2];
       const objectiveIds = [10, 11];
 
-      Objective.findAll = jest.fn().mockResolvedValue([
-        { id: 10 },
-        { id: 11 },
-      ]);
+      Objective.findAll = jest.fn().mockResolvedValue([{ id: 10 }, { id: 11 }]);
 
       Objective.destroy = jest.fn().mockResolvedValue(2);
       Goal.destroy = jest.fn().mockResolvedValue(2);
@@ -1739,9 +1858,7 @@ describe('Goals DB service', () => {
         {
           id: 1,
           status: 'Inactive',
-          grantRelationships: [
-            { activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 },
-          ],
+          grantRelationships: [{ activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 }],
         },
       ];
 
@@ -1758,9 +1875,7 @@ describe('Goals DB service', () => {
         {
           id: 2,
           status: 'Inactive',
-          grantRelationships: [
-            { activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 },
-          ],
+          grantRelationships: [{ activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 }],
         },
       ];
 
@@ -1797,9 +1912,7 @@ describe('Goals DB service', () => {
         {
           id: 2,
           status: 'Inactive',
-          grantRelationships: [
-            { activeGrant: { id: 3, status: 'Inactive' }, activeGrantId: 3 },
-          ],
+          grantRelationships: [{ activeGrant: { id: 3, status: 'Inactive' }, activeGrantId: 3 }],
         },
       ];
 

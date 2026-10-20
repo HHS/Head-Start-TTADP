@@ -1,24 +1,29 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
-import TTAHistory from '../TTAHistory';
-import { formatDateRange } from '../../../../utils';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import UserContext from '../../../../UserContext';
+import { formatDateRange } from '../../../../utils';
+import TTAHistory from '../TTAHistory';
+
+const SESSION_KEY = 'ttahistory-filters-v2-401';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 describe('Recipient Record - TTA History', () => {
   const overviewResponse = {
-    numReports: '1', numGrants: '1', inPerson: '0', sumDuration: '1.0', numParticipants: '1',
+    numReports: '1',
+    numGrants: '1',
+    inPerson: '0',
+    sumDuration: '1.0',
+    numParticipants: '1',
+    numSessions: '3',
   };
 
   const tableResponse = {
@@ -28,13 +33,16 @@ describe('Recipient Record - TTA History', () => {
 
   const user = {
     homeRegionId: 14,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }, {
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
 
   const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
@@ -43,24 +51,49 @@ describe('Recipient Record - TTA History', () => {
         <Router history={memoryHistory}>
           <TTAHistory recipientName={name} recipientId="401" regionId="1" />
         </Router>
-
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
   beforeEach(async () => {
-    const overviewUrl = `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    // Filters get reflected into the shared memoryHistory's URL; reset it so filters
+    // applied in one test don't leak into the next test's initial render.
+    memoryHistory.replace('/');
+
+    const ttaHistoryOverviewUrl = `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
     const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
-    fetchMock.get(overviewUrl, overviewResponse);
+    fetchMock.get(ttaHistoryOverviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
+    fetchMock.get(sessionReportsUrl, tableResponse);
 
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
+    fetchMock.get(
+      `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      []
+    );
+
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-tta-history-filters',
+      '<feed><entry><summary>Filter guidance</summary></entry></feed>',
+      { overwriteRoutes: false }
+    );
   });
 
   afterEach(() => {
     fetchMock.restore();
+    window.sessionStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem('ttahistory-filters-v2-401-trainingReportsTable-sorting');
+    window.sessionStorage.removeItem('ttahistory-filters-v2-999');
+    window.sessionStorage.removeItem('ttahistory-filters-v2-999-trainingReportsTable-sorting');
   });
 
   it('renders the TTA History page appropriately', async () => {
@@ -69,9 +102,18 @@ describe('Recipient Record - TTA History', () => {
     expect(overview).toBeTruthy();
   });
 
+  it('renders the TR sessions widget', async () => {
+    act(() => renderTTAHistory());
+    const trSessionsLabel = await screen.findByText('Training report sessions');
+    expect(trSessionsLabel).toBeTruthy();
+  });
+
   it('renders the activity reports table', async () => {
     renderTTAHistory();
-    const reports = await screen.findByText(/approved activity reports/i, { selector: 'h2' });
+    // Use exact match: the tableCaption is "Approved activity reports" (lowercase 'a');
+    // the ApprovedARAndTRByGoalCategory widget title starts with capital 'A' and is longer,
+    // so a case-sensitive exact query selects only the table header.
+    const reports = await screen.findByText('Approved activity reports', { selector: 'h2' });
     expect(reports).toBeInTheDocument();
   });
 
@@ -81,27 +123,197 @@ describe('Recipient Record - TTA History', () => {
     expect(reports).toBeNull();
   });
 
+  it('fetches approvedARAndTRByGoalCategory with the same page filters as other widgets', async () => {
+    act(() => renderTTAHistory());
+    // withWidgetData fires on mount; the beforeEach mock registers the URL including
+    // startDate, region, and recipientId — confirm it was called.
+    const url = `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    expect(fetchMock.called(url)).toBe(true);
+  });
+
   it('combines filters appropriately', async () => {
     renderTTAHistory();
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', tableResponse);
-    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
-    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
-    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', overviewResponse);
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      tableResponse
+    );
+    fetchMock.get(
+      '/api/widgets/targetPopulationTable?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/frequencyGraph?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/ttaHistoryOverview?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      overviewResponse
+    );
+    fetchMock.get(
+      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      []
+    );
 
     await act(async () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
-      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role');
-      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
-      const specialistSelect = await screen.findByLabelText('Select specialist role to filter by');
-      await selectEvent.select(specialistSelect, ['Family Engagement Specialist (FES)', 'Grantee Specialist (GS)']);
-      const apply = await screen.findByRole('button', { name: /apply filters to recipient record data/i });
+      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'myReports');
+      userEvent.selectOptions(
+        await screen.findByRole('combobox', { name: 'condition' }),
+        "where I'm the"
+      );
+      const reportRolesSelect = await screen.findByLabelText('Select report roles to filter by');
+      await selectEvent.select(reportRolesSelect, ['AR creator']);
+      const apply = await screen.findByRole('button', {
+        name: /apply filters to recipient record data/i,
+      });
       userEvent.click(apply);
     });
 
     const button = await screen.findByRole('button', {
-      name: /this button removes the filter: specialist roles is family engagement specialist, grantee specialist/i,
+      name: /this button removes the filter: my reports where i'm the ar creator/i,
     });
 
     expect(button).toBeVisible();
+  });
+
+  it('fetches training reports with the same active page filters as other widgets', async () => {
+    renderTTAHistory();
+    const filteredSessionReportsUrl =
+      '/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401';
+    fetchMock.get(filteredSessionReportsUrl, tableResponse);
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      tableResponse
+    );
+    fetchMock.get(
+      '/api/widgets/targetPopulationTable?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/frequencyGraph?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/ttaHistoryOverview?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      overviewResponse
+    );
+    fetchMock.get(
+      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
+      []
+    );
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'myReports');
+      userEvent.selectOptions(
+        await screen.findByRole('combobox', { name: 'condition' }),
+        "where I'm the"
+      );
+      const reportRolesSelect = await screen.findByLabelText('Select report roles to filter by');
+      await selectEvent.select(reportRolesSelect, ['AR creator']);
+      const apply = await screen.findByRole('button', {
+        name: /apply filters to recipient record data/i,
+      });
+      userEvent.click(apply);
+    });
+
+    // Training reports table must fetch with the same filters applied to other widgets,
+    // not just recipientId/sort — guards against the table silently ignoring page filters.
+    await waitFor(() => expect(fetchMock.called(filteredSessionReportsUrl)).toBe(true));
+  });
+
+  it('strips stale role and activityReportGoalResponse filters from session storage before fetching', async () => {
+    const defaultDateDecoded = formatDateRange({ yearToDate: true, forDateTime: true });
+    window.sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify([
+        { id: 'stale-1', topic: 'role', condition: 'is', query: ['Grantee Specialist'] },
+        {
+          id: 'stale-2',
+          topic: 'activityReportGoalResponse',
+          condition: 'is',
+          query: ['Agree'],
+        },
+        { id: 'valid-1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded },
+      ])
+    );
+
+    act(() => renderTTAHistory());
+
+    expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
+    expect(fetchMock.called(/activityReportGoalResponse\.in\[\]/)).toBe(false);
+  });
+
+  it('scopes training reports sort to the current recipientId and does not bleed across recipients', async () => {
+    const defaultDateDecoded = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    // Store a non-default sort for recipient 401
+    window.sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify([
+        { id: 'f1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded },
+      ])
+    );
+    window.sessionStorage.setItem(
+      'ttahistory-filters-v2-401-trainingReportsTable-sorting',
+      JSON.stringify({ sortBy: 'Session_Name', direction: 'asc', activePage: 2, offset: 10 })
+    );
+
+    // Register expected URLs for a different recipient (999) using the default sort
+    const defaultSessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=999&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`;
+    fetchMock.get(defaultSessionReportsUrl, { rows: [], count: 0 });
+    fetchMock.get(
+      `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      overviewResponse
+    );
+    fetchMock.get(
+      `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      tableResponse
+    );
+    fetchMock.get(
+      `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,
+      []
+    );
+
+    await act(async () => {
+      render(
+        <UserContext.Provider value={{ user }}>
+          <Router history={memoryHistory}>
+            <TTAHistory recipientName="Other Recipient" recipientId="999" regionId="1" />
+          </Router>
+        </UserContext.Provider>
+      );
+    });
+
+    // Recipient 999 should use the default sort, not the sort stored for recipient 401
+    await waitFor(() => expect(fetchMock.called(defaultSessionReportsUrl)).toBe(true));
+    expect(fetchMock.called(/sortBy=Session_Name.*recipientId=999/)).toBe(false);
+  });
+
+  it('strips stale role filter from URL params before fetching', async () => {
+    const staleHistory = createMemoryHistory();
+    staleHistory.push({ search: '?role.in[]=Grantee%20Specialist' });
+
+    // The beforeEach mocks only the clean startDate URL; if a role.in[] request
+    // were sent, fetchMock would throw on the unregistered URL.
+    act(() => {
+      render(
+        <UserContext.Provider value={{ user }}>
+          <Router history={staleHistory}>
+            <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
+          </Router>
+        </UserContext.Provider>
+      );
+    });
+
+    expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
   });
 });

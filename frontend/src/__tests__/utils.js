@@ -1,11 +1,14 @@
 import '@testing-library/jest-dom';
 import moment from 'moment';
 import {
-  queryStringToFilters,
+  decodeQueryParam,
   filtersToQueryString,
   formatDateRange,
-  decodeQueryParam,
   isInternalGovernmentLink,
+  isValidDate,
+  parseDateStrict,
+  queryStringToFilters,
+  SUPPORTED_DATE_FORMATS,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -13,9 +16,36 @@ describe('queryStringToFilters', () => {
     const str = 'region.in[]=14&startDate.win=2021/11/13-2021/12/13&gibberish';
     const filters = queryStringToFilters(str);
     expect(filters.length).toBe(2);
-    expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(['region', 'startDate'].sort());
-    expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(['is', 'is within'].sort());
-    expect(filters.map((filter) => filter.query).sort()).toStrictEqual([['14'], '2021/11/13-2021/12/13'].sort());
+    expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(
+      ['region', 'startDate'].sort()
+    );
+    expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(
+      ['is', 'is within'].sort()
+    );
+    expect(filters.map((filter) => filter.query).sort()).toStrictEqual(
+      [['14'], '2021/11/13-2021/12/13'].sort()
+    );
+  });
+
+  it('merges multiple params with the same topic and condition into one filter', () => {
+    const str =
+      'findingCategory.in[]=Billing&findingCategory.in[]=classroom&startDate.win=2021/11/13-2021/12/13';
+    const filters = queryStringToFilters(str);
+    expect(filters.length).toBe(2);
+    const categoryFilter = filters.find((f) => f.topic === 'findingCategory');
+    expect(categoryFilter.condition).toBe('is');
+    expect(categoryFilter.query).toStrictEqual(['Billing', 'classroom']);
+  });
+
+  it('round-trips a combined array filter through filtersToQueryString', () => {
+    const original = [
+      { id: 'abc', topic: 'findingCategory', condition: 'is', query: ['Billing', 'classroom'] },
+    ];
+    const str = filtersToQueryString(original);
+    const parsed = queryStringToFilters(str);
+    expect(parsed.length).toBe(1);
+    expect(parsed[0].topic).toBe('findingCategory');
+    expect(parsed[0].query).toStrictEqual(['Billing', 'classroom']);
   });
 });
 
@@ -111,6 +141,34 @@ describe('filtersToQueryString', () => {
     const str = filtersToQueryString(filters, 'YOLO');
     expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
+
+  it('repairs a display-formatted date range before strict validation and serialization', () => {
+    const filters = [
+      {
+        id: 'legacy-date',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '11/13/2021-12/13/2021',
+      },
+    ];
+
+    expect(filtersToQueryString(filters)).toBe(
+      `startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`
+    );
+  });
+
+  it('does not serialize invalid or partially valid date ranges', () => {
+    const filters = [
+      {
+        id: 'invalid-date',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-not-a-date',
+      },
+    ];
+
+    expect(filtersToQueryString(filters)).toBe('');
+  });
 });
 
 describe('formatDateRange', () => {
@@ -164,5 +222,82 @@ describe('formatDateRange', () => {
   it('returns a blank string if nothing is passed in', () => {
     const str = formatDateRange();
     expect(str).toBe('');
+  });
+});
+
+describe('isValidDate', () => {
+  /**
+   * ControlledDatePicker submits the typed text verbatim, so anything accepted
+   * here reaches the API. The backend accepts the same set via
+   * DISPLAY_DATE_FORMATS in src/constants.js — see the parity test in
+   * src/constants.test.js.
+   */
+  it('parses every supported format', () => {
+    SUPPORTED_DATE_FORMATS.forEach((format) => {
+      const value = moment('2026-01-02').format(format);
+      const parsed = isValidDate(value);
+
+      expect(parsed).not.toBeNull();
+      expect(parsed.format('MM/DD/YYYY')).toBe('01/02/2026');
+    });
+  });
+
+  // moment's strict M/D tokens reject a leading zero, so the zero-padded dotted
+  // form needs its own 'MM.DD.YYYY' entry in the list.
+  it.each(['01.02.2026', '01.02.26', '1.2.2026', '2026-01-02', '1/2/26'])('accepts %s', (value) => {
+    expect(isValidDate(value)).not.toBeNull();
+  });
+
+  it.each(['2026/01/02', '1-2-2026', '13/45/2026', '02/29/2025', 'not-a-date'])(
+    'rejects %s',
+    (value) => {
+      expect(isValidDate(value)).toBeNull();
+    }
+  );
+
+  it('returns null for empty values', () => {
+    expect(isValidDate('')).toBeNull();
+    expect(isValidDate(null)).toBeNull();
+    expect(isValidDate(undefined)).toBeNull();
+  });
+});
+describe('parseDateStrict', () => {
+  it('returns null for a falsy value', () => {
+    expect(parseDateStrict(null)).toBeNull();
+    expect(parseDateStrict('')).toBeNull();
+  });
+
+  it('returns null for an invalid date string', () => {
+    expect(parseDateStrict('not-a-date')).toBeNull();
+  });
+
+  it('parses YYYY-MM-DD dates', () => {
+    const parsed = parseDateStrict('2026-04-14');
+    expect(parsed).not.toBeNull();
+    expect(parsed.format('YYYY-MM-DD')).toBe('2026-04-14');
+  });
+
+  it('parses MM/DD/YYYY dates', () => {
+    const parsed = parseDateStrict('04/14/2026');
+    expect(parsed).not.toBeNull();
+    expect(parsed.format('MM/DD/YYYY')).toBe('04/14/2026');
+  });
+
+  it('parses ISO 8601 dates', () => {
+    const parsed = parseDateStrict('2026-04-14T00:00:00.000Z');
+    expect(parsed).not.toBeNull();
+    expect(parsed.toISOString()).toBe('2026-04-14T00:00:00.000Z');
+  });
+
+  it("does not fall back to Moment's deprecated JS Date parsing", () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(parseDateStrict('not-a-date')).toBeNull();
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it('does not shift the calendar day when formatting a UTC ISO 8601 date in a timezone behind UTC', () => {
+    const parsed = parseDateStrict('2026-04-14T00:00:00.000Z');
+    expect(parsed.format('MM/DD/YYYY')).toBe('04/14/2026');
   });
 });

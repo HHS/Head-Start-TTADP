@@ -1,18 +1,20 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { screen, render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import PaginationCard from '../PaginationCard';
 
 describe('PaginationCard', () => {
   const renderPaginationCard = (handlePageChange = () => {}, totalCount = 30, offSet = 10) => {
-    render(<PaginationCard
-      currentPage={2}
-      totalCount={totalCount}
-      offset={offSet}
-      perPage={10}
-      handlePageChange={handlePageChange}
-    />);
+    render(
+      <PaginationCard
+        currentPage={2}
+        totalCount={totalCount}
+        offset={offSet}
+        perPage={10}
+        handlePageChange={handlePageChange}
+      />
+    );
   };
 
   it('renders correctly', async () => {

@@ -1,10 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Loader from '../components/Loader';
 import { OverviewWidgetField } from './OverviewWidgetField';
 
-export function DashboardOverviewContainer({ fieldData, loading }) {
+export function DashboardOverviewContainer({ fieldData, loading, maxToolTipWidth }) {
   return (
     <Grid
       row
@@ -24,16 +24,19 @@ export function DashboardOverviewContainer({ fieldData, loading }) {
           route={
             field.route
               ? {
-                to: `/dashboards/${field.route}`,
-                label: 'Display details',
-                ariaLabel: field.ariaLabel,
-              }
+                  to: `/dashboards/${field.route}`,
+                  label: 'Display details',
+                  ariaLabel: field.ariaLabel,
+                }
               : null
           }
           filterApplicable={field.filterApplicable}
           iconSize={field.iconSize}
           tooltipText={field.tooltipText}
           showNoResults={field.showNoResults}
+          noResultsDrawerConfig={field.noResultsDrawerConfig}
+          maxToolTipWidth={maxToolTipWidth}
+          drawerTagName={field.drawerTagName}
         />
       ))}
     </Grid>
@@ -54,13 +57,21 @@ DashboardOverviewContainer.propTypes = {
       route: PropTypes.string,
       filterApplicable: PropTypes.bool,
       iconSize: PropTypes.string,
-    }),
+      drawerTagName: PropTypes.string,
+      noResultsDrawerConfig: PropTypes.shape({
+        title: PropTypes.string,
+        tagName: PropTypes.string,
+      }),
+      showNoResults: PropTypes.bool,
+    })
   ),
+  maxToolTipWidth: PropTypes.number,
 };
 
 DashboardOverviewContainer.defaultProps = {
   fieldData: [],
   loading: false,
+  maxToolTipWidth: null,
 };
 
 export default DashboardOverviewContainer;

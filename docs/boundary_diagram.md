@@ -25,6 +25,7 @@ Boundary(aws, "AWS GovCloud") {
         Container(worker_app, "<&layers> TTA Hub Worker Application", "NodeJS, Bull", "Perform background work and data processing")
         Container(similarity_api, "Similarity API", "Python", "AI application to identify similarity of text")
         Container(clamav, "File scanning API", "ClamAV", "Internal application for scanning user uploads\n\n docker: ajilaag/clamav-rest:20211026")
+        Container(maintenance_app, "Maintenance Page", "Static", "Static page served in place of the TTA Hub during incident response or blocking maintenance. The primary hostname is remapped to this application so users cannot reach the live site while work is in progress.")
         Container(www_jwks, ".well-known/jwks.json (JWKS)", "HTTP JSON", "Publishes public JWK (kid) for token client-auth verification")
       }
       Boundary(auto, "Automation") {
@@ -55,9 +56,6 @@ Boundary(aws, "AWS GovCloud") {
       }
       Boundary(cloudgov_services_dev, "Services - Dev") {
         ContainerDb(dev_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
-      }
-      Boundary(cloudgov_services_sandbox, "Services - Sandbox") {
-        ContainerDb(sandbox_db, "PostgreSQL Database", "AWS RDS", "Contains PII-free content and configuration for the TTA Hub testing") #violet
       }
     }
   }
@@ -91,7 +89,6 @@ Rel(auto_proc_backup, auto_s3, "store", "aws s3")
 Rel(auto_s3, auto_proc_restore, "retrieve", "aws s3")
 Rel(auto_proc_restore, staging_db, "restore", "psql")
 Rel(auto_proc_restore, dev_db, "restore", "psql")
-Rel(auto_proc_restore, sandbox_db, "restore", "psql")
 
 Rel(developer, newrelic, "Manage performance & logging", "https GET/POST/PUT/DELETE (443)")
 Rel(www_app, newrelic, "reports telemetry", "tcp (443)")
@@ -106,6 +103,7 @@ end note
 Rel(www_s3, personnel, "download file attachments", "https GET (443)")
 Rel(aws_alb, cloudgov_router, "proxies requests", "https GET/POST/PUT/DELETE, secure websockets - WSS (443)")
 Rel(cloudgov_router, www_app, "proxies requests", "https GET/POST/PUT/DELETE, secure websockets - WSS (443)")
+Rel(cloudgov_router, maintenance_app, "proxies requests while the primary hostname is remapped for maintenance", "https GET (443)")
 Rel(worker_app, clamav, "scans files", "https POST (9443)")
 Rel(worker_app, AWS_SES_SMTP_Server, "notifies users", "port 587")
 Rel(AWS_SES_SMTP_Server, AWS_SNS, "notifies admin")

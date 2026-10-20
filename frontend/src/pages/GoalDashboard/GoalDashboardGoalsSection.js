@@ -1,0 +1,489 @@
+import { Alert, Dropdown, Label } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { useLocation } from 'react-router-dom';
+import PaginationCard from '../../components/PaginationCard';
+import WidgetContainer from '../../components/WidgetContainer';
+import WidgetContainerSubtitle from '../../components/WidgetContainer/WidgetContainerSubtitle';
+import { fetchGoalDashboardGoals, fetchGoalDashboardGoalsCsvByIds } from '../../fetchers/goals';
+import useFetch from '../../hooks/useFetch';
+import { blobToCsvDownload, filtersToQueryString } from '../../utils';
+import GoalDashboardGoalCards from './GoalDashboardGoalCards';
+import './GoalDashboardGoalsSection.css';
+
+const DEFAULT_PER_PAGE = 10;
+const MAX_PER_PAGE = 50;
+
+export const GOAL_DASHBOARD_SORT_OPTIONS = [
+  { value: 'createdOn-desc', label: 'Date added (newest to oldest)' },
+  { value: 'createdOn-asc', label: 'Date added (oldest to newest)' },
+  { value: 'goalStatus-asc', label: 'Goal status (not started first)' },
+  { value: 'goalStatus-desc', label: 'Goal status (closed first)' },
+  { value: 'goalCategory-asc', label: 'Goal category (A-Z)' },
+  { value: 'goalCategory-desc', label: 'Goal category (Z-A)' },
+];
+
+const DEFAULT_SORT_CONFIG = {
+  sortBy: 'goalStatus',
+  direction: 'asc',
+  activePage: 1,
+  offset: 0,
+};
+
+const VALID_SORT_KEYS = new Set(['createdOn', 'goalStatus', 'goalCategory']);
+const VALID_DIRECTIONS = new Set(['asc', 'desc']);
+
+const normalizePerPage = (value) => {
+  const parsedValue = parseInt(String(value), DECIMAL_BASE);
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    return DEFAULT_PER_PAGE;
+  }
+
+  return Math.min(parsedValue, MAX_PER_PAGE);
+};
+
+const normalizeSelectedGoalIds = (value) =>
+  [value]
+    .flat()
+    .map((id) => parseInt(String(id), DECIMAL_BASE))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+const sameSelectedGoalIds = (currentIds, nextIds) => {
+  if (currentIds.length !== nextIds.length) {
+    return false;
+  }
+
+  const sortedCurrentIds = [...currentIds].sort((left, right) => left - right);
+  const sortedNextIds = [...nextIds].sort((left, right) => left - right);
+
+  return sortedCurrentIds.every((id, index) => id === sortedNextIds[index]);
+};
+
+const normalizeSortConfig = (value, perPage) => {
+  const candidateSortConfig = value || {};
+  const sortBy = VALID_SORT_KEYS.has(candidateSortConfig.sortBy)
+    ? candidateSortConfig.sortBy
+    : DEFAULT_SORT_CONFIG.sortBy;
+  const direction = VALID_DIRECTIONS.has(candidateSortConfig.direction)
+    ? candidateSortConfig.direction
+    : DEFAULT_SORT_CONFIG.direction;
+  const activePage = Math.max(
+    parseInt(
+      String(candidateSortConfig.activePage || DEFAULT_SORT_CONFIG.activePage),
+      DECIMAL_BASE
+    ) || DEFAULT_SORT_CONFIG.activePage,
+    1
+  );
+  const parsedOffset = parseInt(String(candidateSortConfig.offset), DECIMAL_BASE);
+  const offset =
+    Number.isInteger(parsedOffset) && parsedOffset >= 0 ? parsedOffset : (activePage - 1) * perPage;
+
+  return {
+    sortBy,
+    direction,
+    activePage,
+    offset,
+  };
+};
+
+const parseSortValue = (value) => {
+  const directionSeparatorIndex = value.lastIndexOf('-');
+
+  if (directionSeparatorIndex === -1) {
+    return {
+      sortBy: value,
+      direction: 'asc',
+    };
+  }
+
+  return {
+    sortBy: value.slice(0, directionSeparatorIndex),
+    direction: value.slice(directionSeparatorIndex + 1),
+  };
+};
+
+export const buildGoalDashboardGoalsQuery = ({
+  direction,
+  filters = [],
+  format,
+  offset,
+  perPage,
+  refreshKey = 0,
+  sortBy,
+}) => {
+  const params = new URLSearchParams();
+  params.set('sortBy', sortBy);
+  params.set('direction', direction);
+  params.set('skipCache', 'true');
+
+  if (typeof offset === 'number') {
+    params.set('offset', offset);
+  }
+
+  if (typeof perPage === 'number') {
+    params.set('perPage', perPage);
+  }
+
+  if (refreshKey > 0) {
+    params.set('_refresh', refreshKey);
+  }
+
+  if (format) {
+    params.set('format', format);
+  }
+
+  const filterQueryString = filtersToQueryString(filters);
+  return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
+};
+
+function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
+  const location = useLocation();
+  const initialDashboardState = location.state?.goalDashboardState || {};
+  const initialSelectedGoalIds = React.useMemo(
+    () => normalizeSelectedGoalIds(initialDashboardState.selectedGoalIds),
+    [initialDashboardState.selectedGoalIds]
+  );
+  const [perPage, setPerPage] = React.useState(() =>
+    normalizePerPage(initialDashboardState.perPage)
+  );
+  const [sortConfig, setSortConfig] = React.useState(() =>
+    normalizeSortConfig(
+      initialDashboardState.sortConfig,
+      normalizePerPage(initialDashboardState.perPage)
+    )
+  );
+  const [selectedGoalIds, setSelectedGoalIds] = React.useState(() =>
+    normalizeSelectedGoalIds(initialDashboardState.selectedGoalIds)
+  );
+  const [selectionReady, setSelectionReady] = React.useState(
+    () => initialSelectedGoalIds.length === 0
+  );
+  const [exportMode, setExportMode] = React.useState('');
+  const [exportError, setExportError] = React.useState('');
+  const [refreshKey, setRefreshKey] = React.useState(0);
+
+  React.useEffect(() => {
+    setSelectionReady(initialSelectedGoalIds.length === 0);
+  }, [initialSelectedGoalIds.length]);
+  const dashboardBackLinkState = React.useMemo(
+    () => ({
+      backLinkTo: {
+        pathname: '/dashboards/goal-dashboard',
+        state: {
+          goalDashboardState: {
+            perPage,
+            sortConfig,
+          },
+        },
+      },
+      backLinkText: 'Back to Goal Dashboard',
+    }),
+    [perPage, sortConfig]
+  );
+  const goalsQuery = React.useMemo(() => {
+    return buildGoalDashboardGoalsQuery({
+      sortBy: sortConfig.sortBy,
+      direction: sortConfig.direction,
+      offset: sortConfig.offset,
+      perPage,
+      refreshKey,
+      filters,
+    });
+  }, [filters, perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
+
+  const {
+    data: dashboardGoals,
+    setData: setDashboardGoals,
+    error: dashboardGoalsError,
+    loading: dashboardGoalsLoading,
+  } = useFetch(
+    null,
+    () => fetchGoalDashboardGoals(goalsQuery),
+    [goalsQuery],
+    'Unable to fetch goal dashboard goals'
+  );
+
+  // Show cards whenever we have data, even if a subsequent refetch errored.
+  // The error alert is rendered separately above the cards. This preserves
+  // optimistic state (e.g. after a delete) when a backfill refetch fails.
+  const hasDashboardGoals = Boolean(dashboardGoals);
+  const goalsCount = hasDashboardGoals ? dashboardGoals.count : 0;
+  const goalRows = hasDashboardGoals ? dashboardGoals.goalRows || [] : [];
+  const allGoalIds = hasDashboardGoals ? dashboardGoals.allGoalIds || [] : [];
+  const maxPage = React.useMemo(
+    () => Math.max(Math.ceil(goalsCount / perPage), 1),
+    [goalsCount, perPage]
+  );
+
+  const handleSortChange = (event) => {
+    const { sortBy, direction } = parseSortValue(event.target.value);
+    setSortConfig({
+      sortBy,
+      direction,
+      activePage: 1,
+      offset: 0,
+    });
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      activePage: pageNumber,
+      offset: (pageNumber - 1) * perPage,
+    }));
+  };
+
+  const handlePerPageChange = (event) => {
+    const nextPerPage = normalizePerPage(event.target.value);
+    setPerPage(nextPerPage);
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      activePage: 1,
+      offset: 0,
+    }));
+  };
+
+  const handleGoalDeleted = (deletedGoalIds) => {
+    setDashboardGoals((previousDashboardGoals) => {
+      const goalIdsToDelete = new Set(deletedGoalIds);
+      const previousRows = previousDashboardGoals?.goalRows || [];
+      const previousAllGoalIds = previousDashboardGoals?.allGoalIds || [];
+      const nextRows = previousRows.filter((goal) => !goalIdsToDelete.has(goal.id));
+      const nextAllGoalIds = previousAllGoalIds.filter((goalId) => !goalIdsToDelete.has(goalId));
+
+      return {
+        ...previousDashboardGoals,
+        count: Math.max((previousDashboardGoals?.count || 0) - deletedGoalIds.length, 0),
+        goalRows: nextRows,
+        allGoalIds: nextAllGoalIds,
+      };
+    });
+
+    // If there are more goals beyond the current page after deletion, refetch to backfill.
+    // The page-collapse case (activePage > maxPage) is handled by the useEffect below.
+    const nextCount = Math.max((dashboardGoals?.count || 0) - deletedGoalIds.length, 0);
+    const nextRowCount = (dashboardGoals?.goalRows?.length || 0) - deletedGoalIds.length;
+    if (nextCount > sortConfig.offset + nextRowCount) {
+      setRefreshKey((k) => k + 1);
+    }
+  };
+
+  const fetchAllGoalIds = React.useCallback(async () => {
+    const params = new URLSearchParams(goalsQuery);
+    params.set('includeAllGoalIds', 'true');
+    params.set('skipCache', 'true');
+
+    const nextDashboardGoals = await fetchGoalDashboardGoals(params.toString());
+    const nextAllGoalIds = nextDashboardGoals?.allGoalIds || [];
+    setDashboardGoals((previousDashboardGoals) => ({
+      ...previousDashboardGoals,
+      allGoalIds: nextAllGoalIds,
+    }));
+    return nextAllGoalIds;
+  }, [goalsQuery, setDashboardGoals]);
+
+  React.useEffect(() => {
+    if (!hasDashboardGoals || sortConfig.activePage <= maxPage) {
+      return;
+    }
+
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      activePage: maxPage,
+      offset: (maxPage - 1) * perPage,
+    }));
+  }, [hasDashboardGoals, maxPage, perPage, sortConfig.activePage]);
+
+  const handleSelectionChange = React.useCallback((nextSelectedGoalIds) => {
+    setSelectedGoalIds((previousSelectedGoalIds) =>
+      sameSelectedGoalIds(previousSelectedGoalIds, nextSelectedGoalIds)
+        ? previousSelectedGoalIds
+        : nextSelectedGoalIds
+    );
+  }, []);
+
+  const handleSelectionReadyChange = React.useCallback((nextSelectionReady) => {
+    setSelectionReady(nextSelectionReady);
+  }, []);
+
+  const exportCsv = React.useCallback(
+    async (goalIds = [], mode = 'table') => {
+      setExportError('');
+      setExportMode(mode);
+
+      try {
+        const blob = await fetchGoalDashboardGoalsCsvByIds(
+          buildGoalDashboardGoalsQuery({
+            sortBy: sortConfig.sortBy,
+            direction: sortConfig.direction,
+            filters,
+            format: 'csv',
+          }),
+          goalIds
+        );
+        blobToCsvDownload(blob, 'goal-dashboard-goals.csv');
+      } catch (_error) {
+        setExportError('Unable to export goal dashboard goals. Please try again.');
+      } finally {
+        setExportMode('');
+      }
+    },
+    [filters, sortConfig.direction, sortConfig.sortBy]
+  );
+
+  const handleExportTable = React.useCallback(async () => {
+    await exportCsv([], 'table');
+  }, [exportCsv]);
+
+  const handleExportSelected = React.useCallback(async () => {
+    if (!selectionReady || !selectedGoalIds.length) {
+      return;
+    }
+
+    await exportCsv(selectedGoalIds, 'selected');
+  }, [exportCsv, selectedGoalIds, selectionReady]);
+
+  const menuItems = React.useMemo(() => {
+    if (exportMode !== '') {
+      return [];
+    }
+
+    const items = [
+      {
+        label: 'Export table',
+        onClick: handleExportTable,
+      },
+    ];
+
+    if (selectionReady && selectedGoalIds.length) {
+      items.push({
+        label: 'Export selected',
+        onClick: handleExportSelected,
+      });
+    }
+
+    return items;
+  }, [exportMode, handleExportSelected, handleExportTable, selectedGoalIds.length, selectionReady]);
+
+  return (
+    <WidgetContainer
+      className="ttahub-goal-dashboard-goals maxw-full"
+      loading={dashboardGoalsLoading}
+      loadingLabel="Goal dashboard goals loading"
+      title="TTA goals and objectives"
+      subtitle={
+        <WidgetContainerSubtitle customCss="margin-0">
+          Data reflects standard goals created on or after {dataStartDateDisplay}.
+        </WidgetContainerSubtitle>
+      }
+      menuItems={menuItems}
+      showHeaderBorder={false}
+      titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
+    >
+      <div className="ttahub-goal-dashboard-goals__section padding-x-3 padding-top-2 padding-bottom-3 minh-card">
+        <div className="ttahub-goal-dashboard-goals__controls display-flex flex-justify flex-align-center flex-gap-2 minh-5">
+          <div className="ttahub-goal-dashboard-goals__sort-control display-flex flex-align-center">
+            <Label
+              htmlFor="goal-dashboard-goals-sort"
+              className="margin-y-0 margin-right-1 text-no-wrap"
+            >
+              Sort by
+            </Label>
+            <Dropdown
+              id="goal-dashboard-goals-sort"
+              name="goal-dashboard-goals-sort"
+              className="ttahub-goal-dashboard-goals__sort-select margin-top-0"
+              value={`${sortConfig.sortBy}-${sortConfig.direction}`}
+              onChange={handleSortChange}
+            >
+              {GOAL_DASHBOARD_SORT_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Dropdown>
+          </div>
+          <div className="ttahub-goal-dashboard-goals__per-page-control display-flex flex-align-center">
+            <Label
+              htmlFor="goal-dashboard-goals-per-page"
+              className="margin-y-0 margin-right-1 text-no-wrap"
+            >
+              Show
+            </Label>
+            <Dropdown
+              id="goal-dashboard-goals-per-page"
+              name="goal-dashboard-goals-per-page"
+              className="ttahub-goal-dashboard-goals__per-page-select margin-top-0"
+              value={perPage}
+              onChange={handlePerPageChange}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </Dropdown>
+          </div>
+        </div>
+        {dashboardGoalsError && (
+          <Alert type="error" role="alert" className="margin-top-3">
+            {dashboardGoalsError}
+          </Alert>
+        )}
+        {exportError && (
+          <Alert type="error" role="alert" className="margin-top-3">
+            {exportError}
+          </Alert>
+        )}
+        {hasDashboardGoals && (
+          <GoalDashboardGoalCards
+            goals={goalRows}
+            goalsCount={goalsCount}
+            allGoalIds={allGoalIds}
+            onGoalDeleted={handleGoalDeleted}
+            onSelectAllGoals={fetchAllGoalIds}
+            backLinkState={dashboardBackLinkState}
+            initialSelectedGoalIds={initialSelectedGoalIds}
+            onSelectionChange={handleSelectionChange}
+            onSelectionReadyChange={handleSelectionReadyChange}
+          />
+        )}
+        {hasDashboardGoals && goalsCount > 0 && (
+          <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
+            <PaginationCard
+              totalCount={goalsCount}
+              currentPage={sortConfig.activePage}
+              offset={sortConfig.offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+              accessibleLandmarkName="TTA goals and objectives pagination"
+              paginationClassName="padding-x-1 margin-0"
+            />
+          </div>
+        )}
+      </div>
+    </WidgetContainer>
+  );
+}
+
+GoalDashboardGoalsSection.propTypes = {
+  dataStartDateDisplay: PropTypes.string.isRequired,
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.number,
+      ]),
+    })
+  ),
+};
+
+GoalDashboardGoalsSection.defaultProps = {
+  filters: [],
+};
+
+export default GoalDashboardGoalsSection;

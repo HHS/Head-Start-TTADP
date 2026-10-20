@@ -1,13 +1,12 @@
 /* eslint-disable import/prefer-default-export */
+
+import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
-import {
-  DECIMAL_BASE,
-} from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
+import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 
 const namespace = 'SERVICE:CITATIONS';
 
@@ -19,7 +18,19 @@ export const getTextByCitation = async (req, res) => {
     const { citationIds } = req.query;
 
     // Get the citations for the grant.
-    const citations = await textByCitation([citationIds].flat());
+    const citationIdsArray = (() => {
+      if (Array.isArray(citationIds)) {
+        return citationIds;
+      }
+
+      if (citationIds && typeof citationIds === 'object') {
+        return Object.values(citationIds);
+      }
+
+      return citationIds === undefined ? [] : [citationIds];
+    })();
+
+    const citations = await textByCitation(citationIdsArray.flat());
 
     // Return the text
     res.status(httpCodes.OK).send(citations);

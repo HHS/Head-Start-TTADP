@@ -46,7 +46,9 @@ jest.mock('../../models', () => ({
 jest.mock('../../logger', () => ({
   auditLogger: {
     error: jest.fn(),
+    info: jest.fn(),
     log: jest.fn(),
+    warn: jest.fn(),
   },
   logger: {
     info: jest.fn(),
@@ -81,7 +83,7 @@ describe('Maintenance Queue', () => {
       const error = new Error('test-error');
       onFailedMaintenance(job, error);
       expect(auditLogger.error).toHaveBeenCalledWith(
-        `job ${job.name} failed for ${job.data.type} with error ${error}`,
+        `job ${job.name} failed for ${job.data.type} with error ${error}`
       );
     });
   });
@@ -92,7 +94,7 @@ describe('Maintenance Queue', () => {
       const result = 'test-result';
       onCompletedMaintenance(job, result);
       expect(logger.info).toHaveBeenCalledWith(
-        `Successfully performed ${job.name} maintenance for ${job.data?.type}`,
+        `Successfully performed ${job.name} maintenance for ${job.data?.type}`
       );
     });
 
@@ -101,7 +103,7 @@ describe('Maintenance Queue', () => {
       const result = null;
       onCompletedMaintenance(job, result);
       expect(logger.error).toHaveBeenCalledWith(
-        `Failed to perform ${job.name} maintenance for ${job.data?.type}`,
+        `Failed to perform ${job.name} maintenance for ${job.data?.type}`
       );
     });
   });
@@ -154,18 +156,10 @@ describe('Maintenance Queue', () => {
       expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
         1,
         MAINTENANCE_CATEGORY.MAINTENANCE,
-        expect.any(Function),
+        expect.any(Function)
       );
-      expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
-        2,
-        category1,
-        expect.any(Function),
-      );
-      expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
-        3,
-        category2,
-        expect.any(Function),
-      );
+      expect(maintenanceQueue.process).toHaveBeenNthCalledWith(2, category1, expect.any(Function));
+      expect(maintenanceQueue.process).toHaveBeenNthCalledWith(3, category2, expect.any(Function));
     });
   });
 
@@ -189,7 +183,14 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
       await enqueueMaintenanceJob({ category, data });
-      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
+      expect(maintenanceQueue.add).toHaveBeenCalledWith(
+        category,
+        data,
+        expect.objectContaining({
+          removeOnComplete: 5,
+          removeOnFail: 10,
+        })
+      );
     });
 
     it('should default data to {} if not provided', async () => {
@@ -202,14 +203,16 @@ describe('Maintenance Queue', () => {
       expect(maintenanceQueue.add).toHaveBeenCalledWith(
         category,
         expect.objectContaining({}),
-        expect.objectContaining({}),
+        expect.objectContaining({})
       );
     });
 
     it('should log an error if no processor is defined for the given type', async () => {
       const category = 'non-existent-category';
       await enqueueMaintenanceJob({ category });
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error(`Maintenance Queue Error: no processor defined for ${category}`));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        new Error(`Maintenance Queue Error: no processor defined for ${category}`)
+      );
     });
   });
 
@@ -246,7 +249,7 @@ describe('Maintenance Queue', () => {
       await updateMaintenanceLog(log, newData, isSuccessful);
       expect(MaintenanceLog.update).toHaveBeenCalledWith(
         { data: newData, isSuccessful },
-        { where: { id: log.id } },
+        { where: { id: log.id } }
       );
     });
   });
@@ -301,7 +304,7 @@ describe('Maintenance Queue', () => {
             errorMessage,
           }),
         }),
-        { where: { id: log.id } },
+        { where: { id: log.id } }
       );
     });
 
@@ -331,7 +334,7 @@ describe('Maintenance Queue', () => {
             errorMessage: 'Test error',
           }),
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
   });
@@ -347,7 +350,7 @@ describe('Maintenance Queue', () => {
         shiftedDate.getDate(),
         today.getHours(),
         today.getMinutes(),
-        today.getSeconds(),
+        today.getSeconds()
       );
       expect(backDate(dateOffSet)).toEqual(expected);
     });
@@ -363,7 +366,7 @@ describe('Maintenance Queue', () => {
           where: expect.objectContaining({
             createdAt: { [Op.lt]: olderThen },
           }),
-        }),
+        })
       );
     });
 
@@ -396,7 +399,7 @@ describe('Maintenance Queue', () => {
           where: expect.objectContaining({
             createdAt: { [Op.lt]: olderThen },
           }),
-        }),
+        })
       );
     });
 
@@ -435,7 +438,7 @@ describe('Cron Enrollment and Cron Jobs', () => {
     await executeCronEnrollmentFunctions('0', 0, 'production');
     expect(auditLogger.error).toHaveBeenCalledWith(
       expect.stringContaining('Error executing cron enrollment function: cron error'),
-      expect.any(Error),
+      expect.any(Error)
     );
   });
 
@@ -554,7 +557,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
-      expect.objectContaining({}),
+      expect.objectContaining({})
     );
   });
 
@@ -567,7 +570,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
-      expect.objectContaining({}),
+      expect.objectContaining({})
     );
   });
 
@@ -599,7 +602,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
-      expect.objectContaining({}),
+      expect.objectContaining({})
     );
   });
 });

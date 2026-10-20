@@ -1,7 +1,7 @@
-import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
-import { get, put, destroy } from './index';
+import join from 'url-join';
+import { destroy, get, put } from './index';
 
 const eventsUrl = join('/', 'api', 'events');
 
@@ -19,29 +19,32 @@ export const updateEvent = async (id, data) => {
   return res.json();
 };
 
-export const completeEvent = async (id, data) => updateEvent(id, {
-  ...data,
-  data: {
-    ...data.data,
-    status: TRAINING_REPORT_STATUSES.COMPLETE,
-  },
-});
+export const completeEvent = async (id, data) =>
+  updateEvent(id, {
+    ...data,
+    data: {
+      ...data.data,
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
+    },
+  });
 
-export const suspendEvent = async (id, data) => updateEvent(id, {
-  ...data,
-  data: {
-    ...data.data,
-    status: TRAINING_REPORT_STATUSES.SUSPENDED,
-  },
-});
+export const suspendEvent = async (id, data) =>
+  updateEvent(id, {
+    ...data,
+    data: {
+      ...data.data,
+      status: TRAINING_REPORT_STATUSES.SUSPENDED,
+    },
+  });
 
-export const resumeEvent = async (id, data, status) => updateEvent(id, {
-  ...data,
-  data: {
-    ...data.data,
-    status,
-  },
-});
+export const resumeEvent = async (id, data, status) =>
+  updateEvent(id, {
+    ...data,
+    data: {
+      ...data.data,
+      status,
+    },
+  });
 
 export const sessionsByEventId = async (id) => {
   const res = await get(`/api/session-reports/eventId/${String(id)}`);

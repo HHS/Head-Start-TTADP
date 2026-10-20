@@ -1,62 +1,143 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import HeaderUserMenu from '../HeaderUserMenu';
+import { createMemoryHistory } from 'history';
+import { Router } from 'react-router';
+import { fetchNotificationsCount } from '../../fetchers/notifications';
 import UserContext from '../../UserContext';
+import HeaderUserMenu from '../HeaderUserMenu';
 
-describe('HeaderUserMenu notifications', () => {
+jest.mock('../../fetchers/notifications', () => ({
+  fetchNotificationsCount: jest.fn().mockResolvedValue({ count: 0, rows: [] }),
+}));
+
+describe('HeaderUserMenu notification indicators', () => {
   const defaultProps = {
-    areThereUnreadNotifications: false,
-    setAreThereUnreadNotifications: jest.fn(),
+    areThereUnreadWhatsNewNotifications: false,
+    setAreThereUnreadWhatsNewNotifications: jest.fn(),
   };
 
-  const history = createMemoryHistory();
+  beforeEach(() => {
+    fetchNotificationsCount.mockClear();
+    fetchNotificationsCount.mockResolvedValue({ count: 0, rows: [] });
+  });
 
-  const user = { name: 'harry potter', permissions: [] };
+  const user = { name: 'user', permissions: [], flags: [] };
 
-  const renderHeaderUserMenu = (props = defaultProps) => render(
-    <Router history={history}>
-      <UserContext.Provider value={{ user }}>
-        <HeaderUserMenu {...props} />
-      </UserContext.Provider>
-    </Router>,
+  const renderHeaderUserMenu = async (props = defaultProps, currentUser = user) =>
+    act(async () => {
+      render(
+        <Router history={createMemoryHistory()}>
+          <UserContext.Provider value={{ user: currentUser }}>
+            <HeaderUserMenu {...props} />
+          </UserContext.Provider>
+        </Router>
+      );
+    });
+
+  it.each([
+    [false, 0],
+    [false, 1],
+    [true, 0],
+    [true, 1],
+  ])(
+    'keeps avatar and bell indicators independent: whatsNew=%s count=%s',
+    async (whatsNew, count) => {
+      fetchNotificationsCount.mockResolvedValue({ count, rows: [] });
+      const clearWhatsNew = jest.fn();
+      await renderHeaderUserMenu(
+        {
+          areThereUnreadWhatsNewNotifications: whatsNew,
+          setAreThereUnreadWhatsNewNotifications: clearWhatsNew,
+        },
+        { ...user, flags: ['actionable_notifications'] }
+      );
+      const bell = await screen.findByRole('link', {
+        name: count ? 'Notification center, 1 unread notification' : 'Notification center',
+      });
+      const avatar = screen.getByTestId('header-avatar');
+      expect(bell.compareDocumentPosition(avatar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(avatar.className.includes('header-avatar-button__with-unread')).toBe(whatsNew);
+      await act(async () => userEvent.click(bell));
+      expect(clearWhatsNew).not.toHaveBeenCalled();
+      await act(async () => {
+        userEvent.click(screen.getByTestId('header-avatar'));
+      });
+      const dropdown = within(screen.getByTestId('user-menu-dropdown'));
+      const notificationsLink = dropdown.getByRole('link', { name: /^Notifications/ });
+      expect(within(notificationsLink).queryByText('new') !== null).toBe(count > 0);
+      const whatsNewLink = dropdown.getByRole('link', { name: /what's new/i });
+      expect(within(whatsNewLink).queryByText('new') !== null).toBe(whatsNew);
+      await act(async () => userEvent.click(whatsNewLink));
+      expect(clearWhatsNew).toHaveBeenCalledWith(false);
+    }
   );
 
-  it('renders the notification link', () => {
-    renderHeaderUserMenu();
+  it('renders the notification link', async () => {
+    await renderHeaderUserMenu();
 
-    act(() => {
+    await act(async () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+    expect(screen.getByRole('link', { name: /what's new/i })).toBeVisible();
     expect(screen.queryByText('new')).toBe(null);
   });
 
-  it('renders the notification link with a new notification indicator', () => {
-    const setAreThereUnreadNotifications = jest.fn();
-    const props = {
-      setAreThereUnreadNotifications,
-      areThereUnreadNotifications: true,
-    };
+  it('hides the notifications link when the user lacks the actionable notifications flag', async () => {
+    await renderHeaderUserMenu(defaultProps, { ...user, flags: [] });
 
-    renderHeaderUserMenu(props);
-
-    act(() => {
+    await act(async () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
-    expect(screen.getByText('new')).toBeVisible();
+    expect(screen.queryByRole('link', { name: /^notifications$/i })).toBe(null);
+    expect(fetchNotificationsCount).not.toHaveBeenCalled();
+  });
 
-    act(() => {
-      userEvent.click(screen.getByRole('link', { name: /notifications/i }));
+  it.each([
+    [0, 'Notification center'],
+    [1, 'Notification center, 1 unread notification'],
+    [2, 'Notification center, 2 unread notifications'],
+  ])('gives the bell and dropdown unique accessible names with %s unread', async (count, name) => {
+    fetchNotificationsCount.mockResolvedValue({ count, rows: [] });
+    await renderHeaderUserMenu(defaultProps, { ...user, flags: ['actionable_notifications'] });
+    const bell = await screen.findByRole('link', { name });
+
+    await act(async () => {
+      userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(setAreThereUnreadNotifications).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('link', { name })).toBe(bell);
+    const menuLink = screen.getByRole('link', { name: /^notifications/i });
+    expect(menuLink).toBeVisible();
+    expect(menuLink).not.toBe(bell);
+    expect(bell).toHaveAttribute('href', '/notifications');
+    expect(menuLink).toHaveAttribute('href', '/notifications');
+  });
+
+  it('renders the notification link with a new notification indicator', async () => {
+    const setAreThereUnreadWhatsNewNotifications = jest.fn();
+    const props = {
+      setAreThereUnreadWhatsNewNotifications,
+      areThereUnreadWhatsNewNotifications: true,
+    };
+
+    await renderHeaderUserMenu(props);
+
+    await act(async () => {
+      userEvent.click(screen.getByTestId('header-avatar'));
+    });
+
+    expect(screen.getByRole('link', { name: /what's new/i })).toBeVisible();
+    expect(screen.getByText('new')).toBeVisible();
+
+    await act(async () => {
+      userEvent.click(screen.getByRole('link', { name: /what's new/i }));
+    });
+
+    expect(setAreThereUnreadWhatsNewNotifications).toHaveBeenCalledWith(false);
   });
 });

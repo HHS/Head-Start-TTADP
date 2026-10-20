@@ -1,9 +1,14 @@
-import { Op } from 'sequelize';
+import {
+  REPORT_STATUSES,
+  TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS,
+} from '@ttahub/common';
 import moment from 'moment';
-import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
 
-function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
+function addOrUpdateResponse(traceId, res, xValue, valueToAdd, month) {
+  const traceIndex = res.findIndex((trace) => trace.id === traceId);
+
   // If report is missing duration set value to 0.
   let cleanValue = valueToAdd;
   if (cleanValue === null) {
@@ -79,13 +84,13 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
     const dates = dateRange.split('-');
     // Check if we have a Start Date.
     if (dates.length > 0) {
-    // eslint-disable-next-line prefer-destructuring
+      // eslint-disable-next-line prefer-destructuring
       startDate = dates[0];
     }
 
     // Check if we have and End Date.
     if (dates.length > 1) {
-    // eslint-disable-next-line prefer-destructuring
+      // eslint-disable-next-line prefer-destructuring
       endDate = dates[1];
     }
   }
@@ -108,16 +113,10 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   // Query Approved AR's.
   const reports = await ActivityReport.findAll({
-    attributes: [
-      'id',
-      'startDate',
-      'ttaType',
-      'duration',
-    ],
+    attributes: ['id', 'startDate', 'ttaType', 'duration'],
     where: {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
-
     },
     raw: true,
     includeIgnoreAttributes: false,
@@ -143,14 +142,39 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {
         // Populate Both.
-        if (r.ttaType && ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both'))) {
-          addOrUpdateResponse(2, res, xValue, r.duration, month);
-        } else if (r.ttaType && (r.ttaType.includes('training') || r.ttaType.includes('Training'))) {
+        if (
+          r.ttaType &&
+          ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) ||
+            r.ttaType.includes('Both'))
+        ) {
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
+        } else if (
+          r.ttaType &&
+          (r.ttaType.includes('training') || r.ttaType.includes('Training'))
+        ) {
           // Hours of Training.
-          addOrUpdateResponse(0, res, xValue, r.duration, month);
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
         } else {
           // Hours of Technical Assistance.
-          addOrUpdateResponse(1, res, xValue, r.duration, month);
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
         }
 
         // Populate used AR Id's and Dates.

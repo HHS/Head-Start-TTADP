@@ -1,9 +1,12 @@
 import httpContext from 'express-http-context';
-import { sequelize } from '../models';
-import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
+import { sequelize } from '../models';
+import {
+  addAuditTransactionSettings,
+  removeFromAuditedTransactions,
+} from '../models/auditModelGenerator';
 
 const namespace = 'SERVICE:WRAPPER';
 
@@ -11,17 +14,31 @@ const logContext = {
   namespace,
 };
 
-export default function transactionWrapper(originalFunction, context = '', isReadOnly = false) {
+export default function transactionWrapper(
+  originalFunction,
+  context = '',
+  isReadOnly = false,
+  transactionOptions = {}
+) {
   return async function wrapper(req, res, next) {
     const startTime = Date.now();
     try {
       httpContext.set('auditDescriptor', originalFunction.name);
+      if (req) {
+        req.inTransactionWrapper = true;
+      }
       // eslint-disable-next-line @typescript-eslint/return-await
-      return await sequelize.transaction(async (transaction) => {
+      return await sequelize.transaction(transactionOptions, async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         let snapShot;
         try {
-          await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
+          await addAuditTransactionSettings(
+            sequelize,
+            null,
+            null,
+            'transaction',
+            originalFunction.name
+          );
 
           if (isReadOnly) {
             snapShot = await captureSnapshot(true);
@@ -29,25 +46,44 @@ export default function transactionWrapper(originalFunction, context = '', isRea
 
           const result = await originalFunction(req, res, next);
 
-          if (isReadOnly && await hasModifiedData(snapShot, transaction.id)) {
+          if (isReadOnly && (await hasModifiedData(snapShot, transaction.id))) {
             throw new Error('Transaction was flagged as READONLY, but has modifed data.');
           }
 
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
-          removeFromAuditedTransactions();
           return result;
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${err.message}`);
           throw err;
+        } finally {
+          removeFromAuditedTransactions();
         }
       });
     } catch (err) {
+      if (req) {
+        req.inTransactionWrapper = false;
+      }
+      if (
+        Number.isInteger(err?.statusCode) &&
+        err?.responseBody &&
+        typeof res?.status === 'function'
+      ) {
+        return res.status(err.statusCode).json(err.responseBody);
+      }
       return handleErrors(req, res, err, logContext);
+    } finally {
+      if (req) {
+        delete req.inTransactionWrapper;
+      }
     }
   };
 }
 
-export function readOnlyTransactionWrapper(originalFunction, context = '') {
-  return transactionWrapper(originalFunction, context, true);
+export function readOnlyTransactionWrapper(
+  originalFunction,
+  context = '',
+  transactionOptions = {}
+) {
+  return transactionWrapper(originalFunction, context, true, transactionOptions);
 }

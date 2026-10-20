@@ -9,10 +9,21 @@ describe('CollaboratorType Model', () => {
 
   beforeAll(async () => {
     mapsToInstance = await CollaboratorType.create({ name: 'Mapped Collaborator', validForId: 1 });
-    instance = await CollaboratorType.create({ name: 'Original Collaborator', mapsTo: mapsToInstance.id, validForId: 1 });
-    mapsToInstance = await CollaboratorType.create({ id: instanceId1, name: 'Mapped Collaborator', validForId: 1 });
     instance = await CollaboratorType.create({
-      id: instanceId2, name: 'Original Collaborator', mapsTo: mapsToInstance.id, validForId: 1,
+      name: 'Original Collaborator',
+      mapsTo: mapsToInstance.id,
+      validForId: 1,
+    });
+    mapsToInstance = await CollaboratorType.create({
+      id: instanceId1,
+      name: 'Mapped Collaborator',
+      validForId: 1,
+    });
+    instance = await CollaboratorType.create({
+      id: instanceId2,
+      name: 'Original Collaborator',
+      mapsTo: mapsToInstance.id,
+      validForId: 1,
     });
   });
 

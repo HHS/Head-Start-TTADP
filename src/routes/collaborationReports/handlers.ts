@@ -1,32 +1,25 @@
-import type { Request, Response } from 'express';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
-import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
-import {
-  NOT_FOUND,
-  FORBIDDEN,
-  BAD_REQUEST,
-  NO_CONTENT,
-} from 'http-codes';
+import type { Request, Response } from 'express';
+import { BAD_REQUEST, FORBIDDEN, NO_CONTENT, NOT_FOUND } from 'http-codes';
+import { USER_SETTINGS } from '../../constants';
+import handleErrors from '../../lib/apiErrorHandler';
+import { collaboratorAssignedNotification } from '../../lib/mailer';
+import { collabReportToCsvRecord } from '../../lib/transform';
+import db from '../../models';
 import CollabReportPolicy from '../../policies/collabReport';
+import { setReadRegions } from '../../services/accessValidation';
+import { upsertApprover } from '../../services/collabReportApprovers';
 import {
   collabReportById,
   createOrUpdateReport,
-  getReports as getReportsService,
   deleteReport,
   getCSVReports,
+  getReports as getReportsService,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
-import handleErrors from '../../lib/apiErrorHandler';
 import { userSettingOverridesById } from '../../services/userSettings';
-import { USER_SETTINGS } from '../../constants';
-import {
-  collaboratorAssignedNotification,
-} from '../../lib/mailer';
-import { setReadRegions } from '../../services/accessValidation';
-import { upsertApprover } from '../../services/collabReportApprovers';
-import { collabReportToCsvRecord } from '../../lib/transform';
-import db from '../../models';
+import { userById } from '../../services/users';
 
 const { CollabReportApprover } = db;
 
@@ -93,11 +86,7 @@ export async function getAlerts(req: Request, res: Response) {
     const reportPayload = await getReportsService({
       ...query,
       limit: 'all',
-      status: [
-        REPORT_STATUSES.DRAFT,
-        REPORT_STATUSES.SUBMITTED,
-        REPORT_STATUSES.NEEDS_ACTION,
-      ],
+      status: [REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION],
       userId,
     });
     // reportPayload will be an object like:
@@ -159,7 +148,7 @@ export async function sendCollabReportCSV(reports, res) {
           header: 'Method',
         },
         {
-          key: 'description',
+          key: 'descriptionFormatted',
           header: 'Description',
         },
         {
@@ -178,12 +167,10 @@ export async function sendCollabReportCSV(reports, res) {
     };
   }
 
-  const csvData = stringify(
-    csvRows,
-    options,
-  );
+  const csvData = stringify(csvRows, options);
 
-  res.send(csvData);
+  res.attachment('collaboration-reports.csv');
+  res.send(`\ufeff${csvData}`);
 }
 
 /**
@@ -202,6 +189,7 @@ export async function downloadReports(req: Request, res: Response) {
     // the query here may contain additional filter information
     // so we expect the collab reports to have a full filter suite
     const reportPayload = await getCSVReports(query);
+
     await sendCollabReportCSV(reportPayload, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -241,9 +229,13 @@ export async function saveReport(req: Request, res: Response) {
     delete newReport.regionId;
 
     // Merge the updated report with the old
-    const savedReport = await createOrUpdateReport({
-      ...existingReport, ...newReport,
-    }, existingReport);
+    const savedReport = await createOrUpdateReport(
+      {
+        ...existingReport,
+        ...newReport,
+      },
+      existingReport
+    );
 
     res.json(savedReport);
     return;
@@ -318,14 +310,25 @@ export async function submitReport(req: Request, res: Response) {
         ...existingReport,
         ...newReport,
       },
-      existingReport,
+      existingReport
     );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await CollabReportApprover.update({ status: null }, {
-      where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
-      individualHooks: true,
-    });
+    // unless we're adding new approvers
+    const newApprovers = (newReport.approvers || []).map((a) => a.user?.id);
+    const oldApprovers = (existingReport.approvers || []).map((a) => a.user?.id);
+    const oldSet = new Set(oldApprovers.filter((id) => id != null));
+    const additions = newApprovers.filter((id) => id != null && !oldSet.has(id));
+
+    if (additions.length === 0) {
+      await CollabReportApprover.update(
+        { status: null },
+        {
+          where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
+          individualHooks: true,
+        }
+      );
+    }
 
     res.json(savedReport);
   } catch (error) {
@@ -395,12 +398,11 @@ export async function createReport(req: Request, res: Response) {
     if (report.collabReportSpecialists) {
       const collabs = report.collabReportSpecialists;
 
-      const settingsForAllCollabs = await Promise.all(collabs.map(
-        (c) => userSettingOverridesById(
-          c.userId,
-          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
-        ),
-      ));
+      const settingsForAllCollabs = await Promise.all(
+        collabs.map((c) =>
+          userSettingOverridesById(c.userId, USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED)
+        )
+      );
 
       const collabsWithSettings = collabs.filter((_value, index) => {
         if (!settingsForAllCollabs[index]) {
@@ -411,6 +413,41 @@ export async function createReport(req: Request, res: Response) {
       collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function unlockReport(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canUnlock()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    // Unlocking resets all Approving Managers to NEEDS_ACTION status
+    // Calculated status is updated in the hook
+    await CollabReportApprover.update(
+      { status: APPROVER_STATUSES.NEEDS_ACTION },
+      {
+        where: { collabReportId },
+        individualHooks: true,
+      }
+    );
+
+    res.sendStatus(NO_CONTENT);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

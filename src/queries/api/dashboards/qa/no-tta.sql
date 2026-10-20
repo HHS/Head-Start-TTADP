@@ -194,6 +194,16 @@ JSON: {
       "display": "End Date",
       "description": "Filter based on the end date of the activity reports.",
       "supportsExclusion": true
+    },
+    {
+      "name": "grantStatus",
+      "type": "string[]",
+      "display": "Grant Status",
+      "description": "Filter based on the status of the grant.",
+      "supportsExclusion": true,
+      "options": {
+        "staticValues": ["active", "inactive", "interim-management-cdi"]
+      }
     }
   ]
 }
@@ -208,6 +218,7 @@ DECLARE
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.region', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
+    grant_status_filter TEXT := NULLIF(current_setting('ssdi.grantStatus', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -217,6 +228,7 @@ DECLARE
     region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.region.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
+    grant_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantStatus.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
@@ -257,7 +269,8 @@ BEGIN
     program_type_filter IS NOT NULL OR
     grant_numbers_filter IS NOT NULL OR
     state_code_filter IS NOT NULL OR
-    region_ids_filter IS NOT NULL
+    region_ids_filter IS NOT NULL OR
+    grant_status_filter IS NOT NULL
   THEN
     WITH
       applied_filtered_grants AS (
@@ -301,6 +314,17 @@ BEGIN
           region_ids_filter IS NULL
           OR COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId") != region_ids_not_filter
         )
+        -- Filter for grantStatus if ssdi.grantStatus is defined
+        AND (
+          grant_status_filter IS NULL
+          OR (
+            (
+              ((grant_status_filter::jsonb ->> 0) = 'active' AND gr.status = 'Active' AND gr.cdi = false)
+              OR ((grant_status_filter::jsonb ->> 0) = 'inactive' AND gr.status = 'Inactive' AND gr.cdi = false)
+              OR ((grant_status_filter::jsonb ->> 0) = 'interim-management-cdi' AND gr.cdi = true AND gr.status = 'Active')
+            ) != grant_status_not_filter
+          )
+        )
         GROUP BY 1
         ORDER BY 1
       ),
@@ -330,86 +354,74 @@ BEGIN
   DROP TABLE IF EXISTS filtered_activity_reports;
   CREATE TEMP TABLE IF NOT EXISTS filtered_activity_reports (id INT);
 
-  WITH seed_filtered_activity_reports AS (
-      INSERT INTO filtered_activity_reports (id)
+  WITH candidate_activity_reports AS (
       SELECT
-        a.id
+        a.id,
+        a."startDate"::date AS start_date,
+        a."endDate"::date AS end_date
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId"
       JOIN filtered_grants fgr ON ar."grantId" = fgr.id
       JOIN "ActivityReportGoals" arg ON a.id = arg."activityReportId"
-      --JOIN filtered_goals fg ON arg."goalId" = fg.id
       WHERE a."calculatedStatus" = 'approved'
-      GROUP BY 1
+      GROUP BY 1, 2, 3
+  ),
+  applied_filtered_activity_reports AS (
+      SELECT
+        id
+      FROM candidate_activity_reports
+      WHERE 1 = 1
+      -- Filter for startDate dates between two values
+      AND (
+        start_date_filter IS NULL
+        OR start_date <@ (
+          SELECT CONCAT(
+          '[', MIN(value::timestamp), ',',
+          COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp), ')'
+          )::daterange
+          FROM json_array_elements_text(COALESCE(start_date_filter, '[]')::json) AS value
+        ) != start_date_not_filter
+      )
+      -- Filter for endDate dates between two values
+      AND (
+        end_date_filter IS NULL
+        OR end_date <@ (
+          SELECT CONCAT(
+          '[', MIN(value::timestamp), ',',
+          COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp), ')'
+          )::daterange
+          FROM json_array_elements_text(COALESCE(end_date_filter, '[]')::json) AS value
+        ) != end_date_not_filter
+      )
+  ),
+  seed_filtered_activity_reports AS (
+      INSERT INTO filtered_activity_reports (id)
+      SELECT
+        id
+      FROM applied_filtered_activity_reports
       ORDER BY 1
       RETURNING id
+  ),
+  filtered_out_activity_reports AS (
+      SELECT
+        COUNT(*) AS record_cnt
+      FROM candidate_activity_reports car
+      LEFT JOIN applied_filtered_activity_reports afa ON car.id = afa.id
+      WHERE afa.id IS NULL
   )
   INSERT INTO process_log (action, record_cnt)
   SELECT 'Seed filtered_activity_reports' AS action, COUNT(*)
   FROM seed_filtered_activity_reports
-  GROUP BY 1;
+  GROUP BY 1
+  UNION ALL
+  SELECT
+    'Apply Activity Report Filters' AS action,
+    record_cnt
+  FROM filtered_out_activity_reports
+  WHERE start_date_filter IS NOT NULL OR end_date_filter IS NOT NULL;
 
 ---------------------------------------------------------------------------------------------------
--- Step 3.2: Apply activity report filters (start/end date) and remove reports that don't meet criteria
-  IF
-        start_date_filter IS NOT NULL OR
-        end_date_filter IS NOT NULL
-    THEN
-    WITH
-      applied_filtered_activity_reports AS (
-        SELECT
-          a.id
-        FROM filtered_activity_reports fa
-        JOIN "ActivityReports" a ON fa.id = a.id
-        WHERE a."calculatedStatus" = 'approved'
-        -- Filter for startDate dates between two values
-        AND (
-          start_date_filter IS NULL
-          OR a."startDate"::date <@ (
-            SELECT CONCAT(
-            '[', MIN(value::timestamp), ',',
-            COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp), ')'
-            )::daterange
-            FROM json_array_elements_text(COALESCE(start_date_filter, '[]')::json) AS value
-          ) != start_date_not_filter
-        )
-        -- Filter for endDate dates between two values
-        AND (
-          end_date_filter IS NULL
-          OR a."endDate"::date <@ (
-            SELECT CONCAT(
-            '[', MIN(value::timestamp), ',',
-            COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp), ')'
-            )::daterange
-            FROM json_array_elements_text(COALESCE(end_date_filter, '[]')::json) AS value
-          ) != end_date_not_filter
-        )
-        GROUP BY 1
-        ORDER BY 1
-      ),
-      applied_filtered_out_activity_reports AS (
-        SELECT 
-          fa.id
-        FROM filtered_activity_reports fa
-        LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa.id
-        GROUP BY 1
-        HAVING COUNT(afa.id) = 0
-        ORDER BY 1
-      ),
-      delete_from_activity_report_filter AS (
-        DELETE FROM filtered_activity_reports fa
-        USING applied_filtered_out_activity_reports afaoar
-        WHERE fa.id = afaoar.id
-        RETURNING fa.id
-      )
-    INSERT INTO process_log (action, record_cnt)
-    SELECT 'Apply Activity Report Filters' AS action, COUNT(*)
-    FROM delete_from_activity_report_filter
-    GROUP BY 1;
-  END IF;
-
----------------------------------------------------------------------------------------------------
--- Step 3.3: Update filtered_grants based on the reduced filtered_activity_reports dataset
+-- Step 3.2: Update filtered_grants based on the reduced filtered_activity_reports dataset
 WITH reduced_grants AS (
     SELECT DISTINCT 
       ar."grantId"
@@ -450,6 +462,13 @@ has_current_grant AS (
   FROM "Grants"
   GROUP BY 1
 ),
+requested_datasets AS (
+    SELECT
+      (
+        NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+        OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["no_tta_page"]'::jsonb
+      ) AS include_no_tta_page
+),
 active_filters_array AS (
     SELECT array_remove(ARRAY[
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
@@ -458,34 +477,49 @@ active_filters_array AS (
       CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
       CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
       CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
-      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
+      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantStatus', true), '') IS NOT NULL THEN 'grantStatus' END
     ], NULL) AS active_filters
 
+),
+-- Build recipient level sets once so widget generation does not re-aggregate the
+-- full grants/activity/session join on every request.
+eligible_recipients AS (
+    SELECT DISTINCT
+      gr."recipientId" AS id
+    FROM "Grants" gr
+    JOIN has_current_grant hcg ON gr."recipientId" = hcg.rid
+    AND hcg.has_current_active_grant
+    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
+    JOIN filtered_grants fgr ON gr.id = fgr.id
+),
+recent_activity_report_recipients AS (
+    SELECT DISTINCT
+      gr."recipientId" AS id
+    FROM "Grants" gr
+    JOIN filtered_grants fgr ON gr.id = fgr.id
+    JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
+    JOIN filtered_activity_reports far ON ar."activityReportId" = far.id
+    JOIN "ActivityReports" a ON far.id = a.id
+    AND a."calculatedStatus" = 'approved'
+    AND a."startDate"::date > now() - INTERVAL '90 days'
+),
+recent_session_recipients AS (
+    SELECT DISTINCT
+      (elem ->> 'value')::int AS id
+    FROM "SessionReportPilots" srp
+    CROSS JOIN LATERAL jsonb_array_elements(srp.data -> 'recipients') AS elem
+    WHERE srp.data ->> 'status' = 'Complete'
+    AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
 ),
 
 no_tta AS (
     SELECT
-      r.id,
-      COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
-    FROM "Recipients" r
-    JOIN has_current_grant hcg ON r.id = hcg.rid
-    JOIN "Grants" gr ON r.id = gr."recipientId"
-    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
-    JOIN filtered_grants fgr ON gr.id = fgr.id
-    LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
-    LEFT JOIN filtered_activity_reports far ON ar."activityReportId" = far.id
-    LEFT JOIN "ActivityReports" a ON far.id = a.id
-    AND a."calculatedStatus" = 'approved'
-    AND a."startDate"::date > now() - INTERVAL '90 days'
-    LEFT JOIN "SessionReportPilots" srp ON EXISTS (
-        SELECT 1 
-        FROM jsonb_array_elements(srp.data -> 'recipients') AS elem
-        WHERE (elem ->> 'value')::int = r.id
-    )
-    AND srp.data ->> 'status' = 'Complete'
-    AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
-    WHERE hcg.has_current_active_grant
-    GROUP BY 1
+      er.id,
+      rar.id IS NOT NULL OR rsr.id IS NOT NULL AS has_tta
+    FROM eligible_recipients er
+    LEFT JOIN recent_activity_report_recipients rar ON er.id = rar.id
+    LEFT JOIN recent_session_recipients rsr ON er.id = rsr.id
     ORDER BY 1
 ),
 no_tta_widget AS (
@@ -502,7 +536,9 @@ no_tta_page AS (
       gr."regionId",
       ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::timestamp last_tta,
       now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::date days_since_last_tta
-    FROM no_tta nt
+    FROM requested_datasets rd
+    JOIN no_tta nt
+    ON rd.include_no_tta_page
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
     JOIN has_current_grant hcg ON r.id = hcg.rid

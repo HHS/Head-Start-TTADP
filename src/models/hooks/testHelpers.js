@@ -1,6 +1,6 @@
-import crypto from 'crypto';
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import { AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
 
 export const draftObject = {
@@ -19,22 +19,25 @@ export const draftObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
+  activityReason: 'reason',
   creatorRole: 'TTAC',
   version: 2,
 };
 
 export const approverUserIds = () => [
-  faker.datatype.number({ min: 9064284 }),
-  faker.datatype.number({ min: 9064284 }),
-  faker.datatype.number({ min: 9064284 }),
+  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
+  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
+  faker.number.int({ min: 9064284, max: 9064284 + 99999 }),
 ];
 
-export const mockApprovers = (ids) => ids.map((id) => ({
-  id,
-  hsesUserId: String(id),
-  hsesUsername: `user${id}`,
-  lastLogin: new Date(),
-}));
+export const mockApprovers = (ids) =>
+  ids.map((id) => ({
+    id,
+    hsesUserId: String(id),
+    hsesUsername: `user${id}`,
+    lastLogin: new Date(),
+  }));
 
 export const fileGenerator = (file = {}) => {
   const fn = faker.system.commonFileName();
@@ -42,7 +45,7 @@ export const fileGenerator = (file = {}) => {
     originalFileName: fn,
     key: fn,
     status: FILE_STATUSES.UPLOADED,
-    fileSize: faker.datatype.number({ min: 10000 }),
+    fileSize: faker.number.int({ min: 10000, max: 10000 + 99999 }),
     ...file,
   };
 };
@@ -51,10 +54,7 @@ export const objectiveTemplateGenerator = (title, objectiveTemplate = {}) => {
   const t = title || faker.lorem.sentence(5);
 
   const secret = 'secret';
-  const hash = crypto
-    .createHmac('md5', secret)
-    .update(t)
-    .digest('hex');
+  const hash = crypto.createHmac('md5', secret).update(t).digest('hex');
 
   return {
     templateTitle: t,

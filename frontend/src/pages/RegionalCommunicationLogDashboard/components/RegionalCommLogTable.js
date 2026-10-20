@@ -1,18 +1,22 @@
-import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { EMPTY_ARRAY } from '../../../Constants';
+import { UserGroupIcon } from '../../../components/icons';
 import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
-import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
-import UserContext from '../../../UserContext';
-import useWidgetSorting from '../../../hooks/useWidgetSorting';
-import { EMPTY_ARRAY } from '../../../Constants';
-import { deleteCommunicationLogById, getCommunicationLogs } from '../../../fetchers/communicationLog';
-import AppLoadingContext from '../../../AppLoadingContext';
-import { UserGroupIcon } from '../../../components/icons';
-import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import {
+  deleteCommunicationLogById,
+  getCommunicationLogs,
+} from '../../../fetchers/communicationLog';
 import useAsyncWidgetExport from '../../../hooks/useAsyncWidgetExport';
+import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
+import useWidgetSorting from '../../../hooks/useWidgetSorting';
+import UserContext from '../../../UserContext';
+import { expandFilters } from '../../../utils';
+import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 
@@ -22,16 +26,19 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-const headers = ['Recipient', 'Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
+const headers = [
+  'Recipient',
+  'Date',
+  'Purpose',
+  'Goals',
+  'Creator name',
+  'Other TTA staff',
+  'Result',
+];
 
-const DeleteLogModal = ({
-  modalRef,
-  onLogRemoved,
-  log,
-}) => {
+const DeleteLogModal = ({ modalRef, onLogRemoved, log }) => {
   const onDeleteLog = () => {
-    onLogRemoved(log)
-      .then(modalRef.current.toggleModal(false));
+    onLogRemoved(log).then(modalRef.current.toggleModal(false));
   };
 
   return (
@@ -52,10 +59,7 @@ const DeleteLogModal = ({
 };
 
 DeleteLogModal.propTypes = {
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   onLogRemoved: PropTypes.func.isRequired,
   log: PropTypes.shape({
     id: PropTypes.number,
@@ -73,7 +77,7 @@ DeleteLogModal.defaultProps = {
   log: null,
 };
 
-export default function RegionalCommLogTable({ filters }) {
+export default function RegionalCommLogTable({ filters, resetPagination, setResetPagination }) {
   const [logs, setLogs] = useState();
   const [error, setError] = useState();
   const [showTabularData, setShowTabularData] = useState(true);
@@ -86,18 +90,16 @@ export default function RegionalCommLogTable({ filters }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
-  const {
-    requestSort,
-    sortConfig,
-    setSortConfig,
-  } = useWidgetSorting(
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
+  const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
     'communication-log-table', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
     headers, // stringColumns
     ['Date'], // dateColumns
-    EMPTY_ARRAY, // keyColumns
+    EMPTY_ARRAY // keyColumns
   );
 
   const { exportRows } = useAsyncWidgetExport(
@@ -105,7 +107,7 @@ export default function RegionalCommLogTable({ filters }) {
     'Communication_Log_Export',
     sortConfig,
     getCommunicationLogs,
-    filters,
+    filtersToApply
   );
 
   const menuItems = useWidgetMenuItems(
@@ -113,7 +115,7 @@ export default function RegionalCommLogTable({ filters }) {
     setShowTabularData,
     null, // capture function
     checkboxes,
-    exportRows,
+    exportRows
   ).filter((m) => !m.label.includes('Display'));
 
   const handleDelete = (log) => {
@@ -133,9 +135,12 @@ export default function RegionalCommLogTable({ filters }) {
 
   const handlePageChange = (pageNumber) => {
     // eslint-disable-next-line max-len
-    setSortConfig({ ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE });
+    setSortConfig({
+      ...sortConfig,
+      activePage: pageNumber,
+      offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE,
+    });
   };
-
   const handleRowActionClick = (action, row, regionId) => {
     if (action === 'View') {
       history.push(`/communication-log/region/${regionId}/log/${row.id}/view`);
@@ -143,6 +148,14 @@ export default function RegionalCommLogTable({ filters }) {
       handleDelete(row);
     }
   };
+
+  // When the filters change, reset the pagination back to the first page.
+  useEffect(() => {
+    if (resetPagination) {
+      setSortConfig((prevSortConfig) => ({ ...prevSortConfig, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   useDeepCompareEffect(() => {
     async function fetchLogs() {
@@ -155,7 +168,7 @@ export default function RegionalCommLogTable({ filters }) {
           sortConfig.direction,
           sortConfig.offset || 0,
           COMMUNICATION_LOG_PER_PAGE,
-          filters,
+          filtersToApply
         );
 
         const data = response.rows.map((log) => ({
@@ -165,23 +178,46 @@ export default function RegionalCommLogTable({ filters }) {
           isUrl: true,
           isInternalLink: true,
           link: `/communication-log/region/${log.data.regionId}/log/${log.id}/view`,
-          suffixContent:
-            log.recipients && log.recipients.length > 1 ? <UserGroupIcon /> : null,
+          suffixContent: log.recipients && log.recipients.length > 1 ? <UserGroupIcon /> : null,
           data: [
-            { title: 'Recipient', value: log.recipients.map((r) => r.name).join(', '), tooltip: true },
+            {
+              title: 'Recipient',
+              value: log.recipients.map((r) => r.name).join(', '),
+              tooltip: true,
+            },
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose, tooltip: true },
-            { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
+            {
+              title: 'Goals',
+              value: (log.data.goals || []).map((g) => g.label).join(', '),
+              tooltip: true,
+            },
             { title: 'Creator name', value: log.authorName },
-            { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
+            {
+              title: 'Other TTA staff',
+              value: (log.otherStaff || []).map((u) => u.label).join(', '),
+              tooltip: true,
+            },
             { title: 'Result', value: log.data.result, tooltip: true },
           ],
-          actions: log.userId === user.id ? [
-            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)) },
-            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log, Number(log.data.regionId)) },
-          ] : [
-            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)) },
-          ],
+          actions:
+            log.userId === user.id
+              ? [
+                  {
+                    label: 'View',
+                    onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)),
+                  },
+                  {
+                    label: 'Delete',
+                    onClick: () => handleRowActionClick('Delete', log, Number(log.data.regionId)),
+                  },
+                ]
+              : [
+                  {
+                    label: 'View',
+                    onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)),
+                  },
+                ],
         }));
 
         setLogs(response);
@@ -193,11 +229,7 @@ export default function RegionalCommLogTable({ filters }) {
       }
     }
     fetchLogs();
-  }, [
-    setIsAppLoading,
-    sortConfig,
-    filters,
-  ]);
+  }, [setIsAppLoading, sortConfig, filtersToApply]);
 
   return (
     <>
@@ -216,7 +248,7 @@ export default function RegionalCommLogTable({ filters }) {
         handlePageChange={handlePageChange}
         titleMargin={{ bottom: 3 }}
       >
-        {(logs && logs.count > 0) ? (
+        {logs && logs.count > 0 ? (
           <HorizontalTableWidget
             headers={headers}
             data={tabularData}
@@ -236,32 +268,38 @@ export default function RegionalCommLogTable({ filters }) {
             <p className="usa-prose text-center bold">
               <strong>You haven&apos;t logged any communication yet.</strong>
               <br />
-              You can record interactions with recipients that are not
-              included in an activity report here.
+              You can record interactions with recipients that are not included in an activity
+              report here.
               <br />
               Click the &quot;Add communication&quot; button to get started.
             </p>
           </div>
         )}
       </WidgetContainer>
-      <DeleteLogModal
-        modalRef={modalRef}
-        onLogRemoved={deleteLog}
-        log={logToDelete}
-      />
+      <DeleteLogModal modalRef={modalRef} onLogRemoved={deleteLog} log={logToDelete} />
     </>
   );
 }
 
 RegionalCommLogTable.propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  })),
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
+        PropTypes.string,
+        PropTypes.number,
+      ]),
+    })
+  ),
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
 };
 
 RegionalCommLogTable.defaultProps = {
   filters: [],
+  resetPagination: false,
+  setResetPagination: () => {},
 };
