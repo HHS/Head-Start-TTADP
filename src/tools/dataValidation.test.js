@@ -67,12 +67,14 @@ describe('dataValidation', () => {
       /ActivityReports data counts: \[\s*(.|\s)*\s*\]/m,
     ];
 
+    // checks the log format only; an empty table logs a blank "last updated at", and the
+    // database is shared with suites that may have emptied a table before this one runs
     const simplePatterns = [
-      /Goals has \d+ records, last updated at: .+/,
-      /Recipients has \d+ records, last updated at: .+/,
-      /Grants has \d+ records, last updated at: .+/,
-      /ActivityReports has \d+ records, last updated at: .+/,
-      /Users has \d+ records, last updated at: .+/,
+      /Goals has \d+ records, last updated at: .*/,
+      /Recipients has \d+ records, last updated at: .*/,
+      /Grants has \d+ records, last updated at: .*/,
+      /ActivityReports has \d+ records, last updated at: .*/,
+      /Users has \d+ records, last updated at: .*/,
       /Files has \d+ records, last updated at: */,
       /Objectives has \d+ records, last updated at: .*/,
       /NextSteps has \d+ records, last updated at: .*/,
