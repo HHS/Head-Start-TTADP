@@ -6,7 +6,6 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { blobToCsvDownload } from '../../../utils';
 import ActiveTtaRequestsTable from '../ActiveTtaRequestsTable';
-import { GOAL_CELL_CLASS, GOAL_TEXT_CLASS } from '../index';
 
 jest.mock('../../../utils', () => ({
   ...jest.requireActual('../../../utils'),
@@ -39,7 +38,11 @@ const apiRequest = (n, overrides = {}) => ({
   creator: { id: 1, name: 'Rachel Green' },
   reviewer: { id: 2, name: 'Ross Geller' },
   recipient: RECIPIENTS[n % 3],
-  goalTemplate: { id: 3, templateName: 'Monitoring' },
+  goalTemplate: {
+    id: 3,
+    templateName: 'The recipient will develop and implement a plan to correct its findings.',
+    standard: 'Monitoring',
+  },
   grants: [{ id: n, stateCode: STATES[n % 3] }],
   ...overrides,
 });
@@ -189,14 +192,24 @@ describe('ActiveTtaRequestsTable', () => {
     expect(cells[3]).toHaveTextContent('-');
   });
 
-  it('wraps a long goal within its cell instead of letting it spill past the table', async () => {
+  it("shows the goal's category rather than its full name", async () => {
     renderTable();
     await waitForRows();
 
-    const cells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
+    const goalCell = within(screen.getAllByRole('row')[1]).getAllByRole('cell')[2];
 
-    expect(cells[2]).toHaveClass(GOAL_CELL_CLASS);
-    expect(within(cells[2]).getByText('Monitoring')).toHaveClass(GOAL_TEXT_CLASS);
+    expect(goalCell).toHaveTextContent(/^Monitoring$/);
+  });
+
+  it('leaves the goal blank when its template has no category', async () => {
+    renderTable([
+      apiRequest(1, { goalTemplate: { id: 4, templateName: 'A goal', standard: null } }),
+    ]);
+    await waitForRows();
+
+    const goalCell = within(screen.getAllByRole('row')[1]).getAllByRole('cell')[2];
+
+    expect(goalCell).toHaveTextContent(/^-$/);
   });
 
   it('links the request id and the draft status back into the request', async () => {

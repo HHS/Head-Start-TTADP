@@ -499,6 +499,9 @@ components:
               type: integer
             templateName:
               type: string
+            standard:
+              type: string
+              nullable: true
         grants:
           type: array
           items:

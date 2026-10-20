@@ -17,22 +17,3 @@
 .ttahub-tta-requests-table .ttahub-tta-requests-table--multiline {
   white-space: pre-line;
 }
-
-/*
-  Scrollable tables keep cell text on one line and cap cells at 250px, so a long goal
-  spilled past its cell. A goal gets more room than that and wraps once it fills it.
-
-  The table is full width, so once it outgrows the widget the browser shrinks any column
-  that can wrap down to its longest word. Sizing the text to its own width (up to the cap)
-  is what holds the goal column open, since a td can't size itself that way.
-*/
-.ttahub-tta-requests-table .usa-table td.ttahub-tta-requests-table--goal {
-  max-width: none;
-  white-space: normal;
-}
-
-.ttahub-tta-requests-table .ttahub-tta-requests-table--goal-text {
-  display: block;
-  width: max-content;
-  max-width: 446px;
-}

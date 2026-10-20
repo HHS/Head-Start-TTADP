@@ -7,12 +7,7 @@ import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import { ttaRequestViewPath } from '../../pages/TtaRequestForm/constants';
 import AddTtaRequestButton from '../AddTtaRequestButton';
-import TtaRequestsTable, {
-  GOAL_CELL_CLASS,
-  GOAL_TEXT_CLASS,
-  recipientRecordUrl,
-  type TtaRequestsTableRow,
-} from './index';
+import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
 
 /** a request as the TTA request list endpoints return it */
 export interface ActiveTtaRequest {
@@ -25,7 +20,7 @@ export interface ActiveTtaRequest {
   creator: { id: number; name: string };
   reviewer: { id: number; name: string } | null;
   recipient: { id: number; name: string } | null;
-  goalTemplate: { id: number; templateName: string } | null;
+  goalTemplate: { id: number; templateName: string; standard: string | null } | null;
   grants: { id: number; stateCode: string | null }[];
 }
 
@@ -173,12 +168,8 @@ const toTableRow = (
         value: moment(request.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       ...(showRecipientColumns ? [{ title: COLUMNS.CREATOR, value: request.creator.name }] : []),
-      {
-        title: COLUMNS.GOAL,
-        value: request.goalTemplate?.templateName ?? BLANK,
-        className: GOAL_CELL_CLASS,
-        contentClassName: GOAL_TEXT_CLASS,
-      },
+      // the goal's category, since a goal template's full name is too long for the table
+      { title: COLUMNS.GOAL, value: request.goalTemplate?.standard ?? BLANK },
       ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: stateCodes(request) }] : []),
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
       { title: COLUMNS.APPROVER, value: BLANK },

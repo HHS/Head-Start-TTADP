@@ -92,16 +92,9 @@ export default function HorizontalTableWidgetCell({
     return classes.join(' ');
   };
 
-  // a wrapper lets a cell size its content, which the td itself can't do inside a table
-  const content = data.contentClassName ? (
-    <span className={data.contentClassName}>{getCellContent()}</span>
-  ) : (
-    getCellContent()
-  );
-
   return (
     <td data-label={data.title} className={getFirstColumnClasses()}>
-      {content}
+      {getCellContent()}
       {data.suffixContent && <span className="margin-left-2">{data.suffixContent}</span>}
     </td>
   );
@@ -118,7 +111,6 @@ HorizontalTableWidgetCell.propTypes = {
     title: PropTypes.string,
     suffixContent: PropTypes.node,
     hideLinkIcon: PropTypes.bool,
-    contentClassName: PropTypes.string,
   }).isRequired,
   showDashForNullValue: PropTypes.bool,
   isFirstColumn: PropTypes.bool,

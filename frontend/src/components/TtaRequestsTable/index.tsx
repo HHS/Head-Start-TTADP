@@ -11,10 +11,6 @@ export const PER_PAGE = 10;
 export const recipientRecordUrl = (recipientId: number, regionId: number) =>
   `/recipient-tta-records/${recipientId}/region/${regionId}/profile`;
 
-/** a goal name gets up to 446px before it wraps, rather than spilling past its cell */
-export const GOAL_CELL_CLASS = 'ttahub-tta-requests-table--goal';
-export const GOAL_TEXT_CLASS = 'ttahub-tta-requests-table--goal-text';
-
 // these tables have no row checkboxes, so there is never a subset to export
 const NO_CHECKBOXES = {};
 
@@ -22,8 +18,6 @@ export interface TtaRequestsTableCell {
   title: string;
   value: string;
   className?: string;
-  /** wraps the cell's content in a span with this class */
-  contentClassName?: string;
   isUrl?: boolean;
   isInternalLink?: boolean;
   link?: string;

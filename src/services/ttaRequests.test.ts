@@ -339,6 +339,8 @@ describe('ttaRequests service', () => {
       expect(row.creator.id).toBe(creator.id);
       expect(row.reviewer.id).toBe(reviewer.id);
       expect(row.goalTemplate.id).toBe(goalTemplate.id);
+      // the tables show the goal's category
+      expect(row.goalTemplate).toHaveProperty('standard');
       expect(row.grants.map((g) => g.id)).toEqual([grantOne.id]);
     });
 

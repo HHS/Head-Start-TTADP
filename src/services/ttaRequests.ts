@@ -151,7 +151,8 @@ export async function getTtaRequests(
       {
         model: GoalTemplate,
         as: 'goalTemplate',
-        attributes: ['id', 'templateName'],
+        // the tables show a goal by its category
+        attributes: ['id', 'templateName', 'standard'],
       },
       {
         // the state a request is in is the state its grants are in
