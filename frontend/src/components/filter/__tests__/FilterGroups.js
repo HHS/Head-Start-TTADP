@@ -1,37 +1,31 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { act, render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import FilterGroups from '../FilterGroups';
+import React from 'react';
+import selectEvent from 'react-select-event';
 import MyGroupsProvider from '../../MyGroupsProvider';
+import FilterGroups from '../FilterGroups';
 
 describe('FilterGroups', () => {
   const renderFilterGroups = (onApply) => {
-    fetchMock.get('/api/groups', [{
-      id: 1,
-      name: 'group1',
-      grants: [
-        {
-          id: 1,
-          name: 'grant1',
-        },
-      ],
-      isPublic: false,
-    }]);
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        grants: [
+          {
+            id: 1,
+            name: 'grant1',
+          },
+        ],
+        isPublic: false,
+      },
+    ]);
 
     render(
       <MyGroupsProvider authenticated>
-        <FilterGroups
-          onApply={onApply}
-          inputId="screams"
-          query={[]}
-        />
-      </MyGroupsProvider>,
+        <FilterGroups onApply={onApply} inputId="screams" query={[]} />
+      </MyGroupsProvider>
     );
   };
 
@@ -43,6 +37,6 @@ describe('FilterGroups', () => {
 
     const select = await screen.findByText(/Select group to filter by/i);
     await selectEvent.select(select, ['group1']);
-    expect(onApply).toHaveBeenCalledWith([1]);
+    expect(onApply).toHaveBeenCalledWith(['1']);
   });
 });

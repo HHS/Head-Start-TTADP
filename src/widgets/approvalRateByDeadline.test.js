@@ -1,10 +1,8 @@
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  ActivityReport, ActivityRecipient, User, Recipient, Grant, Region,
-} from '../models';
-import approvalRateByDeadline from './approvalRateByDeadline';
+import moment from 'moment';
+import db, { ActivityRecipient, ActivityReport, Grant, Recipient, Region, User } from '../models';
 import { createOrUpdate } from '../services/activityReports';
+import approvalRateByDeadline from './approvalRateByDeadline';
 
 const RECIPIENT_ID = 975109;
 const GRANT_ID_ONE = 10639721;
@@ -112,8 +110,10 @@ describe('approvalRateByDeadline widget', () => {
 
   afterAll(async () => {
     await db.sequelize.transaction(async (transaction) => {
-      const reports = await ActivityReport
-        .findAll({ where: { userId: [mockUser.id] }, transaction });
+      const reports = await ActivityReport.findAll({
+        where: { userId: [mockUser.id] },
+        transaction,
+      });
       const ids = reports.map((report) => report.id);
       await ActivityRecipient.destroy({ where: { activityReportId: ids }, transaction });
       await ActivityReport.destroy({ where: { id: ids }, transaction });
@@ -138,10 +138,7 @@ describe('approvalRateByDeadline widget', () => {
       if (created.region1 || created.region2) {
         await Region.destroy({
           where: {
-            id: [
-              ...(created.region1 ? [1] : []),
-              ...(created.region2 ? [2] : []),
-            ],
+            id: [...(created.region1 ? [1] : []), ...(created.region2 ? [2] : [])],
           },
           transaction,
         });
@@ -177,11 +174,14 @@ describe('approvalRateByDeadline widget', () => {
       startDate: dateString,
     });
 
-    await ActivityReport.update({
-      approvedAt,
-      approvedAtTimezone: 'America/New_York',
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-    }, { where: { id: [reportRegionOne.id, reportRegionTwo.id] } });
+    await ActivityReport.update(
+      {
+        approvedAt,
+        approvedAtTimezone: 'America/New_York',
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      },
+      { where: { id: [reportRegionOne.id, reportRegionTwo.id] } }
+    );
 
     const result = await approvalRateByDeadline(null, { 'region.in': ['1'] });
     const monthRecord = result.records.find((r) => r.month_label === monthLabel);

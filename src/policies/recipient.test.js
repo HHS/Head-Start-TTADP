@@ -82,7 +82,7 @@ describe('Recipient', () => {
       return new Recipient(user, recipient);
     };
 
-    it('doesn\'t throw when there are no roles', async () => {
+    it("doesn't throw when there are no roles", async () => {
       const testCases = [
         { user: undefined },
         { user: { roles: undefined } },
@@ -102,9 +102,7 @@ describe('Recipient', () => {
   describe('canView', () => {
     it('returns false if there are no read permissions', async () => {
       const user = {
-        permissions: [
-
-        ],
+        permissions: [],
       };
       const recipient = {
         grants: [
@@ -141,9 +139,7 @@ describe('Recipient', () => {
   describe('canReadInRegion', () => {
     it('returns false if there are no read permissions', async () => {
       const user = {
-        permissions: [
-
-        ],
+        permissions: [],
       };
       const recipient = {
         grants: [

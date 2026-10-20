@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { Readable, PassThrough } from 'stream';
+import { PassThrough, Readable } from 'stream';
 
 // Define an object that maps algorithm names to their corresponding string values
 const Algorithms = {
@@ -12,7 +12,7 @@ const Algorithms = {
 };
 
 // Create a type alias for the values of the Algorithms object
-type Algorithm = typeof Algorithms[keyof typeof Algorithms];
+type Algorithm = (typeof Algorithms)[keyof typeof Algorithms];
 
 class Hasher extends PassThrough {
   private hash: crypto.Hash;
@@ -56,22 +56,17 @@ class Hasher extends PassThrough {
 const getHash = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: string | Record<string, any>,
-  algorithm: Algorithm = Algorithms.SHA256,
+  algorithm: Algorithm = Algorithms.SHA256
 ) => {
-  const inputData = typeof data === 'string'
-    ? Buffer.from(data)
-    : Buffer.from(JSON.stringify(data));
+  const inputData =
+    typeof data === 'string' ? Buffer.from(data) : Buffer.from(JSON.stringify(data));
   const hash = crypto.createHash(algorithm);
   hash.update(inputData);
   return hash.digest('hex');
 };
 
 export default Hasher;
-export {
-  Algorithms,
-  Algorithm,
-  getHash,
-};
+export { type Algorithm, Algorithms, getHash };
 
 // // Usage example:
 // import fs from 'fs';

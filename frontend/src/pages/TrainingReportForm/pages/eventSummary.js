@@ -1,47 +1,48 @@
-import React, {
-  useState,
-  useContext,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import Select from 'react-select';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  TARGET_POPULATIONS,
-  EVENT_TARGET_POPULATIONS,
-  TRAINING_REPORT_STATUSES,
-  ALL_STATES_FLATTENED,
-} from '@ttahub/common';
-import { useFormContext, Controller } from 'react-hook-form';
-import {
-  Label,
+  Alert,
+  Button,
+  Checkbox,
   Dropdown,
   Fieldset,
+  Label,
   Radio,
-  TextInput,
-  Button,
   Textarea,
+  TextInput,
 } from '@trussworks/react-uswds';
+import {
+  ALL_STATES_FLATTENED,
+  EVENT_TARGET_POPULATIONS,
+  TARGET_POPULATIONS,
+  TRAINING_REPORT_STATUSES,
+} from '@ttahub/common';
 import { sortBy } from 'lodash';
-import MultiSelect from '../../../components/MultiSelect';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Controller, useFormContext } from 'react-hook-form';
+import Select from 'react-select';
+import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import colors from '../../../colors';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import DismissingComponentWrapper from '../../../components/DismissingComponentWrapper';
 import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import MultiSelect from '../../../components/MultiSelect';
 import ReadOnlyField from '../../../components/ReadOnlyField';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
-import UserContext from '../../../UserContext';
-import isAdmin from '../../../permissions';
-import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import selectOptionsReset from '../../../components/selectOptionsReset';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
+import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
 
 // Get the first three values in TARGET_POPULATIONS.
 const tgtPop = [...TARGET_POPULATIONS];
 const firstThree = tgtPop.splice(0, 3);
 
-const targetPopulations = [
-  ...tgtPop,
-  ...EVENT_TARGET_POPULATIONS,
-];
+const targetPopulations = [...tgtPop, ...EVENT_TARGET_POPULATIONS];
 
 // Sort the reasons alphabetically.
 targetPopulations.sort();
@@ -60,14 +61,11 @@ const EventSummary = ({
   isAppLoading,
   showSubmitModal,
   onSaveDraft,
+  lastSaveTime,
+  showSavedDraft,
+  updateShowSavedDraft,
 }) => {
-  const {
-    register,
-    control,
-    getValues,
-    watch,
-    setValue,
-  } = useFormContext();
+  const { register, control, getValues, watch, setValue } = useFormContext();
 
   const data = getValues();
   const startDate = watch('startDate');
@@ -88,47 +86,45 @@ const EventSummary = ({
     setEndDateKey(`endDate-${newEnd}`);
   };
 
-  const {
-    eventName,
-    owner,
-    status,
-  } = data;
+  const { eventName, owner, status } = data;
 
   const { user } = useContext(UserContext);
 
   const hasAdminRights = isAdmin(user);
-  const { users: { pointOfContact, creators } } = additionalData;
-  const adminCanEdit = hasAdminRights && (status !== TRAINING_REPORT_STATUSES.COMPLETE);
-  const ownerName = owner && owner.name ? owner.name : '';
+  const {
+    users: { pointOfContact, creators },
+  } = additionalData;
+  const adminCanEdit = hasAdminRights && status !== TRAINING_REPORT_STATUSES.COMPLETE;
+  const ownerName = owner?.name ?? '';
 
   const getIntendedAudience = (value) => {
     let audience = '';
     if (value) {
-      audience = data.eventIntendedAudience.charAt(0).toUpperCase()
-              + data.eventIntendedAudience.slice(1);
+      audience =
+        data.eventIntendedAudience.charAt(0).toUpperCase() + data.eventIntendedAudience.slice(1);
     }
     return audience;
   };
 
   const getPointOfContacts = (pocs) => {
     let pocsToDisplay = [];
-    if (pocs && pocs.length) {
-      pocsToDisplay = pointOfContact.filter(
-        (poc) => pocs.includes(poc.id),
-      ).map((poc) => poc.fullName);
+    if (pocs?.length) {
+      pocsToDisplay = pointOfContact
+        .filter((poc) => pocs.includes(poc.id))
+        .map((poc) => poc.fullName);
     }
     return pocsToDisplay.join(', ');
   };
 
   const getReadOnlyReasons = (reasons) => {
-    if (!reasons || reasons.length === 0) {
+    if (!reasons?.length) {
       return '';
     }
     return reasons.join(', ');
   };
 
   const getReadOnlyTargetPopulations = (tvalue) => {
-    if (!tvalue || tvalue.length === 0) {
+    if (!tvalue?.length) {
       return '';
     }
     return tvalue.join(', ');
@@ -146,12 +142,7 @@ const EventSummary = ({
           {adminCanEdit ? (
             <>
               <div className="margin-top-3">
-                <FormItem
-                  label="Event id "
-                  name="eventId"
-                  htmlFor="eventId"
-                  required
-                >
+                <FormItem label="Event id " name="eventId" htmlFor="eventId" required>
                   <TextInput
                     id="eventId"
                     name="eventId"
@@ -162,12 +153,7 @@ const EventSummary = ({
                 </FormItem>
               </div>
               <div className="margin-top-3">
-                <FormItem
-                  label="Event name "
-                  name="eventName"
-                  htmlFor="eventName"
-                  required
-                >
+                <FormItem label="Event name " name="eventName" htmlFor="eventName" required>
                   <TextInput
                     id="eventName"
                     name="eventName"
@@ -242,9 +228,7 @@ const EventSummary = ({
               </div>
 
               <div className="margin-top-3" data-testid="additional-states">
-                <Label htmlFor="additionalStates">
-                  Addtional states involved
-                </Label>
+                <Label htmlFor="additionalStates">Addtional states involved</Label>
                 <Controller
                   render={({ onChange: controllerOnChange, value: states, onBlur }) => (
                     <Select
@@ -257,9 +241,7 @@ const EventSummary = ({
                           if (!states || states.length === 0) {
                             return false;
                           }
-                          return states.some(
-                            (s) => option.label.includes(s),
-                          );
+                          return states.some((s) => option.label.includes(s));
                         })
                       }
                       inputId="additionalStates"
@@ -284,23 +266,40 @@ const EventSummary = ({
                 />
               </div>
             </>
-          )
-            : (
-              <>
-                <ReadOnlyField label="Event name">
-                  {eventName}
-                </ReadOnlyField>
-                <ReadOnlyField label="Event creator">
-                  {ownerName}
-                </ReadOnlyField>
-                <ReadOnlyField label="Event organizer">
-                  {data.eventOrganizer}
-                </ReadOnlyField>
-                <ReadOnlyField label="Additional states involved">
-                  {data.additionalStates ? data.additionalStates.join(', ') : ''}
-                </ReadOnlyField>
-              </>
-            )}
+          ) : (
+            <>
+              <ReadOnlyField label="Event name">{eventName}</ReadOnlyField>
+              <ReadOnlyField label="Event creator">{ownerName}</ReadOnlyField>
+              <ReadOnlyField label="Event organizer">{data.eventOrganizer}</ReadOnlyField>
+              <ReadOnlyField label="Additional states involved">
+                {data.additionalStates ? data.additionalStates.join(', ') : ''}
+              </ReadOnlyField>
+            </>
+          )}
+        </div>
+
+        <div className="margin-top-3">
+          <FormItem
+            label="Additional regions involved"
+            name="additionalRegions"
+            fieldSetWrapper
+            required={false}
+          >
+            <Checkbox
+              id="additionalRegions-11"
+              name="additionalRegions"
+              value="11"
+              label="Region 11 (Tribal)"
+              inputRef={register()}
+            />
+            <Checkbox
+              id="additionalRegions-12"
+              name="additionalRegions"
+              value="12"
+              label="Region 12 (Migrant and Seasonal Head Start)"
+              inputRef={register()}
+            />
+          </FormItem>
         </div>
 
         <div className="margin-top-3">
@@ -334,18 +333,12 @@ const EventSummary = ({
           </FormItem>
         </div>
         <div className="margin-top-3" data-testid="collaborator-select">
-          <FormItem
-            label="Event collaborators "
-            name="collaboratorIds"
-            required
-          >
+          <FormItem label="Event collaborators " name="collaboratorIds" required>
             <Controller
               render={({ onChange: controllerOnChange, value, onBlur }) => (
                 <Select
                   isMulti
-                  value={(optionsForValue).filter((option) => (
-                    value.includes(option.id)
-                  ))}
+                  value={optionsForValue.filter((option) => value.includes(option.id))}
                   inputId="collaboratorIds"
                   name="collaboratorIds"
                   className="usa-select"
@@ -358,7 +351,7 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  options={trainerOptions.filter((option) => option.id !== data.ownerId)}
+                  options={optionsForValue.filter((option) => option.id !== data.ownerId)}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required
@@ -376,74 +369,70 @@ const EventSummary = ({
               name="collaboratorIds"
               defaultValue={[]}
             />
-
           </FormItem>
         </div>
         <div className={adminCanEdit ? 'margin-top-2' : 'margin-top-2 margin-bottom-3'}>
-          {(
-            adminCanEdit
-            && data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
-          ) && (
-          <div className="margin-top-2">
-            <FormItem
-              label="Event region point of contact "
-              name="pocIds"
-              required
-            >
-              <Controller
-                render={({ onChange: controllerOnChange, value, onBlur }) => (
-                  <Select
-                    value={pointOfContact.filter((option) => (
-                      value.includes(option.id)
-                    ))}
-                    inputId="pocIds"
-                    name="pocIds"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.map((option) => option.id));
-                    }}
-                    inputRef={register({
-                      required:
-                            'Select at least one event region point of contact',
-                    })}
-                    getOptionLabel={(option) => option.fullName}
-                    getOptionValue={(option) => option.id}
-                    options={pointOfContact}
-                    onBlur={onBlur}
-                    required
-                    isMulti
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    // eslint-disable-next-line max-len
-                    if (data.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-                      return true;
-                    }
+          {adminCanEdit &&
+            data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && (
+              <div className="margin-top-2">
+                <FormItem label="Event region point of contact " name="pocIds" required>
+                  <Controller
+                    render={({ onChange: controllerOnChange, value, onBlur }) => (
+                      <Select
+                        value={pointOfContact.filter((option) => value.includes(option.id))}
+                        inputId="pocIds"
+                        name="pocIds"
+                        className="usa-select"
+                        styles={selectOptionsReset}
+                        components={{
+                          DropdownIndicator: null,
+                        }}
+                        onChange={(s) => {
+                          controllerOnChange(s.map((option) => option.id));
+                        }}
+                        inputRef={register({
+                          required: 'Select at least one event region point of contact',
+                        })}
+                        getOptionLabel={(option) => option.fullName}
+                        getOptionValue={(option) => option.id}
+                        options={pointOfContact}
+                        onBlur={onBlur}
+                        required
+                        isMulti
+                      />
+                    )}
+                    control={control}
+                    rules={{
+                      validate: (value) => {
+                        // eslint-disable-next-line max-len
+                        if (
+                          data.eventOrganizer ===
+                          TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+                        ) {
+                          return true;
+                        }
 
-                    if (!value || value.length === 0) {
-                      return (
-                        'Select at least one event region '
-                            + 'point of contact'
-                      );
-                    }
-                    return true;
-                  },
-                }}
-                name="pocIds"
-                defaultValue={[]}
-              />
-            </FormItem>
-          </div>
-          )}
-          { adminCanEdit ? (
+                        if (!value || value.length === 0) {
+                          return 'Select at least one event region ' + 'point of contact';
+                        }
+                        return true;
+                      },
+                    }}
+                    name="pocIds"
+                    defaultValue={[]}
+                  />
+                </FormItem>
+              </div>
+            )}
+          {adminCanEdit ? (
             <Fieldset>
-              <div className={data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS ? 'margin-top-3' : ''}>
+              <div
+                className={
+                  data.eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
+                    ? 'margin-top-3'
+                    : ''
+                }
+              >
                 <FormItem
                   label="Event intended audience"
                   name="eventIntendedAudience"
@@ -472,9 +461,9 @@ const EventSummary = ({
           ) : (
             <div className="margin-top-3">
               {eventOrganizer !== TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && (
-              <ReadOnlyField label="Event region point of contact">
-                {getPointOfContacts(data.pocIds)}
-              </ReadOnlyField>
+                <ReadOnlyField label="Event region point of contact">
+                  {getPointOfContacts(data.pocIds)}
+                </ReadOnlyField>
               )}
               <ReadOnlyField label="Event intended audience">
                 {getIntendedAudience(data.eventIntendedAudience)}
@@ -490,11 +479,7 @@ const EventSummary = ({
             id="startDate-label"
             htmlFor="startDate"
           >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
+            <div className="usa-hint">mm/dd/yyyy</div>
             <ControlledDatePicker
               key={`startDate-${datePickerKey}`}
               control={control}
@@ -507,17 +492,8 @@ const EventSummary = ({
             />
           </FormItem>
 
-          <FormItem
-            label="Event end date"
-            name="endDate"
-            id="endDate-label"
-            htmlFor="endDate"
-          >
-            <div
-              className="usa-hint"
-            >
-              mm/dd/yyyy
-            </div>
+          <FormItem label="Event end date" name="endDate" id="endDate-label" htmlFor="endDate">
+            <div className="usa-hint">mm/dd/yyyy</div>
             <ControlledDatePicker
               control={control}
               name="endDate"
@@ -535,18 +511,19 @@ const EventSummary = ({
                 Training type
                 <Req />
               </Label>
-              <Dropdown required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
+              <Dropdown
+                required
+                id="trainingType"
+                name="trainingType"
+                inputRef={register({ required: 'Select a training type' })}
+              >
                 <option>Series</option>
                 <option>Multi-Day single event</option>
                 <option>1 day or less</option>
               </Dropdown>
             </div>
             <div className="margin-top-2">
-              <FormItem
-                label="Target populations addressed"
-                name="targetPopulations"
-                required
-              >
+              <FormItem label="Target populations addressed" name="targetPopulations" required>
                 <MultiSelect
                   name="targetPopulations"
                   control={control}
@@ -557,11 +534,7 @@ const EventSummary = ({
               </FormItem>
             </div>
             <div className="margin-top-2">
-              <FormItem
-                label="Event vision "
-                name="vision"
-                required
-              >
+              <FormItem label="Event vision " name="vision" required>
                 <Textarea
                   id="vision"
                   name="vision"
@@ -575,23 +548,59 @@ const EventSummary = ({
           </>
         ) : (
           <>
-            <ReadOnlyField label="Training type">
-              {data.trainingType || 'Series'}
-            </ReadOnlyField>
-            <ReadOnlyField label="Reasons">
-              {getReadOnlyReasons(data.reasons)}
-            </ReadOnlyField>
+            <ReadOnlyField label="Training type">{data.trainingType || 'Series'}</ReadOnlyField>
+            <ReadOnlyField label="Reasons">{getReadOnlyReasons(data.reasons)}</ReadOnlyField>
             <ReadOnlyField label="Target populations addressed">
               {getReadOnlyTargetPopulations(data.targetPopulations)}
             </ReadOnlyField>
-            <ReadOnlyField label="Event vision">
-              {data.vision}
-            </ReadOnlyField>
+            <ReadOnlyField label="Event vision">{data.vision}</ReadOnlyField>
           </>
         )}
+        <DismissingComponentWrapper
+          shown={showSavedDraft}
+          updateShown={updateShowSavedDraft}
+          hideFromScreenReader={false}
+        >
+          {lastSaveTime && (
+            <Alert
+              id="eventSummarySaveAlert"
+              className="margin-top-3 maxw-mobile-lg"
+              noIcon
+              slim
+              type="success"
+              aria-live="off"
+            >
+              <span className="display-flex flex-align-center">
+                <FontAwesomeIcon
+                  className="margin-right-1 flex-align-self-center"
+                  color={colors.baseDarkest}
+                  icon={faCheckCircle}
+                  size="lg"
+                />
+                Draft saved on {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+              </span>
+            </Alert>
+          )}
+        </DismissingComponentWrapper>
         <div className="display-flex margin-top-4">
-          <Button id="review-and-submit" className="usa-button--no-margin-top margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
-          <Button id="save-draft" className="usa-button--no-margin-top usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
+          <Button
+            id="review-and-submit"
+            className="usa-button--no-margin-top margin-right-1"
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => showSubmitModal()}
+          >
+            Review and submit
+          </Button>
+          <Button
+            id="save-draft"
+            className="usa-button--no-margin-top usa-button--outline"
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => onSaveDraft()}
+          >
+            Save draft
+          </Button>
         </div>
       </div>
     </div>
@@ -615,6 +624,15 @@ EventSummary.propTypes = {
   isAppLoading: PropTypes.bool.isRequired,
   showSubmitModal: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  lastSaveTime: PropTypes.instanceOf(moment),
+  showSavedDraft: PropTypes.bool,
+  updateShowSavedDraft: PropTypes.func,
+};
+
+EventSummary.defaultProps = {
+  lastSaveTime: null,
+  showSavedDraft: false,
+  updateShowSavedDraft: () => {},
 };
 
 export default EventSummary;

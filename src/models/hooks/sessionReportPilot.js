@@ -4,7 +4,9 @@
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
-const safeParse = require('../helpers/safeParse');
+const { purifyDataFields } = require('../helpers/purifyFields');
+
+const fieldsToEscape = ['ttaProvided', 'objective'];
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   let event;
@@ -46,12 +48,15 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
     if (event) {
       const data = event.data || {};
       auditLogger.info('Setting event to in progress', { eventId: event.id });
-      await event.update({
-        data: {
-          ...data,
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      await event.update(
+        {
+          data: {
+            ...data,
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
         },
-      }, { transaction: options.transaction });
+        { transaction: options.transaction }
+      );
     }
   } catch (err) {
     auditLogger.error(`Error in setAssociatedEventToInProgress: ${err}`);
@@ -88,20 +93,16 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 const beforeCreate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
 };
 
-export {
-  afterCreate,
-  afterUpdate,
-  beforeCreate,
-  beforeUpdate,
-  beforeDestroy,
-};
+export { afterCreate, afterUpdate, beforeCreate, beforeDestroy, beforeUpdate };

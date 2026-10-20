@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import ObjectiveStatusDropdown from '../ObjectiveStatusDropdown';
-import UserContext from '../../../../UserContext';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
+import React from 'react';
 import { OBJECTIVE_STATUS } from '../../../../Constants';
+import UserContext from '../../../../UserContext';
+import ObjectiveStatusDropdown from '../ObjectiveStatusDropdown';
 
 const user = {
   permissions: [
@@ -25,9 +25,9 @@ describe('ObjectiveStatusDropdown', () => {
     currentStatus,
     onUpdate = jest.fn(),
     forceReadOnly = false,
-    onApprovedAR = false,
+    onApprovedAR = false
   ) => {
-    render((
+    render(
       <UserContext.Provider value={{ user }}>
         <ObjectiveStatusDropdown
           currentStatus={currentStatus}
@@ -40,7 +40,7 @@ describe('ObjectiveStatusDropdown', () => {
           onApprovedAR={onApprovedAR}
         />
       </UserContext.Provider>
-    ));
+    );
   };
 
   it('displays the correct number of options for not started', async () => {
@@ -50,7 +50,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -69,7 +71,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -88,7 +92,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -107,7 +113,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -125,7 +133,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -143,7 +153,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -166,7 +178,9 @@ describe('ObjectiveStatusDropdown', () => {
     const onUpdate = jest.fn();
     renderStatusDropdown(OBJECTIVE_STATUS.IN_PROGRESS, onUpdate);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     const option = await screen.findByRole('button', { name: OBJECTIVE_STATUS.SUSPENDED });
@@ -182,7 +196,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -201,7 +217,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
@@ -220,7 +238,9 @@ describe('ObjectiveStatusDropdown', () => {
     let options = await screen.findAllByRole('button');
     expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    const select = await screen.findByRole('button', {
+      name: /change status for objective 345345/i,
+    });
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');

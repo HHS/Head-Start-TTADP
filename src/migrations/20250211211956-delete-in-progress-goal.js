@@ -6,9 +6,12 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         UPDATE "Goals" SET "deletedAt" = NOW() WHERE "id" = 97478;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 
@@ -16,9 +19,12 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         UPDATE "Goals" SET "deletedAt" = null WHERE "id" = 97478;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 };

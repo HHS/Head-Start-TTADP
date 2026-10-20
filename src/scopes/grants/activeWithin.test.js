@@ -1,10 +1,10 @@
 import {
-  Op,
   filtersToScopes,
   Grant,
-  sequelize,
-  recipients,
+  Op,
   possibleIds,
+  recipients,
+  sequelize,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';
@@ -26,8 +26,9 @@ describe('grants/activeWithin', () => {
       where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
     });
     expect(found.length).toBe(3);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[0].id, recipients[4].id, recipients[5].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([recipients[0].id, recipients[4].id, recipients[5].id])
+    );
   });
 
   it('after', async () => {
@@ -37,8 +38,9 @@ describe('grants/activeWithin', () => {
       where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
     });
     expect(found.length).toBe(3);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id])
+    );
   });
 
   it('after plus inactivation date', async () => {
@@ -48,9 +50,15 @@ describe('grants/activeWithin', () => {
       where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
     });
     expect(found.length).toBe(5);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id, recipients[3].id,
-        recipients[4].id, recipients[5].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([
+        recipients[1].id,
+        recipients[2].id,
+        recipients[3].id,
+        recipients[4].id,
+        recipients[5].id,
+      ])
+    );
   });
 
   it('within', async () => {
@@ -63,8 +71,9 @@ describe('grants/activeWithin', () => {
       include: scope.grant.include,
     });
     expect(found.length).toBe(2);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[1].id, recipients[2].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([recipients[1].id, recipients[2].id])
+    );
   });
 
   it('within plus inactivation date', async () => {
@@ -77,7 +86,8 @@ describe('grants/activeWithin', () => {
       include: scope.grant.include,
     });
     expect(found.length).toBe(2);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[4].id, recipients[5].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([recipients[4].id, recipients[5].id])
+    );
   });
 });

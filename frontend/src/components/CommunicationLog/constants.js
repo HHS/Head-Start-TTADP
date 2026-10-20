@@ -37,8 +37,10 @@ const defaultValues = {
   },
 };
 
-const GENERIC_SAVE_ERROR = 'There was an error saving the communication log. Please try again later.';
-const LOG_NOT_FOUND_SAVE_ERROR = 'This communication log was deleted in another window. Your changes were not saved.';
+const GENERIC_SAVE_ERROR =
+  'There was an error saving the communication log. Please try again later.';
+const LOG_NOT_FOUND_SAVE_ERROR =
+  'This communication log was deleted in another window. Your changes were not saved.';
 
 const isCommunicationLogNotFoundError = (err) => {
   if (err?.status === 404 || err?.statusCode === 404 || err?.response?.status === 404) {
@@ -59,45 +61,33 @@ const isCommunicationLogNotFoundError = (err) => {
   return false;
 };
 
-const recipientRecordRootUrl = (
-  recipientId,
-  regionId,
-) => `/recipient-tta-records/${recipientId}/region/${regionId}`;
+const recipientRecordRootUrl = (recipientId, regionId) =>
+  `/recipient-tta-records/${recipientId}/region/${regionId}`;
 
 const formatRecipientCommunicationLogUrl = (
   recipientId,
   regionId,
   communicationLogId,
-  currentPage = '',
-) => `${recipientRecordRootUrl(recipientId, regionId)}/communication/${communicationLogId}/${currentPage}`;
+  currentPage = ''
+) =>
+  `${recipientRecordRootUrl(recipientId, regionId)}/communication/${communicationLogId}/${currentPage}`;
 
-const formatRegionalCommunicationLogUrl = (
-  regionId,
-  communicationLogId,
-  currentPage = '',
-) => `/communication-log/region/${regionId}/log/${communicationLogId}/${currentPage}`;
+const formatRegionalCommunicationLogUrl = (regionId, communicationLogId, currentPage = '') =>
+  `/communication-log/region/${regionId}/log/${communicationLogId}/${currentPage}`;
 
-const pageComplete = (
-  hookForm,
-  fields,
-) => fields.every((field) => hookForm.getValues(field));
+const pageComplete = (hookForm, fields) => fields.every((field) => hookForm.getValues(field));
 
 /**
-   * this is just a simple handler to "flatten"
-   * the JSON column data into the form
-   *
-   * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
-   *  replaces the form with those values; it also calls the standard form.reset event
-   * @param {*} updatedLog - the log object from the database, which has some
-   * information stored at the top level of the object, and some stored in a data column
-   */
+ * this is just a simple handler to "flatten"
+ * the JSON column data into the form
+ *
+ * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
+ *  replaces the form with those values; it also calls the standard form.reset event
+ * @param {*} updatedLog - the log object from the database, which has some
+ * information stored at the top level of the object, and some stored in a data column
+ */
 const resetFormData = (reset, updatedLog) => {
-  const {
-    data,
-    updatedAt,
-    recipients,
-    ...fields
-  } = updatedLog;
+  const { data, updatedAt, recipients, ...fields } = updatedLog;
 
   const form = {
     ...defaultValues,
@@ -110,15 +100,15 @@ const resetFormData = (reset, updatedLog) => {
 };
 
 export {
-  defaultValues,
   defaultLogValues,
-  recipientRecordRootUrl,
+  defaultValues,
   formatRecipientCommunicationLogUrl,
   formatRegionalCommunicationLogUrl,
-  pageComplete,
-  nextStepsFields,
-  resetFormData,
   GENERIC_SAVE_ERROR,
-  LOG_NOT_FOUND_SAVE_ERROR,
   isCommunicationLogNotFoundError,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  nextStepsFields,
+  pageComplete,
+  recipientRecordRootUrl,
+  resetFormData,
 };

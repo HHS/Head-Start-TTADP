@@ -75,7 +75,7 @@ This workflow automates the building, testing, and deployment process for the ap
 1. **Build and Lint**
 2. **Backend, Frontend, and E2E Tests**
 3. **Dynamic Security Scan**
-4. **Deploy**: Deploys to `sandbox`, `dev`, `staging`, or `prod` environments based on the branch.
+4. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
 
 ---
 
@@ -88,7 +88,7 @@ These workflows are triggered at regular intervals using cron schedules:
    - Scheduled at 12:00 UTC, Monday to Friday.
 
 2. **Daily Backup Upload Production**:
-   - Creates a backup of the production database, processes it, and restores it to staging, sandbox, and dev environments for testing.
+   - Creates a backup of the production database, processes it, and restores it to staging and dev environments for testing.
    - Scheduled at 10:00 UTC, Monday to Friday.
 
 ---
@@ -109,7 +109,7 @@ The configuration supports several workflows that can be manually triggered usin
 4. **Manual Process Backup** (`manual-backup`):
    - Processes and uploads a backup for distribution to other environments.
 
-5. **Manual Restore to Staging, Sandbox, or Dev** (`manual-restore-staging`, `manual-restore-sandbox`, `manual-restore-dev`):
+5. **Manual Restore to Staging or Dev** (`manual-restore-staging`, `manual-restore-dev`):
    - Restores processed backups to the respective environments for further testing or analysis.
 
 ---

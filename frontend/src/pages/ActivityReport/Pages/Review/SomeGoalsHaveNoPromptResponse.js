@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Alert, Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { missingDataForActivityReport } from '../../../../fetchers/goals';
 
 const MissingGoalDataList = ({ missingGoalData }) => (
@@ -15,11 +15,7 @@ const MissingGoalDataList = ({ missingGoalData }) => (
           target="_blank"
           rel="noopener noreferrer"
         >
-          {goal.recipientName}
-          {' '}
-          {goal.grantNumber}
-          {' '}
-          {goal.id}
+          {goal.recipientName} {goal.grantNumber} {goal.id}
         </Link>
       </li>
     ))}
@@ -27,13 +23,15 @@ const MissingGoalDataList = ({ missingGoalData }) => (
 );
 
 MissingGoalDataList.propTypes = {
-  missingGoalData: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    recipientId: PropTypes.number,
-    regionId: PropTypes.number,
-    recipientName: PropTypes.string,
-    grantNumber: PropTypes.string,
-  })).isRequired,
+  missingGoalData: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      recipientId: PropTypes.number,
+      regionId: PropTypes.number,
+      recipientName: PropTypes.string,
+      grantNumber: PropTypes.string,
+    })
+  ).isRequired,
 };
 
 const RefreshListOfGoalsButton = ({ onClick }) => (
@@ -73,7 +71,7 @@ const SomeGoalsHaveNoPromptResponse = ({
   };
 
   useDeepCompareEffect(() => {
-    const ids = goalsMissingResponses.map((goal) => goal.goalIds).flat();
+    const ids = goalsMissingResponses.flatMap((goal) => goal.goalIds);
     if (!ids.length) return;
     if (!regionId) return;
 
@@ -91,29 +89,29 @@ const SomeGoalsHaveNoPromptResponse = ({
       Please check the Recipient TTA Record and complete the missing fields.
       <ul className="usa-list margin-left-2">
         {promptsMissingResponses.map((prompt) => (
-          <li key={prompt}>
-            {prompt}
-          </li>
+          <li key={prompt}>{prompt}</li>
         ))}
       </ul>
-
-      { (missingGoalData.length > 0) && (
-      <details open>
-        <summary><strong>Incomplete goals</strong></summary>
-        <MissingGoalDataList missingGoalData={missingGoalData} />
-        <RefreshListOfGoalsButton onClick={onClickRefresh} />
-      </details>
+      {missingGoalData.length > 0 && (
+        <details open>
+          <summary>
+            <strong>Incomplete goals</strong>
+          </summary>
+          <MissingGoalDataList missingGoalData={missingGoalData} />
+          <RefreshListOfGoalsButton onClick={onClickRefresh} />
+        </details>
       )}
-
     </Alert>
   );
 };
 
 SomeGoalsHaveNoPromptResponse.propTypes = {
   promptsMissingResponses: PropTypes.arrayOf(PropTypes.string).isRequired,
-  goalsMissingResponses: PropTypes.arrayOf(PropTypes.shape({
-    goalIds: PropTypes.arrayOf(PropTypes.number),
-  })).isRequired,
+  goalsMissingResponses: PropTypes.arrayOf(
+    PropTypes.shape({
+      goalIds: PropTypes.arrayOf(PropTypes.number),
+    })
+  ).isRequired,
   regionId: PropTypes.number.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
 };

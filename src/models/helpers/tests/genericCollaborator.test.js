@@ -1,3 +1,4 @@
+const { EmptyResultError } = require('sequelize');
 const {
   createCollaborator,
   getCollaboratorRecord,
@@ -39,7 +40,7 @@ describe('GenericCollaborator', () => {
           collaboratorTypeId: 1,
           linkBack,
         },
-        { transaction },
+        { transaction }
       );
     });
 
@@ -61,8 +62,9 @@ describe('GenericCollaborator', () => {
       const linkBack = null;
 
       // Call the function and expect an error
-      await expect(createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack))
-        .rejects.toThrow('No collaborator type found for "NonExistentType" in Goals');
+      await expect(
+        createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack)
+      ).rejects.toThrow('No collaborator type found for "NonExistentType" in Goals');
     });
   });
 
@@ -100,16 +102,19 @@ describe('GenericCollaborator', () => {
             required: true,
             where: { name: typeName },
             attributes: ['name'],
-            include: [{
-              model: sequelize.models.ValidFor,
-              as: 'validFor',
-              required: true,
-              attributes: [],
-              where: { name: 'Goals' },
-            }],
+            include: [
+              {
+                model: sequelize.models.ValidFor,
+                as: 'validFor',
+                required: true,
+                attributes: [],
+                where: { name: 'Goals' },
+              },
+            ],
           },
         ],
-      }, { transaction });
+        transaction,
+      });
     });
   });
 
@@ -119,7 +124,9 @@ describe('GenericCollaborator', () => {
       const sequelize = {
         models: {
           GoalCollaborator: {
-            findOne: jest.fn().mockResolvedValue({ dataValues: { id: 1, linkBack: null } }),
+            findOne: jest.fn().mockResolvedValue({
+              dataValues: { id: 1, linkBack: { activityReportIds: [1] } },
+            }),
             update: jest.fn().mockResolvedValue({}),
           },
           CollaboratorType: {
@@ -133,7 +140,7 @@ describe('GenericCollaborator', () => {
       const goalId = 1;
       const userId = 2;
       const typeName = 'Creator';
-      const linkBack = null;
+      const linkBack = { activityReportIds: [2] };
 
       // Call the function
       await findOrCreateCollaborator(
@@ -143,21 +150,131 @@ describe('GenericCollaborator', () => {
         goalId,
         userId,
         typeName,
-        linkBack,
+        linkBack
       );
 
-      // Verify that the update method is called with the correct arguments
+      // Verify that the update method is called with the merged linkBack
       expect(sequelize.models.GoalCollaborator.update).toHaveBeenCalledWith(
         {
-          linkBack: null,
+          linkBack: { activityReportIds: [1, 2] },
         },
         {
           where: { id: expect.anything() },
           transaction,
           individualHooks: true,
           returning: true,
-        },
+        }
       );
+    });
+
+    it('skips the update when the merged linkBack is unchanged', async () => {
+      const existingCollaborator = { dataValues: { id: 1, linkBack: { activityReportIds: [1] } } };
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest.fn().mockResolvedValue(existingCollaborator),
+            update: jest.fn().mockResolvedValue({}),
+          },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
+          },
+        },
+      };
+      const transaction = {};
+
+      const result = await findOrCreateCollaborator(
+        'goal',
+        sequelize,
+        transaction,
+        1,
+        2,
+        'Creator',
+        null
+      );
+
+      expect(sequelize.models.GoalCollaborator.update).not.toHaveBeenCalled();
+      expect(result).toBe(existingCollaborator);
+    });
+
+    it('propagates errors from the initial collaborator lookup, and recovers on retry', async () => {
+      const error = new Error('collaborator lookup failed');
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest
+              .fn()
+              .mockRejectedValueOnce(error)
+              .mockResolvedValueOnce({ dataValues: { id: 1, linkBack: null } }),
+            update: jest.fn().mockResolvedValue({}),
+          },
+          CollaboratorType: {},
+        },
+      };
+      const transaction = {};
+      const args = ['goal', sequelize, transaction, 1, 2, 'Creator', null];
+
+      await expect(findOrCreateCollaborator(...args)).rejects.toThrow(error);
+      await expect(findOrCreateCollaborator(...args)).resolves.toBeDefined();
+    });
+
+    it('falls back to the winning row when create loses a unique constraint race', async () => {
+      const winningRecord = { dataValues: { id: 1, linkBack: { activityReportIds: [1] } } };
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(winningRecord),
+            // ON CONFLICT DO NOTHING skipped the insert.
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped')),
+            update: jest.fn().mockResolvedValue({}),
+          },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
+          },
+        },
+      };
+      const transaction = {};
+
+      const result = await findOrCreateCollaborator(
+        'goal',
+        sequelize,
+        transaction,
+        1,
+        2,
+        'Creator',
+        { activityReportIds: [2] }
+      );
+
+      expect(sequelize.models.GoalCollaborator.update).toHaveBeenCalledWith(
+        { linkBack: { activityReportIds: [1, 2] } },
+        {
+          where: { id: winningRecord.dataValues.id },
+          transaction,
+          individualHooks: true,
+          returning: true,
+        }
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('surfaces an insert skipped by a conflict on some other constraint instead of masking it', async () => {
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockRejectedValueOnce(new EmptyResultError('insert skipped')),
+            update: jest.fn(),
+          },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'create', id: 1 }),
+          },
+        },
+      };
+      const transaction = {};
+
+      await expect(
+        findOrCreateCollaborator('goal', sequelize, transaction, 1, 2, 'Creator', null)
+      ).rejects.toThrow('no matching row was found');
+      expect(sequelize.models.GoalCollaborator.update).not.toHaveBeenCalled();
     });
   });
 
@@ -212,15 +329,17 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
@@ -250,15 +369,17 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
@@ -282,29 +403,26 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
       const transaction = {};
 
       // Call the function
-      await removeCollaboratorsForType(
-        'goal',
-        sequelize,
-        { transaction },
-        goalId,
-        typeName,
-        { activityReportIds: [null] },
-      );
+      await removeCollaboratorsForType('goal', sequelize, { transaction }, goalId, typeName, {
+        activityReportIds: [null],
+      });
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).not.toHaveBeenCalled();

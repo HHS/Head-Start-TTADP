@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import join from 'url-join';
-import FeedPreview from '../FeedPreview';
 import { mockRSSData } from '../../../testHelpers';
+import FeedPreview from '../FeedPreview';
 
 const tagUrl = join('/', 'api', 'feeds', 'item', '?tag=tag');
 

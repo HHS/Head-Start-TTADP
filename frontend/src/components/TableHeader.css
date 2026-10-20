@@ -2,58 +2,58 @@
 - create a container context
 **/
 .ttahub-table-header {
-    container: ttahub-table-header / inline-size;
+  container: ttahub-table-header / inline-size;
 }
 
 .ttahub-table-header.ttahub-table-header--hide-menu {
-    container: ttahub-table-header-without-menu / inline-size;
+  container: ttahub-table-header-without-menu / inline-size;
 }
 
 /**
-* the mobile view of the stuff inside the header, left aligned horizontally
-* and "spaced-between" vertically, with a small gap
-**/
+ * the mobile view of the stuff inside the header, left aligned horizontally
+ * and "spaced-between" vertically, with a small gap
+ **/
 .ttahub-table-header--contents {
-    display: flex;    
-    justify-content: space-between;
-    flex: 1 1;
-    gap: 1em;
-    flex-direction: column;
+  display: flex;
+  justify-content: space-between;
+  flex: 1 1;
+  gap: 1em;
+  flex-direction: column;
 }
 
 /**
-* this is just the wrapper around the heading and the controls
-**/
-.ttahub-table-header--contents-heading-section  {
-    flex-direction: column;
-    gap: 0.5em;
+ * this is just the wrapper around the heading and the controls
+ **/
+.ttahub-table-header--contents-heading-section {
+  flex-direction: column;
+  gap: 0.5em;
 }
 
 /**
-** first min-width breakpoint, the entire contents is now aligned horizontally
-*/
+ ** first min-width breakpoint, the entire contents is now aligned horizontally
+ */
 @container ttahub-table-header (min-width: 940px) {
-    .ttahub-table-header--contents {
-        align-items: center;
-        flex-direction: row;
-    }
+  .ttahub-table-header--contents {
+    align-items: center;
+    flex-direction: row;
+  }
 }
 
 @container ttahub-table-header-without-menu (min-width: 600px) {
-    .ttahub-table-header--contents {
-        align-items: center;
-        flex-direction: row;
-    }
+  .ttahub-table-header--contents {
+    align-items: center;
+    flex-direction: row;
+  }
 }
 
 /**
-** smaller min-width breakpoint, this is just for the heading and the controls, 
-** to align them horizontally
-*/
+ ** smaller min-width breakpoint, this is just for the heading and the controls,
+ ** to align them horizontally
+ */
 
 @container ttahub-table-header (min-width: 500px) {
-    .ttahub-table-header--contents-heading-section {
-        align-items: center;
-        flex-direction: row;
-    }    
+  .ttahub-table-header--contents-heading-section {
+    align-items: center;
+    flex-direction: row;
+  }
 }

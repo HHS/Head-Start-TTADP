@@ -1,11 +1,6 @@
-import faker from '@faker-js/faker';
-import db, {
-  File,
-} from '../models';
-import {
-  updateStatusByKey,
-  createFileMetaData,
-} from './files';
+import { faker } from '@faker-js/faker';
+import db, { File } from '../models';
+import { createFileMetaData, updateStatusByKey } from './files';
 
 describe('files service', () => {
   afterAll(async () => {
@@ -44,7 +39,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
       expect(result).toEqual(mockUpdatedFile.toJSON());
     });
@@ -57,7 +52,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
     });
 
@@ -68,7 +63,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
       // Depending on the actual behavior, this might need to be adjusted
       // If the function is supposed to return undefined or an empty object when no file is updated
@@ -82,7 +77,7 @@ describe('files service', () => {
       filesForCreateFileMetaData = await Promise.all([
         File.create({
           originalFileName: 'test.pdf',
-          key: faker.datatype.uuid(),
+          key: faker.string.uuid(),
           status: 'APPROVED',
           fileSize: 12345,
         }),
@@ -98,7 +93,7 @@ describe('files service', () => {
     });
 
     it('creates a file where needed', async () => {
-      const newFile = await createFileMetaData('test2.pdf', faker.datatype.uuid(), 99);
+      const newFile = await createFileMetaData('test2.pdf', faker.string.uuid(), 99);
       filesForCreateFileMetaData = [...filesForCreateFileMetaData, newFile];
       expect(newFile.originalFileName).toBe('test2.pdf');
     });
@@ -109,7 +104,7 @@ describe('files service', () => {
       const newFile = await createFileMetaData(
         existingFile.originalFileName,
         existingFile.key,
-        existingFile.fileSize,
+        existingFile.fileSize
       );
 
       expect(newFile.id).toEqual(existingFile.id);

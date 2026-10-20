@@ -1,7 +1,5 @@
+import { Role } from '../../models';
 import { getRoles, saveRoles } from './role';
-import {
-  Role,
-} from '../../models';
 
 jest.mock('../../models', () => ({
   Role: {

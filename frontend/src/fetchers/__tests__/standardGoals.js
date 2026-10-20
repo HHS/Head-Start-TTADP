@@ -1,13 +1,7 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import {
-  get, post, put,
-} from '../index';
-import {
-  getStandardGoal,
-  addStandardGoal,
-  updateStandardGoal,
-} from '../standardGoals';
+import { get, post, put } from '../index';
+import { addStandardGoal, getStandardGoal, updateStandardGoal } from '../standardGoals';
 
 jest.mock('../index', () => {
   const originalModule = jest.requireActual('../index');
@@ -31,10 +25,7 @@ describe('StandardGoals fetcher', () => {
 
   it('getStandardGoal', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(standardGoalUrl,
-      '1',
-      'grant',
-      '1');
+    const url = join(standardGoalUrl, '1', 'grant', '1');
     get.mockResolvedValue({ json: async () => mockData });
     const res = await getStandardGoal(1, 1);
     expect(res).toEqual(mockData);
@@ -42,10 +33,7 @@ describe('StandardGoals fetcher', () => {
   });
   it('getStandardGoal w/status', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(standardGoalUrl,
-      '1',
-      'grant',
-      '1?status=Closed');
+    const url = join(standardGoalUrl, '1', 'grant', '1?status=Closed');
     get.mockResolvedValue({ json: async () => mockData });
     const res = await getStandardGoal(1, 1, 'Closed');
     expect(res).toEqual(mockData);
@@ -53,10 +41,7 @@ describe('StandardGoals fetcher', () => {
   });
   it('addStandardGoal', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(standardGoalUrl,
-      '1',
-      'grant',
-      '1');
+    const url = join(standardGoalUrl, '1', 'grant', '1');
     const mockGoodResponse = { ok: true, json: async () => mockData };
     post.mockResolvedValue(mockGoodResponse);
     const goalData = {

@@ -1,23 +1,19 @@
+import { Button, Fieldset, Form } from '@trussworks/react-uswds';
 import React, { useMemo } from 'react';
-import {
-  Form,
-  Fieldset,
-  Button,
-} from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../../components/FormItem';
-import ApproverSelect from '../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
-import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 import useExistingApprovers from '../../../../hooks/useExistingApprovers';
 import ApproverStatusList from '../../../ActivityReport/Pages/components/ApproverStatusList';
 import DisplayApproverNotes from '../../../ActivityReport/Pages/components/DisplayApproverNotes';
+import ApproverSelect from '../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
+import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 
-export default function CreatorNeedsAction({
-  onSubmit,
-  availableApprovers,
-}) {
+export default function CreatorNeedsAction({ onSubmit, availableApprovers }) {
   // eslint-disable-next-line max-len
-  const approverOptions = useMemo(() => (availableApprovers || []).map((a) => ({ value: a.id, label: a.name })), [availableApprovers]);
+  const approverOptions = useMemo(
+    () => (availableApprovers || []).map((a) => ({ value: a.id, label: a.name })),
+    [availableApprovers]
+  );
   const { handleSubmit } = useFormContext();
   const { initialValue } = useExistingApprovers(approverOptions);
 
@@ -33,11 +29,7 @@ export default function CreatorNeedsAction({
 
         <div className="margin-bottom-4">
           <Fieldset className="smart-hub--report-legend smart-hub--report-legend--collapse-form-group">
-            <FormItem
-              label="Add additional approvers"
-              name="approvers"
-              required={false}
-            >
+            <FormItem label="Add additional approvers" name="approvers" required={false}>
               <ApproverSelect
                 name="approvers"
                 valueProperty="user.id"

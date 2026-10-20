@@ -65,15 +65,8 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 export const convertReportToFormData = (fetchedReport) => {
-  const {
-    participants,
-    hasDataUsed,
-    dataUsed,
-    hasGoals,
-    reportGoals,
-    statesInvolved,
-    ...rest
-  } = fetchedReport;
+  const { participants, hasDataUsed, dataUsed, hasGoals, reportGoals, statesInvolved, ...rest } =
+    fetchedReport;
 
   // Convert reasons into a checkbox-friendly format
   let reportReasons = [];
@@ -101,16 +94,20 @@ export const convertReportToFormData = (fetchedReport) => {
 
   // Convert participants, dataUsed, goals, and statesInvolved for use with multiselect components
   const participantValues = Array.isArray(participants)
-    ? participants.map((p) => ({ label: p, value: p })) : [];
-  const dataUsedValues = Array.isArray(dataUsed) ? dataUsed.map((d) => (
-    { label: COLLAB_REPORT_DATA[d.collabReportDatum], value: d.collabReportDatum }
-  )) : [];
-  const goalsValues = Array.isArray(reportGoals) ? reportGoals.map((g) => (
-    { label: g.goalTemplate.standard, value: g.goalTemplateId }
-  )) : [];
-  const statesInvolvedValues = Array.isArray(statesInvolved) ? statesInvolved.map((s) => (
-    { label: STATES[s], value: s }
-  )) : [];
+    ? participants.map((p) => ({ label: p, value: p }))
+    : [];
+  const dataUsedValues = Array.isArray(dataUsed)
+    ? dataUsed.map((d) => ({
+        label: COLLAB_REPORT_DATA[d.collabReportDatum],
+        value: d.collabReportDatum,
+      }))
+    : [];
+  const goalsValues = Array.isArray(reportGoals)
+    ? reportGoals.map((g) => ({ label: g.goalTemplate.standard, value: g.goalTemplateId }))
+    : [];
+  const statesInvolvedValues = Array.isArray(statesInvolved)
+    ? statesInvolved.map((s) => ({ label: STATES[s], value: s }))
+    : [];
 
   const retVal = {
     ...rest,

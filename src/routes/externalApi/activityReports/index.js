@@ -1,9 +1,6 @@
 import express from 'express';
-
-import {
-  getReportByDisplayId,
-} from './handlers';
 import transactionWrapper from '../../transactionWrapper';
+import { getReportByDisplayId } from './handlers';
 
 const router = express.Router();
 

@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import usePresenceData from '../usePresenceData';
 
 describe('usePresenceData', () => {
@@ -143,11 +143,7 @@ describe('usePresenceData', () => {
     act(() => {
       result.current.handlePresenceUpdate({
         hasMultipleUsers: true,
-        otherUsers: [
-          { username: 'user1' },
-          { username: 'user2' },
-          { username: null },
-        ],
+        otherUsers: [{ username: 'user1' }, { username: 'user2' }, { username: null }],
         tabCount: 3,
       });
     });

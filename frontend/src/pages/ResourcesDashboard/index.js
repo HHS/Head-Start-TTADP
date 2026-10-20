@@ -1,35 +1,29 @@
 /* eslint-disable no-alert */
 /* eslint-disable no-console */
-import React, {
-  useContext,
-  useState,
-  useEffect,
-} from 'react';
+
+import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import useFilters from '../../hooks/useFilters';
+import { v4 as uuidv4 } from 'uuid';
+import { REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY, REPORTS_PER_PAGE } from '../../Constants';
+import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { downloadReports, getReportsViaIdPost } from '../../fetchers/activityReports';
+import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../fetchers/helpers';
+import { fetchFlatResourceData } from '../../fetchers/Resources';
+import useFilters from '../../hooks/useFilters';
+import useSessionSort from '../../hooks/useSessionSort';
+import UserContext from '../../UserContext';
+import { filtersToQueryString, formatDateRange } from '../../utils';
+import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import { filtersToQueryString, formatDateRange } from '../../utils';
-import { fetchFlatResourceData } from '../../fetchers/Resources';
-import {
-  downloadReports,
-  getReportsViaIdPost,
-} from '../../fetchers/activityReports';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
-import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
-import { REPORTS_PER_PAGE, REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY } from '../../Constants';
-import RegionPermissionModal from '../../components/RegionPermissionModal';
-import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
-import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
-import useSessionSort from '../../hooks/useSessionSort';
 import './index.scss';
 
 const defaultDate = formatDateRange({
@@ -58,16 +52,19 @@ export default function ResourcesDashboard() {
     rows: [],
   });
 
-  const [activityReportSortConfig, setActivityReportSortConfig] = useSessionSort({
-    sortBy: 'updatedAt',
-    direction: 'desc',
-    activePage: 1,
-  }, 'resource-dashboard-activity-report-sort');
+  const [activityReportSortConfig, setActivityReportSortConfig] = useSessionSort(
+    {
+      sortBy: 'updatedAt',
+      direction: 'desc',
+      activePage: 1,
+    },
+    'resource-dashboard-activity-report-sort'
+  );
 
   const { activePage } = activityReportSortConfig;
 
   const [activityReportOffset, setActivityReportOffset] = useState(
-    (activePage - 1) * REPORTS_PER_PAGE,
+    (activePage - 1) * REPORTS_PER_PAGE
   );
 
   const {
@@ -87,7 +84,7 @@ export default function ResourcesDashboard() {
     REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
     true,
     additionalDefaultFilters,
-    RESOURCES_DASHBOARD_FILTER_CONFIG,
+    RESOURCES_DASHBOARD_FILTER_CONFIG
   );
 
   const { reportIds } = resourcesData;
@@ -101,7 +98,7 @@ export default function ResourcesDashboard() {
           activityReportSortConfig.sortBy,
           activityReportSortConfig.direction,
           activityReportOffset,
-          REPORTS_PER_PAGE,
+          REPORTS_PER_PAGE
         );
         setActivityReports(data);
         updateError('');
@@ -130,9 +127,7 @@ export default function ResourcesDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filters);
       try {
-        const data = await fetchFlatResourceData(
-          filterQuery,
-        );
+        const data = await fetchFlatResourceData(filterQuery);
         setResourcesData(data);
         updateError('');
       } catch (e) {
@@ -143,9 +138,7 @@ export default function ResourcesDashboard() {
     }
     // Call resources fetch.
     fetcHResourcesData();
-  }, [
-    filters,
-  ]);
+  }, [filters]);
 
   const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
     try {
@@ -164,7 +157,7 @@ export default function ResourcesDashboard() {
   const handleDownloadAllReports = async (
     setIsDownloading,
     setDownloadError,
-    downloadAllButtonRef,
+    downloadAllButtonRef
   ) => {
     const queryString = reportIds.map((i) => `id=${i}`).join('&');
     const downloadURL = getAllReportsDownloadURL(queryString);
@@ -173,7 +166,7 @@ export default function ResourcesDashboard() {
       setIsDownloading,
       setDownloadError,
       downloadURL,
-      downloadAllButtonRef,
+      downloadAllButtonRef
     );
   };
 
@@ -182,7 +175,7 @@ export default function ResourcesDashboard() {
     reportCheckboxes,
     setIsDownloading,
     setDownloadError,
-    downloadSelectedButtonRef,
+    downloadSelectedButtonRef
   ) => {
     const toDownloadableReportIds = (accumulator, entry) => {
       if (!activityReports.rows) return accumulator;
@@ -199,7 +192,7 @@ export default function ResourcesDashboard() {
         setIsDownloading,
         setDownloadError,
         downloadURL,
-        downloadSelectedButtonRef,
+        downloadSelectedButtonRef
       );
     }
   };
@@ -212,18 +205,16 @@ export default function ResourcesDashboard() {
       <RegionPermissionModal
         filters={filters}
         user={user}
-        showFilterWithMyRegions={
-          () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        showFilterWithMyRegions={() =>
+          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
         }
       />
-      <h1 className="landing">
-        Resource dashboard
-      </h1>
+      <h1 className="landing">Resource dashboard</h1>
       <Grid row>
         {error && (
-        <Alert className="margin-bottom-2" type="error" role="alert">
-          {error}
-        </Alert>
+          <Alert className="margin-bottom-2" type="error" role="alert">
+            {error}
+          </Alert>
         )}
       </Grid>
       <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
@@ -240,10 +231,7 @@ export default function ResourcesDashboard() {
         data={resourcesData.resourcesDashboardOverview}
         loading={isLoading}
       />
-      <ResourceUse
-        data={resourcesData.resourcesUse}
-        loading={isLoading}
-      />
+      <ResourceUse data={resourcesData.resourcesUse} loading={isLoading} />
       <ResourcesAssociatedWithTopics
         data={resourcesData.topicUse}
         loading={isLoading}
@@ -264,7 +252,6 @@ export default function ResourcesDashboard() {
         reportsCount={activityReports.count}
         activePage={activePage}
       />
-
     </div>
   );
 }
@@ -275,11 +262,13 @@ ResourcesDashboard.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

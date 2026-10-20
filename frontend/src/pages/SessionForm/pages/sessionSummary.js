@@ -1,60 +1,54 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useRef,
-} from 'react';
 import {
-  SUPPORT_TYPES,
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import {
-  useFormContext,
-  Controller,
-  useFieldArray,
-  useController,
-} from 'react-hook-form';
-import {
-  TextInput,
-  Fieldset,
-  Label,
-  Textarea,
-  Dropdown,
-  Radio,
   Button,
+  Dropdown,
   ErrorMessage,
+  Fieldset,
+  FormGroup,
+  Label,
   Link,
+  Radio,
+  Textarea,
+  TextInput,
 } from '@trussworks/react-uswds';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Controller, useController, useFieldArray, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import { getTopics } from '../../../fetchers/topics';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import Req from '../../../components/Req';
-import selectOptionsReset from '../../../components/selectOptionsReset';
+import Drawer from '../../../components/Drawer';
+import Dropzone from '../../../components/FileUploader/Dropzone';
+import FileTable from '../../../components/FileUploader/FileTable';
+import FormItem from '../../../components/FormItem';
+import PlusButton from '../../../components/GoalForm/PlusButton';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import QuestionTooltip from '../../../components/QuestionTooltip';
+import Req from '../../../components/Req';
+import RichEditor from '../../../components/RichEditor';
+import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
+import selectOptionsReset from '../../../components/selectOptionsReset';
+import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
+import { getTopics } from '../../../fetchers/topics';
+import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
+import { isEmptyRichText, sanitizeRichText } from '../../../utils';
+import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
+import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import SessionTrainers from '../components/SessionTrainers';
 import {
-  sessionSummaryFields,
-  pageComplete,
   NO_ERROR,
+  pageComplete,
+  sessionSummaryFields,
   sessionSummaryRequiredFields,
 } from '../constants';
-import FormItem from '../../../components/FormItem';
-import FileTable from '../../../components/FileUploader/FileTable';
-import Dropzone from '../../../components/FileUploader/Dropzone';
-import PlusButton from '../../../components/GoalForm/PlusButton';
-import AppLoadingContext from '../../../AppLoadingContext';
-import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
-import SessionObjectiveResource from '../components/SessionObjectiveResource';
-import Drawer from '../../../components/Drawer';
-import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
-import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import { mustBeQuarterHalfOrWhole } from '../../../Constants';
-import useGoalTemplates from '../../../hooks/useGoalTemplates';
-import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -62,6 +56,11 @@ const DEFAULT_RESOURCE = {
 
 const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
+  // Facilitation only drives the workflow on Regional PD events with National Centers.
+  const canEditFacilitation =
+    isAdmin(user) &&
+    event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS;
 
   const goalTemplates = useGoalTemplates([]);
 
@@ -74,12 +73,53 @@ const SessionSummary = ({ datePickerKey, event }) => {
     setError,
   } = useFormContext();
 
+  // Facilitation picks the completion workflow and approver candidates, so a
+  // correction restarts the session in the new workflow (mirrors updateSession).
+  const resetWorkflowForFacilitation = () => {
+    setValue('approverId', '', { shouldDirty: true });
+    ['ownerComplete', 'collabComplete', 'pocComplete'].forEach((key) => {
+      setValue(key, false, { shouldDirty: true });
+    });
+  };
+
   const id = watch('id');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const courses = watch('courses');
 
-  const { trainerOptions } = useEventAndSessionStaff(event);
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the tta provided',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
+
+  const {
+    field: {
+      onChange: onChangeObjective,
+      onBlur: onBlurObjective,
+      value: objective,
+      name: objectiveInputName,
+    },
+  } = useController({
+    name: `objective`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => !isEmptyRichText(value) || 'Describe the session objectives',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -107,7 +147,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (err) {
+      } catch (_error) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -126,9 +166,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
   } = useFieldArray({
     control,
     name: 'objectiveResources',
-    defaultValue: [
-      DEFAULT_RESOURCE,
-    ],
+    defaultValue: [DEFAULT_RESOURCE],
   });
 
   // Use courses.
@@ -156,7 +194,10 @@ const SessionSummary = ({ datePickerKey, event }) => {
     name: 'courses',
     defaultValue: courses || [],
     rules: {
-      validate: (value) => !objectiveUseIpdCourses || (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+      validate: (value) =>
+        !objectiveUseIpdCourses ||
+        (objectiveUseIpdCourses && value.length > 0) ||
+        'Select at least one course',
     },
   });
 
@@ -197,7 +238,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       const uploadResults = await uploadSessionObjectiveFiles(id, uploadedFiles);
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -210,7 +251,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       setIsAppLoading(true);
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);
@@ -220,19 +261,12 @@ const SessionSummary = ({ datePickerKey, event }) => {
   return (
     <>
       <Helmet>
-        <title>
-          Session Summary
-        </title>
+        <title>Session Summary</title>
       </Helmet>
       <IndicatesRequiredField />
 
       <div>
-        <FormItem
-          label="Session name "
-          name="sessionName"
-          htmlFor="sessionName"
-          required
-        >
+        <FormItem label="Session name " name="sessionName" htmlFor="sessionName" required>
           <TextInput
             id="sessionName"
             name="sessionName"
@@ -243,6 +277,27 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
+      {canEditFacilitation ? (
+        <FormItem label="Training facilitation" name="facilitation" htmlFor="facilitation" required>
+          <Dropdown
+            id="facilitation"
+            name="facilitation"
+            required
+            inputRef={register({ required: 'Select who is providing the training' })}
+            onChange={resetWorkflowForFacilitation}
+          >
+            <option value="" disabled>
+              Select who is providing the training
+            </option>
+            <option value="national_center">National Center</option>
+            <option value="regional_tta_staff">Regional TTA staff</option>
+            <option value="both">Both (National Center and Regional TTA staff)</option>
+          </Dropdown>
+        </FormItem>
+      ) : (
+        <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
+      )}
+
       <div className="maxw-mobile">
         <FormItem
           label="Session start date"
@@ -251,11 +306,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           htmlFor="startDate"
           required
         >
-          <div
-            className="usa-hint"
-          >
-            mm/dd/yyyy
-          </div>
+          <div className="usa-hint">mm/dd/yyyy</div>
           <ControlledDatePicker
             key={`startDate-${datePickerKey}`}
             control={control}
@@ -267,7 +318,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
             endDate={endDate}
             minDate={eventStartDate}
             customValidationMessages={{
-              afterMessage: 'Date selected can\'t be before event start date.',
+              afterMessage: "Date selected can't be before event start date.",
             }}
           />
         </FormItem>
@@ -278,11 +329,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           htmlFor="endDate"
           required
         >
-          <div
-            className="usa-hint"
-          >
-            mm/dd/yyyy
-          </div>
+          <div className="usa-hint">mm/dd/yyyy</div>
           <ControlledDatePicker
             control={control}
             name="endDate"
@@ -295,10 +342,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       </div>
 
       <div>
-        <FormItem
-          label="Duration in hours (round to the nearest quarter hour) "
-          name="duration"
-        >
+        <FormItem label="Duration in hours (round to the nearest quarter hour) " name="duration">
           <div className="maxw-card-lg">
             <TextInput
               id="duration"
@@ -307,68 +351,57 @@ const SessionSummary = ({ datePickerKey, event }) => {
               min={0}
               max={99.5}
               step={0.25}
-              inputRef={
-                register({
-                  required: 'Enter duration',
-                  valueAsNumber: true,
-                  validate: {
-                    mustBeQuarterHalfOrWhole,
-                  },
-                  min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
-                  max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
-                })
-              }
+              inputRef={register({
+                required: 'Enter duration',
+                valueAsNumber: true,
+                validate: {
+                  mustBeQuarterHalfOrWhole,
+                },
+                min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
+                max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+              })}
               required
             />
           </div>
         </FormItem>
       </div>
 
-      <FormItem
-        label="Session context "
-        name="context"
-        required={false}
-      >
-        <Textarea
-          id="context"
-          name="context"
-          inputRef={register()}
-        />
+      <FormItem label="Session context " name="context" required={false}>
+        <Textarea id="context" name="context" inputRef={register()} />
       </FormItem>
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
-      <FormItem
-        label="Session objectives "
-        name="objective"
-        required
-      >
-        <Textarea
-          id="objective"
-          name="objective"
-          inputRef={register({
-            required: 'Describe the session objectives',
-          })}
-          required
-        />
-      </FormItem>
+      <FormGroup error={!!errors.objective}>
+        <Label>
+          Session objectives
+          <Req />
+        </Label>
+        {errors.objective ? (
+          <ErrorMessage id={`${objectiveInputName}-error`}>{errors.objective.message}</ErrorMessage>
+        ) : null}
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <RichEditor
+            ariaLabel="Session objectives"
+            ariaRequired
+            ariaInvalid={!!errors.objective}
+            ariaDescribedBy={errors.objective ? `${objectiveInputName}-error` : undefined}
+            value={objective}
+            onChange={onChangeObjective}
+            onBlur={onBlurObjective}
+          />
+        </div>
+      </FormGroup>
 
       <div>
-        <Drawer
-          triggerRef={goalDrawerTriggerRef}
-          stickyHeader
-          stickyFooter
-          title="Goal guidance"
-        >
+        <Drawer triggerRef={goalDrawerTriggerRef} stickyHeader stickyFooter title="Goal guidance">
           <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" />
         </Drawer>
         <FormItem
           required={false}
           htmlFor="goalTemplates"
-          label={(
+          label={
             <>
-              Select the goals that this activity supports
-              {' '}
-              <Req />
+              Select the goals that this activity supports <Req />
               <button
                 type="button"
                 className="usa-button usa-button--unstyled usa-button--no-margin"
@@ -377,7 +410,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 Get help selecting a goal
               </button>
             </>
-          )}
+          }
           name="goalTemplates"
         >
           <Controller
@@ -399,7 +432,13 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 inputRef={register({ required: 'Select at least one goal' })}
                 getOptionLabel={(option) => option.standard}
                 getOptionValue={(option) => option.id}
-                options={(goalTemplates ? goalTemplates.filter((g) => g.standard !== 'Monitoring' && g.standard !== 'RAN investigation') : [])}
+                options={
+                  goalTemplates
+                    ? goalTemplates.filter(
+                        (g) => g.standard !== 'Monitoring' && g.standard !== 'RAN investigation'
+                      )
+                    : []
+                }
                 isMulti
                 required
               />
@@ -426,16 +465,17 @@ const SessionSummary = ({ datePickerKey, event }) => {
           stickyFooter
           title="Topic guidance"
         >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" />
+          <ContentFromFeedByTag
+            className="ttahub-drawer--objective-topics-guidance"
+            tagName="ttahub-topic"
+          />
         </Drawer>
         <FormItem
           required={false}
           htmlFor="objectiveTopics"
-          label={(
+          label={
             <>
-              Topics
-              {' '}
-              <Req />
+              Topics <Req />
               <button
                 type="button"
                 className="usa-button usa-button--unstyled margin-left-1 usa-button--no-margin"
@@ -444,15 +484,13 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 Get help choosing topics
               </button>
             </>
-          )}
+          }
           name="objectiveTopics"
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(topicOptions || []).filter((option) => (
-                  value.includes(option.name)
-                ))}
+                value={(topicOptions || []).filter((option) => value.includes(option.name))}
                 inputId="objectiveTopics"
                 name="objectiveTopics"
                 className="usa-select"
@@ -488,47 +526,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
-        <FormItem
-          label="Who provided the TTA?"
-          name="trainers"
-          required
-        >
-          <Controller
-            render={({ onChange: controllerOnChange, value, onBlur }) => (
-              <Select
-                value={value}
-                inputId="trainers"
-                name="trainers"
-                className="usa-select"
-                styles={selectOptionsReset}
-                onBlur={onBlur}
-                components={{
-                  DropdownIndicator: null,
-                }}
-                onChange={controllerOnChange}
-                inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions}
-                getOptionLabel={(option) => option.fullName}
-                getOptionValue={(option) => option.id}
-                isMulti
-                required
-              />
-            )}
-            control={control}
-            rules={{
-              validate: (value) => {
-                if (!value || value.length === 0) {
-                  return 'Select at least one trainer';
-                }
-                return true;
-              },
-            }}
-            name="trainers"
-            defaultValue={[]}
-          />
-        </FormItem>
-      </div>
+      <SessionTrainers event={event} />
+
       <IpdCourseSelect
         error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
@@ -574,20 +573,18 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
       <Fieldset className="ttahub-objective-files">
         <legend>
-          Did you use any other TTA resources that aren&apos;t available as a link?
-          {' '}
+          Did you use any other TTA resources that aren&apos;t available as a link?{' '}
           <QuestionTooltip
-            text={(
+            text={
               <div>
-                Examples include:
-                {' '}
+                Examples include:{' '}
                 <ul className="usa-list">
                   <li>Presentation slides from PD events</li>
                   <li>PDF&apos;s you created from multiple TTA resources</li>
                   <li>Other OHS-provided resources</li>
                 </ul>
               </div>
-            )}
+            }
           />
         </legend>
         <Radio
@@ -607,11 +604,13 @@ const SessionSummary = ({ datePickerKey, event }) => {
           onChange={() => setUseFiles(false)}
         />
 
-        { useFiles ? (
+        {useFiles ? (
           <>
             <ErrorMessage>{fileUploadMessage}</ErrorMessage>
             <Label htmlFor="files">Attach any non-link resources</Label>
-            <span className="usa-hint display-block">Example file types: .docx, .pdf, .ppt (max size 30 MB)</span>
+            <span className="usa-hint display-block">
+              Example file types: .docx, .pdf, .ppt (max size 30 MB)
+            </span>
             <Dropzone
               handleDrop={handleDrop}
               inputName="objectiveFiles"
@@ -623,35 +622,23 @@ const SessionSummary = ({ datePickerKey, event }) => {
             />
           </>
         ) : null}
-
       </Fieldset>
 
-      <FormItem
-        label="TTA provided "
-        name="ttaProvided"
-        required
-      >
-        <Textarea
-          required
-          id="ttaProvided"
-          name="ttaProvided"
-          inputRef={register({
-            required: 'Describe the tta provided',
-          })}
-        />
-      </FormItem>
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status="Not Started"
+        isOnApprovedReport={false}
+        error={errors.ttaProvided ? ERROR_FORMAT(errors.ttaProvided.message) : NO_ERROR}
+        validateTta={onBlurTta}
+      />
 
       <div className="margin-bottom-4">
-        <SupportTypeDrawer
-          drawerTriggerRef={supportTypeDrawerTriggerRef}
-        />
+        <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
-            <>
-              Support type
-              {' '}
-              <Req />
-            </>
+            Support type <Req />
           </Label>
           <button
             type="button"
@@ -668,11 +655,14 @@ const SessionSummary = ({ datePickerKey, event }) => {
           defaultValue=""
           required
         >
-          <option disabled hidden value="">Select one</option>
-          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
+          <option disabled hidden value="">
+            Select one
+          </option>
+          {SUPPORT_TYPES.map((option) => (
+            <option key={option}>{option}</option>
+          ))}
         </Dropdown>
       </div>
-      <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
     </>
   );
 };
@@ -717,14 +707,29 @@ const ReviewSection = () => {
     files,
     ttaProvided,
     objectiveSupportType,
+    otherTrainers,
   } = watch();
 
   // eslint-disable-next-line max-len
-  const objectiveFiles = (files || []).map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const objectiveFiles = (files || []).map((f) =>
+    f.url ? (
+      <Link href={f.url.url} key={f.url.url}>
+        {f.originalFileName}
+      </Link>
+    ) : (
+      <span key={f.id}>{f.originalFileName}</span>
+    )
+  );
   // eslint-disable-next-line max-len
-  const resources = (objectiveResources || []).filter((r) => r.value).map((r) => <Link href={r.value}>{r.value}</Link>);
+  const resources = (objectiveResources || [])
+    .filter((r) => r.value)
+    .map((r) => (
+      <Link key={`r-${r.value}`} href={r.value}>
+        {r.value}
+      </Link>
+    ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
-  const objectiveTrainers = (trainers || []).map((t) => t.fullName);
+  const objectiveTrainers = (trainers || []).map((t) => t.fullName).filter((t) => t !== 'Other');
 
   const sections = [
     {
@@ -741,15 +746,46 @@ const ReviewSection = () => {
       title: 'Objectives summary',
       anchor: 'session-objective',
       items: [
-        { label: 'Session objectives', name: 'objective', customValue: { objective } },
+        {
+          label: 'Session objectives',
+          name: 'objective',
+          customValue: { objective: sanitizeRichText(objective) },
+          isRichText: true,
+        },
         { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
-        { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
-        { label: 'Resource links', name: 'objectiveResources', customValue: { objectiveResources: resources } },
+        ...(otherTrainers && otherTrainers.trim() !== ''
+          ? [
+              {
+                label: 'Other trainers',
+                name: 'otherTrainers',
+                customValue: { otherTrainers },
+              },
+            ]
+          : []),
+        {
+          label: 'EEP Courses',
+          name: 'courses',
+          customValue: { courses: (courses || []).map((c) => c.name) },
+        },
+        {
+          label: 'Resource links',
+          name: 'objectiveResources',
+          customValue: { objectiveResources: resources },
+        },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
-        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
-        { label: 'Support type', name: 'objectiveSupportType', customValue: { objectiveSupportType } },
+        {
+          label: 'TTA provided',
+          name: 'ttaProvided',
+          customValue: { ttaProvided: sanitizeRichText(ttaProvided) },
+          isRichText: true,
+        },
+        {
+          label: 'Support type',
+          name: 'objectiveSupportType',
+          customValue: { objectiveSupportType },
+        },
       ],
     },
   ];
@@ -759,12 +795,32 @@ const ReviewSection = () => {
 
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
+  const { trainers } = hookForm.getValues();
+
+  const required = [...requiredFields];
 
   if (useIpdCourses) {
-    return pageComplete(hookForm, [...requiredFields, 'courses']);
+    required.push('courses');
   }
 
-  return pageComplete(hookForm, requiredFields);
+  if (trainers?.some((trainer) => trainer.id === 'other')) {
+    required.push('otherTrainers');
+  }
+
+  // ttaProvided and objective are rich-text fields: the generic string check treats
+  // any HTML wrapper (e.g. '<p></p>') as complete, so validate them for actual text
+  // content.
+  if (
+    isEmptyRichText(hookForm.getValues('ttaProvided')) ||
+    isEmptyRichText(hookForm.getValues('objective'))
+  ) {
+    return false;
+  }
+
+  return pageComplete(
+    hookForm,
+    required.filter((field) => field !== 'ttaProvided' && field !== 'objective')
+  );
 };
 
 export default {
@@ -785,19 +841,35 @@ export default {
     _weAreAutoSaving,
     datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
       <div className="ttahub-form-button-group display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1 usa-button--no-margin-top" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        <Button
+          id={`${path}-save-continue`}
+          className="margin-right-1 usa-button--no-margin-top"
+          type="button"
+          disabled={isAppLoading}
+          onClick={onContinue}
+        >
+          {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE
+            ? 'Save and continue'
+            : 'Continue'}
+        </Button>
         {
           // if status is 'Completed' then don't show the save draft button.
-          additionalData
-          && additionalData.status
-          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-            <Button id={`${path}-save-draft`} className="usa-button--outline usa-button--no-margin-top " type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          additionalData?.status && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button
+              id={`${path}-save-draft`}
+              className="usa-button--outline usa-button--no-margin-top "
+              type="button"
+              disabled={isAppLoading}
+              onClick={onSaveDraft}
+            >
+              Save draft
+            </Button>
           )
         }
       </div>

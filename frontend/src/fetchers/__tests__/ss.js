@@ -10,7 +10,10 @@ beforeEach(() => {
 
 describe('getSheets', () => {
   it('should fetch sheets', async () => {
-    const mockSheets = [{ id: 1, name: 'Sheet1' }, { id: 2, name: 'Sheet2' }];
+    const mockSheets = [
+      { id: 1, name: 'Sheet1' },
+      { id: 2, name: 'Sheet2' },
+    ];
     fetchMock.getOnce(sheetsUrl, mockSheets);
 
     const sheets = await getSheets();

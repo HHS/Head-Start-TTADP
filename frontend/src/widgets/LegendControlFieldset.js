@@ -1,11 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Fieldset } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function LegendControlFieldset({
-  children,
-  legend,
-}) {
+export default function LegendControlFieldset({ children, legend }) {
   return (
     <Fieldset className="ttahub-legend-control-fieldset grid-row text-align-center margin-bottom-3 border-0 padding-0 display-flex desktop:flex-justify-center">
       <legend className="usa-sr-only">{legend}</legend>

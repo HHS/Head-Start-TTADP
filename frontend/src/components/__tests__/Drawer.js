@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import Drawer from '../Drawer';
 
 // eslint-disable-next-line react/prop-types
@@ -21,11 +21,11 @@ describe('Drawer', () => {
     <div>
       <div ref={clickTargetRef}>click target</div>
       {hasTrigger && (
-      <div>
-        <button type="button" ref={triggerRef} onClick={() => {}}>
-          Open
-        </button>
-      </div>
+        <div>
+          <button type="button" ref={triggerRef} onClick={() => {}}>
+            Open
+          </button>
+        </div>
       )}
       <Drawer
         title={hasTitle ? 'Hello' : ''}

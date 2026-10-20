@@ -1,0 +1,12 @@
+get:
+  tags:
+    - monitoring
+  summary: Retrieve monitoring finding categories
+  operationId: getMonitoringFindingCategories
+  responses:
+    200:
+      description: List of monitoring finding category names
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/monitoringFindingCategoriesResponse'

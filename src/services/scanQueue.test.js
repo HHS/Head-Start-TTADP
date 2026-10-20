@@ -1,11 +1,11 @@
 import Queue from 'bull';
-import addToScanQueue, {
-  scanQueue,
-  onFailedScanQueue,
-  onCompletedScanQueue,
-  processScanQueue,
-} from './scanQueue';
 import { auditLogger, logger } from '../logger';
+import addToScanQueue, {
+  onCompletedScanQueue,
+  onFailedScanQueue,
+  processScanQueue,
+  scanQueue,
+} from './scanQueue';
 
 jest.mock('bull');
 
@@ -47,16 +47,20 @@ describe('addToScanQueue', () => {
         backoff: expect.any(Object),
         removeOnComplete: true,
         removeOnFail: true,
-      }),
+      })
     );
   });
 
   it('onFailedScanQueue logs an error', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onFailedScanQueue(job, error);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('onCompletedScanQueue logs info on success', () => {
@@ -64,28 +68,38 @@ describe('addToScanQueue', () => {
     const result = { status: 200, data: { message: 'Success' } };
     const loggerSpy = jest.spyOn(logger, 'info');
     onCompletedScanQueue(job, result);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('onCompletedScanQueue logs error on failure', () => {
     const job = { data: { key: 'test-key' } };
     const result = { status: 400, data: { message: 'Failure' } };
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onCompletedScanQueue(job, result);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 400 and result {"message":"Failure"}',
+      'queue_job_non_success_status',
+      result
+    );
   });
 
   it('scanQueue on failed event triggers onFailedScanQueue', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     scanQueue.on.mockImplementation((event, callback) => {
       if (event === 'failed') {
         callback(job, error);
       }
     });
     scanQueue.on('failed', onFailedScanQueue);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('scanQueue on completed event triggers onCompletedScanQueue', () => {
@@ -98,7 +112,9 @@ describe('addToScanQueue', () => {
       }
     });
     scanQueue.on('completed', onCompletedScanQueue);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('processScanQueue sets up listeners and processes the queue', () => {

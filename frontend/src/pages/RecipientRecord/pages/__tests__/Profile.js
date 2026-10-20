@@ -1,12 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import { render, screen } from '@testing-library/react';
-import Profile from '../Profile';
+import { SCOPE_IDS } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { mockRSSData } from '../../../../testHelpers';
 import UserContext from '../../../../UserContext';
 import { GrantDataProvider } from '../GrantDataContext';
-import { mockRSSData } from '../../../../testHelpers';
+import Profile from '../Profile';
 
 describe('Recipient Record - Profile', () => {
   const user = {
@@ -23,7 +23,7 @@ describe('Recipient Record - Profile', () => {
         <GrantDataProvider>
           <Profile recipientSummary={summary} recipientId={1} regionId={1} />
         </GrantDataProvider>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -33,10 +33,18 @@ describe('Recipient Record - Profile', () => {
 
   it('renders the recipient summary approriately', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/asdfsjkfd', {
-      recipientId: 1, regionId: 1, reviewStatus: 'Compliant', reviewDate: '02/02/2024', reviewType: 'Follow-up', grant: 'asdfsjkfd',
+      recipientId: 1,
+      regionId: 1,
+      reviewStatus: 'Compliant',
+      reviewDate: '02/02/2024',
+      reviewType: 'Follow-up',
+      grant: 'asdfsjkfd',
     });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
-    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
+    fetchMock.get(
+      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1',
+      { recipients: [], overview: {} }
+    );
     const summary = {
       recipientId: '44',
       grants: [
@@ -60,56 +68,86 @@ describe('Recipient Record - Profile', () => {
     expect(fetchMock.called('/api/monitoring/1/region/1/grant/asdfsjkfd')).toBe(true);
     expect(fetchMock.called('/api/monitoring/class/1/region/1/grant/asdfsjkfd')).toBe(true);
 
-    expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })
+    ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /Monitoring review/i })).toBeInTheDocument();
   });
 
   it('always shows grant heading even when no class or monitoring data', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/asdfsjkfd', { body: null });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {});
-    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
+    fetchMock.get(
+      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1',
+      { recipients: [], overview: {} }
+    );
     const summary = {
       recipientId: '44',
-      grants: [{
-        id: 1,
-        number: 'asdfsjkfd',
-        status: 'Active',
-        endDate: '2021-09-28',
-      }],
+      grants: [
+        {
+          id: 1,
+          number: 'asdfsjkfd',
+          status: 'Active',
+          endDate: '2021-09-28',
+        },
+      ],
     };
     renderRecipientProfile(summary);
 
     // Grant heading should always be visible now
-    expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })
+    ).toBeInTheDocument();
   });
 
   it('displays class data', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/asdfsjkfd', { body: null });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/asdfsjkfd', {
-      recipientId: 1, regionId: 1, grantNumber: 'asdfsjkfd', received: '03/30/2023', ES: '5.8611', CO: '5.6296', IS: '3.2037',
+      recipientId: 1,
+      regionId: 1,
+      grantNumber: 'asdfsjkfd',
+      received: '03/30/2023',
+      ES: '5.8611',
+      CO: '5.6296',
+      IS: '3.2037',
     });
-    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
+    fetchMock.get(
+      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1',
+      { recipients: [], overview: {} }
+    );
     const summary = {
       recipientId: '44',
-      grants: [{
-        id: 1,
-        number: 'asdfsjkfd',
-        status: 'Active',
-        endDate: '2021-09-28',
-      }],
+      grants: [
+        {
+          id: 1,
+          number: 'asdfsjkfd',
+          status: 'Active',
+          endDate: '2021-09-28',
+        },
+      ],
     };
     renderRecipientProfile(summary);
 
-    expect(await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /grant number asdfsjkfd/i })
+    ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /CLASS® review/i })).toBeInTheDocument();
   });
 
   it('only shows active grants in the bottom grant-by-grant section', async () => {
     fetchMock.get('/api/monitoring/1/region/1/grant/active-grant', {
-      recipientId: 1, regionId: 1, reviewStatus: 'Compliant', reviewDate: '02/02/2024', reviewType: 'Follow-up', grant: 'active-grant',
+      recipientId: 1,
+      regionId: 1,
+      reviewStatus: 'Compliant',
+      reviewDate: '02/02/2024',
+      reviewType: 'Follow-up',
+      grant: 'active-grant',
     });
     fetchMock.get('/api/monitoring/class/1/region/1/grant/active-grant', {});
-    fetchMock.get('/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1', { recipients: [], overview: {} });
+    fetchMock.get(
+      '/api/recipient-spotlight?sortBy=recipientName&direction=asc&offset=0&recipientId.in=1&region.in=1&grantId=1',
+      { recipients: [], overview: {} }
+    );
     const summary = {
       recipientId: '44',
       grants: [
@@ -130,10 +168,14 @@ describe('Recipient Record - Profile', () => {
     renderRecipientProfile(summary);
 
     // Active grant should appear in the bottom section
-    expect(await screen.findByRole('heading', { name: /grant number active-grant/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /grant number active-grant/i })
+    ).toBeInTheDocument();
 
     // Inactive grant should NOT appear in the bottom section
-    expect(screen.queryByRole('heading', { name: /grant number inactive-grant/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /grant number inactive-grant/i })
+    ).not.toBeInTheDocument();
 
     // Both grants should still appear in the upper GrantList table (via recipientSummary)
     expect(screen.getByText('active-grant')).toBeInTheDocument();

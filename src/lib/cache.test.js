@@ -73,7 +73,9 @@ describe('getCachedResponse', () => {
 
   it('handles an error to set the response', async () => {
     mockGet.mockResolvedValue(null);
-    mockSet.mockImplementation(() => { throw new Error('error'); });
+    mockSet.mockImplementation(() => {
+      throw new Error('error');
+    });
 
     const callback = jest.fn().mockResolvedValue('new value');
     const response = await getCachedResponse('key', callback);

@@ -1,10 +1,8 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import './DataCard.css';
 
-export default function DataCard({
-  children, testId, className, errorBorder,
-}) {
+export default function DataCard({ children, testId, className, errorBorder }) {
   const borderClass = errorBorder ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
   return (
     <article

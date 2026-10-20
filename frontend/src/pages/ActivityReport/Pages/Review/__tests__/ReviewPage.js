@@ -3,9 +3,9 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { FormProvider, useForm } from 'react-hook-form';
+import { BrowserRouter } from 'react-router-dom';
 import ReviewPage from '../ReviewPage';
 
 const sections = [
@@ -58,10 +58,7 @@ const RenderReviewPage = ({ defaultValues = values }) => {
   return (
     <BrowserRouter>
       <FormProvider {...hookForm}>
-        <ReviewPage
-          sections={sections}
-          path="id"
-        />
+        <ReviewPage sections={sections} path="id" />
       </FormProvider>
     </BrowserRouter>
   );
@@ -69,11 +66,12 @@ const RenderReviewPage = ({ defaultValues = values }) => {
 
 describe('ReviewPage', () => {
   it('does not display the "edit" link if the report is not editable', async () => {
-    render(<RenderReviewPage defaultValues={
-      { ...values, calculatedStatus: REPORT_STATUSES.APPROVED }
-    }
-    />);
-    await waitFor(() => expect(screen.queryByRole('link', { name: 'Edit form section "first"' })).toBeNull());
+    render(
+      <RenderReviewPage defaultValues={{ ...values, calculatedStatus: REPORT_STATUSES.APPROVED }} />
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('link', { name: 'Edit form section "first"' })).toBeNull()
+    );
   });
 
   describe('with an editable report', () => {

@@ -8,13 +8,15 @@ const AUDIT_SETTINGS_SQL = `
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
-      transaction,
-      replacements: { sessionSig: __filename },
-    });
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
+        transaction,
+        replacements: { sessionSig: __filename },
+      });
 
-    return queryInterface.sequelize.query(`
+      return queryInterface.sequelize.query(
+        `
       UPDATE "CommunicationLogs"
       SET data = jsonb_set(
         data,
@@ -50,16 +52,20 @@ module.exports = {
         true
       )
       WHERE data ? 'notes';
-    `, { transaction });
-  }),
+    `,
+        { transaction }
+      );
+    }),
 
-  down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
-      transaction,
-      replacements: { sessionSig: __filename },
-    });
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.sequelize.query(AUDIT_SETTINGS_SQL, {
+        transaction,
+        replacements: { sessionSig: __filename },
+      });
 
-    return queryInterface.sequelize.query(`
+      return queryInterface.sequelize.query(
+        `
       UPDATE "CommunicationLogs"
       SET data = jsonb_set(
         data,
@@ -90,6 +96,8 @@ module.exports = {
         true
       )
       WHERE data ? 'notes';
-    `, { transaction });
-  }),
+    `,
+        { transaction }
+      );
+    }),
 };

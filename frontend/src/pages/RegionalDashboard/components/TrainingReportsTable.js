@@ -1,12 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import WidgetContainer from '../../../components/WidgetContainer';
-import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
+import WidgetContainer from '../../../components/WidgetContainer';
 import { getSessionReportsCSV, getSessionReportsCSVById } from '../../../fetchers/session';
+import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import './TrainingReportsTable.css';
 
 const PER_PAGE = 10;
 
@@ -19,9 +20,17 @@ const TrainingReportsTable = ({
   sortConfig,
   setSortConfig,
   filters,
+  recipientId,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const perPage = sortConfig.perPage || PER_PAGE;
+
+  // Selections survive paging and sorting, but a filter change swaps out the dataset underneath
+  // them. The by-id export does pass the active filters along, so a stale selection can't reach
+  // the CSV here, but it would still be counted as selected in a table that no longer shows it.
+  useEffect(() => {
+    setReportCheckboxes({});
+  }, [filters]);
 
   const selectedReports = useMemo(() => {
     const ids = [];
@@ -37,91 +46,96 @@ const TrainingReportsTable = ({
   const menuItems = [];
 
   if (data.rows.length) {
-    menuItems.push(
-      {
-        label: 'Export table',
-        onClick: async () => getSessionReportsCSV(sortConfig, filters),
-      },
-    );
+    menuItems.push({
+      label: 'Export table',
+      onClick: async () => getSessionReportsCSV(sortConfig, filters, recipientId),
+    });
   }
 
   if (selectedReports.length) {
-    menuItems.unshift(
-      {
-        label: 'Export selected rows',
-        onClick: async () => getSessionReportsCSVById(selectedReports, sortConfig, filters),
-      },
-    );
+    menuItems.unshift({
+      label: 'Export selected rows',
+      onClick: async () =>
+        getSessionReportsCSVById(selectedReports, sortConfig, filters, recipientId),
+    });
   }
 
-  const handlePageChange = useCallback((pageNumber) => {
-    setSortConfig((previousConfig) => ({
-      ...previousConfig,
-      activePage: pageNumber,
-      offset: (pageNumber - 1) * perPage,
-    }));
-  }, [setSortConfig, perPage]);
+  const handlePageChange = useCallback(
+    (pageNumber) => {
+      setSortConfig((previousConfig) => ({
+        ...previousConfig,
+        activePage: pageNumber,
+        offset: (pageNumber - 1) * perPage,
+      }));
+    },
+    [setSortConfig, perPage]
+  );
 
   const history = useHistory();
 
-  const tabularData = useMemo(() => data.rows.map((r) => ({
-    id: r.id,
-    title: r.eventId,
-    heading: <Link to={`/training-report/view/${r.eventId}?back_link=hide`}>{r.eventId}</Link>,
-    data: [
-      {
-        title: 'Event title',
-        tooltip: r.eventName,
-        value: r.eventName,
-      },
-      {
-        title: 'Supporting goals',
-        value: (
-          <TooltipWithCollection
-            collection={(r.goalTemplates || []).map((gt) => gt.standard)}
-            collectionTitle={`supporting goals for ${r.eventId}`}
-          />
-        ),
-      },
-      {
-        title: 'Session name',
-        tooltip: r.sessionName,
-        value: r.sessionName,
-      },
-      {
-        title: 'Session start date',
-        value: r.startDate ? moment(r.startDate).format(DATE_DISPLAY_FORMAT) : '',
-      },
-      {
-        title: 'Session end date',
-        value: r.endDate ? moment(r.endDate).format(DATE_DISPLAY_FORMAT) : '',
-      },
-      {
-        title: 'Topics',
-        value: (
-          <TooltipWithCollection
-            collection={r.objectiveTopics || []}
-            collectionTitle={`topics for ${r.eventId}`}
-          />
-        ),
-      },
-    ],
-    actions: [
-      {
-        label: 'View',
-        onClick: () => history.push(`/training-report/view/${r.eventId}?back_link=hide`),
-      },
-      {
-        label: 'Export',
-        onClick: () => getSessionReportsCSVById([r.id], sortConfig, filters),
-      },
-    ],
-  })), [data.rows, history, sortConfig, filters]);
+  const tabularData = useMemo(
+    () =>
+      data.rows.map((r) => ({
+        id: r.id,
+        title: r.eventId,
+        heading: <Link to={`/training-report/view/${r.eventId}?back_link=hide`}>{r.eventId}</Link>,
+        data: [
+          {
+            title: 'Event title',
+            tooltip: r.eventName,
+            value: r.eventName,
+          },
+          {
+            title: 'Supporting goals',
+            value: (
+              <TooltipWithCollection
+                collection={(r.goalTemplates || []).map((gt) => gt.standard)}
+                collectionTitle={`supporting goals for ${r.eventId}`}
+              />
+            ),
+          },
+          {
+            title: 'Session name',
+            tooltip: r.sessionName,
+            value: r.sessionName,
+          },
+          {
+            title: 'Session start date',
+            value: r.startDate ? moment(r.startDate).format(DATE_DISPLAY_FORMAT) : '',
+          },
+          {
+            title: 'Session end date',
+            value: r.endDate ? moment(r.endDate).format(DATE_DISPLAY_FORMAT) : '',
+          },
+          {
+            title: 'Topics',
+            value: (
+              <TooltipWithCollection
+                collection={r.objectiveTopics || []}
+                collectionTitle={`topics for ${r.eventId}`}
+              />
+            ),
+          },
+        ],
+        actions: [
+          {
+            label: 'View',
+            onClick: () => history.push(`/training-report/view/${r.eventId}?back_link=hide`),
+          },
+          {
+            label: 'Export',
+            onClick: () => getSessionReportsCSVById([r.id], sortConfig, filters, recipientId),
+          },
+        ],
+      })),
+    [data.rows, history, sortConfig, filters, recipientId]
+  );
 
   return (
     <WidgetContainer
       className="training-reports-table--widget-container"
       title={title}
+      subtitle="Approved sessions from training events."
       enableCheckboxes
       checkboxes={reportCheckboxes}
       setCheckboxes={setReportCheckboxes}
@@ -138,9 +152,9 @@ const TrainingReportsTable = ({
       titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
     >
       {data.rows.length === 0 && (
-      <div>
-        <p className="font-serif-md margin-0 padding-10 text-bold text-center">{emptyMsg}</p>
-      </div>
+        <div>
+          <p className="font-serif-md margin-0 padding-10 text-bold text-center">{emptyMsg}</p>
+        </div>
       )}
       {data.rows.length > 0 && (
         <HorizontalTableWidget
@@ -148,8 +162,8 @@ const TrainingReportsTable = ({
             'Event title',
             'Supporting goals',
             'Session name',
-            'Session start date',
-            'Session end date',
+            { displayName: 'Session start date', name: 'startDate' },
+            { displayName: 'Session end date', name: 'endDate' },
             'Topics',
           ]}
           data={tabularData}
@@ -164,7 +178,6 @@ const TrainingReportsTable = ({
           showDashForNullValue
           hideFirstColumnBorder
           stickyFirstColumn
-          stickyLastColumn={false}
         />
       )}
     </WidgetContainer>
@@ -175,6 +188,7 @@ TrainingReportsTable.defaultProps = {
   loading: false,
   emptyMsg: 'No training reports found',
   filters: [],
+  recipientId: null,
 };
 
 TrainingReportsTable.propTypes = {
@@ -195,6 +209,7 @@ TrainingReportsTable.propTypes = {
   title: PropTypes.string.isRequired,
   setSortConfig: PropTypes.func.isRequired,
   filters: PropTypes.arrayOf(PropTypes.shape({})),
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default TrainingReportsTable;

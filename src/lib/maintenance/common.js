@@ -1,7 +1,10 @@
 const { Op } = require('sequelize');
 const { CronJob } = require('cron');
 const {
-  default: newQueue, increaseListeners, KEEP_COMPLETED_JOBS, KEEP_FAILED_JOBS,
+  default: newQueue,
+  increaseListeners,
+  KEEP_COMPLETED_JOBS,
+  KEEP_FAILED_JOBS,
 } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
@@ -108,16 +111,12 @@ const processMaintenanceQueue = () => {
   increaseListeners(maintenanceQueue, Object.entries(maintenanceQueueProcessors).length);
 
   // Process each category in the queue using its corresponding processor
-  Object.entries(maintenanceQueueProcessors)
-    .map(([category, { processor, runInTransaction }]) => maintenanceQueue.process(
+  Object.entries(maintenanceQueueProcessors).map(([category, { processor, runInTransaction }]) =>
+    maintenanceQueue.process(
       category,
-      runInTransaction
-        ? transactionQueueWrapper(
-          processor,
-          category,
-        )
-        : processor,
-    ));
+      runInTransaction ? transactionQueueWrapper(processor, category) : processor
+    )
+  );
 };
 
 /**
@@ -143,7 +142,7 @@ const enqueueMaintenanceJob = async ({
             removeOnComplete: KEEP_COMPLETED_JOBS,
             removeOnFail: KEEP_FAILED_JOBS,
             ...jobSettings,
-          },
+          }
         );
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
@@ -197,16 +196,21 @@ const registerCronEnrollmentFunction = (enrollFunction) => {
  * @returns {Promise<void>}
  */
 const executeCronEnrollmentFunctions = async (instanceId, contextId, env) => {
-  auditLogger.log('info', `Executing cron enrollment functions for instance ${instanceId}, context ${contextId}, env ${env}`);
+  auditLogger.log(
+    'info',
+    `Executing cron enrollment functions for instance ${instanceId}, context ${contextId}, env ${env}`
+  );
 
   // Execute all registered functions asynchronously
-  await Promise.all(cronEnrollmentFunctions.map(async (fn) => {
-    try {
-      await fn(instanceId, contextId, env);
-    } catch (err) {
-      auditLogger.error(`Error executing cron enrollment function: ${err.message}`, err);
-    }
-  }));
+  await Promise.all(
+    cronEnrollmentFunctions.map(async (fn) => {
+      try {
+        await fn(instanceId, contextId, env);
+      } catch (err) {
+        auditLogger.error(`Error executing cron enrollment function: ${err.message}`, err);
+      }
+    })
+  );
 };
 
 /**
@@ -249,11 +253,8 @@ const hasCronJob = (category, type, name = '') => !!maintenanceCronJobs?.[catego
  * @returns {boolean} - Returns true if the cron job has been marked as started, otherwise false.
  */
 // Define a function to check if a cron job has been started for a given category and type
-const hasCronJobBeenStarted = (
-  category,
-  type,
-  name,
-) => !!maintenanceCronJobs?.[category]?.[type]?.[name]?.started;
+const hasCronJobBeenStarted = (category, type, name) =>
+  !!maintenanceCronJobs?.[category]?.[type]?.[name]?.started;
 
 /**
  * Sets the schedule for a cron job of a given category and type.
@@ -327,18 +328,23 @@ const createCategory = (category, typeJobs, timezone) => {
   // Create an object containing jobs for each type of job in the category.
   const jobs = Object.entries(typeJobs).reduce((acc, [type, names]) => {
     // Iterate over the nested structure
-    const namedJobs = Object.entries(names)
-      .reduce((typeAcc, [name, { jobCommand, schedule, started }]) => {
+    const namedJobs = Object.entries(names).reduce(
+      (typeAcc, [name, { jobCommand, schedule, started }]) => {
         // Only add the job if it hasn't started
         if (!started) {
-          auditLogger.log('info', `Maintenance: createCategory: category: ${category}, type: ${type}, name: ${name}, schedule: ${schedule}`);
+          auditLogger.log(
+            'info',
+            `Maintenance: createCategory: category: ${category}, type: ${type}, name: ${name}, schedule: ${schedule}`
+          );
           return {
             ...typeAcc,
             ...createJob(category, type, name, timezone, schedule, jobCommand),
           };
         }
         return typeAcc;
-      }, {});
+      },
+      {}
+    );
 
     // Combine the jobs for each type
     return {
@@ -358,15 +364,14 @@ const createCategory = (category, typeJobs, timezone) => {
  * @returns {Array} - An array of categories containing their respective cron jobs.
  */
 const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
-  const categories = Object.entries(maintenanceCronJobs)
-    .reduce((acc, [category, typeJobs]) => {
-      auditLogger.log('info', `Maintenance: runMaintenanceCronJobs: category: ${category}`);
-      const categoryObj = createCategory(category, typeJobs, timezone);
-      // Extract the category name from the returned object
-      const categoryName = Object.keys(categoryObj)[0];
-      acc[categoryName] = categoryObj[categoryName];
-      return acc;
-    }, {});
+  const categories = Object.entries(maintenanceCronJobs).reduce((acc, [category, typeJobs]) => {
+    auditLogger.log('info', `Maintenance: runMaintenanceCronJobs: category: ${category}`);
+    const categoryObj = createCategory(category, typeJobs, timezone);
+    // Extract the category name from the returned object
+    const categoryName = Object.keys(categoryObj)[0];
+    acc[categoryName] = categoryObj[categoryName];
+    return acc;
+  }, {});
 
   return categories;
 };
@@ -402,10 +407,7 @@ const createMaintenanceLog = async (category, type, data, triggeredById) => {
  */
 const updateMaintenanceLog = async (log, newData, isSuccessful) => {
   // Update the MaintenanceLog table with the new data and success status for the specified log ID.
-  await MaintenanceLog.update(
-    { data: newData, isSuccessful },
-    { where: { id: log.id } },
-  );
+  await MaintenanceLog.update({ data: newData, isSuccessful }, { where: { id: log.id } });
 };
 
 /**
@@ -417,13 +419,7 @@ const updateMaintenanceLog = async (log, newData, isSuccessful) => {
  * @param {integer} triggeredById - The id of the maintenance log that triggered this command.
  * @returns {boolean} - Whether the maintenance command was successful or not.
  */
-const maintenanceCommand = async (
-  callback,
-  category,
-  type,
-  data = {},
-  triggeredById = null,
-) => {
+const maintenanceCommand = async (callback, category, type, data = {}, triggeredById = null) => {
   // Initialize variables for logging and tracking success
   const logMessages = [];
   const logBenchmarks = [];
@@ -441,9 +437,12 @@ const maintenanceCommand = async (
     const result = await callback(logMessages, logBenchmarks, log.id);
 
     // Determine if the maintenance command was successful based on log messages and returned data
-    isSuccessful = logMessages.some((message) => message.toLowerCase().includes('successfully')
-      || message.toLowerCase().includes('executed'))
-      || !!result?.isSuccessful;
+    isSuccessful =
+      logMessages.some(
+        (message) =>
+          message.toLowerCase().includes('successfully') ||
+          message.toLowerCase().includes('executed')
+      ) || !!result?.isSuccessful;
 
     // Merge any returned data into the original data object and update the maintenance log
     const newData = {
@@ -458,13 +457,17 @@ const maintenanceCommand = async (
     auditLogger.error(`Error occurred while running maintenance command: ${err.message}`);
 
     // Update the maintenance log with the error information
-    await updateMaintenanceLog(log, {
-      ...(log?.data && log.data),
-      ...(logMessages.length > 0 && { messages: logMessages }),
-      ...(logBenchmarks.length > 0 && { benchmarks: logBenchmarks }),
-      error: JSON.parse(JSON.stringify(err)),
-      errorMessage: err.message,
-    }, isSuccessful);
+    await updateMaintenanceLog(
+      log,
+      {
+        ...(log?.data && log.data),
+        ...(logMessages.length > 0 && { messages: logMessages }),
+        ...(logBenchmarks.length > 0 && { benchmarks: logBenchmarks }),
+        error: JSON.parse(JSON.stringify(err)),
+        errorMessage: err.message,
+      },
+      isSuccessful
+    );
   }
 
   // Return whether the maintenance command was successful or not
@@ -481,7 +484,7 @@ const backDate = (dateOffSet) => {
   const today = new Date();
   // Calculate the shifted date by subtracting the specified number of days in milliseconds
   // from today's date.
-  const shiftedDate = new Date(today.getTime() - (dateOffSet * 24 * 60 * 60 * 1000));
+  const shiftedDate = new Date(today.getTime() - dateOffSet * 24 * 60 * 60 * 1000);
   // Create a new Date object representing the shifted date and today's time.
   const shiftedDateTime = new Date(
     shiftedDate.getFullYear(),
@@ -489,7 +492,7 @@ const backDate = (dateOffSet) => {
     shiftedDate.getDate(),
     today.getHours(),
     today.getMinutes(),
-    today.getSeconds(),
+    today.getSeconds()
   );
   // Return the shifted date and time as a Date object.
   return shiftedDateTime;
@@ -522,9 +525,7 @@ const clearMaintenanceLogs = async (data, triggeredById) => {
         },
         benchmark: true,
       });
-      return typeof result === 'number'
-        ? { rowsDeleted: result, isSuccessful: true }
-        : result;
+      return typeof result === 'number' ? { rowsDeleted: result, isSuccessful: true } : result;
     },
     MAINTENANCE_CATEGORY.MAINTENANCE,
     MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
@@ -532,7 +533,7 @@ const clearMaintenanceLogs = async (data, triggeredById) => {
       ...data,
       olderThen,
     },
-    triggeredById,
+    triggeredById
   );
 };
 
@@ -577,41 +578,55 @@ addQueueProcessor(MAINTENANCE_CATEGORY.MAINTENANCE, maintenance);
 registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
   if (!isTrue('FORCE_CRON')) {
     if (instanceId !== '0') {
-      auditLogger.log('info', `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`);
+      auditLogger.log(
+        'info',
+        `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`
+      );
       return;
     }
 
     if (env !== 'production') {
-      auditLogger.log('info', `Skipping maintenance cron job enrollment in non-production environment (${env})`);
+      auditLogger.log(
+        'info',
+        `Skipping maintenance cron job enrollment in non-production environment (${env})`
+      );
       return;
     }
 
     if (contextId !== 1) {
-      auditLogger.log('info', `Skipping maintenance cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
+      auditLogger.log(
+        'info',
+        `Skipping maintenance cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`
+      );
       return;
     }
   }
-  auditLogger.log('info', `Registering maintenance cron jobs for context ${contextId} in environment ${env} for instance ${instanceId}`);
+  auditLogger.log(
+    'info',
+    `Registering maintenance cron jobs for context ${contextId} in environment ${env} for instance ${instanceId}`
+  );
 
   addCronJob(
     MAINTENANCE_CATEGORY.MAINTENANCE, // The maintenance category is "DB"
     MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // The maintenance type is "DAILY_DB_MAINTENANCE"
     // The function to execute takes in the category, type, timezone, and schedule parameters
-    (category, type, timezone, schedule) => new CronJob(
-      schedule, // The schedule parameter specifies when the job should run
-      () => enqueueMaintenanceJob({
-        // constant representing the category of maintenance
-        category: MAINTENANCE_CATEGORY.MAINTENANCE,
-        data: {
-          // shorthand property notation for type: type
-          type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
-          dateOffSet: 90, // otherwise, merge the provided data object
-        },
-      }),
-      null,
-      true,
-      timezone, // The timezone parameter specifies the timezone in which the job should run
-    ),
+    (category, type, timezone, schedule) =>
+      new CronJob(
+        schedule, // The schedule parameter specifies when the job should run
+        () =>
+          enqueueMaintenanceJob({
+            // constant representing the category of maintenance
+            category: MAINTENANCE_CATEGORY.MAINTENANCE,
+            data: {
+              // shorthand property notation for type: type
+              type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
+              dateOffSet: 90, // otherwise, merge the provided data object
+            },
+          }),
+        null,
+        true,
+        timezone // The timezone parameter specifies the timezone in which the job should run
+      ),
     /**
      * This cron expression breaks down as follows:
      *  30 - The minute when the job will run (in this case, 30 minutes past the hour)
@@ -620,7 +635,7 @@ registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
      *  * - The month when the job will run (in this case, any month)
      *  * - The day of the week when the job will run (in this case, any day of the week)
      * */
-    '30 22 * * *',
+    '30 22 * * *'
   );
 });
 

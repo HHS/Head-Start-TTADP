@@ -1,0 +1,72 @@
+get:
+  tags:
+    - widgets
+  operationId: activeNoncompliantCitationsWithTtaSupport
+  summary: Retrieve active noncompliant citations with TTA support widget data
+  description: >
+    Returns two monthly trace series covering the continuous month range derived
+    from approved activity reports: one for all active areas of noncompliance
+    and one for the subset that also received TTA support in the same month.
+  responses:
+    200:
+      description: Two-element array of monthly trace data for active noncompliant citations
+      content:
+        application/json:
+          schema:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: object
+              required:
+                - name
+                - x
+                - y
+                - month
+                - id
+                - trace
+              properties:
+                name:
+                  type: string
+                  enum:
+                    - Active areas of noncompliance with TTA support
+                    - All active areas of noncompliance
+                  description: Human-readable label for this trace series.
+                x:
+                  type: array
+                  description: >
+                    Ordered list of month labels covering the full continuous
+                    range (no gaps), formatted as "MMM YYYY" (e.g. "Jan 2025").
+                  items:
+                    type: string
+                    example: Jan 2025
+                y:
+                  type: array
+                  description: >
+                    Count of distinct active noncompliant citations for the
+                    corresponding month in the `x` array. Zero-filled for
+                    months with no matching data.
+                  items:
+                    type: integer
+                    minimum: 0
+                    example: 3
+                month:
+                  type: array
+                  description: >
+                    Reserved month metadata array; currently always empty strings.
+                  items:
+                    type: string
+                id:
+                  type: string
+                  enum:
+                    - active-areas-of-noncompliance-with-tta-support
+                    - all-active-areas-of-noncompliance
+                  description: Stable trace identifier used by the frontend chart.
+                trace:
+                  type: string
+                  enum:
+                    - circle
+                    - triangle
+                  description: Marker shape used to render this trace on the chart.
+    401:
+      description: Unauthorized

@@ -1,12 +1,17 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
+import { expandFilters, expandMonitoringFilters } from '../../../utils';
 import ActivityReportDashboard from './ActivityReportDashboard';
-import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
-import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
 import MonitoringReportDashboard from './MonitoringReportDashboard';
-import { expandFilters } from '../../../utils';
+import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
+import TrainingReportDashboard from './TrainingReportDashboard';
+
+const EXPANSION_FUNCTION = {
+  monitoring: expandMonitoringFilters,
+  default: expandFilters,
+};
 
 export default function Dashboard({
   reportType,
@@ -16,7 +21,10 @@ export default function Dashboard({
   filterKey,
   userHasOnlyOneRegion,
 }) {
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+  const filtersToApply = useMemo(() => {
+    const expandFunction = EXPANSION_FUNCTION[reportType] || EXPANSION_FUNCTION.default;
+    return expandFunction(filters);
+  }, [filters, reportType]);
 
   let DashboardComponent = ActivityReportDashboard;
   switch (reportType) {

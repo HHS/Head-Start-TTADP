@@ -7,7 +7,7 @@ const activityReportFilesIncludeExclude = (include) => {
   return selectDistinctActivityReportGoalIds(
     `LEFT JOIN "ActivityReports" ON "ActivityReports"."id" = "ActivityReportGoals"."activityReportId"
     LEFT JOIN "ActivityReportFiles" ON "ActivityReportFiles"."activityReportId" = "ActivityReports"."id" LEFT JOIN "Files" ON "Files"."id" = "ActivityReportFiles"."fileId"`,
-    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`,
+    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`
   );
 };
 
@@ -17,7 +17,7 @@ const activityReportObjectiveFilesIncludeExclude = (include) => {
   return selectDistinctActivityReportGoalIds(
     `LEFT JOIN "ActivityReports" ON "ActivityReports"."id" = "ActivityReportGoals"."activityReportId"
     LEFT JOIN "ActivityReportObjectives" ON "ActivityReportObjectives"."activityReportId" = "ActivityReports"."id" LEFT JOIN "ActivityReportObjectiveFiles" ON "ActivityReportObjectiveFiles"."activityReportObjectiveId" = "ActivityReportObjectives"."id" LEFT JOIN "Files" ON "Files"."id" = "ActivityReportObjectiveFiles"."fileId"`,
-    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`,
+    `${a} LOWER(STRING_AGG("Files"."originalFileName", CHR(10)))`
   );
 };
 
@@ -38,7 +38,12 @@ export function withoutResourceAttachment(query) {
   return {
     [Op.and]: [
       filterAssociation(activityReportFilesIncludeExclude(false), search, false, 'NOT ILIKE'),
-      filterAssociation(activityReportObjectiveFilesIncludeExclude(false), search, false, 'NOT ILIKE'),
+      filterAssociation(
+        activityReportObjectiveFilesIncludeExclude(false),
+        search,
+        false,
+        'NOT ILIKE'
+      ),
     ],
   };
 }

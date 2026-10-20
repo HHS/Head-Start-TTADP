@@ -1,26 +1,32 @@
 /* eslint-disable dot-notation */
+
+import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import { ValidationError } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { auditLogger } from '../../logger';
 import db, {
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
   Goal,
-  Objective,
-  User,
-  Recipient,
-  OtherEntity,
   Grant,
+  Objective,
+  OtherEntity,
+  Recipient,
+  User,
 } from '..';
-import { auditLogger } from '../../logger';
-import { copyStatus, validateForSubmission, validateForApproval } from '../hooks/activityReport';
+import {
+  copyStatus,
+  validateForApproval,
+  validateForSubmission,
+  validateObjectiveSupportTypesForSubmission,
+} from '../hooks/activityReport';
 
 jest.mock('bull');
 
 jest.mock('express-http-context', () => ({
-  get: jest.fn().mockReturnValue(1),
+  get: jest.fn().mockReturnValue(undefined),
   set: jest.fn(),
 }));
 
@@ -58,32 +64,34 @@ const mockOtherEntity = {
   name: 'Regional TTA/Other Specialists',
 };
 
-const mockGrant = [{
-  id: 65535,
-  number: '99CH9998',
-  regionId: 2,
-  status: 'Active',
-  startDate: new Date('2021-02-09T15:13:00.000Z'),
-  endDate: new Date('2021-02-09T15:13:00.000Z'),
-  cdi: false,
-  grantSpecialistName: null,
-  grantSpecialistEmail: null,
-  stateCode: 'NY',
-  annualFundingMonth: 'October',
-},
-{
-  id: 65536,
-  number: '99CH9999',
-  regionId: 2,
-  status: 'Active',
-  startDate: new Date('2021-02-09T15:13:00.000Z'),
-  endDate: new Date('2021-02-09T15:13:00.000Z'),
-  cdi: false,
-  grantSpecialistName: null,
-  grantSpecialistEmail: null,
-  stateCode: 'NY',
-  annualFundingMonth: 'October',
-}];
+const mockGrant = [
+  {
+    id: 65535,
+    number: '99CH9998',
+    regionId: 2,
+    status: 'Active',
+    startDate: new Date('2021-02-09T15:13:00.000Z'),
+    endDate: new Date('2021-02-09T15:13:00.000Z'),
+    cdi: false,
+    grantSpecialistName: null,
+    grantSpecialistEmail: null,
+    stateCode: 'NY',
+    annualFundingMonth: 'October',
+  },
+  {
+    id: 65536,
+    number: '99CH9999',
+    regionId: 2,
+    status: 'Active',
+    startDate: new Date('2021-02-09T15:13:00.000Z'),
+    endDate: new Date('2021-02-09T15:13:00.000Z'),
+    cdi: false,
+    grantSpecialistName: null,
+    grantSpecialistEmail: null,
+    stateCode: 'NY',
+    annualFundingMonth: 'October',
+  },
+];
 
 const sampleReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -115,15 +123,9 @@ const sampleReport = {
   version: 2,
 };
 
-const mockGoals = [
-  { name: 'goal 1' },
-  { name: 'goal 2' },
-];
+const mockGoals = [{ name: 'goal 1' }, { name: 'goal 2' }];
 
-const mockObjectives = [
-  { title: 'objective 1' },
-  { title: 'objective 2' },
-];
+const mockObjectives = [{ title: 'objective 1' }, { title: 'objective 2' }];
 
 const ORIGINAL_ENV = process.env;
 
@@ -185,11 +187,15 @@ describe('Activity Reports model', () => {
       grantId: grants[1].id,
     });
     await Promise.all(goals);
-    await Promise.all(goals.map(async (goal) => ActivityReportGoal.create({
-      activityReportId: report.id,
-      goalId: goal.id,
-      status: goal.status,
-    })));
+    await Promise.all(
+      goals.map(async (goal) =>
+        ActivityReportGoal.create({
+          activityReportId: report.id,
+          goalId: goal.id,
+          status: goal.status,
+        })
+      )
+    );
     objectives[0] = await Objective.create({
       ...mockObjectives[0],
       goalId: goals[0].id,
@@ -203,22 +209,30 @@ describe('Activity Reports model', () => {
       goalId: goals[2].id,
     });
     await Promise.all(objectives);
-    await Promise.all(objectives.map(async (objective) => ActivityReportObjective.create({
-      activityReportId: report.id,
-      objectiveId: objective.id,
-      status: objective.status,
-    })));
+    await Promise.all(
+      objectives.map(async (objective) =>
+        ActivityReportObjective.create({
+          activityReportId: report.id,
+          objectiveId: objective.id,
+          status: objective.status,
+          supportType: 'Planning',
+        })
+      )
+    );
   });
   afterAll(async () => {
     process.env = ORIGINAL_ENV; // restore original env
-    await Promise.all(activityRecipients
-      .map(async (activityRecipient) => ActivityRecipient.destroy({
-        where: {
-          activityReportId: activityRecipient.activityReportId,
-          grantId: activityRecipient.grantId,
-          otherEntityId: activityRecipient.otherEntityId,
-        },
-      })));
+    await Promise.all(
+      activityRecipients.map(async (activityRecipient) =>
+        ActivityRecipient.destroy({
+          where: {
+            activityReportId: activityRecipient.activityReportId,
+            grantId: activityRecipient.grantId,
+            otherEntityId: activityRecipient.otherEntityId,
+          },
+        })
+      )
+    );
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
@@ -234,7 +248,9 @@ describe('Activity Reports model', () => {
 
   it('copyStatus', async () => {
     const instance = { submissionStatus: REPORT_STATUSES.DRAFT };
-    instance.set = (name, value) => { instance[name] = value; };
+    instance.set = (name, value) => {
+      instance[name] = value;
+    };
     copyStatus(instance);
     expect(instance.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
     instance.submissionStatus = REPORT_STATUSES.DELETED;
@@ -276,20 +292,12 @@ describe('Activity Reports model', () => {
     });
 
     it('does not throw when status change is not to SUBMITTED', () => {
-      const instance = makeInstance(
-        REPORT_STATUSES.DRAFT,
-        ['submissionStatus'],
-        validDataValues,
-      );
+      const instance = makeInstance(REPORT_STATUSES.DRAFT, ['submissionStatus'], validDataValues);
       expect(() => validateForSubmission(instance)).not.toThrow();
     });
 
     it('does not throw when submissionStatus is not in changed fields', () => {
-      const instance = makeInstance(
-        REPORT_STATUSES.SUBMITTED,
-        ['duration'],
-        validDataValues,
-      );
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['duration'], validDataValues);
       expect(() => validateForSubmission(instance)).not.toThrow();
     });
 
@@ -297,17 +305,16 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.SUBMITTED,
         ['submissionStatus'],
-        validDataValues,
+        validDataValues
       );
       expect(() => validateForSubmission(instance)).not.toThrow();
     });
 
     it('throws ValidationError when a required field is missing on SUBMITTED transition', () => {
-      const instance = makeInstance(
-        REPORT_STATUSES.SUBMITTED,
-        ['submissionStatus'],
-        { ...validDataValues, deliveryMethod: undefined },
-      );
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus'], {
+        ...validDataValues,
+        deliveryMethod: undefined,
+      });
       expect(() => validateForSubmission(instance)).toThrow(ValidationError);
     });
 
@@ -322,7 +329,7 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.SUBMITTED,
         ['submissionStatus'],
-        hybridDataValues,
+        hybridDataValues
       );
       expect(() => validateForSubmission(instance)).not.toThrow();
     });
@@ -338,9 +345,90 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.SUBMITTED,
         ['submissionStatus'],
-        hybridDataValues,
+        hybridDataValues
       );
       expect(() => validateForSubmission(instance)).toThrow(ValidationError);
+    });
+  });
+
+  describe('validateObjectiveSupportTypesForSubmission', () => {
+    const makeSequelize = (objectives) => ({
+      models: {
+        ActivityReportObjective: {
+          findAll: jest.fn().mockResolvedValue(objectives),
+        },
+      },
+    });
+
+    const makeInstance = (submissionStatus, changed) => ({
+      id: 123,
+      submissionStatus,
+      changed: () => changed,
+    });
+
+    it('does not query when the status change is not to SUBMITTED', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.DRAFT, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).not.toHaveBeenCalled();
+    });
+
+    it('does not query when submissionStatus is not in changed fields', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['duration']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when every objective has a support type', async () => {
+      const sequelize = makeSequelize([
+        { id: 1, supportType: 'Planning' },
+        { id: 2, supportType: 'Implementing' },
+      ]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+      expect(sequelize.models.ActivityReportObjective.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { activityReportId: 123 } })
+      );
+    });
+
+    it('does not throw when the report has no objectives', async () => {
+      const sequelize = makeSequelize([]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).resolves.toBeUndefined();
+    });
+
+    it('throws ValidationError when an objective is missing a support type', async () => {
+      const sequelize = makeSequelize([
+        { id: 1, supportType: 'Planning' },
+        { id: 2, supportType: null },
+      ]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when an objective has an invalid support type', async () => {
+      const sequelize = makeSequelize([{ id: 1, supportType: 'NotARealSupportType' }]);
+      const instance = makeInstance(REPORT_STATUSES.SUBMITTED, ['submissionStatus']);
+
+      await expect(
+        validateObjectiveSupportTypesForSubmission(sequelize, instance, {})
+      ).rejects.toThrow(ValidationError);
     });
   });
 
@@ -372,7 +460,7 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.APPROVED,
         ['submissionStatus'],
-        validDataValues,
+        validDataValues
       );
       expect(() => validateForApproval(instance)).not.toThrow();
     });
@@ -381,7 +469,7 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.NEEDS_ACTION,
         ['calculatedStatus'],
-        validDataValues,
+        validDataValues
       );
       expect(() => validateForApproval(instance)).not.toThrow();
     });
@@ -390,64 +478,48 @@ describe('Activity Reports model', () => {
       const instance = makeInstance(
         REPORT_STATUSES.APPROVED,
         ['calculatedStatus'],
-        validDataValues,
+        validDataValues
       );
       expect(() => validateForApproval(instance)).not.toThrow();
     });
 
     it('throws ValidationError when a required field is missing on APPROVED transition', () => {
-      const instance = makeInstance(
-        REPORT_STATUSES.APPROVED,
-        ['calculatedStatus'],
-        { ...validDataValues, topics: null },
-      );
+      const instance = makeInstance(REPORT_STATUSES.APPROVED, ['calculatedStatus'], {
+        ...validDataValues,
+        topics: null,
+      });
       expect(() => validateForApproval(instance)).toThrow(ValidationError);
     });
   });
 
   it('propagateApprovedStatus', async () => {
-    const preReport = await ActivityReport.findOne(
-      { where: { id: report.id }, individualHooks: true },
-    );
+    const preReport = await ActivityReport.findOne({
+      where: { id: report.id },
+      individualHooks: true,
+    });
 
     const goalsPre = await Goal.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: goals.map((g) => g.id) },
     });
     const objectivesPre = await Objective.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: objectives.map((o) => o.id) },
     });
 
-    await preReport.update(
-      {
-        userId: user.id,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      },
-    );
-    await ActivityReport.findOne(
-      { where: { id: report.id }, individualHooks: true },
-    );
+    await preReport.update({
+      userId: user.id,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+    });
+    await ActivityReport.findOne({ where: { id: report.id }, individualHooks: true });
 
     const goalsPost = await Goal.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: goals.map((g) => g.id) },
     });
     const objectivesPost = await Objective.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: objectives.map((o) => o.id) },
     });
 
@@ -461,21 +533,15 @@ describe('Activity Reports model', () => {
 
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-      { where: { id: report.id }, individualHooks: true },
+      { where: { id: report.id }, individualHooks: true }
     );
 
     const goalsPost2 = await Goal.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: goals.map((g) => g.id) },
     });
     const objectivesPost2 = await Objective.findAll({
-      attributes: [
-        'id',
-        'onApprovedAR',
-      ],
+      attributes: ['id', 'onApprovedAR'],
       where: { id: objectives.map((o) => o.id) },
     });
 
@@ -484,53 +550,43 @@ describe('Activity Reports model', () => {
   });
 
   it('submittedDate', async () => {
-    const preReport = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
-    );
+    const preReport = await ActivityReport.findOne({ where: { id: reportToSubmit.id } });
     const submittedDate = moment();
     preReport.submittedDate = submittedDate;
 
     // Submitted.
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
-      { individualHooks: true },
+      { individualHooks: true }
     );
-    reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
-    );
+    reportToSubmit = await ActivityReport.findOne({ where: { id: reportToSubmit.id } });
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
 
     // Approved.
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { id: reportToSubmit.id }, individualHooks: true },
+      { where: { id: reportToSubmit.id }, individualHooks: true }
     );
-    reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
-    );
+    reportToSubmit = await ActivityReport.findOne({ where: { id: reportToSubmit.id } });
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
 
     // Needs Action.
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { id: reportToSubmit.id }, individualHooks: true },
+      { where: { id: reportToSubmit.id }, individualHooks: true }
     );
-    reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
-    );
+    reportToSubmit = await ActivityReport.findOne({ where: { id: reportToSubmit.id } });
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
 
     // Reset to Draft.
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.DRAFT },
-      { where: { id: reportToSubmit.id }, individualHooks: true },
+      { where: { id: reportToSubmit.id }, individualHooks: true }
     );
-    reportToSubmit = await ActivityReport.findOne(
-      { where: { id: reportToSubmit.id } },
-    );
+    reportToSubmit = await ActivityReport.findOne({ where: { id: reportToSubmit.id } });
     expect(reportToSubmit.submittedDate).toBeNull();
   });
 
@@ -542,16 +598,19 @@ describe('Activity Reports model', () => {
   });
   it('name', async () => {
     try {
-      const arr = await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.findOne({
-          where: {
-            activityReportId: activityRecipient.activityReportId,
-            grantId: activityRecipient.grantId,
-            otherEntityId: activityRecipient.otherEntityId,
-          },
-          attributes: ['name'],
-          include: [{ model: Grant, as: 'grant', required: false }],
-        })));
+      const arr = await Promise.all(
+        activityRecipients.map(async (activityRecipient) =>
+          ActivityRecipient.findOne({
+            where: {
+              activityReportId: activityRecipient.activityReportId,
+              grantId: activityRecipient.grantId,
+              otherEntityId: activityRecipient.otherEntityId,
+            },
+            attributes: ['name'],
+            include: [{ model: Grant, as: 'grant', required: false }],
+          })
+        )
+      );
 
       expect(arr[0].name).toEqual(grants[0].name);
       expect(arr[1].name).toEqual(grants[1].name);
@@ -568,9 +627,7 @@ describe('Activity Reports model', () => {
       where: { id: report.id },
     });
 
-    expect(r.sortedTopics).toStrictEqual(
-      ['topic', 'topic2', 'red', 'blue', 'declination'].sort(),
-    );
+    expect(r.sortedTopics).toStrictEqual(['topic', 'topic2', 'red', 'blue', 'declination'].sort());
 
     await r.update({ topics: [] });
 

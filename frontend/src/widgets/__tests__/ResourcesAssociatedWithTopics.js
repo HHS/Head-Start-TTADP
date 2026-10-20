@@ -1,13 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-  act,
-} from '@testing-library/react';
+import React from 'react';
 import ResourcesAssociatedWithTopics, { parseValue } from '../ResourcesAssociatedWithTopics';
 
 const emptyData = {
@@ -17,29 +11,30 @@ const emptyData = {
 
 const mockData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
-  topics: [{
-    link: 'https://official.gov',
-    heading: 'https://official.gov',
-    isUrl: true,
-    data: [
-      {
-        title: 'Jan-22',
-        value: '66',
-      },
-      {
-        title: 'Feb-22',
-        value: '77',
-      },
-      {
-        title: 'Mar-22',
-        value: '88',
-      },
-      {
-        title: 'total',
-        value: '99',
-      },
-    ],
-  },
+  topics: [
+    {
+      link: 'https://official.gov',
+      heading: 'https://official.gov',
+      isUrl: true,
+      data: [
+        {
+          title: 'Jan-22',
+          value: '66',
+        },
+        {
+          title: 'Feb-22',
+          value: '77',
+        },
+        {
+          title: 'Mar-22',
+          value: '88',
+        },
+        {
+          title: 'total',
+          value: '99',
+        },
+      ],
+    },
   ],
 };
 
@@ -114,7 +109,9 @@ describe('Resources Associated with Topics', () => {
   it('renders correctly without data', async () => {
     renderResourcesAssociatedWithTopics(emptyData);
 
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Topics/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -128,7 +125,9 @@ describe('Resources Associated with Topics', () => {
   it('renders correctly with data', async () => {
     renderResourcesAssociatedWithTopics(mockData);
 
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Topics/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -147,7 +146,9 @@ describe('Resources Associated with Topics', () => {
 
   it('correctly handles value sort', async () => {
     renderResourcesAssociatedWithTopics(mockSortData);
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -160,7 +161,9 @@ describe('Resources Associated with Topics', () => {
     });
 
     // Sort.
-    const sortColBtn = await screen.findByRole('button', { name: /feb-22\. activate to sort ascending/i });
+    const sortColBtn = await screen.findByRole('button', {
+      name: /feb-22\. activate to sort ascending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
 
     await waitFor(() => {
@@ -177,7 +180,9 @@ describe('Resources Associated with Topics', () => {
 
   it('correctly handles heading sort', async () => {
     renderResourcesAssociatedWithTopics(mockSortData);
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -190,17 +195,12 @@ describe('Resources Associated with Topics', () => {
     });
 
     // Sort.
-    let sortColBtn = await screen.findByRole('button', { name: /topic\. activate to sort ascending/i });
+    let sortColBtn = await screen.findByRole('button', {
+      name: /topic\. activate to sort ascending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
 
-    const cellValues = [
-      /firstrow/i,
-      /1/i,
-      /3/i,
-      /secondrow/i,
-      /2/i,
-      /4/i,
-    ];
+    const cellValues = [/firstrow/i, /1/i, /3/i, /secondrow/i, /2/i, /4/i];
 
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -213,7 +213,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[5]).toHaveTextContent(cellValues[5]);
     });
 
-    sortColBtn = await screen.findByRole('button', { name: /topic\. activate to sort descending/i });
+    sortColBtn = await screen.findByRole('button', {
+      name: /topic\. activate to sort descending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -245,7 +247,9 @@ describe('Resources Associated with Topics', () => {
     renderResourcesAssociatedWithTopics(mockSortData, 1);
 
     // On first page.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /https:\/\/secondrow\.gov/i })).toBeInTheDocument();
@@ -265,7 +269,9 @@ describe('Resources Associated with Topics', () => {
     act(() => fireEvent.click(resetButton));
 
     // Verify reset back to first page.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /https:\/\/secondrow\.gov/i })).toBeInTheDocument();

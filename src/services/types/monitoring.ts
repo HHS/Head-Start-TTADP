@@ -5,7 +5,7 @@ export interface IMonitoringReview {
   statusLink: {
     status: {
       name: string;
-    }
+    };
   };
 }
 
@@ -15,7 +15,7 @@ export interface IMonitoringReviewGrantee {
   reviewId: number;
   monitoringReviewLink: {
     monitoringReviews: IMonitoringReview[];
-  }
+  };
 }
 
 export interface IMonitoringResponse {
@@ -28,6 +28,7 @@ export interface IMonitoringResponse {
 }
 
 export interface ITTAByReviewObjective {
+  id?: number;
   title: string;
   activityReports: {
     id: number;
@@ -36,6 +37,7 @@ export interface ITTAByReviewObjective {
   endDate: string;
   topics: string[];
   status: string;
+  participants?: string[];
 }
 
 export interface ITTAByCitationReview {
@@ -43,7 +45,6 @@ export interface ITTAByCitationReview {
   reviewType: string;
   reviewReceived: string;
   outcome: string;
-  findingStatus: string;
   specialists: {
     name: string;
     roles: string[];
@@ -76,6 +77,7 @@ export interface ITTAByReviewResponse {
 }
 
 export interface ITTAByCitationResponse {
+  citationId: number;
   citationNumber: string;
   findingType: string;
   status: string;

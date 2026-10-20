@@ -1,9 +1,9 @@
 import {} from 'dotenv/config';
+import handleErrors from '../lib/apiErrorHandler';
 import { auditLogger } from '../logger';
+import { unauthorized } from '../serializers/errorResponses';
 import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId, retrieveUserDetails } from '../services/currentUser';
-import { unauthorized } from '../serializers/errorResponses';
-import handleErrors from '../lib/apiErrorHandler';
 import { getUserInfo } from './authMiddleware';
 
 const namespace = 'MIDDLEWARE:TOKEN';

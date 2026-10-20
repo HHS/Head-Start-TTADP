@@ -1,11 +1,10 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import ApprovedReportV1, { calculateGoalsAndObjectives } from '../../../components/ReportView/ApprovedReportV1';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import ApprovedReportV1, {
+  calculateGoalsAndObjectives,
+} from '../../../components/ReportView/ApprovedReportV1';
 
 describe('Approved Activity Report V1 component', () => {
   const title = 'Gabba Gabba Hey';
@@ -30,23 +29,32 @@ describe('Approved Activity Report V1 component', () => {
       {
         fullName: 'Test 2',
         user: { fullName: 'Test 2' },
-      }],
+      },
+    ],
     approvers: [
       {
-        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
+        id: 1,
+        status: '',
+        note: '',
+        user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
+        id: 2,
+        status: '',
+        note: 'note',
+        user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
     activityRecipientType: 'recipient',
     specialistNextSteps: [],
-    recipientNextSteps: [{
-      note: 'Test me',
-      completeDate: '2021-01-01',
-    }],
+    recipientNextSteps: [
+      {
+        note: 'Test me',
+        completeDate: '2021-01-01',
+      },
+    ],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     reason: ['Needed it'],
@@ -75,9 +83,7 @@ describe('Approved Activity Report V1 component', () => {
         resources: [],
         files: [],
         value: 17762,
-        ids: [
-          17762,
-        ],
+        ids: [17762],
         ttaProvided,
         arOrder: 1,
       },
@@ -88,50 +94,66 @@ describe('Approved Activity Report V1 component', () => {
   it('should return an array of two arrays, each of which contains strings', () => {
     const result = calculateGoalsAndObjectives({ ...report, title, ttaProvided });
     expect(result).toStrictEqual([
-      [
-        'Objective 1',
-        'TTA Provided 1',
-      ],
-      [
-        title,
-        ttaProvided,
-      ],
+      ['Objective 1', 'TTA Provided 1'],
+      [title, ttaProvided],
     ]);
   });
   it('submitted date shown', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, submittedDate: '2023-01-09',
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          submittedDate: '2023-01-09',
+        }}
+      />
+    );
     expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
   });
 
   it('submitted date hidden', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, submittedDate: null,
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          submittedDate: null,
+        }}
+      />
+    );
     expect(screen.queryAllByText(/Date submitted:/i).length).toBe(0);
   });
 
   it('renders without topics', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, topics: null, submittedDate: '2023-01-09',
-    }}
-    />);
-    expect(await screen.findByRole('heading', { name: /tta activity report boat/i })).toBeInTheDocument();
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          topics: null,
+          submittedDate: '2023-01-09',
+        }}
+      />
+    );
+    expect(
+      await screen.findByRole('heading', { name: /tta activity report boat/i })
+    ).toBeInTheDocument();
     expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
     expect(await screen.findByText(/Topics/i)).toBeInTheDocument();
   });
 
   it('renders without author', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, submittedDate: '2023-01-09', author: null,
-    }}
-    />);
-    expect(await screen.findByRole('heading', { name: /tta activity report boat/i })).toBeInTheDocument();
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          submittedDate: '2023-01-09',
+          author: null,
+        }}
+      />
+    );
+    expect(
+      await screen.findByRole('heading', { name: /tta activity report boat/i })
+    ).toBeInTheDocument();
     expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
     expect(await screen.findByText(/Topics/i)).toBeInTheDocument();
@@ -139,49 +161,77 @@ describe('Approved Activity Report V1 component', () => {
 
   it('renders different tta types', async () => {
     // Technical assistance.
-    render(<ApprovedReportV1 data={{
-      ...report, ttaType: ['technical-assistance'],
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          ttaType: ['technical-assistance'],
+        }}
+      />
+    );
     expect(await screen.findByText('Technical Assistance, Virtual (Phone)')).toBeInTheDocument();
 
     // Both.
-    render(<ApprovedReportV1 data={{
-      ...report, ttaType: ['technical-assistance', 'training'],
-    }}
-    />);
-    expect(await screen.findByText('Training and Technical Assistance, Virtual (Phone)')).toBeInTheDocument();
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          ttaType: ['technical-assistance', 'training'],
+        }}
+      />
+    );
+    expect(
+      await screen.findByText('Training and Technical Assistance, Virtual (Phone)')
+    ).toBeInTheDocument();
 
     // No delivery type.
-    render(<ApprovedReportV1 data={{
-      ...report, ttaType: ['training'], virtualDeliveryType: null,
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          ttaType: ['training'],
+          virtualDeliveryType: null,
+        }}
+      />
+    );
     expect(await screen.findByText('Training')).toBeInTheDocument();
   });
 
   it('renders approved at', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, approvedAt: '2023-02-15',
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          approvedAt: '2023-02-15',
+        }}
+      />
+    );
     expect(await screen.findByText(/Date approved:/i)).toBeInTheDocument();
     expect(screen.queryAllByText('02/15/2023').length).toBe(1);
   });
 
   it('renders other entity', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, activityRecipientType: 'other-entity',
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          activityRecipientType: 'other-entity',
+        }}
+      />
+    );
     expect(await screen.findByText(/Other entities/i)).toBeInTheDocument();
   });
 
   it('renders without resources', async () => {
-    render(<ApprovedReportV1 data={{
-      ...report, ECLKCResourcesUsed: null, nonECLKCResourcesUsed: null,
-    }}
-    />);
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          ECLKCResourcesUsed: null,
+          nonECLKCResourcesUsed: null,
+        }}
+      />
+    );
     expect(await screen.findByText('OHS / ECLKC resources')).toBeInTheDocument();
     expect(await screen.findByText('Non-ECLKC resources')).toBeInTheDocument();
   });

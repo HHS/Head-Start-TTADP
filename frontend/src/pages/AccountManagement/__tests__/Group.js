@@ -1,16 +1,11 @@
-import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import join from 'url-join';
+import React from 'react';
 import { Router } from 'react-router';
-import Group from '../Group';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import Group from '../Group';
 
 const endpoint = join('/', 'api', 'groups');
 
@@ -27,7 +22,7 @@ describe('Group', () => {
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
           <Group match={{ params: { groupId }, path: '', url: '' }} />
         </AppLoadingContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -35,8 +30,14 @@ describe('Group', () => {
     fetchMock.get(join(endpoint, '1'), {
       name: 'Test Group',
       creator: { id: 1, name: 'Test Creator' },
-      coOwners: [{ id: 2, name: 'Test CoOwner' }, { id: 3, name: 'Test CoOwner2' }],
-      individuals: [{ id: 4, name: 'Test SharedWith' }, { id: 5, name: 'Test SharedWith2' }],
+      coOwners: [
+        { id: 2, name: 'Test CoOwner' },
+        { id: 3, name: 'Test CoOwner2' },
+      ],
+      individuals: [
+        { id: 4, name: 'Test SharedWith' },
+        { id: 5, name: 'Test SharedWith2' },
+      ],
       grants: [
         {
           id: 1,

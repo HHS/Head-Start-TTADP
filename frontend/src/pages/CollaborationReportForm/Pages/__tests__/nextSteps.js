@@ -13,43 +13,53 @@ jest.mock('react-helmet', () => ({
   },
 }));
 
-jest.mock('../../../ActivityReport/Pages/Review/ReviewPage', () => function MockReviewPage({ sections, path }) {
-  return (
-    <div data-testid="review-page">
-      <div data-testid="review-page-path">{path}</div>
-      <div data-testid="review-page-sections">{JSON.stringify(sections)}</div>
-    </div>
-  );
-});
+jest.mock(
+  '../../../ActivityReport/Pages/Review/ReviewPage',
+  () =>
+    function MockReviewPage({ sections, path }) {
+      return (
+        <div data-testid="review-page">
+          <div data-testid="review-page-path">{path}</div>
+          <div data-testid="review-page-sections">{JSON.stringify(sections)}</div>
+        </div>
+      );
+    }
+);
 
-jest.mock('../../../../components/Navigator/components/NavigatorButtons', () => function MockNavigatorButtons({
-  isAppLoading,
-  onContinue,
-  onSaveDraft,
-  onUpdatePage,
-  path,
-  position,
-}) {
-  return (
-    <div data-testid="navigator-buttons">
-      <div data-testid="nav-path">{path}</div>
-      <div data-testid="nav-position">{position}</div>
-      <div data-testid="nav-loading">{isAppLoading.toString()}</div>
-      <button onClick={onContinue} type="button" data-testid="continue-btn">Continue</button>
-      <button onClick={onSaveDraft} type="button" data-testid="save-draft-btn">Save Draft</button>
-      <button onClick={() => onUpdatePage(1)} type="button" data-testid="update-page-btn">Update Page</button>
-    </div>
-  );
-});
+jest.mock(
+  '../../../../components/Navigator/components/NavigatorButtons',
+  () =>
+    function MockNavigatorButtons({
+      isAppLoading,
+      onContinue,
+      onSaveDraft,
+      onUpdatePage,
+      path,
+      position,
+    }) {
+      return (
+        <div data-testid="navigator-buttons">
+          <div data-testid="nav-path">{path}</div>
+          <div data-testid="nav-position">{position}</div>
+          <div data-testid="nav-loading">{isAppLoading.toString()}</div>
+          <button onClick={onContinue} type="button" data-testid="continue-btn">
+            Continue
+          </button>
+          <button onClick={onSaveDraft} type="button" data-testid="save-draft-btn">
+            Save Draft
+          </button>
+          <button onClick={() => onUpdatePage(1)} type="button" data-testid="update-page-btn">
+            Update Page
+          </button>
+        </div>
+      );
+    }
+);
 
 // Test wrapper component
 const TestWrapper = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
 describe('nextSteps Page', () => {
@@ -83,9 +93,7 @@ describe('nextSteps Page', () => {
     it('returns true if at least one valid step', () => {
       const hookForm = {
         getValues: () => ({
-          steps: [
-            { collabStepDetail: 'Step 1 detail', collabStepCompleteDate: '2024-01-15' },
-          ],
+          steps: [{ collabStepDetail: 'Step 1 detail', collabStepCompleteDate: '2024-01-15' }],
         }),
       };
 
@@ -118,9 +126,9 @@ describe('nextSteps Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('helmet')).toBeInTheDocument();
@@ -141,9 +149,9 @@ describe('nextSteps Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('alert')).toBeInTheDocument();
@@ -163,9 +171,9 @@ describe('nextSteps Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('navigator-buttons')).toBeInTheDocument();
@@ -188,9 +196,9 @@ describe('nextSteps Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const continueBtn = screen.getByTestId('continue-btn');
@@ -221,11 +229,7 @@ describe('nextSteps Page', () => {
         },
       ];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const reviewPage = screen.getByTestId('review-page');
       expect(reviewPage).toBeInTheDocument();
@@ -241,9 +245,7 @@ describe('nextSteps Page', () => {
 
     it('handles empty steps array', () => {
       render(
-        <TestWrapper defaultValues={{ steps: [] }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
+        <TestWrapper defaultValues={{ steps: [] }}>{nextStepsPage.reviewSection()}</TestWrapper>
       );
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
@@ -264,9 +266,7 @@ describe('nextSteps Page', () => {
 
     it('handles null steps', () => {
       render(
-        <TestWrapper defaultValues={{ steps: null }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
+        <TestWrapper defaultValues={{ steps: null }}>{nextStepsPage.reviewSection()}</TestWrapper>
       );
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
@@ -281,11 +281,7 @@ describe('nextSteps Page', () => {
         },
       ];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const { items } = sectionsData[0];
@@ -309,11 +305,7 @@ describe('nextSteps Page', () => {
         { collabStepDetail: 'Third', collabStepCompleteDate: '2024-03-15' },
       ];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const { items } = sectionsData[0];
@@ -326,30 +318,18 @@ describe('nextSteps Page', () => {
 
   describe('ReviewSection Component', () => {
     it('uses useFormContext watch correctly', () => {
-      const steps = [
-        { collabStepDetail: 'Watch test', collabStepCompleteDate: '2024-01-15' },
-      ];
+      const steps = [{ collabStepDetail: 'Watch test', collabStepCompleteDate: '2024-01-15' }];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       expect(screen.getByTestId('review-page')).toBeInTheDocument();
       expect(screen.getByTestId('review-page-path')).toHaveTextContent('next-steps');
     });
 
     it('renders ReviewPage with correct props', () => {
-      const steps = [
-        { collabStepDetail: 'Review test', collabStepCompleteDate: '2024-01-15' },
-      ];
+      const steps = [{ collabStepDetail: 'Review test', collabStepCompleteDate: '2024-01-15' }];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const reviewPage = screen.getByTestId('review-page');
       expect(reviewPage).toBeInTheDocument();
@@ -365,11 +345,7 @@ describe('nextSteps Page', () => {
         {},
       ];
 
-      render(
-        <TestWrapper defaultValues={{ steps }}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{ steps }}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const { items } = sectionsData[0];
@@ -382,11 +358,7 @@ describe('nextSteps Page', () => {
     });
 
     it('handles undefined steps in form data', () => {
-      render(
-        <TestWrapper defaultValues={{}}>
-          {nextStepsPage.reviewSection()}
-        </TestWrapper>,
-      );
+      render(<TestWrapper defaultValues={{}}>{nextStepsPage.reviewSection()}</TestWrapper>);
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const { items } = sectionsData[0];

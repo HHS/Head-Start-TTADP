@@ -1,4 +1,4 @@
-import { Writable, Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 
 class BufferStream extends Writable {
   private chunks: Buffer[] = [];

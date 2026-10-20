@@ -1,9 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { TRACE_IDS } from '@ttahub/common';
-import withWidgetData from './withWidgetData';
-import LineGraphWidget from './LineGraphWidget';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { deriveLineGraphLegendConfig } from './constants';
+import LineGraphWidget from './LineGraphWidget';
+import withWidgetData from './withWidgetData';
 
 const EXPORT_NAME = 'Total TTA hours';
 const HOURS_PREFIX = /^Hours of\s+/i;
@@ -46,7 +46,7 @@ export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
       legendConfig={deriveLineGraphLegendConfig(
         data,
         DEFAULT_LEGEND_CONFIG,
-        formatTotalHoursLegendLabel,
+        formatTotalHoursLegendLabel
       )}
     />
   );
@@ -59,8 +59,9 @@ TotalHrsAndRecipientGraph.propTypes = {
         name: PropTypes.string,
         x: PropTypes.arrayOf(PropTypes.string),
         y: PropTypes.arrayOf(PropTypes.number),
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   hideYAxis: PropTypes.bool,
 };
@@ -69,13 +70,22 @@ TotalHrsAndRecipientGraph.defaultProps = {
   hideYAxis: false,
   data: [
     {
-      name: 'Training', x: [], y: [], month: '',
+      name: 'Training',
+      x: [],
+      y: [],
+      month: '',
     },
     {
-      name: 'Technical Assistance', x: [], y: [], month: '',
+      name: 'Technical Assistance',
+      x: [],
+      y: [],
+      month: '',
     },
     {
-      name: 'Both', x: [], y: [], month: '',
+      name: 'Both',
+      x: [],
+      y: [],
+      month: '',
     },
   ],
 };

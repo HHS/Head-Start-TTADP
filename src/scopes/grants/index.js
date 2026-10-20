@@ -1,20 +1,22 @@
 /* eslint-disable import/prefer-default-export */
-import sequelize, { Op } from 'sequelize';
+
 import { map, pickBy } from 'lodash';
-import { activeBefore, activeAfter, activeWithinDates } from './activeWithin';
-import { withRegion, withoutRegion } from './region';
-import { withRecipientName, withoutRecipientName } from './recipient';
-import { withRecipientId, withoutRecipientId } from './recipientId';
-import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
-import { withProgramTypes, withoutProgramTypes } from './programType';
-import { withStateCode } from './stateCode';
-import { withGrantNumber, withoutGrantNumber } from './grantNumber';
-import { withGroup, withoutGroup } from './group';
-import { beforeLastTTA, afterLastTTA, withinLastTTA } from './lastTTA';
-import { noActivityWithin } from './recipientsWithoutTTA';
+import sequelize, { Op } from 'sequelize';
+import { activeAfter, activeBefore, activeWithinDates } from './activeWithin';
 import { withGoalName, withoutGoalName } from './goalName';
-import { withGrantStatus, withoutGrantStatus } from './grantStatus';
 import { withGoalResponse, withoutGoalResponse } from './goalResponse';
+import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withGroup, withoutGroup } from './group';
+import { afterLastTTA, beforeLastTTA, withinLastTTA } from './lastTTA';
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
+import { withoutProgramTypes, withProgramTypes } from './programType';
+import { withoutRecipientName, withRecipientName } from './recipient';
+import { withoutRecipientId, withRecipientId } from './recipientId';
+import { noActivityWithin } from './recipientsWithoutTTA';
+import { withoutRegion, withRegion } from './region';
+import { withoutStandard, withStandard } from './standard';
+import { withStateCode } from './stateCode';
 
 export const topicToQuery = {
   recipient: {
@@ -22,6 +24,7 @@ export const topicToQuery = {
     nctn: (query) => withoutRecipientName(query),
   },
   recipientId: {
+    ctn: (query) => withRecipientId(query),
     in: (query) => withRecipientId(query),
     nin: (query) => withoutRecipientId(query),
   },
@@ -75,6 +78,10 @@ export const topicToQuery = {
   goalResponse: {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
+  },
+  standard: {
+    in: (query) => withStandard(query),
+    nin: (query) => withoutStandard(query),
   },
 };
 

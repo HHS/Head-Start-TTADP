@@ -1,29 +1,28 @@
 import '@testing-library/jest-dom';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
-import {
-  render,
-  waitFor,
-  act,
-  screen,
-} from '@testing-library/react';
 import VBarGraph from '../VBarGraph';
 
-const TEST_DATA = [{
-  name: 'one',
-  count: 1,
-},
-{
-  name: 'two / two and a half',
-  count: 2,
-},
-{
-  name: 'three is the number than comes after two and with that we think about it',
-  count: 0,
-}];
+const TEST_DATA = [
+  {
+    name: 'one',
+    count: 1,
+  },
+  {
+    name: 'two / two and a half',
+    count: 2,
+  },
+  {
+    name: 'three is the number than comes after two and with that we think about it',
+    count: 0,
+  },
+];
 
 const renderBarGraph = async (props) => {
   act(() => {
-    render(<VBarGraph data={props.data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
+    render(
+      <VBarGraph data={props.data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />
+    );
   });
 };
 

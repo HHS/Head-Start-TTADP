@@ -9,18 +9,15 @@ export const updateObjectiveStatus = async (
   regionId,
   status,
   closeSuspendReason = '',
-  closeSuspendContext = '',
+  closeSuspendContext = ''
 ) => {
-  const data = await put(
-    join(objectiveUrl, 'status'),
-    {
-      ids,
-      regionId,
-      status,
-      closeSuspendReason,
-      closeSuspendContext,
-    },
-  );
+  const data = await put(join(objectiveUrl, 'status'), {
+    ids,
+    regionId,
+    status,
+    closeSuspendReason,
+    closeSuspendContext,
+  });
 
   return data.json();
 };

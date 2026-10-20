@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         -- Update workforce root causes for fei.
         with ids as (
             SELECT
@@ -154,10 +153,11 @@ module.exports = {
                                 UPDATE "GoalFieldResponses"
                                         SET "response" = '{Workforce, Other ECE Options}'
                                 WHERE "id" IN (SELECT "id" FROM "ids");
-            `, { transaction });
+            `,
+        { transaction }
+      );
     });
   },
 
-  down: async () => {
-  },
+  down: async () => {},
 };

@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React from 'react';
 import PropTypes from 'prop-types';
+=======
+import { GridContainer } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
+>>>>>>> main
 import { Helmet } from 'react-helmet';
 import RecipientSpotlightDataController from './RecipientSpotlightDataController';
 import './RecipientSpotlightDashboard.scss';

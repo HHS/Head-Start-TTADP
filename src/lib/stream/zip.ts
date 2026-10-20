@@ -1,8 +1,8 @@
-import { Readable, PassThrough } from 'stream';
-import * as unzipper from 'unzipper';
 import * as path from 'path';
-import BufferStream from './buffer';
+import { PassThrough, type Readable } from 'stream';
+import * as unzipper from 'unzipper';
 import { auditLogger } from '../../logger';
+import BufferStream from './buffer';
 
 class ZipStream {
   private readonly zipStream: Readable;
@@ -18,7 +18,7 @@ class ZipStream {
   constructor(
     zipStream: Readable,
     private password?: string,
-    filesNeedingStreams: { name: string, path: string }[] = [],
+    filesNeedingStreams: { name: string; path: string }[] = []
   ) {
     this.zipStream = zipStream;
     this.fileStreams = new Map<string, Promise<Readable>>();
@@ -49,10 +49,11 @@ class ZipStream {
 
           this.fileDetails.push(fileInfo);
 
-          if (filesNeedingStreams.some((neededFile) => (
-            neededFile.name === fileName
-            && neededFile.path === fileDir
-          ))) {
+          if (
+            filesNeedingStreams.some(
+              (neededFile) => neededFile.name === fileName && neededFile.path === fileDir
+            )
+          ) {
             // Duplicate the stream for this file
             const bufferStream = new BufferStream();
             entry.pipe(bufferStream);
@@ -110,4 +111,4 @@ interface FileInfo {
 }
 
 export default ZipStream;
-export { FileInfo };
+export type { FileInfo };

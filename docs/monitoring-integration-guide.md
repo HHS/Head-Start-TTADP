@@ -141,13 +141,15 @@ A: The intent is for citations to be available to select within the time period 
 - Citations are considered open if either:
   - the Finding is `Active` or `Elevated Deficiency`, or
   - the most recent review for the Finding has a `NULL` report delivery date (review not yet delivered).
+- Citations are not shown if they are considered to have already been addressed. This occurs if a monitoring goal on the citation's grant has been closed since the most recent report was delivered. Monitoring goals that go through the "reopening" process are exempt from this and will show prior citations.
 - Citations are filtered to reviews delivered after the monitoring cutoff date and before the AR start date.
 - Citations are only returned for grants with an open (not Closed/Suspended) Monitoring goal.
+- An admin user can reopen a closed goal. If `g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'`, we can safely assume that this goal was manually reopened, and the citations for this grant are shown.
 
 ## Monitoring Goal Creation Logic (Current)
 Monitoring goals are created only when all of the following are true:
 - Monitoring goal creation is enabled (`ENABLE_MONITORING_GOAL_CREATION=true`).
-- The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA1-PSR`, `FA-2`, `FA2-CR`, `FA2-CSR`, `Special`.
+- The review type is in the allowlist: `AIAN-DEF`, `RAN`, `Follow-up`, `FA-1`, `FA1-FR`, `FA1-PSR`, `FA-2`, `FA2-CR`, `FA2-CSR`, `Special`, `Comprehensive Review`.
 - The review `reportDeliveryDate` is between the cutoff date (`2025-01-21`) and now.
 - There is at least one open finding linked to the review and grantee. "Open" means either:
   - Finding status is `Active` or `Elevated Deficiency`, or

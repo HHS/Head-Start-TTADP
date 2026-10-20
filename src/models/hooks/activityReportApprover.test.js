@@ -1,18 +1,13 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { ActivityReport, ActivityReportApprover, sequelize, User } from '..';
 import {
-  sequelize,
-  User,
-  ActivityReport,
-  ActivityReportApprover,
-} from '..';
-import {
-  calculateReportStatusFromApprovals,
   afterDestroy,
   afterRestore,
   afterUpdate,
+  calculateReportStatusFromApprovals,
 } from './activityReportApprover';
 
-import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
+import { approverUserIds, draftObject, mockApprovers } from './testHelpers';
 
 describe('activityReportApprover hooks', () => {
   const mockUserIds = approverUserIds();
@@ -57,9 +52,10 @@ describe('activityReportApprover hooks', () => {
 
   describe('afterDestroy', () => {
     it('updates the calculated status of the report after approval destruction', async () => {
-      const ar = await ActivityReport.create(
-        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
-      );
+      const ar = await ActivityReport.create({
+        ...draftObject,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
 
       const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
@@ -84,7 +80,7 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
-    it('otherwise, it doesn\'t update the calculated status of the report', async () => {
+    it("otherwise, it doesn't update the calculated status of the report", async () => {
       const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {
@@ -102,9 +98,10 @@ describe('activityReportApprover hooks', () => {
 
   describe('afterRestore', () => {
     it('updates the calculated status of the report after approval restoration', async () => {
-      const ar = await ActivityReport.create(
-        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
-      );
+      const ar = await ActivityReport.create({
+        ...draftObject,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
 
       const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
@@ -129,7 +126,7 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
-    it('otherwise, it doesn\'t update the calculated status of the report', async () => {
+    it("otherwise, it doesn't update the calculated status of the report", async () => {
       const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {
@@ -147,9 +144,10 @@ describe('activityReportApprover hooks', () => {
 
   describe('afterUpdate', () => {
     it('updates the calculated status of the report after approval restoration', async () => {
-      const ar = await ActivityReport.create(
-        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
-      );
+      const ar = await ActivityReport.create({
+        ...draftObject,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
 
       const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
@@ -174,7 +172,7 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
-    it('otherwise, it doesn\'t update the calculated status of the report', async () => {
+    it("otherwise, it doesn't update the calculated status of the report", async () => {
       const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {

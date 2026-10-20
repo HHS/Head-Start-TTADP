@@ -1,15 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import React from 'react';
 import colors from '../../../colors';
-import {
-  InProgress,
-  Closed,
-  NoStatus,
-  NotStarted,
-  Draft,
-  Paused,
-} from '../../icons';
+import { Closed, Draft, InProgress, NoStatus, NotStarted, Paused } from '../../icons';
 
 const STATUSES = {
   'In progress': {

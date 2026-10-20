@@ -1,13 +1,13 @@
-import _ from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
-import { createRegionalScopeObject, userRegionalPermissions, userGlobalPermissions } from '../PermissionHelpers';
+import _ from 'lodash';
+import {
+  createRegionalScopeObject,
+  userGlobalPermissions,
+  userRegionalPermissions,
+} from '../PermissionHelpers';
 
-const {
-  ADMIN,
-  READ_ACTIVITY_REPORTS,
-  READ_WRITE_ACTIVITY_REPORTS,
-  UNLOCK_APPROVED_REPORTS,
-} = SCOPE_IDS;
+const { ADMIN, READ_ACTIVITY_REPORTS, READ_WRITE_ACTIVITY_REPORTS, UNLOCK_APPROVED_REPORTS } =
+  SCOPE_IDS;
 
 describe('PermissionHelpers', () => {
   describe('createRegionalScopeObject', () => {

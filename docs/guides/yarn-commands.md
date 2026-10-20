@@ -12,7 +12,9 @@ This guide is the source of truth for local command usage. For common operations
 | Start backend dev watcher | `yarn server` |
 | Start frontend dev server | `yarn start:fe` |
 | Start worker dev watcher | `yarn start:worker:watch` |
-| Start backend + frontend + worker locally | `yarn start:stack:local` |
+| Run frontend tests | `yarn --cwd frontend test` |
+| Run frontend tests (CI coverage) | `yarn --cwd frontend test:ci` |
+| Run frontend lint | `yarn --cwd frontend lint` |
 | Start backend from build output | `yarn start:be` |
 | Start backend with debugger | `yarn start:debug` |
 | Run backend tests | `yarn test` |
@@ -22,11 +24,9 @@ This guide is the source of truth for local command usage. For common operations
 | Run Playwright API tests | `yarn test:e2e:api` |
 | Run Playwright utils tests | `yarn test:e2e:utils` |
 | Run Cucumber BDD tests | `yarn test:bdd` |
-| Run backend lint | `yarn lint` |
-| Run backend lint (CI formatter) | `yarn lint:ci` |
-| Run backend + frontend lint | `yarn lint:all` |
-| Auto-fix backend lint issues | `yarn lint:fix` |
-| Auto-fix backend + frontend lint issues | `yarn lint:fix:all` |
+| Run lint (pass path or default to all files) | `yarn lint` |
+| Run ShellCheck on tracked Bash scripts | `yarn lint:shell` |
+| Auto-fix lint and formatting | `yarn lint:fix` |
 | Build backend TypeScript | `yarn build` |
 | Build frontend production bundle | `yarn --cwd frontend build` |
 
@@ -95,7 +95,10 @@ These are useful for debugging or one-off orchestration. For normal use, prefer 
 
 ## Supporting Bash Helpers
 
-- `bin/run-tool [--local] <src-path> [args...]`
+- `bin/run-tool [--local|--build|--auto] <src-path> [args...]`
+  - `--auto` (default): uses `tsx <src-path>` locally and `node ./build/server/<src-path>` when `VCAP_APPLICATION` is set.
+  - `--local`: forces `tsx <src-path>`.
+  - `--build`: forces `node ./build/server/<src-path>`; if `<src-path>` ends in `.ts`, it is mapped to `.js` in build output.
 - `bin/ci-env <command...>`
 - `bin/test-backend-ci`
 - `bin/build-coverage-report`

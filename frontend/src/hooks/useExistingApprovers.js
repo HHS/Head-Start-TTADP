@@ -1,12 +1,12 @@
-import { useRef, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
+import { useMemo, useRef } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 export default function useExistingApprovers(
   options,
   fieldName = 'approvers',
   valueProperty = 'user.id',
-  labelProperty = 'user.fullName',
+  labelProperty = 'user.fullName'
 ) {
   const { watch } = useFormContext();
 
@@ -19,9 +19,9 @@ export default function useExistingApprovers(
       return options;
     }
 
-    const initialValues = (Array.isArray(initialValueRef.current)
-      ? initialValueRef.current
-      : [initialValueRef.current]).map((r) => _.get(r, valueProperty));
+    const initialValues = (
+      Array.isArray(initialValueRef.current) ? initialValueRef.current : [initialValueRef.current]
+    ).map((r) => _.get(r, valueProperty));
 
     return options.filter((option) => {
       const { value } = option;
@@ -38,9 +38,9 @@ export default function useExistingApprovers(
 
     // Filter out initial values from display if filterInitialValue is true
     if (initialValueRef.current) {
-      const initialValues = (Array.isArray(initialValueRef.current)
-        ? initialValueRef.current
-        : [initialValueRef.current]).map((r) => _.get(r, valueProperty));
+      const initialValues = (
+        Array.isArray(initialValueRef.current) ? initialValueRef.current : [initialValueRef.current]
+      ).map((r) => _.get(r, valueProperty));
 
       valuesToDisplay = selectValue.filter((item) => {
         const itemValue = _.get(item, valueProperty);

@@ -6,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- This will show there are no records marked deleted
         DROP TABLE IF EXISTS beforecounts;
         CREATE TEMP TABLE beforecounts
@@ -88,7 +89,9 @@ module.exports = {
           ON btablename = atablename
         ORDER BY 2
         ;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 
@@ -96,7 +99,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         UPDATE "MonitoringClassSummaries" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
         UPDATE "MonitoringFindingGrants" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
         UPDATE "MonitoringReviewGrantees" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
@@ -108,7 +112,9 @@ module.exports = {
         UPDATE "MonitoringFindingStandards" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
         UPDATE "MonitoringStandards" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
         UPDATE "MonitoringFindingStatuses" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 };

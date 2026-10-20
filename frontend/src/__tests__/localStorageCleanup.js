@@ -1,12 +1,10 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import join from 'url-join';
-import {
-  screen, render, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import urlJoin from 'url-join';
 import App from '../App';
-import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../testHelpers';
+import { mockDocumentProperty, mockRSSData, mockWindowProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
 const feedsUrl = '/api/feeds/whats-new';
@@ -19,10 +17,10 @@ describe('localStorageCleanup', () => {
   });
 
   afterEach(() => fetchMock.restore());
-  const userUrl = join('api', 'user');
-  const logoutUrl = join('api', 'logout');
-  const alertsUrl = join('api', 'alerts');
-  const groupsUrl = join('api', 'groups');
+  const userUrl = urlJoin('api', 'user');
+  const logoutUrl = urlJoin('api', 'logout');
+  const alertsUrl = urlJoin('api', 'alerts');
+  const groupsUrl = urlJoin('api', 'groups');
 
   describe('when authenticated, local storage is queried', () => {
     mockWindowProperty('localStorage', {
@@ -34,7 +32,7 @@ describe('localStorageCleanup', () => {
     beforeEach(async () => {
       const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
-      fetchMock.get(join((userUrl, 'statistics')), {
+      fetchMock.get(urlJoin(userUrl, 'statistics'), {
         daysSinceJoined: 1,
         arsCreated: 17343,
         arsCollaboratedOn: 0,
@@ -119,7 +117,7 @@ describe('localStorageCleanup', () => {
     beforeEach(async () => {
       const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
-      fetchMock.get(join((userUrl, 'statistics')), {
+      fetchMock.get(urlJoin(userUrl, 'statistics'), {
         daysSinceJoined: 1,
         arsCreated: 17343,
         arsCollaboratedOn: 0,

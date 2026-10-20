@@ -3,12 +3,12 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FormProvider, useForm } from 'react-hook-form';
 import moment from 'moment';
-import ApproverReview from '../ApproverReview';
+import { FormProvider, useForm } from 'react-hook-form';
 import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
+import ApproverReview from '../ApproverReview';
 
 // Mock dependencies
 jest.mock('moment');
@@ -17,40 +17,40 @@ jest.mock('../../../../../Constants', () => ({
   DATE_DISPLAY_FORMAT: 'MM/DD/YYYY',
 }));
 
-jest.mock('../../../../../components/FormItem', () => function MockFormItem({ children, label }) {
-  return (
-    <div data-testid="form-item">
-      <label>{label}</label>
-      {children}
-    </div>
-  );
-});
+jest.mock(
+  '../../../../../components/FormItem',
+  () =>
+    function MockFormItem({ children, label }) {
+      return (
+        <div data-testid="form-item">
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: test fixture */}
+          <label>{label}</label>
+          {children}
+        </div>
+      );
+    }
+);
 
-jest.mock('../../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({
-  id,
-  name,
-  defaultValue,
-  ariaLabel,
-}) {
-  return (
-    <textarea
-      id={id}
-      name={name}
-      defaultValue={defaultValue || ''}
-      aria-label={ariaLabel}
-      data-testid="rich-editor"
-    />
-  );
-});
+jest.mock(
+  '../../../../../components/HookFormRichEditor',
+  () =>
+    function MockHookFormRichEditor({ id, name, defaultValue, ariaLabel }) {
+      return (
+        <textarea
+          id={id}
+          name={name}
+          defaultValue={defaultValue || ''}
+          aria-label={ariaLabel}
+          data-testid="rich-editor"
+        />
+      );
+    }
+);
 
 // Test wrapper component
 const TestWrapper = ({ children, defaultValues = {} }) => {
   const methods = useForm({ defaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
 describe('ApproverReview Component', () => {
@@ -87,11 +87,12 @@ describe('ApproverReview Component', () => {
     moment.mockReturnValue(mockMoment);
   });
 
-  const renderComponent = (props = {}) => render(
-    <TestWrapper>
-      <ApproverReview {...defaultProps} {...props} />
-    </TestWrapper>,
-  );
+  const renderComponent = (props = {}) =>
+    render(
+      <TestWrapper>
+        <ApproverReview {...defaultProps} {...props} />
+      </TestWrapper>
+    );
 
   describe('Manager Notes Display', () => {
     it('renders manager notes section when otherManagerNotes exists', () => {
@@ -198,17 +199,13 @@ describe('ApproverReview Component', () => {
         const methods = useForm({
           defaultValues: { status: APPROVER_STATUSES.NEEDS_ACTION },
         });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
+        return <FormProvider {...methods}>{children}</FormProvider>;
       };
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
+        </TestWrapperWithStatus>
       );
 
       expect(screen.getByText('Add manager notes')).toBeInTheDocument();
@@ -220,17 +217,13 @@ describe('ApproverReview Component', () => {
         const methods = useForm({
           defaultValues: { status: 'approved' },
         });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
+        return <FormProvider {...methods}>{children}</FormProvider>;
       };
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
+        </TestWrapperWithStatus>
       );
 
       expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();
@@ -242,17 +235,13 @@ describe('ApproverReview Component', () => {
         const methods = useForm({
           defaultValues: { status: '' },
         });
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
+        return <FormProvider {...methods}>{children}</FormProvider>;
       };
 
       render(
         <TestWrapperWithStatus>
           <ApproverReview {...defaultProps} />
-        </TestWrapperWithStatus>,
+        </TestWrapperWithStatus>
       );
 
       expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();

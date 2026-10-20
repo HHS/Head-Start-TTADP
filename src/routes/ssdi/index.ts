@@ -1,12 +1,12 @@
 import express from 'express';
-import { readOnlyTransactionWrapper } from '../transactionWrapper';
 import authMiddleware from '../../middleware/authMiddleware';
+import { readOnlyTransactionWrapper } from '../transactionWrapper';
 import {
-  listQueries,
   getFilters,
-  runQuery,
-  listQueriesWithWildcard,
   getFiltersWithWildcard,
+  listQueries,
+  listQueriesWithWildcard,
+  runQuery,
   runQueryWithWildcard,
 } from './handlers';
 

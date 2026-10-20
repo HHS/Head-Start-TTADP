@@ -2,27 +2,26 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, waitFor, within, act, fireEvent,
-} from '@testing-library/react';
+import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { useFormContext, useForm } from 'react-hook-form';
-import ActivityReportNavigator, {
-  getPrompts,
-  getPromptErrors,
-  formatEndDate,
-} from '../ActivityReportNavigator';
-import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
-import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS } from '../constants';
-import NetworkContext from '../../../NetworkContext';
+import React from 'react';
+import { useForm, useFormContext } from 'react-hook-form';
 import AppLoadingContext from '../../../AppLoadingContext';
-import NavigatorButtons from '../components/NavigatorButtons';
-import RichEditor from '../../RichEditor';
-import * as goalValidator from '../../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport } from '../../../fetchers/activityReports';
+import NetworkContext from '../../../NetworkContext';
+import * as goalValidator from '../../../pages/ActivityReport/Pages/components/goalValidator';
+import UserContext from '../../../UserContext';
+import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
+import RichEditor from '../../RichEditor';
+import ActivityReportNavigator, {
+  formatEndDate,
+  getPromptErrors,
+  getPrompts,
+} from '../ActivityReportNavigator';
+import NavigatorButtons from '../components/NavigatorButtons';
+import { IN_PROGRESS, NOT_STARTED } from '../constants';
 
 jest.mock('../../../fetchers/activityReports', () => ({
   saveGoalsForReport: jest.fn(),
@@ -53,12 +52,7 @@ const Input = ({
   const { register } = useFormContext();
   return (
     <>
-      <input
-        type={type}
-        data-testid={name}
-        name={name}
-        ref={register({ required })}
-      />
+      <input type={type} data-testid={name} name={name} ref={register({ required })} />
       <NavigatorButtons
         isAppLoading={false}
         onContinue={onContinue}
@@ -84,7 +78,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -110,7 +104,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -135,7 +129,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -153,18 +147,12 @@ const defaultPages = [
     label: 'review page',
     path: 'review',
     review: true,
-    render: (
-      _formData,
-      onFormSubmit,
-    ) => (
+    render: (_formData, onFormSubmit) => (
       <div>
-        <Input
-          name="fourth"
-          position={4}
-          path="review"
-          required
-        />
-        <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
+        <Input name="fourth" position={4} path="review" required />
+        <button type="button" data-testid="review" onClick={onFormSubmit}>
+          Continue
+        </button>
       </div>
     ),
   },
@@ -213,16 +201,18 @@ describe('ActivityReportNavigator', () => {
 
     return (
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{
-          connectionActive: true,
-          localStorageAvailable: true,
-        }}
-        >
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+        <NetworkContext.Provider
+          value={{
+            connectionActive: true,
+            localStorageAvailable: true,
           }}
+        >
+          <AppLoadingContext.Provider
+            value={{
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }}
           >
             <ActivityReportNavigator
               draftSaver={jest.fn()}
@@ -265,23 +255,25 @@ describe('ActivityReportNavigator', () => {
     shouldAutoSave = true,
     onHookForm,
   } = {}) => {
-    await act(() => waitFor(() => {
-      render(
-        <NavigatorWrapper
-          currentPage={currentPage}
-          onSubmit={onSubmit}
-          onSave={onSave}
-          updatePage={updatePage}
-          pages={pages}
-          formData={formData}
-          onUpdateError={onUpdateError}
-          editable={editable}
-          autoSaveInterval={autoSaveInterval}
-          shouldAutoSave={shouldAutoSave}
-          onHookForm={onHookForm}
-        />,
-      );
-    }));
+    await act(() =>
+      waitFor(() => {
+        render(
+          <NavigatorWrapper
+            currentPage={currentPage}
+            onSubmit={onSubmit}
+            onSave={onSave}
+            updatePage={updatePage}
+            pages={pages}
+            formData={formData}
+            onUpdateError={onUpdateError}
+            editable={editable}
+            autoSaveInterval={autoSaveInterval}
+            shouldAutoSave={shouldAutoSave}
+            onHookForm={onHookForm}
+          />
+        );
+      })
+    );
   };
 
   beforeEach(() => {
@@ -290,6 +282,30 @@ describe('ActivityReportNavigator', () => {
 
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  it('blocks side-nav navigation on a needs-action report with no valid approvers', async () => {
+    const updatePage = jest.fn();
+    const onUpdateError = jest.fn();
+    await renderNavigator({
+      updatePage,
+      onUpdateError,
+      formData: {
+        ...initialData,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [],
+        pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+      },
+    });
+
+    userEvent.click(screen.getByRole('button', { name: /second page/i }));
+
+    await waitFor(() => {
+      expect(updatePage).not.toHaveBeenCalled();
+      expect(onUpdateError).toHaveBeenCalledWith(
+        'At least one approver is required before saving.'
+      );
+    });
   });
 
   it('sets dirty forms as "in progress"', async () => {
@@ -306,7 +322,9 @@ describe('ActivityReportNavigator', () => {
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
 
-    await act(async () => userEvent.click(await screen.findByRole('button', { name: 'Save draft' })));
+    await act(async () =>
+      userEvent.click(await screen.findByRole('button', { name: 'Save draft' }))
+    );
     expect(fetchMock.called()).toBe(false);
   });
 
@@ -314,9 +332,11 @@ describe('ActivityReportNavigator', () => {
     const onSave = jest.fn();
     await renderNavigator({ shouldAutoSave: false, onSave });
 
-    await act(() => waitFor(() => {
-      jest.advanceTimersByTime(800);
-    }));
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
 
     expect(onSave).not.toHaveBeenCalled();
   });
@@ -329,16 +349,19 @@ describe('ActivityReportNavigator', () => {
     userEvent.click(screen.getByTestId('second'));
 
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
-      {
-        ...initialData,
-        pageState: {
-          ...initialData.pageState, 2: IN_PROGRESS,
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        {
+          ...initialData,
+          pageState: {
+            ...initialData.pageState,
+            2: IN_PROGRESS,
+          },
+          second: 'on',
         },
-        second: 'on',
-      },
-      false,
-    ));
+        false
+      )
+    );
   });
 
   it('submits data when "continuing" from the review page', async () => {
@@ -365,13 +388,16 @@ describe('ActivityReportNavigator', () => {
     userEvent.click(screen.getByTestId('second'));
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
-    await waitFor(() => expect(
-      onSave,
-    ).toHaveBeenCalledWith({
-      ...initialData,
-      pageState: { ...initialData.pageState, 2: IN_PROGRESS },
-      second: 'on',
-    }, false));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        {
+          ...initialData,
+          pageState: { ...initialData.pageState, 2: IN_PROGRESS },
+          second: 'on',
+        },
+        false
+      )
+    );
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
@@ -386,17 +412,24 @@ describe('ActivityReportNavigator', () => {
     const onUpdateError = jest.fn();
 
     await renderNavigator({
-      currentPage: 'second', onSubmit, onSave, onUpdateError,
+      currentPage: 'second',
+      onSubmit,
+      onSave,
+      onUpdateError,
     });
 
     // mark the form as dirty so that onSave is called
-    await act(() => waitFor(() => {
-      userEvent.click(screen.getByTestId('second'));
-    }));
+    await act(() =>
+      waitFor(() => {
+        userEvent.click(screen.getByTestId('second'));
+      })
+    );
 
-    await act(() => waitFor(async () => {
-      userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
-    }));
+    await act(() =>
+      waitFor(async () => {
+        userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+      })
+    );
 
     expect(onSave).toHaveBeenCalled();
     expect(onUpdateError).toHaveBeenCalled();
@@ -410,8 +443,13 @@ describe('ActivityReportNavigator', () => {
     const input = screen.getByTestId('second');
     userEvent.click(input);
 
-    jest.advanceTimersByTime(800);
-    expect(onSave).toHaveBeenCalled();
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
+
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
   });
 
   it('does not run the autosave when the form is clean', async () => {
@@ -444,16 +482,19 @@ describe('ActivityReportNavigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
 
     // Verify onSave was called with the correct data
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
-      {
-        ...initialData,
-        pageState: {
-          ...initialData.pageState, 1: IN_PROGRESS,
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        {
+          ...initialData,
+          pageState: {
+            ...initialData.pageState,
+            1: IN_PROGRESS,
+          },
+          first: 'on',
         },
-        first: 'on',
-      },
-      false,
-    ));
+        false
+      )
+    );
 
     // Reset mocks for further testing
     onSave.mockClear();
@@ -468,7 +509,8 @@ describe('ActivityReportNavigator', () => {
       formData: {
         ...initialData,
         pageState: {
-          ...initialData.pageState, 1: IN_PROGRESS,
+          ...initialData.pageState,
+          1: IN_PROGRESS,
         },
         first: 'on',
       },
@@ -485,19 +527,21 @@ describe('ActivityReportNavigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
 
     // Verify onSave was called with the correct data including both pages
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
-      {
-        ...initialData,
-        pageState: {
-          ...initialData.pageState,
-          1: IN_PROGRESS,
-          2: IN_PROGRESS,
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        {
+          ...initialData,
+          pageState: {
+            ...initialData.pageState,
+            1: IN_PROGRESS,
+            2: IN_PROGRESS,
+          },
+          first: 'on',
+          second: 'on',
         },
-        first: 'on',
-        second: 'on',
-      },
-      false,
-    ));
+        false
+      )
+    );
   });
 });
 
@@ -512,11 +556,17 @@ describe('shouldUpdateFormData', () => {
 
     render(
       <div>
+        {/* biome-ignore lint/a11y/noLabelWithoutControl: test fixture */}
         <label>
           Rich Editor
-          <RichEditor ariaLabel="rich editor" value="test" onChange={jest.fn()} onBlur={jest.fn()} />
+          <RichEditor
+            ariaLabel="rich editor"
+            value="test"
+            onChange={jest.fn()}
+            onBlur={jest.fn()}
+          />
         </label>
-      </div>,
+      </div>
     );
 
     const richEditor = await screen.findByRole('textbox', { name: 'rich editor' });
@@ -556,7 +606,7 @@ describe('getPrompts', () => {
           fieldName: 'test',
         },
       ],
-      getValues,
+      getValues
     );
 
     expect(prompts).toEqual([
@@ -634,7 +684,7 @@ describe('ActivityReportNavigator goals page saves', () => {
           _isAppLoading,
           onContinue,
           onSaveDraft,
-          onUpdatePage,
+          onUpdatePage
         ) => (
           <NavigatorButtons
             isAppLoading={false}
@@ -647,7 +697,11 @@ describe('ActivityReportNavigator goals page saves', () => {
         ),
       },
       {
-        path: 'review', label: 'Review', position: 3, review: true, render: () => <div />,
+        path: 'review',
+        label: 'Review',
+        position: 3,
+        review: true,
+        render: () => <div />,
       },
     ],
   };
@@ -684,11 +738,12 @@ describe('ActivityReportNavigator goals page saves', () => {
     formState: overrides.formState || { isDirty: true, errors: {} },
   });
 
-  const renderWithContext = (hookForm, props = {}) => render(
-    <AppLoadingContext.Provider value={mockAppLoadingContext}>
-      <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
-    </AppLoadingContext.Provider>,
-  );
+  const renderWithContext = (hookForm, props = {}) =>
+    render(
+      <AppLoadingContext.Provider value={mockAppLoadingContext}>
+        <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
+      </AppLoadingContext.Provider>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -716,7 +771,7 @@ describe('ActivityReportNavigator goals page saves', () => {
     await waitFor(() => {
       // Verifies goalOrder extraction and navigation save
       expect(defaultProps.onSave).toHaveBeenCalledWith(
-        expect.objectContaining({ goalOrder: expect.any(Array) }),
+        expect.objectContaining({ goalOrder: expect.any(Array) })
       );
       expect(hookForm.reset).toHaveBeenCalled();
       expect(mockAppLoadingContext.setIsAppLoading).toHaveBeenCalled();
@@ -746,9 +801,11 @@ describe('ActivityReportNavigator goals page saves', () => {
       goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
       values: {
         goalPrompts: [],
-        'goalForEditing.objectives': [{
-          resources: [{ value: 'http://test' }],
-        }],
+        'goalForEditing.objectives': [
+          {
+            resources: [{ value: 'http://test' }],
+          },
+        ],
       },
     });
 
@@ -765,9 +822,11 @@ describe('ActivityReportNavigator goals page saves', () => {
       goalForEditing: { id: 1, objectives: [], originalIndex: 0 },
       values: {
         goalPrompts: [],
-        'goalForEditing.objectives': [{
-          resources: [{ value: 'http://test' }],
-        }],
+        'goalForEditing.objectives': [
+          {
+            resources: [{ value: 'http://test' }],
+          },
+        ],
       },
     });
 
@@ -779,10 +838,11 @@ describe('ActivityReportNavigator goals page saves', () => {
       jest.advanceTimersByTime(400);
     });
 
-    await waitFor(() => expect(hookForm.setError).toHaveBeenCalledWith(
-      'goalForEditing.objectives[0].resources',
-      { message: 'Resources are required' },
-    ));
+    await waitFor(() =>
+      expect(hookForm.setError).toHaveBeenCalledWith('goalForEditing.objectives[0].resources', {
+        message: 'Resources are required',
+      })
+    );
   });
 
   it('focuses and exits when goals are invalid', async () => {
@@ -840,10 +900,56 @@ describe('ActivityReportNavigator goals page saves', () => {
       expect(defaultProps.onSave).toHaveBeenCalled();
     });
 
+    // The goal form fields are cleared as part of the single reset() payload
+    // (not via post-reset setValue calls) so the read-only goals list renders
+    // consistently in one pass.
     await waitFor(() => {
-      expect(hookForm.setValue).toHaveBeenCalledWith('goalName', '');
+      expect(hookForm.reset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          goalForEditing: '',
+          goalName: '',
+          goalEndDate: '',
+          goalPrompts: [],
+        })
+      );
+    });
+  });
+
+  it('folds a backend-split goalForEditing into the goals list when closing the form', async () => {
+    const hookForm = createMockHookForm({
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+      values: { goalPrompts: [] },
+      formState: { isDirty: true, errors: {} },
+    });
+
+    // Backend still reports the just-saved goal as actively edited, so onSave
+    // returns it split out into goalForEditing with the goals array missing it.
+    // Because "Save goal" closes the form, the goal must be folded back into
+    // goals at its original index so the read-only list renders it.
+    defaultProps.onSave.mockResolvedValue({
+      id: 1,
+      goals: [{ id: 5, name: 'Existing goal' }],
+      goalForEditing: { id: 7, name: 'Goal', originalIndex: 1 },
+    });
+
+    renderWithContext(hookForm);
+
+    const continueBtn = document.getElementById('draft-goals-objectives-save-continue');
+    fireEvent.click(continueBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSave).toHaveBeenCalled();
+    });
+
+    // reset() alone does not propagate to the useController-bound `goals` field,
+    // so the handler also calls setValue('goals', ...) with the folded goal at its
+    // original index to force the read-only list to render it.
+    await waitFor(() => {
+      expect(hookForm.setValue).toHaveBeenCalledWith('goals', [
+        { id: 5, name: 'Existing goal' },
+        { id: 7, name: 'Goal', originalIndex: 1 },
+      ]);
       expect(hookForm.setValue).toHaveBeenCalledWith('goalForEditing', '');
-      expect(hookForm.reset).toHaveBeenCalled();
     });
   });
 
@@ -863,7 +969,7 @@ describe('ActivityReportNavigator goals page saves', () => {
 
     await waitFor(() => {
       expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
-        expect.stringContaining('A network error has prevented us from saving'),
+        expect.stringContaining('A network error has prevented us from saving')
       );
     });
   });
@@ -888,7 +994,7 @@ describe('ActivityReportNavigator goals page saves', () => {
 
     await waitFor(() => {
       expect(defaultProps.updateErrorMessage).toHaveBeenCalledWith(
-        expect.stringContaining('A network error has prevented us from saving'),
+        expect.stringContaining('A network error has prevented us from saving')
       );
     });
   });
@@ -925,7 +1031,7 @@ describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
           _isAppLoading,
           onContinue,
           onSaveDraft,
-          onUpdatePage,
+          onUpdatePage
         ) => (
           <>
             <div>Activity Summary</div>
@@ -949,7 +1055,11 @@ describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
         render: () => <div>Goals</div>,
       },
       {
-        path: 'review', label: 'Review', position: 3, review: true, render: () => <div />,
+        path: 'review',
+        label: 'Review',
+        position: 3,
+        review: true,
+        render: () => <div />,
       },
     ],
   };
@@ -984,11 +1094,12 @@ describe('ActivityReportNavigator autosave with shouldUpdateFormData', () => {
     formState: overrides.formState || { isDirty: true, errors: {} },
   });
 
-  const renderWithContext = (hookForm, props = {}) => render(
-    <AppLoadingContext.Provider value={mockAppLoadingContext}>
-      <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
-    </AppLoadingContext.Provider>,
-  );
+  const renderWithContext = (hookForm, props = {}) =>
+    render(
+      <AppLoadingContext.Provider value={mockAppLoadingContext}>
+        <ActivityReportNavigator {...defaultProps} {...props} hookForm={hookForm} />
+      </AppLoadingContext.Provider>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();

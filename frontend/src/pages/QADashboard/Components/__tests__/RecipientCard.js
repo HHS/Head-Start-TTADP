@@ -1,31 +1,37 @@
+import { render, screen } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common';
 import RecipientCard from '../RecipientCard';
 
 const recipientData = {
   name: 'Sample Recipient 1',
+  grantNumber: '90CI010073',
   lastARStartDate: '09/01/2021',
   emotionalSupport: 1.2,
   classroomOrganization: 2.3,
   instructionalSupport: 3.4,
   reportDeliveryDate: '09/15/2021',
-  id: 1,
+  id: '1:QA-REVIEW-A',
+  recipientId: 1,
   regionId: 2,
   goals: [
     {
+      id: 54826,
       goalNumber: 'G-54826',
       status: GOAL_STATUS.IN_PROGRESS,
       creator: 'Jon Doe',
       collaborator: 'Jane Doe',
+      lastARStartDate: '09/01/2021',
     },
     {
+      id: 54827,
       goalNumber: 'G-54827',
       status: GOAL_STATUS.CLOSED,
       creator: 'Bill Smith',
       collaborator: 'Barbra Smith',
+      lastARStartDate: null,
     },
   ],
 };
@@ -36,9 +42,9 @@ describe('GoalCard', () => {
     recipient,
     handleGoalCheckboxSelect = jest.fn(),
     isChecked = false,
-    zIndex = 100,
+    zIndex = 100
   ) => {
-    render((
+    render(
       <Router history={history}>
         <RecipientCard
           recipient={recipient}
@@ -46,7 +52,8 @@ describe('GoalCard', () => {
           isChecked={isChecked}
           zIndex={zIndex}
         />
-      </Router>));
+      </Router>
+    );
   };
 
   it('renders correctly', () => {
@@ -54,7 +61,7 @@ describe('GoalCard', () => {
 
     // Column headers.
     expect(screen.getByText('Recipient')).toBeInTheDocument();
-    expect(screen.getByText('Last AR start date')).toBeInTheDocument();
+    expect(screen.getByText('Grant number')).toBeInTheDocument();
     expect(screen.getByText('Emotional support')).toBeInTheDocument();
     expect(screen.getByText('Classroom organization')).toBeInTheDocument();
     expect(screen.getByText('Instructional support')).toBeInTheDocument();
@@ -62,18 +69,27 @@ describe('GoalCard', () => {
     expect(screen.getByText('Sample Recipient 1')).toBeInTheDocument();
 
     // Column data.
-    expect(screen.getByText('09/01/2021')).toBeInTheDocument();
+    expect(screen.getByText('90CI010073')).toBeInTheDocument();
     expect(screen.getByText('1.2')).toBeInTheDocument();
     expect(screen.getByText('2.3')).toBeInTheDocument();
     expect(screen.getByText('3.4')).toBeInTheDocument();
     expect(screen.getByText('09/15/2021')).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {
+        name: /select recipient sample recipient 1 grant 90CI010073 report received 09\/15\/2021/i,
+      })
+    ).toBeInTheDocument();
   });
 
   it('expands the goals', () => {
     renderGoalCard(recipientData);
 
-    const showGoalsBtn = screen.getByRole('button', { name: /view goals for recipient sample recipient 1/i });
+    const showGoalsBtn = screen.getByRole('button', {
+      name: /view goals for recipient sample recipient 1 grant 90CI010073 report received 09\/15\/2021/i,
+    });
+    expect(showGoalsBtn).not.toHaveTextContent('(2)');
     expect(screen.queryByText('Goal number')).not.toBeInTheDocument();
+    expect(screen.queryByText('Last AR start date')).not.toBeInTheDocument();
     expect(screen.queryByText('Goal status')).not.toBeInTheDocument();
     expect(screen.queryByText('Creator')).not.toBeInTheDocument();
     expect(screen.queryByText('Collaborator')).not.toBeInTheDocument();
@@ -81,17 +97,26 @@ describe('GoalCard', () => {
     // Expand.
     showGoalsBtn.click();
 
+    expect(showGoalsBtn).not.toHaveTextContent('(2)');
+    expect(
+      screen
+        .getAllByText('Last AR start date')[0]
+        .compareDocumentPosition(screen.getAllByText('Goal number')[0])
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.queryAllByText('Goal number').length).toBe(2);
+    expect(screen.queryAllByText('Last AR start date').length).toBe(2);
     expect(screen.queryAllByText('Goal status').length).toBe(2);
     expect(screen.queryAllByText('Creator').length).toBe(2);
     expect(screen.queryAllByText('Collaborator').length).toBe(2);
 
     expect(screen.getByText('G-54826')).toBeInTheDocument();
+    expect(screen.getByText('09/01/2021')).toBeInTheDocument();
     expect(screen.getByText(GOAL_STATUS.IN_PROGRESS)).toBeInTheDocument();
     expect(screen.getByText('Jon Doe')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
 
     expect(screen.getByText('G-54827')).toBeInTheDocument();
+    expect(screen.getByText('--')).toBeInTheDocument();
     expect(screen.getByText(GOAL_STATUS.CLOSED)).toBeInTheDocument();
     expect(screen.getByText('Bill Smith')).toBeInTheDocument();
     expect(screen.getByText('Barbra Smith')).toBeInTheDocument();
@@ -100,6 +125,7 @@ describe('GoalCard', () => {
     showGoalsBtn.click();
 
     expect(screen.queryByText('Goal number')).not.toBeInTheDocument();
+    expect(screen.queryByText('Last AR start date')).not.toBeInTheDocument();
     expect(screen.queryByText('Goal status')).not.toBeInTheDocument();
     expect(screen.queryByText('Creator')).not.toBeInTheDocument();
     expect(screen.queryByText('Collaborator')).not.toBeInTheDocument();

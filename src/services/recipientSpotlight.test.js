@@ -1,6 +1,8 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
+import fakerUnique from '../fakerUnique';
 import db from '../models';
+import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
 
 // Helper function to create scopes with region filter
@@ -21,9 +23,7 @@ const createScopesWithRegion = (regionId) => ({
 const createScopesWithGrantId = (grantId) => ({
   grant: {
     where: {
-      [db.Sequelize.Op.and]: [
-        { id: { [db.Sequelize.Op.in]: [grantId] } },
-      ],
+      [db.Sequelize.Op.and]: [{ id: { [db.Sequelize.Op.in]: [grantId] } }],
     },
     include: [],
   },
@@ -55,10 +55,22 @@ const {
   MonitoringFinding,
   MonitoringFindingStatus,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingGrant,
   ProgramPersonnel,
   ActivityReport,
   ActivityReportGoal,
+} = db;
+
+// Fact-table models used to verify the new monitoring data pipeline
+const {
+  Citation,
+  DeliveredReview,
+  DeliveredReviewCitation,
+  GrantCitation,
+  GrantDeliveredReview,
+  MonitoringFindingStandard,
+  MonitoringStandard,
 } = db;
 
 describe('recipientSpotlight service', () => {
@@ -85,7 +97,12 @@ describe('recipientSpotlight service', () => {
 
   let monitoringReviewStatus;
   let monitoringFindingStatus;
+  let monitoringFindingHistoryStatus;
   let deficiencyFinding;
+
+  // Fact-table records created by updateMonitoringFactTables; used in tests and afterAll cleanup
+  let deficiencyCitation;
+  let deficiencyStandardId;
 
   const createDate = new Date();
   // Make pastYear clearly within the last 12 months (9 months ago) to avoid edge cases
@@ -105,9 +122,15 @@ describe('recipientSpotlight service', () => {
     const leftoverGrants = await Grant.findAll({
       where: {
         number: [
-          'G-NORMAL-01', 'G-CHILD-INC-01', 'G-DEFICIENCY-01',
-          'G-NEW-RECIP-01', 'G-NEW-STAFF-01', 'G-NO-TTA-01',
-          'G-INACTIVE-01', 'G-SORT-TEST-A', 'G-SORT-TEST-B',
+          'G-NORMAL-01',
+          'G-CHILD-INC-01',
+          'G-DEFICIENCY-01',
+          'G-NEW-RECIP-01',
+          'G-NEW-STAFF-01',
+          'G-NO-TTA-01',
+          'G-INACTIVE-01',
+          'G-SORT-TEST-A',
+          'G-SORT-TEST-B',
         ],
       },
       raw: true,
@@ -129,99 +152,115 @@ describe('recipientSpotlight service', () => {
 
     // Create test user
     testUser = await User.create({
-      name: faker.name.findName(),
+      name: faker.person.fullName(),
       email: faker.internet.email(),
       homeRegionId: REGION_ID,
       hsesUsername: faker.internet.email(),
-      hsesUserId: `fake${faker.unique(() => faker.datatype.number({ min: 1, max: 10000 }))}`,
+      hsesUserId: `fake${fakerUnique(() => faker.number.int({ min: 1, max: 10000 }))}`,
       lastLogin: new Date(),
     });
 
     // Create monitoring status records
     monitoringReviewStatus = await MonitoringReviewStatus.create({
-      statusId: faker.datatype.number({ min: 1000, max: 9999 }), // Using integer for statusId
+      statusId: faker.number.int({ min: 1000, max: 9999 }), // Using integer for statusId
       name: 'Complete',
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
 
     monitoringFindingStatus = await MonitoringFindingStatus.create({
-      statusId: faker.datatype.number({ min: 1000, max: 9999 }), // Using integer for statusId
+      statusId: faker.number.int({ min: 1000, max: 9999 }), // Using integer for statusId
       name: 'Active',
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
 
+    // MonitoringFindingHistories has its own status vocabulary (e.g. "New") distinct from
+    // MonitoringFindingStatuses ("Active"); Citations.calculated_status/active is derived
+    // from the history status, so a matching row is needed here too.
+    monitoringFindingHistoryStatus = await MonitoringFindingHistoryStatus.create({
+      statusId: faker.number.int({ min: 1000, max: 9999 }),
+      name: 'New',
+      sourceCreatedAt: createDate,
+      sourceUpdatedAt: createDate,
+    });
+
     // Create GrantNumberLinks for our test grant numbers
-    await db.GrantNumberLink.bulkCreate([
-      { grantNumber: 'G-NORMAL-01' },
-      { grantNumber: 'G-CHILD-INC-01' },
-      { grantNumber: 'G-DEFICIENCY-01' },
-      { grantNumber: 'G-NEW-RECIP-01' },
-      { grantNumber: 'G-NEW-STAFF-01' },
-      { grantNumber: 'G-NO-TTA-01' },
-      { grantNumber: 'G-INACTIVE-01' },
-      { grantNumber: 'G-SORT-TEST-A' },
-      { grantNumber: 'G-SORT-TEST-B' },
-    ], { ignoreDuplicates: true });
+    await db.GrantNumberLink.bulkCreate(
+      [
+        { grantNumber: 'G-NORMAL-01' },
+        { grantNumber: 'G-CHILD-INC-01' },
+        { grantNumber: 'G-DEFICIENCY-01' },
+        { grantNumber: 'G-NEW-RECIP-01' },
+        { grantNumber: 'G-NEW-STAFF-01' },
+        { grantNumber: 'G-NO-TTA-01' },
+        { grantNumber: 'G-INACTIVE-01' },
+        { grantNumber: 'G-SORT-TEST-A' },
+        { grantNumber: 'G-SORT-TEST-B' },
+      ],
+      { ignoreDuplicates: true }
+    );
 
     // Create recipients for testing
     normalRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Normal Recipient',
       regionId: REGION_ID,
     });
 
     childIncidentsRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Child Incidents Recipient',
       regionId: REGION_ID,
     });
 
     deficiencyRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Deficiency Recipient',
       regionId: REGION_ID,
     });
 
     newRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'New Recipient',
       regionId: REGION_ID,
     });
 
     newStaffRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'New Staff Recipient',
       regionId: REGION_ID,
     });
 
     noTTARecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'No TTA Recipient',
       regionId: REGION_ID,
     });
 
     inactiveOnlyRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       name: 'Inactive Only Recipient',
       regionId: REGION_ID,
     });
 
     // Create MonitoringGranteeLinks for each recipient
-    await db.MonitoringGranteeLink.bulkCreate([
-      { granteeId: normalRecipient.id.toString() },
-      { granteeId: childIncidentsRecipient.id.toString() },
-      { granteeId: deficiencyRecipient.id.toString() },
-      { granteeId: newRecipient.id.toString() },
-      { granteeId: newStaffRecipient.id.toString() },
-      { granteeId: noTTARecipient.id.toString() },
-      { granteeId: inactiveOnlyRecipient.id.toString() },
-    ], { ignoreDuplicates: true });
+    await db.MonitoringGranteeLink.bulkCreate(
+      [
+        { granteeId: normalRecipient.id.toString() },
+        { granteeId: childIncidentsRecipient.id.toString() },
+        { granteeId: deficiencyRecipient.id.toString() },
+        { granteeId: newRecipient.id.toString() },
+        { granteeId: newStaffRecipient.id.toString() },
+        { granteeId: noTTARecipient.id.toString() },
+        { granteeId: inactiveOnlyRecipient.id.toString() },
+      ],
+      { ignoreDuplicates: true }
+    );
 
     // Create grants for each recipient
     normalGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-NORMAL-01',
       recipientId: normalRecipient.id,
       regionId: REGION_ID,
@@ -232,7 +271,7 @@ describe('recipientSpotlight service', () => {
     });
 
     childIncidentsGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-CHILD-INC-01',
       recipientId: childIncidentsRecipient.id,
       regionId: REGION_ID,
@@ -243,7 +282,7 @@ describe('recipientSpotlight service', () => {
     });
 
     deficiencyGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-DEFICIENCY-01',
       recipientId: deficiencyRecipient.id,
       regionId: REGION_ID,
@@ -254,7 +293,7 @@ describe('recipientSpotlight service', () => {
     });
 
     newRecipientGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-NEW-RECIP-01',
       recipientId: newRecipient.id,
       regionId: REGION_ID,
@@ -265,7 +304,7 @@ describe('recipientSpotlight service', () => {
     });
 
     newStaffGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-NEW-STAFF-01',
       recipientId: newStaffRecipient.id,
       regionId: REGION_ID,
@@ -276,7 +315,7 @@ describe('recipientSpotlight service', () => {
     });
 
     noTTAGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-NO-TTA-01',
       recipientId: noTTARecipient.id,
       regionId: REGION_ID,
@@ -287,7 +326,7 @@ describe('recipientSpotlight service', () => {
     });
 
     inactiveOnlyGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+      id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
       number: 'G-INACTIVE-01',
       recipientId: inactiveOnlyRecipient.id,
       regionId: REGION_ID,
@@ -356,28 +395,17 @@ describe('recipientSpotlight service', () => {
 
     // Create monitoring reviews, findings, and other related data
 
-    // 1. Create child incidents (RAN) reviews
-    const childIncidentsReview1Id = faker.unique(
-      () => faker.datatype.number({ min: 40000, max: 50000 }),
-    ).toString();
-    const childIncidentsReview2Id = faker.unique(
-      () => faker.datatype.number({ min: 50001, max: 60000 }),
-    ).toString();
-      // Add a third incident review to ensure we have more than one (required by the logic)
-    const childIncidentsReview3Id = faker.unique(
-      () => faker.datatype.number({ min: 60001, max: 65000 }),
+    // 1. Create child incidents (RAN) review — one is sufficient to trigger the indicator
+    const childIncidentsReview1Id = fakerUnique(() =>
+      faker.number.int({ min: 40000, max: 50000 })
     ).toString();
 
-    // Create MonitoringReviewLinks first
-    await db.MonitoringReviewLink.bulkCreate([
-      { reviewId: childIncidentsReview1Id },
-      { reviewId: childIncidentsReview2Id },
-      { reviewId: childIncidentsReview3Id },
-    ]);
+    // Create MonitoringReviewLink first
+    await db.MonitoringReviewLink.bulkCreate([{ reviewId: childIncidentsReview1Id }]);
 
     const childIncidentsReview1 = await MonitoringReview.create({
       reviewId: childIncidentsReview1Id,
-      contentId: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })).toString(),
+      contentId: fakerUnique(() => faker.number.int({ min: 40000, max: 50000 })).toString(),
       statusId: monitoringReviewStatus.statusId,
       reviewType: 'RAN',
       reportDeliveryDate: pastYear,
@@ -385,62 +413,20 @@ describe('recipientSpotlight service', () => {
       sourceUpdatedAt: createDate,
     });
 
-    const childIncidentsReview2 = await MonitoringReview.create({
-      reviewId: childIncidentsReview2Id,
-      contentId: faker.unique(() => faker.datatype.number({ min: 50001, max: 60000 })).toString(),
-      statusId: monitoringReviewStatus.statusId,
-      reviewType: 'RAN',
-      reportDeliveryDate: pastYear,
+    await MonitoringReviewGrantee.create({
+      reviewId: childIncidentsReview1.reviewId,
+      granteeId: childIncidentsRecipient.id.toString(),
+      grantNumber: childIncidentsGrant.number,
+      createTime: createDate,
+      updateTime: createDate,
+      updateBy: 'test-user',
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
-
-    const childIncidentsReview3 = await MonitoringReview.create({
-      reviewId: childIncidentsReview3Id,
-      contentId: faker.unique(() => faker.datatype.number({ min: 60001, max: 65000 })).toString(),
-      statusId: monitoringReviewStatus.statusId,
-      reviewType: 'RAN',
-      reportDeliveryDate: pastYear,
-      sourceCreatedAt: createDate,
-      sourceUpdatedAt: createDate,
-    });
-
-    await MonitoringReviewGrantee.bulkCreate([
-      {
-        reviewId: childIncidentsReview1.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-      {
-        reviewId: childIncidentsReview2.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-      {
-        reviewId: childIncidentsReview3.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-    ]);
 
     // 2. Create deficiency finding
-    const deficiencyReviewId = faker.unique(
-      () => faker.datatype.number({ min: 60001, max: 70000 }),
+    const deficiencyReviewId = fakerUnique(() =>
+      faker.number.int({ min: 60001, max: 70000 })
     ).toString();
 
     // Create MonitoringReviewLink first
@@ -450,7 +436,7 @@ describe('recipientSpotlight service', () => {
 
     const deficiencyReview = await MonitoringReview.create({
       reviewId: deficiencyReviewId,
-      contentId: faker.unique(() => faker.datatype.number({ min: 60001, max: 70000 })).toString(),
+      contentId: fakerUnique(() => faker.number.int({ min: 60001, max: 70000 })).toString(),
       statusId: monitoringReviewStatus.statusId,
       reviewType: 'FA-1',
       reportDeliveryDate: pastYear,
@@ -469,8 +455,8 @@ describe('recipientSpotlight service', () => {
       sourceUpdatedAt: createDate,
     });
 
-    const deficiencyFindingId = faker.unique(
-      () => faker.datatype.number({ min: 80001, max: 90000 }),
+    const deficiencyFindingId = fakerUnique(() =>
+      faker.number.int({ min: 80001, max: 90000 })
     ).toString();
 
     // Create MonitoringFindingLink first
@@ -482,7 +468,7 @@ describe('recipientSpotlight service', () => {
       findingId: deficiencyFindingId,
       statusId: monitoringFindingStatus.statusId,
       findingType: 'Deficiency',
-      hash: faker.datatype.uuid(),
+      hash: faker.string.uuid(),
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
@@ -490,10 +476,9 @@ describe('recipientSpotlight service', () => {
     await MonitoringFindingHistory.create({
       findingId: deficiencyFinding.findingId,
       reviewId: deficiencyReview.reviewId,
+      statusId: monitoringFindingHistoryStatus.statusId,
       determination: 'Deficiency',
-      findingHistoryId: faker.unique(
-        () => faker.datatype.number({ min: 90001, max: 100000 }),
-      ).toString(),
+      findingHistoryId: fakerUnique(() => faker.number.int({ min: 90001, max: 100000 })).toString(),
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
@@ -503,9 +488,43 @@ describe('recipientSpotlight service', () => {
       granteeId: deficiencyRecipient.id.toString(),
       statusId: monitoringFindingStatus.statusId,
       findingType: 'Deficiency',
-      hash: faker.datatype.uuid(),
+      hash: faker.string.uuid(),
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
+    });
+
+    // MonitoringFindingStandard + MonitoringStandard are required by updateMonitoringFactTables
+    // to produce a Citation row for this finding.
+    deficiencyStandardId = faker.number.int({ min: 200000, max: 299999 });
+    await MonitoringStandard.findOrCreate({
+      where: { standardId: deficiencyStandardId },
+      defaults: {
+        standardId: deficiencyStandardId,
+        contentId: faker.string.uuid(),
+        citation: '1302.47(b)',
+        text: 'Test deficiency standard',
+        guidance: 'Fiscal',
+        citable: 1,
+        hash: faker.string.uuid(),
+        sourceCreatedAt: createDate,
+        sourceUpdatedAt: createDate,
+      },
+    });
+    await MonitoringFindingStandard.create({
+      findingId: deficiencyFinding.findingId,
+      standardId: deficiencyStandardId,
+      sourceCreatedAt: createDate,
+      sourceUpdatedAt: createDate,
+    });
+
+    // Populate DeliveredReviews, Citations, GrantDeliveredReviews, and GrantCitations
+    // from the raw monitoring data we created above.
+    await updateMonitoringFactTables();
+
+    // Look up the Citation the update produced so the deficiency test can
+    // soft-delete it and verify the indicator drops to false.
+    deficiencyCitation = await Citation.findOne({
+      where: { finding_uuid: deficiencyFinding.findingId },
     });
   });
 
@@ -551,6 +570,14 @@ describe('recipientSpotlight service', () => {
         transaction,
       });
 
+      // MonitoringFindingStandard references MonitoringFindingLink; must be deleted first.
+      // Broad cleanup consistent with the where:{} pattern used for all other monitoring tables.
+      await MonitoringFindingStandard.destroy({
+        where: {},
+        force: true,
+        transaction,
+      });
+
       await MonitoringReviewGrantee.destroy({
         where: {},
         force: true,
@@ -565,10 +592,7 @@ describe('recipientSpotlight service', () => {
 
       // Clean up related tables that reference the link tables
       // Clean up MonitoringClassSummaries (references MonitoringReviewLinks)
-      await db.sequelize.query(
-        'DELETE FROM "MonitoringClassSummaries"',
-        { transaction },
-      );
+      await db.sequelize.query('DELETE FROM "MonitoringClassSummaries"', { transaction });
 
       // Clean up link tables
       await db.MonitoringGranteeLink.destroy({
@@ -626,6 +650,46 @@ describe('recipientSpotlight service', () => {
         transaction,
       });
 
+      // Clean up fact table records created by updateMonitoringFactTables.
+      // Junction tables must be deleted before their referenced entities.
+      if (grantIds.length > 0) {
+        const testGDRs = await GrantDeliveredReview.findAll({
+          where: { grantId: grantIds },
+          attributes: ['deliveredReviewId'],
+          raw: true,
+          transaction,
+        });
+        const drIds = testGDRs.map((r) => r.deliveredReviewId);
+        if (drIds.length > 0) {
+          await DeliveredReviewCitation.destroy({
+            where: { deliveredReviewId: drIds },
+            force: true,
+            transaction,
+          });
+          await GrantDeliveredReview.destroy({
+            where: { deliveredReviewId: drIds },
+            force: true,
+            transaction,
+          });
+          await DeliveredReview.destroy({
+            where: { id: drIds },
+            force: true,
+            transaction,
+          });
+        }
+        await GrantCitation.destroy({ where: { grantId: grantIds }, force: true, transaction });
+      }
+      if (deficiencyCitation?.id) {
+        await Citation.destroy({ where: { id: deficiencyCitation.id }, force: true, transaction });
+      }
+      if (deficiencyStandardId) {
+        await MonitoringStandard.destroy({
+          where: { standardId: deficiencyStandardId },
+          force: true,
+          transaction,
+        });
+      }
+
       // Clean up grants
       if (grantIds.length > 0) {
         await Grant.destroy({
@@ -654,9 +718,16 @@ describe('recipientSpotlight service', () => {
         });
       }
 
-      // Clean up monitoring statuses
+      // Clean up monitoring statuses. Each *Status create() hook (syncLink) auto-creates a
+      // matching *StatusLink row (the real FK target — see genericLink.js), so the Link row
+      // must be destroyed too, and only after nothing still references it.
       if (monitoringReviewStatus?.statusId) {
         await MonitoringReviewStatus.destroy({
+          where: { statusId: monitoringReviewStatus.statusId },
+          force: true,
+          transaction,
+        });
+        await db.MonitoringReviewStatusLink.destroy({
           where: { statusId: monitoringReviewStatus.statusId },
           force: true,
           transaction,
@@ -669,6 +740,24 @@ describe('recipientSpotlight service', () => {
           force: true,
           transaction,
         });
+        await db.MonitoringFindingStatusLink.destroy({
+          where: { statusId: monitoringFindingStatus.statusId },
+          force: true,
+          transaction,
+        });
+      }
+
+      if (monitoringFindingHistoryStatus?.statusId) {
+        await MonitoringFindingHistoryStatus.destroy({
+          where: { statusId: monitoringFindingHistoryStatus.statusId },
+          force: true,
+          transaction,
+        });
+        await db.MonitoringFindingHistoryStatusLink.destroy({
+          where: { statusId: monitoringFindingHistoryStatus.statusId },
+          force: true,
+          transaction,
+        });
       }
     });
 
@@ -678,14 +767,9 @@ describe('recipientSpotlight service', () => {
   describe('getRecipientSpotlightIndicators', () => {
     it('returns recipients with required fields', async () => {
       const scopes = createScopesWithRegion(REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toHaveProperty('recipients');
       expect(result).toHaveProperty('count');
@@ -703,6 +787,7 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0]).toHaveProperty('underenrolled');
       expect(result.recipients[0]).toHaveProperty('DRS');
       expect(result.recipients[0]).toHaveProperty('FEI');
+      expect(result.recipients[0]).toHaveProperty('underenrolled');
       expect(result.overview).toHaveProperty('numRecipients');
       expect(result.overview).toHaveProperty('totalRecipients');
       expect(result.overview).toHaveProperty('recipientPercentage');
@@ -714,14 +799,9 @@ describe('recipientSpotlight service', () => {
     it('returns a specific recipient when recipientId is provided', async () => {
       // Use a recipient with an indicator since we filter out 0-indicator recipients
       const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -733,14 +813,9 @@ describe('recipientSpotlight service', () => {
 
     it('identifies child incidents correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
@@ -749,44 +824,54 @@ describe('recipientSpotlight service', () => {
 
     it('identifies deficiencies correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(deficiencyRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].deficiency).toBe(true);
 
-      // Source-deleted findings must be excluded — soft-delete the finding and verify
+      // Simulate a source deletion: mark the MonitoringFinding as deleted, then re-run
+      // updateMonitoringFactTables. The update script should set Citations.deletedAt on the
+      // now-invalid Citation, which is the real mechanism the new deficiency query relies on.
       await deficiencyFinding.update({ sourceDeletedAt: new Date() });
+      await updateMonitoringFactTables();
       const resultAfterDelete = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
         10,
-        [REGION_ID],
+        [REGION_ID]
       );
       expect(resultAfterDelete.recipients[0].deficiency).toBe(false);
-      await deficiencyFinding.update({ sourceDeletedAt: null });
-    });
 
-    it('identifies new recipients correctly', async () => {
-      const scopes = createScopesWithRecipientAndRegion(newRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
+      // Restore the finding and re-run; the ON CONFLICT DO UPDATE path in the update script
+      // sets deletedAt = NULL, bringing the indicator back.
+      await deficiencyFinding.update({ sourceDeletedAt: null });
+      await updateMonitoringFactTables();
+      // Refresh the outer reference so afterAll cleanup has a valid Citation instance.
+      deficiencyCitation = await Citation.findOne({
+        where: { finding_uuid: deficiencyFinding.findingId },
+      });
+      const resultAfterRestore = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
         'ASC',
         0,
         10,
-        [REGION_ID],
+        [REGION_ID]
       );
+      expect(resultAfterRestore.recipients[0].deficiency).toBe(true);
+    });
+
+    it('identifies new recipients correctly', async () => {
+      const scopes = createScopesWithRecipientAndRegion(newRecipient.id, REGION_ID);
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -797,8 +882,8 @@ describe('recipientSpotlight service', () => {
     it('does not flag recipient with old inactive grant as new recipient', async () => {
       // A recipient with an old inactive grant + a newer active grant should NOT be
       // flagged as "New Recipient" because they have historical grant activity > 4 years old.
-      const oldInactiveGrantNumber = `G-OLD-INACTIVE-${faker.datatype.number({ min: 100000, max: 999999 })}`;
-      const newActiveGrantNumber = `G-NEW-ACTIVE-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      const oldInactiveGrantNumber = `G-OLD-INACTIVE-${faker.number.int({ min: 100000, max: 999999 })}`;
+      const newActiveGrantNumber = `G-NEW-ACTIVE-${faker.number.int({ min: 100000, max: 999999 })}`;
 
       await db.GrantNumberLink.bulkCreate([
         { grantNumber: oldInactiveGrantNumber },
@@ -806,7 +891,7 @@ describe('recipientSpotlight service', () => {
       ]);
 
       const veteranRecipient = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         name: 'Veteran Recipient With Inactive History',
         regionId: REGION_ID,
       });
@@ -815,7 +900,7 @@ describe('recipientSpotlight service', () => {
 
       // Old grant: inactive, started > 4 years ago
       const oldInactiveGrant = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         number: oldInactiveGrantNumber,
         recipientId: veteranRecipient.id,
         regionId: REGION_ID,
@@ -828,7 +913,7 @@ describe('recipientSpotlight service', () => {
 
       // New grant: active, started within the last 4 years
       const newActiveGrant = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         number: newActiveGrantNumber,
         recipientId: veteranRecipient.id,
         regionId: REGION_ID,
@@ -846,7 +931,7 @@ describe('recipientSpotlight service', () => {
           'ASC',
           0,
           10,
-          [REGION_ID],
+          [REGION_ID]
         );
 
         expect(result.recipients.length).toBe(1);
@@ -865,7 +950,7 @@ describe('recipientSpotlight service', () => {
           [REGION_ID],
           [],
           [],
-          newActiveGrant.id, // sets singleGrantId so grantmode is true
+          newActiveGrant.id // sets singleGrantId so grantmode is true
         );
 
         expect(grantModeResult.recipients.length).toBe(1);
@@ -891,14 +976,9 @@ describe('recipientSpotlight service', () => {
 
     it('identifies new staff correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(newStaffRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -908,14 +988,9 @@ describe('recipientSpotlight service', () => {
 
     it('identifies no TTA correctly', async () => {
       const scopes = createScopesWithRecipientAndRegion(noTTARecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -923,18 +998,97 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients[0].noTTA).toBe(true);
     });
 
+    it('sets lastTTA from the activity report endDate, not startDate', async () => {
+      // Uses a report where startDate is 3 years ago but endDate is 9 months ago.
+      // Verifies MAX(ar."endDate") is used — not MAX(ar."startDate").
+      const grantNumber = `G-LASTTA-${faker.number.int({ min: 100000, max: 999999 })}`;
+      await db.GrantNumberLink.create({ grantNumber });
+
+      const ttaRecipient = await Recipient.create({
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
+        name: 'Last TTA Date Recipient',
+        regionId: REGION_ID,
+      });
+
+      const ttaGrant = await Grant.create({
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
+        number: grantNumber,
+        recipientId: ttaRecipient.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYears,
+        endDate: createDate,
+        cdi: false,
+      });
+
+      const ttaGoal = await Goal.create({
+        name: 'Last TTA Test Goal',
+        status: 'Not Started',
+        grantId: ttaGrant.id,
+      });
+
+      // startDate is 3 years ago; endDate is 9 months ago — intentionally different.
+      const ttaReport = await ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        userId: testUser.id,
+        regionId: REGION_ID,
+        startDate: pastThreeYears,
+        endDate: pastYear,
+        approvedAt: pastYear,
+        duration: 1,
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: ttaReport.id,
+        grantId: ttaGrant.id,
+        goalId: ttaGoal.id,
+      });
+
+      try {
+        const scopes = createScopesWithRecipientAndRegion(ttaRecipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        const row = result.recipients[0];
+
+        // lastTTA must reflect endDate (pastYear ≈ 9 months ago),
+        // not startDate (pastThreeYears ≈ 3 years ago).
+        // Compare YYYY-MM-DD strings directly — DATE columns have no timezone component
+        // in Postgres, so no shifting occurs on read. Use local date parts to match
+        // how Sequelize serialized pastYear on write.
+        const pad = (n) => String(n).padStart(2, '0');
+        const toLocalYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        expect(row.lastTTA).not.toBeNull();
+        expect(row.lastTTA.slice(0, 10)).toBe(toLocalYMD(pastYear));
+        expect(row.lastTTA.slice(0, 10)).not.toBe(toLocalYMD(pastThreeYears));
+      } finally {
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: ttaReport.id },
+          force: true,
+        });
+        await ActivityReport.destroy({ where: { id: ttaReport.id }, force: true });
+        await Goal.destroy({ where: { id: ttaGoal.id }, force: true });
+        await Grant.destroy({ where: { id: ttaGrant.id }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: ttaRecipient.id }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber }, force: true });
+      }
+    });
+
     it('includes recipients with zero indicators in results when no indicator filters are applied', async () => {
       // normalRecipient has TTA and no other indicators, so indicatorCount = 0
       // The service should now include it by default when no indicator filters are passed
       const scopes = createScopesWithRecipientAndRegion(normalRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
@@ -956,7 +1110,7 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [REGION_ID],
+        [REGION_ID]
       );
 
       // Test with offset 2
@@ -966,7 +1120,7 @@ describe('recipientSpotlight service', () => {
         'ASC',
         2,
         100,
-        [REGION_ID],
+        [REGION_ID]
       );
 
       expect(firstPage).toBeDefined();
@@ -987,22 +1141,47 @@ describe('recipientSpotlight service', () => {
       expect(firstPage.recipients[0].recipientId).not.toBe(secondPage.recipients[0].recipientId);
     });
 
+    it('returns all rows when limit is null (used for CSV export)', async () => {
+      const scopes = createScopesWithRegion(REGION_ID);
+
+      // A small limit should truncate the result set...
+      const limited = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 1, [
+        REGION_ID,
+      ]);
+
+      // ...while a null limit returns every matching row.
+      const unlimited = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        null,
+        [REGION_ID]
+      );
+
+      expect(limited.recipients.length).toBeLessThanOrEqual(1);
+      // The total count is unaffected by the limit; the unlimited query should
+      // return as many rows as that count.
+      expect(unlimited.recipients.length).toBe(unlimited.count);
+      expect(unlimited.recipients.length).toBeGreaterThanOrEqual(limited.recipients.length);
+    });
+
     it('handles sorting correctly', async () => {
       // Create multiple recipients with different names to ensure sorting works
       const recipientA = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
+        id: fakerUnique(() => faker.number.int({ min: 50000, max: 60000 })),
         name: 'AAAA Test Recipient',
         regionId: REGION_ID,
       });
 
       const recipientB = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
+        id: fakerUnique(() => faker.number.int({ min: 50000, max: 60000 })),
         name: 'ZZZZ Test Recipient',
         regionId: REGION_ID,
       });
 
       const grantA = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
+        id: fakerUnique(() => faker.number.int({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-A',
         recipientId: recipientA.id,
         regionId: REGION_ID,
@@ -1013,7 +1192,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const grantB = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 50000, max: 60000 })),
+        id: fakerUnique(() => faker.number.int({ min: 50000, max: 60000 })),
         number: 'G-SORT-TEST-B',
         recipientId: recipientB.id,
         regionId: REGION_ID,
@@ -1033,7 +1212,7 @@ describe('recipientSpotlight service', () => {
           'ASC',
           0,
           100,
-          [REGION_ID],
+          [REGION_ID]
         );
 
         // Test descending order
@@ -1043,7 +1222,7 @@ describe('recipientSpotlight service', () => {
           'DESC',
           0,
           100,
-          [REGION_ID],
+          [REGION_ID]
         );
 
         expect(ascResult).toBeDefined();
@@ -1052,80 +1231,384 @@ describe('recipientSpotlight service', () => {
         expect(descResult.recipients.length).toBeGreaterThan(0);
 
         // Find our test recipients in the results
-        const ascTestRecipients = ascResult.recipients.filter(
-          (r) => r.recipientName.includes('Test Recipient'),
+        const ascTestRecipients = ascResult.recipients.filter((r) =>
+          r.recipientName.includes('Test Recipient')
         );
 
-        const descTestRecipients = descResult.recipients.filter(
-          (r) => r.recipientName.includes('Test Recipient'),
+        const descTestRecipients = descResult.recipients.filter((r) =>
+          r.recipientName.includes('Test Recipient')
         );
 
         // Check that 'AAAA' comes before 'ZZZZ' in ascending order
-        expect(ascTestRecipients.findIndex(
-          (r) => r.recipientName === 'AAAA Test Recipient',
-        )).toBeLessThan(
-          ascTestRecipients.findIndex((r) => r.recipientName === 'ZZZZ Test Recipient'),
+        expect(
+          ascTestRecipients.findIndex((r) => r.recipientName === 'AAAA Test Recipient')
+        ).toBeLessThan(
+          ascTestRecipients.findIndex((r) => r.recipientName === 'ZZZZ Test Recipient')
         );
 
         // Check that 'ZZZZ' comes before 'AAAA' in descending order
-        expect(descTestRecipients.findIndex(
-          (r) => r.recipientName === 'ZZZZ Test Recipient',
-        )).toBeLessThan(
-          descTestRecipients.findIndex((r) => r.recipientName === 'AAAA Test Recipient'),
+        expect(
+          descTestRecipients.findIndex((r) => r.recipientName === 'ZZZZ Test Recipient')
+        ).toBeLessThan(
+          descTestRecipients.findIndex((r) => r.recipientName === 'AAAA Test Recipient')
         );
       } finally {
         // Clean up the test data
-        await Grant.destroy({ where: { id: [grantA.id, grantB.id] }, force: true, individualHooks: true });
+        await Grant.destroy({
+          where: { id: [grantA.id, grantB.id] },
+          force: true,
+          individualHooks: true,
+        });
         await Recipient.destroy({ where: { id: [recipientA.id, recipientB.id] }, force: true });
       }
     });
 
+<<<<<<< HEAD
     it('confirms underenrolled, DRS, and FEI are set to false for MVP placeholders', async () => {
+=======
+    it('confirms DRS is set to false (not yet implemented)', async () => {
+>>>>>>> main
       // Use a recipient with an indicator since we filter out 0-indicator recipients
       const scopes = createScopesWithRecipientAndRegion(childIncidentsRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       expect(result).toBeDefined();
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].underenrolled).toBe(false);
       expect(result.recipients[0].DRS).toBe(false);
+      // childIncidentsGrant has no FEI status, so FEI and underenrolled are false
       expect(result.recipients[0].FEI).toBe(false);
+      expect(result.recipients[0].underenrolled).toBe(false);
+    });
+
+    // Helper to create a recipient with one or more grants that carry FEI statuses.
+    // Returns the created recipient, grants, and a cleanup function.
+    const createFeiRecipient = async (name, grantConfigs) => {
+      const recipient = await Recipient.create({
+        id: fakerUnique(() => faker.number.int({ min: 30001, max: 49999 })),
+        name,
+        regionId: REGION_ID,
+      });
+      await db.MonitoringGranteeLink.create({ granteeId: recipient.id.toString() });
+
+      const grantNumbers = grantConfigs.map(
+        (_, index) => `G-FEI-${faker.number.int({ min: 100000, max: 999999 })}-${index}`
+      );
+      await db.GrantNumberLink.bulkCreate(grantNumbers.map((grantNumber) => ({ grantNumber })));
+
+      const grants = await Promise.all(
+        grantConfigs.map((config, index) =>
+          Grant.create({
+            id: fakerUnique(() => faker.number.int({ min: 30001, max: 49999 })),
+            number: grantNumbers[index],
+            recipientId: recipient.id,
+            regionId: REGION_ID,
+            status: config.status || 'Active',
+            startDate: pastFiveYears,
+            endDate: createDate,
+            feiHsStatus: config.feiHsStatus || null,
+            feiEhsStatus: config.feiEhsStatus || null,
+            cdi: false,
+          })
+        )
+      );
+
+      const cleanup = async () => {
+        await Grant.destroy({
+          where: { id: grants.map((g) => g.id) },
+          force: true,
+          individualHooks: true,
+        });
+        await db.MonitoringGranteeLink.destroy({
+          where: { granteeId: recipient.id.toString() },
+          force: true,
+        });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber: grantNumbers }, force: true });
+      };
+
+      return { recipient, grants, cleanup };
+    };
+
+    it('identifies FEI via feiHsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI HS Recipient', [
+        { feiHsStatus: 'Month X of 12 Month Period' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+        expect(result.recipients[0].underenrolled).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies FEI via feiEhsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI EHS Recipient', [
+        { feiEhsStatus: 'Central Office Review' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('flags FEI for DCU evaluation-period statuses', async () => {
+      const dcuStatuses = [
+        'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+        'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+      ];
+      // eslint-disable-next-line no-restricted-syntax
+      for (const status of dcuStatuses) {
+        // eslint-disable-next-line no-await-in-loop
+        const { recipient, cleanup } = await createFeiRecipient(`DCU FEI Recipient ${status}`, [
+          { feiHsStatus: status },
+        ]);
+        try {
+          const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+          // eslint-disable-next-line no-await-in-loop
+          const result = await getRecipientSpotlightIndicators(
+            scopes,
+            'recipientName',
+            'ASC',
+            0,
+            10,
+            [REGION_ID]
+          );
+          expect(result.recipients.length).toBe(1);
+          expect(result.recipients[0].FEI).toBe(true);
+        } finally {
+          // eslint-disable-next-line no-await-in-loop
+          await cleanup();
+        }
+      }
+    });
+
+    it('does not flag FEI for a non-initiative FEI status', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Fully Enrolled Recipient', [
+        { feiHsStatus: 'Fully Enrolled' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(false);
+        expect(result.recipients[0].underenrolled).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('flags FEI at the recipient level when at least one grant is in FEI', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Mixed FEI Recipient', [
+        { feiHsStatus: 'Fully Enrolled' },
+        { feiEhsStatus: 'Notified of 12 Month Period' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('scopes FEI to the specific grant in grant mode', async () => {
+      const { recipient, grants, cleanup } = await createFeiRecipient('Grant Mode FEI Recipient', [
+        { feiHsStatus: 'Central Office Review' },
+        { feiHsStatus: 'Fully Enrolled' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+
+        // Grant mode on the in-FEI grant -> FEI true
+        const inFeiResult = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          grants[0].id
+        );
+        expect(inFeiResult.recipients.length).toBe(1);
+        expect(inFeiResult.recipients[0].FEI).toBe(true);
+
+        // Grant mode on the fully-enrolled grant -> FEI false
+        const notInFeiResult = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          [],
+          [],
+          grants[1].id
+        );
+        expect(notInFeiResult.recipients.length).toBe(1);
+        expect(notInFeiResult.recipients[0].FEI).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies underenrolled via feiHsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled HS Recipient', [
+        { feiHsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].underenrolled).toBe(true);
+        // "Underenrolled less than 4 Months" is not an in-FEI status
+        expect(result.recipients[0].FEI).toBe(false);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('identifies underenrolled via feiEhsStatus', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled EHS Recipient', [
+        { feiEhsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].underenrolled).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('filters recipients by the FEI priority indicator', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('FEI Filter Recipient', [
+        { feiHsStatus: 'DCU Month X of 6 Month DCU Evaluation' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          ['FEI']
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientId).toBe(recipient.id);
+        expect(result.recipients[0].FEI).toBe(true);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    it('filters recipients by the Underenrolled priority indicator', async () => {
+      const { recipient, cleanup } = await createFeiRecipient('Underenrolled Filter Recipient', [
+        { feiHsStatus: 'Underenrolled less than 4 Months' },
+      ]);
+      try {
+        const scopes = createScopesWithRecipientAndRegion(recipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID],
+          ['Underenrolled']
+        );
+        expect(result.recipients.length).toBe(1);
+        expect(result.recipients[0].recipientId).toBe(recipient.id);
+        expect(result.recipients[0].underenrolled).toBe(true);
+      } finally {
+        await cleanup();
+      }
     });
 
     it('filters by singleGrantId correctly', async () => {
       // Recipient with indicators (child incidents via RAN reviews)
       const singleGrantRecipient = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         name: 'Single Grant Test Recipient',
         regionId: REGION_ID,
       });
 
       // Separate recipient with no indicators
       const noIndicatorRecipient = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         name: 'No Indicator Grant Recipient',
         regionId: REGION_ID,
       });
 
-      const singleGrantReviewId = faker.unique(
-        () => faker.datatype.number({ min: 70001, max: 75000 }),
+      const singleGrantReviewId = fakerUnique(() =>
+        faker.number.int({ min: 70001, max: 75000 })
       ).toString();
-      const singleGrantReviewId2 = faker.unique(
-        () => faker.datatype.number({ min: 75001, max: 80000 }),
+      const singleGrantReviewId2 = fakerUnique(() =>
+        faker.number.int({ min: 75001, max: 80000 })
       ).toString();
 
-      const singleGrantIndNumber = `G-SG-IND-${faker.datatype.number({ min: 100000, max: 999999 })}`;
-      const singleGrantNoIndNumber = `G-SG-NOIND-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      const singleGrantIndNumber = `G-SG-IND-${faker.number.int({ min: 100000, max: 999999 })}`;
+      const singleGrantNoIndNumber = `G-SG-NOIND-${faker.number.int({ min: 100000, max: 999999 })}`;
       // Second grant on singleGrantRecipient — will have a new CFO
-      const singleGrantOtherNumber = `G-SG-OTHER-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      const singleGrantOtherNumber = `G-SG-OTHER-${faker.number.int({ min: 100000, max: 999999 })}`;
 
       // Create GrantNumberLinks before creating grants (foreign key constraint)
       await db.GrantNumberLink.bulkCreate([
@@ -1135,7 +1618,7 @@ describe('recipientSpotlight service', () => {
       ]);
 
       const singleGrantWithIndicator = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         number: singleGrantIndNumber,
         recipientId: singleGrantRecipient.id,
         regionId: REGION_ID,
@@ -1146,7 +1629,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const singleGrantWithoutIndicator = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         number: singleGrantNoIndNumber,
         recipientId: noIndicatorRecipient.id,
         regionId: REGION_ID,
@@ -1160,7 +1643,7 @@ describe('recipientSpotlight service', () => {
       // In grant mode targeting singleGrantWithIndicator, this CFO should NOT
       // trigger newStaff. In recipient mode it should.
       const singleGrantOther = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        id: fakerUnique(() => faker.number.int({ min: 10000, max: 30000 })),
         number: singleGrantOtherNumber,
         recipientId: singleGrantRecipient.id,
         regionId: REGION_ID,
@@ -1224,7 +1707,7 @@ describe('recipientSpotlight service', () => {
 
       const singleGrantReview = await MonitoringReview.create({
         reviewId: singleGrantReviewId,
-        contentId: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })).toString(),
+        contentId: fakerUnique(() => faker.number.int({ min: 40000, max: 50000 })).toString(),
         statusId: monitoringReviewStatus.statusId,
         reviewType: 'RAN',
         reportDeliveryDate: pastYear,
@@ -1234,7 +1717,7 @@ describe('recipientSpotlight service', () => {
 
       const singleGrantReview2 = await MonitoringReview.create({
         reviewId: singleGrantReviewId2,
-        contentId: faker.unique(() => faker.datatype.number({ min: 50001, max: 60000 })).toString(),
+        contentId: fakerUnique(() => faker.number.int({ min: 50001, max: 60000 })).toString(),
         statusId: monitoringReviewStatus.statusId,
         reviewType: 'RAN',
         reportDeliveryDate: pastYear,
@@ -1266,11 +1749,15 @@ describe('recipientSpotlight service', () => {
       ]);
       // End setup for childIncidents
 
+      // Push the new monitoring reviews into the fact tables so that
+      // all_reviews (which now reads DeliveredReviews/GrantDeliveredReviews) can see them.
+      await updateMonitoringFactTables();
+
       try {
         // Test with the grant that has an indicator
         const scopesWithIndicator = createScopesWithRecipientAndRegion(
           singleGrantRecipient.id,
-          REGION_ID,
+          REGION_ID
         );
         const resultWithIndicator = await getRecipientSpotlightIndicators(
           scopesWithIndicator,
@@ -1281,7 +1768,7 @@ describe('recipientSpotlight service', () => {
           [REGION_ID],
           [],
           [],
-          singleGrantWithIndicator.id,
+          singleGrantWithIndicator.id
         );
 
         expect(resultWithIndicator.recipients.length).toBe(1);
@@ -1305,11 +1792,11 @@ describe('recipientSpotlight service', () => {
           [REGION_ID],
           [],
           [],
-          null,
+          null
         );
 
         const recipientRow = recipientModeResult.recipients.find(
-          (r) => r.recipientId === singleGrantRecipient.id,
+          (r) => r.recipientId === singleGrantRecipient.id
         );
         expect(recipientRow).toBeDefined();
         expect(recipientRow.newStaff).toBe(true);
@@ -1317,7 +1804,7 @@ describe('recipientSpotlight service', () => {
         // Test with the grant that has no indicator (different recipient, no monitoring data)
         const scopesWithoutIndicator = createScopesWithRecipientAndRegion(
           noIndicatorRecipient.id,
-          REGION_ID,
+          REGION_ID
         );
         const resultWithoutIndicator = await getRecipientSpotlightIndicators(
           scopesWithoutIndicator,
@@ -1328,7 +1815,7 @@ describe('recipientSpotlight service', () => {
           [REGION_ID],
           [],
           [],
-          singleGrantWithoutIndicator.id,
+          singleGrantWithoutIndicator.id
         );
         // With no explicit indicator filters, recipients with zero indicators should now be included.
         expect(resultWithoutIndicator.recipients.length).toBe(1);
@@ -1349,6 +1836,31 @@ describe('recipientSpotlight service', () => {
           where: { id: singleGrantGoal.id },
           force: true,
         });
+
+        // Clean up fact table records created by the updateMonitoringFactTables call above
+        const sgGrantIds = [
+          singleGrantWithIndicator.id,
+          singleGrantWithoutIndicator.id,
+          singleGrantOther.id,
+        ];
+        const sgGDRs = await GrantDeliveredReview.findAll({
+          where: { grantId: sgGrantIds },
+          attributes: ['deliveredReviewId'],
+          raw: true,
+        });
+        const sgDrIds = sgGDRs.map((r) => r.deliveredReviewId);
+        if (sgDrIds.length > 0) {
+          await DeliveredReviewCitation.destroy({
+            where: { deliveredReviewId: sgDrIds },
+            force: true,
+          });
+          await GrantDeliveredReview.destroy({
+            where: { deliveredReviewId: sgDrIds },
+            force: true,
+          });
+          await DeliveredReview.destroy({ where: { id: sgDrIds }, force: true });
+        }
+        await GrantCitation.destroy({ where: { grantId: sgGrantIds }, force: true });
 
         await MonitoringReviewGrantee.destroy({
           where: { reviewId: [singleGrantReview.reviewId, singleGrantReview2.reviewId] },
@@ -1402,7 +1914,9 @@ describe('recipientSpotlight service', () => {
 
     it('works with empty grant list (queries all grants)', async () => {
       // Create a scope that returns no grants initially
-      const emptyGrantScope = { grant: { where: { id: { [db.Sequelize.Op.eq]: -999 } }, include: [] } };
+      const emptyGrantScope = {
+        grant: { where: { id: { [db.Sequelize.Op.eq]: -999 } }, include: [] },
+      };
 
       const result = await getRecipientSpotlightIndicators(
         emptyGrantScope,
@@ -1410,7 +1924,7 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [REGION_ID],
+        [REGION_ID]
       );
 
       expect(result).toBeDefined();
@@ -1424,18 +1938,13 @@ describe('recipientSpotlight service', () => {
     it('excludes recipients with only inactive grants from spotlight cards and totalRecipients', async () => {
       // Query scoped to only the inactive-only recipient
       const scopes = createScopesWithRecipientAndRegion(inactiveOnlyRecipient.id, REGION_ID);
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_ID,
+      ]);
 
       // Recipient with only inactive grant should not appear in spotlight cards
       const inactiveRecipientInResults = result.recipients.find(
-        (r) => r.recipientId === inactiveOnlyRecipient.id,
+        (r) => r.recipientId === inactiveOnlyRecipient.id
       );
       expect(inactiveRecipientInResults).toBeUndefined();
       expect(result.recipients.length).toBe(0);
@@ -1450,10 +1959,10 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         10,
-        [REGION_ID],
+        [REGION_ID]
       );
       const inactiveRecipientCounted = broadResult.recipients.find(
-        (r) => r.recipientId === inactiveOnlyRecipient.id,
+        (r) => r.recipientId === inactiveOnlyRecipient.id
       );
       expect(inactiveRecipientCounted).toBeUndefined();
     });
@@ -1469,7 +1978,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['New staff'],
+        ['New staff']
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1482,7 +1991,7 @@ describe('recipientSpotlight service', () => {
 
       // Our test "New Staff Recipient" should be in the results
       const newStaffRecipientResult = result.recipients.find(
-        (r) => r.recipientName === 'New Staff Recipient',
+        (r) => r.recipientName === 'New Staff Recipient'
       );
       expect(newStaffRecipientResult).toBeDefined();
     });
@@ -1496,7 +2005,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['No TTA'],
+        ['No TTA']
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1509,7 +2018,7 @@ describe('recipientSpotlight service', () => {
 
       // Our test "No TTA Recipient" should be in the results
       const noTTARecipientResult = result.recipients.find(
-        (r) => r.recipientName === 'No TTA Recipient',
+        (r) => r.recipientName === 'No TTA Recipient'
       );
       expect(noTTARecipientResult).toBeDefined();
     });
@@ -1523,7 +2032,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['New staff', 'No TTA'],
+        ['New staff', 'No TTA']
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1536,10 +2045,10 @@ describe('recipientSpotlight service', () => {
 
       // Both test recipients should be in the results
       const newStaffRecipientResult = result.recipients.find(
-        (r) => r.recipientName === 'New Staff Recipient',
+        (r) => r.recipientName === 'New Staff Recipient'
       );
       const noTTARecipientResult = result.recipients.find(
-        (r) => r.recipientName === 'No TTA Recipient',
+        (r) => r.recipientName === 'No TTA Recipient'
       );
       expect(newStaffRecipientResult).toBeDefined();
       expect(noTTARecipientResult).toBeDefined();
@@ -1554,7 +2063,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        [], // empty filter
+        [] // empty filter
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1564,7 +2073,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        [], // no filter
+        [] // no filter
       );
 
       // Both should return the same results
@@ -1581,7 +2090,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['Invalid Label', 'Another Invalid'],
+        ['Invalid Label', 'Another Invalid']
       );
 
       const resultDefault = await getRecipientSpotlightIndicators(
@@ -1590,7 +2099,7 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [REGION_ID],
+        [REGION_ID]
       );
 
       // Invalid labels should be filtered out, returning all recipients (default behavior)
@@ -1606,7 +2115,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['New staff', 'Invalid Label'],
+        ['New staff', 'Invalid Label']
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1627,7 +2136,7 @@ describe('recipientSpotlight service', () => {
         0,
         100,
         [REGION_ID],
-        ['New recipient'],
+        ['New recipient']
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1639,9 +2148,7 @@ describe('recipientSpotlight service', () => {
       });
 
       // Our test "New Recipient" should be in the results
-      const newRecipientResult = result.recipients.find(
-        (r) => r.recipientName === 'New Recipient',
-      );
+      const newRecipientResult = result.recipients.find((r) => r.recipientName === 'New Recipient');
       expect(newRecipientResult).toBeDefined();
     });
   });
@@ -1660,7 +2167,7 @@ describe('recipientSpotlight service', () => {
         [], // no include filters
         [], // no exclude filters
         null, // no singleGrantId
-        true, // mustHaveIndicators
+        true // mustHaveIndicators
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1669,9 +2176,7 @@ describe('recipientSpotlight service', () => {
         expect(recipient.indicatorCount).toBeGreaterThan(0);
       });
       // normalRecipient should NOT be in the results
-      const normalResult = result.recipients.find(
-        (r) => r.recipientName === 'Normal Recipient',
-      );
+      const normalResult = result.recipients.find((r) => r.recipientName === 'Normal Recipient');
       expect(normalResult).toBeUndefined();
     });
 
@@ -1687,7 +2192,7 @@ describe('recipientSpotlight service', () => {
         [], // no include filters
         [], // no exclude filters
         null, // no singleGrantId
-        false, // mustHaveIndicators
+        false // mustHaveIndicators
       );
 
       expect(result.recipients.length).toBe(1);
@@ -1708,7 +2213,7 @@ describe('recipientSpotlight service', () => {
         ['No TTA'], // include filter
         [], // no exclude filters
         null, // no singleGrantId
-        true, // mustHaveIndicators (should be ignored since include filter is set)
+        true // mustHaveIndicators (should be ignored since include filter is set)
       );
 
       expect(result).toHaveProperty('recipients');
@@ -1735,14 +2240,9 @@ describe('recipientSpotlight service', () => {
         },
       };
 
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        100,
-        [REGION_ID],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 100, [
+        REGION_ID,
+      ]);
 
       // Should return empty results since no grants match 'ZZ' state code
       expect(result.recipients).toEqual([]);
@@ -1754,7 +2254,7 @@ describe('recipientSpotlight service', () => {
       // First, update one of our test grants to have a specific state code
       await db.Grant.update(
         { stateCode: 'TX' },
-        { where: { id: childIncidentsGrant.id }, individualHooks: true },
+        { where: { id: childIncidentsGrant.id }, individualHooks: true }
       );
 
       try {
@@ -1777,7 +2277,7 @@ describe('recipientSpotlight service', () => {
           'ASC',
           0,
           100,
-          [REGION_ID],
+          [REGION_ID]
         );
 
         // Should only return the recipient with the TX grant
@@ -1787,7 +2287,7 @@ describe('recipientSpotlight service', () => {
         // Reset the state code
         await db.Grant.update(
           { stateCode: null },
-          { where: { id: childIncidentsGrant.id }, individualHooks: true },
+          { where: { id: childIncidentsGrant.id }, individualHooks: true }
         );
       }
     });
@@ -1822,7 +2322,20 @@ describe('recipientSpotlight service', () => {
         if (existingGrants.length > 0) {
           const existingGrantIds = existingGrants.map((g) => g.id);
           const existingRecipientIds = [...new Set(existingGrants.map((g) => g.recipientId))];
-          await ActivityReportGoal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
+          const existingGoals = await Goal.findAll({
+            where: { grantId: existingGrantIds },
+            attributes: ['id'],
+            raw: true,
+            transaction: t,
+          });
+          const existingGoalIds = existingGoals.map((g) => g.id);
+          if (existingGoalIds.length > 0) {
+            await ActivityReportGoal.destroy({
+              where: { goalId: existingGoalIds },
+              force: true,
+              transaction: t,
+            });
+          }
           await Goal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
           await Grant.destroy({
             where: { id: existingGrantIds },
@@ -1839,43 +2352,46 @@ describe('recipientSpotlight service', () => {
       });
 
       // Create GrantNumberLinks for test grants
-      await db.GrantNumberLink.bulkCreate([
-        { grantNumber: 'G-SORT-SEC-A' },
-        { grantNumber: 'G-SORT-SEC-B' },
-        { grantNumber: 'G-SORT-SEC-C' },
-        { grantNumber: 'G-SORT-SEC-D' },
-      ], { ignoreDuplicates: true });
+      await db.GrantNumberLink.bulkCreate(
+        [
+          { grantNumber: 'G-SORT-SEC-A' },
+          { grantNumber: 'G-SORT-SEC-B' },
+          { grantNumber: 'G-SORT-SEC-C' },
+          { grantNumber: 'G-SORT-SEC-D' },
+        ],
+        { ignoreDuplicates: true }
+      );
 
       // Create recipients with names that allow us to verify secondary sort
       // Zebra and Yak will have 0 indicators (with TTA)
       // Apple and Banana will have 1 indicator (noTTA)
       sortRecipientA = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         name: 'Zebra Secondary Sort Recipient',
         regionId: REGION_ID,
       });
 
       sortRecipientB = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         name: 'Yak Secondary Sort Recipient',
         regionId: REGION_ID,
       });
 
       sortRecipientC = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         name: 'Banana Secondary Sort Recipient',
         regionId: REGION_ID,
       });
 
       sortRecipientD = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         name: 'Apple Secondary Sort Recipient',
         regionId: REGION_ID,
       });
 
       // Create grants - all old enough to not trigger newRecipients
       sortGrantA = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         number: 'G-SORT-SEC-A',
         recipientId: sortRecipientA.id,
         regionId: REGION_ID,
@@ -1885,7 +2401,7 @@ describe('recipientSpotlight service', () => {
       });
 
       sortGrantB = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         number: 'G-SORT-SEC-B',
         recipientId: sortRecipientB.id,
         regionId: REGION_ID,
@@ -1895,7 +2411,7 @@ describe('recipientSpotlight service', () => {
       });
 
       sortGrantC = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         number: 'G-SORT-SEC-C',
         recipientId: sortRecipientC.id,
         regionId: REGION_ID,
@@ -1905,7 +2421,7 @@ describe('recipientSpotlight service', () => {
       });
 
       sortGrantD = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 70000, max: 80000 })),
+        id: fakerUnique(() => faker.number.int({ min: 70000, max: 80000 })),
         number: 'G-SORT-SEC-D',
         recipientId: sortRecipientD.id,
         regionId: REGION_ID,
@@ -1937,32 +2453,39 @@ describe('recipientSpotlight service', () => {
         { grantId: sortGrantA.id, goalId: goalA.id },
         { grantId: sortGrantB.id, goalId: goalB.id },
       ];
-      await Promise.all(grantsWithGoals.map(async ({ grantId, goalId }) => {
-        const report = await ActivityReport.create({
-          activityRecipientType: 'recipient',
-          submissionStatus: 'submitted',
-          calculatedStatus: 'approved',
-          userId: testUser.id,
-          regionId: REGION_ID,
-          startDate: pastYearSort,
-          endDate: pastYearSort,
-          approvedAt: pastYearSort,
-          duration: 1,
-        });
+      await Promise.all(
+        grantsWithGoals.map(async ({ grantId, goalId }) => {
+          const report = await ActivityReport.create({
+            activityRecipientType: 'recipient',
+            submissionStatus: 'submitted',
+            calculatedStatus: 'approved',
+            userId: testUser.id,
+            regionId: REGION_ID,
+            startDate: pastYearSort,
+            endDate: pastYearSort,
+            approvedAt: pastYearSort,
+            duration: 1,
+          });
 
-        await ActivityReportGoal.create({
-          activityReportId: report.id,
-          grantId,
-          goalId,
-        });
+          await ActivityReportGoal.create({
+            activityReportId: report.id,
+            grantId,
+            goalId,
+          });
 
-        return report;
-      }));
+          return report;
+        })
+      );
     });
 
     afterAll(async () => {
       // Clean up activity report goals first (by goalId, since ActivityReportGoal doesn't have grantId)
-      const grantIdsForCleanup = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+      const grantIdsForCleanup = [
+        sortGrantA?.id,
+        sortGrantB?.id,
+        sortGrantC?.id,
+        sortGrantD?.id,
+      ].filter(Boolean);
 
       // Get the activity report IDs that are linked to our grants BEFORE deleting ActivityReportGoals
       let activityReportIds = [];
@@ -2002,14 +2525,19 @@ describe('recipientSpotlight service', () => {
       }
 
       // Clean up grants
-      const grantIds = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(Boolean);
+      const grantIds = [sortGrantA?.id, sortGrantB?.id, sortGrantC?.id, sortGrantD?.id].filter(
+        Boolean
+      );
       if (grantIds.length > 0) {
         await Grant.destroy({ where: { id: grantIds }, force: true, individualHooks: true });
       }
 
       // Clean up recipients
       const recipientIds = [
-        sortRecipientA?.id, sortRecipientB?.id, sortRecipientC?.id, sortRecipientD?.id,
+        sortRecipientA?.id,
+        sortRecipientB?.id,
+        sortRecipientC?.id,
+        sortRecipientD?.id,
       ].filter(Boolean);
       if (recipientIds.length > 0) {
         await Recipient.destroy({ where: { id: recipientIds }, force: true });
@@ -2026,7 +2554,16 @@ describe('recipientSpotlight service', () => {
         grant: {
           where: {
             [db.Sequelize.Op.and]: [
-              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              {
+                id: {
+                  [db.Sequelize.Op.in]: [
+                    sortGrantA.id,
+                    sortGrantB.id,
+                    sortGrantC.id,
+                    sortGrantD.id,
+                  ],
+                },
+              },
               { regionId: REGION_ID },
             ],
           },
@@ -2040,11 +2577,11 @@ describe('recipientSpotlight service', () => {
         'ASC',
         0,
         100,
-        [REGION_ID],
+        [REGION_ID]
       );
 
-      const testRecipients = result.recipients.filter(
-        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      const testRecipients = result.recipients.filter((r) =>
+        r.recipientName.includes('Secondary Sort Recipient')
       );
 
       expect(testRecipients.length).toBe(4);
@@ -2065,7 +2602,16 @@ describe('recipientSpotlight service', () => {
         grant: {
           where: {
             [db.Sequelize.Op.and]: [
-              { id: { [db.Sequelize.Op.in]: [sortGrantA.id, sortGrantB.id, sortGrantC.id, sortGrantD.id] } },
+              {
+                id: {
+                  [db.Sequelize.Op.in]: [
+                    sortGrantA.id,
+                    sortGrantB.id,
+                    sortGrantC.id,
+                    sortGrantD.id,
+                  ],
+                },
+              },
               { regionId: REGION_ID },
             ],
           },
@@ -2079,11 +2625,11 @@ describe('recipientSpotlight service', () => {
         'DESC',
         0,
         100,
-        [REGION_ID],
+        [REGION_ID]
       );
 
-      const testRecipients = result.recipients.filter(
-        (r) => r.recipientName.includes('Secondary Sort Recipient'),
+      const testRecipients = result.recipients.filter((r) =>
+        r.recipientName.includes('Secondary Sort Recipient')
       );
 
       expect(testRecipients.length).toBe(4);
@@ -2113,23 +2659,23 @@ describe('recipientSpotlight service', () => {
       }
 
       // Create additional grant number links
-      await db.GrantNumberLink.bulkCreate([
-        { grantNumber: 'G-REGION-SORT-1' },
-        { grantNumber: 'G-REGION-SORT-2' },
-      ], { ignoreDuplicates: true });
+      await db.GrantNumberLink.bulkCreate(
+        [{ grantNumber: 'G-REGION-SORT-1' }, { grantNumber: 'G-REGION-SORT-2' }],
+        { ignoreDuplicates: true }
+      );
 
       const recipientRegion1B = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        id: fakerUnique(() => faker.number.int({ min: 80000, max: 90000 })),
         name: 'Beta Region Sort Recipient',
       });
 
       const recipientRegion1A = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        id: fakerUnique(() => faker.number.int({ min: 80000, max: 90000 })),
         name: 'Alpha Region Sort Recipient',
       });
 
       const grantRegion1B = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        id: fakerUnique(() => faker.number.int({ min: 80000, max: 90000 })),
         number: 'G-REGION-SORT-1',
         recipientId: recipientRegion1B.id,
         regionId: REGION_ID,
@@ -2139,7 +2685,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const grantRegion1A = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 80000, max: 90000 })),
+        id: fakerUnique(() => faker.number.int({ min: 80000, max: 90000 })),
         number: 'G-REGION-SORT-2',
         recipientId: recipientRegion1A.id,
         regionId: REGION_ID,
@@ -2161,17 +2707,12 @@ describe('recipientSpotlight service', () => {
           },
         };
 
-        const result = await getRecipientSpotlightIndicators(
-          scopes,
-          'regionId',
-          'ASC',
-          0,
-          100,
-          [REGION_ID],
-        );
+        const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'ASC', 0, 100, [
+          REGION_ID,
+        ]);
 
-        const testRecipients = result.recipients.filter(
-          (r) => r.recipientName.includes('Region Sort Recipient'),
+        const testRecipients = result.recipients.filter((r) =>
+          r.recipientName.includes('Region Sort Recipient')
         );
 
         expect(testRecipients.length).toBe(2);
@@ -2180,9 +2721,18 @@ describe('recipientSpotlight service', () => {
         expect(testRecipients[0].recipientName).toBe('Alpha Region Sort Recipient');
         expect(testRecipients[1].recipientName).toBe('Beta Region Sort Recipient');
       } finally {
-        await Grant.destroy({ where: { id: [grantRegion1A.id, grantRegion1B.id] }, force: true, individualHooks: true });
-        await Recipient.destroy({ where: { id: [recipientRegion1A.id, recipientRegion1B.id] }, force: true });
-        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-1', 'G-REGION-SORT-2'] } });
+        await Grant.destroy({
+          where: { id: [grantRegion1A.id, grantRegion1B.id] },
+          force: true,
+          individualHooks: true,
+        });
+        await Recipient.destroy({
+          where: { id: [recipientRegion1A.id, recipientRegion1B.id] },
+          force: true,
+        });
+        await db.GrantNumberLink.destroy({
+          where: { grantNumber: ['G-REGION-SORT-1', 'G-REGION-SORT-2'] },
+        });
       }
     });
 
@@ -2200,23 +2750,23 @@ describe('recipientSpotlight service', () => {
       }
 
       // Create additional grant number links
-      await db.GrantNumberLink.bulkCreate([
-        { grantNumber: 'G-REGION-SORT-3' },
-        { grantNumber: 'G-REGION-SORT-4' },
-      ], { ignoreDuplicates: true });
+      await db.GrantNumberLink.bulkCreate(
+        [{ grantNumber: 'G-REGION-SORT-3' }, { grantNumber: 'G-REGION-SORT-4' }],
+        { ignoreDuplicates: true }
+      );
 
       const recipientRegionDescB = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        id: fakerUnique(() => faker.number.int({ min: 90000, max: 99000 })),
         name: 'Delta Region Sort Recipient',
       });
 
       const recipientRegionDescA = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        id: fakerUnique(() => faker.number.int({ min: 90000, max: 99000 })),
         name: 'Charlie Region Sort Recipient',
       });
 
       const grantRegionDescB = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        id: fakerUnique(() => faker.number.int({ min: 90000, max: 99000 })),
         number: 'G-REGION-SORT-3',
         recipientId: recipientRegionDescB.id,
         regionId: REGION_ID,
@@ -2226,7 +2776,7 @@ describe('recipientSpotlight service', () => {
       });
 
       const grantRegionDescA = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 90000, max: 99000 })),
+        id: fakerUnique(() => faker.number.int({ min: 90000, max: 99000 })),
         number: 'G-REGION-SORT-4',
         recipientId: recipientRegionDescA.id,
         regionId: REGION_ID,
@@ -2248,17 +2798,12 @@ describe('recipientSpotlight service', () => {
           },
         };
 
-        const result = await getRecipientSpotlightIndicators(
-          scopes,
-          'regionId',
-          'DESC',
-          0,
-          100,
-          [REGION_ID],
-        );
+        const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'DESC', 0, 100, [
+          REGION_ID,
+        ]);
 
-        const testRecipients = result.recipients.filter(
-          (r) => r.recipientName.includes('Region Sort Recipient'),
+        const testRecipients = result.recipients.filter((r) =>
+          r.recipientName.includes('Region Sort Recipient')
         );
 
         expect(testRecipients.length).toBe(2);
@@ -2267,9 +2812,18 @@ describe('recipientSpotlight service', () => {
         expect(testRecipients[0].recipientName).toBe('Charlie Region Sort Recipient');
         expect(testRecipients[1].recipientName).toBe('Delta Region Sort Recipient');
       } finally {
-        await Grant.destroy({ where: { id: [grantRegionDescA.id, grantRegionDescB.id] }, force: true, individualHooks: true });
-        await Recipient.destroy({ where: { id: [recipientRegionDescA.id, recipientRegionDescB.id] }, force: true });
-        await db.GrantNumberLink.destroy({ where: { grantNumber: ['G-REGION-SORT-3', 'G-REGION-SORT-4'] } });
+        await Grant.destroy({
+          where: { id: [grantRegionDescA.id, grantRegionDescB.id] },
+          force: true,
+          individualHooks: true,
+        });
+        await Recipient.destroy({
+          where: { id: [recipientRegionDescA.id, recipientRegionDescB.id] },
+          force: true,
+        });
+        await db.GrantNumberLink.destroy({
+          where: { grantNumber: ['G-REGION-SORT-3', 'G-REGION-SORT-4'] },
+        });
       }
     });
   });
@@ -2297,20 +2851,20 @@ describe('recipientSpotlight service', () => {
       }
 
       // Create GrantNumberLinks for our test grant numbers
-      await db.GrantNumberLink.bulkCreate([
-        { grantNumber: 'G-MULTI-R1' },
-        { grantNumber: 'G-MULTI-R2' },
-      ], { ignoreDuplicates: true });
+      await db.GrantNumberLink.bulkCreate(
+        [{ grantNumber: 'G-MULTI-R1' }, { grantNumber: 'G-MULTI-R2' }],
+        { ignoreDuplicates: true }
+      );
 
       // Create a single recipient
       multiRegionRecipient = await Recipient.create({
-        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        id: fakerUnique(() => faker.number.int({ min: 40000, max: 50000 })),
         name: 'Multi Region Recipient',
       });
 
       // Create grants in different regions for same recipient
       grantRegion1 = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        id: fakerUnique(() => faker.number.int({ min: 40000, max: 50000 })),
         number: 'G-MULTI-R1',
         recipientId: multiRegionRecipient.id,
         regionId: REGION_1,
@@ -2319,7 +2873,7 @@ describe('recipientSpotlight service', () => {
       });
 
       grantRegion2 = await Grant.create({
-        id: faker.unique(() => faker.datatype.number({ min: 40000, max: 50000 })),
+        id: fakerUnique(() => faker.number.int({ min: 40000, max: 50000 })),
         number: 'G-MULTI-R2',
         recipientId: multiRegionRecipient.id,
         regionId: REGION_2,
@@ -2331,7 +2885,11 @@ describe('recipientSpotlight service', () => {
     afterAll(async () => {
       const grantIdsToDelete = [grantRegion1?.id, grantRegion2?.id].filter(Boolean);
       if (grantIdsToDelete.length > 0) {
-        await Grant.destroy({ where: { id: grantIdsToDelete }, force: true, individualHooks: true });
+        await Grant.destroy({
+          where: { id: grantIdsToDelete },
+          force: true,
+          individualHooks: true,
+        });
       }
       if (multiRegionRecipient?.id) {
         await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
@@ -2353,14 +2911,10 @@ describe('recipientSpotlight service', () => {
         },
       };
 
-      const result = await getRecipientSpotlightIndicators(
-        scopes,
-        'recipientName',
-        'ASC',
-        0,
-        10,
-        [REGION_1, REGION_2],
-      );
+      const result = await getRecipientSpotlightIndicators(scopes, 'recipientName', 'ASC', 0, 10, [
+        REGION_1,
+        REGION_2,
+      ]);
 
       // Should return 2 rows (one per region) for the same recipient
       expect(result.recipients.length).toBe(2);
@@ -2373,6 +2927,116 @@ describe('recipientSpotlight service', () => {
       // But different regions
       const regions = result.recipients.map((r) => r.regionId).sort();
       expect(regions).toEqual([REGION_1, REGION_2]);
+    });
+  });
+
+  describe('indicators are scoped to the recipient+region level', () => {
+    const REGION_1 = 1;
+    const REGION_2 = 2;
+    const fiveYearsAgo = new Date();
+    fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+    const grantNumbers = ['G-SCOPE-R1', 'G-SCOPE-R2'];
+    let multiRegionRecipient;
+    let scopeGrantR1;
+    let scopeGrantR2;
+
+    const createScopesForRecipientRegions = (recipientId, regions) => ({
+      grant: {
+        where: {
+          [db.Sequelize.Op.and]: [
+            { id: { [db.Sequelize.Op.ne]: null } },
+            { recipientId: { [db.Sequelize.Op.in]: [recipientId] } },
+            { regionId: { [db.Sequelize.Op.in]: regions } },
+          ],
+        },
+        include: [],
+      },
+    });
+
+    beforeAll(async () => {
+      // Clean up leftover data from previous failed runs
+      const leftover = await Grant.findAll({ where: { number: grantNumbers }, raw: true });
+      if (leftover.length > 0) {
+        const ids = leftover.map((g) => g.id);
+        const recipIds = [...new Set(leftover.map((g) => g.recipientId))];
+        await Grant.destroy({ where: { id: ids }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: recipIds }, force: true });
+      }
+
+      await db.GrantNumberLink.bulkCreate(
+        grantNumbers.map((grantNumber) => ({ grantNumber })),
+        { ignoreDuplicates: true }
+      );
+
+      multiRegionRecipient = await Recipient.create({
+        id: fakerUnique(() => faker.number.int({ min: 50001, max: 59999 })),
+        name: 'Region Scoped Recipient',
+      });
+
+      // Region 1 grant: FEI initiative status + recently started (new recipient)
+      scopeGrantR1 = await Grant.create({
+        id: fakerUnique(() => faker.number.int({ min: 50001, max: 59999 })),
+        number: grantNumbers[0],
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_1,
+        status: 'Active',
+        startDate: twoYearsAgo,
+        feiHsStatus: 'Notified of 12 Month Period',
+      });
+
+      // Region 2 grant: not in FEI + started long ago (not a new recipient)
+      scopeGrantR2 = await Grant.create({
+        id: fakerUnique(() => faker.number.int({ min: 50001, max: 59999 })),
+        number: grantNumbers[1],
+        recipientId: multiRegionRecipient.id,
+        regionId: REGION_2,
+        status: 'Active',
+        startDate: fiveYearsAgo,
+        feiHsStatus: 'Fully Enrolled',
+      });
+    });
+
+    afterAll(async () => {
+      const grantIds = [scopeGrantR1?.id, scopeGrantR2?.id].filter(Boolean);
+      if (grantIds.length > 0) {
+        await Grant.destroy({ where: { id: grantIds }, force: true, individualHooks: true });
+      }
+      if (multiRegionRecipient?.id) {
+        await Recipient.destroy({ where: { id: multiRegionRecipient.id }, force: true });
+      }
+      await db.GrantNumberLink.destroy({ where: { grantNumber: grantNumbers }, force: true });
+    });
+
+    it("does not let one region's grant status bleed FEI into another region card", async () => {
+      const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
+      const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'ASC', 0, 10, [
+        REGION_1,
+        REGION_2,
+      ]);
+
+      const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
+      expect(result.recipients.length).toBe(2);
+      // Region 1 grant is in FEI; region 2 grant is not.
+      expect(byRegion[REGION_1].FEI).toBe(true);
+      expect(byRegion[REGION_2].FEI).toBe(false);
+    });
+
+    it("computes new recipient per region using only that region's grants", async () => {
+      const scopes = createScopesForRecipientRegions(multiRegionRecipient.id, [REGION_1, REGION_2]);
+      const result = await getRecipientSpotlightIndicators(scopes, 'regionId', 'ASC', 0, 10, [
+        REGION_1,
+        REGION_2,
+      ]);
+
+      const byRegion = Object.fromEntries(result.recipients.map((r) => [r.regionId, r]));
+      // Region 1's only grant started 2 years ago -> new recipient.
+      expect(byRegion[REGION_1].newRecipients).toBe(true);
+      // Region 2's only grant started 5 years ago -> not a new recipient,
+      // even though the recipient has a newer grant in region 1.
+      expect(byRegion[REGION_2].newRecipients).toBe(false);
     });
   });
 });

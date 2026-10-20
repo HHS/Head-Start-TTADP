@@ -1,29 +1,19 @@
-import React, {
-  useEffect,
-  useState,
-  useContext,
-  useRef,
-} from 'react';
+import { Alert, Button, Form, Grid, ModalToggleButton } from '@trussworks/react-uswds';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Alert, Grid, Form, Button, ModalToggleButton,
-} from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import useLocalStorage from '../../hooks/useLocalStorage';
-import {
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  defaultValues,
-} from './constants';
-import { getTrainingReportUsers } from '../../fetchers/users';
-import { eventById, updateEvent } from '../../fetchers/event';
-import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import BackLink from '../../components/BackLink';
-import EventSummary from './pages/eventSummary';
+import { useHistory } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import AppLoadingContext from '../../AppLoadingContext';
+import BackLink from '../../components/BackLink';
 import Modal from '../../components/VanillaModal';
+import { eventById, updateEvent } from '../../fetchers/event';
+import { getTrainingReportUsers } from '../../fetchers/users';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import NetworkContext, { isOnlineMode } from '../../NetworkContext';
+import { defaultValues, LOCAL_STORAGE_ADDITIONAL_DATA_KEY } from './constants';
+import EventSummary from './pages/eventSummary';
 
 /**
  * this is just a simple handler to "flatten"
@@ -35,11 +25,7 @@ import Modal from '../../components/VanillaModal';
  * information stored at the top level of the object, and some stored in a data column
  */
 const resetFormData = (reset, event) => {
-  const {
-    data,
-    updatedAt,
-    ...fields
-  } = event;
+  const { data, updatedAt, ...fields } = event;
 
   const form = {
     ...data,
@@ -57,7 +43,9 @@ const resetFormData = (reset, event) => {
 };
 
 export default function TrainingReportForm({ match }) {
-  const { params: { trainingReportId } } = match;
+  const {
+    params: { trainingReportId },
+  } = match;
   const reportId = useRef();
   const modalRef = useRef();
 
@@ -85,12 +73,13 @@ export default function TrainingReportForm({ match }) {
    */
 
   const [additionalData, updateAdditionalData, localStorageAvailable] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId), {
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(trainingReportId),
+    {
       users: {
         pointOfContact: [],
         collaborators: [],
       },
-    },
+    }
   );
 
   // we use both of these to determine if we're in the loading screen state
@@ -102,8 +91,12 @@ export default function TrainingReportForm({ match }) {
   // as the truss component doesn't re-render when the default value changes
   const [datePickerKey, setDatePickerKey] = useState(Date.now().toString());
 
+  // these drive the "Draft saved on ..." confirmation alert
+  const [lastSaveTime, updateLastSaveTime] = useState(null);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
+
   /* ============
-  */
+   */
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -172,18 +165,13 @@ export default function TrainingReportForm({ match }) {
     try {
       // reset the error message
       setError('');
-      setIsAppLoading(true);
       hookForm.clearErrors();
 
+      setIsAppLoading(true);
+
       // grab the newest data from the form
-      const {
-        ownerId,
-        pocIds,
-        collaboratorIds,
-        regionId,
-        sessionReports,
-        ...data
-      } = hookForm.getValues();
+      const { ownerId, pocIds, collaboratorIds, regionId, sessionReports, ...data } =
+        hookForm.getValues();
 
       const dataToPut = {
         data,
@@ -196,6 +184,9 @@ export default function TrainingReportForm({ match }) {
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, dataToPut);
       resetFormData(hookForm.reset, updatedEvent);
+
+      updateLastSaveTime(moment(updatedEvent.updatedAt));
+      updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -212,14 +203,8 @@ export default function TrainingReportForm({ match }) {
       setIsAppLoading(true);
 
       // grab the newest data from the form
-      const {
-        ownerId,
-        pocIds,
-        collaboratorIds,
-        regionId,
-        sessionReports,
-        ...data
-      } = hookForm.getValues();
+      const { ownerId, pocIds, collaboratorIds, regionId, sessionReports, ...data } =
+        hookForm.getValues();
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
@@ -236,7 +221,7 @@ export default function TrainingReportForm({ match }) {
 
       const dateStr = moment().format('MM/DD/YYYY [at] h:mm a z');
       const message = {
-        eventId: updatedEvent.data.eventId,
+        eventId: updatedEvent.eventId,
         dateStr,
       };
 
@@ -270,16 +255,16 @@ export default function TrainingReportForm({ match }) {
 
   return (
     <div className="smart-hub-training-report">
-      { error
-      && (
-      <Alert className="margin-bottom-3" type="error">
-        {error}
-      </Alert>
+      {error && (
+        <Alert className="margin-bottom-3" type="error">
+          {error}
+        </Alert>
       )}
-      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Event - Training Report | TTA Hub" />
-      <BackLink to={backLinkUrl}>
-        Back to Training Reports
-      </BackLink>
+      <Helmet
+        titleTemplate="%s - Training Report | TTA Hub"
+        defaultTitle="Event - Training Report | TTA Hub"
+      />
+      <BackLink to={backLinkUrl}>Back to Training Reports</BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-2 margin-bottom-4">
@@ -287,41 +272,35 @@ export default function TrainingReportForm({ match }) {
               Training report - Event
             </h1>
             <div className="lead-paragraph">
-              {formData.eventId}
-              :
-              {' '}
-              {formData.eventName}
+              {formData.eventId}: {formData.eventName}
             </div>
           </div>
         </Grid>
       </Grid>
-      <NetworkContext.Provider value={
-        {
+      <NetworkContext.Provider
+        value={{
           connectionActive: isOnlineMode() && connectionActive,
           localStorageAvailable,
-        }
-      }
+        }}
       >
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <Modal
-            modalRef={modalRef}
-            heading="Are you sure you want to continue?"
-          >
+          <Modal modalRef={modalRef} heading="Are you sure you want to continue?">
             <p>You will not be able to make changes once you save the event.</p>
 
-            <Button
-              type="submit"
-              className="margin-right-1"
-              onClick={() => okFormSubmit()}
-            >
+            <Button type="submit" className="margin-right-1" onClick={() => okFormSubmit()}>
               Yes, continue
             </Button>
-            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, cancel</ModalToggleButton>
+            <ModalToggleButton
+              className="usa-button--subtle"
+              closer
+              modalRef={modalRef}
+              data-focus="true"
+            >
+              No, cancel
+            </ModalToggleButton>
           </Modal>
-          <Form
-            className="smart-hub--form-large smart-hub--form__activity-report-form"
-          >
+          <Form className="smart-hub--form-large smart-hub--form__activity-report-form">
             <EventSummary
               additionalData={additionalData}
               formData={formData}
@@ -329,6 +308,9 @@ export default function TrainingReportForm({ match }) {
               onSaveDraft={onSave}
               datePickerKey={datePickerKey}
               showSubmitModal={showSubmitModal}
+              lastSaveTime={lastSaveTime}
+              showSavedDraft={showSavedDraft}
+              updateShowSavedDraft={updateShowSavedDraft}
             />
           </Form>
         </FormProvider>

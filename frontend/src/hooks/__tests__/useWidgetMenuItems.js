@@ -3,13 +3,9 @@ import useWidgetMenuItems from '../useWidgetMenuItems';
 
 describe('useWidgetMenuItems', () => {
   it('should return menu items', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      false,
-      jest.fn(),
-      jest.fn(),
-      {},
-      jest.fn(),
-    ));
+    const { result } = renderHook(() =>
+      useWidgetMenuItems(false, jest.fn(), jest.fn(), {}, jest.fn())
+    );
 
     const menuItems = result.current;
     expect(menuItems).toEqual([
@@ -25,13 +21,9 @@ describe('useWidgetMenuItems', () => {
   });
 
   it('should display menu items for tabular data', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      true,
-      jest.fn(),
-      jest.fn(),
-      {},
-      jest.fn(),
-    ));
+    const { result } = renderHook(() =>
+      useWidgetMenuItems(true, jest.fn(), jest.fn(), {}, jest.fn())
+    );
 
     const menuItems = result.current;
     expect(menuItems).toEqual([
@@ -47,13 +39,9 @@ describe('useWidgetMenuItems', () => {
   });
 
   it('should display menu items for selected rows', () => {
-    const { result } = renderHook(() => useWidgetMenuItems(
-      true,
-      jest.fn(),
-      jest.fn(),
-      { 1: true },
-      jest.fn(),
-    ));
+    const { result } = renderHook(() =>
+      useWidgetMenuItems(true, jest.fn(), jest.fn(), { 1: true }, jest.fn())
+    );
 
     const menuItems = result.current;
     expect(menuItems).toEqual([

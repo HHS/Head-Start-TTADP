@@ -1,9 +1,5 @@
-import faker from '@faker-js/faker';
-import db, {
-  User,
-  NationalCenter,
-  NationalCenterUser,
-} from '..';
+import { faker } from '@faker-js/faker';
+import db, { NationalCenter, NationalCenterUser, User } from '..';
 
 describe('NationalCenterUser', () => {
   let user;
@@ -14,32 +10,32 @@ describe('NationalCenterUser', () => {
   beforeAll(async () => {
     // Create mock user.
     user = await User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.string.sample(),
+      hsesUserId: faker.string.sample(),
       lastLogin: new Date(),
     });
 
     // create mock updated user.
     updatedUser = await User.create({
-      id: faker.datatype.number(),
+      id: faker.number.int({ min: 0, max: 99999 }),
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: faker.string.sample(),
+      hsesUserId: faker.string.sample(),
       lastLogin: new Date(),
     });
 
     // Create mock national center.
     nationalCenter = await NationalCenter.create({
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      name: faker.company.name(),
     });
 
     // create mock updated national center.
     updatedNationalCenter = await NationalCenter.create({
-      id: faker.datatype.number({ min: 10000, max: 100000 }),
-      name: faker.company.companyName(),
+      id: faker.number.int({ min: 10000, max: 100000 }),
+      name: faker.company.name(),
     });
 
     // Create mock national center user.
@@ -101,7 +97,9 @@ describe('NationalCenterUser', () => {
     // Assert updated national center user values.
     expect(updatedNationalCenterUser).toHaveProperty('id');
     // eslint-disable-next-line max-len
-    expect(updatedNationalCenterUser.nationalCenterId).toEqual(parseInt(updatedNationalCenter.id, 10));
+    expect(updatedNationalCenterUser.nationalCenterId).toEqual(
+      parseInt(updatedNationalCenter.id, 10)
+    );
     expect(updatedNationalCenterUser.userId).toEqual(updatedUser.id);
   });
 });

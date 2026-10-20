@@ -1,9 +1,9 @@
-import React from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import GoalSource from './GoalSource';
+import React from 'react';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
+import GoalSource from './GoalSource';
 import './RTRGoalSource.css';
 
 const GoalSourceProps = {
@@ -15,10 +15,12 @@ const GoalSourceProps = {
   userCanEdit: PropTypes.bool.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   isCurated: PropTypes.bool.isRequired,
-  selectedGrants: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    numberWithProgramTypes: PropTypes.string,
-  })).isRequired,
+  selectedGrants: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      numberWithProgramTypes: PropTypes.string,
+    })
+  ).isRequired,
 };
 
 const DisplayGoalSource = ({
@@ -49,11 +51,7 @@ const DisplayGoalSource = ({
 
   return grantNumbers.map((grantNumber) => (
     <div key={uniqueId('source-by-grant-')} className="margin-top-1">
-      <h3 className="ttahub-rtr-grant-number">
-        Grant
-        {' '}
-        {grantNumber}
-      </h3>
+      <h3 className="ttahub-rtr-grant-number">Grant {grantNumber}</h3>
       <GoalSource
         source={source[grantNumber] || ''}
         onChangeGoalSource={(newSource) => updateSingleSource(grantNumber, newSource)}
@@ -103,11 +101,11 @@ export default function RTRGoalSource({
   return (
     <>
       {selectedGrants.length > 1 && (
-      <DivergenceRadio
-        divergenceLabel="Do all recipient grants have the same source?"
-        divergence={sourcesDiverge}
-        setDivergence={setSourcesDiverge}
-      />
+        <DivergenceRadio
+          divergenceLabel="Do all recipient grants have the same source?"
+          divergence={sourcesDiverge}
+          setDivergence={setSourcesDiverge}
+        />
       )}
       <DisplayGoalSource
         source={source}

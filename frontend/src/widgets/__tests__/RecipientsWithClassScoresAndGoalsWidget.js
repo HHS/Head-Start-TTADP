@@ -1,13 +1,22 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router';
+import { mockWindowProperty } from '../../testHelpers';
 import UserContext from '../../UserContext';
+import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
+
+const createObjectURL = jest.fn(() => 'blob:recipients-with-class-export');
+const revokeObjectURL = jest.fn();
+
+mockWindowProperty('URL', {
+  createObjectURL,
+  revokeObjectURL,
+});
 
 const recipientData = {
   widgetData: {
@@ -18,25 +27,59 @@ const recipientData = {
   },
   pageData: [
     {
-      id: 1,
+      id: '1:QA-REVIEW-A',
+      recipientId: 1,
+      regionId: 1,
       name: 'Action for Boston Community Development, Inc.',
+      heading: 'Action for Boston Community Development, Inc.',
+      grantNumber: '90CI010073',
       lastARStartDate: '01/02/2021',
-      emotionalSupport: 6.0430,
-      classroomOrganization: 5.0430,
-      instructionalSupport: 4.0430,
+      emotionalSupport: 6.043,
+      classroomOrganization: 5.043,
+      instructionalSupport: 4.043,
       reportDeliveryDate: '03/01/2022',
+      dataForExport: [
+        {
+          title: 'Grant Number',
+          value: '90CI010073',
+        },
+        {
+          title: 'Report Received Date',
+          value: '03/01/2022',
+        },
+        {
+          title: 'Last AR Start Date',
+          value: '01/02/2021',
+        },
+        {
+          title: 'Emotional Support',
+          value: 6.043,
+        },
+        {
+          title: 'Classroom Organization',
+          value: 5.043,
+        },
+        {
+          title: 'Instructional Support',
+          value: 4.043,
+        },
+      ],
       goals: [
         {
+          id: 45641,
           goalNumber: 'G-45641',
           status: GOAL_STATUS.IN_PROGRESS,
           creator: 'John Doe',
           collaborator: 'Jane Doe',
+          lastARStartDate: '01/02/2021',
         },
         {
+          id: 25858,
           goalNumber: 'G-25858',
           status: GOAL_STATUS.SUSPENDED,
           creator: 'Bill Smith',
           collaborator: 'Bob Jones',
+          lastARStartDate: '01/02/2021',
         },
       ],
     },
@@ -48,16 +91,24 @@ const renderRecipientsWithClassScoresAndGoalsWidget = (data) => {
   render(
     <UserContext.Provider value={{ user: { id: 1 } }}>
       <Router history={history}>
-        <RecipientsWithClassScoresAndGoalsWidget
-          data={data}
-          loading={false}
-        />
+        <RecipientsWithClassScoresAndGoalsWidget data={data} parentLoading={false} />
       </Router>
-    </UserContext.Provider>,
+    </UserContext.Provider>
   );
 };
 
+const readBlobAsText = (blob) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsText(blob);
+  });
+
 describe('Recipients With Class and Scores and Goals Widget', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders correctly without data', async () => {
     const emptyData = {
       widgetData: {
@@ -80,18 +131,23 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
     expect(screen.getByText(/Recipients with CLASS® scores/i)).toBeInTheDocument();
     expect(screen.getByText(/1-1 of 1/i)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].name)).toBeInTheDocument();
-    expect(screen.getByText(recipientData.pageData[0].lastARStartDate)).toBeInTheDocument();
+    expect(screen.getByText(recipientData.pageData[0].grantNumber)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].emotionalSupport)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].classroomOrganization)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].instructionalSupport)).toBeInTheDocument();
     expect(screen.getByText('03/01/2022')).toBeInTheDocument();
 
     // Expand the goals.
-    const goalsButton = screen.getByRole('button', { name: /view goals for recipient action for boston community development, inc\./i });
+    const goalsButton = screen.getByRole('button', {
+      name: /view goals for recipient action for boston community development, inc\. grant 90CI010073 report received 03\/01\/2022/i,
+    });
     expect(goalsButton).toBeInTheDocument();
     goalsButton.click();
 
     expect(screen.getByText(recipientData.pageData[0].goals[0].goalNumber)).toBeInTheDocument();
+    expect(screen.getAllByText(recipientData.pageData[0].lastARStartDate).length).toBeGreaterThan(
+      0
+    );
     expect(screen.getByText(recipientData.pageData[0].goals[0].status)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].goals[0].creator)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].goals[0].collaborator)).toBeInTheDocument();
@@ -99,6 +155,22 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
     expect(screen.getByText(recipientData.pageData[0].goals[1].status)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].goals[1].creator)).toBeInTheDocument();
     expect(screen.getByText(recipientData.pageData[0].goals[1].collaborator)).toBeInTheDocument();
+  });
+
+  it('exports grant and review identifying values', async () => {
+    renderRecipientsWithClassScoresAndGoalsWidget(recipientData);
+
+    const recipientCheckbox = screen.getByRole('checkbox', {
+      name: /select recipient action for boston community development, inc\. grant 90CI010073 report received 03\/01\/2022/i,
+    });
+    recipientCheckbox.click();
+
+    screen.getByRole('button', { name: /export selected/i }).click();
+
+    const [blob] = createObjectURL.mock.calls[0];
+    await expect(readBlobAsText(blob)).resolves.toContain(
+      'recipientsWithClassScoresAndGoals,Grant Number,Report Received Date,Last AR Start Date,Emotional Support,Classroom Organization,Instructional Support\n"Action for Boston Community Development, Inc.",90CI010073,03/01/2022,01/02/2021,6.043,5.043,4.043'
+    );
   });
 
   it('updates the page when the per page limit is changed', async () => {
@@ -112,6 +184,8 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
       },
       pageData: Array.from({ length: numberOfRecipients }, (_, i) => ({
         ...recipientData.pageData[0],
+        id: `${i + 1}:QA-REVIEW-A`,
+        recipientId: i + 1,
         name: `recipient ${i + 1}`,
       })),
     };
@@ -143,6 +217,8 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
       },
       pageData: Array.from({ length: numberOfRecipients }, (_, i) => ({
         ...recipientData.pageData[0],
+        id: `${i + 1}:QA-REVIEW-A`,
+        recipientId: i + 1,
         name: `recipient ${i + 1}`,
       })),
     };
@@ -176,9 +252,13 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
       },
       pageData: Array.from({ length: numberOfRecipients }, (_, i) => ({
         ...recipientData.pageData[0],
+        id: `${i + 1}:QA-REVIEW-A`,
+        recipientId: i + 1,
         name: `recipient ${i + 1}`,
         // Make the date of last TTA increment by 1 day for each recipient.
-        lastARStartDate: moment(recipientData.pageData[0].lastARStartDate).add(i, 'days').format('MM/DD/YYYY'),
+        lastARStartDate: moment(recipientData.pageData[0].lastARStartDate)
+          .add(i, 'days')
+          .format('MM/DD/YYYY'),
       })),
     };
 

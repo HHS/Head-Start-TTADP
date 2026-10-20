@@ -1,17 +1,26 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FilterItem from '../FilterItem';
-import FilterErrorContext from '../FilterErrorContext';
+import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import { activityReportGoalResponseFilter, specialistRoleFilter } from '../activityReportFilters';
+import FilterErrorContext from '../FilterErrorContext';
+import FilterItem from '../FilterItem';
 
-const selectedTopic = TTAHISTORY_FILTER_CONFIG[0];
-const topicOptions = TTAHISTORY_FILTER_CONFIG.map(({ id: filterId, display }) => (
-  <option key={filterId} value={filterId}>{display}</option>
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterItem tests continue to exercise those filter types.
+const FILTER_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
+
+const selectedTopic = FILTER_CONFIG[0];
+const topicOptions = FILTER_CONFIG.map(({ id: filterId, display }) => (
+  <option key={filterId} value={filterId}>
+    {display}
+  </option>
 ));
 
 describe('Filter menu item', () => {
@@ -20,14 +29,16 @@ describe('Filter menu item', () => {
     onRemoveFilter = jest.fn(),
     onUpdateFilter = jest.fn(),
     setErrors = jest.fn(),
+    selectedTopicOverride = selectedTopic,
+    error = ''
   ) => {
-    const setError = jest.fn((error) => {
-      setErrors([error]);
+    const setError = jest.fn((e) => {
+      setErrors([e]);
     });
 
     render(
       <div>
-        <FilterErrorContext.Provider value={{ setError, error: '' }}>
+        <FilterErrorContext.Provider value={{ setError, error }}>
           <FilterItem
             filter={filter}
             onRemoveFilter={onRemoveFilter}
@@ -35,17 +46,39 @@ describe('Filter menu item', () => {
             index={0}
             key={filter.id}
             topicOptions={topicOptions}
-            selectedTopic={selectedTopic}
+            selectedTopic={selectedTopicOverride}
           />
         </FilterErrorContext.Provider>
         <button type="button">BIG DUMB BUTTON</button>
-      </div>,
+      </div>
     );
   };
 
+  it.each([
+    ['window', window],
+    ['EventTarget', new EventTarget()],
+    ['null', null],
+  ])('validates without crashing when the blur target is %s', (_label, relatedTarget) => {
+    const setErrors = jest.fn();
+    renderFilterItem(
+      { id: 'incomplete-filter', topic: '', condition: '', query: '' },
+      jest.fn(),
+      jest.fn(),
+      setErrors
+    );
+
+    // userEvent cannot express focus moving to a non-DOM EventTarget.
+    fireEvent.blur(screen.getByRole('combobox', { name: 'topic' }), { relatedTarget });
+
+    expect(setErrors).toHaveBeenCalledWith(['Please enter a filter']);
+  });
+
   it('updates topic & condition', async () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -62,7 +95,10 @@ describe('Filter menu item', () => {
 
   it('displays a date filter correctly', () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -73,9 +109,72 @@ describe('Filter menu item', () => {
     expect(screen.getByRole('textbox', { name: /date/i })).toBeVisible();
   });
 
+  it('passes a configured minimum date to the filter input', () => {
+    const renderInput = jest.fn(() => <input aria-label="date" />);
+    const configuredTopic = {
+      ...selectedTopic,
+      minDate: '2025-01-21',
+      minDateErrorMessage: 'Please enter a date on or after 01/21/2025',
+      renderInput,
+    };
+    const filter = {
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2025/01/22',
+    };
+
+    renderFilterItem(filter, jest.fn(), jest.fn(), jest.fn(), configuredTopic);
+
+    expect(renderInput).toHaveBeenCalledWith(
+      'gibberish',
+      'is on or after',
+      '2025/01/22',
+      expect.any(Function),
+      '2025-01-21',
+      'Please enter a date on or after 01/21/2025'
+    );
+  });
+
+  it('renders custom date error message with value error formatting classes', () => {
+    const filter = {
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2025/01/20',
+    };
+
+    const { container } = render(
+      <FilterErrorContext.Provider
+        value={{ setError: jest.fn(), error: 'Please enter a date on or after 01/21/2025' }}
+      >
+        <FilterItem
+          filter={filter}
+          onRemoveFilter={jest.fn()}
+          onUpdateFilter={jest.fn()}
+          index={0}
+          key={filter.id}
+          topicOptions={topicOptions}
+          selectedTopic={selectedTopic}
+        />
+      </FilterErrorContext.Provider>
+    );
+
+    const errorSpan = screen.getByText('Please enter a date on or after 01/21/2025');
+    expect(errorSpan).toBeVisible();
+
+    const formGroup = container.querySelector('.ttahub-filter-menu-item');
+    expect(formGroup).toHaveClass('usa-form-group--error');
+    expect(formGroup).toHaveClass('ttahub-filter-menu-item--error');
+    expect(formGroup).toHaveClass('ttahub-filter-menu-item--error--value');
+  });
+
   it('applies the proper date range', async () => {
     const filter = {
-      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'is within', query: '2021/01/01-2021/10/28',
+      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3',
+      topic: 'startDate',
+      condition: 'is within',
+      query: '2021/01/01-2021/10/28',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -97,7 +196,11 @@ describe('Filter menu item', () => {
     userEvent.type(ed, '01/02/2021');
 
     userEvent.click(await screen.findByRole('button', { name: /apply date range changes/i }));
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
+    expect(onUpdate).toHaveBeenCalledWith(
+      'c6d0b3a7-8d51-4265-908a-beaaf16f12d3',
+      'query',
+      '2021/01/01-2021/01/02'
+    );
   });
 
   it('validates topic', async () => {

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: bin/update-common-version <version>"
+  echo "Example: bin/update-common-version 2.3.6"
+  exit 1
+fi
+
+version="$1"
+package="@ttahub/common@${version}"
+
+echo "Updating backend dependency to ${package}"
+yarn add --exact "${package}"
+
+echo "Updating frontend dependency to ${package}"
+yarn --cwd frontend add --exact "${package}"
+
+echo "Done."

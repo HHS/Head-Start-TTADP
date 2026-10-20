@@ -1,48 +1,37 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-  useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useForm, FormProvider, useController } from 'react-hook-form';
-import { GOAL_CLOSE_REASONS } from '@ttahub/common';
-import { Helmet } from 'react-helmet';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  Alert,
   Button,
   Dropdown,
   Fieldset,
   FormGroup,
   Label,
+  ModalToggleButton,
+  Radio,
   Table,
   Textarea,
-  Radio,
-  Alert,
-  ModalToggleButton,
 } from '@trussworks/react-uswds';
+import { GOAL_CLOSE_REASONS } from '@ttahub/common';
+import { uniq, uniqueId } from 'lodash';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { FormProvider, useController, useForm } from 'react-hook-form';
 import Select from 'react-select';
-import { uniqueId, uniq } from 'lodash';
-import Container from '../../../components/Container';
-import Req from '../../../components/Req';
-import {
-  getGroupsByRegion,
-  closeMultiRecipientGoalsFromAdmin,
-} from '../../../fetchers/Admin';
-import { getGoals } from '../../../fetchers/activityReports';
 import AppLoadingContext from '../../../AppLoadingContext';
-import { REGIONS } from './constants';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import ReadOnlyField from '../../../components/ReadOnlyField';
-import Modal from '../../../components/VanillaModal';
 import colors from '../../../colors';
+import Container from '../../../components/Container';
+import ReadOnlyField from '../../../components/ReadOnlyField';
+import Req from '../../../components/Req';
+import selectOptionsReset from '../../../components/selectOptionsReset';
+import Modal from '../../../components/VanillaModal';
+import { closeMultiRecipientGoalsFromAdmin, getGroupsByRegion } from '../../../fetchers/Admin';
+import { getGoals } from '../../../fetchers/activityReports';
+import { REGIONS } from './constants';
 
-const findOrFailExistingGoal = (needle, haystack) => haystack.find(
-  (g) => g.status === needle.status
-      && g.name.trim() === needle.name.trim(),
-);
+const findOrFailExistingGoal = (needle, haystack) =>
+  haystack.find((g) => g.status === needle.status && g.name.trim() === needle.name.trim());
 
 const reduceAndSortGoals = (goals) => {
   const reducedGoals = goals.reduce((acc, goal) => {
@@ -59,18 +48,19 @@ const reduceAndSortGoals = (goals) => {
   return [...reducedGoals].sort((a, b) => a.name.localeCompare(b.name));
 };
 
-const CloseRadios = ({ register }) => GOAL_CLOSE_REASONS.map((r) => (
-  <Radio
-    id={r.trim().replace(' ', '-').toLowerCase()}
-    key={r}
-    name="closeSuspendReason"
-    label={r}
-    value={r}
-    className="smart-hub--report-checkbox"
-    inputRef={register()}
-    required
-  />
-));
+const CloseRadios = ({ register }) =>
+  GOAL_CLOSE_REASONS.map((r) => (
+    <Radio
+      id={r.trim().replace(' ', '-').toLowerCase()}
+      key={r}
+      name="closeSuspendReason"
+      label={r}
+      value={r}
+      className="smart-hub--report-checkbox"
+      inputRef={register()}
+      required
+    />
+  ));
 
 CloseRadios.propTypes = {
   register: PropTypes.func.isRequired,
@@ -96,10 +86,7 @@ export default function Close() {
   });
 
   const { register, watch } = hookForm;
-  const {
-    region,
-    group,
-  } = watch();
+  const { region, group } = watch();
 
   const {
     field: {
@@ -115,9 +102,10 @@ export default function Close() {
     defaultValue: null,
   });
 
-  const selectedGroup = useMemo(() => (
-    groupOptions.find((g) => g.id === (Number(group)))
-  ), [group, groupOptions]);
+  const selectedGroup = useMemo(
+    () => groupOptions.find((g) => g.id === Number(group)),
+    [group, groupOptions]
+  );
 
   useEffect(() => {
     async function getGoalOptions() {
@@ -184,13 +172,7 @@ export default function Close() {
         </Helmet>
         <Container>
           <h2>Close goals</h2>
-          <p>
-            Successfully closed
-            {' '}
-            {response.goals.length}
-            {' '}
-            goals.
-          </p>
+          <p>Successfully closed {response.goals.length} goals.</p>
           <p>
             <Button
               type="button"
@@ -220,10 +202,7 @@ export default function Close() {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <form className="usa-form maxw-tablet">
-            <Modal
-              modalRef={modalRef}
-              heading="Close goals"
-            >
+            <Modal modalRef={modalRef} heading="Close goals">
               <p>Are you sure?</p>
               <Button
                 type="submit"
@@ -232,49 +211,50 @@ export default function Close() {
               >
                 Yes, close goals
               </Button>
-              <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, go back</ModalToggleButton>
+              <ModalToggleButton
+                className="usa-button--subtle"
+                closer
+                modalRef={modalRef}
+                data-focus="true"
+              >
+                No, go back
+              </ModalToggleButton>
             </Modal>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="region">
-                Region
-                {' '}
-                <Req />
+                Region <Req />
               </Label>
               <Dropdown id="region" name="region" inputRef={register({ required: true })} required>
-                <option value="" disabled selected hidden>Select</option>
+                <option value="" disabled selected hidden>
+                  Select
+                </option>
                 {REGIONS.map((r) => (
                   <option key={`region${r}`} value={r}>
-                    Region
-                    {' '}
-                    {r}
+                    Region {r}
                   </option>
                 ))}
               </Dropdown>
             </FormGroup>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="group">
-                Recipient group
-                {' '}
-                <Req />
+                Recipient group <Req />
               </Label>
               <Dropdown id="group" name="group" inputRef={register({ required: true })} required>
-                <option value="" disabled selected hidden>Select</option>
+                <option value="" disabled selected hidden>
+                  Select
+                </option>
                 {groupOptions.map((g) => (
                   <option key={`group${g.id}`} value={g.id}>
                     {g.name}
                   </option>
                 ))}
               </Dropdown>
-              {(group && selectedGroup) && (
+              {group && selectedGroup && (
                 <details className="border border-base-light padding-1 margin-y-1 radius-md">
-                  <summary>
-                    Grants in group
-                  </summary>
+                  <summary>Grants in group</summary>
                   <ul className="usa-list">
                     {selectedGroup.grants.map((g) => (
-                      <li key={`grant${g.id}`}>
-                        {g.recipientInfo}
-                      </li>
+                      <li key={`grant${g.id}`}>{g.recipientInfo}</li>
                     ))}
                   </ul>
                 </details>
@@ -282,14 +262,11 @@ export default function Close() {
             </FormGroup>
             <FormGroup>
               <Label required htmlFor={selectedGoalInputName}>
-                Select goal to close
-                {' '}
-                <Req />
+                Select goal to close <Req />
                 <br />
                 <span className="usa-hint">
-                  All objectives under selected goals
-                  that have appeared on approved activity reports
-                  will be closed also.
+                  All objectives under selected goals that have appeared on approved activity
+                  reports will be closed also.
                 </span>
               </Label>
               <Select
@@ -307,80 +284,60 @@ export default function Close() {
               />
             </FormGroup>
             {selectedGoal && (
-            <div>
-              <details className="border border-base-light padding-1 margin-y-1 radius-md">
-                <summary>
-                  Selected goal details
-                </summary>
-                <ReadOnlyField label="Name">
-                  {selectedGoal.name}
-                </ReadOnlyField>
-                <ReadOnlyField label="Status">
-                  {selectedGoal.status}
-                </ReadOnlyField>
-                <Table stackedStyle="default">
-                  <thead>
-                    <tr>
-                      <th scope="col">Grants</th>
-                      <th scope="col">Has goal?</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedGroup ? selectedGroup.grants : []).map((grant) => (
-                      <tr key={uniqueId('grant_table_id_')}>
-                        <td data-label="Grants">{grant.recipientInfo}</td>
-                        <td data-label="Has goal?" align="center">
-                          {selectedGoal.grantIds.includes(grant.id) ? (
-                            <FontAwesomeIcon icon={faCheckCircle} color={colors.successDarker} />
-                          ) : (
-                            <FontAwesomeIcon icon={faCircleXmark} color={colors.error} />
-                          )}
-                        </td>
+              <div>
+                <details className="border border-base-light padding-1 margin-y-1 radius-md">
+                  <summary>Selected goal details</summary>
+                  <ReadOnlyField label="Name">{selectedGoal.name}</ReadOnlyField>
+                  <ReadOnlyField label="Status">{selectedGoal.status}</ReadOnlyField>
+                  <Table stackedStyle="default">
+                    <thead>
+                      <tr>
+                        <th scope="col">Grants</th>
+                        <th scope="col">Has goal?</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </details>
+                    </thead>
+                    <tbody>
+                      {(selectedGroup ? selectedGroup.grants : []).map((grant) => (
+                        <tr key={uniqueId('grant_table_id_')}>
+                          <td data-label="Grants">{grant.recipientInfo}</td>
+                          <td data-label="Has goal?" align="center">
+                            {selectedGoal.grantIds.includes(grant.id) ? (
+                              <FontAwesomeIcon icon={faCheckCircle} color={colors.successDarker} />
+                            ) : (
+                              <FontAwesomeIcon icon={faCircleXmark} color={colors.error} />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </details>
 
-              <FormGroup>
-                <Fieldset>
-                  <legend>
-                    Select reason for closing goal and objectives
-                    {' '}
-                    <Req />
-                    <br />
-                    <span className="usa-hint">
-                      This will overwrite any existing reasons.
-                    </span>
-                  </legend>
-                  <CloseRadios register={register} />
-                </Fieldset>
-              </FormGroup>
+                <FormGroup>
+                  <Fieldset>
+                    <legend>
+                      Select reason for closing goal and objectives <Req />
+                      <br />
+                      <span className="usa-hint">This will overwrite any existing reasons.</span>
+                    </legend>
+                    <CloseRadios register={register} />
+                  </Fieldset>
+                </FormGroup>
 
-              <FormGroup>
-                <Label htmlFor="closeSuspendReasonContext">
-                  Additional context
-                </Label>
-                <Textarea
-                  id="closeSuspendReasonContext"
-                  name="closeSuspendReasonContext"
-                  type="text"
-                  inputRef={register()}
-                />
-              </FormGroup>
-            </div>
+                <FormGroup>
+                  <Label htmlFor="closeSuspendReasonContext">Additional context</Label>
+                  <Textarea
+                    id="closeSuspendReasonContext"
+                    name="closeSuspendReasonContext"
+                    type="text"
+                    inputRef={register()}
+                  />
+                </FormGroup>
+              </div>
             )}
-            {(response && response.isError) && (
-              <Alert type="error">
-                {response.message}
-              </Alert>
-            )}
+            {response && response.isError && <Alert type="error">{response.message}</Alert>}
 
-            <ModalToggleButton
-              modalRef={modalRef}
-            >
-              Submit
-            </ModalToggleButton>
+            <ModalToggleButton modalRef={modalRef}>Submit</ModalToggleButton>
           </form>
         </FormProvider>
       </Container>

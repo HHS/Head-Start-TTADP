@@ -1,25 +1,35 @@
-import {
-  processActivityReportObjectiveForResourcesById,
-} from './resource';
+import { Op, Transaction } from 'sequelize';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import { auditLogger } from '../logger';
-
-const { Op } = require('sequelize');
-const {
+import {
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
-  ActivityReportObjectiveFile,
+  ActivityReportObjectiveCitation,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
-  ActivityReportObjectiveCitation,
+  Citation,
+  File,
   Goal,
   GoalFieldResponse,
+  GoalTemplate,
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
   Topic,
-} = require('../models');
+} from '../models';
+import { processActivityReportObjectiveForResourcesById } from './resource';
+
+const trimToNull = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+  return trimmedValue || null;
+};
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.id);
@@ -31,22 +41,45 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
   const originalFileIds = originalAROFiles.map((originalAROFile) => originalAROFile.fileId);
   const removedFileIds = originalFileIds.filter((fileId) => !filesSet.has(fileId));
   const currentFileIds = new Set(originalFileIds.filter((fileId) => filesSet.has(fileId)));
-  const newFilesIds = fileIds.filter((topic) => !currentFileIds.has(topic));
+  const candidateNewFileIds = fileIds.filter((fileId) => !currentFileIds.has(fileId));
+
+  // A stale form (e.g. another tab deleted the objective, which removes orphaned files)
+  // can submit file ids that no longer exist; linking them would violate the FK.
+  // KEY SHARE locks the rows so a concurrent orphan cleanup can't delete them before we link.
+  const existingFiles = candidateNewFileIds.length
+    ? await File.findAll({
+        attributes: ['id'],
+        where: { id: candidateNewFileIds },
+        lock: Transaction.LOCK.KEY_SHARE,
+        raw: true,
+      })
+    : [];
+  const existingFileIds = new Set(existingFiles.map((file) => file.id));
+  const newFilesIds = candidateNewFileIds.filter((fileId) => existingFileIds.has(fileId));
+  const missingFileIds = candidateNewFileIds.filter((fileId) => !existingFileIds.has(fileId));
+  if (missingFileIds.length) {
+    auditLogger.info(
+      `Skipping nonexistent file ids for ObjectiveId: ${objectiveId}, ` +
+        `AROId: ${activityReportObjectiveId}, fileIds: ${missingFileIds.join(', ')}`
+    );
+  }
 
   return Promise.all([
-    ...newFilesIds.map(async (fileId) => ActivityReportObjectiveFile.create({
-      activityReportObjectiveId,
-      fileId,
-    })),
+    ...newFilesIds.map(async (fileId) =>
+      ActivityReportObjectiveFile.create({
+        activityReportObjectiveId,
+        fileId,
+      })
+    ),
     removedFileIds.length > 0
       ? ActivityReportObjectiveFile.destroy({
-        where: {
-          activityReportObjectiveId,
-          fileId: { [Op.in]: removedFileIds },
-        },
-        individualHooks: true,
-        hookMetadata: { objectiveId },
-      })
+          where: {
+            activityReportObjectiveId,
+            fileId: { [Op.in]: removedFileIds },
+          },
+          individualHooks: true,
+          hookMetadata: { objectiveId },
+        })
       : Promise.resolve(),
   ]);
 };
@@ -73,7 +106,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
   return processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
-    resourceIds,
+    resourceIds
   );
 };
 
@@ -84,26 +117,27 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
     where: { activityReportObjectiveId },
     raw: true,
   });
-  const originalCourseIds = originalAroCourses.map((course) => course.courseId)
-    || [];
+  const originalCourseIds = originalAroCourses.map((course) => course.courseId) || [];
   const removedCourseIds = originalCourseIds.filter((id) => !courseSet.has(id));
   const currentCourseIds = new Set(originalCourseIds.filter((id) => courseSet.has(id)));
   const newCourseIds = courseIds.filter((id) => !currentCourseIds.has(id));
 
   return Promise.all([
-    ...newCourseIds.map(async (courseId) => ActivityReportObjectiveCourse.create({
-      activityReportObjectiveId,
-      courseId,
-    })),
+    ...newCourseIds.map(async (courseId) =>
+      ActivityReportObjectiveCourse.create({
+        activityReportObjectiveId,
+        courseId,
+      })
+    ),
     removedCourseIds.length > 0
       ? ActivityReportObjectiveCourse.destroy({
-        where: {
-          activityReportObjectiveId,
-          courseId: { [Op.in]: removedCourseIds },
-        },
-        individualHooks: true,
-        hookMetadata: { objectiveId },
-      })
+          where: {
+            activityReportObjectiveId,
+            courseId: { [Op.in]: removedCourseIds },
+          },
+          individualHooks: true,
+          hookMetadata: { objectiveId },
+        })
       : Promise.resolve(),
   ]);
 };
@@ -114,9 +148,9 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   let resolvedTopics = [];
   if (topicsNeedingLookup.length > 0) {
     auditLogger.info(
-      'Some topics were missing IDs and required a lookup. '
-      + `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, `
-      + `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`,
+      'Some topics were missing IDs and required a lookup. ' +
+        `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, ` +
+        `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`
     );
     const topicNames = topicsNeedingLookup.map((t) => t.name);
     const foundTopics = await Topic.findAll({
@@ -127,17 +161,21 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
     const foundNames = new Set(foundTopics.map((t) => t.name));
     const missing = topicNames.filter((n) => !foundNames.has(n));
     if (missing.length) {
-      auditLogger.error(`Could not resolve topic names: ${missing.join(', ')} for objectiveId: ${objectiveId}`);
+      auditLogger.error(
+        `Could not resolve topic names: ${missing.join(', ')} for objectiveId: ${objectiveId}`
+      );
     }
 
     resolvedTopics = foundTopics.map((t) => ({ id: t.id, name: t.name }));
   }
 
-  const enrichedTopics = topics.map((t) => {
-    if (t.id) return t;
-    const resolved = resolvedTopics.find((rt) => rt.name === t.name);
-    return resolved ? { ...t, id: resolved.id } : null;
-  }).filter(Boolean);
+  const enrichedTopics = topics
+    .map((t) => {
+      if (t.id) return t;
+      const resolved = resolvedTopics.find((rt) => rt.name === t.name);
+      return resolved ? { ...t, id: resolved.id } : null;
+    })
+    .filter(Boolean);
 
   const topicIds = enrichedTopics.map((t) => t.id);
 
@@ -152,33 +190,28 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   const newTopicIds = topicIds.filter((id) => !currentTopicIds.has(id));
 
   return Promise.all([
-    ...newTopicIds.map((topicId) => ActivityReportObjectiveTopic.create({
-      activityReportObjectiveId,
-      topicId,
-    })),
+    ...newTopicIds.map((topicId) =>
+      ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId,
+        topicId,
+      })
+    ),
     removedTopicIds.length > 0
       ? ActivityReportObjectiveTopic.destroy({
-        where: {
-          activityReportObjectiveId,
-          topicId: { [Op.in]: removedTopicIds },
-        },
-        individualHooks: true,
-        hookMetadata: { objectiveId },
-      })
+          where: {
+            activityReportObjectiveId,
+            topicId: { [Op.in]: removedTopicIds },
+          },
+          individualHooks: true,
+          hookMetadata: { objectiveId },
+        })
       : Promise.resolve(),
   ]);
 };
 
-/*
-  - ActivityReportObjectiveCitation -
-  Each row in this table is per grant (from ARO).
-  Each row has a json column called 'monitoringReferences', this is an array of objects.
-  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
-  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
-  Citations to remove will be determined by id.
-*/
 export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
   let newCitations = [];
+
   // Delete all existing citations for this activity report objective.
   await ActivityReportObjectiveCitation.destroy({
     where: { activityReportObjectiveId },
@@ -188,25 +221,31 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
   // Get the goal for this objective.
   const goal = await Goal.findOne({
-    attributes: ['grantId', 'createdVia'],
+    attributes: ['grantId'],
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+        where: {
+          standard: 'Monitoring',
+        },
+      },
       {
         model: Objective,
         as: 'objectives',
         where: { id: objectiveId },
         required: true,
+        attributes: [],
       },
     ],
   });
 
   if (!goal) {
-    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
-    return [];
-  }
-
-  if (goal.createdVia !== 'monitoring') {
-    // If this is no longer a monitoring goal associated with this objective,
-    // we don't (and shouldn't) save any citations.
+    auditLogger.info(
+      `No monitoring goal found for objective ${objectiveId}. Skipping citation caching.`
+    );
     return [];
   }
 
@@ -214,26 +253,170 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
     const grantForThisCitation = goal.grantId;
-    // Get all the citations for the grant.
-    const citationsToSave = citations.reduce((acc, citation) => {
+    const citationReferenceKeys = new Set();
+
+    newCitations = citations.reduce((acc, citation) => {
+      // this shape is tested at the request level by Joi
       const { monitoringReferences } = citation;
-      monitoringReferences.forEach((ref) => {
-        const { grantId } = ref;
-        if (grantId === grantForThisCitation && !acc.find((c) => c.standardId === ref.standardId)) {
-          acc.push(citation);
+
+      monitoringReferences.forEach((reference) => {
+        const grantId = Number(reference.grantId);
+        if (!Number.isInteger(grantId) || grantId !== grantForThisCitation) {
+          return;
         }
+
+        const parsedStandardId = Number(reference.standardId);
+        const standardId = Number.isInteger(parsedStandardId) ? parsedStandardId : null;
+        const findingId = trimToNull(reference.findingId);
+        const reviewName = trimToNull(reference.reviewName);
+        const grantNumber = trimToNull(reference.grantNumber);
+        const findingType = trimToNull(reference.findingType);
+        const findingSource = trimToNull(reference.findingSource);
+        // eslint-disable-next-line max-len
+        const acro = trimToNull(reference.acro);
+        const citationText = trimToNull(reference.citation);
+        const name =
+          acro && citationText
+            ? formatMonitoringCitationName({
+                acro,
+                citation: citationText,
+                findingSource,
+              })
+            : null;
+        const parsedSeverity = Number(reference.severity);
+        const severity = Number.isInteger(parsedSeverity) ? parsedSeverity : null;
+        let reportDeliveryDate = null;
+        if (reference.reportDeliveryDate instanceof Date) {
+          reportDeliveryDate = reference.reportDeliveryDate.toISOString();
+        } else if (reference.reportDeliveryDate) {
+          reportDeliveryDate = String(reference.reportDeliveryDate).trim();
+        }
+        const monitoringFindingStatusName = reference.monitoringFindingStatusName
+          ? String(reference.monitoringFindingStatusName).trim()
+          : null;
+
+        if (
+          !findingId ||
+          !reviewName ||
+          !grantNumber ||
+          !Number.isInteger(standardId) ||
+          !findingType ||
+          !acro ||
+          !Number.isInteger(severity) ||
+          !reportDeliveryDate ||
+          !monitoringFindingStatusName ||
+          !name ||
+          !citationText
+        ) {
+          throw new Error('Missing required citation field');
+        }
+
+        const citationReferenceKey = [findingId, grantId, reviewName, standardId].join('::');
+        if (citationReferenceKeys.has(citationReferenceKey)) {
+          return;
+        }
+
+        citationReferenceKeys.add(citationReferenceKey);
+
+        acc.push({
+          activityReportObjectiveId,
+          citation: citationText,
+          citationId: null,
+          findingId,
+          grantId,
+          grantNumber,
+          reviewName,
+          standardId,
+          findingType,
+          findingSource,
+          acro,
+          severity,
+          reportDeliveryDate,
+          monitoringFindingStatusName,
+          name,
+        });
       });
+
       return acc;
     }, []);
-    newCitations = citationsToSave.map((citation) => (
-      {
-        activityReportObjectiveId,
-        citation: citation.citation,
-        // Only save the monitoring references for the grant we are working with.
-        monitoringReferences: citation.monitoringReferences.filter(
-          (ref) => ref.grantId === grantForThisCitation,
+
+    const findingIdentifiers = [
+      ...new Set(newCitations.map(({ findingId }) => findingId).filter((findingId) => !!findingId)),
+    ];
+
+    if (findingIdentifiers.length > 0) {
+      const numericFindingIds = [
+        ...new Set(
+          findingIdentifiers
+            .map((findingIdentifier) => Number(findingIdentifier))
+            .filter((findingIdentifier) => Number.isInteger(findingIdentifier))
         ),
+      ];
+
+      const citationWhereClauses = [
+        {
+          finding_uuid: {
+            [Op.in]: findingIdentifiers,
+          },
+        },
+      ];
+
+      if (numericFindingIds.length > 0) {
+        citationWhereClauses.push({
+          mfid: {
+            [Op.in]: numericFindingIds,
+          },
+        });
+      }
+
+      const foundCitations = await Citation.findAll({
+        attributes: ['id', 'finding_uuid', 'mfid'],
+        where: {
+          [Op.or]: citationWhereClauses,
+        },
+      });
+
+      const citationIdByIdentifier = foundCitations.reduce((acc, foundCitation) => {
+        const { id, finding_uuid: findingUuid, mfid } = foundCitation;
+
+        if (findingUuid) {
+          acc.set(String(findingUuid), id);
+        }
+        if (mfid !== null && mfid !== undefined) {
+          acc.set(String(mfid), id);
+        }
+        return acc;
+      }, new Map());
+
+      const citationIdByFindingId = new Map(
+        findingIdentifiers
+          .map((findingIdentifier) => [
+            findingIdentifier,
+            citationIdByIdentifier.get(findingIdentifier),
+          ])
+          .filter(([, citationId]) => citationId !== undefined)
+      );
+
+      const unresolvedFindingIds = findingIdentifiers.filter(
+        (findingIdentifier) => !citationIdByFindingId.has(findingIdentifier)
+      );
+
+      if (unresolvedFindingIds.length > 0) {
+        const errorMessage =
+          `Unable to cache citations for objective ${objectiveId} ` +
+          `and activity report objective ${activityReportObjectiveId}. ` +
+          `No Citation record found for finding IDs: ${unresolvedFindingIds.join(', ')}`;
+        auditLogger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      newCitations = newCitations.map((citation) => ({
+        ...citation,
+        legacy: false,
+        citationId: citation.findingId ? citationIdByFindingId.get(citation.findingId) : null,
       }));
+    }
+
     // If we have citations to save, create them.
     if (newCitations.length > 0) {
       return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
@@ -260,9 +443,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     useFiles,
   } = metadata;
 
-  const objectiveId = objective.dataValues
-    ? objective.dataValues.id
-    : objective.id;
+  const objectiveId = objective.dataValues ? objective.dataValues.id : objective.id;
   let aro = await ActivityReportObjective.findOne({
     where: {
       objectiveId,
@@ -271,36 +452,45 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     raw: true,
   });
   if (!aro) {
-    aro = await ActivityReportObjective.create({
-      objectiveId,
-      activityReportId: reportId,
-    }, { raw: true });
+    aro = await ActivityReportObjective.create(
+      {
+        objectiveId,
+        activityReportId: reportId,
+      },
+      { raw: true }
+    );
   }
   const { id: activityReportObjectiveId } = aro;
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
   // means the following update cannot be in the Promise.all in the return.
-  await ActivityReportObjective.update({
-    title: objective.title,
-    status: status || objective.status,
-    ttaProvided,
-    supportType: supportType || null,
-    arOrder: order + 1,
-    closeSuspendContext: closeSuspendContext || null,
-    closeSuspendReason: closeSuspendReason || null,
-    objectiveCreatedHere,
-    useIpdCourses,
-    useFiles,
-  }, {
-    where: { id: activityReportObjectiveId },
-    individualHooks: true,
-  });
+  await ActivityReportObjective.update(
+    {
+      title: objective.title,
+      status: status || objective.status,
+      ttaProvided,
+      supportType: supportType || null,
+      arOrder: order + 1,
+      closeSuspendContext: closeSuspendContext || null,
+      closeSuspendReason: closeSuspendReason || null,
+      objectiveCreatedHere,
+      useIpdCourses,
+      useFiles,
+    },
+    {
+      where: { id: activityReportObjectiveId },
+      individualHooks: true,
+    }
+  );
 
   return Promise.all([
-    Objective.update({ onAR: true }, {
-      where: { id: objectiveId },
-      individualHooks: true,
-    }),
+    Objective.update(
+      { onAR: true },
+      {
+        where: { id: objectiveId },
+        individualHooks: true,
+      }
+    ),
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
@@ -309,91 +499,79 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-export const cachePrompts = async (
-  goalId,
-  activityReportGoalId,
-  promptResponses,
-) => {
+export const cachePrompts = async (goalId, activityReportGoalId, promptResponses) => {
   const originalARGResponses = await ActivityReportGoalFieldResponse.findAll({
-    attributes: [
-      'id',
-      'goalTemplateFieldPromptId',
-      'response',
-    ],
+    attributes: ['id', 'goalTemplateFieldPromptId', 'response'],
     where: { activityReportGoalId },
     raw: true,
   });
 
-  const {
-    newPromptResponses,
-    updatedPromptResponses,
-    promptIds,
-  } = promptResponses
+  const { newPromptResponses, updatedPromptResponses, promptIds } = promptResponses
     // first we transform to match the correct column names
     .map(({ response, promptId }) => ({ response, goalTemplateFieldPromptId: promptId }))
     // then we reduce, separating the new and updated records
-    .reduce((acc, promptResponse) => {
-      const currentPromptResponse = originalARGResponses
-        .find(({ goalTemplateFieldPromptId }) => (
-          promptResponse.goalTemplateFieldPromptId === goalTemplateFieldPromptId
-        ));
+    .reduce(
+      (acc, promptResponse) => {
+        const currentPromptResponse = originalARGResponses.find(
+          ({ goalTemplateFieldPromptId }) =>
+            promptResponse.goalTemplateFieldPromptId === goalTemplateFieldPromptId
+        );
 
-      if (!currentPromptResponse) {
-      // Record is in newData but not in currentData
-        acc.newPromptResponses.push(promptResponse);
-      } else if (
-        // we check to see if the old response the new
-        JSON.stringify(promptResponse.response) !== JSON.stringify(currentPromptResponse.response)
-      ) {
-      // Record is in both newData and currentData, but with different responses
-        acc.updatedPromptResponses.push(promptResponse);
-      }
+        if (!currentPromptResponse) {
+          // Record is in newData but not in currentData
+          acc.newPromptResponses.push(promptResponse);
+        } else if (
+          // we check to see if the old response the new
+          JSON.stringify(promptResponse.response) !== JSON.stringify(currentPromptResponse.response)
+        ) {
+          // Record is in both newData and currentData, but with different responses
+          acc.updatedPromptResponses.push(promptResponse);
+        }
 
-      acc.promptIds.push(promptResponse.goalTemplateFieldPromptId);
+        acc.promptIds.push(promptResponse.goalTemplateFieldPromptId);
 
-      return acc;
-    }, { newPromptResponses: [], updatedPromptResponses: [], promptIds: [] });
+        return acc;
+      },
+      { newPromptResponses: [], updatedPromptResponses: [], promptIds: [] }
+    );
 
   // Find records in currentData but not in newData
-  const removedPromptResponses = originalARGResponses
-    .filter(({ goalTemplateFieldPromptId }) => !promptIds.includes(goalTemplateFieldPromptId));
+  const removedPromptResponses = originalARGResponses.filter(
+    ({ goalTemplateFieldPromptId }) => !promptIds.includes(goalTemplateFieldPromptId)
+  );
 
   return Promise.all([
-    ...newPromptResponses.map(async ({
-      goalTemplateFieldPromptId,
-      response,
-    }) => ActivityReportGoalFieldResponse.create({
-      activityReportGoalId,
-      goalTemplateFieldPromptId,
-      response,
-    })),
-    ...updatedPromptResponses.map(async ({
-      goalTemplateFieldPromptId,
-      response,
-    }) => ActivityReportGoalFieldResponse.update({ response }, {
-      where: {
+    ...newPromptResponses.map(async ({ goalTemplateFieldPromptId, response }) =>
+      ActivityReportGoalFieldResponse.create({
         activityReportGoalId,
         goalTemplateFieldPromptId,
-      },
-    })),
+        response,
+      })
+    ),
+    ...updatedPromptResponses.map(async ({ goalTemplateFieldPromptId, response }) =>
+      ActivityReportGoalFieldResponse.update(
+        { response },
+        {
+          where: {
+            activityReportGoalId,
+            goalTemplateFieldPromptId,
+          },
+        }
+      )
+    ),
     removedPromptResponses.length > 0
       ? ActivityReportGoalFieldResponse.destroy({
-        where: {
-          id: removedPromptResponses.map(({ id }) => id),
-        },
-        individualHooks: true,
-        hookMetadata: { goalId },
-      })
+          where: {
+            id: removedPromptResponses.map(({ id }) => id),
+          },
+          individualHooks: true,
+          hookMetadata: { goalId },
+        })
       : Promise.resolve(),
   ]);
 };
 
-const cacheGoalMetadata = async (
-  goal,
-  reportId,
-  isActivelyBeingEditing,
-  prompts,
-) => {
+const cacheGoalMetadata = async (goal, reportId, isActivelyBeingEditing, prompts) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
     where: {
@@ -405,37 +583,43 @@ const cacheGoalMetadata = async (
   // if it does, then we update it with the new values
   if (arg) {
     const activityReportGoalId = arg.id;
-    await ActivityReportGoal.update({
-      name: goal.name,
-      status: goal.status,
-      timeframe: goal.timeframe,
-      closeSuspendReason: goal.closeSuspendReason,
-      closeSuspendContext: goal.closeSuspendContext,
-      isRttapa: null,
-      isActivelyEdited: isActivelyBeingEditing || false,
-      source: goal.source,
-    }, {
-      where: { id: activityReportGoalId },
-      individualHooks: true,
-    });
+    await ActivityReportGoal.update(
+      {
+        name: goal.name,
+        status: goal.status,
+        timeframe: goal.timeframe,
+        closeSuspendReason: goal.closeSuspendReason,
+        closeSuspendContext: goal.closeSuspendContext,
+        isRttapa: null,
+        isActivelyEdited: isActivelyBeingEditing || false,
+        source: goal.source,
+      },
+      {
+        where: { id: activityReportGoalId },
+        individualHooks: true,
+      }
+    );
   } else {
     // otherwise, we create a new one
-    arg = await ActivityReportGoal.create({
-      goalId: goal.id,
-      activityReportId: reportId,
-      name: goal.name,
-      status: goal.status,
-      timeframe: goal.timeframe,
-      closeSuspendReason: goal.closeSuspendReason,
-      closeSuspendContext: goal.closeSuspendContext,
-      source: goal.source,
-      isRttapa: null,
-      isActivelyEdited: isActivelyBeingEditing || false,
-    }, {
-      individualHooks: true,
-      returning: true,
-      plain: true,
-    });
+    arg = await ActivityReportGoal.create(
+      {
+        goalId: goal.id,
+        activityReportId: reportId,
+        name: goal.name,
+        status: goal.status,
+        timeframe: goal.timeframe,
+        closeSuspendReason: goal.closeSuspendReason,
+        closeSuspendContext: goal.closeSuspendContext,
+        source: goal.source,
+        isRttapa: null,
+        isActivelyEdited: isActivelyBeingEditing || false,
+      },
+      {
+        individualHooks: true,
+        returning: true,
+        plain: true,
+      }
+    );
   }
 
   const finalPromises = [
@@ -468,55 +652,51 @@ const cacheGoalMetadata = async (
 
     // if we have goal prompts call cache prompts with the goals prompts
     if (goalPrompts && goalPrompts.length) {
-      finalPromises.push(
-        cachePrompts(goal.id, arg.id, goalPrompts),
-      );
+      finalPromises.push(cachePrompts(goal.id, arg.id, goalPrompts));
     }
   } else if (prompts.length) {
-    finalPromises.push(
-      cachePrompts(goal.id, arg.id, prompts),
-    );
+    finalPromises.push(cachePrompts(goal.id, arg.id, prompts));
   }
   return Promise.all(finalPromises);
 };
 
 async function destroyActivityReportObjectiveMetadata(
   activityReportObjectiveIdsToRemove,
-  objectiveIds,
+  objectiveIds
 ) {
-  return Array.isArray(activityReportObjectiveIdsToRemove)
-  && activityReportObjectiveIdsToRemove.length > 0
+  return Array.isArray(activityReportObjectiveIdsToRemove) &&
+    activityReportObjectiveIdsToRemove.length > 0
     ? Promise.all([
-      ActivityReportObjectiveFile.destroy({
-        where: {
-          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-        },
-        hookMetadata: { objectiveIds },
-        individualHooks: true,
-      }),
-      ActivityReportObjectiveResource.destroy({
-        where: {
-          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-        },
-        hookMetadata: { objectiveIds },
-        individualHooks: true,
-      }),
-      ActivityReportObjectiveTopic.destroy({
-        where: {
-          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-        },
-        hookMetadata: { objectiveIds },
-        individualHooks: true,
-      }),
-    ])
+        ActivityReportObjectiveFile.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+          },
+          hookMetadata: { objectiveIds },
+          individualHooks: true,
+        }),
+        ActivityReportObjectiveResource.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+          },
+          hookMetadata: { objectiveIds },
+          individualHooks: true,
+        }),
+        ActivityReportObjectiveTopic.destroy({
+          where: {
+            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+          },
+          hookMetadata: { objectiveIds },
+          individualHooks: true,
+        }),
+      ])
     : Promise.resolve();
 }
 
 export {
   cacheFiles,
+  cacheGoalMetadata,
+  cacheObjectiveMetadata,
   cacheResources,
   cacheTopics,
-  cacheObjectiveMetadata,
-  cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
 };

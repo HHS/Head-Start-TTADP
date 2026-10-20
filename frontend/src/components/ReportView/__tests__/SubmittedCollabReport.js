@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
+import React from 'react';
 import SubmittedCollabReport, { formatNextSteps } from '../SubmittedCollabReport';
 
 const mockReport = {

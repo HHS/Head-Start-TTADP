@@ -1,9 +1,9 @@
 import express from 'express';
 import httpCodes from 'http-codes';
 import multiparty from 'multiparty';
-import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { csvImport } from '../../services/course';
+import transactionWrapper from '../transactionWrapper';
 import { bufferFromPath } from './helpers';
 
 const namespace = 'ADMIN:COURSE';

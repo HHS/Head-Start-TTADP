@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import RecipientSpotlightCard from '../RecipientSpotlightCard';
 
@@ -21,21 +21,19 @@ const mockRecipient = {
 };
 
 describe('RecipientSpotlightCard', () => {
-  const renderCard = (recipient = mockRecipient) => render(
-    <BrowserRouter>
-      <RecipientSpotlightCard recipient={recipient} />
-    </BrowserRouter>,
-  );
+  const renderCard = (recipient = mockRecipient) =>
+    render(
+      <BrowserRouter>
+        <RecipientSpotlightCard recipient={recipient} />
+      </BrowserRouter>
+    );
 
   it('renders recipient name as link', () => {
     renderCard();
     const link = screen.getByText('Test Recipient');
     expect(link).toBeInTheDocument();
     expect(link.tagName).toBe('A');
-    expect(link).toHaveAttribute(
-      'href',
-      '/recipient-tta-records/1/region/5/profile',
-    );
+    expect(link).toHaveAttribute('href', '/recipient-tta-records/1/region/5/profile');
   });
 
   it('renders region number', () => {
@@ -90,7 +88,7 @@ describe('RecipientSpotlightCard', () => {
 
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipient')).toBeInTheDocument();
-    expect(screen.getByText(/more than one child incident cited in a RAN/)).toBeInTheDocument();
+    expect(screen.getByText(/at least one child incident cited in a RAN/)).toBeInTheDocument();
   });
 
   it('changes button text to "Hide" when expanded', () => {
@@ -122,13 +120,21 @@ describe('RecipientSpotlightCard', () => {
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
+<<<<<<< HEAD
     // Should show all visible spotlight indicators
+=======
+    // Should show all displayed indicators (DRS is temporarily hidden)
+>>>>>>> main
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipient')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
+    expect(screen.getByText('FEI')).toBeInTheDocument();
     expect(screen.getByText('New staff')).toBeInTheDocument();
     expect(screen.getByText('No TTA')).toBeInTheDocument();
+<<<<<<< HEAD
     expect(screen.getByText('FEI')).toBeInTheDocument();
+=======
+>>>>>>> main
     expect(screen.getByText('Underenrolled')).toBeInTheDocument();
   });
 
@@ -148,10 +154,14 @@ describe('RecipientSpotlightCard', () => {
     const { container } = render(
       <BrowserRouter>
         <RecipientSpotlightCard recipient={allActiveRecipient} />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
+<<<<<<< HEAD
     // 7 indicators are shown (DRS remains hidden)
+=======
+    // 7 indicators are shown (DRS is temporarily hidden)
+>>>>>>> main
     const filledBoxes = container.querySelectorAll('.ttahub--indicator-box-filled');
     expect(filledBoxes.length).toBe(7);
   });
@@ -172,7 +182,7 @@ describe('RecipientSpotlightCard', () => {
     const { container } = render(
       <BrowserRouter>
         <RecipientSpotlightCard recipient={noIndicatorsRecipient} />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     const filledBoxes = container.querySelectorAll('.ttahub--indicator-box-filled');
@@ -184,8 +194,12 @@ describe('RecipientSpotlightCard', () => {
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
-    expect(screen.getByText(/Recipient has experienced more than one child incident/)).toBeInTheDocument();
-    expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Recipient has experienced at least one child incident/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Recipient is in the first 4 years as a Head Start program/)
+    ).toBeInTheDocument();
   });
 
   it('renders expander button even when no indicators are active', () => {
@@ -204,7 +218,7 @@ describe('RecipientSpotlightCard', () => {
     const { container } = render(
       <BrowserRouter>
         <RecipientSpotlightCard recipient={noIndicatorsRecipient} />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     // Expander button should render even with 0 count
@@ -215,7 +229,11 @@ describe('RecipientSpotlightCard', () => {
     expect(filledBoxes.length).toBe(0);
   });
 
+<<<<<<< HEAD
   it('renders all 7 visible indicator types when all are active', () => {
+=======
+  it('renders all 7 indicator types when all are active', () => {
+>>>>>>> main
     const allActiveRecipient = {
       ...mockRecipient,
       childIncidents: true,
@@ -231,13 +249,17 @@ describe('RecipientSpotlightCard', () => {
     render(
       <BrowserRouter>
         <RecipientSpotlightCard recipient={allActiveRecipient} />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
 
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
+<<<<<<< HEAD
     // FEI is visible and DRS remains hidden
+=======
+    // DRS is temporarily hidden
+>>>>>>> main
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
     expect(screen.getByText('FEI')).toBeInTheDocument();
@@ -259,7 +281,9 @@ describe('RecipientSpotlightCard', () => {
     fireEvent.click(expandButton);
 
     // Descriptions should say "Recipient has", not "Recipient grant has"
-    expect(screen.getByText(/Recipient has experienced more than one child incident/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Recipient has experienced at least one child incident/)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Recipient grant has/)).not.toBeInTheDocument();
   });
 });

@@ -11,7 +11,7 @@ module.exports = {
                 set_config('audit.transactionId', NULL, TRUE) as "transactionId",
                 set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
       // Update all the existing link tables to use the current topics,
       // then update ActivityReports.topics
@@ -159,7 +159,7 @@ module.exports = {
         ;
         */
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

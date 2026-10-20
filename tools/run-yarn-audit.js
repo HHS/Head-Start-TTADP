@@ -3,6 +3,8 @@
 const { execSync } = require('child_process');
 const { exit } = require('node:process');
 const fs = require('fs');
+const { validate } = require('uuid');
+const path = require('path');
 
 /* eslint-disable no-console */
 
@@ -33,6 +35,13 @@ function parseResult(rawData) {
   return findings;
 }
 
+function validateKnownIssuesFile() {
+  if (!fs.existsSync(ISSUES_FILE)) {
+    fs.writeFileSync(ISSUES_FILE, '');
+    return;
+  }
+}
+
 function getKnownIssues() {
   const fileData = fs.readFileSync(ISSUES_FILE, 'utf8');
   return parseResult(fileData);
@@ -60,10 +69,12 @@ function compareIssues(knownIssues, newIssues) {
 }
 
 function main() {
+  console.log(`Checking for issues in "${path.basename(process.cwd())}/"`);
+  validateKnownIssuesFile();
   const newIssues = getNewIssues();
   const knownIssues = getKnownIssues();
   if (newIssues.size === 0) {
-    console.info('No issues found.');
+    console.info(`No issues found.`);
     exit(0);
   }
   console.log(`Found ${newIssues.size} current issues.`);
@@ -74,7 +85,11 @@ function main() {
   console.error(`Found ${unsolvedIssues.length} issues\n`);
   if (unsolvedIssues.length !== 0) {
     unsolvedIssues.forEach((issue) => {
-      const chunkOne = `${issue.data.advisory.module_name}@${issue.data.advisory.findings[0].version} to ${issue.data.advisory.patched_versions}`.padEnd(50, ' ');
+      const chunkOne =
+        `${issue.data.advisory.module_name}@${issue.data.advisory.findings[0].version} to ${issue.data.advisory.patched_versions}`.padEnd(
+          50,
+          ' '
+        );
       const chunkTwo = `(${issue.data.advisory.severity}) ${JSON.stringify(issue.data.advisory.findings)}`;
       console.info(`${chunkOne} ${chunkTwo}`);
     });

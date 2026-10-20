@@ -1,9 +1,14 @@
 /* istanbul ignore file */
-import { WhereOptions } from 'sequelize';
+import type { WhereOptions } from 'sequelize';
 
 export interface IScopes {
-  grant?: WhereOptions[],
-  trainingReport?: WhereOptions[],
-  activityReport?: WhereOptions[],
-  goal?: WhereOptions[],
+  grant: {
+    where: WhereOptions;
+  };
+  trainingReport: WhereOptions[];
+  activityReport: WhereOptions[];
+  goal: WhereOptions[];
+  deliveredReview: WhereOptions[];
+  citation: WhereOptions[];
+  grantCitation: WhereOptions[];
 }

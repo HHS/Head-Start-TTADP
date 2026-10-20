@@ -1,11 +1,7 @@
 import httpCodes from 'http-codes';
 import db from '../../models';
-import {
-  updateNationalCenter,
-  deleteNationalCenter,
-  createNationalCenter,
-} from './nationalCenter';
-import { updateById, deleteById, create } from '../../services/nationalCenters';
+import { create, deleteById, updateById } from '../../services/nationalCenters';
+import { createNationalCenter, deleteNationalCenter, updateNationalCenter } from './nationalCenter';
 
 jest.mock('../../services/nationalCenters', () => ({
   updateById: jest.fn(),

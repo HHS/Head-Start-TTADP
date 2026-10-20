@@ -14,15 +14,25 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = t
   if (comparator.toLowerCase() === 'between') {
     const [min, max] = searchTerms;
     return {
-      [operator]: sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${min} AND ${max})`),
+      [operator]: sequelize.literal(
+        `"Goal"."id" ${operator} (${baseQuery} ${comparator} ${min} AND ${max})`
+      ),
     };
   }
 
   if (!escape) {
-    return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${String(term).trim()})`));
+    return searchTerms.map((term) =>
+      sequelize.literal(
+        `"Goal"."id" ${operator} (${baseQuery} ${comparator} ${String(term).trim()})`
+      )
+    );
   }
 
-  return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
+  return searchTerms.map((term) =>
+    sequelize.literal(
+      `"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`
+    )
+  );
 }
 
 /**
@@ -36,6 +46,12 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = t
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = '~*', escape = true) {
+export function filterAssociation(
+  baseQuery,
+  searchTerms,
+  exclude,
+  comparator = '~*',
+  escape = true
+) {
   return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator, escape);
 }

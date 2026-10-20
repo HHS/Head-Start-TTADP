@@ -6,8 +6,8 @@ For general coding standards, follow existing style in the surrounding code.
 ## Code Style
 - Prefer creating new backend files as TypeScript.
 - Follow existing style in the surrounding code.
-- Ensure changes pass lint checks.
-- Reuse existing components and hooks before creating new ones.
+- Ensure changes pass Biome lint checks.
+- Always prefer reusing existing patterns, components and hooks.
 
 ## Testing
 - Add or update tests for behavior changes unless the change is purely documentation or formatting.
@@ -41,13 +41,15 @@ For detailed testing patterns including database state management helpers, see `
 - Log actionable context (request IDs, relevant entity IDs) without leaking PII.
 
 ### Validation
-- We leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
-
+- Leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
 
 ## Frontend
 
+### Typescript
+- Any new components should be authored in TypeScript. Existing JavaScript components should be updated to Typescript where possible.
+
 ### Hook and Component Reuse
-- Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 
+- Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching). Create new hooks if change can be reusable
 - Use `@trussworks/react-uswds` components.
 
 ### CSS
@@ -62,3 +64,14 @@ For detailed testing patterns including database state management helpers, see `
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
 - Update `docs/adr/` if an architecture decision is introduced or changed.
+- Use `.github/pull_request_template.md` for PR descriptions. Keep "Description of change" and "How to test" to a few brief sentences each, and fill in the Jira issue link and checklists.
+
+## Unit testing
+- Prefer userEvent from '@testing-library/user-event' over fireEvent from '@testing-library/react'
+
+## Domain Terminology
+- The `EventReportPilot` model is referred to in specs and documentation as **Training Reports**.
+- The `SessionReportPilot` model is referred to in specs and documentation as **Sessions**.
+
+## Sharing code
+- Use the `common` package to share constants, functional code, and types

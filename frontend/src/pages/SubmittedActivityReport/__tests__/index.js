@@ -1,17 +1,10 @@
 import '@testing-library/jest-dom';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-
-import { createMemoryHistory } from 'history';
 import SubmittedActivityReport from '../index';
 
 describe('Submitted activity report view', () => {
@@ -36,14 +29,21 @@ describe('Submitted activity report view', () => {
       {
         fullName: 'Test 2',
         user: { fullName: 'Test 2' },
-      }],
+      },
+    ],
     approvers: [
       {
-        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
+        id: 1,
+        status: '',
+        note: '',
+        user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
+        id: 2,
+        status: '',
+        note: 'note',
+        user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
@@ -119,7 +119,7 @@ describe('Submitted activity report view', () => {
     render(
       <Router history={history}>
         <SubmittedActivityReport user={passedUser} match={match} />
-      </Router>,
+      </Router>
     );
   }
   afterEach(() => fetchMock.restore());
@@ -134,24 +134,24 @@ describe('Submitted activity report view', () => {
     fetchMock.get('/api/activity-reports/5000', report);
     fetchMock.get('/api/activity-reports/5001', {
       ...report,
-      activityRecipients: [
-        { name: 'Tim', grantId: 400 },
-      ],
+      activityRecipients: [{ name: 'Tim', grantId: 400 }],
       ECLKCResourcesUsed: [''],
       nonECLKCResourcesUsed: [''],
       ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
-      goalsAndObjectives: [{
-        name: 'Goal',
-        objectives: [
-          {
-            title: 'Test',
-            ActivityReportObjective: {
-              ttaProvided: 'Why not?',
+      goalsAndObjectives: [
+        {
+          name: 'Goal',
+          objectives: [
+            {
+              title: 'Test',
+              ActivityReportObjective: {
+                ttaProvided: 'Why not?',
+              },
             },
-          },
-        ],
-      }],
+          ],
+        },
+      ],
       requester: 'chud',
     });
     fetchMock.get('/api/activity-reports/5002', { status: 500 });
@@ -160,9 +160,7 @@ describe('Submitted activity report view', () => {
       ...report,
       ttaType: ['training', 'technical-assistance'],
       requester: 'regionalOffice',
-      activityRecipients: [
-        { name: 'Anti-tim' },
-      ],
+      activityRecipients: [{ name: 'Anti-tim' }],
     });
 
     fetchMock.get('/api/activity-reports/5004', {
@@ -184,26 +182,28 @@ describe('Submitted activity report view', () => {
 
     fetchMock.get('/api/activity-reports/5005', {
       ...report,
-      goalsAndObjectives: [{
-        name: 'Goal',
-        objectives: [
-          {
-            title: 'Objective',
-            ActivityReportObjective: {
-              ttaProvided: 'All of it',
-            },
-            topics: [{ label: 'being fancy' }],
-            resources: [{ value: 'http://www.website.com' }],
-            status: 'Test status',
-            files: [
-              {
-                url: { url: 'http://www.website.com' },
-                originalFileName: 'file.pdf',
+      goalsAndObjectives: [
+        {
+          name: 'Goal',
+          objectives: [
+            {
+              title: 'Objective',
+              ActivityReportObjective: {
+                ttaProvided: 'All of it',
               },
-            ],
-          },
-        ],
-      }],
+              topics: [{ label: 'being fancy' }],
+              resources: [{ value: 'http://www.website.com' }],
+              status: 'Test status',
+              files: [
+                {
+                  url: { url: 'http://www.website.com' },
+                  originalFileName: 'file.pdf',
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     fetchMock.get('/api/activity-reports/5006', {
@@ -271,7 +271,11 @@ describe('Submitted activity report view', () => {
     await waitFor(() => {
       const copyButton = screen.getByRole('button', { name: /copy url link/i });
       fireEvent.click(copyButton);
-      expect(screen.getByText(/sorry, something went wrong copying that url\. here it ishttp:\/\/localhost\//i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /sorry, something went wrong copying that url\. here it ishttp:\/\/localhost\//i
+        )
+      ).toBeInTheDocument();
     });
   });
 

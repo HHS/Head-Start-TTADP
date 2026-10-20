@@ -1,5 +1,5 @@
 .smarthub-table-widget {
-    height: calc(100% - 1.5rem);
+  height: calc(100% - 1.5rem);
 }
 
 .smarthub-table-widget .usa-table-container--scrollable {
@@ -36,7 +36,7 @@
   text-align: left;
 }
 
-.smarthub-table-widget .usa-table th:nth-child(2), 
+.smarthub-table-widget .usa-table th:nth-child(2),
 .smarthub-table-widget .usa-table td:nth-child(2) {
   padding-left: 60px;
 }

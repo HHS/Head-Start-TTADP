@@ -1,17 +1,75 @@
-import { ActivityReportApprover, User } from '../models';
+import { REPORT_STATUSES } from '@ttahub/common';
+import cls from 'cls-hooked';
+import { ActivityReport, ActivityReportApprover, sequelize, User } from '../models';
+import { archiveNotificationsOnActivityReportApproved } from './notifications/activityReport';
+
+/**
+ * Wraps an approver mutation (`fn`) in a transaction that snapshots the activity report's
+ * calculatedStatus before and after running it, archiving the in-app notifications that
+ * become obsolete on approval when the mutation causes the report to transition into
+ * APPROVED status.
+ *
+ * `syncApprovers` runs on every report save, including drafts, so this only checks for a
+ * transition when the report is actually SUBMITTED. Otherwise it short-circuits and just runs
+ * `fn`, mirroring the bail-out condition the model hook itself already used.
+ *
+ * `sequelize.transaction()` does not pick up the ambient CLS transaction on its own, so the
+ * caller's transaction (e.g. from `transactionWrapper`) is passed explicitly as the parent.
+ * That makes this a SAVEPOINT on the same connection rather than a new top-level transaction.
+ * Without it, the row lock below runs on a second connection and blocks forever on the
+ * row lock the caller already holds from updating the report, hanging the request. The row
+ * lock serializes concurrent approvers reviewing the same report so each transition is
+ * observed by exactly one caller.
+ *
+ * The lock is `FOR NO KEY UPDATE`, not `FOR UPDATE`: it still conflicts with itself, so approvers
+ * stay serialized, but it does not conflict with the `FOR KEY SHARE` lock that foreign-key checks
+ * take on this row when child rows (NextSteps, etc.) are inserted. `FOR UPDATE` deadlocked
+ * overlapping report saves, since `syncApprovers` runs on every save after next steps are saved.
+ *
+ * @param {number|string} activityReportId
+ * @param {() => Promise<*>} fn
+ * @returns {Promise<*>}
+ */
+async function withApprovalTransition(activityReportId, fn) {
+  const parent = cls.getNamespace('transaction')?.get('transaction');
+  return sequelize.transaction({ transaction: parent }, async (transaction) => {
+    const report = await ActivityReport.findByPk(activityReportId, {
+      attributes: ['id', 'submissionStatus', 'calculatedStatus'],
+      transaction,
+      lock: transaction.LOCK.NO_KEY_UPDATE,
+    });
+
+    if (!report || report.submissionStatus !== REPORT_STATUSES.SUBMITTED) {
+      return fn();
+    }
+
+    const before = report.calculatedStatus;
+    const result = await fn();
+
+    const after = await ActivityReport.findByPk(activityReportId, {
+      attributes: ['calculatedStatus'],
+      transaction,
+    });
+
+    if (
+      after &&
+      after.calculatedStatus === REPORT_STATUSES.APPROVED &&
+      before !== REPORT_STATUSES.APPROVED
+    ) {
+      await archiveNotificationsOnActivityReportApproved(Number(activityReportId));
+    }
+
+    return result;
+  });
+}
 
 /**
  * Update or create new Approver
  *
  * @param {*} values - object containing Approver properties to create or update
  */
-export async function upsertApprover(values) {
-  const {
-    activityReportId,
-    userId,
-    status,
-    note,
-  } = values;
+async function upsertApproverInternal(values) {
+  const { activityReportId, userId, status, note } = values;
 
   let approver = await ActivityReportApprover.findOne({
     where: {
@@ -66,13 +124,24 @@ export async function upsertApprover(values) {
 }
 
 /**
+ * Update or create new Approver. Wraps `upsertApproverInternal` so that an approval that
+ * completes a report's approval chain archives the notifications that are obsolete once the
+ * report is APPROVED.
+ *
+ * @param {*} values - object containing Approver properties to create or update
+ */
+export async function upsertApprover(values) {
+  return withApprovalTransition(values.activityReportId, () => upsertApproverInternal(values));
+}
+
+/**
  * Determine which Approvers to delete, add or restore
  *
  * @param {*} activityReportId - pk of ActivityReport, used to find ActivityReportApprovers
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
  */
-export async function syncApprovers(activityReportId, userIds = []) {
+async function syncApproversInternal(activityReportId, userIds = []) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
   });
@@ -102,10 +171,12 @@ export async function syncApprovers(activityReportId, userIds = []) {
 
   // Create or restore approvers
   if (userIds.length > 0) {
-    const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
-      activityReportId,
-      userId,
-    }));
+    const upsertApproverPromises = userIds.map(async (userId) =>
+      upsertApproverInternal({
+        activityReportId,
+        userId,
+      })
+    );
     await Promise.all(upsertApproverPromises);
   }
 
@@ -120,4 +191,20 @@ export async function syncApprovers(activityReportId, userIds = []) {
       },
     ],
   });
+}
+
+/**
+ * Determine which Approvers to delete, add or restore. Wraps `syncApproversInternal` in a
+ * single approval-transition snapshot so that a destroy that completes a report's approval
+ * (an approver being removed can leave the remaining approvers all APPROVED) also archives
+ * the obsolete notifications -- a gap the previous model-hook-only archival left open.
+ *
+ * @param {*} activityReportId - pk of ActivityReport, used to find ActivityReportApprovers
+ * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
+ * deleted or created to match this list
+ */
+export async function syncApprovers(activityReportId, userIds = []) {
+  return withApprovalTransition(activityReportId, () =>
+    syncApproversInternal(activityReportId, userIds)
+  );
 }

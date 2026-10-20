@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
-  User,
   EventReportPilot,
-  sequelize,
-  mockUser,
+  filtersToScopes,
   mockCollaboratorUser,
+  mockUser,
+  Op,
+  sequelize,
+  User,
 } from './testHelpers';
 
 describe('trainingReports/eventId', () => {
@@ -19,36 +19,46 @@ describe('trainingReports/eventId', () => {
     await User.create(mockUser);
 
     // Report with event to find.
-    reportWithEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { eventId: 'R01-TR-23-1035' },
-    }, { individualHooks: false });
+    reportWithEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-1035',
+        data: { eventId: 'R01-TR-23-1035' },
+      },
+      { individualHooks: false }
+    );
 
     // Report without event to find.
-    reportWithoutEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { eventId: 'R01-TR-23-2484' },
-    }, { individualHooks: false });
+    reportWithoutEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-2484',
+        data: { eventId: 'R01-TR-23-2484' },
+      },
+      { individualHooks: false }
+    );
 
-    // Report with null event.
-    reportWithNullEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { },
-    }, { individualHooks: false });
+    // Report with a non-matching event id (previously created with a null event id,
+    // which is no longer possible now that eventId is a required column).
+    reportWithNullEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        eventId: 'R01-TR-23-0000',
+        data: { eventId: 'R01-TR-23-0000' },
+      },
+      { individualHooks: false }
+    );
 
-    possibleIds = [
-      reportWithEventId.id,
-      reportWithoutEventId.id,
-      reportWithNullEventId.id];
+    possibleIds = [reportWithEventId.id, reportWithoutEventId.id, reportWithNullEventId.id];
   });
 
   afterAll(async () => {

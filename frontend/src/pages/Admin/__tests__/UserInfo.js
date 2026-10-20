@@ -1,14 +1,17 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import UserInfo from '../UserInfo';
 
 describe('UserInfo', () => {
   beforeEach(async () => {
     fetchMock.reset();
-    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
+    fetchMock.get('/api/admin/roles', [
+      { fullName: 'Grantee Specialist', name: 'GS', id: 1 },
+      { fullName: 'COR', name: 'COR', id: 2 },
+    ]);
   });
 
   afterEach(() => fetchMock.restore());
@@ -128,9 +131,7 @@ describe('UserInfo', () => {
 
       // expanded: all 5 items visible (deduped)
       items = within(listScope).getAllByRole('listitem');
-      expect(items.map((li) => li.textContent)).toEqual(
-        ['ROLE_FEDERAL', 'A', 'B', 'C', 'D'],
-      );
+      expect(items.map((li) => li.textContent)).toEqual(['ROLE_FEDERAL', 'A', 'B', 'C', 'D']);
 
       // toggle back to collapse
       await userEvent.click(within(listScope).getByRole('button', { name: /show less/i }));

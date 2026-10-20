@@ -1,13 +1,7 @@
 import { Op } from 'sequelize';
 import db from '../models';
 
-const {
-  sequelize,
-  Goal,
-  Grant,
-  GoalFieldResponse,
-  Recipient,
-} = db;
+const { sequelize, Goal, Grant, GoalFieldResponse, Recipient } = db;
 
 export default async function getGoalsMissingDataForActivityReportSubmission(goalIds: number[]) {
   return Goal.findAll({
@@ -23,7 +17,14 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
       id: goalIds,
     },
     having: sequelize.literal('COUNT(responses.id) = 0'),
-    group: ['Goal.id', 'grant.id', 'grant.recipient.id', 'grant.recipient.name', 'grant.regionId', 'grant.number'],
+    group: [
+      'Goal.id',
+      'grant.id',
+      'grant.recipient.id',
+      'grant.recipient.name',
+      'grant.regionId',
+      'grant.number',
+    ],
     include: [
       {
         model: GoalFieldResponse,
@@ -41,12 +42,14 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
         as: 'grant',
         attributes: [],
         required: true,
-        include: [{
-          model: Recipient,
-          required: true,
-          as: 'recipient',
-          attributes: [],
-        }],
+        include: [
+          {
+            model: Recipient,
+            required: true,
+            as: 'recipient',
+            attributes: [],
+          },
+        ],
       },
     ],
   }) as Array<{

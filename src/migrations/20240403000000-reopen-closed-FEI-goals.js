@@ -23,19 +23,23 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await Promise.all(goalIds.map(async (goalId) => queryInterface.sequelize.query(/* sql */`
+      await Promise.all(
+        goalIds.map(async (goalId) =>
+          queryInterface.sequelize.query(/* sql */ `
       UPDATE "Goals" g
       SET status = 'In Progress'
       WHERE g.id = ${goalId};
-      `)));
+      `)
+        )
+      );
 
       // Prep for merging goals 51094 and 73270 for City of Albuquerque Early Head Start 06CH010672
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(/* sql */ `
       UPDATE "ActivityReportGoals" arg
       SET source = 'Regional office priority'
       WHERE arg.id = 99676;
       `);
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(/* sql */ `
       DELETE FROM "ActivityReportGoals" arg
       WHERE arg.id = 99685;
       `);
@@ -47,11 +51,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await Promise.all(goalIds.map(async (goalId) => queryInterface.sequelize.query(/* sql */`
+      await Promise.all(
+        goalIds.map(async (goalId) =>
+          queryInterface.sequelize.query(/* sql */ `
       UPDATE "Goals" g
       SET status = 'Closed'
       WHERE g.id = ${goalId};
-      `)));
+      `)
+        )
+      );
     });
   },
 };

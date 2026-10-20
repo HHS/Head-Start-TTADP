@@ -1,18 +1,8 @@
 /* eslint-disable max-len */
-import faker from '@faker-js/faker';
-import {
-  TRAINING_REPORT_STATUSES,
-  REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  EventReportPilot,
-  SessionReportPilot,
-  User,
-} from '../models';
-import {
-  getTrainingReportAlerts,
-  getTrainingReportAlertsForUser,
-} from './event';
+import { faker } from '@faker-js/faker';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { EventReportPilot, SessionReportPilot, User } from '../models';
+import { getTrainingReportAlerts, getTrainingReportAlertsForUser } from './event';
 
 jest.mock('bull');
 
@@ -21,9 +11,9 @@ const regionId = 1;
 const CURRENT_DATE = new Date();
 
 async function createEvents({
-  ownerId = faker.datatype.number(),
-  collaboratorId = faker.datatype.number(),
-  pocId = faker.datatype.number(),
+  ownerId = faker.number.int({ min: 0, max: 99999 }),
+  collaboratorId = faker.number.int({ min: 0, max: 99999 }),
+  pocId = faker.number.int({ min: 0, max: 99999 }),
 }) {
   // create some events!!!
   const baseEvent = {
@@ -31,9 +21,13 @@ async function createEvents({
     collaboratorIds: [collaboratorId],
     pocIds: [pocId],
     regionId: 1,
+    // Each spread of this object yields a fresh, unique eventId so the NOT NULL +
+    // UNIQUE `eventId` column never collides across the many events created below.
+    get eventId() {
+      return `R0${regionId}-TR-${faker.string.uuid()}`;
+    },
     data: {
-      eventName: faker.datatype.string(),
-      eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
+      eventName: faker.string.sample(),
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       trainingType: 'Series',
       targetPopulations: ['Children & Families'],
@@ -57,7 +51,7 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  const minus2 = await EventReportPilot.create(baseEvent);
+  const minus2 = await EventReportPilot.create({ ...baseEvent, data: { ...baseEvent.data } });
   testData.ids.push(minus2.id);
 
   // event with no sessions and a start date of today (Will not appear in alerts)
@@ -113,7 +107,7 @@ async function createEvents({
   const c1 = await SessionReportPilot.create({
     eventId: c.id,
     data: {
-      sessionName: faker.datatype.string(),
+      sessionName: faker.string.sample(),
     },
   });
 
@@ -153,11 +147,15 @@ async function createEvents({
   testData.ids.push(f.id);
 
   // poc incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const f1StartDate = new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1));
   const f1 = await SessionReportPilot.create({
     eventId: f.id,
+    startDate: f1StartDate,
+    endDate: CURRENT_DATE,
     data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      sessionName: faker.string.sample(),
+      startDate: f1StartDate,
       endDate: CURRENT_DATE,
       duration: 'Series',
       objective: 'This is an objective',
@@ -192,11 +190,15 @@ async function createEvents({
   testData.ids.push(g.id);
 
   // owner incomplete session
+  // startDate/endDate columns are the source of truth for session dates.
+  const g1StartDate = new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1));
   const g1 = await SessionReportPilot.create({
     eventId: g.id,
+    startDate: g1StartDate,
+    endDate: CURRENT_DATE,
     data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
+      sessionName: faker.string.sample(),
+      startDate: g1StartDate,
       endDate: CURRENT_DATE,
       duration: 'Series',
       objective: 'This is an objective',
@@ -222,7 +224,7 @@ async function createEvents({
     eventId: g.id,
     data: {
       status: TRAINING_REPORT_STATUSES.COMPLETE,
-      sessionName: faker.datatype.string(),
+      sessionName: faker.string.sample(),
       startDate: new Date(CURRENT_DATE.setMonth(CURRENT_DATE.getMonth() - 1)),
       endDate: CURRENT_DATE,
       duration: 'Series',
@@ -255,7 +257,7 @@ async function createEvents({
 }
 
 describe('getTrainingReportAlerts', () => {
-  const ownerId = faker.datatype.number();
+  const ownerId = faker.number.int({ min: 0, max: 99999 });
 
   describe('getAllAlerts', () => {
     let testData;
@@ -267,11 +269,9 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlerts();
       // Filter to just time-based alerts from our test data
       const timeBasedAlerts = alerts.filter(
-        (a) => !['waitingForApproval', 'changesNeeded'].includes(a.alertType),
+        (a) => !['waitingForApproval', 'changesNeeded'].includes(a.alertType)
       );
-      const idsToCheck = timeBasedAlerts
-        .map((i) => i.id)
-        .filter((i) => testData.ids.has(i));
+      const idsToCheck = timeBasedAlerts.map((i) => i.id).filter((i) => testData.ids.has(i));
       const expectedIds = [
         ...new Set([
           ...testData.ist.missingEventInfo,
@@ -285,7 +285,7 @@ describe('getTrainingReportAlerts', () => {
       expectedIds.forEach((expectedId) => {
         expect(idsToCheck).toContain(
           expectedId,
-          `Expected ${expectedId} to be in alerts for time-based alert types`,
+          `Expected ${expectedId} to be in alerts for time-based alert types`
         );
       });
     });
@@ -294,9 +294,10 @@ describe('getTrainingReportAlerts', () => {
       // Create event with endDate 20 days ago
       const eventWithOldEndDate = await EventReportPilot.create({
         ownerId,
-        collaboratorIds: [faker.datatype.number()],
-        pocIds: [faker.datatype.number()],
+        collaboratorIds: [faker.number.int({ min: 0, max: 99999 })],
+        pocIds: [faker.number.int({ min: 0, max: 99999 })],
         regionId: 1,
+        eventId: `R01-TR-ENDDATE-${ownerId}`,
         data: {
           eventName: 'Missing Event Info Test',
           eventId: `R01-TR-ENDDATE-${ownerId}`,
@@ -313,7 +314,7 @@ describe('getTrainingReportAlerts', () => {
 
       const alerts = await getTrainingReportAlerts(ownerId, [1]);
       const missingEventAlert = alerts.find(
-        (a) => a.alertType === 'missingEventInfo' && a.id === eventWithOldEndDate.id,
+        (a) => a.alertType === 'missingEventInfo' && a.id === eventWithOldEndDate.id
       );
 
       expect(missingEventAlert).toBeTruthy();
@@ -336,6 +337,7 @@ describe('getTrainingReportAlerts', () => {
     let approver;
     let event;
     let sessionWaitingForApproval;
+    let sessionWithStaleOwnerComplete;
     let sessionChangesNeeded;
 
     beforeAll(async () => {
@@ -359,6 +361,7 @@ describe('getTrainingReportAlerts', () => {
         collaboratorIds: [approver.id], // Add approver as collaborator so they see the event
         pocIds: [],
         regionId: 1,
+        eventId: 'R01-PD-TESTAPPROVAL',
         data: {
           eventId: 'R01-PD-TESTAPPROVAL',
           eventName: 'Test Approval Event',
@@ -395,6 +398,21 @@ describe('getTrainingReportAlerts', () => {
           isIstVisit: 'yes',
           nextSteps: [{ completeDate: CURRENT_DATE, note: 'Next step 1' }],
           pocComplete: true,
+          collabComplete: true,
+        },
+      });
+
+      // Owner completion left over from national center facilitation after a switch
+      // to regional facilitation; the policy does not treat this as submitted.
+      sessionWithStaleOwnerComplete = await SessionReportPilot.create({
+        eventId: event.id,
+        approverId: approver.id,
+        submitterId: submitter.id,
+        data: {
+          sessionName: 'Session With Stale Owner Complete',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          facilitation: 'regional_tta_staff',
+          ownerComplete: true,
           collabComplete: true,
         },
       });
@@ -442,7 +460,7 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       expect(waitingAlert).toBeTruthy();
       expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
@@ -451,11 +469,21 @@ describe('getTrainingReportAlerts', () => {
       expect(waitingAlert.approverName).toBe('Test Approver');
     });
 
+    it('does not show waitingForApproval for stale completion flags from another workflow', async () => {
+      const alerts = await getTrainingReportAlertsForUser(approver.id, [1]);
+
+      expect(
+        alerts.find(
+          (a) => a.alertType === 'waitingForApproval' && a.id === sessionWithStaleOwnerComplete.id
+        )
+      ).toBeUndefined();
+    });
+
     it('should show waitingForApproval alert to approver', async () => {
       const alerts = await getTrainingReportAlertsForUser(approver.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       expect(waitingAlert).toBeTruthy();
       expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
@@ -466,10 +494,10 @@ describe('getTrainingReportAlerts', () => {
       const approverAlerts = await getTrainingReportAlertsForUser(approver.id, [1]);
 
       const submitterChangesAlert = submitterAlerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
       const approverChangesAlert = approverAlerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
 
       expect(submitterChangesAlert).toBeTruthy();
@@ -489,10 +517,10 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(otherUser.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       const changesAlert = alerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
 
       expect(waitingAlert).toBeUndefined();
@@ -505,7 +533,7 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
 
       expect(waitingAlert.approverName).toBe('Test Approver');

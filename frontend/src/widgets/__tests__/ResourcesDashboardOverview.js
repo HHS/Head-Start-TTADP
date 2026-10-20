@@ -1,9 +1,9 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { render, screen } from '@testing-library/react';
 import { ResourcesDashboardOverviewWidget } from '../ResourcesDashboardOverview';
 
 const renderResourcesDashboardOverview = (props) => {
@@ -12,7 +12,7 @@ const renderResourcesDashboardOverview = (props) => {
   render(
     <Router history={history}>
       <ResourcesDashboardOverviewWidget loading={props.loading} data={props.data} />
-    </Router>,
+    </Router>
   );
 };
 
@@ -24,7 +24,7 @@ describe('Resource Dashboard Overview Widget', () => {
     expect(screen.getByText(/headstart.gov resources/i)).toBeInTheDocument();
     expect(screen.getByText(/recipients reached/i)).toBeInTheDocument();
     expect(screen.getByText(/participants reached/i)).toBeInTheDocument();
-    expect(screen.getByText(/reports citing ipd courses/i)).toBeInTheDocument();
+    expect(screen.getByText(/reports citing eep courses/i)).toBeInTheDocument();
   });
 
   it('shows the correct data', async () => {
@@ -58,6 +58,6 @@ describe('Resource Dashboard Overview Widget', () => {
     expect(await screen.findByText(/765/)).toBeVisible();
     expect(await screen.findByText(/participants reached/i)).toBeVisible();
     expect(await screen.findByText(/88.88%/)).toBeVisible();
-    expect(await screen.findByText(/reports citing ipd courses/i)).toBeVisible();
+    expect(await screen.findByText(/reports citing eep courses/i)).toBeVisible();
   });
 });

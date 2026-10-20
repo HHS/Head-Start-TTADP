@@ -1,23 +1,16 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import FilterPriorityIndicator from '../FilterPriorityIndicator';
 
 const { findByText } = screen;
 
 describe('FilterPriorityIndicator', () => {
-  const renderPriorityIndicatorSelect = (onApply, query = []) => (
+  const renderPriorityIndicatorSelect = (onApply, query = []) =>
     render(
-      <FilterPriorityIndicator
-        onApply={onApply}
-        inputId="priority-indicator-test"
-        query={query}
-      />,
-    ));
+      <FilterPriorityIndicator onApply={onApply} inputId="priority-indicator-test" query={query} />
+    );
 
   it('calls the onApply handler when a priority indicator is selected', async () => {
     const onApply = jest.fn();
@@ -35,7 +28,11 @@ describe('FilterPriorityIndicator', () => {
     const select = await findByText(/select priority indicator to filter by/i);
     await selectEvent.openMenu(select);
 
+<<<<<<< HEAD
     // Verify visible options are present (DRS remains filtered out)
+=======
+    // Verify options are present (only DRS is filtered out)
+>>>>>>> main
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
     expect(screen.getByText('FEI')).toBeInTheDocument();
@@ -44,7 +41,11 @@ describe('FilterPriorityIndicator', () => {
     expect(screen.getByText('No TTA')).toBeInTheDocument();
     expect(screen.getByText('Underenrolled')).toBeInTheDocument();
 
+<<<<<<< HEAD
     // Verify DRS is not present
+=======
+    // Verify DRS is not present (still hidden)
+>>>>>>> main
     expect(screen.queryByText('DRS')).not.toBeInTheDocument();
   });
 

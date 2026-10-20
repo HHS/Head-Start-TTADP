@@ -1,13 +1,14 @@
-import React from 'react';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
-import TopAlert from './TopAlert';
 import { Accordion } from '../../../components/Accordion';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import Submit from './Submit';
 import Approve from './Approve';
 import NeedsAction from './NeedsAction';
+import Submit from './Submit';
+import TopAlert from './TopAlert';
 
 const Review = ({
   reviewItems,
@@ -17,6 +18,7 @@ const Review = ({
   isApprover,
   isAdmin,
   approver,
+  isOwner,
   isSubmitted,
   onUpdatePage,
   onSaveDraft,
@@ -35,8 +37,10 @@ const Review = ({
   }
 
   const { getValues } = useFormContext();
-  const { id, eventId, submitter } = getValues();
+  const { id, eventId, submitter, status } = getValues();
   const history = useHistory();
+  const approverCanEdit =
+    isSubmitted && !isNeedsAction && status !== TRAINING_REPORT_STATUSES.COMPLETE;
 
   return (
     <>
@@ -44,16 +48,15 @@ const Review = ({
 
       <IndicatesRequiredField />
 
-      {(!isApprover && !isNeedsAction) && (
-        <p className="usa-prose margin-top-2 margin-bottom-4">Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.</p>
+      {!isApprover && !isNeedsAction && (
+        <p className="usa-prose margin-top-2 margin-bottom-4">
+          Review the information in each section before submitting for approval. Once submitted, you
+          will no longer be able to edit the report.
+        </p>
       )}
 
       {isSubmitted && (
-      <TopAlert
-        isNeedsAction={isNeedsAction}
-        submitter={submitter}
-        approver={approver}
-      />
+        <TopAlert isNeedsAction={isNeedsAction} submitter={submitter} approver={approver} />
       )}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-4">
@@ -70,7 +73,7 @@ const Review = ({
               },
             }))}
             multiselectable
-            canEdit={!isApprover}
+            canEdit={!isApprover || approverCanEdit}
             doesStartExpanded={isApprover}
           />
         </div>
@@ -84,6 +87,7 @@ const Review = ({
         pages={pages}
         onFormReview={onFormReview}
         isPoc={isPoc}
+        isOwner={isOwner}
         isAdmin={isAdmin}
       />
     </>
@@ -93,21 +97,26 @@ const Review = ({
 Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    state: PropTypes.string,
-    review: PropTypes.bool,
-    label: PropTypes.string,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string,
+      review: PropTypes.bool,
+      label: PropTypes.string,
+    })
+  ).isRequired,
   approver: PropTypes.shape({
     id: PropTypes.number,
     fullName: PropTypes.string,
   }).isRequired,
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    content: PropTypes.node.isRequired,
-  })).isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    })
+  ).isRequired,
   isPoc: PropTypes.bool.isRequired,
+  isOwner: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,

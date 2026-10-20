@@ -32,8 +32,8 @@ const redisSnapshot = ({
 const buildNotificationJobs = (
   displayId,
   actions = expectedNotificationActions,
-  failedReasonsByAction = {},
-) => (
+  failedReasonsByAction = {}
+) =>
   actions.map((name, index) => ({
     id: index + 1,
     name,
@@ -42,8 +42,7 @@ const buildNotificationJobs = (
       displayId,
       reportPath: `/training-report/${displayId}`,
     },
-  }))
-);
+  }));
 
 const makeDeps = ({
   notificationActions = expectedNotificationActions,
@@ -71,13 +70,12 @@ const makeDeps = ({
   let redisPhase = 0;
   const soakJobs = new Map();
   let removedSoakJobsCount = 0;
-  const selectionPermissionRows = selectionEligibleUserIds.flatMap((id) => ([
+  const selectionPermissionRows = selectionEligibleUserIds.flatMap((id) => [
     { userId: id, scopeId: SITE_ACCESS, regionId: 14 },
     { userId: id, scopeId: READ_WRITE_TRAINING_REPORTS, regionId: selectionRegionId },
-  ]));
-  const currentSnapshot = () => (
-    redisSnapshots[Math.min(redisPhase, redisSnapshots.length - 1)] || redisSnapshot()
-  );
+  ]);
+  const currentSnapshot = () =>
+    redisSnapshots[Math.min(redisPhase, redisSnapshots.length - 1)] || redisSnapshot();
   const infoFor = (snap, section) => {
     if (section === 'clients') {
       return `connected_clients:${snap.connectedClients}\nblocked_clients:${snap.blockedClients}\n`;
@@ -87,24 +85,25 @@ const makeDeps = ({
     }
     return `rejected_connections:${snap.rejectedConnections}\nevicted_keys:${snap.evictedKeys}\n`;
   };
-  const clientListFor = (snap) => (
+  const clientListFor = (snap) =>
     Array.from({ length: snap.clientListCount })
       .map((_, i) => `id=${i + 1} addr=127.0.0.1:${6000 + i}`)
-      .join('\n')
-  );
-  const soakStateCounts = () => (
-    Array.from(soakJobs.values()).reduce((acc, job) => ({
-      ...acc,
-      [job.state]: (acc[job.state] || 0) + 1,
-    }), {
-      waiting: 0,
-      active: 0,
-      delayed: 0,
-      completed: 0,
-      failed: 0,
-      paused: 0,
-    })
-  );
+      .join('\n');
+  const soakStateCounts = () =>
+    Array.from(soakJobs.values()).reduce(
+      (acc, job) => ({
+        ...acc,
+        [job.state]: (acc[job.state] || 0) + 1,
+      }),
+      {
+        waiting: 0,
+        active: 0,
+        delayed: 0,
+        completed: 0,
+        failed: 0,
+        paused: 0,
+      }
+    );
 
   const deps = {
     sequelize: {
@@ -136,9 +135,11 @@ const makeDeps = ({
     },
     User: {
       findByPk: jest.fn().mockResolvedValue({ id: 1001 }),
-      findAll: jest.fn().mockResolvedValue(
-        selectionEligibleUserIds.map((id) => ({ id, email: `user${id}@example.com` })),
-      ),
+      findAll: jest
+        .fn()
+        .mockResolvedValue(
+          selectionEligibleUserIds.map((id) => ({ id, email: `user${id}@example.com` }))
+        ),
     },
     Resource: {
       create: jest.fn().mockResolvedValue({ id: 2001 }),
@@ -146,9 +147,7 @@ const makeDeps = ({
       destroy: jest.fn().mockImplementation(resourceDestroy),
     },
     File: {
-      findByPk: jest.fn()
-        .mockResolvedValueOnce({ status: fileStatus })
-        .mockResolvedValueOnce(null),
+      findByPk: jest.fn().mockResolvedValueOnce({ status: fileStatus }).mockResolvedValueOnce(null),
       destroy: jest.fn().mockResolvedValue(undefined),
     },
     createEvent: jest.fn().mockImplementation(async (request) => {
@@ -194,26 +193,27 @@ const makeDeps = ({
         if (!states.length) {
           return counts;
         }
-        return states.reduce((acc, state) => ({
-          ...acc,
-          [state]: counts[state] || 0,
-        }), {});
+        return states.reduce(
+          (acc, state) => ({
+            ...acc,
+            [state]: counts[state] || 0,
+          }),
+          {}
+        );
       }),
-      getJobs: jest.fn(async ([state]) => (
-        [
-          ...(state === 'completed'
-            ? buildNotificationJobs(eventDisplayId, notificationActions)
-            : []),
-          ...(state === 'failed'
-            ? buildNotificationJobs(
+      getJobs: jest.fn(async ([state]) => [
+        ...(state === 'completed'
+          ? buildNotificationJobs(eventDisplayId, notificationActions)
+          : []),
+        ...(state === 'failed'
+          ? buildNotificationJobs(
               eventDisplayId,
               notificationFailedActions,
-              notificationFailedReasonsByAction,
+              notificationFailedReasonsByAction
             )
-            : []),
-          ...Array.from(soakJobs.values()).filter((job) => job.state === state),
-        ]
-      )),
+          : []),
+        ...Array.from(soakJobs.values()).filter((job) => job.state === state),
+      ]),
     },
     debug: {
       getRemovedSoakJobsCount: () => removedSoakJobsCount,
@@ -227,10 +227,13 @@ const makeDeps = ({
 describe('queueExerciseLive', () => {
   it('auto-selects region and actors when omitted', async () => {
     const deps = makeDeps();
-    const result = await runQueueExerciseLive({
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.preflight.passed).toBe(true);
     expect(result.options.region).toBe(1);
@@ -241,12 +244,15 @@ describe('queueExerciseLive', () => {
 
   it('returns a passing summary when all flows complete', async () => {
     const deps = makeDeps();
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.preflight.passed).toBe(true);
     expect(result.flows.notifications.passed).toBe(true);
@@ -259,13 +265,16 @@ describe('queueExerciseLive', () => {
 
   it('runs soak test and passes when all soak jobs complete within thresholds', async () => {
     const deps = makeDeps();
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      soak: 25,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        soak: 25,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.soak.enabled).toBe(true);
     expect(result.flows.soak.requestedActions).toBe(25);
@@ -283,13 +292,16 @@ describe('queueExerciseLive', () => {
       soakJobState: 'failed',
       soakFailedReasons: ['SMTP timeout', 'SMTP timeout', 'Template missing'],
     });
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      soak: 10,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        soak: 10,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.soak.enabled).toBe(true);
     expect(result.flows.soak.failedActions).toBe(10);
@@ -329,13 +341,16 @@ describe('queueExerciseLive', () => {
         }),
       ],
     });
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      soak: 10,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        soak: 10,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.soak.enabled).toBe(true);
     expect(result.flows.soak.passed).toBe(false);
@@ -347,12 +362,15 @@ describe('queueExerciseLive', () => {
     const deps = makeDeps({
       notificationActions: [EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED],
     });
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 0.02,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 0.02,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.notifications.passed).toBe(false);
     expect(result.flows.notifications.error).toContain('Timed out');
@@ -371,15 +389,20 @@ describe('queueExerciseLive', () => {
         [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED]: 'SMTP timeout',
       },
     });
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.notifications.passed).toBe(false);
-    expect(result.flows.notifications.error).toContain('failed=[trainingReportSessionCreated:SMTP timeout]');
+    expect(result.flows.notifications.error).toContain(
+      'failed=[trainingReportSessionCreated:SMTP timeout]'
+    );
     expect(result.flows.notifications.failedReasonCounts).toEqual([
       { reason: 'SMTP timeout', count: 1 },
     ]);
@@ -393,14 +416,17 @@ describe('queueExerciseLive', () => {
 
   it('retains soak jobs when keepSoakJobs is enabled', async () => {
     const deps = makeDeps();
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      soak: 8,
-      keepSoakJobs: true,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        soak: 8,
+        keepSoakJobs: true,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.soak.passed).toBe(true);
     expect(result.flows.soak.retainedJobs).toBe(true);
@@ -416,15 +442,20 @@ describe('queueExerciseLive', () => {
       selectionEligibleUserIds: [1001, 1002],
     });
 
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.preflight.passed).toBe(false);
-    expect(result.preflight.error).toContain('collaboratorUserId 1002 is not notification-eligible');
+    expect(result.preflight.error).toContain(
+      'collaboratorUserId 1002 is not notification-eligible'
+    );
   });
 
   it('fails resource flow when metadata state never updates', async () => {
@@ -437,12 +468,15 @@ describe('queueExerciseLive', () => {
       }),
     });
 
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 0.02,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 0.02,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.resource.passed).toBe(false);
     expect(result.flows.resource.error).toContain('Timed out');
@@ -456,12 +490,15 @@ describe('queueExerciseLive', () => {
 
     deps.File.findByPk = jest.fn().mockResolvedValue({ status: FILE_STATUSES.QUEUED });
 
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 0.02,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 0.02,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.scan.passed).toBe(false);
     expect(result.flows.scan.error).toContain('Timed out');
@@ -475,12 +512,15 @@ describe('queueExerciseLive', () => {
       },
     });
 
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 1,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 1,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.cleanup.passed).toBe(false);
     expect(result.cleanup.errors.some((e) => e.includes('resource cleanup failed'))).toBe(true);
@@ -491,12 +531,15 @@ describe('queueExerciseLive', () => {
       downloadFile: async () => ({ Body: Buffer.from('still there') }),
     });
 
-    const result = await runQueueExerciseLive({
-      region: 1,
-      ownerUserId: 1001,
-      timeoutSec: 0.02,
-      pollMs: 1,
-    }, deps);
+    const result = await runQueueExerciseLive(
+      {
+        region: 1,
+        ownerUserId: 1001,
+        timeoutSec: 0.02,
+        pollMs: 1,
+      },
+      deps
+    );
 
     expect(result.flows.s3.passed).toBe(false);
     expect(result.flows.s3.error).toContain('Timed out');

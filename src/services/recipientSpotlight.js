@@ -1,10 +1,34 @@
 /* eslint-disable max-len */
+
+import { FEI_HS_STATUSES } from '@ttahub/common';
 import { Op, QueryTypes } from 'sequelize';
-import {
-  sequelize,
-  Grant,
-  Recipient,
-} from '../models';
+import { Grant, Recipient, sequelize } from '../models';
+
+// Of the possible imported FEI statuses (FEI_HS_STATUSES), these indicate the
+// grant is currently in the Full Enrollment Initiative — covering the 12-month
+// period, Central Office Review, and the designated chronically underenrolled
+// (DCU) 6-month evaluation statuses.
+// Note: the standalone "Month X of 6 Month Evaluation Period" status is
+// intentionally NOT part of the initiative and is excluded here on purpose.
+// We filter the canonical list so the exact strings live in one place and any
+// drift in FEI_HS_STATUSES is reflected here automatically. This membership may
+// change going forward, so it is kept in one spot.
+const FEI_IN_INITIATIVE_STATUSES = FEI_HS_STATUSES.filter((status) =>
+  [
+    'Notified of 12 Month Period',
+    'Month X of 12 Month Period',
+    'DCU Month X of 6 Month DCU Evaluation',
+    'Central Office Review',
+    'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+    'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+  ].includes(status)
+);
+
+// FEI statuses that indicate a grant reports below 97% enrollment but has not
+// reached 4 consecutive months of underenrollment.
+const FEI_UNDERENROLLED_STATUSES = FEI_HS_STATUSES.filter(
+  (status) => status === 'Underenrolled less than 4 Months'
+);
 
 // Map from indicator label (as shown in UI) to column name in SQL
 const INDICATOR_LABEL_TO_COLUMN = {
@@ -16,6 +40,7 @@ const INDICATOR_LABEL_TO_COLUMN = {
   Underenrolled: 'underenrolled',
   DRS: 'DRS',
   FEI: 'FEI',
+  Underenrolled: 'underenrolled',
 };
 
 // Whitelist of allowed sortBy column names to prevent SQL injection
@@ -32,6 +57,7 @@ const ALLOWED_SORT_COLUMNS = [
   'underenrolled',
   'DRS',
   'FEI',
+  'underenrolled',
   'indicatorCount',
 ];
 
@@ -49,7 +75,7 @@ export async function getRecipientSpotlightIndicators(
   indicatorsToInclude = [],
   indicatorsToExclude = [],
   singleGrantId = null,
-  mustHaveIndicators = false,
+  mustHaveIndicators = false
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -103,20 +129,18 @@ export async function getRecipientSpotlightIndicators(
 
   /*
     Create the spotlight query using the grant ids and other params.
-    At the time of writing this comment, there will be a total of seven spotlight indicators.
-    For the MVP we will only implement 5 of them. Based on the grant ids we will create the
-    raw sql query and return an array of objects. Each row is a recipient the recipient object
-    should have the following properties
+    At the time of writing this comment, there will be a total of eight spotlight indicators.
+    Based on the grant ids we will create the raw sql query and return an array of objects.
+    Each row is a recipient the recipient object should have the following properties
     recipientId, regionId, grantIds, childIncidents, deficiency, newRecipients,
-    newStaff, noTTA, DRS, FEI
-    with a true or false for each of the seven indicators. We want to handle pagination,
-    sorting
-    given the parameters. For now for DRS and FEI we will return false.
+    newStaff, noTTA, DRS, FEI, underenrolled
+    with a true or false for each of the indicators. We want to handle pagination,
+    sorting given the parameters. DRS is not yet implemented and will return false.
 
     Note: LTM = Last Twelve Months
 
-    Description of the seven indicators:
-    1. Child Incidents (monitoring data): Grants that have more than one child incident
+    Description of the indicators:
+    1. Child Incidents (monitoring data): Grants that have at least one child incident
     (RAN) monitoring citation in LTM (MonitoringReviews.ReviewType).
     2. Deficiency (monitoring data): Grants that have at least one review > finding > standard
       (citation) that has a MonitoringFindingHistories.determination of Deficiency.
@@ -126,7 +150,10 @@ export async function getRecipientSpotlightIndicators(
     which matches recipientLeadership() in src/services/recipient.js
     5. No TTA: There are no approved reports (AR) for this recipient in the LTM.
     6. DRS: TBD
-    7. FEI: TBD
+    7. FEI: Grant is currently in the Full Enrollment Initiative based on its FEI HS
+    or FEI EHS status (see FEI_IN_INITIATIVE_STATUSES above).
+    8. Underenrolled: Grant reports below 97% enrollment but has not reached 4 consecutive
+    months of underenrollment (see FEI_UNDERENROLLED_STATUSES above).
 */
   const grantIdList = grantIds.map((g) => g.id);
   const hasGrantIds = grantIdList.length > 0;
@@ -146,7 +173,8 @@ export async function getRecipientSpotlightIndicators(
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active grants in the regions,
   // regardless of other scope filters, to get the true denominator for the percentage
-  const totalRecipientsResult = await sequelize.query(`
+  const totalRecipientsResult = await sequelize.query(
+    `
     SELECT COUNT(*) AS "totalRecipients"
     FROM (
       SELECT DISTINCT r.id, gr."regionId"
@@ -155,17 +183,21 @@ export async function getRecipientSpotlightIndicators(
       WHERE gr."regionId" IN (:regions)
         AND gr.status = 'Active'
     ) AS recipient_regions
-  `, {
-    replacements: {
-      regions: regions.map((r) => parseInt(r, 10)),
-    },
-    type: QueryTypes.SELECT,
-  });
+  `,
+    {
+      replacements: {
+        regions: regions.map((r) => parseInt(r, 10)),
+      },
+      type: QueryTypes.SELECT,
+    }
+  );
   const totalRecipients = parseInt(totalRecipientsResult[0]?.totalRecipients || 0, 10);
 
   // Validate and sanitize sortBy and direction to prevent SQL injection
   const safeSortBy = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'recipientName';
-  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
+  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase())
+    ? direction.toUpperCase()
+    : 'ASC';
 
   let indicatorWhereClause = '';
 
@@ -198,8 +230,6 @@ export async function getRecipientSpotlightIndicators(
   const spotLightSql = `
     WITH
     -- Creating some useful CTEs
-    -- make it easy to limit to only monitoring data in the valid timeframe
-    monitoring_dates AS ( SELECT '2025-01-21'::date monitoring_start_date),
     -- Join grants and recipients so we don't have to do it repeatedly
     grant_recipients AS (
       SELECT
@@ -220,7 +250,7 @@ export async function getRecipientSpotlightIndicators(
       rname,
       region,
       ARRAY_AGG(DISTINCT grid)::text[] grant_ids,
-      MAX(ar."startDate") last_tta,
+      MAX(ar."endDate") last_tta,
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
       -- blank is recipient mode, nonblank is grantmode
@@ -235,9 +265,11 @@ export async function getRecipientSpotlightIndicators(
       AND ar."calculatedStatus" = 'approved'
     GROUP BY 1,2,3
     ),
-    -- In recipient mode we care about all the grants for a recipient
-    -- not just the ones in the filter. In grantmode we only want the
-    -- indicators calculated for that specific grant.
+    -- In recipient mode we care about all the grants for a recipient in this
+    -- region (not just the ones passing the other filters), so indicators are
+    -- computed at the recipient+region level. Grants in other regions belong to
+    -- that recipient's other region cards and must not bleed in here. In
+    -- grantmode we only want the indicators calculated for that specific grant.
     all_grants AS (
     SELECT DISTINCT
       r.rid,
@@ -246,104 +278,58 @@ export async function getRecipientSpotlightIndicators(
       gr.id grid,
       gr."startDate" grstart,
       gr.number grnumber,
-      gr.status grstatus
+      gr.status grstatus,
+      gr."feiHsStatus" fei_hs_status,
+      gr."feiEhsStatus" fei_ehs_status
     FROM recipients r
     JOIN grant_recipients g
       ON r.rid = g.rid
     JOIN "Grants" gr
       ON r.rid = gr."recipientId"
+      AND gr."regionId" = r.region
       AND (
         NOT grantmode OR
         g.grid = gr.id
       )
     WHERE (gr.deleted IS NULL OR NOT gr.deleted)
     ),
-    -- Select all the potentially-relevant reviews
-    -- for early filtering of monitoring datasets
-    all_reviews AS (
-    SELECT DISTINCT
-      rid,
-      region,
-      grid,
-      mr."reviewId" ruuid,
-      mr."reviewType" review_type,
-      mrs.name review_status,
-      mr."reportDeliveryDate" rdd,
-      mr."startDate" rsd,
-      mr."sourceCreatedAt" rsc
-    FROM all_grants
-    JOIN "MonitoringReviewGrantees" mrg
-      ON grnumber = mrg."grantNumber"
-    JOIN "MonitoringReviews" mr
-      ON mrg."reviewId" = mr."reviewId"
-    JOIN "MonitoringReviewStatuses" mrs
-      ON mr."statusId" = mrs."statusId"
-    CROSS JOIN monitoring_dates
-    WHERE mr."deletedAt" IS NULL 
-      AND grstatus = 'Active'
-      AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
-      )
-    ),
     ---------------------------------------
     -- Spotlight indicators ---------------
     ---------------------------------------
-    -- 1. Child Incidents: Grants with more than one RAN citation in the last 12 months
+    -- 1. Child Incidents: Grants with at least one RAN citation in the last 12 months
     child_incidents AS (
-      SELECT
+      SELECT DISTINCT
         rid incident_rid,
         region incident_region
-      FROM all_reviews
-      WHERE review_type = 'RAN'
-        AND review_status = 'Complete'
-        AND rdd >= NOW() - INTERVAL '12 months'
-      GROUP BY 1,2
-      HAVING COUNT(*) > 1
+      FROM all_grants
+      JOIN "GrantDeliveredReviews" gdr
+        ON grid = gdr."grantId"
+      JOIN "DeliveredReviews" dr
+        ON gdr."deliveredReviewId" = dr.id
+      WHERE dr."deletedAt" IS NULL
+        AND grstatus = 'Active'
+        AND dr.review_type = 'RAN'
+        AND dr.review_status = 'Complete'
+        AND dr.report_delivery_date >= NOW() - INTERVAL '12 months'
     ),
     
-    -- 2. Deficiency: Recipients with at least one uncorrected deficiency
-    --    in monitoring findings. The logic for "uncorrected" is complex
-    --    because we cannot simply rely on the finding's statusId value.
-
-    -- associate each citation with its most recent review to see 
-    ordered_citation_reviews AS (
-    SELECT DISTINCT ON (mf."findingId")
-      rid,
-      region,
-      grid,
-      mf."findingId" fid,
-      -- this is only safe with deficiencies because AOCs and ANCs are not
-      -- consistent between findingType and determination
-      COALESCE(mfh.determination, mf."findingType") finding_type,
-      mfs.name finding_status,
-      ruuid,
-      review_status,
-      rdd
-    FROM "MonitoringFindings" mf
-    JOIN "MonitoringFindingHistories" mfh
-      ON mf."findingId" = mfh."findingId"
-      AND mf."sourceDeletedAt" IS NULL
-    JOIN all_reviews
-      ON mfh."reviewId" = ruuid
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    WHERE mf."findingType" = 'Deficiency'
-      OR mfs.name = 'Elevated Deficiency'
-    ORDER BY mf."findingId",rsd DESC, rsc DESC
-    ),
+    -- 2. Deficiency: Recipients with at least one active Deficiency citation
     deficiencies AS (
       SELECT DISTINCT
-        rid deficiency_rid,
-        region deficiency_region
-      FROM ordered_citation_reviews
-      WHERE finding_status IN ('Active','Elevated Deficiency')
-        OR rdd IS NULL
+        ag.rid deficiency_rid,
+        ag.region deficiency_region
+      FROM "Citations" c
+      JOIN "GrantCitations" gc ON c.id = gc."citationId"
+      JOIN all_grants ag ON gc."grantId" = ag.grid
+      WHERE c.calculated_finding_type = 'Deficiency'
+        AND c.active = TRUE
+        AND c."deletedAt" IS NULL
+        AND ag.grstatus = 'Active'
     ),
 
-    -- 3. New Recipients: Recipients with oldest grant less than 4 years old
-    --    this checks all recipient grants even in grantmode
+    -- 3. New Recipients: Recipients with oldest grant in this region less than
+    --    4 years old. Scoped to the card's region so a recipient can be new in
+    --    one region without other regions' older grants suppressing it.
     new_recipients AS (
       SELECT
         rid new_recip_rid,
@@ -351,6 +337,7 @@ export async function getRecipientSpotlightIndicators(
       FROM recipients
       JOIN "Grants" gr
         ON gr."recipientId" = rid
+        AND gr."regionId" = region
       WHERE (gr.deleted IS NULL OR NOT gr.deleted)
       GROUP BY 1,2
       HAVING MIN(gr."startDate") >= NOW() - INTERVAL '4 years'
@@ -376,7 +363,7 @@ export async function getRecipientSpotlightIndicators(
     SELECT (jsonb_array_elements(data->'recipients')->>'value')::integer session_grid
     FROM "SessionReportPilots"
     WHERE data->>'status' = 'Complete'
-      AND (data->>'startDate')::timestamp >= NOW() - INTERVAL '12 months'
+      AND "startDate" >= NOW() - INTERVAL '12 months'
     ),
     grants_with_tta AS (
       SELECT
@@ -423,6 +410,35 @@ export async function getRecipientSpotlightIndicators(
         region no_tta_region
       FROM grants_without_tta
     ),
+    -- 7. FEI: Grants currently in the Full Enrollment Initiative
+    --    (based on the grant's FEI HS or FEI EHS status).
+    --    The applicable statuses may change going forward, so they are
+    --    sourced from a derived constant (FEI_IN_INITIATIVE_STATUSES).
+    fei AS (
+      SELECT DISTINCT
+        rid fei_rid,
+        region fei_region
+      FROM all_grants
+      WHERE grstatus = 'Active'
+        AND (
+          fei_hs_status IN (:feiInitiativeStatuses)
+          OR fei_ehs_status IN (:feiInitiativeStatuses)
+        )
+    ),
+    -- 8. Underenrolled: Grants that report below 97% enrollment but have not
+    --    reached 4 consecutive months of underenrollment
+    --    (FEI HS or FEI EHS status of "Underenrolled less than 4 Months").
+    underenrolled AS (
+      SELECT DISTINCT
+        rid underenrolled_rid,
+        region underenrolled_region
+      FROM all_grants
+      WHERE grstatus = 'Active'
+        AND (
+          fei_hs_status IN (:feiUnderenrolledStatuses)
+          OR fei_ehs_status IN (:feiUnderenrolledStatuses)
+        )
+    ),
     -- Combine all indicators into one result set
     combined_indicators AS (
       SELECT
@@ -438,13 +454,19 @@ export async function getRecipientSpotlightIndicators(
         no_tta_rid IS NOT NULL "noTTA",
         FALSE AS "underenrolled", -- Placeholder for future implementation
         FALSE AS "DRS",  -- Placeholder for future implementation
-        FALSE AS "FEI",   -- Placeholder for future implementation
+        fei_rid IS NOT NULL "FEI",
+        underenrolled_rid IS NOT NULL "underenrolled",
         (incident_rid IS NOT NULL)::int +
         (deficiency_rid IS NOT NULL)::int +
         (new_recip_rid IS NOT NULL)::int +
         (new_staff_rid IS NOT NULL)::int +
         (no_tta_rid IS NOT NULL)::int +
+<<<<<<< HEAD
         FALSE::int "indicatorCount"
+=======
+        (fei_rid IS NOT NULL)::int +
+        (underenrolled_rid IS NOT NULL)::int "indicatorCount"
+>>>>>>> main
       FROM recipients
       LEFT JOIN child_incidents ci
         ON rid = incident_rid
@@ -461,6 +483,12 @@ export async function getRecipientSpotlightIndicators(
       LEFT JOIN no_tta nt
         ON rid = no_tta_rid
         AND region = no_tta_region
+      LEFT JOIN fei f
+        ON rid = fei_rid
+        AND region = fei_region
+      LEFT JOIN underenrolled ue
+        ON rid = underenrolled_rid
+        AND region = underenrolled_region
     )
 
     SELECT
@@ -469,24 +497,23 @@ export async function getRecipientSpotlightIndicators(
     FROM combined_indicators
     WHERE ${indicatorWhereClause}
     ORDER BY "${safeSortBy}" ${safeDirection}${
-  (safeSortBy === 'indicatorCount' || safeSortBy === 'regionId') ? ', "recipientName" ASC' : ''
-}
-    ${hasGrantIds ? `LIMIT ${limit}` : ''}
+      safeSortBy === 'indicatorCount' || safeSortBy === 'regionId' ? ', "recipientName" ASC' : ''
+    }
+    ${hasGrantIds && Number.isInteger(limit) && limit > 0 ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
   `;
 
   // Execute the raw SQL query to get the recipient spotlight indicators.
-  const spotlightSqlData = await sequelize.query(
-    spotLightSql,
-    {
-      type: QueryTypes.SELECT,
+  const spotlightSqlData = await sequelize.query(spotLightSql, {
+    replacements: {
+      feiInitiativeStatuses: FEI_IN_INITIATIVE_STATUSES,
+      feiUnderenrolledStatuses: FEI_UNDERENROLLED_STATUSES,
     },
-  );
+    type: QueryTypes.SELECT,
+  });
 
   // Extract total count from the first row (window function includes it on every row)
-  const totalCount = spotlightSqlData.length > 0
-    ? parseInt(spotlightSqlData[0].totalCount, 10)
-    : 0;
+  const totalCount = spotlightSqlData.length > 0 ? parseInt(spotlightSqlData[0].totalCount, 10) : 0;
 
   // Remove totalCount from each recipient object before returning
   const recipients = spotlightSqlData.map(({ totalCount: _, ...recipient }) => recipient);
@@ -498,9 +525,8 @@ export async function getRecipientSpotlightIndicators(
     overview: {
       numRecipients: totalCount.toString(), // This is the total number of cards (recipient:region).
       totalRecipients: totalRecipients.toString(), // This is the total number of recipient:region for denom.
-      recipientPercentage: totalRecipients > 0
-        ? `${Math.round((totalCount / totalRecipients) * 100)}%`
-        : '0%',
+      recipientPercentage:
+        totalRecipients > 0 ? `${Math.round((totalCount / totalRecipients) * 100)}%` : '0%',
     },
   };
 }

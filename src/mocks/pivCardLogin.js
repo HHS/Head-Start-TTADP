@@ -88,9 +88,7 @@ const userInfoPivCardLogin = {
   },
   oauth2Request: {
     clientId: 'test-client-id',
-    scope: [
-      'user_info',
-    ],
+    scope: ['user_info'],
     requestParameters: {
       code: 'code',
       grant_type: 'authorization_code',
@@ -109,9 +107,7 @@ const userInfoPivCardLogin = {
     approved: true,
     refresh: false,
     redirectUri: 'http://localhost:8080/oauth2-client/login/oauth2/code/',
-    responseTypes: [
-      'code',
-    ],
+    responseTypes: ['code'],
     extensions: {},
     refreshTokenRequest: null,
     grantType: 'authorization_code',

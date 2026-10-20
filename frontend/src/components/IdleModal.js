@@ -4,10 +4,10 @@
   milliseconds the logout prop is called.
 */
 
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { useIdleTimer } from 'react-idle-timer';
 import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { useIdleTimer } from 'react-idle-timer';
 import Modal from './Modal';
 
 // list of events to determine activity
@@ -42,11 +42,14 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
 
   // Make sure we clean up any timeout functions when this component
   // is unmounted
-  useEffect(() => function cleanup() {
-    if (inactiveTimeout) {
-      clearTimeout(inactiveTimeout);
-    }
-  });
+  useEffect(
+    () =>
+      function cleanup() {
+        if (inactiveTimeout) {
+          clearTimeout(inactiveTimeout);
+        }
+      }
+  );
 
   const onIdle = () => {
     const timer = setTimeout(() => {
@@ -80,11 +83,8 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
       cancelButtonText="Stay logged in"
     >
       <Alert role="alert" type="warning">
-        You will be automatically logged out due to inactivity in
-        {' '}
-        {timeToLogoutMsg}
-        {' '}
-        unless you become active again.
+        You will be automatically logged out due to inactivity in {timeToLogoutMsg} unless you
+        become active again.
       </Alert>
     </Modal>
   );

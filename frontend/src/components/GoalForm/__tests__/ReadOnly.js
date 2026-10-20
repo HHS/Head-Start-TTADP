@@ -1,8 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import ReadOnly from '../ReadOnly';
 
 describe('ReadOnly', () => {
@@ -16,13 +14,7 @@ describe('ReadOnly', () => {
   ];
 
   const renderReadOnly = () => {
-    render((
-      <ReadOnly
-        createdGoals={createdGoals}
-        onEdit={jest.fn()}
-        onRemove={jest.fn()}
-      />
-    ));
+    render(<ReadOnly createdGoals={createdGoals} onEdit={jest.fn()} onRemove={jest.fn()} />);
   };
 
   it('can render with a null endDate no problem', async () => {
@@ -52,13 +44,13 @@ describe('ReadOnly', () => {
       },
     ];
 
-    render((
+    render(
       <ReadOnly
         createdGoals={multipleGoalsWithSameTemplate}
         onEdit={jest.fn()}
         onRemove={jest.fn()}
       />
-    ));
+    );
 
     // Both goals should be visible even though they share the same goalTemplateId
     expect(await screen.findByText('First goal from template')).toBeVisible();

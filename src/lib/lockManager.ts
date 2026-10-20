@@ -1,8 +1,8 @@
 /* istanbul ignore file: tested but not showing as tested for coverage purposes */
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
-import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
+import { generateRedisConfig } from './queue';
 
 export default class LockManager {
   private redis: Redis;
@@ -30,20 +30,10 @@ export default class LockManager {
     process.on('SIGINT', this.handleShutdown);
     process.on('SIGTERM', this.handleShutdown);
     process.on('uncaughtException', this.handleShutdown);
-    process.on(
-      'unhandledRejection',
-      this.handleShutdown as unknown as (
-        reason,
-        promise,
-      ) => void,
-    );
+    process.on('unhandledRejection', this.handleShutdown as unknown as (reason, promise) => void);
   }
 
-  constructor(
-    lockKey: string,
-    lockTTL = 2 * 1000,
-    redisConfig = generateRedisConfig(),
-  ) {
+  constructor(lockKey: string, lockTTL = 2 * 1000, redisConfig = generateRedisConfig()) {
     const config = {
       ...redisConfig?.redisOpts?.redis,
       uri: redisConfig?.uri,
@@ -57,7 +47,10 @@ export default class LockManager {
     this.lockTTL = lockTTL;
 
     if (this.redis.client && process.env.NODE_ENV !== 'test') {
-      this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`);
+      this.redis.client(
+        'SETNAME',
+        `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`
+      );
     }
 
     this.registerEventListeners();
@@ -69,10 +62,7 @@ export default class LockManager {
     process.removeListener('uncaughtException', this.handleShutdown);
     process.removeListener(
       'unhandledRejection',
-      this.handleShutdown as unknown as (
-        reason,
-        promise,
-      ) => void,
+      this.handleShutdown as unknown as (reason, promise) => void
     );
   }
 
@@ -119,7 +109,7 @@ export default class LockManager {
         if (!hasLock) {
           auditLogger.log(
             'info',
-            `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`,
+            `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`
           );
           await this.close();
           return;
@@ -161,7 +151,7 @@ export default class LockManager {
       1,
       `${this.lockKey}`,
       this.lockValue,
-      ttl,
+      ttl
     );
 
     return result === 1;
@@ -175,7 +165,9 @@ export default class LockManager {
       try {
         const renewed = await this.renewHoldTTL(ttl);
         if (!renewed) {
-          auditLogger.error(`Failed to renew the lock for key "${this.lockKey}". Another instance may take over.`);
+          auditLogger.error(
+            `Failed to renew the lock for key "${this.lockKey}". Another instance may take over.`
+          );
           this.stopRenewal();
         }
       } catch (error) {

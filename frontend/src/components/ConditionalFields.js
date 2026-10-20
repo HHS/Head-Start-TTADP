@@ -1,6 +1,6 @@
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import PropTypes from 'prop-types';
 import ConditionalMultiselect from './ConditionalMultiselect';
 import CONDITIONAL_FIELD_CONSTANTS from './condtionalFieldConstants';
 
@@ -8,15 +8,7 @@ const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: ({
-      error,
-      field,
-      validations,
-      value,
-      onChange,
-      onBlur,
-      userCanEdit,
-    }) => (
+    render: ({ error, field, validations, value, onChange, onBlur, userCanEdit }) => (
       <ConditionalMultiselect
         fieldData={field}
         validations={validations}
@@ -106,7 +98,7 @@ ConditionalFields.propTypes = {
     PropTypes.shape({
       fieldType: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,

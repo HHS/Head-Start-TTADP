@@ -1,18 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-import GrantLabel from '../GrantLabel';
+import React from 'react';
 import { withText } from '../../../../testHelpers';
+import GrantLabel from '../GrantLabel';
 
 describe('GrantLabel', () => {
   test('renders the label and value', async () => {
-    render(
-      <GrantLabel
-        label="label"
-        value="value"
-      />,
-    );
+    render(<GrantLabel label="label" value="value" />);
     const found = await screen.findByText(withText('label: value'));
     expect(found).toBeVisible();
   });

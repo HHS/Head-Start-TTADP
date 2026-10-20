@@ -61,8 +61,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.name = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: name');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: name'
+      );
     });
 
     it('should throw error when startDate is missing', async () => {
@@ -74,8 +75,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.startDate = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: startDate');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: startDate'
+      );
     });
 
     it('should throw error when endDate is missing', async () => {
@@ -87,8 +89,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.endDate = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: endDate');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: endDate'
+      );
     });
 
     it('should throw error when duration is missing', async () => {
@@ -100,8 +103,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.duration = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: duration');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: duration'
+      );
     });
 
     it('should throw error when isStateActivity is missing', async () => {
@@ -113,8 +117,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.isStateActivity = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: isStateActivity');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: isStateActivity'
+      );
     });
 
     it('should throw error when conductMethod is missing', async () => {
@@ -126,8 +131,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.conductMethod = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: conductMethod');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: conductMethod'
+      );
     });
 
     it('should throw error when description is missing', async () => {
@@ -139,8 +145,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.description = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: description');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: description'
+      );
     });
 
     it('should handle empty string values as missing', async () => {
@@ -152,8 +159,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.name = '';
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: name');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: name'
+      );
     });
 
     it('should handle undefined values as missing', async () => {
@@ -165,8 +173,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.description = undefined;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: description');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: description'
+      );
     });
 
     it('should handle false boolean values correctly for isStateActivity', async () => {
@@ -190,8 +199,9 @@ describe('collabReport hooks', () => {
       mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.duration = 0;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: duration');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: duration'
+      );
     });
 
     it('should validate with changed array being null', async () => {
@@ -210,8 +220,9 @@ describe('collabReport hooks', () => {
       mockInstance.name = null;
       mockInstance.startDate = null;
 
-      await expect(validateSubmission(mockInstance))
-        .rejects.toThrow('Required field not provided: name');
+      await expect(validateSubmission(mockInstance)).rejects.toThrow(
+        'Required field not provided: name'
+      );
     });
   });
 
@@ -241,8 +252,9 @@ describe('collabReport hooks', () => {
       };
       const mockSequelize = {};
 
-      await expect(beforeUpdate(mockSequelize, mockInstance))
-        .rejects.toThrow('Required field not provided: name');
+      await expect(beforeUpdate(mockSequelize, mockInstance)).rejects.toThrow(
+        'Required field not provided: name'
+      );
     });
 
     it('should handle successful validation', async () => {

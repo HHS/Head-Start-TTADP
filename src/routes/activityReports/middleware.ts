@@ -1,9 +1,8 @@
-/* eslint-disable import/prefer-default-export */
+import { APPROVER_STATUSES } from '@ttahub/common';
+import type { NextFunction, Request, Response } from 'express';
+import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment-timezone';
-import httpCodes from 'http-codes';
-import { NextFunction, Request, Response } from 'express';
-import { APPROVER_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
 
 const errorMessage = 'Received malformed request body';
@@ -17,9 +16,7 @@ const validateTimezone = (value: string, helpers: Joi.CustomHelpers) => {
 };
 
 const reviewReportSchema = Joi.object({
-  status: Joi.string()
-    .valid(APPROVER_STATUSES.APPROVED, APPROVER_STATUSES.NEEDS_ACTION)
-    .required(),
+  status: Joi.string().valid(APPROVER_STATUSES.APPROVED, APPROVER_STATUSES.NEEDS_ACTION).required(),
   note: Joi.string().allow('', null).optional(),
   approvedAtTimezone: Joi.string()
     .when('status', {
@@ -34,10 +31,28 @@ const reviewReportSchema = Joi.object({
     }),
 });
 
+const submitReportSchema = Joi.object({
+  approverUserIds: Joi.array().items(Joi.number().integer().positive()).min(1).required(),
+}).unknown(true);
+
 export function checkReviewReportBody(req: Request, res: Response, next: NextFunction) {
   const { error } = reviewReportSchema.validate(req.body, {
     abortEarly: false,
     allowUnknown: false,
+  });
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  return next();
+}
+
+export function checkSubmitReportBody(req: Request, res: Response, next: NextFunction) {
+  const { error } = submitReportSchema.validate(req.body, {
+    abortEarly: false,
   });
 
   if (error) {
