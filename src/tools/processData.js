@@ -288,7 +288,7 @@ export const convertName = (name, email) => {
   const fakeUser = {
     id: additionalId + transformedUsersByEmail.size + 1,
     name: faker.person.fullName(), // Generate a fake name
-    email: normalizedEmail.includes('@') ? generateFakeEmail() : email,
+    email: normalizedEmail ? generateFakeEmail() : email,
   };
   if (normalizedEmail) {
     transformedUsersByEmail.set(normalizedEmail, fakeUser);
