@@ -80,6 +80,11 @@ describe('Landing Page', () => {
       topics: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
+    fetchMock.get('/api/feedback/survey/active?pageId=activity-reports-landing', {
+      pageId: 'activity-reports-landing',
+      survey: { id: 1, endDate: null, questions: [{ id: 1, questionText: 'Did you find this page helpful?', order: 1 }] },
+      completed: false,
+    });
     const user = {
       name: 'test@test.com',
       permissions: [

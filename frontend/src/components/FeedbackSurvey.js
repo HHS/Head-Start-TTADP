@@ -15,6 +15,7 @@ import { getActiveFeedbackSurvey } from '../fetchers/feedback';
 import {
   ALWAYS_SHOW_SURVEY_KEY,
   getFeedbackSurveyDebugFlag,
+  setFeedbackSurveyDebugFlag,
 } from '../utils/feedbackSurveyDebug';
 import './FeedbackSurvey.scss';
 
@@ -124,7 +125,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     }
 
     const completionTimer = setTimeout(() => {
-      setSurveyStatus(shouldAlwaysShowSurvey() ? 'ready' : SURVEY_STATUS.COMPLETED);
+      setSurveyStatus(SURVEY_STATUS.COMPLETED);
     }, SUBMITTED_ANIMATION_DURATION_MS);
 
     return () => {
@@ -154,6 +155,9 @@ function FeedbackSurvey({ pageId, onSubmit }) {
       });
 
       modalRef.current?.toggleModal(false);
+      // The "Show survey" testing override is one-shot: once answered, the survey stays hidden
+      // until someone re-enables it
+      setFeedbackSurveyDebugFlag(ALWAYS_SHOW_SURVEY_KEY, false);
       setSurveyStatus(SURVEY_STATUS.SUBMITTED);
     } catch (error) {
       setSubmitError(true);

@@ -195,7 +195,7 @@ describe('FeedbackSurvey', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('returns survey button after successful submission when local override is set', async () => {
+  it('clears the show-survey override after submission so the survey stays hidden', async () => {
     window.localStorage.setItem(ALWAYS_SHOW_SURVEY_KEY, 'true');
     const onSubmit = jest.fn().mockResolvedValue(undefined);
 
@@ -206,10 +206,21 @@ describe('FeedbackSurvey', () => {
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
     expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
+    expect(window.localStorage.getItem(ALWAYS_SHOW_SURVEY_KEY)).toBeNull();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
     }, { timeout: 2200 });
+  });
+
+  it('stays hidden on the next load after it was answered with the override', async () => {
+    // Server reports completion and the override was cleared by the submission
+    getActiveFeedbackSurvey.mockResolvedValue({ survey: SURVEY, completed: true });
+
+    render(<FeedbackSurvey {...defaultProps} />);
+
+    await waitFor(() => expect(getActiveFeedbackSurvey).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
   });
 
   describe('end date card', () => {
