@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { extractIssuesSection } = require('./pr-jira-issue-link');
 
 const DEFAULT_ENDPOINT = 'https://api.credal.acf.gov/api/v0/copilots/sendMessage';
 const DEFAULT_AGENT_ID = 'e85a3cc2-5944-11f1-aad1-9f8702339566';
@@ -7,6 +8,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 1000;
 const JIRA_ISSUE_LINE_PATTERN = /^\*\s+https:\/\/jira\.acf\.gov\/browse\/TTAHUB-\d+$/;
 const JIRA_KEY_PATTERN = /\bTTAHUB-\d+\b/gi;
+const JIRA_LINK_PATTERN = /https:\/\/jira\.acf\.gov\/browse\/(TTAHUB-\d+)\b/gi;
 const JIRA_PLACEHOLDER_KEY = 'TTAHUB-0';
 
 // Keep in sync with docs/credalProductionPrPrompt.md's Title Rules cap.
@@ -20,39 +22,58 @@ const TITLE_MAX_LENGTH = 80;
 class CredalNonRetryableError extends Error {}
 
 const OUTER_HEADING_PATTERN = /^##[^#]/m;
+const MANAGED_MARKER_PATTERN = /<!--\s*production-pr:/i;
 
 /**
- * Rejects an embedded `##` (H2) heading line inside a prose field. Without
- * this, generated content containing e.g. "## Jira Issue(s)" plus its own
- * Jira link gets written verbatim into the body by wrapManagedSection, and
- * pr-notifications.yml's naive awk-based section extractor - which just
- * matches the first line satisfying `^## (Jira )?Issue` anywhere in the body,
- * not specifically the real template section - would pick up the injected
- * block instead of (or as well as) the real, already-validated `issues`
- * field, sending whatever tickets it contains to the Jira transition webhook.
- * `issues` itself doesn't need this check: its own per-line format validator
- * already rejects anything that isn't a bare Jira link line, which a heading
- * line could never satisfy.
+ * Rejects structure that would break the rendered PR body when it appears
+ * inside a prose field.
+ *
+ * An embedded `##` (H2) heading line: without this, generated content
+ * containing e.g. "## Jira Issue(s)" plus its own Jira link gets written
+ * verbatim into the body by wrapManagedSection, and pr-notifications.yml's
+ * naive awk based section extractor, which matches the first line satisfying
+ * `^## (Jira )?Issue` anywhere in the body and not specifically the real
+ * template section, would pick up the injected block instead of (or as well
+ * as) the real, already validated `issues` field, sending whatever tickets it
+ * contains to the Jira transition webhook.
+ *
+ * A managed section marker: after the first run, the markers are part of the
+ * existing PR body that is sent back to Credal. If generated text echoes an
+ * end marker, setManagedSection stops at that first marker on the next update
+ * and the rest of the generated text is left outside the managed section for
+ * good.
+ *
+ * `issues` needs neither check: its own per line format validator already
+ * rejects anything that is not a bare Jira link line, which a heading or a
+ * marker line could never satisfy.
  */
-function rejectEmbeddedHeading(value, helpers) {
+function rejectStructuralInjection(value, helpers) {
   if (OUTER_HEADING_PATTERN.test(value)) {
     return helpers.message(
       'must not contain a markdown "##" heading - that could inject a fake section into the rendered PR body'
     );
   }
 
+  if (MANAGED_MARKER_PATTERN.test(value)) {
+    return helpers.message(
+      'must not contain a production-pr managed section marker - that could break the section boundary on the next update'
+    );
+  }
+
   return value;
 }
 
+/**
+ * An empty issues field is valid here on purpose: whether it is acceptable
+ * depends on the release scope, which this schema cannot see. A release that
+ * declares no tickets must have an empty field, and one that declares tickets
+ * must not, and validateIssuesAgainstReleaseScope enforces both.
+ */
 function validateIssuesFormat(value, helpers) {
   const lines = value
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
-
-  if (lines.length === 0) {
-    return helpers.error('string.empty');
-  }
 
   const invalidLine = lines.find((line) => !JIRA_ISSUE_LINE_PATTERN.test(line));
 
@@ -75,9 +96,9 @@ const PRODUCTION_PR_CONTENT_SCHEMA = Joi.object({
     .messages({
       'string.pattern.base': '"title" must start with "[Prod]"',
     }),
-  descriptionOfChange: Joi.string().trim().min(1).custom(rejectEmbeddedHeading).required(),
-  howToTest: Joi.string().trim().min(1).custom(rejectEmbeddedHeading).required(),
-  issues: Joi.string().trim().min(1).custom(validateIssuesFormat).required(),
+  descriptionOfChange: Joi.string().trim().min(1).custom(rejectStructuralInjection).required(),
+  howToTest: Joi.string().trim().min(1).custom(rejectStructuralInjection).required(),
+  issues: Joi.string().trim().allow('').custom(validateIssuesFormat).required(),
 }).required();
 
 /**
@@ -106,18 +127,47 @@ function extractJiraKeys(text) {
   return [...new Set(keys.map((key) => key.toUpperCase()))];
 }
 
+function extractLinkedJiraKeys(text) {
+  return [...(text ?? '').matchAll(JIRA_LINK_PATTERN)].map((match) => match[1].toUpperCase());
+}
+
+// Dependabot pull requests declare their ticket on a standalone `Jira: <url>`
+// line instead of a Jira Issue(s) section.
+function extractStandaloneJiraLines(body) {
+  return (body ?? '')
+    .split(/\r?\n/)
+    .filter((line) => /^\s*Jira:/i.test(line))
+    .join('\n');
+}
+
 /**
- * The Jira tickets actually present in the release scope's source commits -
- * the only tickets Credal's "issues" output is allowed to mention. Looks at
- * each commit's subject, source PR title, and source PR body, since a ticket
- * can appear in any of the three depending on how the commit was authored.
+ * The Jira tickets a commit declares. A ticket mentioned in the prose of a PR
+ * body, such as a follow up or a separate piece of work, is not declared, and
+ * counting it would make Credal list it and the notification workflow
+ * transition it. Declared means: in the commit subject, in the PR title, as a
+ * link in the PR's issues section (using the same headings that
+ * pr-jira-issue-link.js accepts), or on a standalone `Jira:` line.
+ */
+function extractDeclaredJiraKeys({ subject, prTitle, prBody }) {
+  const body = prBody ?? '';
+
+  return [
+    ...new Set([
+      ...extractJiraKeys(subject),
+      ...extractJiraKeys(prTitle),
+      ...extractLinkedJiraKeys(extractIssuesSection(body)),
+      ...extractLinkedJiraKeys(extractStandaloneJiraLines(body)),
+    ]),
+  ];
+}
+
+/**
+ * The Jira tickets declared by the release scope's source commits - the only
+ * tickets Credal's "issues" output is allowed to mention, and all of them
+ * must be mentioned.
  */
 function extractExpectedJiraKeys(releaseCommits = []) {
-  const keys = releaseCommits.flatMap((commit) => [
-    ...extractJiraKeys(commit.subject),
-    ...extractJiraKeys(commit.prTitle),
-    ...extractJiraKeys(commit.prBody),
-  ]);
+  const keys = releaseCommits.flatMap((commit) => extractDeclaredJiraKeys(commit));
 
   return [...new Set(keys)].filter((key) => key !== JIRA_PLACEHOLDER_KEY);
 }
@@ -307,6 +357,7 @@ module.exports = {
   PRODUCTION_PR_CONTENT_SCHEMA,
   validateProductionPrContent,
   extractJiraKeys,
+  extractDeclaredJiraKeys,
   extractExpectedJiraKeys,
   validateIssuesAgainstReleaseScope,
   parseCredalResponse,

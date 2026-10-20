@@ -99,8 +99,11 @@ Write a flat bullet list of Jira issues.
 Requirements:
 
 include each Jira ticket once
-preserve all valid Jira tickets present in the release scope
-if a source item truly has no Jira and the caller's input explicitly marks it N/A or Hotfix, include that only if needed
+only list a ticket that a pull request declares: in its title, as a link in its Jira Issue(s) section (or Issue(s) section), or on a standalone line starting with Jira:
+ignore a ticket that appears only in the body text of a pull request, such as follow up or separate work
+preserve all declared Jira tickets present in the release scope
+do not write N/A, Hotfix, or any other placeholder line: every line must be a Jira link
+if the release scope declares no Jira tickets, return an empty string for issues
 do not invent Jira IDs
 Update Rules
 
@@ -178,3 +181,10 @@ if a section truly cannot be populated, keep it minimal and factual
   changes in scope.
 - **Title Rules**: added an explicit ~80-character cap so the wrapper
   script's response validation has a concrete contract to check against.
+- **Issue(s) Rules** tightened to match what the wrapper script now validates.
+  A ticket counts only if a pull request declares it (title, a link in its
+  Jira Issue(s) or Issue(s) section, or a standalone `Jira:` line), not if it
+  is only mentioned in body text. Placeholder lines such as N/A are not
+  allowed. A release that declares no tickets returns an empty string. The
+  live Credal agent prompt has to be edited to match, since the script rejects
+  a response that lists a ticket the release does not declare.

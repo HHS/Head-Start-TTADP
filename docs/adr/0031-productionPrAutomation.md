@@ -49,8 +49,9 @@ Adopt option 4. The details that matter:
 **Credal output is untrusted.** The script reads the reply from `message`, not `structuredOutput`, and validates it before anything is written:
 
 - The title starts with `[Prod]` and fits the length limit.
-- The description and the how to test text cannot contain a `##` heading, because an injected heading could pass fake tickets to the Slack and Jira extractor.
-- Every line of the issues field is a bare Jira link, and the set of tickets must match the tickets found in the release's commits and pull requests. An omitted ticket, an invented ticket, and the `TTAHUB-0` placeholder are all rejected.
+- The description and the how to test text cannot contain a `##` heading, because an injected heading could pass fake tickets to the Slack and Jira extractor. They also cannot contain a managed section marker, because an echoed marker would break the section boundary on the next update.
+- Every line of the issues field is a bare Jira link, and the set of tickets must match the tickets the release's pull requests declare. A pull request declares a ticket in its title, as a link in its Jira Issue(s) section, or on a standalone `Jira:` line, which is how Dependabot pull requests do it. A ticket mentioned only in the body text, such as follow up work, is not declared. An omitted ticket, an invented ticket, and the `TTAHUB-0` placeholder are all rejected.
+- An empty issues field is accepted only when the release declares no tickets. Without that rule, a release made up only of ticketless commits could never be written.
 
 Any validation, network, or status failure fails the run and writes nothing. Retries cover only timeouts, network errors, and 429 or 5xx responses.
 
