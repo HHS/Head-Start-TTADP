@@ -76,3 +76,7 @@ CLAUDE-mine.md
 
 # Ignore compiled test utility artifacts
 tests/utils/*.js
+
+# HSES import data (nightly extract); never commit
+/hses/
+/hses.zip
