@@ -1,5 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
+import { uniqueTestId } from '../fakerUnique';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -176,6 +177,10 @@ const reportObject = {
   version: 2,
 };
 
+// A status id of our own: the seeded monitoring data uses 6006, and the cleanup below deletes
+// every review with this status id.
+const monitoringStatusId = uniqueTestId();
+
 async function createMonitoringData(grantNumber) {
   await MonitoringClassSummary.findOrCreate({
     where: { grantNumber },
@@ -211,7 +216,7 @@ async function createMonitoringData(grantNumber) {
     defaults: {
       reviewId: 'reviewId',
       contentId: '653DABA6-DE64-4081-B5B3-9A126487E8F',
-      statusId: 6006,
+      statusId: monitoringStatusId,
       startDate: '2024-02-12',
       endDate: '2024-02-12',
       reviewType: 'FA-1',
@@ -231,16 +236,16 @@ async function createMonitoringData(grantNumber) {
   });
 
   await MonitoringReviewStatusLink.findOrCreate({
-    where: { statusId: 6006 },
+    where: { statusId: monitoringStatusId },
     defaults: {
-      statusId: 6006,
+      statusId: monitoringStatusId,
     },
   });
 
   await MonitoringReviewStatus.findOrCreate({
-    where: { statusId: 6006 },
+    where: { statusId: monitoringStatusId },
     defaults: {
-      statusId: 6006,
+      statusId: monitoringStatusId,
       name: 'Complete',
       sourceCreatedAt: '2024-02-12 14:31:55.74-08',
       sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
@@ -252,10 +257,13 @@ async function destroyMonitoringData() {
   await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true });
   await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringReview.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringReview.destroy({ where: { statusId: monitoringStatusId }, force: true });
   await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true });
-  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringReviewStatus.destroy({ where: { statusId: monitoringStatusId }, force: true });
+  await MonitoringReviewStatusLink.destroy({
+    where: { statusId: monitoringStatusId },
+    force: true,
+  });
 }
 
 describe('processData', () => {
