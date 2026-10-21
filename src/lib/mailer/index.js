@@ -577,7 +577,7 @@ export const trSessionCreated = async (event, sessionId) => {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
-    const { eventId } = event.data;
+    const { eventId } = event;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
@@ -640,7 +640,7 @@ export const trSessionSubmittedForApproval = async (event, session) => {
       );
     }
 
-    const { eventId } = event.data;
+    const { eventId } = event;
     const emailTo = filterAndDeduplicateEmails([approver.email]);
 
     if (emailTo.length === 0) {
@@ -663,7 +663,7 @@ export const trSessionSubmittedForApproval = async (event, session) => {
       ...referenceData(),
     };
 
-    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
+    await notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
   } catch (err) {
     auditLogger.error(err);
   }
