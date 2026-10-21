@@ -228,32 +228,31 @@ describe('changeGoalStatus service', () => {
     ).rejects.toThrow('Goal not found');
   });
 
-  it.each([
-    REPORT_STATUSES.DRAFT,
-    REPORT_STATUSES.SUBMITTED,
-    REPORT_STATUSES.NEEDS_ACTION,
-  ])('blocks direct closure when the goal is on a %s report', async (calculatedStatus) => {
-    await activeReport.update({ calculatedStatus }, { hooks: false });
-    const statusChange = {
-      goalId: activeReportGoal.id,
-      newStatus: 'Closed',
-      reason,
-      context,
-    };
+  it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+    'blocks direct closure when the goal is on a %s report',
+    async (calculatedStatus) => {
+      await activeReport.update({ calculatedStatus }, { hooks: false });
+      const statusChange = {
+        goalId: activeReportGoal.id,
+        newStatus: 'Closed',
+        reason,
+        context,
+      };
 
-    await expect(
-      changeGoalStatus({
-        ...statusChange,
-        userId: mockUser.id,
-      })
-    ).rejects.toMatchObject({
-      code: 'GOAL_STATUS_CHANGE_BLOCKED',
-      reasons: ['ACTIVE_ACTIVITY_REPORT'],
-    });
+      await expect(
+        changeGoalStatus({
+          ...statusChange,
+          userId: mockUser.id,
+        })
+      ).rejects.toMatchObject({
+        code: 'GOAL_STATUS_CHANGE_BLOCKED',
+        reasons: ['ACTIVE_ACTIVITY_REPORT'],
+      });
 
-    await activeReportGoal.reload();
-    expect(activeReportGoal.status).toBe('In Progress');
-  });
+      await activeReportGoal.reload();
+      expect(activeReportGoal.status).toBe('In Progress');
+    }
+  );
 
   it('blocks system closure when the goal is on an active report', async () => {
     await expect(

@@ -7,7 +7,9 @@ import overview from './overview';
 import trSessionsForRecipient from './trSessionsForRecipient';
 
 const mockOverview = overview as jest.MockedFunction<typeof overview>;
-const mockTrSessionsForRecipient = trSessionsForRecipient as jest.MockedFunction<typeof trSessionsForRecipient>;
+const mockTrSessionsForRecipient = trSessionsForRecipient as jest.MockedFunction<
+  typeof trSessionsForRecipient
+>;
 
 const AR_DATA = {
   numReports: '5',

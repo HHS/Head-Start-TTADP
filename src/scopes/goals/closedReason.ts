@@ -32,9 +32,6 @@ export function withClosedReason(reasons: string[]) {
 export function withoutClosedReason(reasons: string[]) {
   const result = filterAssociation(closedReasonSubQuery, reasons, true);
   return {
-    [Op.and]: [
-      { status: GOAL_STATUS.CLOSED },
-      result.where,
-    ],
+    [Op.and]: [{ status: GOAL_STATUS.CLOSED }, result.where],
   };
 }

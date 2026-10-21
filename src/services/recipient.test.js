@@ -29,7 +29,13 @@ import db, {
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { createGrant, createRecipient, createReport, destroyReport, getUniqueId } from '../testUtils';
+import {
+  createGrant,
+  createRecipient,
+  createReport,
+  destroyReport,
+  getUniqueId,
+} from '../testUtils';
 import {
   allArUserIdsByRecipientAndRegion,
   allRecipients,

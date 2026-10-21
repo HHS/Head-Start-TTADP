@@ -33,10 +33,7 @@ const Submitter = ({
   const activityRecipients = watch('activityRecipients');
 
   const participantIds = new Set(
-    [
-      userId,
-      ...collaborators.map((collaborator) => collaborator?.userId ?? collaborator?.user?.id),
-    ]
+    [userId, ...collaborators.map((collaborator) => collaborator?.userId ?? collaborator?.user?.id)]
       .map(Number)
       .filter(Number.isFinite)
   );

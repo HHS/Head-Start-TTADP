@@ -509,10 +509,7 @@ const getReasonNodeYPositions = ({
 
   if (totalReasonVisualFlow <= 0 || nonStatusNodeIds.length <= 1) {
     nonStatusNodeIds.forEach((id, i) => {
-      reasonYById.set(
-        id,
-        Number(getDistributedY(i, nonStatusNodeIds.length).toFixed(4))
-      );
+      reasonYById.set(id, Number(getDistributedY(i, nonStatusNodeIds.length).toFixed(4)));
       halfHeights.push(0);
     });
   } else {
@@ -1197,9 +1194,9 @@ export {
   getMinimumVisualValueForLink,
   getNodeColorById,
   getNodeLabel,
-  getReasonNodeYPositions,
   getPatternIdByNodeId,
   getPercentLabel,
+  getReasonNodeYPositions,
   getStatusKeyFromNodeId,
   getStatusSortIndex,
   getVisualLinkValues,

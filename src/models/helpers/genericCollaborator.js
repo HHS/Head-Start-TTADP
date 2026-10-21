@@ -179,14 +179,14 @@ const getCollaboratorRecord = async (
     ...(transaction && { transaction }),
     ...(lock &&
       transaction?.LOCK && {
-      lock: {
-        level: transaction.LOCK.UPDATE,
-        // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
-        // locking a query with joined lookup tables ("cannot be applied to the nullable
-        // side of an outer join").
-        of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
-      },
-    }),
+        lock: {
+          level: transaction.LOCK.UPDATE,
+          // Scope FOR UPDATE to the collaborator row itself; without this Postgres rejects
+          // locking a query with joined lookup tables ("cannot be applied to the nullable
+          // side of an outer join").
+          of: sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators],
+        },
+      }),
   });
 
 const mergeObjects = (obj1, obj2) => {
@@ -262,7 +262,16 @@ const findOrCreateCollaborator = async (
           typeName,
           linkBack
         ),
-        () => getCollaboratorRecord(genericCollaboratorType, sequelize, t, entityId, userId, typeName, true),
+        () =>
+          getCollaboratorRecord(
+            genericCollaboratorType,
+            sequelize,
+            t,
+            entityId,
+            userId,
+            typeName,
+            true
+          ),
         t
       );
       if (created) return record;
@@ -450,23 +459,23 @@ const removeCollaboratorsForType = async (
       const updatePromises =
         updates.length > 0
           ? updates.map(async (update) =>
-            sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
-              { linkBack: update.linkBack },
-              {
-                where: { id: update.id },
-                individualHooks: true,
-                ...(transaction && { transaction }),
-              }
+              sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
+                { linkBack: update.linkBack },
+                {
+                  where: { id: update.id },
+                  individualHooks: true,
+                  ...(transaction && { transaction }),
+                }
+              )
             )
-          )
           : [Promise.resolve()];
       const deletePromise =
         deletes.length > 0
           ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
-            where: { id: deletes },
-            individualHooks: true,
-            ...(transaction && { transaction }),
-          })
+              where: { id: deletes },
+              individualHooks: true,
+              ...(transaction && { transaction }),
+            })
           : Promise.resolve();
 
       await Promise.all([...updatePromises, deletePromise]);

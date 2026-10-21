@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
@@ -17,7 +17,6 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
   await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
 
-
   await page.getByLabel('condition', { exact: true }).selectOption('contains');
   await page.locator('.ttahub-filter-select__input-container').click();
   await page.getByText('Rhode Island (RI)', { exact: true }).click();
@@ -27,7 +26,9 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'apply filters for regional dashboard' }).click();
 
   // remove the filter
-  await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
+  await page
+    .getByRole('button', { name: 'This button removes the filter: State or territory contains RI' })
+    .click();
 
   // switch the total training graph's display type back and forth
   await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
@@ -45,21 +46,27 @@ test('Regional Dashboard', async ({ page }) => {
 
   await Promise.all([
     page.waitForEvent('download'),
-    page.locator('#rd-total-tta-hours-save-screenshot').click()
+    page.locator('#rd-total-tta-hours-save-screenshot').click(),
   ]);
 
   // print a screenshot of the topics graph
   await Promise.all([
     page.waitForEvent('download'),
-    page.locator('#rd-save-screenshot-topic-frequency').click()
+    page.locator('#rd-save-screenshot-topic-frequency').click(),
   ]);
 
   // view the topics as a table
-  await page.getByRole('button', { name: /display Number of Activity Reports by Topic as table/i }).click();
+  await page
+    .getByRole('button', { name: /display Number of Activity Reports by Topic as table/i })
+    .click();
 
   // change the topics graph order
   await page.getByRole('button', { name: 'toggle Change topic graph order menu' }).click();
-  await page.getByRole('button', { name: 'Select to view data from A to Z. Select Apply filters button to apply selection' }).click();
+  await page
+    .getByRole('button', {
+      name: 'Select to view data from A to Z. Select Apply filters button to apply selection',
+    })
+    .click();
   await page.getByTestId('gridContainer').getByTestId('apply-filters-test-id').click();
 
   // make sure the activity reports table is visible

@@ -1,5 +1,5 @@
-import { APIResponse } from '@playwright/test';
-import Joi from 'joi';
+import type { APIResponse } from '@playwright/test';
+import type Joi from 'joi';
 
 export const root = `http://localhost:8080/api`;
 
@@ -10,7 +10,11 @@ export const root = `http://localhost:8080/api`;
  * @param expect The Jest expect function to use for asserting the validation result.
  * @throws If the response body could not be parsed as JSON or if validation fails.
  */
-export const validateSchema = async (response: APIResponse, schema: Joi.ObjectSchema | Joi.ArraySchema, expect) => {
+export const validateSchema = async (
+  response: APIResponse,
+  schema: Joi.ObjectSchema | Joi.ArraySchema,
+  expect
+) => {
   const body = await response.body();
   const json = JSON.parse(String(body));
   const { error } = schema.validate(json);

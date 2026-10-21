@@ -1,7 +1,7 @@
 import { createFiltersToScopes } from '../utils';
-import { withCreator, withoutCreator } from './creator';
-import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
 import { withClosedReason, withoutClosedReason } from './closedReason';
+import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
+import { withCreator, withoutCreator } from './creator';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
 import { withGoalName, withoutGoalName } from './goalName';
@@ -28,7 +28,7 @@ import { withoutResourceUrl, withResourceUrl } from './resouceUrl';
 import { withoutResourceAttachment, withResourceAttachment } from './resourceAttachment';
 import { withoutStandard, withStandard } from './standard';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
-import { withStateCode, withoutStateCode } from './stateCode';
+import { withoutStateCode, withStateCode } from './stateCode';
 import { withoutStatus, withStatus } from './status';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutTopics, withTopics } from './topics';

@@ -4,7 +4,8 @@
 }
 
 /* Align sort indicators with the bottom line of both single- and multi-line labels. */
-.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
   .usa-table
   thead
   th
