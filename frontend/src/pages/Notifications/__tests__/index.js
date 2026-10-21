@@ -1,9 +1,8 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
-import FeatureFlag from '../../../components/FeatureFlag';
 import {
   archiveNotification,
   fetchArchivedNotifications,
@@ -12,7 +11,6 @@ import {
 } from '../../../fetchers/notifications';
 import { notifyDataUpdates } from '../../../hooks/useDataUpdates';
 import useFetch from '../../../hooks/useFetch';
-import UserContext from '../../../UserContext';
 import Notifications from '../index';
 
 jest.mock('../../../hooks/useFetch');
@@ -85,32 +83,6 @@ describe('Notifications Page', () => {
     renderPage('/notifications');
 
     expect(screen.getByText('Notifications')).toBeVisible();
-  });
-
-  test('redirects users without the actionable notifications flag to the 404 page', () => {
-    const user = {
-      name: 'user',
-      permissions: [],
-      flags: [],
-    };
-
-    render(
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user }}>
-          <MemoryRouter initialEntries={['/notifications']}>
-            <FeatureFlag flag="actionable_notifications" renderNotFound>
-              <Notifications />
-            </FeatureFlag>
-            <Route path="/something-went-wrong/404">
-              <div>Not found page</div>
-            </Route>
-          </MemoryRouter>
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    );
-
-    expect(screen.getByText('Not found page')).toBeVisible();
-    expect(screen.queryByText('Notifications')).toBe(null);
   });
 
   test('renders both tabs when there are notifications', () => {

@@ -1317,7 +1317,7 @@ export const sendEmailVerificationRequestWithToken = (
     return null;
   }
 
-  const uri = `${process.env.TTA_SMART_HUB_URI}/notifications/verify-email/${token}`;
+  const uri = `${process.env.TTA_SMART_HUB_URI}/account/notifications/${token}`;
 
   return createEmailSender(transport).send({
     template: path.resolve(emailTemplatePath, 'email_verification'),

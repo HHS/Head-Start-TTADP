@@ -14,7 +14,7 @@ import { fetchNotificationsCount } from '../fetchers/notifications';
 import { storageAvailable } from '../hooks/helpers';
 import useDataUpdates from '../hooks/useDataUpdates';
 import useFetch from '../hooks/useFetch';
-import isAdmin, { canSeeBehindFeatureFlag } from '../permissions';
+import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 import NavLink from './NavLink';
 import NotificationBell from './NotificationBell';
@@ -71,19 +71,17 @@ function HeaderUserMenu({
   }, []);
 
   const location = useLocation();
-  const notificationsEnabled = canSeeBehindFeatureFlag(user, 'actionable_notifications');
   const revision = useDataUpdates('notifications');
   const userId = user?.id;
   const { data: notificationCount } = useFetch(
     { count: 0, userId: null },
     async () => ({
-      count: notificationsEnabled ? (await fetchNotificationsCount(UNREAD_FILTERS)).count : 0,
+      count: (await fetchNotificationsCount(UNREAD_FILTERS)).count,
       userId,
     }),
-    [userId, notificationsEnabled, location, revision]
+    [userId, location, revision]
   );
-  const hasUnreadNotifications =
-    notificationsEnabled && notificationCount.userId === userId && notificationCount.count > 0;
+  const hasUnreadNotifications = notificationCount.userId === userId && notificationCount.count > 0;
 
   const menuItems = useMemo(
     () =>
@@ -93,7 +91,6 @@ function HeaderUserMenu({
           key: 2,
           label: 'Notifications',
           to: `/notifications`,
-          featureFlag: 'actionable_notifications',
           badge: hasUnreadNotifications ? (
             <Pill type="success" className="margin-left-1">
               new

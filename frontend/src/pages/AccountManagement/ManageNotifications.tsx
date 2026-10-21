@@ -10,6 +10,7 @@ import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import { getSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+import { canSeeBehindFeatureFlag } from '../../permissions';
 import UserContext from '../../UserContext';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
 import CollabReportNotifications from './components/notifications/CollabReportNotifications';
@@ -70,6 +71,11 @@ export default function ManageNotifications({
       });
   }, []);
 
+  const hasNotificationsFeatureFlag = useMemo(
+    () => canSeeBehindFeatureFlag(user, 'actionable_notifications'),
+    [user]
+  );
+
   const accordionItems = useMemo(
     () =>
       [
@@ -87,76 +93,86 @@ export default function ManageNotifications({
           expanded: true,
           headingLevel: 'h2',
         },
-        {
-          title: 'Collaboration Reports',
-          content: (
-            <CollabReportNotifications
-              clearAlerts={clearAlerts}
-              emailVerified={emailValidated}
-              sendVerificationEmail={sendVerificationEmail}
-              emailVerificationSent={emailVerificationSent}
-            />
-          ),
-          id: 'collab-report-notifications',
-          expanded: true,
-          headingLevel: 'h2',
-        },
-        {
-          title: 'Communication Logs',
-          content: (
-            <CommunicationLogNotifications
-              clearAlerts={clearAlerts}
-              emailVerified={emailValidated}
-              sendVerificationEmail={sendVerificationEmail}
-              emailVerificationSent={emailVerificationSent}
-            />
-          ),
-          id: 'communication-log-notifications',
-          expanded: true,
-          headingLevel: 'h2',
-        },
-        {
-          title: 'Training Reports',
-          content: (
-            <TrainingReportNotifications
-              emailVerified={emailValidated}
-              clearAlerts={clearAlerts}
-              sendVerificationEmail={sendVerificationEmail}
-              emailVerificationSent={emailVerificationSent}
-            />
-          ),
-          id: 'training-report-notifications',
-          expanded: true,
-          headingLevel: 'h2',
-        },
-        {
-          title: 'System Related',
-          content: (
-            <SystemRelatedNotifications
-              emailVerified={emailValidated}
-              sendVerificationEmail={sendVerificationEmail}
-              emailVerificationSent={emailVerificationSent}
-            />
-          ),
-          id: 'system-related-notifications',
-          expanded: true,
-          headingLevel: 'h2',
-        },
-        {
-          title: 'Other',
-          content: (
-            <OtherNotifications
-              emailVerified={emailValidated}
-              sendVerificationEmail={sendVerificationEmail}
-              emailVerificationSent={emailVerificationSent}
-            />
-          ),
-          id: 'other-notifications',
-          expanded: true,
-          headingLevel: 'h2',
-        },
+        ...(hasNotificationsFeatureFlag
+          ? [
+              {
+                title: 'Collaboration Reports',
+                content: (
+                  <CollabReportNotifications
+                    clearAlerts={clearAlerts}
+                    emailVerified={emailValidated}
+                    sendVerificationEmail={sendVerificationEmail}
+                    emailVerificationSent={emailVerificationSent}
+                  />
+                ),
+                id: 'collab-report-notifications',
+                expanded: true,
+                headingLevel: 'h2',
+              },
+              {
+                title: 'Communication Logs',
+                content: (
+                  <CommunicationLogNotifications
+                    clearAlerts={clearAlerts}
+                    emailVerified={emailValidated}
+                    sendVerificationEmail={sendVerificationEmail}
+                    emailVerificationSent={emailVerificationSent}
+                  />
+                ),
+                id: 'communication-log-notifications',
+                expanded: true,
+                headingLevel: 'h2',
+              },
+              {
+                title: 'Training Reports',
+                content: (
+                  <TrainingReportNotifications
+                    emailVerified={emailValidated}
+                    clearAlerts={clearAlerts}
+                    sendVerificationEmail={sendVerificationEmail}
+                    emailVerificationSent={emailVerificationSent}
+                  />
+                ),
+                id: 'training-report-notifications',
+                expanded: true,
+                headingLevel: 'h2',
+              },
+              {
+                title: 'System Related',
+                content: (
+                  <SystemRelatedNotifications
+                    emailVerified={emailValidated}
+                    sendVerificationEmail={sendVerificationEmail}
+                    emailVerificationSent={emailVerificationSent}
+                  />
+                ),
+                id: 'system-related-notifications',
+                expanded: true,
+                headingLevel: 'h2',
+              },
+              {
+                title: 'Other',
+                content: (
+                  <OtherNotifications
+                    emailVerified={emailValidated}
+                    sendVerificationEmail={sendVerificationEmail}
+                    emailVerificationSent={emailVerificationSent}
+                  />
+                ),
+                id: 'other-notifications',
+                expanded: true,
+                headingLevel: 'h2',
+              },
+            ]
+          : []),
       ] as AccordionItemProps[],
-    [emailValidated, sendVerificationEmail, emailVerificationSent, clearAlerts]
+    [
+      emailValidated,
+      sendVerificationEmail,
+      emailVerificationSent,
+      clearAlerts,
+      hasNotificationsFeatureFlag,
+    ]
   );
 
   const methods = useForm({

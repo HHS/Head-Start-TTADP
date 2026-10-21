@@ -4,9 +4,7 @@ import db from '../models';
 import { createUser } from '../testUtils';
 import { editGroup } from './groups';
 
-const {
-  sequelize, Group, GroupCollaborator, Permission, User,
-} = db;
+const { sequelize, Group, GroupCollaborator, Permission, User } = db;
 
 describe('groups concurrency', () => {
   let group;
