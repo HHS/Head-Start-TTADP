@@ -64,6 +64,8 @@
   $ref: './monitoring/finding-categories.yaml'
 '/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
+'/goals/{goalId}/history':
+  $ref: './goals/goal-history.yaml'
 '/courses/dashboard':
   $ref: './courses/dashboard.yaml'
 '/widgets/overview':
