@@ -267,7 +267,7 @@ describe('GenericCollaborator', () => {
       ).rejects.toThrow('no matching row was found');
     });
 
-    it('upserts the collaborator and links valid, de-duplicated report ids in one statement', async () => {
+    it('locks and links an existing collaborator in one statement, without rewriting it', async () => {
       const row = { id: 9, goalId: 1 };
       const built = { id: 9 };
       const sequelize = {
@@ -299,9 +299,9 @@ describe('GenericCollaborator', () => {
       expect(result).toBe(built);
       expect(sequelize.query).toHaveBeenCalledTimes(1);
       const [sql, options] = sequelize.query.mock.calls[0];
-      expect(sql).toContain('INSERT INTO "GoalCollaborators"');
-      // An existing collaborator is locked without being rewritten.
-      expect(sql).toContain('WHERE FALSE');
+      expect(sql).toContain('FOR UPDATE');
+      expect(sql).not.toContain('INSERT INTO "GoalCollaborators"');
+      expect(sql).not.toContain('UPDATE "GoalCollaborators"');
       expect(sql).toContain('INSERT INTO "GoalCollaboratorActivityReports"');
       expect(options).toMatchObject({
         replacements: {
@@ -319,7 +319,7 @@ describe('GenericCollaborator', () => {
       expect(sequelize.models.GoalCollaborator.findOne).not.toHaveBeenCalled();
     });
 
-    it('reruns the statement when a concurrently committed collaborator was not yet visible', async () => {
+    it('creates and links the collaborator in one statement when there is no active one', async () => {
       const row = { id: 9 };
       const sequelize = {
         models: {
@@ -337,6 +337,35 @@ describe('GenericCollaborator', () => {
 
       expect(result).toBe(row);
       expect(sequelize.query).toHaveBeenCalledTimes(2);
+      const [createSql] = sequelize.query.mock.calls[1];
+      expect(createSql).toContain('INSERT INTO "GoalCollaborators"');
+      expect(createSql).toContain('DO NOTHING');
+      expect(createSql).toContain('INSERT INTO "GoalCollaboratorActivityReports"');
+    });
+
+    it('tries again when a concurrently created collaborator was not yet visible', async () => {
+      const row = { id: 9 };
+      const sequelize = {
+        models: {
+          GoalCollaborator: { build: jest.fn().mockReturnValue(row) },
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue({ name: 'Linker', id: 4 }),
+          },
+        },
+        // No active row, then the insert conflicts, then the next pass finds the winner.
+        query: jest
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([row]),
+      };
+
+      const result = await findOrCreateCollaborator('goal', sequelize, {}, 1, 2, 'Linker', {
+        activityReportIds: [7],
+      });
+
+      expect(result).toBe(row);
+      expect(sequelize.query).toHaveBeenCalledTimes(3);
     });
 
     it('gives up after repeated attempts find no collaborator', async () => {
@@ -353,7 +382,7 @@ describe('GenericCollaborator', () => {
       await expect(
         findOrCreateCollaborator('goal', sequelize, {}, 1, 2, 'Linker', { activityReportIds: [7] })
       ).rejects.toThrow('Could not find or create the Linker collaborator for goal 1');
-      expect(sequelize.query).toHaveBeenCalledTimes(3);
+      expect(sequelize.query).toHaveBeenCalledTimes(6);
     });
 
     it('rejects activity report links for group collaborators', async () => {

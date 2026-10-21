@@ -471,6 +471,36 @@ describe('concurrency races (real database)', () => {
       expect(await linkedReportIds(original.id)).toEqual(sortedNumbers([first, second]));
     });
 
+    it('an add blocked on a collaborator being replaced links to the replacement, not the deleted row', async () => {
+      const goalId = goals[0].id;
+      const [last, replacementReport, blockedReport] = reportIds;
+      const original = await collab(null, goalId, [last]);
+
+      // One transaction removes the collaborator's last report (soft-deleting it) and re-adds it,
+      // creating a replacement row, then stays open.
+      const held = holdOpenTransaction(async (t) => {
+        await removeLinker(t, goalId, [last]);
+        return collab(t, goalId, [replacementReport]);
+      });
+      const replacement = await held.ready;
+      expect(replacement.id).not.toBe(original.id);
+
+      // A concurrent add has to wait for that transaction.
+      const blocked = trackedTransaction((t) => collab(t, goalId, [blockedReport]));
+      await sleep(300);
+      expect(blocked.state.settled).toBe(false);
+
+      held.release();
+      await held.done;
+      const linked = await blocked.done;
+
+      expect(linked.id).toBe(replacement.id);
+      expect(await linkedReportIds(replacement.id)).toEqual(
+        sortedNumbers([replacementReport, blockedReport])
+      );
+      expect(await linkedReportIds(original.id)).toEqual([]);
+    });
+
     it('a collaborator that appears between the lock and the unlink is left alone', async () => {
       const goalId = goals[0].id;
       const [removed, added] = reportIds;

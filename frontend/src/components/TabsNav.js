@@ -8,7 +8,7 @@ import colors from '../colors';
 import './TabsNav.scss';
 import FeatureFlag from './FeatureFlag';
 
-export default function TabsNav({ backLink, links, ariaLabel }) {
+export default function TabsNav({ backLink, links, ariaLabel, alert }) {
   const linkClass = 'display-block padding-2 ttahub-tabs-nav_link';
   const liClass = 'ttahub-tabs-nav_tab display-block margin-0 padding-0';
 
@@ -45,6 +45,7 @@ export default function TabsNav({ backLink, links, ariaLabel }) {
           </ul>
         </nav>
       </div>
+      {alert}
       <div>
         {backLink && backLink.props && backLink.props.children ? (
           <FontAwesomeIcon
@@ -70,8 +71,11 @@ TabsNav.propTypes = {
     })
   ).isRequired,
   backLink: PropTypes.node,
+  // shown above the back link, under the tabs
+  alert: PropTypes.node,
 };
 
 TabsNav.defaultProps = {
   backLink: null,
+  alert: null,
 };

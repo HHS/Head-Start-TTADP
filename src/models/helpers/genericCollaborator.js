@@ -303,33 +303,12 @@ const findOrCreateCollaborator = async (
     typeName
   );
 
-  // A single statement ensures the active collaborator exists and links the reports to it.
-  // Separate find-then-insert steps could link reports to a collaborator that a concurrent
-  // removeCollaboratorsForType had just deleted. As one statement, any interleaving with that
-  // removal is safe. Raw SQL because Sequelize can't upsert against a partial index.
-  //
-  // On a conflict, DO UPDATE ... WHERE FALSE locks the existing collaborator row against
-  // removals in other transactions without rewriting it, so a repeat link adds no update or
-  // audit row. The row isn't returned in that case, so it's read by the `existing` branch.
-  const statement = /* sql */ `
-    WITH inserted AS (
-      INSERT INTO "${collaboratorTable}" ("${idName}", "userId", "collaboratorTypeId", "createdAt", "updatedAt")
-      VALUES (:entityId, :userId, :collaboratorTypeId, NOW(), NOW())
-      ON CONFLICT ("${idName}", "userId", "collaboratorTypeId") WHERE "deletedAt" IS NULL
-      DO UPDATE SET "updatedAt" = NOW() WHERE FALSE
-      RETURNING *
-    ),
-    collaborator AS (
-      SELECT * FROM inserted
-      UNION ALL
-      SELECT c.*
-      FROM "${collaboratorTable}" c
-      WHERE c."${idName}" = :entityId
-        AND c."userId" = :userId
-        AND c."collaboratorTypeId" = :collaboratorTypeId
-        AND c."deletedAt" IS NULL
-        AND NOT EXISTS (SELECT 1 FROM inserted)
-    ),
+  // Each statement below finds or creates the active collaborator and links the reports to it
+  // in one go. Separate find-then-link steps could link reports to a collaborator that a
+  // removeCollaboratorsForType sharing this transaction had just deleted; as single statements,
+  // any interleaving with that removal is safe. Raw SQL because Sequelize can't upsert against
+  // a partial index.
+  const linkReports = /* sql */ `
     linked AS (
       INSERT INTO "${reportLinks.table}" ("${reportLinks.collaboratorIdName}", "activityReportId", "createdAt", "updatedAt")
       SELECT collaborator.id, report_id, NOW(), NOW()
@@ -339,18 +318,49 @@ const findOrCreateCollaborator = async (
     )
     SELECT * FROM collaborator;
   `;
+  // Locks the existing active collaborator against removals in other transactions, without
+  // rewriting it, so a repeat link adds no update or audit row. FOR UPDATE rechecks the row's
+  // latest committed version, so one soft-deleted by a removal this statement waited on is
+  // skipped rather than linked.
+  const linkExisting = /* sql */ `
+    WITH collaborator AS (
+      SELECT c.*
+      FROM "${collaboratorTable}" c
+      WHERE c."${idName}" = :entityId
+        AND c."userId" = :userId
+        AND c."collaboratorTypeId" = :collaboratorTypeId
+        AND c."deletedAt" IS NULL
+      FOR UPDATE
+    ),
+    ${linkReports}
+  `;
+  // Creates the collaborator when there's no active one. On a conflict with one created
+  // concurrently, it inserts and returns nothing, and the existing one is linked on the next pass.
+  const createAndLink = /* sql */ `
+    WITH collaborator AS (
+      INSERT INTO "${collaboratorTable}" ("${idName}", "userId", "collaboratorTypeId", "createdAt", "updatedAt")
+      VALUES (:entityId, :userId, :collaboratorTypeId, NOW(), NOW())
+      ON CONFLICT ("${idName}", "userId", "collaboratorTypeId") WHERE "deletedAt" IS NULL
+      DO NOTHING
+      RETURNING *
+    ),
+    ${linkReports}
+  `;
   const options = {
     replacements: { entityId, userId, collaboratorTypeId, reportIds },
     type: QueryTypes.SELECT,
     ...(transaction && { transaction }),
   };
 
-  // When the conflicting row was committed by another transaction after this statement's
-  // snapshot was taken, the `existing` branch can't see it yet and nothing is linked. Running
-  // the statement again takes a fresh snapshot that does.
+  // Each pass takes a fresh snapshot, so a collaborator another transaction committed (or
+  // deleted) since the last statement is seen on the next one.
   for (let attempt = 0; attempt < 3; attempt += 1) {
     // eslint-disable-next-line no-await-in-loop
-    const [row] = await sequelize.query(statement, options);
+    let [row] = await sequelize.query(linkExisting, options);
+    if (!row) {
+      // eslint-disable-next-line no-await-in-loop
+      [row] = await sequelize.query(createAndLink, options);
+    }
     if (row) {
       return sequelize.models[collaborators].build(row, { isNewRecord: false, raw: true });
     }
