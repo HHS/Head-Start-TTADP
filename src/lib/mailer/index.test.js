@@ -2216,9 +2216,8 @@ describe('mailer tests', () => {
       ownerId: 1,
       collaboratorIds: [2, 3],
       pocIds: [4, 5],
-      data: {
-        eventId: 'tr-1234',
-      },
+      eventId: 'tr-1234',
+      data: {},
     };
     it('trSessionCreated success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
@@ -2226,7 +2225,10 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-        expect.any(Object)
+        expect.objectContaining({
+          displayId: 'tr-1234',
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/1`,
+        })
       );
     });
     it('trSessionCreated error', async () => {
@@ -2345,6 +2347,14 @@ describe('mailer tests', () => {
         userById.mockResolvedValue(null);
         await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
         expect(notificationQueueMock.add).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('logs an error when enqueueing the notification fails', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'approver@test.gov' });
+        notificationQueueMock.add.mockRejectedValueOnce(new Error('Redis unavailable'));
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
         expect(auditLogger.error).toHaveBeenCalledTimes(1);
       });
 
@@ -2499,7 +2509,7 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
         },
         1
       );
@@ -2521,7 +2531,7 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
         },
         1
       );
@@ -2534,7 +2544,7 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
         },
         1
       );
