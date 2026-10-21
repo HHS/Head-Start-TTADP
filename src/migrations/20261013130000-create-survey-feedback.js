@@ -79,6 +79,7 @@ module.exports = {
       await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_region_id_idx', { transaction });
       await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_submitted_at_idx', { transaction });
       await queryInterface.dropTable('FeedbackSurveys', { transaction });
+      await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_FeedbackSurveys_response";', { transaction });
     });
   },
 };

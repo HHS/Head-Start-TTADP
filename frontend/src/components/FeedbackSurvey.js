@@ -151,7 +151,6 @@ function FeedbackSurvey({ pageId, onSubmit }) {
           response: answers[q.id].response,
           comment: (answers[q.id].comment || '').trim(),
         })),
-        timestamp: new Date().toISOString(),
       });
 
       modalRef.current?.toggleModal(false);

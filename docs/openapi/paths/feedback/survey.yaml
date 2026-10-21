@@ -16,9 +16,6 @@ post:
           properties:
             surveyId:
               type: integer
-            timestamp:
-              type: string
-              format: date-time
             responses:
               type: array
               minItems: 1
