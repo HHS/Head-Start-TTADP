@@ -13,7 +13,14 @@
       "trackingTicket": "TTAHUB-5729",
       "closureTarget": "2026-11-05",
       "recommendation": "Closed. The production database binding was removed from the stopped application. No further action is needed unless the application is restarted, in which case rebind the service and restage.",
-      "approval": null
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/4070",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-21",
+        "decision": "Approved. Production database binding confirmed removed from the stopped application."
+      }
     },
     {
       "id": "INV-2026-0002",
