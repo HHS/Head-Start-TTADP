@@ -47,6 +47,25 @@ export function checkCollabReportIdParam(req, res, next) {
 }
 
 /**
+ *  Check ttaRequestId req param
+ *
+ * This middleware validates that the TTA request id supplied
+ * by the ttaRequestId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkTtaRequestIdParam(req, res, next) {
+  if (req.params && req.params.ttaRequestId && canBeInt(req.params.ttaRequestId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: ttaRequestId ${String(req?.params?.ttaRequestId)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
  *  Check fileId req param
  *
  * This middleware validates that the File id supplied
