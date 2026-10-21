@@ -371,7 +371,6 @@ export async function updateSession(id: number, request) {
     endDate: hasEndDate
       ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
       : (session.get('endDate') as unknown as Date | null),
-    data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
     approverId?: number | null;
@@ -392,7 +391,9 @@ export async function updateSession(id: number, request) {
   }
 
   // Only a first submission notifies collaborators (TR-3c); resubmissions after
-  // changes were requested are covered by TR-5c.
+  // changes were requested are covered by TR-5c. `hasBeenSubmitted` is sticky:
+  // facilitation changes clear completion flags and the approver, and participant
+  // submits overwrite status, so neither tells us whether the session was ever submitted.
   const wasSubmitted = isSessionSubmitted(event, {
     approverId: session.approverId,
     data: existingData,
@@ -401,8 +402,18 @@ export async function updateSession(id: number, request) {
     approverId: update.approverId !== undefined ? update.approverId : session.approverId,
     data: newData,
   } as unknown as SessionShape);
-  const isFirstSubmission =
-    !wasSubmitted && isSubmitted && existingData.status !== REPORT_STATUSES.NEEDS_ACTION;
+  // wasSubmitted and NEEDS_ACTION cover sessions submitted before the marker existed
+  const hasBeenSubmitted =
+    Boolean(existingData.hasBeenSubmitted) ||
+    wasSubmitted ||
+    existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isFirstSubmission = isSubmitted && !hasBeenSubmitted;
+
+  if (hasBeenSubmitted || isSubmitted) {
+    newData.hasBeenSubmitted = true;
+  }
+
+  update.data = cast(JSON.stringify(newData), 'jsonb');
 
   await SessionReportPilot.update(update, {
     where: { id },
