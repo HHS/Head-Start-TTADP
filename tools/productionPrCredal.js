@@ -22,7 +22,10 @@ const TITLE_MAX_LENGTH = 80;
 class CredalNonRetryableError extends Error {}
 
 const OUTER_HEADING_PATTERN = /^##[^#]/m;
-const MANAGED_MARKER_PATTERN = /<!--\s*production-pr:/i;
+// Matches the marker namespace, not the full `<!--` opener. The SAST job
+// (Semgrep with p/default) fails to parse a regex literal that starts with the
+// HTML comment opener in this file, which makes the whole scan incomplete.
+const MANAGED_MARKER_PATTERN = /production-pr:/i;
 
 /**
  * Rejects structure that would break the rendered PR body when it appears

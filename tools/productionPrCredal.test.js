@@ -157,6 +157,14 @@ describe('validateProductionPrContent', () => {
     ).toThrow(/must not contain a production-pr managed section marker/);
   });
 
+  it('rejects the marker namespace even without the comment delimiters', () => {
+    const echoed = '- Change mentioning production-pr:description-of-change:end in plain text.';
+
+    expect(() =>
+      validateProductionPrContent({ ...VALID_CONTENT, descriptionOfChange: echoed })
+    ).toThrow(/must not contain a production-pr managed section marker/);
+  });
+
   it('allows an unrelated HTML comment', () => {
     const withComment = '- Legit change.\n<!-- reviewer note -->';
 
