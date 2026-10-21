@@ -1,4 +1,4 @@
-import { TTA_REQUEST_ORIGINATORS } from '@ttahub/common';
+import { TTA_REQUEST_MONITORING_STANDARD, TTA_REQUEST_ORIGINATORS } from '@ttahub/common';
 
 /** the form's field names, kept in one place so the sections and their tests agree */
 export const TTA_REQUEST_FIELDS = {
@@ -14,7 +14,7 @@ export const TTA_REQUEST_FIELDS = {
 } as const;
 
 /** a goal template's standard is 'Monitoring' when citations apply to it */
-export const MONITORING_STANDARD = 'Monitoring';
+export const MONITORING_STANDARD = TTA_REQUEST_MONITORING_STANDARD;
 
 export const SELECT_PLACEHOLDER = '- Select -';
 

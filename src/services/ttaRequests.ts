@@ -1,4 +1,4 @@
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import { TTA_REQUEST_MONITORING_STANDARD, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
@@ -361,9 +361,6 @@ export async function updateTtaRequest(
   return saved.toJSON();
 }
 
-// the goal template standard that citations apply to
-const MONITORING_STANDARD = 'Monitoring';
-
 /**
  * Saves the request as it stands and submits it for review. The body has already been
  * checked for the required fields; what is left to check depends on the saved request:
@@ -381,7 +378,7 @@ export async function submitTtaRequest(
     throw dataError('The reviewer must be able to approve in the request region');
   }
 
-  if (saved.goalTemplate?.standard === MONITORING_STANDARD && !saved.citations.length) {
+  if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
     throw dataError('A request for the monitoring goal needs at least one citation');
   }
 

@@ -189,6 +189,11 @@ const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office
 
 exports.TTA_REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS;
 
+// the goal template standard that citations apply to
+const TTA_REQUEST_MONITORING_STANDARD = 'Monitoring';
+
+exports.TTA_REQUEST_MONITORING_STANDARD = TTA_REQUEST_MONITORING_STANDARD;
+
 const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
 
 exports.TIMELINE_FILTER_TOPICS = TIMELINE_FILTER_TOPICS;
