@@ -59,7 +59,14 @@
       "trackingTicket": "TTAHUB-5734",
       "closureTarget": "2026-11-05",
       "recommendation": "Closed. The unmapped route was deleted and app_url corrected to the mapped route. No further action is needed.",
-      "approval": null
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/4069",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-21",
+        "decision": "Approved. Unmapped route confirmed deleted and app_url corrected to the mapped route."
+      }
     },
     {
       "id": "INV-2026-0005",
