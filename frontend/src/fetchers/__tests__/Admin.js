@@ -2,7 +2,9 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 
 import {
+  closeFeedbackSurveyDefinition,
   closeMultiRecipientGoalsFromAdmin,
+  createFeedbackSurveyDefinition,
   createMultiRecipientGoalsFromAdmin,
   createNationalCenter,
   deleteNationalCenter,
@@ -10,11 +12,14 @@ import {
   getCreatorsByRegion,
   getCuratedTemplates,
   getFeatures,
+  getFeedbackSurveyDefinitions,
+  getFeedbackSurveys,
   getGroupsByRegion,
   getRecipients,
   getRedisInfo,
   getUsers,
   importCsv,
+  reopenFeedbackSurveyDefinition,
   updateLegacyUsers,
   updateNationalCenter,
   updateUser,
@@ -75,6 +80,42 @@ describe('Admin', () => {
       fetchMock.get(join('/', 'api', 'admin', 'recipients'), recipients);
       const fetchedRecipients = await getRecipients();
       expect(fetchedRecipients).toEqual(recipients);
+    });
+  });
+
+  describe('getFeedbackSurveys', () => {
+    it('gets feedback surveys', async () => {
+      const res = { rows: [{ id: 1 }], total: 1 };
+      fetchMock.get(join('/', 'api', 'admin', 'feedback-surveys'), res);
+      const fetched = await getFeedbackSurveys();
+      expect(fetched).toEqual(res);
+    });
+
+    it('passes query parameters', async () => {
+      const res = { rows: [{ id: 2 }], total: 1 };
+      fetchMock.get(
+        '/api/admin/feedback-surveys?pageId=qa&regionId=4&userRole=Grants+Specialist&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc',
+        res
+      );
+      const fetched = await getFeedbackSurveys({
+        pageId: 'qa',
+        regionId: 4,
+        userRole: 'Grants Specialist',
+        createdAtFrom: '2026-03-01',
+        createdAtTo: '2026-03-31',
+        sortBy: 'pageId',
+        sortDir: 'asc',
+      });
+      expect(fetched).toEqual(res);
+    });
+
+    it('normalizes legacy array responses', async () => {
+      const res = [{ id: 3 }];
+      fetchMock.get('/api/admin/feedback-surveys?limit=5', res);
+
+      const fetched = await getFeedbackSurveys({ limit: 5 });
+
+      expect(fetched).toEqual({ rows: res, total: 1 });
     });
   });
 
@@ -176,6 +217,41 @@ describe('Admin', () => {
         const deleted = await deleteNationalCenter(1);
         expect(deleted).toEqual(res);
       });
+    });
+  });
+
+  describe('feedback survey definitions', () => {
+    const url = join('/', 'api', 'admin', 'feedback-survey-definitions');
+
+    it('lists surveys', async () => {
+      const payload = { active: [], closed: [], pages: {} };
+      fetchMock.get(url, payload);
+
+      expect(await getFeedbackSurveyDefinitions()).toEqual(payload);
+    });
+
+    it('creates a survey', async () => {
+      const survey = {
+        pageId: 'qa-dashboard', startDate: '2026-10-20', endDate: '2026-11-20', question: 'Q?',
+      };
+      fetchMock.post(url, { id: 1, ...survey });
+
+      expect(await createFeedbackSurveyDefinition(survey)).toEqual({ id: 1, ...survey });
+      expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(survey);
+    });
+
+    it('closes a survey', async () => {
+      fetchMock.put(join(url, '4', 'close'), { id: 4, status: 'closed' });
+
+      expect(await closeFeedbackSurveyDefinition(4)).toEqual({ id: 4, status: 'closed' });
+    });
+
+    it('reopens a survey with dates', async () => {
+      const dates = { startDate: '2026-10-21', endDate: '2026-10-31' };
+      fetchMock.put(join(url, '4', 'reopen'), { id: 4, status: 'active' });
+
+      expect(await reopenFeedbackSurveyDefinition(4, dates)).toEqual({ id: 4, status: 'active' });
+      expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(dates);
     });
   });
 });

@@ -477,6 +477,51 @@ class EventReportPilots{
  version : integer
 }
 
+class FeedbackSurveyCompletions{
+ * id : integer : <generated>
+ * surveyId : integer : REFERENCES "FeedbackSurveyDefinitions".id
+ * completedAt : timestamp with time zone
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * updatedAt : timestamp with time zone
+ * userId : integer
+}
+
+class FeedbackSurveyDefinitions{
+ * id : integer : <generated>
+ createdBy : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * startDate : date
+ * status : enum : 'active'::"enum_FeedbackSurveyDefinitions_status"
+ * updatedAt : timestamp with time zone
+ closedAt : timestamp with time zone
+ endDate : date
+}
+
+class FeedbackSurveyQuestions{
+ * id : integer : <generated>
+ * surveyId : integer : REFERENCES "FeedbackSurveyDefinitions".id
+ * createdAt : timestamp with time zone
+ * order : integer
+ * questionText : text
+ * updatedAt : timestamp with time zone
+}
+
+class FeedbackSurveys{
+ * id : integer : <generated>
+ questionId : integer : REFERENCES "FeedbackSurveyQuestions".id
+ surveyId : integer : REFERENCES "FeedbackSurveyDefinitions".id
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * response : enum
+ * submittedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
+ comment : text
+ regionId : integer
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -2012,6 +2057,62 @@ class ZALEventReportPilots{
  session_sig : text
 }
 
+class ZALFeedbackSurveyCompletions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveyDefinitions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveyQuestions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveys{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALFiles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3150,9 +3251,13 @@ class ZALZAFilter{
 ' Associations
 
 
+!issue='associations need to be defined both directions'
+FeedbackSurveyQuestions "1" --[#d54309,plain,thickness=2]-- "1" FeedbackSurveys : question
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" FeedbackSurveyDefinitions : creator
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
@@ -3195,6 +3300,9 @@ DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitati
 DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" GrantDeliveredReviews : grantDeliveredReviews, deliveredReview
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
+FeedbackSurveyDefinitions "1" --[#black,dashed,thickness=2]--{  "n" FeedbackSurveyCompletions : survey, completions
+FeedbackSurveyDefinitions "1" --[#black,dashed,thickness=2]--{  "n" FeedbackSurveyQuestions : questions, survey
+FeedbackSurveyDefinitions "1" --[#black,dashed,thickness=2]--{  "n" FeedbackSurveys : responses, survey
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles

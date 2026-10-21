@@ -7,6 +7,35 @@ export const getUsers = async () => {
   return users.json();
 };
 
+export const getFeedbackSurveys = async (params = {}) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      query.append(key, value);
+    }
+  });
+
+  const url = query.toString()
+    ? join('/', 'api', 'admin', 'feedback-surveys').concat(`?${query.toString()}`)
+    : join('/', 'api', 'admin', 'feedback-surveys');
+
+  const feedback = await get(url);
+  const payload = await feedback.json();
+
+  if (Array.isArray(payload)) {
+    return {
+      rows: payload,
+      total: payload.length,
+    };
+  }
+
+  return {
+    rows: payload.rows || [],
+    total: payload.total || 0,
+  };
+};
+
 export const getFeatures = async () => {
   const features = await get(join('/', 'api', 'admin', 'users', 'features'));
   return features.json();
@@ -30,6 +59,28 @@ export const getRoles = async () => {
 export const saveRoles = async (roles) => {
   const updatedRoles = await put(join('/', 'api', 'admin', 'roles'), { roles });
   return updatedRoles.json();
+};
+
+const feedbackSurveyDefinitionsUrl = join('/', 'api', 'admin', 'feedback-survey-definitions');
+
+export const getFeedbackSurveyDefinitions = async () => {
+  const surveys = await get(feedbackSurveyDefinitionsUrl);
+  return surveys.json();
+};
+
+export const createFeedbackSurveyDefinition = async (survey) => {
+  const created = await post(feedbackSurveyDefinitionsUrl, survey);
+  return created.json();
+};
+
+export const closeFeedbackSurveyDefinition = async (surveyId) => {
+  const closed = await put(join(feedbackSurveyDefinitionsUrl, String(surveyId), 'close'), {});
+  return closed.json();
+};
+
+export const reopenFeedbackSurveyDefinition = async (surveyId, dates) => {
+  const reopened = await put(join(feedbackSurveyDefinitionsUrl, String(surveyId), 'reopen'), dates);
+  return reopened.json();
 };
 
 export const getSiteAlerts = async () => {

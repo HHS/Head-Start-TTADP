@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-export */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -80,6 +80,11 @@ describe('Landing Page', () => {
       topics: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
+    fetchMock.get('/api/feedback/survey/active?pageId=activity-reports-landing', {
+      pageId: 'activity-reports-landing',
+      survey: { id: 1, endDate: null, questions: [{ id: 1, questionText: 'Did you find this page helpful?', order: 1 }] },
+      completed: false,
+    });
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -140,6 +145,10 @@ describe('Landing Page', () => {
 
   test('displays activity reports heading', async () => {
     expect(await screen.findByRole('heading', { name: /Activity reports - /i })).toBeVisible();
+  });
+
+  test('displays feedback survey on landing page', async () => {
+    expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeVisible();
   });
 
   test('displays report id column', async () => {
@@ -604,12 +613,9 @@ describe('handleApplyFilters', () => {
 
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test',
-      {
-        count: 0,
-        rows: [],
-      }
+      { count: 0, rows: [] }
     );
-    const query = await screen.findByRole('textbox');
+    const query = await within(screen.getByTestId('filters')).findByRole('textbox');
     userEvent.type(query, 'test');
 
     // const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
@@ -672,7 +678,7 @@ describe('handleApplyAlertFilters', () => {
     const condition = await screen.findByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'contains');
 
-    const query = await screen.findByRole('textbox');
+    const query = await within(screen.getByTestId('filters')).findByRole('textbox');
     userEvent.type(query, 'test');
 
     fetchMock.restore();

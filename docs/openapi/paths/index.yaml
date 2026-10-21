@@ -119,3 +119,14 @@
 
 '/notifications/count':
   $ref: './notifications-count.yaml'
+
+'/feedback/survey':
+  $ref: './feedback/survey.yaml'
+'/feedback/survey/active':
+  $ref: './feedback/survey-active.yaml'
+'/admin/feedback-survey-definitions':
+  $ref: './admin-feedback-surveys/definitions.yaml'
+'/admin/feedback-survey-definitions/{surveyId}/close':
+  $ref: './admin-feedback-surveys/close.yaml'
+'/admin/feedback-survey-definitions/{surveyId}/reopen':
+  $ref: './admin-feedback-surveys/reopen.yaml'

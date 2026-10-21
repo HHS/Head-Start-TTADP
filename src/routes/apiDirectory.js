@@ -17,6 +17,7 @@ import communicationLogRouter from './communicationLog';
 import coursesRouter from './courses';
 import deliveredReviewsRouter from './deliveredReviews';
 import eventRouter from './events';
+import feedbackRouter from './feedback';
 import feedRouter from './feeds';
 import filesRouter from './files';
 import goalsRouter from './goals';
@@ -101,6 +102,7 @@ router.use('/courses', coursesRouter);
 router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
+router.use('/feedback', feedbackRouter);
 router.use('/delivered-reviews', deliveredReviewsRouter);
 router.use('/tta-requests', ttaRequestsRouter);
 

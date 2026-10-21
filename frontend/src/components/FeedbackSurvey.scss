@@ -1,0 +1,275 @@
+@import '../colors.scss';
+
+// Flat bright gold. Product chose this over a darker gold: white text on it is ~2.6:1, below the
+// WCAG AA 4.5:1 minimum. The end date is also exposed to screen readers via the button's aria-describedby.
+$survey-gold: #c99a12;
+// The card only rises about its own height, so it moves at a constant speed to stay easy to follow
+$survey-gold-slide-ms: 500ms;
+$survey-gold-shine-ms: 2000ms;
+// One quick confetti-style pop once the card is up
+// Quick pop (~0.35s) followed by a long, slow dwindle
+$survey-sparkle-ms: 2400ms;
+
+.survey-feedback__dock {
+  z-index: 1000;
+}
+
+.survey-feedback__trigger-button {
+  // Sits above the end date card so the card appears to slide out from behind it
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+
+  &.survey-feedback__trigger-button--pulse {
+    animation: survey-feedback-button-pulse 900ms ease-out;
+  }
+
+  &.survey-feedback__trigger-button--submitted {
+    background-color: $success;
+    border-color: $success;
+    color: #fff;
+    animation: survey-feedback-button-submitted 1200ms ease forwards;
+
+    &:hover,
+    &:focus {
+      background-color: $success-darkest;
+      border-color: $success-darkest;
+      color: #fff;
+    }
+  }
+}
+
+@keyframes survey-feedback-button-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  35%,
+  55% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 0.4rem rgba($ttahub-blue-light, 0.85), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+}
+
+@keyframes survey-feedback-button-submitted {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.96);
+  }
+}
+
+// Small flat gold tab that slides up from behind the trigger button, then catches a shine.
+// Its bottom edge stays tucked behind the button, and it is always narrower than the button.
+.survey-feedback__end-date {
+  // Behind the button (z-index 1), so the card and its sparkles slide out from behind it
+  position: relative;
+  z-index: 0;
+  max-width: 85%;
+  margin-bottom: -0.25rem;
+  animation: survey-feedback-card-slide-in $survey-gold-slide-ms linear both;
+}
+
+.survey-feedback__end-date-card {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-bottom: 0.5rem;
+  background-color: $survey-gold;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+    transform: skewX(-20deg);
+    // Shine sweeps once the bar has finished sliding up
+    animation: survey-feedback-card-shine $survey-gold-shine-ms ease-in-out $survey-gold-slide-ms both;
+  }
+}
+
+// Sparkles pop out of the card's top edge in a single confetti-style burst once the card has finished sliding up.
+// They live outside the card because the card clips its contents for the shine.
+.survey-feedback__sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 2px rgba($survey-gold, 0.6));
+}
+
+.survey-feedback__sparkle {
+  --sparkle-x: 0;
+  --sparkle-y: -1rem;
+
+  position: absolute;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  opacity: 0;
+  background-color: $survey-gold;
+  // Four-point star
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  // Fast launch that decelerates, played once
+  animation: survey-feedback-sparkle $survey-sparkle-ms cubic-bezier(0.15, 0.85, 0.35, 1) both;
+}
+
+// Launch point along the top edge, x and y burst distance, size, tiny stagger.
+// Launch points cluster near the middle and fan out wide, like a confetti popper.
+$survey-sparkles: (
+  (30%, -3rem, -0.9rem, 6px, 0ms),
+  (36%, -2.2rem, -2rem, 7px, 40ms),
+  (42%, -1.2rem, -2.7rem, 5px, 20ms),
+  (47%, -0.4rem, -1.6rem, 8px, 60ms),
+  (50%, 0, -3rem, 6px, 0ms),
+  (53%, 0.4rem, -1.6rem, 8px, 50ms),
+  (58%, 1.2rem, -2.7rem, 5px, 30ms),
+  (64%, 2.2rem, -2rem, 7px, 10ms),
+  (70%, 3rem, -0.9rem, 6px, 45ms)
+);
+
+@for $i from 1 through length($survey-sparkles) {
+  $sparkle: nth($survey-sparkles, $i);
+
+  .survey-feedback__sparkle:nth-child(#{$i}) {
+    --sparkle-x: #{nth($sparkle, 2)};
+    --sparkle-y: #{nth($sparkle, 3)};
+
+    left: nth($sparkle, 1);
+    width: nth($sparkle, 4);
+    height: nth($sparkle, 4);
+    animation-delay: $survey-gold-slide-ms + nth($sparkle, 5);
+  }
+}
+
+// Pop: burst out to the peak quickly, then slowly dwindle (shrink and fade) while drifting down
+@keyframes survey-feedback-sparkle {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.2) rotate(0deg);
+  }
+
+  6% {
+    opacity: 1;
+    transform: translate(calc(var(--sparkle-x) * 0.6), calc(var(--sparkle-y) * 0.6)) scale(1.2) rotate(60deg);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translate(var(--sparkle-x), var(--sparkle-y)) scale(1) rotate(120deg);
+  }
+
+  55% {
+    opacity: 0.6;
+    transform: translate(calc(var(--sparkle-x) * 1.05), calc(var(--sparkle-y) + 0.5rem)) scale(0.7) rotate(200deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--sparkle-x) * 1.1), calc(var(--sparkle-y) + 1.2rem)) scale(0.3) rotate(270deg);
+  }
+}
+
+// Starts fully hidden behind the (taller) button and rises into view
+@keyframes survey-feedback-card-slide-in {
+  0% {
+    transform: translateY(100%);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes survey-feedback-card-shine {
+  0% {
+    left: -75%;
+  }
+
+  100% {
+    left: 125%;
+  }
+}
+
+// Product decision: the end date card's slide, shine, and sparkles always play, including for
+// users with prefers-reduced-motion. Only the button pulse is turned off for them.
+@media (prefers-reduced-motion: reduce) {
+  .survey-feedback__trigger-button {
+    animation: none;
+  }
+}
+
+.survey-feedback__modal {
+  .usa-modal__content {
+    max-width: 38rem;
+  }
+
+  .usa-modal__main {
+    padding-top: 0;
+  }
+
+  .usa-modal__heading {
+    padding-top: 0;
+  }
+
+  .survey-feedback__optional-comments-label {
+    display: block;
+    width: 100%;
+    padding-bottom: 0.25rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+
+  .usa-radio {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid $base-lighter;
+    border-radius: 0.5rem;
+  }
+
+  .usa-radio__label {
+    display: flex;
+    align-items: center;
+    min-height: 1.25rem;
+    margin-top: 0;
+  }
+
+  .usa-radio__label::before {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  textarea {
+    min-height: 5rem;
+  }
+}

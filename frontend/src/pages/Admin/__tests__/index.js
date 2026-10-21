@@ -106,4 +106,18 @@ describe('Admin landing page', () => {
     const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });
     expect(heading).toBeVisible();
   });
+
+  it('displays the feedback surveys page on the manage surveys tab', async () => {
+    fetchMock.get('/api/admin/feedback-survey-definitions', { active: [], closed: [], pages: {} });
+    history.push('/admin/feedback-surveys');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /manage surveys/i });
+    expect(heading).toBeVisible();
+    expect(history.location.pathname).toBe('/admin/feedback-surveys/manage');
+  });
 });

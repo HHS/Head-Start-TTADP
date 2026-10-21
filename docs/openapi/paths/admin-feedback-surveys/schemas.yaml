@@ -1,0 +1,67 @@
+surveyQuestion:
+  type: object
+  properties:
+    id:
+      type: integer
+    questionText:
+      type: string
+    order:
+      type: integer
+surveyDefinition:
+  type: object
+  properties:
+    id:
+      type: integer
+    pageId:
+      type: string
+      example: qa-dashboard
+    startDate:
+      type: string
+      format: date
+    endDate:
+      type: string
+      format: date
+      nullable: true
+      description: Null when the survey stays open until an admin closes it
+    status:
+      type: string
+      enum: [active, closed]
+    closedAt:
+      type: string
+      format: date-time
+      nullable: true
+    responseCount:
+      type: integer
+      description: Number of submissions (admin list only)
+    questions:
+      type: array
+      items:
+        $ref: '#/surveyQuestion'
+dateRange:
+  description: >
+    Either startDate and endDate, or manualClose true (no dates) to open the survey today
+    and keep it open until an admin closes it.
+  oneOf:
+    - type: object
+      required:
+        - startDate
+        - endDate
+      additionalProperties: false
+      properties:
+        manualClose:
+          type: boolean
+          enum: [false]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+    - type: object
+      required:
+        - manualClose
+      additionalProperties: false
+      properties:
+        manualClose:
+          type: boolean
+          enum: [true]

@@ -1,0 +1,64 @@
+const { Model } = require('sequelize');
+
+export default (sequelize, DataTypes) => {
+  class FeedbackSurvey extends Model {
+    static associate(models) {
+      FeedbackSurvey.belongsTo(models.FeedbackSurveyDefinition, { foreignKey: 'surveyId', as: 'survey' });
+      FeedbackSurvey.belongsTo(models.FeedbackSurveyQuestion, { foreignKey: 'questionId', as: 'question' });
+    }
+  }
+
+  FeedbackSurvey.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    regionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    userRoles: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: sequelize.literal('(ARRAY[]::character varying[])::character varying(255)[]'),
+    },
+    pageId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    surveyId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    questionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    response: {
+      type: DataTypes.ENUM('yes', 'no'),
+      allowNull: false,
+      validate: {
+        isIn: {
+          args: [['yes', 'no']],
+          msg: 'Response must be one of yes or no',
+        },
+      },
+    },
+    comment: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    submittedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  }, {
+    sequelize,
+    modelName: 'FeedbackSurvey',
+    tableName: 'FeedbackSurveys',
+  });
+
+  return FeedbackSurvey;
+};

@@ -1,0 +1,22 @@
+put:
+  tags:
+    - admin
+  operationId: closeFeedbackSurveyDefinition
+  description: Closes an active feedback survey. Surveys past their end date are also closed nightly.
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Survey closed
+      content:
+        application/json:
+          schema:
+            $ref: './schemas.yaml#/surveyDefinition'
+    400:
+      description: Survey is already closed
+    404:
+      description: Survey not found
