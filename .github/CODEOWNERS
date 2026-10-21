@@ -1,9 +1,9 @@
 # Code owners for the data file guard. When "Require review from Code Owners" is on for main,
-# changes to these files need the owner's review. Add a second owner or a team so an owner
-# can approve a change that another owner wrote.
-/tools/data-file-guard.js @kryswisnaskas
-/tools/data-file-guard.test.js @kryswisnaskas
-/tools/data-file-guard-config.test.js @kryswisnaskas
-/tools/validate-data-file-guard.js @kryswisnaskas
-/.github/workflows/pr-data-file-guard.yml @kryswisnaskas
-/.github/CODEOWNERS @kryswisnaskas
+# changes to these files need review from one of the owners, so either owner can approve a
+# change that the other wrote.
+/tools/data-file-guard.js @kryswisnaskas @HaymondM
+/tools/data-file-guard.test.js @kryswisnaskas @HaymondM
+/tools/data-file-guard-config.test.js @kryswisnaskas @HaymondM
+/tools/validate-data-file-guard.js @kryswisnaskas @HaymondM
+/.github/workflows/pr-data-file-guard.yml @kryswisnaskas @HaymondM
+/.github/CODEOWNERS @kryswisnaskas @HaymondM

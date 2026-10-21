@@ -46,10 +46,11 @@ describe('data file guard configuration', () => {
       '/.github/CODEOWNERS',
     ];
 
-    it.each(guardFiles)('lists %s with at least one owner', (file) => {
+    it.each(guardFiles)('lists %s with at least two owners', (file) => {
       const entry = entries.find(({ pattern }) => pattern === file);
       expect(entry).toBeDefined();
-      expect(entry.owners.length).toBeGreaterThan(0);
+      // Two owners, so either can approve a change the other wrote.
+      expect(new Set(entry.owners).size).toBeGreaterThanOrEqual(2);
       entry.owners.forEach((owner) => expect(owner).toMatch(/^@[\w-]+(\/[\w-]+)?$/));
     });
 
