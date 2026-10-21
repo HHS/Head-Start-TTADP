@@ -3,6 +3,9 @@ import { NextStep } from '../models';
 import { saveNotes } from './activityReports';
 
 jest.mock('../models', () => ({
+  sequelize: {
+    literal: jest.requireActual('sequelize').literal,
+  },
   NextStep: {
     destroy: jest.fn(),
     bulkCreate: jest.fn(),
