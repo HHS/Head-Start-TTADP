@@ -97,10 +97,11 @@ describe('goalTemplates services', () => {
     });
 
     afterAll(async () => {
-      // Delete the goals.
+      // Delete the goals on this suite's grants. The templates are shared, so deleting by
+      // template id would also remove every other goal that uses them.
       await Goal.destroy({
         where: {
-          goalTemplateId: [monitoringTemplate.id, regularTemplate.id],
+          grantId: [monitoringGrant.id, regularGrant.id],
         },
         force: true,
         paranoid: true,

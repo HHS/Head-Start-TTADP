@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { downloadFile } from '../lib/s3';
 import { logger } from '../logger';
 import db, { Goal, Grant } from '../models';
@@ -27,8 +28,12 @@ describe('Import TTA plan goals', () => {
 
   describe('for a single region', () => {
     const regionId = 14;
+    // The importer matches the seeded grants by number, so this suite has to clear and
+    // re-import goals on shared seed data. Roll every change back afterwards.
+    let snapshot;
 
     beforeAll(async () => {
+      snapshot = await captureSnapshot();
       try {
         const fileName = GranteeTestPlan;
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
@@ -55,6 +60,10 @@ describe('Import TTA plan goals', () => {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Goals test ${error}`);
       }
+    });
+
+    afterAll(async () => {
+      await rollbackToSnapshot(snapshot);
     });
 
     it('should import Goals table', async () => {

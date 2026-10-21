@@ -309,6 +309,8 @@ describe('save standard goals for report', () => {
       let files;
       let courses;
       let topics;
+      // only the topics this suite created; the others are shared seed rows
+      let createdTopics;
       let resources;
 
       beforeAll(async () => {
@@ -356,17 +358,16 @@ describe('save standard goals for report', () => {
 
         courses = [courseOne, courseTwo];
 
-        const [topic1] = await Topic.findOrCreate({ where: { name: 'Coaching' } });
-        const [topic2] = await Topic.findOrCreate({ where: { name: 'Communication' } });
-        const [topics2] = await Topic.findOrCreate({
-          where: { name: 'Community and Self-Assessment' },
-        });
+        const topicResults = await Promise.all(
+          ['Coaching', 'Communication', 'Community and Self-Assessment'].map((name) =>
+            Topic.findOrCreate({ where: { name } })
+          )
+        );
 
-        topics = [
-          { id: topic1.id, name: topic1.name },
-          { id: topic2.id, name: topic2.name },
-          { id: topics2.id, name: topics2.name },
-        ];
+        topics = topicResults.map(([topic]) => ({ id: topic.id, name: topic.name }));
+        createdTopics = topicResults
+          .filter(([, created]) => created)
+          .map(([topic]) => ({ id: topic.id, name: topic.name }));
 
         resources = [
           { url: 'http://standard.goals.resource1.com' },
@@ -389,7 +390,7 @@ describe('save standard goals for report', () => {
           goalTemplate.id,
           report.id,
           [grant.id, grantWithSuspendedGoal.id],
-          topics,
+          createdTopics,
           courses,
           files,
           resources
