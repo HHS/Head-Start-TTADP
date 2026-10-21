@@ -14,12 +14,24 @@ describe('data file guard configuration', () => {
     });
 
     it('also runs in the merge queue, so it can be a required check', () => {
-      expect(workflow).toMatch(/^ {2}merge_group:/m);
+      expect(workflow).toMatch(/^ {2}merge_group:\n {4}types: \[checks_requested\]$/m);
     });
 
-    it('compares against the queue base commit when run by the merge queue', () => {
-      expect(workflow).toContain('github.event.merge_group.base_sha');
-      expect(workflow).toContain("format('origin/{0}', github.base_ref)");
+    // The whole expression is matched, so swapping the branches or the condition fails here.
+    // In a merge group github.base_ref is empty, so the queue must use the commit it built on.
+    it('compares against the queue base commit only when run by the merge queue', () => {
+      expect(workflow).toContain(
+        `BASE_REF: \${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || format('origin/{0}', github.base_ref) }}`
+      );
+    });
+
+    // The guard diffs against the base commit, which a shallow checkout does not contain.
+    it('checks out full history so the base commit exists', () => {
+      const checkout = workflow.match(
+        /uses: actions\/checkout@[^\n]*\n {8}with:\n((?: {10}[^\n]*\n)+)/
+      );
+      expect(checkout).not.toBeNull();
+      expect(checkout[1]).toMatch(/^ {10}fetch-depth: 0$/m);
     });
 
     it('keeps the job name data_file_guard, the name used as the required check', () => {
@@ -51,7 +63,9 @@ describe('data file guard configuration', () => {
       expect(entry).toBeDefined();
       // Two owners, so either can approve a change the other wrote.
       expect(new Set(entry.owners).size).toBeGreaterThanOrEqual(2);
-      entry.owners.forEach((owner) => expect(owner).toMatch(/^@[\w-]+(\/[\w-]+)?$/));
+      entry.owners.forEach((owner) => {
+        expect(owner).toMatch(/^@[\w-]+(\/[\w-]+)?$/);
+      });
     });
 
     it.each(guardFiles)('points at a file that exists: %s', (file) => {
@@ -63,7 +77,9 @@ describe('data file guard configuration', () => {
         .readdirSync(path.join(repoRoot, 'tools'))
         .filter((name) => /data-file-guard/.test(name))
         .map((name) => `/tools/${name}`);
-      inTools.forEach((file) => expect(guardFiles).toContain(file));
+      inTools.forEach((file) => {
+        expect(guardFiles).toContain(file);
+      });
     });
   });
 });
