@@ -341,6 +341,28 @@ describe('session reports service', () => {
 
       await destroySession(created.id);
     });
+
+    it('still saves the session when a notification query fails inside the request transaction', async () => {
+      // A failed query aborts the surrounding Postgres transaction, so this only
+      // passes if the notification is isolated in a savepoint
+      createNotificationForSessionSubmittedCollaborators.mockImplementationOnce(() =>
+        db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"')
+      );
+      const created = await createReadySession();
+
+      const updated = await db.sequelize.transaction(() =>
+        updateSession(created.id, {
+          eventId: submitEventId,
+          data: { collabComplete: true, sessionName: 'Saved anyway' },
+        })
+      );
+
+      expect(updated.submitted).toBe(true);
+      const saved = await findSessionById(created.id);
+      expect(saved.data.sessionName).toBe('Saved anyway');
+
+      await destroySession(created.id);
+    });
   });
 
   describe('updateSession facilitation changes', () => {
