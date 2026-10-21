@@ -524,6 +524,9 @@ jobs:
       SFTP_EXPOSED_PORT: 2222
     steps:
     - checkout
+    - run:
+        name: Skip unless backend files changed
+        command: ./tools/ci/skip-unless-changed.sh backend
     - attach_workspace:
         at: .
     - run:
@@ -593,11 +596,14 @@ jobs:
     - run:
         name: Merge backend coverage across nodes
         command: |
+          # test_backend skips itself when a branch push without a PR changes no backend files
+          if ! ./tools/ci/skip-unless-changed.sh backend --check; then exit 0; fi
           chmod +x ./tools/ci/merge-backend-coverage-workspace.sh
           ./tools/ci/merge-backend-coverage-workspace.sh
     - run:
         name: Summarize merged coverage
         command: |
+          if ! ./tools/ci/skip-unless-changed.sh backend --check; then exit 0; fi
           chmod +x ./tools/ci/summarize-backend-coverage.sh
           ./tools/ci/summarize-backend-coverage.sh ./coverage-merge-temp/merged-coverage.json 90
     - store_artifacts:
@@ -607,11 +613,14 @@ jobs:
     - run:
         name: Merge frontend coverage across nodes
         command: |
+          # test_frontend skips itself when a branch push without a PR changes no frontend files
+          if ! ./tools/ci/skip-unless-changed.sh frontend --check; then exit 0; fi
           chmod +x ./tools/ci/merge-frontend-coverage-workspace.sh
           ./tools/ci/merge-frontend-coverage-workspace.sh
     - run:
         name: Check frontend coverage thresholds
         command: |
+          if ! ./tools/ci/skip-unless-changed.sh frontend --check; then exit 0; fi
           chmod +x ./tools/ci/summarize-frontend-coverage.sh
           ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
           npx nyc check-coverage \
@@ -649,6 +658,9 @@ jobs:
     parallelism: 4
     steps:
     - checkout
+    - run:
+        name: Skip unless frontend files changed
+        command: ./tools/ci/skip-unless-changed.sh frontend
     - attach_workspace:
         at: .
     - run:
@@ -711,6 +723,9 @@ jobs:
     resource_class: large
     steps:
     - checkout
+    - run:
+        name: Skip if only documentation changed
+        command: ./tools/ci/skip-unless-changed.sh any
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -2014,6 +2029,9 @@ commands:
         type: string
     steps:
     - checkout
+    - run:
+        name: Skip if only documentation changed
+        command: ./tools/ci/skip-unless-changed.sh any
     - attach_workspace:
         at: .
     - run:
