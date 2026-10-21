@@ -416,9 +416,9 @@ function ActivityReport({ match, location, region }) {
 
   const reportParticipantIds = new Set([
     formData.userId,
-    ...activityReportCollaborators.map((collaborator) => (
-      collaborator?.userId ?? collaborator?.user?.id
-    )),
+    ...activityReportCollaborators.map(
+      (collaborator) => collaborator?.userId ?? collaborator?.user?.id
+    ),
   ]);
   const availableApprovers = (initialAdditionalData.availableApprovers || []).filter(
     (approver) => !reportParticipantIds.has(approver.id)
