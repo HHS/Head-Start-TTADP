@@ -312,6 +312,24 @@ async function archiveApproverApprovedNotificationForUser(
 }
 
 /**
+ * Archives a single approver's "submitted for approval" and "revised report resubmitted"
+ * in-app notifications for an activity report. Called when that approver approves the report
+ * or requests changes, since the prompt asking them to review it is no longer actionable.
+ * @param {number} reportId The activity report ID.
+ * @param {number} userId The approver whose review-request notifications to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+async function archiveApproverSubmittedNotificationsForUser(
+  reportId: number,
+  userId: number
+): Promise<void> {
+  return archiveNotificationsByUserEntityAndType(reportId, userId, [
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED_APPROVER,
+  ]);
+}
+
+/**
  * Creates the "revised report resubmitted for approval" in-app notification for each
  * collaborator on an activity report. Fired when a report is resubmitted for approval
  * (i.e. submitted while it was in "needs action" status). Replaces the standard
@@ -511,6 +529,7 @@ async function archiveNotificationsOnActivityReportApproved(reportId: number): P
 export {
   archiveApproverApprovedNotificationForUser,
   archiveApproverApprovedNotifications,
+  archiveApproverSubmittedNotificationsForUser,
   archiveNeedsActionNotifications,
   archiveNotificationsOnActivityReportApproved,
   archiveResubmittedNotifications,
