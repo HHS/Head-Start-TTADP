@@ -1,12 +1,10 @@
-export interface TtaRequestGrant {
-  id: number;
-  regionId: number;
-  status?: string;
-  /** e.g. "14HP1234 - EHS" */
-  numberWithProgramTypes: string;
-  /** the full name, including the recipient, e.g. "Children and Families First - 14HP1234 - EHS" */
-  name: string;
-}
+import type { TtaRequestGrant } from '@ttahub/common/src/ttaRequests';
+
+export type {
+  TtaRequestGrant,
+  TtaRequestPayload,
+  TtaRequestResponse,
+} from '@ttahub/common/src/ttaRequests';
 
 export interface TtaRequestRecipient {
   id: number;
@@ -43,4 +41,18 @@ export interface SelectOption {
 export interface Approver {
   id: number;
   name: string;
+}
+
+/** the form's values, as react-hook-form holds them */
+export interface TtaRequestFormValues {
+  recipient: TtaRequestRecipient | null;
+  grants: TtaRequestGrant[];
+  /** the radio's value: 'yes', 'no', or '' before either is chosen */
+  recipientAware: string;
+  originator: SelectOption | null;
+  goal: GoalTemplateOption | null;
+  citations: CitationOption[];
+  context: string;
+  creatorNotes: string;
+  reviewer: SelectOption | null;
 }

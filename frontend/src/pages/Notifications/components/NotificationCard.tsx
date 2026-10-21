@@ -39,13 +39,15 @@ function NotificationCardDismiss({
 export default function NotificationCard({
   notification,
   onArchive,
+  isArchive,
 }: {
   onArchive: (notificationId: number | string) => void;
   notification: Notification;
+  isArchive?: boolean;
 }): React.ReactElement {
   const isUnread = !notification.viewedAt;
 
-  const linkClass = `usa-button ${notification.actionable ? '' : 'usa-button--outline'}`;
+  const linkClass = `usa-button ${notification.actionable ? '' : 'usa-button--outline'} margin-right-0`;
 
   return (
     <li className="notification-card desktop:height-9 padding-x-2 border-base-lighter border radius-lg desktop:display-flex flex-justify-start flex-align-center padding-y-1 margin-y-1">
@@ -66,7 +68,9 @@ export default function NotificationCard({
       >
         {notification.displayId || ''}
       </div>
-      <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
+      {!isArchive && (
+        <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
+      )}
       <div
         className={`notification-card__text text-left flex-1 ${isUnread ? 'text-semibold' : ''}`}
       >
@@ -87,7 +91,7 @@ export default function NotificationCard({
           </Link>
         ) : null}
       </div>
-      <NotificationCardDismiss notification={notification} onArchive={onArchive} />
+      {!isArchive && <NotificationCardDismiss notification={notification} onArchive={onArchive} />}
     </li>
   );
 }

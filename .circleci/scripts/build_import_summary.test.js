@@ -389,6 +389,98 @@ describe('build_import_summary.sh', () => {
     expect(summary).toBe('Monitoring job failure: ```\nPhase failed: process\n```');
   });
 
+  describe('Node process warnings in the failed phase log', () => {
+    const taskPrefix = '   2026-10-15T13:23:39.53+0000 [APP/TASK/import-process-prod-1/0]';
+    const deprecationWarning = `${taskPrefix} ERR (node:7) [DEP0169] DeprecationWarning: \`url.parse()\` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for \`url.parse()\` vulnerabilities.`;
+    const traceHint = `${taskPrefix} ERR (Use \`node --trace-deprecation ...\` to show where the warning was created)`;
+
+    function runWithProcessLog(processLog) {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-warning-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: {
+              targetEnv: 'prod',
+              startedAt: '2026-10-15T13:09:00Z',
+            },
+            taskRuns: [
+              {
+                taskName: 'import-process-prod-1',
+                status: 'FAILED',
+                exitCode: 1,
+                startedAt: '2026-10-15T13:23:30Z',
+                finishedAt: '2026-10-15T13:26:00Z',
+                logFile: path.join(logDir, 'phase-process.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(path.join(logDir, 'phase-process.log'), processLog);
+
+      runSummaryScript(artifactDir, summaryFile, '6');
+
+      return fs.readFileSync(summaryFile, 'utf-8');
+    }
+
+    it('reports the real error instead of a later deprecation warning', () => {
+      const summary = runWithProcessLog(
+        [
+          'Task import-process-prod-1 status: RUNNING',
+          `${taskPrefix} ERR Error: downstream system unavailable`,
+          deprecationWarning,
+          traceHint,
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe(
+        `Monitoring job failure: \`\`\`\n${taskPrefix.trim()} ERR Error: downstream system unavailable\n\`\`\``
+      );
+    });
+
+    it('falls back to the phase name when the log only contains warnings', () => {
+      const summary = runWithProcessLog(
+        [
+          'Starting task import-process-prod-1 on tta-smarthub-prod',
+          deprecationWarning,
+          traceHint,
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe('Monitoring job failure: ```\nPhase failed: process\n```');
+    });
+
+    it('reports the last non-warning line when no line matches an error keyword', () => {
+      const summary = runWithProcessLog(
+        [
+          'Task import-process-prod-1 status: RUNNING',
+          `${taskPrefix} OUT yarn run v1.22.22`,
+          deprecationWarning,
+          traceHint,
+          `${taskPrefix} OUT $ bin/run-tool src/tools/importSystemCLI.ts process 1`,
+          'cf logs exited unexpectedly while waiting for task import-process-prod-1',
+          'PHASE_FAILURE process exit 1',
+          '',
+        ].join('\n')
+      );
+
+      expect(summary).toBe(
+        'Monitoring job failure: ```\ncf logs exited unexpectedly while waiting for task import-process-prod-1\n```'
+      );
+    });
+  });
+
   it('reports login failure when no task runs were recorded', () => {
     const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-login-'));
     const logDir = path.join(artifactDir, 'logs');
