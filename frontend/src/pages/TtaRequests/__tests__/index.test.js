@@ -45,10 +45,10 @@ const DRAFT = {
   grants: [],
 };
 
-const renderTtaRequests = () =>
+const renderTtaRequests = (initialEntries = ['/tta-requests']) =>
   render(
     <UserContext.Provider value={{ user }}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <TtaRequests />
       </MemoryRouter>
     </UserContext.Provider>
@@ -138,5 +138,29 @@ describe('TTA Requests', () => {
     // the page spans every region the user can see, so the rows have to say which
     expect(await screen.findByRole('columnheader', { name: /recipient/i })).toBeVisible();
     expect(screen.getByRole('columnheader', { name: /region/i })).toBeVisible();
+  });
+
+  it('says a request was submitted when the form returns here', async () => {
+    renderTtaRequests([
+      {
+        pathname: '/tta-requests',
+        state: {
+          message: {
+            reportId: 99,
+            displayId: 'R01-REQ-99',
+            time: '06/23/2026 at 11:00 am EDT',
+            status: 'submitted',
+          },
+        },
+      },
+    ]);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You submitted request R01-REQ-99 on 06/23/2026 at 11:00 am EDT.'
+    );
+    expect(screen.getByRole('link', { name: 'R01-REQ-99' })).toHaveAttribute(
+      'href',
+      '/tta-requests/view/99'
+    );
   });
 });
