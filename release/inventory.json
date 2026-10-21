@@ -589,7 +589,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/prod_vars.yml"
       },
-      "sha256": "a18e5d994ddcc5ca987c7d14f20e9764a40f6524be6017a4ad55ad7b890b5746",
+      "sha256": "cc00174839bd4046e4af2351e0fc993359f4d3adde7aad17fac9bf46c7078240",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
