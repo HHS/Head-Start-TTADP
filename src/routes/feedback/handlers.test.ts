@@ -65,7 +65,7 @@ describe('Feedback handlers', () => {
       markFeedbackSurveyCompletedMock.mockResolvedValue({ id: 1 });
 
       const request = {
-        body: { ...validBody, timestamp: '2026-03-12T12:30:00.000Z' },
+        body: validBody,
         session: { userId: 7 },
       };
 
@@ -75,14 +75,14 @@ describe('Feedback handlers', () => {
       expect(saveFeedbackSurveyServiceMock).toHaveBeenCalledWith({
         surveyId: 3,
         responses: validBody.responses,
-        timestamp: '2026-03-12T12:30:00.000Z',
+        timestamp: expect.any(String),
         userId: 7,
       });
       expect(markFeedbackSurveyCompletedMock).toHaveBeenCalledWith({
         surveyId: 3,
         pageId: 'qa-dashboard',
         userId: 7,
-        timestamp: '2026-03-12T12:30:00.000Z',
+        timestamp: saveFeedbackSurveyServiceMock.mock.calls[0][0].timestamp,
       });
       expect(status).toHaveBeenCalledWith(201);
       expect(json).toHaveBeenCalledWith({ success: true, feedbackIds: [100, 101] });
@@ -222,11 +222,11 @@ describe('Feedback handlers', () => {
       expect(status).toHaveBeenCalledWith(400);
     });
 
-    it('rejects invalid timestamps', () => {
-      const { status, json } = runValidation({ ...validBody, timestamp: 'not-a-date' });
+    it('rejects client-supplied timestamps', () => {
+      const { status, json } = runValidation({ ...validBody, timestamp: '2020-01-01T00:00:00.000Z' });
 
       expect(status).toHaveBeenCalledWith(400);
-      expect(json).toHaveBeenCalledWith({ error: 'Timestamp must be a valid ISO date string' });
+      expect(json).toHaveBeenCalledWith({ error: '"timestamp" is not allowed' });
     });
   });
 });

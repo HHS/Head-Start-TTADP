@@ -405,6 +405,51 @@ describe('FeedbackSurveys', () => {
     window.URL.revokeObjectURL = originalRevokeObjectURL;
   });
 
+  it('pages through every result for charts and CSV export', async () => {
+    const makeRow = (id) => ({
+      id,
+      regionId: 1,
+      userRoles: [],
+      pageId: 'qa-dashboard',
+      response: 'yes',
+      comment: '',
+      createdAt: '2026-03-18T10:00:00.000Z',
+      submittedAt: '2026-03-18T12:00:00.000Z',
+    });
+    const allRows = Array.from({ length: 1001 }, (_, index) => makeRow(index + 1));
+
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=100&offset=0', pagedResponse(allRows.slice(0, 100), 1001));
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=1000&offset=0', pagedResponse(allRows.slice(0, 1000), 1001));
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=1000&offset=1000', pagedResponse(allRows.slice(1000), 1001));
+
+    const originalCreateObjectURL = window.URL.createObjectURL;
+    const originalRevokeObjectURL = window.URL.revokeObjectURL;
+    const createObjectURLSpy = jest.fn(() => 'blob:csv');
+    window.URL.createObjectURL = createObjectURLSpy;
+    window.URL.revokeObjectURL = jest.fn();
+
+    render(<FeedbackSurveys />);
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=1000&offset=1000')).toBe(true);
+    });
+    await screen.findByRole('heading', { name: /feedback survey responses/i });
+
+    await userEvent.click(screen.getByRole('button', { name: /export table/i }));
+
+    const blob = createObjectURLSpy.mock.calls[0][0];
+    const csv = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsText(blob);
+    });
+    // header + every row across both pages
+    expect(csv.split('\n')).toHaveLength(1002);
+
+    window.URL.createObjectURL = originalCreateObjectURL;
+    window.URL.revokeObjectURL = originalRevokeObjectURL;
+  });
+
   it('handles invalid chart rows and large yes/no counts', async () => {
     const manyRows = Array.from({ length: 14 }, (_, index) => ({
       id: 500 + index,

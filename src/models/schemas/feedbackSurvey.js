@@ -15,9 +15,6 @@ const answerSchema = Joi.object({
 const feedbackSurveySchema = Joi.object({
   surveyId: Joi.number().integer().positive().required(),
   responses: Joi.array().items(answerSchema).min(1).unique('questionId').required(),
-  timestamp: Joi.string().isoDate(),
-}).messages({
-  'string.isoDate': 'Timestamp must be a valid ISO date string',
 });
 
 const dateOnly = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({

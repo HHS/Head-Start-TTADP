@@ -118,7 +118,6 @@ describe('FeedbackSurvey', () => {
           { questionId: 11, response: 'yes', comment: '' },
           { questionId: 12, response: 'no', comment: 'Too many charts' },
         ],
-        timestamp: expect.any(String),
       });
     });
   });

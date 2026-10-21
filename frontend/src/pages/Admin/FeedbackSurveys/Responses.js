@@ -25,13 +25,6 @@ import useFetch from '../../../hooks/useFetch';
 import { pageLabel, toDisplayDate, toDisplayEndDate } from './utils';
 import './FeedbackSurveys.scss';
 
-let Plot = null;
-
-import('plotly.js-basic-dist')
-  .then((Plotly) => {
-    Plot = createPlotlyComponent(Plotly);
-  });
-
 const DEFAULT_FILTERS = {
   q: '',
   surveyId: '',
@@ -199,12 +192,37 @@ function buildCsv(rows) {
   return [header, ...lines].join('\n');
 }
 
+// The API caps each request at CHART_DATA_LIMIT rows, so page through every result
+// to keep charts, filter options and the CSV export complete
+async function fetchAllFeedbackSurveys(filters) {
+  const allRows = [];
+  let total = Infinity;
+
+  while (allRows.length < total) {
+    const response = await getFeedbackSurveys({
+      ...filters,
+      ...DEFAULT_SORT,
+      limit: CHART_DATA_LIMIT,
+      offset: allRows.length,
+    });
+
+    total = response.total;
+    if (!response.rows.length) {
+      break;
+    }
+    allRows.push(...response.rows);
+  }
+
+  return allRows;
+}
+
 function surveyOptionLabel(survey, pages) {
   return `${pageLabel(pages, survey.pageId)}: ${toDisplayDate(survey.startDate)} - ${toDisplayEndDate(survey.endDate)}${survey.status === 'closed' ? ' (closed)' : ''}`;
 }
 
 export default function FeedbackSurveys() {
   const location = useLocation();
+  const [Plot, setPlot] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
@@ -234,30 +252,38 @@ export default function FeedbackSurveys() {
   const responseByMonthChartRef = useRef(null);
   const offset = useMemo(() => (currentPage - 1) * DEFAULT_PAGE_SIZE, [currentPage]);
 
+  // Plotly is loaded lazily; keep the component in state so charts render once it arrives
+  useEffect(() => {
+    let mounted = true;
+    import('plotly.js-basic-dist').then((Plotly) => {
+      if (mounted) {
+        setPlot(() => createPlotlyComponent(Plotly));
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     async function fetchRows() {
       setLoading(true);
       setError('');
 
       try {
-        const [tableResponse, summaryResponse] = await Promise.all([
+        const [tableResponse, summaryRows] = await Promise.all([
           getFeedbackSurveys({
             ...filters,
             ...sort,
             limit: DEFAULT_PAGE_SIZE,
             offset,
           }),
-          getFeedbackSurveys({
-            ...filters,
-            ...DEFAULT_SORT,
-            limit: CHART_DATA_LIMIT,
-            offset: 0,
-          }),
+          fetchAllFeedbackSurveys(filters),
         ]);
 
         setRows(tableResponse.rows);
         setTotalCount(tableResponse.total);
-        setAllRows(summaryResponse.rows);
+        setAllRows(summaryRows);
       } catch (e) {
         setError('There was an error fetching feedback survey responses.');
       } finally {

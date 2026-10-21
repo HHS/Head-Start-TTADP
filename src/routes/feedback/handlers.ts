@@ -9,7 +9,6 @@ import { FeedbackSurveyDefinitionError, getActiveSurveyForPage } from '../../ser
 type FeedbackBody = {
   surveyId?: number;
   responses?: SurveyAnswerInput[];
-  timestamp?: string;
 };
 
 type FeedbackRequestData = {
@@ -34,7 +33,7 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
   const reqData = req as Request & FeedbackRequestData;
 
   try {
-    const { surveyId, responses, timestamp } = reqData.body;
+    const { surveyId, responses } = reqData.body;
     const userId = reqData.session?.userId;
 
     if (!userId) {
@@ -43,7 +42,8 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
       });
     }
 
-    const submittedAt = timestamp || new Date().toISOString();
+    // Submission time is always set server-side so clients cannot skew survey analytics
+    const submittedAt = new Date().toISOString();
 
     const { survey, feedback } = await saveFeedbackSurveyService({
       surveyId,
