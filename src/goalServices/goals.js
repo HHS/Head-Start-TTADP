@@ -1,4 +1,4 @@
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { uniq } from 'lodash';
 import { Op } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
@@ -22,10 +22,12 @@ import {
   Objective,
   Program,
   Resource,
+  SessionReportPilot,
   sequelize,
   Topic,
 } from '../models';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
+import { recipientGrantFilter } from '../services/sessionReports';
 import { saveStandardGoalsForReport } from '../services/standardGoals';
 import changeGoalStatus from './changeGoalStatus';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
@@ -1626,6 +1628,7 @@ export async function getGoalHistory(id) {
       goals: [],
       overview: {
         activityReports: 0,
+        trainingReports: 0,
         objectives: 0,
         closures: 0,
         suspensions: 0,
@@ -1635,6 +1638,41 @@ export async function getGoalHistory(id) {
   }
 
   const goalsWithPreparedSpecialists = goalsWithDetails.map((g) => g.toJSON());
+
+  const grants = goal.goalTemplateId
+    ? await Grant.findAll({
+        attributes: ['id'],
+        where: { recipientId: grantRecord.recipientId },
+        raw: true,
+      })
+    : [];
+  const grantIds = [...new Set(grants.map((grant) => Number(grant.id)))].filter(
+    (grantId) => Number.isInteger(grantId) && grantId > 0
+  );
+
+  const trainingReports =
+    goal.goalTemplateId && grantIds.length
+      ? await SessionReportPilot.count({
+          distinct: true,
+          col: 'id',
+          where: {
+            [Op.and]: [
+              { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+              recipientGrantFilter(grantIds),
+            ],
+          },
+          include: [
+            {
+              model: GoalTemplate,
+              as: 'goalTemplates',
+              attributes: [],
+              through: { attributes: [] },
+              where: { id: goal.goalTemplateId },
+              required: true,
+            },
+          ],
+        })
+      : 0;
 
   const activityReportIds = new Set(
     goalsWithPreparedSpecialists
@@ -1646,6 +1684,7 @@ export async function getGoalHistory(id) {
 
   const overview = {
     activityReports: activityReportIds.size,
+    trainingReports,
     objectives: goalsWithPreparedSpecialists.reduce(
       (sum, g) => sum + (g.objectives?.length || 0),
       0

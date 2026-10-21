@@ -495,6 +495,14 @@ class FindingCategories{
  deletedAt : timestamp with time zone
 }
 
+class GoalCollaboratorActivityReports{
+ * id : integer : <generated>
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * goalCollaboratorId : integer : REFERENCES "GoalCollaborators".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class GoalCollaborators{
  * id : integer : <generated>
  * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
@@ -1095,6 +1103,14 @@ class Notifications{
  triggeredAt : date
 }
 
+class ObjectiveCollaboratorActivityReports{
+ * id : integer : <generated>
+ * activityReportId : integer : REFERENCES "ActivityReports".id
+ * objectiveCollaboratorId : integer : REFERENCES "ObjectiveCollaborators".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class ObjectiveCollaborators{
  * id : integer : <generated>
  * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
@@ -1336,6 +1352,42 @@ class Topics{
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  mapsTo : integer
+}
+
+class TtaRequestCitations{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * citation : text
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ findingType : text
+}
+
+class TtaRequestGrants{
+ * id : integer : <generated>
+ * grantId : integer : REFERENCES "Grants".id
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
+class TtaRequests{
+ * id : integer : <generated>
+ goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ recipientId : integer : REFERENCES "Recipients".id
+ reviewerId : integer : REFERENCES "Users".id
+ * lastUpdatedById : integer : REFERENCES "Users".id
+ * regionId : integer : REFERENCES "Regions".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * status : enum : 'draft'::"enum_TtaRequests_status"
+ * updatedAt : timestamp with time zone
+ context : text
+ creatorNotes : text
+ deletedAt : timestamp with time zone
+ originator : enum
+ recipientAware : boolean
+ submittedAt : timestamp with time zone
 }
 
 class UserRoles{
@@ -1992,6 +2044,20 @@ class ZALFiles{
 }
 
 class ZALFindingCategories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALGoalCollaboratorActivityReports{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2663,6 +2729,20 @@ class ZALNotifications{
  session_sig : text
 }
 
+class ZALObjectiveCollaboratorActivityReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALObjectiveCollaborators{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2957,6 +3037,48 @@ class ZALTopics{
  session_sig : text
 }
 
+class ZALTtaRequestCitations{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequestGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequests{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALUserRoles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3076,6 +3198,7 @@ class ZALZAFilter{
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -3092,8 +3215,10 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : activityReport, activityReportGoals
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaboratorActivityReports : goalCollaboratorLinks, activityReport
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" Notifications : notifications, activityReport
+ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaboratorActivityReports : objectiveCollaboratorLinks, activityReport
 Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
@@ -3123,6 +3248,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, co
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
 FindingCategories "1" --[#black,dashed,thickness=2]--{  "n" Citations : findingCategory, citations
+GoalCollaborators "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaboratorActivityReports : goalCollaborator, activityReportLinks
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : goalTemplate, collabReportGoals
@@ -3131,6 +3257,7 @@ GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTem
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplate
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGoalTemplates : sessionReportGoalTemplates, goalTemplate
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" TtaRequests : ttaRequests, goalTemplate
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, originalGoal, activityReportGoals, reassignedActivityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goal, goalCollaborators
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
@@ -3151,6 +3278,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequestGrants, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
@@ -3180,6 +3308,7 @@ NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : 
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 Notifications "1" --[#black,dashed,thickness=2]--{  "n" NotificationUserStates : notification, userStates
+ObjectiveCollaborators "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaboratorActivityReports : objectiveCollaborator, activityReportLinks
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, originalObjective, activityReportObjectives, reassignedActivityReportObjectives
@@ -3191,12 +3320,14 @@ ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : ma
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : recipient, communicationLogRecipients
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" TtaRequests : ttaRequests, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" CollabReports : region, collabReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
+Regions "1" --[#black,dashed,thickness=2]--{  "n" TtaRequests : ttaRequests, region
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : users, homeRegion
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
@@ -3217,6 +3348,8 @@ SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilot
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
@@ -3276,6 +3409,7 @@ Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, grants
+Grants "n" }--[#black,dotted,thickness=2]--{ "n" TtaRequests : ttaRequests, grants
 Groups "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, groups
 NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps

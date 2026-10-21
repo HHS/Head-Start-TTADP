@@ -1,17 +1,17 @@
 {
   "items": {
-    "SCA-FRONTEND-GHSA-22p9-wv53-3rq4-linkify-it-2.2.0": {
-      "id": "SCA-FRONTEND-GHSA-22p9-wv53-3rq4-linkify-it-2.2.0",
+    "SCA-FRONTEND-GHSA-vcc3-ghjq-m6fr-decode-uri-component-0.2.2": {
+      "id": "SCA-FRONTEND-GHSA-vcc3-ghjq-m6fr-decode-uri-component-0.2.2",
       "scanType": "sca",
       "scanner": "yarn-audit",
       "scope": "frontend",
-      "scannerFindingId": "GHSA-22p9-wv53-3rq4",
-      "module": "linkify-it",
-      "affectedVersion": "2.2.0",
-      "sourceSeverity": "high",
-      "severity": "high",
-      "firstSeen": "2026-07-23",
-      "lastObserved": "2026-07-23",
+      "scannerFindingId": "GHSA-vcc3-ghjq-m6fr",
+      "module": "decode-uri-component",
+      "affectedVersion": "0.2.2",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstSeen": "2026-10-16",
+      "lastObserved": "2026-10-16",
       "escalationState": "warning"
     }
   }

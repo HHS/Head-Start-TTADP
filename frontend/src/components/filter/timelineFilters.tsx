@@ -8,6 +8,7 @@ import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { EMPTY_MULTI_SELECT } from '../../Constants';
 import { formatDateRange } from '../../utils';
+import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterDateRange from './FilterDateRange';
 import FilterSelect from './FilterSelect';
 import { goalCategoryFilter } from './goalFilters';
@@ -35,6 +36,26 @@ const TIMELINE_DATE_OPTIONS = [
 ];
 
 const EVENT_TYPE_OPTIONS = TIMELINE_EVENT_TYPES.map((label) => ({ label, value: label }));
+
+const purposeFilter = {
+  id: 'purpose',
+  display: 'Communication purpose',
+  conditions: TIMELINE_SELECT_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: (query: string | string[]) => [query].flat().join(', '),
+  renderInput: (
+    id: string,
+    condition: string,
+    query: string[],
+    onApplyQuery: (value: string[]) => void
+  ) => (
+    <FilterCommunicationPurpose
+      inputId={`purpose-${condition}-${id}`}
+      query={query}
+      onApply={onApplyQuery}
+    />
+  ),
+};
 
 const dateFilter = {
   id: 'date',
@@ -90,9 +111,12 @@ const eventTypeFilter = {
   ),
 };
 
-export const TIMELINE_FILTER_CONFIG = [dateFilter, goalCategoryFilter, eventTypeFilter].sort(
-  (a, b) => a.display.localeCompare(b.display)
-);
+export const TIMELINE_FILTER_CONFIG = [
+  dateFilter,
+  purposeFilter,
+  goalCategoryFilter,
+  eventTypeFilter,
+].sort((a, b) => a.display.localeCompare(b.display));
 
 export const createInitialTimelineFilters = (): TimelineFilter[] => [
   {
