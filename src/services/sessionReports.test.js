@@ -363,6 +363,65 @@ describe('session reports service', () => {
 
       await destroySession(created.id);
     });
+
+    // Changes requested, facilitation changed (which resets completion and the
+    // approver), then participants submit separately so status leaves NEEDS_ACTION
+    // before the session is complete again
+    const resetAndResubmitInParts = async (sessionId) => {
+      const reset = await updateSession(sessionId, {
+        eventId: submitEventId,
+        data: { facilitation: 'regional_tta_staff' },
+      });
+      expect(reset.submitted).toBe(false);
+
+      const partial = await updateSession(sessionId, {
+        eventId: submitEventId,
+        data: {
+          approverId: approver.id,
+          pocComplete: true,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+      expect(partial.submitted).toBe(false);
+
+      return updateSession(sessionId, {
+        eventId: submitEventId,
+        data: {
+          collabComplete: true,
+          sessionName: 'Renamed session',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+    };
+
+    it('does not notify again when a previously submitted session is reset and resubmitted', async () => {
+      const created = await createReadySession();
+      await updateSession(created.id, { eventId: submitEventId, data: { collabComplete: true } });
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+      expect((await findSessionById(created.id)).data.hasBeenSubmitted).toBe(true);
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { status: REPORT_STATUSES.NEEDS_ACTION },
+      });
+      const resubmitted = await resetAndResubmitInParts(created.id);
+
+      expect(resubmitted.submitted).toBe(true);
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify when a session in needs action from before the marker is reset and resubmitted', async () => {
+      const created = await createReadySession({ status: REPORT_STATUSES.NEEDS_ACTION });
+
+      const resubmitted = await resetAndResubmitInParts(created.id);
+
+      expect(resubmitted.submitted).toBe(true);
+      expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
   });
 
   describe('updateSession facilitation changes', () => {
