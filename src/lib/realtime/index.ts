@@ -181,6 +181,8 @@ export function createRealtimeServer({
   const rooms = new Map<string, Set<Client>>();
   // every connected client, whether or not it has joined a room, so heartbeat reaches all of them
   const clients = new Set<Client>();
+  const upgradeSockets = new Set<Duplex>();
+  let closing = false;
 
   const entryFor = (client: Client) =>
     JSON.stringify({
@@ -228,7 +230,7 @@ export function createRealtimeServer({
   }
 
   async function join(client: Client, room: string, tabId?: string) {
-    if (client.rooms.has(room)) return;
+    if (closing || client.rooms.has(room)) return;
     // the tab id is fixed for the life of a connection
     if (tabId && client.tabId === client.id) {
       client.tabId = tabId;
@@ -242,7 +244,7 @@ export function createRealtimeServer({
       return;
     }
     // the socket may have closed while authorization was pending
-    if (client.ws.readyState !== WebSocket.OPEN) return;
+    if (closing || client.ws.readyState !== WebSocket.OPEN) return;
 
     client.rooms.add(room);
     if (!rooms.has(room)) rooms.set(room, new Set());
@@ -311,6 +313,7 @@ export function createRealtimeServer({
     });
 
     ws.on('message', (raw) => {
+      if (closing) return;
       const message = parseClientMessage(raw);
       if (!message) return;
       client.queue = client.queue
@@ -337,6 +340,13 @@ export function createRealtimeServer({
   });
 
   const onUpgrade = (req: IncomingMessage, socket: Duplex, head: Buffer) => {
+    if (closing) {
+      socket.destroy();
+      return;
+    }
+    upgradeSockets.add(socket);
+    socket.once('close', () => upgradeSockets.delete(socket));
+
     // Node removes its own error listener before handing the socket over. Without
     // one, a client resetting the connection while we authenticate is an uncaught
     // exception, which shuts the whole process down.
@@ -353,7 +363,8 @@ export function createRealtimeServer({
 
     authenticate(req)
       .then((user) => {
-        if (socket.destroyed) return;
+        upgradeSockets.delete(socket);
+        if (closing || socket.destroyed) return;
         if (!user) {
           reject('401 Unauthorized');
           return;
@@ -365,6 +376,7 @@ export function createRealtimeServer({
         });
       })
       .catch((err) => {
+        upgradeSockets.delete(socket);
         logError('upgrade failed')(err);
         reject('500 Internal Server Error');
       });
@@ -413,15 +425,25 @@ export function createRealtimeServer({
      * releases the subscriber connection.
      */
     async close() {
+      closing = true;
       clearInterval(heartbeat);
       server.off('upgrade', onUpgrade);
-      const memberships = [...rooms].flatMap(([room, members]) =>
-        [...members].map((client) => [client, room] as const)
+      upgradeSockets.forEach((socket) => socket.destroy());
+      upgradeSockets.clear();
+      const connectedClients = [...clients];
+      const closed = connectedClients.map(
+        (client) =>
+          new Promise<void>((resolve) => {
+            if (client.ws.readyState === WebSocket.CLOSED) {
+              resolve();
+              return;
+            }
+            client.ws.once('close', () => resolve());
+            client.ws.terminate();
+          })
       );
-      await Promise.allSettled(memberships.map(([client, room]) => leave(client, room)));
-      wss.clients.forEach((ws) => {
-        ws.close(1001, 'server shutting down');
-      });
+      await Promise.all(closed);
+      await Promise.allSettled(connectedClients.map((client) => client.queue));
       wss.close();
       await subscriber.quit();
     },

@@ -269,6 +269,40 @@ describe('realtime', () => {
       expect(alice.received.some((m) => m.type === 'event')).toBe(false);
     });
 
+    it('waits for pending authorization before cleaning up during shutdown', async () => {
+      let allow: (value: boolean) => void;
+      let authorizationStarted: () => void;
+      const authorizationStartedPromise = new Promise<void>((resolve) => {
+        authorizationStarted = resolve;
+      });
+      authorize.mockImplementation(
+        () =>
+          new Promise<boolean>((resolve) => {
+            authorizationStarted();
+            allow = resolve;
+          })
+      );
+      const alice = await connect('alice');
+      alice.send({ type: 'join', room: 'ar-4' });
+      await authorizationStartedPromise;
+
+      const closing = realtime.close();
+      let closeFinished = false;
+      closing.then(() => {
+        closeFinished = true;
+      });
+      await new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+      expect(closeFinished).toBe(false);
+
+      allow(true);
+      await closing;
+
+      expect(await redis.hgetall(presenceKey('ar-4'))).toEqual({});
+      realtime = { ready: async () => {}, close: async () => {} } as typeof realtime;
+    });
+
     it('numbers presence snapshots so clients can drop stale ones', async () => {
       const alice = await connect('alice');
       alice.send({ type: 'join', room: 'ar-5' });
