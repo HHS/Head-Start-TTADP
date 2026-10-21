@@ -261,43 +261,16 @@ export const STATES = {
   AK: 'Alaska',
 };
 
-export const COLLAB_REPORT_CONDUCT_METHODS = [
-  { label: 'Email', value: 'email' },
-  { label: 'Phone', value: 'phone' },
-  { label: 'In person', value: 'in_person' },
-  { label: 'Virtual', value: 'virtual' },
-];
+export {
+  COLLAB_REPORT_CONDUCT_METHODS,
+  COLLAB_REPORT_DATA,
+  COLLAB_REPORT_REASONS,
+} from '@ttahub/common';
 
 export const COLLAB_REPORT_ACTIVITY_TYPES = [
   { label: 'State', value: 'state' },
   { label: 'Regional', value: 'regional' },
 ];
-
-export const COLLAB_REPORT_REASONS = {
-  participate_work_groups:
-    'Participate in national, regional, state, and local work groups and meetings',
-  support_coordination:
-    'Support partnerships, coordination, and collaboration with state/regional partners',
-  agg_regional_data: 'Aggregate, analyze, and/or present regional data',
-  develop_presentations:
-    'Develop and provide presentations, training, and resources to RO and/or state/regional partners',
-};
-
-export const COLLAB_REPORT_DATA = {
-  census_data: 'Census data',
-  child_abuse_and_neglect: 'Child abuse and neglect',
-  child_safety: 'Child safety',
-  child_family_health: 'Child/family health',
-  disabilities: 'Disabilities',
-  foster_care: 'Foster care',
-  homelessness: 'Homelessness',
-  kids_count: 'Kids Count',
-  licensing_data: 'Licensing data',
-  ohs_monitoring: 'OHS Monitoring',
-  pir: 'PIR',
-  tta_hub: 'TTA Hub',
-  other: 'Other',
-};
 
 export const OBJECTIVE_STATUS = {
   NOT_STARTED: 'Not Started',

@@ -2494,10 +2494,10 @@
     path-browserify "^1.0.1"
     tinyglobby "^0.2.14"
 
-"@ttahub/common@2.4.11":
-  version "2.4.11"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.11.tgz#2350c92828f5ce7ed9bdbf1d81b9f02271317cb4"
-  integrity sha512-sQ58StnvMP0S+gjtM+P0eRrPfggwdnFY7Z3snI2RzIdMuViNWVKrgRxlepCSXxXmFYqv8Jm02SDLaZTJnv3T4w==
+"@ttahub/common@2.4.17":
+  version "2.4.17"
+  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.4.17.tgz#1d40b3c38cdf3f99d9c841b118490eb31de09eb6"
+  integrity sha512-n7JtEHJVBJYzQsIzDtIzHtt+AjMsJTaW7YpXKvCCavryncWMlDgyxYEgWbhyDpl2jP1WL4dKReIP4DqDLiP3/g==
 
 "@turf/area@^7.1.0":
   version "7.3.5"
