@@ -101,6 +101,60 @@ describe('timeline navigation restoration', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
+  it.each(['monitoring', 'goals'])(
+    'restores the original view and filters with Back after switching to %s',
+    async (mode) => {
+      mockRealFilters();
+      const initialFilters = [
+        { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+      ];
+      const initialSearch = `?${filtersToQueryString(initialFilters)}`;
+      const history = createMemoryHistory({
+        initialEntries: [
+          {
+            pathname: '/timeline',
+            search: initialSearch,
+            state: { timelineView: view },
+          },
+        ],
+      });
+      getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+      renderTimeline(history);
+      await screen.findByText('No results found.');
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), mode)
+      );
+      await waitFor(() =>
+        expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+          '401',
+          '1',
+          expect.objectContaining({ view: mode })
+        )
+      );
+      expect(history.length).toBe(2);
+      act(() => history.goBack());
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc')
+      );
+      expect(history.location.search).toBe(initialSearch);
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          filters: [expect.objectContaining({ topic: 'standard', query: ['Family Support'] })],
+        })
+      );
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].view).toBeUndefined();
+      act(() => history.goForward());
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual(
+        mode === 'goals'
+          ? []
+          : [expect.objectContaining({ topic: 'standard', query: ['Monitoring'] })]
+      );
+    }
+  );
+
   it('switches views, replaces only goal filters, and restores the chosen view after details', async () => {
     mockRealFilters();
     const initialFilters = [

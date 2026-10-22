@@ -36,6 +36,26 @@ describe('goal status change timeline integration', () => {
   let templates;
   let user;
 
+  it('retains the category of an RTTAPA goal with a NULL status', async () => {
+    const originalStatus = goals[0].status;
+    const originalIsRttapa = goals[0].isRttapa;
+    try {
+      await goals[0].update({ status: null, isRttapa: 'Yes' }, { hooks: false });
+      const expected = [{ label: standards[0], statuses: [] }];
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
+        expected
+      );
+      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual(
+        expected
+      );
+    } finally {
+      await goals[0].update(
+        { status: originalStatus, isRttapa: originalIsRttapa },
+        { hooks: false }
+      );
+    }
+  });
+
   it('only groups categories from non-draft, unmerged RTTAPA goals for this recipient and region', async () => {
     const draftTemplate = await GoalTemplate.create({
       templateName: `(Draft ${getUniqueId()}) Ineligible category`,

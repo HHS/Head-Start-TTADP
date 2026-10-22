@@ -4,6 +4,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import { useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { filtersToQueryString } from '../utils';
 import useRecipientTimeline from './useRecipientTimeline';
 
 interface TimelineView {
@@ -25,6 +26,7 @@ interface TimelinePosition {
 interface TimelineLocationState {
   timelineView?: TimelineView;
   timelinePosition?: TimelinePosition;
+  filtersExplicitlyEmptyFor?: string;
 }
 
 function savedPosition(state: TimelineLocationState): TimelinePosition | null {
@@ -202,15 +204,30 @@ export default function useTimelineNavigation(
     };
   }, []);
 
-  const setView = (changes: Partial<TimelineView>) =>
+  const setView = (changes: Partial<TimelineView>, nextFilters?: RecipientTimelineFilter[]) => {
+    const state = {
+      ...history.location.state,
+      timelineView: { ...view, ...changes },
+      timelinePosition: undefined,
+    };
+    if (nextFilters !== undefined) {
+      const query = filtersToQueryString(nextFilters);
+      // Mode and filters belong to one history entry. Preserve the previous entry for Back.
+      history.push({
+        ...history.location,
+        search: query ? `?${query}` : '',
+        state: {
+          ...state,
+          filtersExplicitlyEmptyFor: nextFilters.length === 0 ? 'timeline-filters' : undefined,
+        },
+      });
+      return;
+    }
     history.replace({
       ...history.location,
-      state: {
-        ...history.location.state,
-        timelineView: { ...view, ...changes },
-        timelinePosition: undefined,
-      },
+      state,
     });
+  };
 
   return {
     ...timeline,

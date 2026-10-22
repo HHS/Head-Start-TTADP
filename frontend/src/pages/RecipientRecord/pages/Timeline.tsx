@@ -30,13 +30,26 @@ interface TimelineProps {
 }
 
 export default function Timeline(props: TimelineProps): React.ReactElement {
-  const { pathname, search } = useLocation();
+  const { pathname, search, state } = useLocation<{
+    timelineView?: { mode?: RecipientTimelineView };
+  }>();
+  const mode = state?.timelineView?.mode || 'chronological';
   const { action } = useHistory();
-  const [navigation, setNavigation] = useState({ pathname, search, version: 0 });
-  if (navigation.pathname !== pathname || navigation.search !== search) {
+  const [navigation, setNavigation] = useState({ pathname, search, mode, version: 0 });
+  if (
+    navigation.pathname !== pathname ||
+    navigation.search !== search ||
+    navigation.mode !== mode
+  ) {
     // useFilters reads URL filters on mount. Reinitialize before its effects can overwrite a
     // Back/Forward destination with the previous entry's filters. Normal filter edits stay mounted.
-    setNavigation({ pathname, search, version: navigation.version + (action === 'POP' ? 1 : 0) });
+    // View switches also initialize filters from their new, atomically written history entry.
+    setNavigation({
+      pathname,
+      search,
+      mode,
+      version: navigation.version + (action === 'POP' || navigation.mode !== mode ? 1 : 0),
+    });
   }
   return <TimelineContent key={navigation.version} {...props} />;
 }
@@ -85,9 +98,14 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
   const changeView = (value: string) => {
     const nextMode: RecipientTimelineView =
       value === 'monitoring' || value === 'goals' ? value : 'chronological';
-    if (nextMode !== mode && nextMode !== 'chronological') {
+    const changes = {
+      mode: nextMode,
+      direction: value === 'asc' ? ('asc' as const) : ('desc' as const),
+    };
+    if (nextMode !== mode) {
       const otherFilters = supportedFilters.filter(({ topic }) => topic !== 'standard');
-      onApplyFilters(
+      setView(
+        changes,
         nextMode === 'monitoring'
           ? [
               ...otherFilters,
@@ -98,11 +116,13 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                 query: ['Monitoring'],
               },
             ]
-          : otherFilters,
-        false
+          : nextMode === 'goals'
+            ? otherFilters
+            : supportedFilters
       );
+      return;
     }
-    setView({ mode: nextMode, direction: value === 'asc' ? 'asc' : 'desc' });
+    setView(changes);
   };
   const groupedEvents = useMemo(
     () =>

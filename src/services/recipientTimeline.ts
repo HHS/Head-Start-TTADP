@@ -73,7 +73,7 @@ export async function getTimelineGoalCategories(
     where: {
       isRttapa: 'Yes',
       mapsToParentGoalId: null,
-      status: { [Op.ne]: 'Draft' },
+      [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }],
     },
     include: [
       {
