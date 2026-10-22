@@ -567,7 +567,7 @@ export function recipientGrantFilter(grantIds: number[]) {
   )`);
 }
 
-// Map frontend column header keys (HorizontalTableWidget sends displayName.replaceAll(' ', '_')) to backend sort keys
+// Legacy underscore keys still sent by default sort configs and saved localStorage state
 const sessionReportSortByAliases: Record<string, string> = {
   Session_name: 'sessionName',
   Session_start_date: 'startDate',
@@ -597,7 +597,12 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
     topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
   };
 
-  // Use the requested sort column or default to id descending
+  if (!sortMap[resolvedSortBy]) {
+    auditLogger.warn(
+      `sessionReportOrderClause: unknown sortBy ${JSON.stringify(sortBy)}, falling back to id`
+    );
+  }
+
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
 
   if (sortEntry === sortMap.id) {
