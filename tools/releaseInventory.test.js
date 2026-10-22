@@ -110,7 +110,7 @@ const productionSpaceState = {
     {
       appName: 'tta-smarthub-prod',
       stack: 'cflinuxfs4',
-      buildpacks: [{ name: 'nodejs-buildpack', version: '1.9.5' }],
+      buildpacks: [{ name: 'nodejs-buildpack', version: '1.9.6' }],
     },
   ],
 };
@@ -517,7 +517,7 @@ describe('deriveSpaceComponents', () => {
   it('records the staged buildpack version', () => {
     const buildpack = observed.find((c) => c.locator.type === 'cloudFoundryBuildpack');
 
-    expect(buildpack.locator.value).toBe('1.9.5');
+    expect(buildpack.locator.value).toBe('1.9.6');
   });
 
   it('records a route destination app name and GUID in their corresponding fields', () => {
@@ -765,7 +765,7 @@ describe('reconcile', () => {
         class: 'platformRuntime',
         name: 'nodejs-buildpack',
         tier: 'reconciled',
-        locator: { type: 'cloudFoundryBuildpack', value: '1.9.5' },
+        locator: { type: 'cloudFoundryBuildpack', value: '1.9.6' },
       },
     ];
     const observed = [
