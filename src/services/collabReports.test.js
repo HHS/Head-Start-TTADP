@@ -670,7 +670,7 @@ describe('Collab Reports Service', () => {
         approvers: mockUserTwo.name,
         purpose: 'Aggregate, analyze, and/or present regional data',
         dataUsed: 'Census data',
-        reportGoals: csvGoalTemplate.standard,
+        reportGoals: `CSV supporting goal ${csvReportIds[0]}`,
         steps: 'Share findings',
         stepsCompleteDate: '02/15/2026',
         approvedAt: expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
