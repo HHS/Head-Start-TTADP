@@ -19,13 +19,19 @@ set -uo pipefail
 scope="${1:-}"
 mode="${2:-}"
 
+# "backend tests", "frontend tests", or just "tests" for the any scope
+label="${scope} tests"
+if [[ "${scope}" == "any" ]]; then
+  label="tests"
+fi
+
 run_tests() {
-  echo "Running ${scope} tests: $1"
+  echo "Running ${label}: $1"
   exit 0
 }
 
 skip_tests() {
-  echo "Skipping ${scope} tests: none of this branch's changes against origin/main affect them."
+  echo "Skipping ${label}: none of this branch's changes against origin/main affect them."
   echo "Changed files:"
   printf '  %s\n' "${changed[@]}"
   if [[ "${mode}" == "--check" ]]; then
