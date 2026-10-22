@@ -28,6 +28,13 @@ let realUsers = [];
 let transformedUsers = [];
 let realRecipients = [];
 
+// Map of a real (normalized) email to its anonymized user, so grant program/grant specialist
+// fields point at the same anonymized Users records in non-production environments
+let transformedUsersByEmail = new Map();
+
+// Grant data from HSES does not always match the casing/whitespace of emails in the Users table
+const normalizeEmail = (email) => (email || '').trim().toLowerCase();
+
 // Predefined list of users from HSES (Head Start Enterprise System) with their details such as
 // name, username, user ID, and email
 const hsesUsers = [
@@ -267,28 +274,26 @@ export const convertName = (name, email) => {
   if (!name) {
     return { name, email };
   }
-  const additionalId = 99999; // Arbitrary ID to use for users not found in the realUsers array
-  let foundUser = realUsers.find((user) => user.email === email);
+  const additionalId = 99999; // Arbitrary ID base to use for people not found in the Users table
+  const normalizedEmail = normalizeEmail(email);
 
-  // If the user is not found and the email contains '@', add the user to the realUsers array
-  if (!foundUser && email.includes('@')) {
-    foundUser = { id: additionalId + 1, name, email };
-    realUsers.push(foundUser);
+  // If this email belongs to a hub user (or was already converted), reuse that identity
+  const foundTransformedUser = normalizedEmail && transformedUsersByEmail.get(normalizedEmail);
+  if (foundTransformedUser) {
+    return foundTransformedUser;
   }
 
-  // Find the corresponding transformed (anonymized) user data
-  let foundTransformedUser = transformedUsers.find((user) => user.id === foundUser.id);
-  if (!foundTransformedUser) {
-    // If the transformed user is not found, create a new transformed user with a fake name
-    // and email
-    foundTransformedUser = {
-      id: foundUser.id,
-      name: faker.person.fullName(), // Generate a fake name
-      email: generateFakeEmail(), // Generate a fake email
-    };
-    transformedUsers.push(foundTransformedUser);
+  // Otherwise create a fake identity, cached per email so the same person stays consistent
+  // across grants
+  const fakeUser = {
+    id: additionalId + transformedUsersByEmail.size + 1,
+    name: faker.person.fullName(), // Generate a fake name
+    email: normalizedEmail ? generateFakeEmail() : email,
+  };
+  if (normalizedEmail) {
+    transformedUsersByEmail.set(normalizedEmail, fakeUser);
   }
-  return foundTransformedUser;
+  return fakeUser;
 };
 
 const convertUserNameCreate = async () =>
@@ -580,6 +585,37 @@ export const hideUsers = async (userIds) => {
     WHERE 1 = 1
     ${whereClause};
   `);
+
+  const transformedUsersById = new Map(transformedUsers.map((user) => [user.id, user]));
+  transformedUsersByEmail = new Map();
+  realUsers.forEach((user) => {
+    const normalizedEmail = normalizeEmail(user.email);
+    const transformedUser = transformedUsersById.get(user.id);
+    if (normalizedEmail && transformedUser && !transformedUsersByEmail.has(normalizedEmail)) {
+      transformedUsersByEmail.set(normalizedEmail, transformedUser);
+    }
+  });
+};
+
+// Function to repoint grant program/grant specialist fields from one (anonymized) email to a
+// user's new name and email, keeping grants linked to users whose details change after
+// hideRecipientsGrants has run
+const repointGrantSpecialists = async (fromEmail, { name, email }) => {
+  if (!fromEmail) {
+    return;
+  }
+  await sequelize.query(
+    /* sql */ `
+    UPDATE "Grants"
+    SET "programSpecialistName" = :name, "programSpecialistEmail" = :email
+    WHERE LOWER("programSpecialistEmail") = LOWER(:fromEmail);
+
+    UPDATE "Grants"
+    SET "grantSpecialistName" = :name, "grantSpecialistEmail" = :email
+    WHERE LOWER("grantSpecialistEmail") = LOWER(:fromEmail);
+  `,
+    { replacements: { fromEmail, name, email } }
+  );
 };
 
 // Function to anonymize recipient and grant data by replacing names and grant numbers with
@@ -789,6 +825,8 @@ export const bootstrapUsers = async () => {
     };
     if (user) {
       id = user.id;
+      // Keep grants that list this user as a specialist pointing at their updated details
+      userPromises.push(repointGrantSpecialists(user.email, hsesUser));
       // If the user already exists, update their details
       userPromises.push(user.update(newUser, { individualHooks: true }));
       // Assign permissions to the user
