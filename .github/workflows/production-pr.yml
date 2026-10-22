@@ -1,0 +1,52 @@
+name: Production PR Automation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Log what would happen instead of creating/updating the PR
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: production-pr
+  cancel-in-progress: false
+
+jobs:
+  create_or_update_production_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          # Needed in full: the script diffs origin/production..origin/main,
+          # which requires complete history for both branches, not just main.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --production --frozen-lockfile
+
+      - name: Create or update the production PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CREDAL_API_KEY_ACF: ${{ secrets.CREDAL_API_KEY_ACF }}
+          # Service-account identity for the Credal call, not a personal email -
+          # set this repo/org variable before relying on this workflow.
+          CREDAL_USER_EMAIL: ${{ vars.PRODUCTION_PR_CREDAL_USER_EMAIL }}
+          # A push always writes for real. Only a manual dispatch can be a dry run.
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        run: node ./tools/productionPrCLI.js
