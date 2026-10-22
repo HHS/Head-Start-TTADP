@@ -668,10 +668,16 @@ const collabReportTransformers = [
   'status',
   transformCollabReportDetails,
   transformHTML('description'),
-  transformRelatedModelWithMultiFields('steps', [
-    { subfield: 'collabStepDetail', label: 'steps' },
-    { subfield: 'collabStepCompleteDate', label: 'stepsCompleteDate' },
-  ]),
+  (report) => {
+    const steps = report.steps || [];
+    const records = Array.isArray(steps) ? steps : [steps];
+    return {
+      steps: records
+        .map(({ collabStepDetail }) => (collabStepDetail || '').replace(/\r\n|\r|\n/g, ' '))
+        .join('\n'),
+      stepsCompleteDate: records.map(({ collabStepCompleteDate }) => collabStepCompleteDate).join('\n'),
+    };
+  },
 ];
 
 /**
