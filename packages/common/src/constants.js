@@ -180,6 +180,7 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
 const TTA_REQUEST_STATUSES = {
   DRAFT: 'draft',
+  SUBMITTED: 'submitted',
 };
 
 exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
@@ -187,6 +188,11 @@ exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
 const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
 
 exports.TTA_REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS;
+
+// the goal template standard that citations apply to
+const TTA_REQUEST_MONITORING_STANDARD = 'Monitoring';
+
+exports.TTA_REQUEST_MONITORING_STANDARD = TTA_REQUEST_MONITORING_STANDARD;
 
 const TIMELINE_FILTER_TOPICS = ['date', 'purpose', 'standard', 'eventType'];
 

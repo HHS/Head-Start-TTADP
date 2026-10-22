@@ -258,6 +258,65 @@ describe('recipient record page', () => {
     expect(screen.getByRole('button', { name: /open filters for this page/i })).toBeVisible();
   });
 
+  it('says a request was submitted above the back link when the form returns here', async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request', {
+      message: {
+        reportId: 14322,
+        displayId: 'R45-REQ-14322',
+        time: '06/23/2026 at 11:00 am EDT',
+        status: 'submitted',
+      },
+    });
+
+    act(() => renderRecipientRecord());
+
+    const alert = await screen.findByText(/you submitted request/i);
+    expect(alert).toHaveTextContent(
+      'You submitted request R45-REQ-14322 on 06/23/2026 at 11:00 am EDT.'
+    );
+    expect(screen.getByRole('link', { name: 'R45-REQ-14322' })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/45/tta-request/view/14322'
+    );
+    // the alert comes before the back link, as in the design
+    const backLink = screen.getByRole('link', { name: /back to search/i });
+    expect(alert.compareDocumentPosition(backLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows a submitted request read only, with a back link to the recipient's requests", async () => {
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/tta-requests/14322', {
+      id: 14322,
+      displayId: 'R45-REQ-14322',
+      regionId: 45,
+      status: 'submitted',
+      recipientAware: true,
+      originator: null,
+      context: '',
+      creatorNotes: '',
+      createdAt: '2026-06-23T16:00:00.000Z',
+      submittedAt: '2026-06-23T17:00:00.000Z',
+      creator: { id: 1, name: 'Avery Example', fullName: 'Avery Example' },
+      reviewer: null,
+      recipient: { id: 1, name: 'the Mighty Recipient' },
+      grants: [],
+      goalTemplate: null,
+      citations: [],
+    });
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request/view/14322');
+
+    act(() => renderRecipientRecord());
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'TTA Request R45-REQ-14322' })
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: /back to tta requests/i })).toHaveAttribute(
+      'href',
+      '/recipient-tta-records/1/region/45/tta-request'
+    );
+  });
+
   it('redirects an unflagged user away from the TTA request page', async () => {
     const unflaggedUser = {
       ...user,

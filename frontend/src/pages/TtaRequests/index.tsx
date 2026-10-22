@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import AddTtaRequestButton from '../../components/AddTtaRequestButton';
 import FilterPanel from '../../components/filter/FilterPanel';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert';
 import ActiveTtaRequestsTable from '../../components/TtaRequestsTable/ActiveTtaRequestsTable';
 import ApprovedTtaRequestsTable from '../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../hooks/useFilters';
@@ -57,6 +58,7 @@ export default function TtaRequests(): React.ReactElement {
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
         }
       />
+      <TtaRequestSubmittedAlert />
       <Grid>
         <Grid row>
           <div className="display-flex flex-align-center flex-gap-2 margin-bottom-3">

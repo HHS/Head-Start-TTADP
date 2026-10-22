@@ -165,8 +165,8 @@ describe('File Upload', () => {
 
     await Promise.all(
       files.map(async (file) => {
-        ActivityReportFile.destroy({ where: { fileId: file.id } });
-        File.destroy({ where: { id: file.id } });
+        await ActivityReportFile.destroy({ where: { fileId: file.id } });
+        await File.destroy({ where: { id: file.id } });
       })
     );
 

@@ -3,9 +3,22 @@ import { auditLogger } from './logger';
 import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
+let shutdownTasks = [];
 
 export const resetShutDownFlag = () => {
   isShuttingDown = false;
+};
+
+/**
+ * Registers async cleanup to run on every shutdown path (signals and fatal
+ * errors) before queues and the database close.
+ */
+export const onShutdown = (task) => {
+  shutdownTasks.push(task);
+};
+
+export const clearShutdownTasks = () => {
+  shutdownTasks = [];
 };
 
 export const gracefulShutdown = async (msg) => {
@@ -15,6 +28,16 @@ export const gracefulShutdown = async (msg) => {
   isShuttingDown = true;
 
   const details = JSON.stringify(descriptiveDetails());
+  const taskResults = await Promise.allSettled(shutdownTasks.map((task) => task()));
+  taskResults
+    .filter((result) => result.status === 'rejected')
+    .forEach(({ reason }) => {
+      auditLogger.alertError(
+        `Error during shutdown task through ${msg}: ${reason}`,
+        'process_shutdown_failure',
+        reason
+      );
+    });
   try {
     await closeAllQueues(msg);
   } catch (err) {

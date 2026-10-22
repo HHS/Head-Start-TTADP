@@ -62,7 +62,7 @@ describe('Recipient Record - TTA History', () => {
 
     const ttaHistoryOverviewUrl = `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
     const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
-    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const sessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=eventId&activePage=1&recipientId=401&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
     fetchMock.get(ttaHistoryOverviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
@@ -179,7 +179,7 @@ describe('Recipient Record - TTA History', () => {
   it('fetches training reports with the same active page filters as other widgets', async () => {
     renderTTAHistory();
     const filteredSessionReportsUrl =
-      '/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=401&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401';
+      '/api/session-reports?sortDir=desc&sortBy=eventId&activePage=1&recipientId=401&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401';
     fetchMock.get(filteredSessionReportsUrl, tableResponse);
     fetchMock.get(
       '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
@@ -260,7 +260,7 @@ describe('Recipient Record - TTA History', () => {
     );
 
     // Register expected URLs for a different recipient (999) using the default sort
-    const defaultSessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=Event_ID&activePage=1&recipientId=999&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`;
+    const defaultSessionReportsUrl = `/api/session-reports?sortDir=desc&sortBy=eventId&activePage=1&recipientId=999&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`;
     fetchMock.get(defaultSessionReportsUrl, { rows: [], count: 0 });
     fetchMock.get(
       `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=999`,

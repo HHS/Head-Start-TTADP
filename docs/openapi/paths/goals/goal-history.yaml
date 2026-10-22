@@ -1,0 +1,53 @@
+get:
+  tags:
+    - goals
+  summary: Gets goal history and overview counts
+  description: >
+    Returns goals sharing the selected goal's template, grant, and prestandard status.
+    Requires permission in the goal's region.
+  parameters:
+    - in: path
+      name: goalId
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Goal history and overview metrics
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              goals:
+                type: array
+                items:
+                  $ref: '../../index.yaml#/components/schemas/goal'
+              overview:
+                type: object
+                properties:
+                  activityReports:
+                    type: integer
+                    minimum: 0
+                    description: Distinct approved activity reports associated with the goal history.
+                  trainingReports:
+                    type: integer
+                    minimum: 0
+                    description: >
+                      Distinct TR sessions sharing the goal category (goal template) and
+                      recipient, across the recipient's grants. Each session is counted
+                      once, regardless of how many matching grants it includes.
+                      Returns zero when the goal has no goal template.
+                  objectives:
+                    type: integer
+                    minimum: 0
+                  closures:
+                    type: integer
+                    minimum: 0
+                  suspensions:
+                    type: integer
+                    minimum: 0
+    401:
+      description: User does not have permission in the goal's region
+    404:
+      description: Goal or grant not found

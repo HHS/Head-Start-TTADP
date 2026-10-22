@@ -2,8 +2,10 @@ import { closeAllQueues } from './lib/queue';
 import { auditLogger } from './logger';
 import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 import {
+  clearShutdownTasks,
   formatLogObject,
   gracefulShutdown,
+  onShutdown,
   registerEventListener,
   resetShutDownFlag,
 } from './processHandler'; // Adjust the import path
@@ -51,6 +53,7 @@ describe('processHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetShutDownFlag();
+    clearShutdownTasks();
   });
 
   describe('gracefulShutdown', () => {
@@ -115,6 +118,37 @@ describe('processHandler', () => {
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize already disconnected through test message: {"some":"details"}'
       );
+    });
+
+    it('runs registered shutdown tasks before closing queues', async () => {
+      const order = [];
+      onShutdown(async () => {
+        order.push('task');
+      });
+      closeAllQueues.mockImplementationOnce(async () => {
+        order.push('queues');
+      });
+
+      await gracefulShutdown('test message');
+
+      expect(order).toEqual(['task', 'queues']);
+    });
+
+    it('logs a failed shutdown task and still finishes shutting down', async () => {
+      onShutdown(async () => {
+        throw new Error('task failed');
+      });
+      isConnectionOpen.mockReturnValueOnce(true);
+
+      await gracefulShutdown('test message');
+
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Error during shutdown task through test message: Error: task failed',
+        'process_shutdown_failure',
+        expect.any(Error)
+      );
+      expect(closeAllQueues).toHaveBeenCalled();
+      expect(sequelize.close).toHaveBeenCalled();
     });
 
     it('should not call gracefulShutdown multiple times concurrently', async () => {

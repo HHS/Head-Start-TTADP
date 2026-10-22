@@ -1,0 +1,4 @@
+/* creator notes come from a textarea, so keep the line breaks the creator typed */
+.ttahub-view-tta-request--creator-notes {
+  white-space: pre-line;
+}

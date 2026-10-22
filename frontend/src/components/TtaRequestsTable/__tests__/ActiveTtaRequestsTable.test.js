@@ -38,7 +38,11 @@ const apiRequest = (n, overrides = {}) => ({
   creator: { id: 1, name: 'Rachel Green' },
   reviewer: { id: 2, name: 'Ross Geller' },
   recipient: RECIPIENTS[n % 3],
-  goalTemplate: { id: 3, templateName: 'Monitoring' },
+  goalTemplate: {
+    id: 3,
+    templateName: 'The recipient will develop and implement a plan to correct its findings.',
+    standard: 'Monitoring',
+  },
   grants: [{ id: n, stateCode: STATES[n % 3] }],
   ...overrides,
 });
@@ -188,6 +192,26 @@ describe('ActiveTtaRequestsTable', () => {
     expect(cells[3]).toHaveTextContent('-');
   });
 
+  it("shows the goal's category rather than its full name", async () => {
+    renderTable();
+    await waitForRows();
+
+    const goalCell = within(screen.getAllByRole('row')[1]).getAllByRole('cell')[2];
+
+    expect(goalCell).toHaveTextContent(/^Monitoring$/);
+  });
+
+  it('leaves the goal blank when its template has no category', async () => {
+    renderTable([
+      apiRequest(1, { goalTemplate: { id: 4, templateName: 'A goal', standard: null } }),
+    ]);
+    await waitForRows();
+
+    const goalCell = within(screen.getAllByRole('row')[1]).getAllByRole('cell')[2];
+
+    expect(goalCell).toHaveTextContent(/^-$/);
+  });
+
   it('links the request id and the draft status back into the request', async () => {
     renderTable();
     await waitForRows();
@@ -202,6 +226,20 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/${NEWEST.id}`
     );
+  });
+
+  it('links a submitted request id to its read-only view, and leaves its status unlinked', async () => {
+    renderTable([apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })]);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+    expect(within(firstRow).getByText('Submitted')).toBeVisible();
+    expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
   });
 
   it('freezes the status column to the right of the table', async () => {

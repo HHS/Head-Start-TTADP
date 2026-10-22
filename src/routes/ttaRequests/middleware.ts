@@ -1,5 +1,6 @@
 import { TTA_REQUEST_ORIGINATORS } from '@ttahub/common';
 import type { NextFunction, Request, Response } from 'express';
+import { convert } from 'html-to-text';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import { auditLogger } from '../../logger';
@@ -51,6 +52,34 @@ export const updateTtaRequestBodySchema = ttaRequestBodySchema.keys({
   regionId: Joi.any().strip(),
 });
 
+const requiredId = Joi.number().integer().positive().required();
+
+/**
+ * Rich text that has to say something. The markup of an empty editor, such as
+ * "<p></p>\n" or "<p><br></p>", is never blank itself, so its text is checked instead;
+ * the HTML is what gets stored.
+ */
+const requiredRichText = Joi.string()
+  .required()
+  .custom((value, helpers) => (/\S/.test(convert(value)) ? value : helpers.error('any.invalid')))
+  .messages({ 'any.invalid': '{{#label}} must have text' });
+
+/**
+ * Submitting saves the request as it stands, so it takes the same body as a save,
+ * but everything the form requires has to be there.
+ */
+export const submitTtaRequestBodySchema = updateTtaRequestBodySchema.keys({
+  recipientId: requiredId,
+  grantIds: Joi.array().items(Joi.number().integer().positive()).unique().min(1).required(),
+  recipientAware: Joi.boolean().required(),
+  originator: Joi.string()
+    .valid(...TTA_REQUEST_ORIGINATORS)
+    .required(),
+  goalTemplateId: requiredId,
+  context: requiredRichText,
+  reviewerId: requiredId,
+});
+
 export function checkCreateTtaRequestBody(req: Request, res: Response, next: NextFunction) {
   const { error, value } = createTtaRequestBodySchema.validate(req.body, validationOptions);
 
@@ -66,6 +95,19 @@ export function checkCreateTtaRequestBody(req: Request, res: Response, next: Nex
 
 export function checkUpdateTtaRequestBody(req: Request, res: Response, next: NextFunction) {
   const { error, value } = updateTtaRequestBodySchema.validate(req.body, validationOptions);
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  req.body = value;
+  return next();
+}
+
+export function checkSubmitTtaRequestBody(req: Request, res: Response, next: NextFunction) {
+  const { error, value } = submitTtaRequestBodySchema.validate(req.body, validationOptions);
 
   if (error) {
     const msg = `${errorMessage}: ${error.message}`;

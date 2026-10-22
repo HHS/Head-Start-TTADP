@@ -136,6 +136,20 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenSharedMyGroup',
 ];
 
+export const TTA_REQUEST_STATUSES: {
+  readonly DRAFT: 'draft';
+  readonly SUBMITTED: 'submitted';
+};
+
+export const TTA_REQUEST_ORIGINATORS: readonly [
+  'Central Office',
+  'Recipient',
+  'Regional Office',
+  'TTA Staff',
+];
+
+export const TTA_REQUEST_MONITORING_STANDARD: 'Monitoring';
+
 export const TIMELINE_FILTER_TOPICS: readonly ['date', 'purpose', 'standard', 'eventType'];
 
 export const TIMELINE_DATE_FILTER_CONDITIONS: readonly [

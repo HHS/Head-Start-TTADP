@@ -1,0 +1,49 @@
+put:
+  tags:
+    - tta request
+  summary: Save and submit a draft TTA request for review
+  description: >-
+    Available only to the request's creator, while it is a draft and they can
+    write in its region. Saves the body as PUT /tta-requests/{ttaRequestId}
+    does, then sets the status to submitted and records submittedAt. Every
+    field the form requires must be present, the reviewer must be an approver
+    in the region, and the monitoring goal needs at least one citation.
+  parameters:
+    - name: ttaRequestId
+      in: path
+      description: ID of the TTA request
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: '../../index.yaml#/components/schemas/ttaRequestInput'
+            - type: object
+              required:
+                - recipientId
+                - grantIds
+                - recipientAware
+                - originator
+                - goalTemplateId
+                - context
+                - reviewerId
+  responses:
+    '200':
+      description: Submitted TTA request
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: >-
+        Malformed ID or body, a required field missing, grants and a recipient
+        that do not belong together in the request's region, a reviewer who
+        cannot approve in the region, or the monitoring goal without citations
+    '403':
+      description: Not the creator, not a draft, or no write permission in the region
+    '404':
+      description: TTA request not found

@@ -3,7 +3,7 @@ import React from 'react';
 import TabsNav from '../../../components/TabsNav';
 import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG, TTA_TIMELINE_FEATURE_FLAG } from '../pages/constants';
 
-export default function RecipientTabs({ region, recipientId, backLink }) {
+export default function RecipientTabs({ region, recipientId, backLink, alert }) {
   const links = [
     {
       to: `/recipient-tta-records/${recipientId}/region/${region}/profile`,
@@ -37,15 +37,17 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
     },
   ];
 
-  return <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} />;
+  return <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} alert={alert} />;
 }
 
 RecipientTabs.propTypes = {
   region: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   backLink: PropTypes.node,
+  alert: PropTypes.node,
 };
 
 RecipientTabs.defaultProps = {
   backLink: null,
+  alert: null,
 };

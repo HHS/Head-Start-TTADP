@@ -33,7 +33,7 @@ jobs:
               $0 ~ section {found=1; next}
               /^## / && found {exit}
               found {print}
-            ' pr_body.md
+            ' pr_body.md | grep -vE '^[[:space:]]*<!--.*-->[[:space:]]*$' || true
           }
 
           truncate_for_slack() {

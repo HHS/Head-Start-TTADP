@@ -54,6 +54,7 @@ import TtaRequests from './pages/TtaRequests';
 import Unauthenticated from './pages/Unauthenticated';
 import ViewCollabReport from './pages/ViewCollabReport';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import ViewTtaRequest from './pages/ViewTtaRequest';
 import WhatsNewPage from './pages/WhatsNewPage';
 import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
 import UserContext from './UserContext';
@@ -272,6 +273,17 @@ export default function Routes({
             <FeatureFlag renderNotFound flag="recipient_tta_request">
               <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
                 <AllRegionsTtaRequestForm />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/tta-requests/view/:ttaRequestId([0-9]+)"
+          render={() => (
+            <FeatureFlag renderNotFound flag="recipient_tta_request">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <ViewTtaRequest />
               </AppWrapper>
             </FeatureFlag>
           )}

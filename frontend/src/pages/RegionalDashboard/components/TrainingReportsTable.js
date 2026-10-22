@@ -159,15 +159,16 @@ const TrainingReportsTable = ({
       {data.rows.length > 0 && (
         <HorizontalTableWidget
           headers={[
-            'Event title',
-            'Supporting goals',
-            'Session name',
+            { displayName: 'Event title', name: 'eventName' },
+            { displayName: 'Supporting goals', name: 'supportingGoals' },
+            { displayName: 'Session name', name: 'sessionName' },
             { displayName: 'Session start date', name: 'startDate' },
             { displayName: 'Session end date', name: 'endDate' },
-            'Topics',
+            { displayName: 'Topics', name: 'topics' },
           ]}
           data={tabularData}
           firstHeading="Event ID"
+          firstHeadingSortKey="eventId"
           enableCheckboxes
           checkboxes={reportCheckboxes}
           setCheckboxes={setReportCheckboxes}

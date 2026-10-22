@@ -27,7 +27,7 @@ const secondRow = {
 };
 
 const defaultSortConfig = {
-  sortBy: 'Event_ID',
+  sortBy: 'eventId',
   direction: 'desc',
   activePage: 1,
   offset: 0,

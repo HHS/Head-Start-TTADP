@@ -17,7 +17,6 @@ import { eventById } from '../../fetchers/event';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
-import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
@@ -25,9 +24,6 @@ import { getInvalidNextStepDateFields } from './pages/nextSteps';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
-
-// websocket publish location interval
-const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 const reduceDataToMatchKeys = (keys, data) =>
   keys.reduce((acc, key) => {
@@ -206,8 +202,6 @@ export default function SessionForm({ match }) {
   const isRegionalNoNationalCenters =
     TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
 
-  const { socket, setSocketPath, socketPath, messageStore } = useSocket(user);
-
   const { isPoc, isAdminUser, isCollaborator, isOwner, isApprover, isNcUser, applicationPages } =
     useSessionFormRoleAndPages(hookForm);
 
@@ -220,21 +214,6 @@ export default function SessionForm({ match }) {
   });
 
   const redirectPagePath = applicationPages[0]?.path || null;
-
-  useEffect(() => {
-    if (!trainingReportId || !sessionId || !currentPage) {
-      return;
-    }
-
-    if (!applicationPages.map((p) => p.path).includes(currentPage)) {
-      return;
-    }
-
-    const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
-    setSocketPath(newPath);
-  }, [sessionId, setSocketPath, trainingReportId, currentPage, applicationPages]);
-
-  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
     // if report isn't or created fetched, the app should be loading
@@ -780,7 +759,6 @@ export default function SessionForm({ match }) {
         <FormProvider {...hookForm}>
           <Navigator
             datePickerKey={datePickerKey}
-            socketMessageStore={messageStore}
             key={currentPage}
             editable
             updatePage={updatePage}

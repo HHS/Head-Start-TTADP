@@ -182,13 +182,13 @@ describe('Training report Dashboard page', () => {
 
     await waitFor(() => {
       expect(getSessionReportsTable).toHaveBeenCalledWith(
-        expect.objectContaining({ sortBy: 'Event_ID', direction: 'desc' }),
+        expect.objectContaining({ sortBy: 'eventId', direction: 'desc' }),
         []
       );
     });
 
     const startDateSortButton = await screen.findByRole('button', {
-      name: /startdate\. activate to sort ascending/i,
+      name: /session start date\. activate to sort ascending/i,
     });
     userEvent.click(startDateSortButton);
 
@@ -200,7 +200,7 @@ describe('Training report Dashboard page', () => {
     });
 
     const startDateSortButtonSecondClick = await screen.findByRole('button', {
-      name: /startdate\. activate to sort ascending/i,
+      name: /session start date\. activate to sort ascending/i,
     });
     userEvent.click(startDateSortButtonSecondClick);
 
@@ -229,7 +229,7 @@ describe('Training report Dashboard page', () => {
     renderTest();
 
     const endDateSortButton = await screen.findByRole('button', {
-      name: /enddate\. activate to sort ascending/i,
+      name: /session end date\. activate to sort ascending/i,
     });
     userEvent.click(endDateSortButton);
 
@@ -241,13 +241,51 @@ describe('Training report Dashboard page', () => {
     });
 
     const endDateSortButtonSecondClick = await screen.findByRole('button', {
-      name: /enddate\. activate to sort ascending/i,
+      name: /session end date\. activate to sort ascending/i,
     });
     userEvent.click(endDateSortButtonSecondClick);
 
     await waitFor(() => {
       expect(getSessionReportsTable).toHaveBeenLastCalledWith(
         expect.objectContaining({ sortBy: 'endDate', direction: 'asc' }),
+        []
+      );
+    });
+  });
+
+  it.each([
+    ['Event ID', 'eventId'],
+    ['Event title', 'eventName'],
+    ['Supporting goals', 'supportingGoals'],
+    ['Session name', 'sessionName'],
+    ['Topics', 'topics'],
+  ])('requests %s sorting with the %s sort key', async (displayName, sortKey) => {
+    getSessionReportsTable.mockResolvedValue({
+      rows: [
+        {
+          id: 3,
+          eventId: 'R01-PD-789',
+          eventName: 'Event',
+          sessionName: 'Session',
+          startDate: '2026-08-01',
+          endDate: '2026-08-02',
+          objectiveTopics: ['Topic'],
+          goalTemplates: [{ standard: 'Goal' }],
+        },
+      ],
+      count: 1,
+    });
+
+    renderTest();
+
+    const sortButton = await screen.findByRole('button', {
+      name: new RegExp(`^${displayName}\\. activate to sort`, 'i'),
+    });
+    userEvent.click(sortButton);
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortBy: sortKey }),
         []
       );
     });

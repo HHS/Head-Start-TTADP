@@ -1,12 +1,10 @@
-export interface TtaRequestGrant {
-  id: number;
-  regionId: number;
-  status?: string;
-  /** e.g. "14HP1234 - EHS" */
-  numberWithProgramTypes: string;
-  /** the full name, including the recipient, e.g. "Children and Families First - 14HP1234 - EHS" */
-  name: string;
-}
+import type { TtaRequestGrant } from '@ttahub/common/src/ttaRequests';
+
+export type {
+  TtaRequestGrant,
+  TtaRequestPayload,
+  TtaRequestResponse,
+} from '@ttahub/common/src/ttaRequests';
 
 export interface TtaRequestRecipient {
   id: number;
@@ -57,35 +55,4 @@ export interface TtaRequestFormValues {
   context: string;
   creatorNotes: string;
   reviewer: SelectOption | null;
-}
-
-/** what the TTA request API takes */
-export interface TtaRequestPayload {
-  regionId?: number;
-  recipientId: number | null;
-  grantIds: number[];
-  recipientAware: boolean | null;
-  originator: string | null;
-  goalTemplateId: number | null;
-  citations: { citation: string; findingType: string | null }[];
-  context: string;
-  creatorNotes: string;
-  reviewerId: number | null;
-}
-
-/** a saved TTA request, as the API returns it */
-export interface TtaRequestResponse {
-  id: number;
-  displayId: string;
-  regionId: number;
-  status: string;
-  recipientAware: boolean | null;
-  originator: string | null;
-  context: string | null;
-  creatorNotes: string | null;
-  recipient: { id: number; name: string } | null;
-  grants: TtaRequestGrant[];
-  goalTemplate: { id: number; templateName: string; standard?: string | null } | null;
-  citations: { citation: string; findingType: string | null }[];
-  reviewer: { id: number; name: string } | null;
 }

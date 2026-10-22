@@ -1,10 +1,10 @@
 get:
   tags:
     - tta request
-  summary: List the current user's draft TTA requests
+  summary: List TTA requests
   description: >-
-    Drafts are private to their creator, so this lists only the current
-    user's own drafts, in the regions they can read.
+    Drafts are private to their creator, so this lists the current user's own
+    drafts and anyone's submitted requests, in the regions they can read.
   parameters:
     - in: query
       name: region.in[]
@@ -15,7 +15,7 @@ get:
       description: Regions to list; limited to the regions the user can read
   responses:
     '200':
-      description: The user's draft TTA requests
+      description: The user's drafts and submitted TTA requests
       content:
         application/json:
           schema:

@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import AddTtaRequestButton from '../../components/AddTtaRequestButton';
+import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
@@ -20,6 +21,7 @@ import StandardGoalForm from '../StandardGoalForm';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import RecipientTtaRequestForm from '../TtaRequestForm/RecipientTtaRequestForm';
+import ViewTtaRequest from '../ViewTtaRequest';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import {
@@ -47,11 +49,17 @@ export function PageWithHeading({
   backLink,
   slug,
   inlineHeadingChildren,
+  alert,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
   return (
     <div>
-      <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
+      <RecipientTabs
+        region={regionId}
+        recipientId={recipientId}
+        backLink={backLink}
+        alert={alert}
+      />
       {error ? (
         <div className="usa-alert usa-alert--error" role="alert">
           <div className="usa-alert__body">
@@ -84,6 +92,7 @@ PageWithHeading.propTypes = {
   backLink: PropTypes.node,
   slug: PropTypes.string,
   inlineHeadingChildren: PropTypes.node,
+  alert: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
@@ -98,6 +107,7 @@ PageWithHeading.defaultProps = {
   ),
   slug: '',
   inlineHeadingChildren: null,
+  alert: null,
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
@@ -186,6 +196,17 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
       <Switch>
         <Route
+          exact
+          path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/view/:ttaRequestId([0-9]+)"
+          render={() => (
+            <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
+              <ViewTtaRequest
+                backLinkTo={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request`}
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-request/:ttaRequestId(new|[0-9]*)"
           render={() => (
             <FeatureFlag flag={RECIPIENT_TTA_REQUEST_FEATURE_FLAG} renderNotFound>
@@ -204,6 +225,11 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientNameWithRegion={recipientNameWithRegion}
                 slug="tta-request"
                 hasAlerts={hasAlerts}
+                alert={
+                  <TtaRequestSubmittedAlert
+                    requestRoot={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request`}
+                  />
+                }
                 inlineHeadingChildren={
                   <AddTtaRequestButton
                     label="Add request"

@@ -4,6 +4,7 @@ import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
@@ -506,19 +507,20 @@ function removeRegionFilters(filters: Record<string, unknown>): Record<string, u
   }, {});
 }
 
-function recipientGrantFilter(grantIds: number[]) {
+export function recipientGrantFilter(grantIds: number[]) {
   return sequelize.literal(`EXISTS (
     SELECT 1
-    FROM jsonb_array_elements("SessionReportPilot"."data"->'recipients') elem
-    WHERE (
-      jsonb_typeof(elem->'value') = 'number'
-      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
-    )
-    AND (elem->>'value')::integer IN (${grantIds.join(', ')})
+    FROM jsonb_array_elements(
+      CASE WHEN jsonb_typeof("SessionReportPilot"."data"->'recipients') = 'array'
+           THEN "SessionReportPilot"."data"->'recipients'
+           ELSE '[]'::jsonb END
+    ) elem
+    WHERE CASE WHEN elem->>'value' ~ '^[0-9]+$'
+               THEN (elem->>'value')::integer END IN (${grantIds.join(', ')})
   )`);
 }
 
-// Map frontend column header keys (HorizontalTableWidget sends displayName.replaceAll(' ', '_')) to backend sort keys
+// Legacy underscore keys still sent by default sort configs and saved localStorage state
 const sessionReportSortByAliases: Record<string, string> = {
   Session_name: 'sessionName',
   Session_start_date: 'startDate',
@@ -548,7 +550,12 @@ function sessionReportOrderClause(sortBy: string, sortDir: string) {
     topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
   };
 
-  // Use the requested sort column or default to id descending
+  if (!sortMap[resolvedSortBy]) {
+    auditLogger.warn(
+      `sessionReportOrderClause: unknown sortBy ${JSON.stringify(sortBy)}, falling back to id`
+    );
+  }
+
   const sortEntry = sortMap[resolvedSortBy] || sortMap.id;
 
   if (sortEntry === sortMap.id) {

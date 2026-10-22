@@ -645,6 +645,16 @@ export default function ViewGoalDetails({ recipient, regionId }) {
                 tooltipText: 'The number of Activity Reports the goal was used on.',
               },
               {
+                key: 'training-reports',
+                icon: faChartColumn,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Training Reports',
+                data: String(overview?.trainingReports ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of TR sessions the goal was used on',
+              },
+              {
                 key: 'goal-objectives',
                 icon: faPenCircle,
                 iconColor: colors.ttahubMediumBlue,
@@ -682,6 +692,9 @@ export default function ViewGoalDetails({ recipient, regionId }) {
           <p className="margin-bottom-1 text-bold">Goal information:</p>
           <p className="margin-y-0">
             <strong>{overview?.activityReports ?? 0}</strong> Activity Reports
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.trainingReports ?? 0}</strong> Training Reports
           </p>
           <p className="margin-y-0">
             <strong>{overview?.objectives ?? 0}</strong> goal objectives

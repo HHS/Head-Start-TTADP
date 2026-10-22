@@ -13,6 +13,7 @@ export default function HorizontalTableWidget({
   headers,
   data,
   firstHeading,
+  firstHeadingSortKey,
   enableSorting,
   lastHeading,
   sortConfig,
@@ -98,7 +99,7 @@ export default function HorizontalTableWidget({
             requestSort(sortKey);
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${name}. Activate to sort ${
+          aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
@@ -252,7 +253,7 @@ export default function HorizontalTableWidget({
               renderSortableColumnHeader(
                 firstHeading,
                 firstHeading.replaceAll(' ', '_'),
-                firstHeading,
+                firstHeadingSortKey || firstHeading,
                 firstHeadingClasses()
               )
             ) : (
@@ -442,6 +443,7 @@ HorizontalTableWidget.propTypes = {
     PropTypes.shape({}),
   ]),
   firstHeading: PropTypes.string.isRequired,
+  firstHeadingSortKey: PropTypes.string,
   selectAllIdPrefix: PropTypes.string,
   lastHeading: PropTypes.string,
   sortConfig: PropTypes.shape({
@@ -472,6 +474,7 @@ HorizontalTableWidget.propTypes = {
 
 HorizontalTableWidget.defaultProps = {
   footerData: false,
+  firstHeadingSortKey: null,
   data: [],
   lastHeading: 'Total',
   sortConfig: {
