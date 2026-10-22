@@ -139,15 +139,10 @@ export const registerEventListener = () => {
     auditLogger.info('A previously unhandled promise rejection was handled:', promise);
   });
 
-  // Listen for exit event as a fallback
-  process.on('exit', async (code) => {
-    if (code === 0) {
-      auditLogger.info(`About to exit with code: ${code}`);
-    } else {
-      auditLogger.error(`About to exit with code: ${code}`);
-    }
-    // If not already handled, you might want to ensure any remaining cleanup
-    // is performed here. This is a last resort.
-    await gracefulShutdown(`app termination (exit event) with code ${code}`);
+  // Listen for exit event. Node runs 'exit' listeners synchronously, so async cleanup
+  // cannot complete here; shutdown is handled by the signal and error handlers above.
+  // Non-zero exits are already alerted by the handlers that call process.exit(1).
+  process.on('exit', (code) => {
+    auditLogger.info(`About to exit with code: ${code}`);
   });
 };

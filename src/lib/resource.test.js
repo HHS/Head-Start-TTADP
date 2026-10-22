@@ -718,6 +718,22 @@ describe('resource worker tests', () => {
     expect(auditLogger.error).not.toHaveBeenCalled();
     expect(mockAxios).not.toHaveBeenCalled();
   });
+
+  it('skips unsupported content types quietly even when the status is not 200', async () => {
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'application/pdf' }, status: 404 })
+    );
+
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.test.gov/missing.pdf' },
+    });
+
+    expect(got).toEqual({
+      status: 204,
+      data: { url: 'http://www.test.gov/missing.pdf', skipReason: 'unsupported_mime_type' },
+    });
+    expect(auditLogger.error).not.toHaveBeenCalled();
+  });
 });
 
 describe('overrideStatusCodeOnAuthRequired', () => {

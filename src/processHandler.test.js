@@ -331,29 +331,12 @@ describe('processHandler', () => {
       );
     });
 
-    it('should handle exit event and log exit code', async () => {
-      closeAllQueues.mockResolvedValueOnce();
-      isConnectionOpen.mockReturnValueOnce(true);
-      sequelize.close.mockResolvedValueOnce();
-      await emitProcessEvent('exit', 0);
-
-      expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 0');
-      expect(auditLogger.error).not.toHaveBeenCalledWith('About to exit with code: 0');
-      expect(closeAllQueues).toHaveBeenCalledWith('app termination (exit event) with code 0');
-      expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (exit event) with code 0: {"some":"details"}'
-      );
-    });
-
-    it('should log a non-zero exit code at error', async () => {
-      closeAllQueues.mockResolvedValueOnce();
-      isConnectionOpen.mockReturnValueOnce(true);
-      sequelize.close.mockResolvedValueOnce();
+    it('should log the exit code at info without running async cleanup', async () => {
       await emitProcessEvent('exit', 1);
 
-      expect(auditLogger.error).toHaveBeenCalledWith('About to exit with code: 1');
-      expect(auditLogger.info).not.toHaveBeenCalledWith('About to exit with code: 1');
-      expect(closeAllQueues).toHaveBeenCalledWith('app termination (exit event) with code 1');
+      expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 1');
+      expect(auditLogger.error).not.toHaveBeenCalled();
+      expect(closeAllQueues).not.toHaveBeenCalled();
     });
   });
 });
