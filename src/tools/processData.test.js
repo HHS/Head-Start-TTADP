@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -425,6 +426,28 @@ describe('processData', () => {
 
       expect(transformedGrant.programSpecialistName).toBe(transformedMockManager.name);
       expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email);
+    });
+
+    it('handles generated specialist names containing single quotes', async () => {
+      await Grant.update(
+        {
+          // earlier tests already anonymized this grant's number, so restore it to be selected
+          number: '01GN011411',
+          grantSpecialistName: 'Quote Tester',
+          grantSpecialistEmail: 'quote.tester@apostrophe.test',
+        },
+        { where: { id: GRANT_ID_TWO } }
+      );
+      const fullNameSpy = jest.spyOn(faker.person, 'fullName').mockReturnValue("Dana O'Keefe");
+
+      try {
+        await hideRecipientsGrants(reportObject.imported.granteeName);
+      } finally {
+        fullNameSpy.mockRestore();
+      }
+
+      const transformedGrant = await Grant.findOne({ where: { id: GRANT_ID_TWO } });
+      expect(transformedGrant.grantSpecialistName).toBe("Dana O'Keefe");
     });
 
     it('updates grant numbers in the GrantNumberLink table', async () => {
