@@ -9,6 +9,7 @@ const {
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
+const { broadcastRoom } = require('../../lib/realtime');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
@@ -909,6 +910,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       sequelize.models.ActivityReportGoal.findAll({
         // Find all ActivityReportGoals models
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['goalId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -918,6 +921,8 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       sequelize.models.ActivityReportObjective.findAll({
         // Find all ActivityReportObjective models
         attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['objectiveId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -929,7 +934,9 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
     const users = [
       ...collaborators, // Spread the elements of the 'collaborators' array into a new array
       { userId: instance.userId }, // Add an object with a 'userId' property to the new array
-    ].filter(({ userId }) => userId);
+    ]
+      .filter(({ userId }) => userId)
+      .sort((a, b) => a.userId - b.userId);
 
     const findOrCreateCollaboratorOptions = users.flatMap((user) => [
       ...goals.map((goal) => ({
@@ -983,6 +990,8 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
     const [arGoals, arObjectives] = await Promise.all([
       sequelize.models.ActivityReportGoal.findAll({
         attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['goalId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -991,6 +1000,8 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
       }),
       sequelize.models.ActivityReportObjective.findAll({
         attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        // Sorted so concurrent status changes lock collaborators in the same order.
+        order: [['objectiveId', 'ASC']],
         where: {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
@@ -1045,14 +1056,9 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
         // Get the current user ID
         const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
 
-        // Dynamically import the mesh server to avoid circular dependencies
-        // eslint-disable-next-line global-require
-        const { getMeshServer } = require('../../index');
-        const mesh = getMeshServer();
-
-        if (mesh) {
+        if (!process.env.BYPASS_SOCKETS) {
           const roomName = `ar-${instance.id}`;
-          await mesh.broadcastRoom(roomName, 'revision-updated', {
+          await broadcastRoom(roomName, 'revision-updated', {
             reportId: instance.id,
             revision: currentRevision,
             userId: userId || null, // Include the user ID who made the change
