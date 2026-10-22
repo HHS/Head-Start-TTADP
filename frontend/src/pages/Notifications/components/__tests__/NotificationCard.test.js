@@ -139,6 +139,13 @@ describe('NotificationCard', () => {
       expect(link.className).not.toContain('usa-button--outline');
     });
 
+    it('applies outline class to an actionable notification in the archive', () => {
+      renderCard({ actionable: true, archivedAt: '2026-06-10T00:00:00.000Z' }, jest.fn(), true);
+
+      const link = screen.getByRole('link', { name: 'Open notification' });
+      expect(link.className).toContain('usa-button--outline');
+    });
+
     it('calls viewNotification with the stringified id on link click', () => {
       renderCard({ actionable: false });
 
