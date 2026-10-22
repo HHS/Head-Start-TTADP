@@ -688,24 +688,28 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   // Update the Recipients table in the database with the anonymized recipient data using a Common
   // Table Expression (CTE)
-  await sequelize.query(/* sql */ `
+  await sequelize.query(
+    /* sql */ `
     WITH fake_recipients AS (
       SELECT
-        jsonb_array_elements('${fakeRecipientDataJSON}'::jsonb) AS data
+        jsonb_array_elements(:fakeRecipientDataJSON::jsonb) AS data
     )
     UPDATE "Recipients"
     SET
       "name" = data->>'name'
     FROM fake_recipients
     WHERE "Recipients"."id" = (data->>'id')::int;
-  `);
+  `,
+    { replacements: { fakeRecipientDataJSON } }
+  );
 
   // Update the Grants table in the database with the anonymized grant data using a Common Table
   // Expression (CTE)
-  await sequelize.query(/* sql */ `
+  await sequelize.query(
+    /* sql */ `
     WITH fake_grants AS (
       SELECT
-        jsonb_array_elements('${fakeGrantDataJSON}'::jsonb) AS data
+        jsonb_array_elements(:fakeGrantDataJSON::jsonb) AS data
     )
     UPDATE "Grants"
     SET
@@ -716,7 +720,9 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
       "grantSpecialistEmail" = data->>'grantSpecialistEmail'
     FROM fake_grants
     WHERE "Grants"."id" = (data->>'id')::int;
-  `);
+  `,
+    { replacements: { fakeGrantDataJSON } }
+  );
 
   // Bulk update related tables MonitoringReviewGrantee, MonitoringClassSummary, and
   // GrantNumberLink with the new anonymized grant numbers
