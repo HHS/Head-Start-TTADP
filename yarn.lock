@@ -2680,10 +2680,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-3.0.1.tgz#d580decb59cb41a15856387a86800838102daf44"
   integrity sha512-VyMVKRrpHTT8PnotUeV8L/mDaMwD5DaAKCFLP73zAqAtvF0FCqky+Ki7BYbFCYQmqFyTe9316Ed5zS70QUR9eg==
 
-"@ttahub/common@2.4.18":
-  version "2.4.18"
-  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.4.18.tgz#8bde6a4016478fd9ba74afc2bc6f5382d979bd6b"
-  integrity sha512-cPPCDulwOMfTWWd2i0dQmslWn7l9MGv6+1UNuYSscvApsC8gw4VATp2QtB9W/eTjzOc8vN1df8iIvcZNrn9m0g==
+"@ttahub/common@2.4.19":
+  version "2.4.19"
+  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.4.19.tgz#dbaeb62a6c93458ad439aeca76987ef2c3d52ade"
+  integrity sha512-CBALiJMuSKJ+vo9bbelRKJV6W+/hvuaJHvvVtWQ++LKcEUhX1vt0I3Q3fxu8Gpo6YMWVfnr9aCpG5IWNuhqavA==
 
 "@types/argparse@1.0.38":
   version "1.0.38"
