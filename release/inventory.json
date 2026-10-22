@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "1e5be6595ac04485ea326a7f03833f05d3f31a432e281d2c528ecef1599fbfaa",
+      "sha256": "2d48d5c57aef40c78f7a25a6d4756a65d26668daade0c2ac739bb16030219354",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
