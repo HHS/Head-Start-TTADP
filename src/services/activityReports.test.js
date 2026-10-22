@@ -19,6 +19,7 @@ import db, {
   Notification,
   Objective,
   ObjectiveCollaborator,
+  ObjectiveCollaboratorActivityReport,
   OtherEntity,
   Permission,
   Program,
@@ -3022,12 +3023,14 @@ describe('Activity report service', () => {
       expect(orphanLinker).not.toBeNull();
       expect(orphanLinker.deletedAt).not.toBeNull();
 
-      // The linker for the shared objective survives with only the live report id
-      // remaining in its linkBack.
+      // The linker for the shared objective survives, linked only to the live report.
       const sharedLinker = await findLinker(objShared.id);
       expect(sharedLinker).not.toBeNull();
       expect(sharedLinker.deletedAt).toBeNull();
-      expect(sharedLinker.linkBack.activityReportIds).toEqual([liveReport.id]);
+      const sharedLinks = await ObjectiveCollaboratorActivityReport.findAll({
+        where: { objectiveCollaboratorId: sharedLinker.id },
+      });
+      expect(sharedLinks.map((link) => link.activityReportId)).toEqual([liveReport.id]);
     });
 
     it('decides from the ARO/AR tables, not the cached onAR/onApprovedAR flags', async () => {

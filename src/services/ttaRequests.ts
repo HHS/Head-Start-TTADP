@@ -1,5 +1,6 @@
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
-import { Op, type WhereOptions } from 'sequelize';
+import { TTA_REQUEST_MONITORING_STANDARD, TTA_REQUEST_STATUSES } from '@ttahub/common';
+import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
+import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
@@ -17,27 +18,12 @@ const {
   Program,
   Recipient,
   GoalTemplate,
+  Role,
   User,
 } = db;
 
-export interface TtaRequestCitationData {
-  citation: string;
-  findingType?: string | null;
-}
-
 /** the request body, after src/routes/ttaRequests/middleware.ts has validated it */
-export interface TtaRequestData {
-  regionId?: number;
-  recipientId?: number | null;
-  grantIds?: number[];
-  recipientAware?: boolean | null;
-  originator?: string | null;
-  goalTemplateId?: number | null;
-  citations?: TtaRequestCitationData[];
-  context?: string | null;
-  creatorNotes?: string | null;
-  reviewerId?: number | null;
-}
+export type TtaRequestData = Partial<TtaRequestPayload>;
 
 interface ExistingTtaRequest {
   id: number;
@@ -48,6 +34,18 @@ interface ExistingTtaRequest {
 // a request that refers to grants or a recipient it cannot -> 400 rather than 500
 const dataError = (message: string) => serviceError(400, message, { error: message });
 
+/**
+ * Locks the request's row for the rest of the caller's transaction (the ambient CLS
+ * transaction from `transactionWrapper`). Saves and submits take this lock before reading the
+ * request, so one that overlaps a submit sees it submitted instead of saving over it.
+ */
+export async function lockTtaRequest(id: number) {
+  return TtaRequest.findByPk(id, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
+}
+
 export async function ttaRequestById(id: number) {
   return TtaRequest.findOne({
     where: { id },
@@ -55,12 +53,14 @@ export async function ttaRequestById(id: number) {
       {
         model: User,
         as: 'creator',
-        attributes: ['id', 'name'],
+        attributes: ['id', 'name', 'fullName'],
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
       },
       {
         model: User,
         as: 'reviewer',
-        attributes: ['id', 'name'],
+        attributes: ['id', 'name', 'fullName'],
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
       },
       {
         model: Recipient,
@@ -113,8 +113,9 @@ export async function ttaRequestById(id: number) {
 }
 
 /**
- * The creator's own draft requests that the scopes allow, optionally for one recipient.
- * Drafts are private to their creator until they are submitted.
+ * The requests the scopes allow, optionally for one recipient: the user's own drafts,
+ * since drafts are private to their creator until they are submitted, and anyone's
+ * submitted requests.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
@@ -125,11 +126,24 @@ export async function getTtaRequests(
     where: {
       [Op.and]: [
         ...scopes,
-        { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+        {
+          [Op.or]: [
+            { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+            { status: TTA_REQUEST_STATUSES.SUBMITTED },
+          ],
+        },
         ...(recipientId ? [{ recipientId }] : []),
       ],
     },
-    attributes: ['id', 'displayId', 'regionId', 'recipientId', 'status', 'createdAt'],
+    attributes: [
+      'id',
+      'displayId',
+      'regionId',
+      'recipientId',
+      'status',
+      'createdAt',
+      'submittedAt',
+    ],
     include: [
       {
         model: User,
@@ -149,7 +163,8 @@ export async function getTtaRequests(
       {
         model: GoalTemplate,
         as: 'goalTemplate',
-        attributes: ['id', 'templateName'],
+        // the tables show a goal by its category
+        attributes: ['id', 'templateName', 'standard'],
       },
       {
         // the state a request is in is the state its grants are in
@@ -344,4 +359,37 @@ export async function updateTtaRequest(
 
   const saved = await ttaRequestById(existing.id);
   return saved.toJSON();
+}
+
+/**
+ * Saves the request as it stands and submits it for review. The body has already been
+ * checked for the required fields; what is left to check depends on the saved request:
+ * the reviewer must still be one of the region's approvers, and the monitoring goal
+ * needs citations.
+ */
+export async function submitTtaRequest(
+  existing: ExistingTtaRequest,
+  data: TtaRequestData,
+  userId: number
+) {
+  const saved = await updateTtaRequest(existing, data, userId);
+
+  if (!saved.reviewerId) {
+    throw dataError('The reviewer must be able to approve in the request region');
+  }
+
+  if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
+    throw dataError('A request for the monitoring goal needs at least one citation');
+  }
+
+  await TtaRequest.update(
+    {
+      status: TTA_REQUEST_STATUSES.SUBMITTED,
+      submittedAt: new Date(),
+    },
+    { where: { id: existing.id } }
+  );
+
+  const submitted = await ttaRequestById(existing.id);
+  return submitted.toJSON();
 }

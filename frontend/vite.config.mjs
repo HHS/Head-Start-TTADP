@@ -65,7 +65,6 @@ export default defineConfig(({ mode }) => {
     resolve: {
       extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
-        '@mesh-kit/core/client': require.resolve('@mesh-kit/core/client'),
         '@use-it/interval': require.resolve('@use-it/interval/dist/index.js'),
       },
     },
