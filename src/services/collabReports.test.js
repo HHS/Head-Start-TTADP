@@ -528,6 +528,12 @@ describe('Collab Reports Service', () => {
 
       const [report1] = reports;
 
+      await CollabReportReason.bulkCreate([
+        { collabReportId: reports[1].id, reasonId: 'support_coordination' },
+        { collabReportId: reports[1].id, reasonId: 'agg_regional_data' },
+        { collabReportId: reports[1].id, reasonId: 'participate_work_groups' },
+      ]);
+
       csvGoalTemplate = await db.GoalTemplate.create(
         {
           id: -report1.id,
@@ -675,6 +681,24 @@ describe('Collab Reports Service', () => {
         stepsCompleteDate: '02/15/2026',
         approvedAt: expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
       });
+    });
+
+    it('preserves reason association order across CSV exports', async () => {
+      const reasons = await CollabReportReason.findAll({
+        where: { collabReportId: csvReportIds[1] },
+        order: [['id', 'ASC']],
+      });
+      const expectedReasons = reasons.map(({ reasonId }) => reasonId);
+      expect(expectedReasons).toEqual([
+        'support_coordination',
+        'agg_regional_data',
+        'participate_work_groups',
+      ]);
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const [report] = await getCSVReports({ 'id.in': [csvReportIds[1]] });
+        expect(report.get('reportReasons')).toEqual(expectedReasons);
+      }
     });
 
     it('respects limit parameter', async () => {

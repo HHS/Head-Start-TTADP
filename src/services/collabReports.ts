@@ -441,7 +441,7 @@ export async function getCSVReports({
         ['calculatedStatus', 'status'],
         [
           sequelize.literal(`(
-            SELECT array_agg("reasonId")
+            SELECT array_agg("reasonId" ORDER BY "id" ASC)
             FROM "CollabReportReasons"
             WHERE "CollabReportReasons"."collabReportId" = "CollabReport"."id"
             AND "CollabReportReasons"."deletedAt" IS NULL
