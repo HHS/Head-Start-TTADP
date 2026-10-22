@@ -9,6 +9,7 @@ import {
   lockTtaRequest,
   submitTtaRequest,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from './ttaRequests';
 
@@ -50,9 +51,13 @@ describe('ttaRequests service', () => {
       createGrant({ recipientId: recipient.id, regionId: 1 }),
       createGrant({ recipientId: recipient.id, regionId: 2 }),
       createGrant({ recipientId: otherRecipient.id, regionId: 1 }),
-      // the reviewer approves in region 1, where these requests are
-      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.APPROVE_REPORTS }),
+      // the reviewer is active and can write in region 1, where these requests are
+      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS }),
+      Permission.create({ userId: reviewer.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
     ]);
+
+    const ttac = await Role.findOne({ where: { name: 'TTAC' } });
+    await UserRole.create({ userId: reviewer.id, roleId: ttac.id });
   });
 
   afterAll(async () => {
@@ -155,12 +160,12 @@ describe('ttaRequests service', () => {
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const saved = await createTtaRequest({ regionId: 1, reviewerId: creator.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
 
-    it('drops a reviewer who approves in another region', async () => {
+    it('drops a reviewer who can review in another region', async () => {
       const saved = await createTtaRequest({ regionId: 2, reviewerId: reviewer.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
@@ -269,14 +274,87 @@ describe('ttaRequests service', () => {
     });
   });
 
+  describe('ttaRequestReviewers', () => {
+    let noRole;
+    let otherRole;
+    let readOnly;
+    let approveOnly;
+    let otherRegion;
+    let twoRoles;
+    let inactive;
+
+    const giveRoles = async (userId: number, names: string[]) => {
+      const roles = await Role.findAll({ where: { name: names } });
+      await UserRole.bulkCreate(roles.map((role) => ({ userId, roleId: role.id })));
+    };
+
+    const permit = (userId: number, scopeId: number, regionId = 1) =>
+      Permission.create({ userId, regionId, scopeId });
+
+    beforeAll(async () => {
+      [noRole, otherRole, readOnly, approveOnly, otherRegion, twoRoles, inactive] =
+        await Promise.all(Array.from({ length: 7 }, () => createUser({})));
+
+      // everyone but the inactive user can sign in
+      const active = [noRole, otherRole, readOnly, approveOnly, otherRegion, twoRoles];
+
+      await Promise.all([
+        ...active.map((user) => permit(user.id, SCOPES.SITE_ACCESS, 14)),
+        permit(noRole.id, SCOPES.READ_WRITE_REPORTS),
+        permit(otherRole.id, SCOPES.READ_WRITE_REPORTS),
+        giveRoles(otherRole.id, ['COR']),
+        permit(readOnly.id, SCOPES.READ_REPORTS),
+        giveRoles(readOnly.id, ['RPM']),
+        permit(approveOnly.id, SCOPES.APPROVE_REPORTS),
+        giveRoles(approveOnly.id, ['ECM']),
+        permit(otherRegion.id, SCOPES.READ_WRITE_REPORTS, 2),
+        giveRoles(otherRegion.id, ['GS']),
+        permit(twoRoles.id, SCOPES.READ_WRITE_REPORTS),
+        giveRoles(twoRoles.id, ['GSM', 'SS']),
+        permit(inactive.id, SCOPES.READ_WRITE_REPORTS),
+        giveRoles(inactive.id, ['TTAC']),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [noRole, otherRole, readOnly, approveOnly, otherRegion, twoRoles, inactive].map(
+        (u) => u.id
+      );
+      await Permission.destroy({ where: { userId: ids } });
+      await UserRole.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
+
+    it('lists users who can write in the region with a reviewing role, once each', async () => {
+      const reviewers = await ttaRequestReviewers(1);
+      const ids = reviewers.map((u) => u.id);
+
+      expect(ids).toContain(reviewer.id);
+      expect(ids.filter((id) => id === twoRoles.id)).toHaveLength(1);
+    });
+
+    it('leaves out inactive users and those without both write permission in the region and a reviewing role', async () => {
+      const ids = (await ttaRequestReviewers(1)).map((u) => u.id);
+
+      [noRole, otherRole, readOnly, approveOnly, otherRegion, inactive, creator].forEach((user) => {
+        expect(ids).not.toContain(user.id);
+      });
+    });
+
+    it('drops a saved reviewer who has a reviewing role but cannot write in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: approveOnly.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
+    });
+  });
+
   describe('updateTtaRequest reviewer', () => {
-    it('saves an approver in the region as the reviewer', async () => {
+    it('saves a reviewer in the region as the reviewer', async () => {
       const created = await createTtaRequest({ regionId: 1 }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: reviewer.id }, creator.id);
       expect(updated.reviewer.id).toBe(reviewer.id);
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: creator.id }, creator.id);
       expect(updated.reviewerId).toBeNull();
@@ -402,7 +480,7 @@ describe('ttaRequests service', () => {
       expect(submitted.context).toBe('<p>Context</p>');
     });
 
-    it('rejects a reviewer who cannot approve in the region', async () => {
+    it('rejects a reviewer who cannot review in the region', async () => {
       const draft = await createTtaRequest({ regionId: 1 }, creator.id);
 
       await expect(
@@ -472,8 +550,7 @@ describe('ttaRequests service', () => {
       const found = await ttaRequestById(created.id);
 
       expect(found.creator.fullName).toBe(`${creator.name}, GS`);
-      // the reviewer has no role, so it is just their name
-      expect(found.reviewer.fullName).toBe(reviewer.name);
+      expect(found.reviewer.fullName).toBe(`${reviewer.name}, TTAC`);
     });
   });
 

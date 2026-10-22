@@ -12,6 +12,7 @@ import {
   lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
@@ -52,6 +53,25 @@ export async function getTtaRequestsByRecipient(req: Request, res: Response) {
 
     const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId));
     res.json(ttaRequests);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getTtaRequestReviewers(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const reviewers = await ttaRequestReviewers(Number(regionId));
+    res.json(reviewers);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

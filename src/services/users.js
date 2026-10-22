@@ -128,6 +128,47 @@ export async function usersWithPermissions(regions, scopes) {
 }
 
 /**
+ * Active users (those with site access) who hold the scope in the region and at least one
+ * of the roles, ordered by name
+ *
+ * @param {number} regionId
+ * @param {number} scopeId
+ * @param {string[]} roles role names, such as 'TTAC'
+ */
+export async function activeUsersWithPermissionAndRoles(regionId, scopeId, roles) {
+  return User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      // site access is a second permission row, which the permissions include below can't
+      // also require
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT "userId" FROM "Permissions" WHERE "scopeId" = ${SITE_ACCESS})`
+        ),
+      },
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: [],
+        required: true,
+        where: { regionId, scopeId },
+      },
+      {
+        model: Role,
+        as: 'roles',
+        attributes: [],
+        required: true,
+        through: { attributes: [] },
+        where: { name: roles },
+      },
+    ],
+    order: [['name', 'ASC']],
+  });
+}
+
+/**
  * @param {User} user
  */
 export async function userEmailIsVerified(user) {

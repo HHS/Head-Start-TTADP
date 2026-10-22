@@ -4,42 +4,42 @@ import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import FormItem from '../../components/FormItem';
 import selectOptionsReset from '../../components/selectOptionsReset';
-import { getApprovers } from '../../fetchers/activityReports';
+import { getTtaRequestReviewers } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import { SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from './constants';
-import type { Approver, SelectOption } from './types';
+import type { Reviewer, SelectOption } from './types';
 
-const NO_APPROVERS: Approver[] = [];
+const NO_REVIEWERS: Reviewer[] = [];
 
 interface SubmitForReviewProps {
-  /** the region whose approvers can review this request, or null until a grant is chosen */
+  /** the region whose reviewers can review this request, or null until a grant is chosen */
   regionId: number | null;
 }
 
 /**
  * Notes for whoever picks the request up, and the person who will review it. The reviewers
- * are the region's activity report approvers, so there is nothing to choose from until the
- * grant - and with it the region - is known.
+ * are the region's users who can write reports and hold a reviewing role, so there is
+ * nothing to choose from until the grant - and with it the region - is known.
  */
 export default function SubmitForReview({ regionId }: SubmitForReviewProps): React.ReactElement {
   const { control, register } = useFormContext();
 
   // there is no region to ask about until a grant has been picked, so ask for nobody
   const fetcher = useCallback(
-    async () => (regionId ? getApprovers(regionId) : NO_APPROVERS),
+    async () => (regionId ? getTtaRequestReviewers(regionId) : NO_REVIEWERS),
     [regionId]
   );
-  const { data: availableApprovers } = useFetch(
-    NO_APPROVERS,
+  const { data: availableReviewers } = useFetch(
+    NO_REVIEWERS,
     fetcher,
     [regionId],
     'Unable to load reviewers.'
   );
 
-  const approvers: SelectOption[] = useMemo(
+  const reviewers: SelectOption[] = useMemo(
     () =>
-      (availableApprovers || []).map((approver) => ({ value: approver.id, label: approver.name })),
-    [availableApprovers]
+      (availableReviewers || []).map((reviewer) => ({ value: reviewer.id, label: reviewer.name })),
+    [availableReviewers]
   );
 
   return (
@@ -74,7 +74,7 @@ export default function SubmitForReview({ regionId }: SubmitForReviewProps): Rea
               name={TTA_REQUEST_FIELDS.REVIEWER}
               className="usa-select"
               styles={selectOptionsReset}
-              options={approvers}
+              options={reviewers}
               placeholder={SELECT_PLACEHOLDER}
               value={value}
               onChange={onChange}

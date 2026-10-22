@@ -12,12 +12,14 @@ import {
   lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
@@ -30,6 +32,7 @@ jest.mock('../../services/ttaRequests', () => ({
   lockTtaRequest: jest.fn(),
   submitTtaRequest: jest.fn(),
   ttaRequestById: jest.fn(),
+  ttaRequestReviewers: jest.fn(),
   updateTtaRequest: jest.fn(),
 }));
 jest.mock('../../services/currentUser');
@@ -139,6 +142,34 @@ describe('TTA request handlers', () => {
     it('hands unexpected errors to handleErrors', async () => {
       (getTtaRequestsService as jest.Mock).mockRejectedValue(new Error('boom'));
       await getTtaRequestsByRecipient(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTtaRequestReviewers', () => {
+    const REVIEWERS = [{ id: 5, name: 'Rachel Green' }];
+
+    beforeEach(() => {
+      req.params = { regionId: '1' };
+    });
+
+    it("lists the region's reviewers", async () => {
+      (ttaRequestReviewers as jest.Mock).mockResolvedValue(REVIEWERS);
+      await getTtaRequestReviewers(req as Request, res as Response);
+      expect(ttaRequestReviewers).toHaveBeenCalledWith(1);
+      expect(json).toHaveBeenCalledWith(REVIEWERS);
+    });
+
+    it('returns 403 without read permission in the region', async () => {
+      (userById as jest.Mock).mockResolvedValue(stranger);
+      await getTtaRequestReviewers(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(ttaRequestReviewers).not.toHaveBeenCalled();
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (ttaRequestReviewers as jest.Mock).mockRejectedValue(new Error('boom'));
+      await getTtaRequestReviewers(req as Request, res as Response);
       expect(handleErrors).toHaveBeenCalled();
     });
   });
