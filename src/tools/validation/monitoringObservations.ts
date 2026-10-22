@@ -799,6 +799,177 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     WHERE mf."sourceDeletedAt" IS NULL
       AND mf."deletedAt" IS NULL
     ;
+
+    -- finding_timeseries_transitions: per-column "did this change from the
+    -- previous band" flags, shared by the finding change-count observations
+    -- below. IS DISTINCT FROM (not <>) so a change into/out of NULL still
+    -- counts as a real transition. A row in MonitoringFindings_timeseries
+    -- (built in monitoringValidationStaging.ts) bands on every audit event,
+    -- not on a value-change of any one column - see auditLogTimeseries.ts -
+    -- so counting rows/bands directly would overcount.
+    DROP TABLE IF EXISTS pg_temp.finding_timeseries_transitions;
+    CREATE TEMP TABLE finding_timeseries_transitions
+    ON COMMIT DROP
+    AS
+    SELECT
+      data_id,
+      "statusId" IS DISTINCT FROM LAG("statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      "correctionDeadLine" IS DISTINCT FROM LAG("correctionDeadLine") OVER (PARTITION BY data_id ORDER BY timeband_start) deadline_changed,
+      "findingType" IS DISTINCT FROM LAG("findingType") OVER (PARTITION BY data_id ORDER BY timeband_start) type_changed,
+      source IS DISTINCT FROM LAG(source) OVER (PARTITION BY data_id ORDER BY timeband_start) source_changed
+    FROM "MonitoringFindings_timeseries"
+    ;
+
+    -- finding_status_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_status_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE status_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_correction_deadline_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_correction_deadline_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE deadline_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_type_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_type_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE type_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_source_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_source_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE source_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- review_timeseries_transitions: same reasoning as
+    -- finding_timeseries_transitions above, against MonitoringReviews_timeseries.
+    DROP TABLE IF EXISTS pg_temp.review_timeseries_transitions;
+    CREATE TEMP TABLE review_timeseries_transitions
+    ON COMMIT DROP
+    AS
+    SELECT
+      data_id,
+      "statusId" IS DISTINCT FROM LAG("statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      outcome IS DISTINCT FROM LAG(outcome) OVER (PARTITION BY data_id ORDER BY timeband_start) outcome_changed
+    FROM "MonitoringReviews_timeseries"
+    ;
+
+    -- review_status_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringReviews',
+      mr.id,
+      'review_status_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringReviews" mr
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE status_changed) cnt
+      FROM review_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mr.id
+    WHERE mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    ;
+
+    -- review_outcome_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringReviews',
+      mr.id,
+      'review_outcome_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringReviews" mr
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE outcome_changed) cnt
+      FROM review_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mr.id
+    WHERE mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    ;
     `,
     { raw: true, transaction }
   );
