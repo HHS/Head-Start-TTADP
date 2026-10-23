@@ -1,6 +1,15 @@
 import { faker } from '@faker-js/faker';
+import { FILE_STATUSES } from '../constants';
 import db, { File } from '../models';
-import { createFileMetaData, updateStatusByKey } from './files';
+import {
+  createFileMetaData,
+  markFilesQueuedForScan,
+  queueFilesForScan,
+  updateStatusByKey,
+} from './files';
+import addToScanQueue from './scanQueue';
+
+jest.mock('./scanQueue', () => jest.fn());
 
 describe('files service', () => {
   afterAll(async () => {
@@ -108,6 +117,63 @@ describe('files service', () => {
       );
 
       expect(newFile.id).toEqual(existingFile.id);
+    });
+  });
+
+  describe('scan queueing', () => {
+    let files;
+
+    beforeEach(async () => {
+      addToScanQueue.mockReset();
+      files = await Promise.all([
+        File.create({
+          originalFileName: 'scan1.pdf',
+          key: `${faker.string.uuid()}.pdf`,
+          status: FILE_STATUSES.UPLOADED,
+          fileSize: 1,
+        }),
+        File.create({
+          originalFileName: 'scan2.pdf',
+          key: `${faker.string.uuid()}.pdf`,
+          status: FILE_STATUSES.UPLOADED,
+          fileSize: 1,
+        }),
+      ]);
+    });
+
+    afterEach(async () => {
+      await File.destroy({ where: { id: files.map((file) => file.id) } });
+    });
+
+    // statuses in the same order as `files`
+    const statuses = async () =>
+      Promise.all(files.map(async (file) => (await File.findByPk(file.id)).status));
+
+    it('markFilesQueuedForScan marks every file QUEUED', async () => {
+      await markFilesQueuedForScan(files);
+
+      expect(await statuses()).toEqual([FILE_STATUSES.QUEUED, FILE_STATUSES.QUEUED]);
+    });
+
+    it('queueFilesForScan adds a scan job for each file', async () => {
+      await queueFilesForScan(files);
+
+      expect(addToScanQueue).toHaveBeenCalledTimes(2);
+      expect(addToScanQueue).toHaveBeenCalledWith({ key: files[0].key });
+      expect(addToScanQueue).toHaveBeenCalledWith({ key: files[1].key });
+      expect(await statuses()).toEqual([FILE_STATUSES.UPLOADED, FILE_STATUSES.UPLOADED]);
+    });
+
+    it('queueFilesForScan marks only the files that fail to queue QUEUEING_FAILED', async () => {
+      addToScanQueue.mockImplementation(async ({ key }) => {
+        if (key === files[1].key) {
+          throw new Error('redis unavailable');
+        }
+      });
+
+      await queueFilesForScan(files);
+
+      expect(await statuses()).toEqual([FILE_STATUSES.UPLOADED, FILE_STATUSES.QUEUEING_FAILED]);
     });
   });
 });

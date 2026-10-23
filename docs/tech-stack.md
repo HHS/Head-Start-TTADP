@@ -2,7 +2,7 @@
 
 ## Backend
 
-- Node.js (24.21.0)
+- Node.js (24.22.1)
 - TypeScript & Javascript (mixed)
 - PostgreSQL (15.12) via Sequelize ORM
 

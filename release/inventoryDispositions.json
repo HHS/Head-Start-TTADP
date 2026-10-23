@@ -7,13 +7,20 @@
       "componentName": "tta-similarity-api-prod",
       "componentClass": "application",
       "finding": "The similarity API application is stopped but remains bound to ttahub-prod, the production database service.",
-      "status": "deferred",
-      "justification": "A stopped application retains its service binding and therefore retains live credentials to the production database. The application is authorized by ADR 0017, so the component itself is documented, but the binding on a stopped application is a standing access path with no operational need while the application is not running.",
+      "status": "resolved",
+      "justification": "Resolved by TTAHUB-5729 on 2026-10-19. The application is stopped (0/1 instances, requested state stopped) and has no operational need for database access, so the ttahub-prod binding was removed with cf unbind-service tta-similarity-api-prod ttahub-prod. Afterward cf services for ttahub-prod listed only tta-smarthub-prod as a bound application. The application itself is still authorized by ADR 0017 and remains stopped. Restarting it would require rebinding ttahub-prod (which issues new credentials) and a restage, and should be accompanied by a review of whether the binding is still needed.",
       "owner": "TTA Hub Tech Lead",
-      "trackingTicket": "TTAHUB-5245",
+      "trackingTicket": "TTAHUB-5729",
       "closureTarget": "2026-11-05",
-      "recommendation": "Either restart the application if it is still in use, or unbind the production database service while it is stopped.",
-      "approval": null
+      "recommendation": "Closed. The production database binding was removed from the stopped application. No further action is needed unless the application is restarted, in which case rebind the service and restage.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/4070",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-21",
+        "decision": "Approved. Production database binding confirmed removed from the stopped application."
+      }
     },
     {
       "id": "INV-2026-0002",
@@ -53,13 +60,20 @@
       "componentName": "tta-smarthub-prod.app.cloud.gov",
       "componentClass": "route",
       "finding": "The route recorded as app_url in deployment_config/prod_vars.yml exists in the space but is mapped to no application. The application actually serves tta-smarthub-prod1.app.cloud.gov.",
-      "status": "deferred",
-      "justification": "The repository configuration names a hostname that no longer routes to the application, which means published configuration disagrees with the deployed state. The numeric suffix on the live route suggests a hostname collision at some point in the past that was worked around rather than resolved.",
+      "status": "resolved",
+      "justification": "Resolved by TTAHUB-5734 on 2026-10-19. The unmapped tta-smarthub-prod.app.cloud.gov route was deleted from the production space (cf delete-route app.cloud.gov --hostname tta-smarthub-prod). Afterward cf routes for ttahub-prod showed the routes mapped to tta-smarthub-prod as ttahub.ohs.acf.hhs.gov and tta-smarthub-prod1.app.cloud.gov, and no unmapped tta-smarthub-prod.app.cloud.gov route remained. app_url in deployment_config/prod_vars.yml now records the mapped tta-smarthub-prod1.app.cloud.gov route, so published configuration matches deployed state. Nothing in CI or manifest.yml consumes app_url, and the public hostname (TTA_SMART_HUB_URI) is unchanged. The suffixed hostname was kept rather than remapped to avoid changing the hostname of a live production application.",
       "owner": "TTA Hub Tech Lead",
-      "trackingTicket": "TTAHUB-5245",
+      "trackingTicket": "TTAHUB-5734",
       "closureTarget": "2026-11-05",
-      "recommendation": "Delete the unmapped route and correct app_url in deployment_config/prod_vars.yml, or remap the intended hostname and retire the suffixed one.",
-      "approval": null
+      "recommendation": "Closed. The unmapped route was deleted and app_url corrected to the mapped route. No further action is needed.",
+      "approval": {
+        "sourceSystem": "GitHub",
+        "record": "https://github.com/HHS/Head-Start-TTADP/pull/4069",
+        "approverRole": "TTA Hub Tech Lead",
+        "approver": "Krys Wisnaskas",
+        "approvalDate": "2026-10-21",
+        "decision": "Approved. Unmapped route confirmed deleted and app_url corrected to the mapped route."
+      }
     },
     {
       "id": "INV-2026-0005",

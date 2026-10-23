@@ -8,7 +8,7 @@ worker_max_old_space_size: 256
 app_disk_quota: 4GB
 
 app_name: tta-smarthub-prod
-app_url: https://tta-smarthub-prod.app.cloud.gov/
+app_url: https://tta-smarthub-prod1.app.cloud.gov/
 cg_api: https://api.fr.cloud.gov
 cg_org: hhs-acf-ohs-tta
 

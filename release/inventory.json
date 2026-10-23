@@ -57,7 +57,7 @@
         "reference": "docs/adr/0017-python-analytics-processing.md",
         "note": "Shown as the Similarity API container in docs/boundary_diagram.md."
       },
-      "notes": "Stopped but still bound to the production database service. See disposition INV-2026-0001."
+      "notes": "Stopped in production and no longer bound to the production database service. See disposition INV-2026-0001."
     },
     {
       "id": "app.automation",
@@ -150,7 +150,7 @@
         "reference": "docs/adr/0006-database.md",
         "note": "Read replica plan authorized by ADR 0016."
       },
-      "notes": "Also bound to tta-similarity-api-((env)). See disposition INV-2026-0001."
+      "notes": "The similarity API binding to the production service was removed. See disposition INV-2026-0001."
     },
     {
       "id": "service.redis",
@@ -433,7 +433,7 @@
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "deployment_config/prod_vars.yml",
-        "note": "app_url in prod_vars.yml records tta-smarthub-prod.app.cloud.gov, which is not the mapped route. See disposition INV-2026-0004."
+        "note": "app_url in prod_vars.yml records this mapped route. See disposition INV-2026-0004."
       }
     },
     {
@@ -515,15 +515,15 @@
       "tier": "reconciled",
       "locator": {
         "type": "cloudFoundryBuildpack",
-        "value": "1.9.5",
+        "value": "1.9.6",
         "pinned": true
       },
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "manifest.yml",
-        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.5, the released v1.9.5 tag, which currently resolves to commit ec0fbc6a2ac4f08d9ad0120fefa2a209bb2d6d80. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.6, the released v1.9.6 tag, which currently resolves to commit 1819bb83c6678b4c6f786f44664318c39bbd4aa5. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
       },
-      "notes": "Pinned by TTAHUB-5732 to the released v1.9.5 tag, the first release whose Node 24.21.0 build matches package.json engines. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
+      "notes": "Pinned by TTAHUB-5732 to a released tag (now v1.9.6, the first release shipping the Node 24.22.1 build that matches package.json engines). The nightly automation app (automation/configs/process.yml) is pinned to the same tag. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
     },
     {
       "id": "platform.nodeVersion",
@@ -537,7 +537,7 @@
         "value": ".nvmrc",
         "pinned": true
       },
-      "sha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f",
+      "sha256": "d9f318747a126ce2247661af67852b185def7789492eabfad7bba322be087c33",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": ".nvmrc"
@@ -555,7 +555,7 @@
         "value": "Dockerfile",
         "pinned": true
       },
-      "sha256": "5e400e2d8369adcc64bdcd7d006d1714f681f761edd1c715626967c728de1e83",
+      "sha256": "470633b2315f45eaf8fd2c94add1de8910a836013d690ef5c48a862b4e9bc20d",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "Dockerfile"
@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "1e5be6595ac04485ea326a7f03833f05d3f31a432e281d2c528ecef1599fbfaa",
+      "sha256": "2d48d5c57aef40c78f7a25a6d4756a65d26668daade0c2ac739bb16030219354",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -589,7 +589,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/prod_vars.yml"
       },
-      "sha256": "a18e5d994ddcc5ca987c7d14f20e9764a40f6524be6017a4ad55ad7b890b5746",
+      "sha256": "cc00174839bd4046e4af2351e0fc993359f4d3adde7aad17fac9bf46c7078240",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"

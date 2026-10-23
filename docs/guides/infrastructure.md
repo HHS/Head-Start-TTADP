@@ -294,7 +294,11 @@ Run `/tmp/lifecycle/launcher /home/vcap/app sh '{}'` or add it to the SSH comman
     cf logs tta-smarthub-dev-blue --recent
     # Example 2: checking dev logs, grep just for task logs
     cf logs tta-smarthub-dev-blue --recent | grep APP/TASK/
+    # Example 3: automation tasks (database backup, restore, process) run in the tta-automation app
+    cf logs tta-automation --recent
    ```
+
+   CI does not stream `tta-automation` task output into CircleCI, because CircleCI job logs are publicly readable. Retrieve it with `cf logs` as above. Do not copy it into tickets, chat or other public places, since task output can contain sensitive data.
 
 #### Run script in an interactive shell
 

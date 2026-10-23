@@ -377,6 +377,10 @@ const getPageScrapeValues = async (url) => {
   return { title, statusCode }; // Return the scraped title and status code
 };
 
+export const RESOURCE_SKIP_REASONS = {
+  UNSUPPORTED_MIME_TYPE: 'unsupported_mime_type',
+};
+
 export const unparsableMimeTypes = [
   'application/octet-stream',
   'application/pdf',
@@ -413,13 +417,15 @@ const getResourceMetaDataJob = async (job) => {
     ({ mimeType, statusCode } = await getMimeType(resourceUrl));
 
     // Check if the MIME type is unparsable.
+    // Unsupported formats (PDFs, images, etc.) are skipped on purpose, so this
+    // is logged at info and flagged with skipReason rather than treated as a failure.
     if (mimeType && unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))) {
-      auditLogger.error(
+      logger.info(
         `Resource Queue: Warning, unable to process resource '${resourceUrl}', received status code '${statusCode}'.`
       );
       return {
         status: httpCodes.NO_CONTENT,
-        data: { url: resourceUrl },
+        data: { url: resourceUrl, skipReason: RESOURCE_SKIP_REASONS.UNSUPPORTED_MIME_TYPE },
       };
     }
 
