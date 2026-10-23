@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
@@ -32,6 +32,7 @@ const batch = (start, length) =>
     links: [],
   }));
 const view = {
+  mode: 'chronological',
   recipientId: '401',
   regionId: '1',
   direction: 'desc',
@@ -99,6 +100,153 @@ describe('timeline navigation restoration', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it.each(['monitoring', 'goals'])(
+    'restores the original view and filters with Back after switching to %s',
+    async (mode) => {
+      mockRealFilters();
+      const initialFilters = [
+        { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+      ];
+      const initialSearch = `?${filtersToQueryString(initialFilters)}`;
+      const history = createMemoryHistory({
+        initialEntries: [
+          {
+            pathname: '/timeline',
+            search: initialSearch,
+            state: { timelineView: view },
+          },
+        ],
+      });
+      getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+      renderTimeline(history);
+      await screen.findByText('No results found.');
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), mode)
+      );
+      await waitFor(() =>
+        expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+          '401',
+          '1',
+          expect.objectContaining({ view: mode })
+        )
+      );
+      expect(history.length).toBe(2);
+      act(() => history.goBack());
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc')
+      );
+      expect(history.location.search).toBe(initialSearch);
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          filters: [expect.objectContaining({ topic: 'standard', query: ['Family Support'] })],
+        })
+      );
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].view).toBeUndefined();
+      act(() => history.goForward());
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual(
+        mode === 'goals'
+          ? []
+          : [expect.objectContaining({ topic: 'standard', query: ['Monitoring'] })]
+      );
+    }
+  );
+
+  it('switches views, replaces only goal filters, and restores the chosen view after details', async () => {
+    mockRealFilters();
+    const initialFilters = [
+      { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+      { id: 'event', topic: 'eventType', condition: 'is', query: ['TTA activity'] },
+    ];
+    const history = createMemoryHistory({
+      initialEntries: [
+        {
+          pathname: '/timeline',
+          search: `?${filtersToQueryString(initialFilters)}`,
+        },
+      ],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.click(screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' }))
+    );
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'monitoring')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          view: 'monitoring',
+          offset: 0,
+          excludeMultiRecipientCommunications: true,
+          filters: [
+            expect.objectContaining({ topic: 'eventType' }),
+            expect.objectContaining({ topic: 'standard', query: ['Monitoring'] }),
+          ],
+        })
+      )
+    );
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          view: 'goals',
+          offset: 0,
+          excludeMultiRecipientCommunications: true,
+          filters: [expect.objectContaining({ topic: 'eventType' })],
+        })
+      )
+    );
+    expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
+    await act(async () => userEvent.click(screen.getByRole('link', { name: 'View details' })));
+    act(() => history.goBack());
+    expect(await screen.findByRole('combobox', { name: 'View' })).toHaveValue('goals');
+  });
+
+  it('groups multi-category events alphabetically in independently expanded accordions', async () => {
+    const events = batch(1, 2).map((event) => ({
+      ...event,
+      tags: [
+        { label: 'Family Support', flagged: false },
+        { label: 'Monitoring', flagged: true },
+      ],
+    }));
+    getRecipientTimeline.mockResolvedValue({
+      count: 2,
+      events,
+      categories: [
+        { label: 'Family Support', statuses: ['Closed'] },
+        { label: 'Monitoring', statuses: ['In Progress'] },
+      ],
+    });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    const family = await screen.findByRole('list', { name: 'Family Support timeline events' });
+    const monitoring = screen.getByRole('list', { name: 'Monitoring timeline events' });
+    expect(within(family).getAllByRole('article')).toHaveLength(2);
+    expect(within(monitoring).getAllByRole('article')).toHaveLength(2);
+    expect(screen.getByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    const headings = within(screen.getByRole('list', { name: 'Timeline events' })).getAllByRole(
+      'heading',
+      { level: 3 }
+    );
+    expect(headings[0]).toHaveTextContent('Family Support');
+    const toggle = screen.getByRole('button', { name: /Family Support Closed/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await act(async () => userEvent.click(toggle));
+    expect(family).not.toBeVisible();
+    expect(monitoring).toBeVisible();
+  });
 
   it.each(['is', 'is not'])(
     'applies multiple communication purposes with %s',

@@ -1,9 +1,14 @@
-import type { RecipientTimelineFilter } from '@ttahub/common/src/recipientTimeline';
+import type {
+  RecipientTimelineFilter,
+  RecipientTimelineView,
+} from '@ttahub/common/src/recipientTimeline';
 import { useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { filtersToQueryString } from '../utils';
 import useRecipientTimeline from './useRecipientTimeline';
 
 interface TimelineView {
+  mode?: RecipientTimelineView;
   recipientId: string;
   regionId: string;
   direction: 'asc' | 'desc';
@@ -21,6 +26,7 @@ interface TimelinePosition {
 interface TimelineLocationState {
   timelineView?: TimelineView;
   timelinePosition?: TimelinePosition;
+  filtersExplicitlyEmptyFor?: string;
 }
 
 function savedPosition(state: TimelineLocationState): TimelinePosition | null {
@@ -57,12 +63,17 @@ export default function useTimelineNavigation(
   const savedView = location.state?.timelineView;
   const matchingView = savedView?.recipientId === recipientId && savedView?.regionId === regionId;
   const direction = matchingView && savedView.direction === 'asc' ? 'asc' : 'desc';
+  const mode: RecipientTimelineView =
+    matchingView && ['monitoring', 'goals'].includes(savedView.mode)
+      ? savedView.mode
+      : 'chronological';
   const excludeMultiRecipientCommunications =
     matchingView && savedView.excludeMultiRecipientCommunications === true;
   const view: TimelineView = {
     recipientId,
     regionId,
     direction,
+    mode,
     excludeMultiRecipientCommunications,
   };
   const queryKey = JSON.stringify([
@@ -71,8 +82,10 @@ export default function useTimelineNavigation(
     direction,
     excludeMultiRecipientCommunications,
     filterQuery,
+    ...(mode === 'chronological' ? [] : [mode]),
   ]);
   const timeline = useRecipientTimeline(recipientId, regionId, {
+    ...(mode === 'chronological' ? {} : { view: mode }),
     direction,
     excludeMultiRecipientCommunications,
     filters,
@@ -111,9 +124,9 @@ export default function useTimelineNavigation(
       loadMore();
       return;
     }
-    const anchor = Array.from(listRef.current?.children || []).find(
-      (element) => (element as HTMLElement).dataset.timelineEvent === target.eventKey
-    );
+    const anchor = Array.from(
+      listRef.current?.querySelectorAll('[data-timeline-event]') || []
+    ).find((element) => (element as HTMLElement).dataset.timelineEvent === target.eventKey);
     const bounds = anchor?.getBoundingClientRect();
     // Details may now be collapsed: keep at least part of the saved event in view.
     const anchorTop = bounds ? Math.max(target.top, 1 - bounds.height) : target.top;
@@ -134,8 +147,12 @@ export default function useTimelineNavigation(
       history.location.search !== location.search
     )
       return;
-    const rows = Array.from(listRef.current?.children || []) as HTMLElement[];
-    const anchor = rows.find((row) => row.getBoundingClientRect().bottom > 0);
+    const rows = Array.from(
+      listRef.current?.querySelectorAll('[data-timeline-event]') || []
+    ) as HTMLElement[];
+    const anchor = rows.find(
+      (row) => !row.closest('[hidden]') && row.getBoundingClientRect().bottom > 0
+    );
     const position: TimelinePosition = {
       queryKey,
       loadedPages,
@@ -187,19 +204,35 @@ export default function useTimelineNavigation(
     };
   }, []);
 
-  const setView = (changes: Partial<TimelineView>) =>
+  const setView = (changes: Partial<TimelineView>, nextFilters?: RecipientTimelineFilter[]) => {
+    const state = {
+      ...history.location.state,
+      timelineView: { ...view, ...changes },
+      timelinePosition: undefined,
+    };
+    if (nextFilters !== undefined) {
+      const query = filtersToQueryString(nextFilters);
+      // Mode and filters belong to one history entry. Preserve the previous entry for Back.
+      history.push({
+        ...history.location,
+        search: query ? `?${query}` : '',
+        state: {
+          ...state,
+          filtersExplicitlyEmptyFor: nextFilters.length === 0 ? 'timeline-filters' : undefined,
+        },
+      });
+      return;
+    }
     history.replace({
       ...history.location,
-      state: {
-        ...history.location.state,
-        timelineView: { ...view, ...changes },
-        timelinePosition: undefined,
-      },
+      state,
     });
+  };
 
   return {
     ...timeline,
     direction,
+    mode,
     excludeMultiRecipientCommunications,
     setView,
     listRef,

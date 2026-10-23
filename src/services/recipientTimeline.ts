@@ -1,6 +1,7 @@
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { TIMELINE_EVENT_TYPES } from '@ttahub/common/src/constants';
 import type {
+  RecipientTimelineCategory,
   RecipientTimelineEvent,
   RecipientTimelineEventPresentation,
   RecipientTimelineFilter,
@@ -9,16 +10,18 @@ import type {
   RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
-import { QueryTypes } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import { auditLogger } from '../logger';
-import { sequelize } from '../models';
+import db from '../models';
 import {
   COMMUNICATION_LOG_TIMELINE_SOURCE,
   RECIPIENT_TIMELINE_SOURCES,
   type TimelineEventSource,
   type TimelineSourceBindings,
 } from './recipientTimelineSources';
+
+const { Goal, GoalTemplate, Grant, sequelize } = db;
 
 interface RecipientTimelineEventIndex {
   source: string;
@@ -59,6 +62,42 @@ const DATE_INPUT_FORMATS = [
 ];
 
 const badTimelineRequest = (message: string) => serviceError(400, message, { message });
+
+/** Category membership is scoped to this recipient and region, independent of event pages. */
+export async function getTimelineGoalCategories(
+  recipientId: number,
+  regionId: number
+): Promise<RecipientTimelineCategory[]> {
+  const goals = await Goal.findAll({
+    attributes: ['status'],
+    where: {
+      isRttapa: 'Yes',
+      mapsToParentGoalId: null,
+      [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }],
+    },
+    include: [
+      {
+        model: Grant.unscoped(),
+        as: 'grant',
+        attributes: [],
+        required: true,
+        where: { recipientId, regionId },
+      },
+      { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: true },
+    ],
+  });
+  const categories = new Map<string, Set<string>>();
+  goals.forEach((goal) => {
+    const label = goal.goalTemplate?.standard?.trim();
+    if (!label) return;
+    const statuses = categories.get(label) ?? new Set<string>();
+    if (goal.status?.trim()) statuses.add(goal.status.trim());
+    categories.set(label, statuses);
+  });
+  return [...categories]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, statuses]) => ({ label, statuses: [...statuses].sort() }));
+}
 
 const validateQueryOptions = ({
   sources,
@@ -537,6 +576,44 @@ export async function getRecipientTimeline(
     : RECIPIENT_TIMELINE_SOURCES.filter(
         ({ name }) => name !== COMMUNICATION_LOG_TIMELINE_SOURCE.name
       );
-  const index = await queryTimelineEventIndex({ ...params, sources });
-  return populateTimelineEventIndex(index, params, sources);
+  // Validate before querying category metadata, including for direct service callers.
+  validateQueryOptions({ ...params, sources });
+  if (
+    params.view !== undefined &&
+    !['chronological', 'monitoring', 'goals'].includes(params.view)
+  ) {
+    throw badTimelineRequest('Timeline view is invalid');
+  }
+  if (!params.view || params.view === 'chronological') {
+    const index = await queryTimelineEventIndex({ ...params, sources });
+    return populateTimelineEventIndex(index, params, sources);
+  }
+
+  const goalCategories = await getTimelineGoalCategories(params.recipientId, params.regionId);
+  const categories =
+    params.view === 'monitoring'
+      ? [
+          {
+            label: 'Monitoring',
+            statuses: goalCategories.find(({ label }) => label === 'Monitoring')?.statuses ?? [],
+          },
+        ]
+      : goalCategories;
+  validateFilters(params.filters, sources);
+  if (!categories.length) return { count: 0, events: [], categories: [] };
+  const viewParams = {
+    ...params,
+    // AND the view constraint with user filters. It cannot be bypassed by removing a pill.
+    filters: [
+      ...params.filters,
+      {
+        topic: 'standard' as const,
+        condition: 'is' as const,
+        query: categories.map(({ label }) => label),
+      },
+    ],
+  };
+  const index = await queryTimelineEventIndex({ ...viewParams, sources });
+  const result = await populateTimelineEventIndex(index, viewParams, sources);
+  return { ...result, categories };
 }

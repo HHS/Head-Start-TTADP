@@ -1,6 +1,7 @@
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button, Checkbox, Dropdown } from '@trussworks/react-uswds';
+import type { RecipientTimelineView } from '@ttahub/common/src/recipientTimeline';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -13,6 +14,7 @@ import {
   TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
+import TimelineCategory from '../../../components/TimelineCategory';
 import TimelineEvent from '../../../components/TimelineEvent';
 import useFilters from '../../../hooks/useFilters';
 import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
@@ -28,13 +30,26 @@ interface TimelineProps {
 }
 
 export default function Timeline(props: TimelineProps): React.ReactElement {
-  const { pathname, search } = useLocation();
+  const { pathname, search, state } = useLocation<{
+    timelineView?: { mode?: RecipientTimelineView };
+  }>();
+  const mode = state?.timelineView?.mode || 'chronological';
   const { action } = useHistory();
-  const [navigation, setNavigation] = useState({ pathname, search, version: 0 });
-  if (navigation.pathname !== pathname || navigation.search !== search) {
+  const [navigation, setNavigation] = useState({ pathname, search, mode, version: 0 });
+  if (
+    navigation.pathname !== pathname ||
+    navigation.search !== search ||
+    navigation.mode !== mode
+  ) {
     // useFilters reads URL filters on mount. Reinitialize before its effects can overwrite a
     // Back/Forward destination with the previous entry's filters. Normal filter edits stay mounted.
-    setNavigation({ pathname, search, version: navigation.version + (action === 'POP' ? 1 : 0) });
+    // View switches also initialize filters from their new, atomically written history entry.
+    setNavigation({
+      pathname,
+      search,
+      mode,
+      version: navigation.version + (action === 'POP' || navigation.mode !== mode ? 1 : 0),
+    });
   }
   return <TimelineContent key={navigation.version} {...props} />;
 }
@@ -67,17 +82,60 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
 
   const {
     events,
+    categories,
     count,
     error,
     loading,
     hasMore,
     loadMore,
     direction,
+    mode,
     excludeMultiRecipientCommunications,
     setView,
     listRef,
     restoring,
   } = useTimelineNavigation(recipientId, regionId, supportedFilters, filterQuery);
+  const changeView = (value: string) => {
+    const nextMode: RecipientTimelineView =
+      value === 'monitoring' || value === 'goals' ? value : 'chronological';
+    const changes = {
+      mode: nextMode,
+      direction: value === 'asc' ? ('asc' as const) : ('desc' as const),
+    };
+    if (nextMode !== mode) {
+      const otherFilters = supportedFilters.filter(({ topic }) => topic !== 'standard');
+      setView(
+        changes,
+        nextMode === 'monitoring'
+          ? [
+              ...otherFilters,
+              {
+                id: 'timeline-monitoring-category',
+                topic: 'standard',
+                condition: 'is',
+                query: ['Monitoring'],
+              },
+            ]
+          : nextMode === 'goals'
+            ? otherFilters
+            : supportedFilters
+      );
+      return;
+    }
+    setView(changes);
+  };
+  const groupedEvents = useMemo(
+    () =>
+      categories
+        .map((category) => ({
+          category,
+          events: events.filter((event) =>
+            event.tags.some(({ label }) => label === category.label)
+          ),
+        }))
+        .filter((group) => group.events.length > 0),
+    [categories, events]
+  );
   const sentinelRef = useRef<HTMLDivElement>(null);
   const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
@@ -136,8 +194,9 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
               view all dates.
             </p>
             <p className="usa-prose">
-              Use View to change the date order. Select Hide multi-recipient communications to
-              exclude communications associated with more than one recipient.
+              Use View to change the date order, show Monitoring related TTA, or group TTA by RTTAPA
+              goal category. Select Hide multi-recipient communications to exclude communications
+              associated with more than one recipient.
             </p>
           </Drawer>
           <DrawerTriggerButton drawerTriggerRef={aboutDrawerRef} customClass="">
@@ -169,11 +228,13 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                   className="margin-top-0 width-mobile"
                   id="timeline-sort"
                   name="timeline-sort"
-                  value={direction}
-                  onChange={(event) => setView({ direction: event.target.value as 'asc' | 'desc' })}
+                  value={mode === 'chronological' ? direction : mode}
+                  onChange={(event) => changeView(event.target.value)}
                 >
                   <option value="desc">All TTA activity by date (most recent first)</option>
                   <option value="asc">All TTA activity by date (oldest first)</option>
+                  <option value="monitoring">Monitoring related TTA only</option>
+                  <option value="goals">TTA activity by RTTAPA goal</option>
                 </Dropdown>
               </div>
               <div className="display-flex flex-align-center">
@@ -215,14 +276,20 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
             )}
             {events.length > 0 && (
               <ol ref={listRef} className="usa-list--unstyled" aria-label="Timeline events">
-                {events.map((event, index) => (
-                  <li
-                    key={JSON.stringify([event.source, event.sourceId])}
-                    data-timeline-event={JSON.stringify([event.source, event.sourceId])}
-                  >
-                    <TimelineEvent event={event} isLast={index === events.length - 1} />
-                  </li>
-                ))}
+                {mode !== 'chronological'
+                  ? groupedEvents.map(({ category, events: categoryEvents }) => (
+                      <li key={category.label}>
+                        <TimelineCategory category={category} events={categoryEvents} />
+                      </li>
+                    ))
+                  : events.map((event, index) => (
+                      <li
+                        key={JSON.stringify([event.source, event.sourceId])}
+                        data-timeline-event={JSON.stringify([event.source, event.sourceId])}
+                      >
+                        <TimelineEvent event={event} isLast={index === events.length - 1} />
+                      </li>
+                    ))}
               </ol>
             )}
             <div ref={sentinelRef}>

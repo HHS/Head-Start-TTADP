@@ -78,6 +78,22 @@ describe('recipient fetcher', () => {
     expect(result).toEqual({ count: 0, events: [] });
   });
 
+  it.each(['monitoring', 'goals'])('getRecipientTimeline sends the %s view', async (view) => {
+    const controls = new URLSearchParams({ direction: 'desc', limit: '25', offset: '0' });
+    controls.set('view', view);
+    controls.set('excludeMultiRecipientCommunications', 'false');
+    fetchMock.getOnce(`${join(recipientUrl, '1', 'region', '2', 'timeline')}?${controls}`, {
+      count: 0,
+      events: [],
+      categories: [],
+    });
+    expect(await getRecipientTimeline('1', '2', { view })).toEqual({
+      count: 0,
+      events: [],
+      categories: [],
+    });
+  });
+
   it('getRecipientTimeline rejects an invalid recipient id', async () => {
     await expect(getRecipientTimeline('not-a-number', '1')).rejects.toThrow(
       'Recipient ID must be a positive integer'

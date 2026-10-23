@@ -60,6 +60,14 @@ get:
     reason, context, and grant number details. Missing optional values are omitted from details;
     missing subtitle/byline values are null. Standard tags and a View goal link are included
     when available.
+    The optional view control accepts chronological (default), monitoring, and goals.
+    Monitoring enforces a positive Monitoring standard constraint. Goals enforces membership
+    in categories of this recipient's non-draft, unmerged RTTAPA goals in this region.
+    View constraints combine with user filters before counts and pagination. Grouped responses
+    include categories with distinct current goal statuses, sorted alphabetically. An event
+    can be displayed under several matching categories but counts once. Event pages retain
+    date ordering; clients group the loaded slices by category. Omitted view retains the
+    original response shape. Removing a user category filter cannot bypass a view constraint.
   operationId: getRecipientTimeline
   parameters:
     - in: path
@@ -97,6 +105,13 @@ get:
         enum:
           - date
         default: date
+    - in: query
+      name: view
+      required: false
+      schema:
+        type: string
+        enum: [chronological, monitoring, goals]
+        default: chronological
     - in: query
       name: direction
       required: false
@@ -250,6 +265,19 @@ get:
               - count
               - events
             properties:
+              categories:
+                type: array
+                description: Category metadata for monitoring and goals views; omitted for chronological.
+                items:
+                  type: object
+                  required: [label, statuses]
+                  properties:
+                    label:
+                      type: string
+                    statuses:
+                      type: array
+                      items:
+                        type: string
               count:
                 type: integer
                 minimum: 0

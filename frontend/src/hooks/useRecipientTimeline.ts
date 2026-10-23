@@ -1,13 +1,16 @@
 import type {
+  RecipientTimelineCategory,
   RecipientTimelineEvent,
   RecipientTimelineFilter,
   RecipientTimelineResponse,
+  RecipientTimelineView,
 } from '@ttahub/common/src/recipientTimeline';
 import { useCallback, useRef, useState } from 'react';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 import { getRecipientTimeline } from '../fetchers/recipient';
 
 interface TimelineOptions {
+  view?: RecipientTimelineView;
   direction: 'asc' | 'desc';
   filters: RecipientTimelineFilter[];
   excludeMultiRecipientCommunications: boolean;
@@ -30,6 +33,7 @@ export default function useRecipientTimeline(
 ) {
   const [events, setEvents] = useState<RecipientTimelineEvent[]>([]);
   const [count, setCount] = useState(0);
+  const [categories, setCategories] = useState<RecipientTimelineCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hasMore, setHasMore] = useState(true);
@@ -45,6 +49,7 @@ export default function useRecipientTimeline(
     setActiveQueryKey(queryKey);
     setEvents([]);
     setCount(0);
+    setCategories([]);
     setHasMore(true);
     setLoading(true);
     setError('');
@@ -88,6 +93,7 @@ export default function useRecipientTimeline(
         exhausted = slice.length === 0 || offset >= total;
         setEvents((previous) => [...previous, ...nextEvents]);
         setCount(total);
+        setCategories(Array.isArray(response?.categories) ? response.categories : []);
         setHasMore(!exhausted);
         setLoadedPages((previous) => previous + 1);
       } catch (_err) {
@@ -108,6 +114,7 @@ export default function useRecipientTimeline(
   // Rows deleted mid-scroll can drop the reported count below what is already rendered.
   return {
     events,
+    categories,
     count: Math.max(count, events.length),
     loading,
     error,
