@@ -140,12 +140,12 @@ function TtaRequestFormBody({
 
   const selectedGrants: TtaRequestGrant[] = watch(TTA_REQUEST_FIELDS.GRANTS);
 
-  // the region follows the grants, which is what the goals, citations and approvers hang off.
+  // the region follows the grants, which is what the goals, citations and reviewers hang off.
   // A saved draft's region is fixed, whichever record's link it was opened from.
   const effectiveRegionId =
     savedRequest?.regionId ?? regionId ?? selectedGrants[0]?.regionId ?? null;
 
-  // goals belong to grants and approvers to a region, so neither survives a change of grant
+  // goals belong to grants and reviewers to a region, so neither survives a change of grant
   const grantKey = grantIdsKey(selectedGrants);
   const previousGrantKey = useRef(grantKey);
 

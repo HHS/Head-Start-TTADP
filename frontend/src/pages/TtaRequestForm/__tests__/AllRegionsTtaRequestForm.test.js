@@ -43,7 +43,7 @@ const renderForm = () =>
 describe('AllRegionsTtaRequestForm', () => {
   beforeEach(() => {
     fetchMock.get('begin:/api/goal-templates', []);
-    fetchMock.get('begin:/api/activity-reports/approvers', []);
+    fetchMock.get('begin:/api/tta-requests/region/', []);
     fetchMock.get('begin:/api/feeds/item', '');
   });
 

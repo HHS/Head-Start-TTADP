@@ -23,7 +23,7 @@ describe('SubmitForReview', () => {
   });
 
   it('takes creator notes as plain text', () => {
-    fetchMock.get('begin:/api/activity-reports/approvers', []);
+    fetchMock.get('begin:/api/tta-requests/region/', []);
     render(<Wrapper regionId={14} />);
 
     const notes = screen.getByLabelText('Add creator notes');
@@ -34,7 +34,7 @@ describe('SubmitForReview', () => {
   });
 
   it('lets the reviewer be chosen and cleared again', async () => {
-    fetchMock.get('begin:/api/activity-reports/approvers', [{ id: 5, name: 'Rachel Green' }]);
+    fetchMock.get('begin:/api/tta-requests/region/', [{ id: 5, name: 'Rachel Green' }]);
     render(<Wrapper regionId={14} />);
 
     const reviewer = screen.getByLabelText(/reviewing ttac or manager/i);
@@ -47,34 +47,37 @@ describe('SubmitForReview', () => {
     });
   });
 
-  it('asks for no approvers until the region is known', async () => {
-    fetchMock.get('begin:/api/activity-reports/approvers', [{ id: 5, name: 'Rachel Green' }]);
+  it('asks for no reviewers until the region is known', async () => {
+    fetchMock.get('begin:/api/tta-requests/region/', [{ id: 5, name: 'Rachel Green' }]);
     render(<Wrapper regionId={null} />);
 
     selectEvent.openMenu(screen.getByLabelText(/reviewing ttac or manager/i));
 
     expect(await screen.findByText(/no options/i)).toBeVisible();
-    expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(false);
+    expect(fetchMock.called('begin:/api/tta-requests/region/')).toBe(false);
   });
 
-  it('copes with an empty approvers response', async () => {
-    fetchMock.get('begin:/api/activity-reports/approvers', { body: 'null', status: 200 });
+  it('copes with an empty reviewers response', async () => {
+    fetchMock.get('begin:/api/tta-requests/region/', {
+      body: 'null',
+      status: 200,
+    });
     render(<Wrapper regionId={14} />);
 
     await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(true);
+      expect(fetchMock.called('begin:/api/tta-requests/region/')).toBe(true);
     });
 
     selectEvent.openMenu(screen.getByLabelText(/reviewing ttac or manager/i));
     expect(await screen.findByText(/no options/i)).toBeVisible();
   });
 
-  it('offers no reviewers when the approvers cannot be read', async () => {
-    fetchMock.get('begin:/api/activity-reports/approvers', 500);
+  it('offers no reviewers when they cannot be read', async () => {
+    fetchMock.get('begin:/api/tta-requests/region/', 500);
     render(<Wrapper regionId={14} />);
 
     await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(true);
+      expect(fetchMock.called('begin:/api/tta-requests/region/')).toBe(true);
     });
 
     selectEvent.openMenu(screen.getByLabelText(/reviewing ttac or manager/i));

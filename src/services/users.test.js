@@ -761,5 +761,59 @@ describe('Users DB service', () => {
       const results = await usersByRoles(['Wiggler'], 999);
       expect(results.length).toBe(0);
     });
+
+    describe('with a scope', () => {
+      let inRegion;
+      let otherRegion;
+      let noAccess;
+
+      beforeAll(async () => {
+        [inRegion, otherRegion, noAccess] = await Promise.all(
+          ['inRegion', 'otherRegion', 'noAccess'].map((name) =>
+            User.create({
+              id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+              name,
+              email: `${name}@test.gov`,
+              // the home region doesn't count once a scope is given
+              homeRegionId: 2,
+              hsesUsername: faker.string.sample(),
+              hsesUserId: faker.string.sample(),
+              lastLogin: new Date(),
+            })
+          )
+        );
+
+        await Promise.all([
+          db.UserRole.bulkCreate([
+            { userId: inRegion.id, roleId: role1.id },
+            { userId: inRegion.id, roleId: role2.id },
+            { userId: otherRegion.id, roleId: role1.id },
+            { userId: noAccess.id, roleId: role1.id },
+          ]),
+          Permission.bulkCreate([
+            { userId: inRegion.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS },
+            { userId: inRegion.id, regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS },
+            { userId: otherRegion.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS },
+            { userId: otherRegion.id, regionId: 2, scopeId: SCOPES.READ_WRITE_REPORTS },
+            { userId: noAccess.id, regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS },
+          ]),
+        ]);
+      });
+
+      afterAll(async () => {
+        const ids = [inRegion.id, otherRegion.id, noAccess.id];
+        await db.UserRole.destroy({ where: { userId: ids } });
+        await Permission.destroy({ where: { userId: ids } });
+        await User.destroy({ where: { id: ids } });
+      });
+
+      it('returns active users who hold the scope in the region, once each', async () => {
+        const results = await usersByRoles(['Wiggler', 'Waggler'], 1, {
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        });
+
+        expect(results.map((u) => u.id)).toEqual([inRegion.id]);
+      });
+    });
   });
 });
