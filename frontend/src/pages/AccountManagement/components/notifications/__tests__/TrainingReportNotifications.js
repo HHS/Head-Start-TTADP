@@ -42,4 +42,20 @@ describe('TrainingReportNotifications', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Someone submits an event session for my review.')).toBeInTheDocument();
   });
+
+  it('renders the session submitted collaborator row after the added as collaborator row', () => {
+    renderComponent();
+
+    const labels = [
+      "I'm added as a collaborator on a Training Report.",
+      'Someone submits a Training Report session for approval that I am a collaborator on.',
+      'Someone submits an event session for my review.',
+    ].map((label) => screen.getByText(label));
+
+    labels.slice(1).forEach((label, index) => {
+      expect(
+        labels[index].compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+  });
 });

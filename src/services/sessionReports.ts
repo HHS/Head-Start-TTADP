@@ -1,6 +1,6 @@
 import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
-import { cast, type Model, Op } from 'sequelize';
+import { cast, type Model, Op, Sequelize, type Transaction } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
@@ -9,6 +9,7 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
+import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
@@ -370,7 +371,6 @@ export async function updateSession(id: number, request) {
     endDate: hasEndDate
       ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
       : (session.get('endDate') as unknown as Date | null),
-    data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
     approverId?: number | null;
@@ -390,10 +390,57 @@ export async function updateSession(id: number, request) {
     update.submitterId = Number(submitterId);
   }
 
+  // Only a first submission notifies collaborators (TR-3c); resubmissions after
+  // changes were requested are covered by TR-5c. `hasBeenSubmitted` is sticky:
+  // facilitation changes clear completion flags and the approver, and participant
+  // submits overwrite status, so neither tells us whether the session was ever submitted.
+  const wasSubmitted = isSessionSubmitted(event, {
+    approverId: session.approverId,
+    data: existingData,
+  } as unknown as SessionShape);
+  const isSubmitted = isSessionSubmitted(event, {
+    approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+    data: newData,
+  } as unknown as SessionShape);
+  // wasSubmitted and NEEDS_ACTION cover sessions submitted before the marker existed
+  const hasBeenSubmitted =
+    Boolean(existingData.hasBeenSubmitted) ||
+    wasSubmitted ||
+    existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isFirstSubmission = isSubmitted && !hasBeenSubmitted;
+
+  if (hasBeenSubmitted || isSubmitted) {
+    newData.hasBeenSubmitted = true;
+  }
+
+  update.data = cast(JSON.stringify(newData), 'jsonb');
+
   await SessionReportPilot.update(update, {
     where: { id },
     individualHooks: true,
   });
+
+  if (isFirstSubmission) {
+    // A notification failure must never fail the save. Catching the error is not
+    // enough: a failed query aborts the request's transaction (transactionWrapper),
+    // so every later query and the commit fail too. Running the notification in a
+    // savepoint lets it roll back on its own.
+    const parentTransaction = (
+      Sequelize as unknown as { _cls?: { get: (key: string) => Transaction | undefined } }
+    )._cls?.get('transaction');
+    try {
+      // we need to run this in a transaction like so. This creates a SAVEPOINT
+      // otherwise, a failed notification would abort the entire transaction.
+      await sequelize.transaction({ transaction: parentTransaction }, () =>
+        createNotificationForSessionSubmittedCollaborators(event, {
+          id,
+          data: newData as { sessionName?: string },
+        })
+      );
+    } catch (err) {
+      auditLogger.error(`Error creating session submitted notifications for session ${id}:`, err);
+    }
+  }
 
   if (goalTemplates) {
     await updateSessionReportRelatedModels(

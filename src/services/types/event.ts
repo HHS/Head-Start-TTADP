@@ -66,11 +66,11 @@ export type EventShape = {
 
 export type CreateEventRequest = {
   ownerId: number;
-  pocIds: number;
+  pocIds: number[];
   collaboratorIds: number[];
   regionId: number;
   data: {
-    owner: undefined | { id: string; name: string; email: string };
+    owner: undefined | { id: string; name: string; fullName?: string; email: string };
     status: TRStatusType;
     eventId: string;
   };

@@ -722,6 +722,8 @@ const NOTIFICATION_TYPES = {
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
   // TR-3: Creator submits a session for approval
   TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  // TR-3c: Event collaborators notified when the creator submits a session for approval
+  TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator',
   // TR-4: Approver requests changes to a session
   TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
   // TR-5/6: Creator or collaborator re-submits a session for review
@@ -814,6 +816,7 @@ const EMAIL_NOTIFICATION_SETTING_KEYS = [
   'emailWhenAddedAsRecipientCommLog',
   'emailWhenAddedAsPocTrainingReport',
   'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionSubmittedCollaboratorTrainingReport',
   'emailWhenSessionReviewRequestedTrainingReport',
   'emailWhenSessionChangesRequestedTrainingReport',
   'emailWhenSessionDetails20DaysCreatorCollaborator',
@@ -853,6 +856,7 @@ const IN_APP_NOTIFICATION_SETTING_KEYS = [
   'inAppWhenAddedAsRecipientCommLog',
   'inAppWhenAddedAsPocTrainingReport',
   'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',
