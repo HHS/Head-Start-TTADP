@@ -189,5 +189,22 @@ describe('Monitoring diagnostic handlers', () => {
       expect(mockResponse.write).toHaveBeenNthCalledWith(2, '11\n');
       expect(mockResponse.end).toHaveBeenCalled();
     });
+
+    it('rethrows stream errors after destroying a started response', async () => {
+      const error = new Error('stream failed');
+      mockResponse.destroy = jest.fn();
+      monitoringDiagnosticsCsv.mockResolvedValue(
+        (async function* csvLines() {
+          yield 'Grant ID\n';
+          throw error;
+        })()
+      );
+
+      await expect(
+        exportMonitoringDiagnostics('grantCitations')(request, mockResponse)
+      ).rejects.toThrow(error);
+
+      expect(mockResponse.destroy).toHaveBeenCalledWith(error);
+    });
   });
 });
