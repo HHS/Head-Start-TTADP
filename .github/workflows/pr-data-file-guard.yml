@@ -3,6 +3,10 @@ name: PR Data File Guard
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+  # The merge queue builds a temporary commit and waits for every required check on it.
+  # Without this trigger a required data_file_guard never reports there, and the queue times out.
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
@@ -24,5 +28,7 @@ jobs:
 
       - name: Block HSES data files and staff emails in data files
         env:
-          BASE_REF: origin/${{ github.base_ref }}
+          # Pull request: compare against the target branch. Merge queue: github.base_ref is empty,
+          # so compare against the commit the queue built on.
+          BASE_REF: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || format('origin/{0}', github.base_ref) }}
         run: node ./tools/validate-data-file-guard.js
