@@ -536,6 +536,7 @@ export async function getReports({
   return CollabReport.findAndCountAll({
     attributes: [
       'id',
+      'userId',
       'name',
       'startDate',
       'createdAt',

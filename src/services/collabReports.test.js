@@ -734,6 +734,18 @@ describe('Collab Reports Service', () => {
       expect(await fetchIds('asc')).toEqual([first.id, second.id]);
       expect(await fetchIds('desc')).toEqual([second.id, first.id]);
     });
+
+    it('sorts by creator with a finite limit', async () => {
+      const { rows } = await getReports({
+        'id.in': [first.id, second.id],
+        status: [REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED],
+        limit: '1',
+        sortBy: 'Creator',
+        sortDir: 'asc',
+      });
+
+      expect(rows.map(({ id }) => id)).toEqual([first.id]);
+    });
   });
 
   describe('createOrUpdateReport with steps, dataUsed, and statesInvolved', () => {
