@@ -1,16 +1,22 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { NOTIFICATION_TYPES } from '../constants';
+import { logger } from '../logger';
 import db, {
   ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
+  Grant,
   Notification,
   NotificationUserState,
+  Program,
+  Recipient,
   sequelize,
   User,
 } from '../models';
 import { syncApprovers, upsertApprover } from './activityReportApprovers';
 import { activityReportAndRecipientsById } from './activityReports';
+import * as notificationService from './notifications';
+import * as activityReportNotifications from './notifications/activityReport';
 
 const mockUser = {
   id: 11184161,
@@ -460,13 +466,115 @@ describe('activityReportApprovers services', () => {
 
       // Removing the pending approver leaves only the already-approved approver, which
       // completes the report's approval as a side effect of the destroy.
-      await syncApprovers(report.id, [mockManager.id]);
+      const notifyProgramSpecialists = jest
+        .spyOn(activityReportNotifications, 'notifyProgramSpecialistsOfApprovedReport')
+        .mockResolvedValue();
+      try {
+        await syncApprovers(report.id, [mockManager.id]);
+        // Assert before mockRestore(), which clears the spy's recorded calls.
+        expect(notifyProgramSpecialists).toHaveBeenCalledWith(report.id);
+      } finally {
+        notifyProgramSpecialists.mockRestore();
+      }
 
       const [updatedReport] = await activityReportAndRecipientsById(report.id);
       expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       const updatedUserState = await NotificationUserState.findByPk(userState.id);
       expect(updatedUserState.archivedAt).not.toBeNull();
+    });
+
+    it('keeps approval committed when specialist notification work fails', async () => {
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: mockManager.id,
+      });
+      const notify = jest
+        .spyOn(activityReportNotifications, 'notifyProgramSpecialistsOfApprovedReport')
+        .mockRejectedValue(new Error('notification failed'));
+      const logError = jest.spyOn(logger, 'error').mockImplementation();
+
+      try {
+        await upsertApprover({
+          activityReportId: report.id,
+          userId: mockManager.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [updatedReport] = await activityReportAndRecipientsById(report.id);
+        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+        expect(notify).toHaveBeenCalledWith(report.id);
+        expect(logError).toHaveBeenCalledWith(
+          'Failed to notify program specialists of approved activity report',
+          expect.objectContaining({ activityReportId: report.id })
+        );
+      } finally {
+        notify.mockRestore();
+        logError.mockRestore();
+      }
+    });
+
+    it('uses computed grant recipient names when notifying program specialists', async () => {
+      const uniqueId = Math.floor(Date.now() / 1000);
+      const specialistEmail = `specialist-${uniqueId}@example.com`;
+      const specialist = await User.create({
+        id: uniqueId + 2,
+        homeRegionId: 1,
+        hsesUsername: `specialist-${uniqueId}`,
+        hsesUserId: `specialist-${uniqueId}`,
+        email: specialistEmail,
+        lastLogin: new Date(),
+      });
+      const recipient = await Recipient.create({
+        id: uniqueId,
+        name: 'Notification Test Recipient',
+        uei: 'NNA5N2KHMGN2',
+      });
+      const grantId = uniqueId;
+      const grant = await Grant.create({
+        id: grantId,
+        number: `TST${uniqueId}`,
+        regionId: 1,
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
+        recipientId: recipient.id,
+        programSpecialistEmail: specialistEmail,
+      });
+      await Program.create({
+        id: grantId + 1,
+        grantId: grant.id,
+        programType: 'HS',
+      });
+      const report = await ActivityReport.create({ ...submittedReport });
+      await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id });
+      const createNotification = jest
+        .spyOn(notificationService, 'createNotification')
+        .mockResolvedValue(null);
+
+      try {
+        await activityReportNotifications.notifyProgramSpecialistsOfApprovedReport(report.id);
+
+        expect(createNotification).toHaveBeenCalledWith(
+          specialist.id,
+          report.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              recipientName: `Notification Test Recipient - TST${uniqueId} - HS`,
+            }),
+          })
+        );
+      } finally {
+        createNotification.mockRestore();
+        await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
+        await ActivityReport.destroy({ where: { id: report.id } });
+        await Program.destroy({ where: { id: grantId + 1 } });
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
+        await User.destroy({ where: { id: specialist.id } });
+      }
     });
 
     it('leaves ACTIVITY_REPORT_APPROVED notifications untouched on approval', async () => {

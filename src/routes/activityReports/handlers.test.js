@@ -409,6 +409,46 @@ describe('Activity Report handlers', () => {
         archiveNotificationsByEntityAndType.mock.invocationCallOrder[archiveCall]
       ).toBeLessThan(createNotification.mock.invocationCallOrder[approvalCall]);
     });
+    it('sends the program specialist email when the report is fully approved', async () => {
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: { id: 777 },
+          activityReportCollaborators: [],
+          approvers: [{ user: { id: 1 }, status: APPROVER_STATUSES.APPROVED }],
+          id: 999999,
+          toJSON: () => ({ id: 999999, displayId: 'R01-AR-999999' }),
+        },
+        [{ name: 'Recipient A' }],
+      ]);
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+      upsertApprover.mockResolvedValue({ id: 1, userId: 1, user: { name: 'Approver Name' } });
+      jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
+      jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
+      const psEmail = jest
+        .spyOn(mailer, 'programSpecialistRecipientReportApprovedNotification')
+        .mockImplementation();
+      const query = jest.spyOn(db.sequelize, 'query').mockResolvedValue([{ id: 55 }]);
+      userSettingOverridesById.mockResolvedValue(null);
+
+      try {
+        await reviewReport(approvedReportRequest, mockResponse);
+      } finally {
+        query.mockRestore();
+      }
+
+      expect(psEmail).toHaveBeenCalled();
+      expect(
+        createNotification.mock.calls.some(
+          ([, , type]) => type === NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+        )
+      ).toBe(false);
+    });
+
     it('creates an in-app approved notification for collaborators, excluding the acting approver', async () => {
       // currentUserId is mocked to always resolve to 1, so that is the acting approver's id
       const mockApproverRecord = {
@@ -3105,6 +3145,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canUnlock: () => true,
       }));
+      activityReportAndRecipientsById.mockResolvedValueOnce([report]);
       await unlockReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
     });
