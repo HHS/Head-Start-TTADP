@@ -199,6 +199,120 @@ There are a few different things you will need to do in order to add a new secre
 - If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
   - Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
 
+### Rotating a database credential
+
+Use this runbook when a cloud.gov database credential (an `aws-rds` service instance such as `ttahub-prod` or
+`ttahub-process`) may have been exposed, or on a regular rotation schedule. Rotating a credential the production
+application is bound to causes downtime, so plan a window and put the app into [maintenance mode](#using-maintenance-mode).
+
+> **Never print a credential.** Don't run `cf env`, `env`, `printenv` or `echo $VCAP_SERVICES`, and don't paste connection
+> strings, passwords or `cf service-key` output into chat, tickets, docs or CI logs. CircleCI job logs for this project are
+> publicly readable. To compare credentials, use a hash (below). Clear your terminal scrollback when you finish.
+
+1. **Know what you are rotating.** `ttahub-prod` is the production database used by `tta-smarthub-prod`. `ttahub-process`
+   is the scratch database that the nightly `restore_db_cron` job uses to anonymize production data; it is bound to
+   `tta-automation` only while a job runs. Target the right space first: `cf target -s <space>`.
+
+2. **Check what is bound to the instance and what keys exist**, because anything else using the credential will not pick up
+   the new one automatically:
+
+   ```bash
+   cf service <instance>
+   cf service-keys <instance>
+   cf curl "/v3/service_credential_bindings?service_instance_names=<instance>"
+   ```
+
+   Also check whether the instance is shared into other spaces (shown by `cf service`). Do not rotate while a job that
+   uses the instance is running (the nightly `restore_db_cron` job starts at 04:00 UTC). The automation jobs share a
+   CircleCI serial group (`tta-automation-lock`).
+
+3. **Production only: schedule a window and turn on maintenance mode.**
+
+   ```bash
+   ./bin/maintenance -m on -e prod
+   ```
+
+4. **Fingerprint the current credential without printing it.** From a shell in the app (`cf ssh <app> -t -c "/tmp/lifecycle/shell"`),
+   this prints only the first 12 characters of a SHA-256 hash:
+
+   ```bash
+   node -e 'const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"][0].credentials;console.log(require("crypto").createHash("sha256").update(c.password).digest("hex").slice(0,12))'
+   ```
+
+   For an instance with no bound app, use `cf service-key <instance> <key-name> | sha256sum` instead; the pipe keeps the
+   password off your screen. Compare the hash after the rotation: a different hash means the credential changed.
+
+5. **Rotate the credential**, then wait for the update to finish before doing anything else:
+
+   ```bash
+   cf update-service <instance> -c '{"rotate_credentials": true}'
+   cf service <instance>   # repeat until the last operation shows "update succeeded"
+   ```
+
+   `cf curl /v3/jobs/<job-guid>` shows the state of an asynchronous operation (`PROCESSING`, `COMPLETE`, `FAILED`) and the
+   error text if one failed.
+
+6. **Rebind the app (apps bound to the instance only).** Unbinding and binding right after the update can fail with
+   `instance not available yet. Please wait and try again`. That is the broker still settling, so wait a few minutes and
+   retry. Don't force or delete anything to get past it.
+
+   ```bash
+   cf unbind-service <app> <instance>
+   cf bind-service <app> <instance>
+   ```
+
+7. **Restage so the app picks up the new credential.** Don't restage before the binding exists, because the new instances
+   would start without database credentials.
+
+   ```bash
+   cf restage <app> --strategy rolling
+   ```
+
+8. **Rotate or recreate service keys.** Delete any key that predates the rotation, and recreate keys that are still needed.
+   (The automation jobs create their own temporary keys at run time.)
+
+   ```bash
+   cf service-keys <instance>
+   cf delete-service-key <instance> <service-key-name>
+   cf create-service-key <instance> <service-key-name>
+   ```
+
+9. **Verify.**
+   - The app is healthy: `cf app <app>` and the site loads; `cf logs <app> --recent` shows no database connection errors.
+   - The fingerprint from step 4 changed.
+   - The old credential no longer works. Open a tunnel and try the old credentials. Instance hosts are on a private network,
+     so you can't connect to them directly from outside cloud.gov.
+
+     ```bash
+     # terminal 1: open the tunnel through a running app in the space and leave it running.
+     # RDS_HOST is the instance's hostname (from the service's credentials); set it without echoing the rest
+     cf ssh -N -L 5433:$RDS_HOST:5432 <running-app>
+     ```
+
+     ```bash
+     # terminal 2: enter the OLD values at the prompts, never in the command itself
+     read "DBNAME?Database name: "
+     read "DBUSER?Old username: "
+     read -s "PGPASSWORD?Old password: "; echo
+     export PGPASSWORD
+     psql "host=localhost port=5433 dbname=$DBNAME user=$DBUSER sslmode=require connect_timeout=5" -c "select 1"
+     unset PGPASSWORD DBNAME DBUSER
+     ```
+
+     `password authentication failed` (or `role ... does not exist`) means the old credential is revoked. If it
+     returns a row, the old credential still works. A timeout or `connection refused` is inconclusive.
+     The `read` prompts above are zsh syntax. In bash use `read -p "Database name: " DBNAME`,
+     `read -p "Old username: " DBUSER` and `read -s -p "Old password: " PGPASSWORD`.
+
+10. **Production only: turn maintenance mode off.**
+
+    ```bash
+    ./bin/maintenance -m off -e prod
+    ```
+
+11. **Record it.** Note the date, the instance, and that the old credential was rejected, in the ticket and the incident
+    report. Record conclusions only: never the credential, connection string, username or hostname.
+
 ## Interacting with a deployed application or database
 
 Read [TTAHUB-System-Operations](https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations) for information on how production may be accessed.
