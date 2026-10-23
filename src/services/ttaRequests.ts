@@ -6,7 +6,7 @@ import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
-import { activeUsersWithPermissionAndRoles } from './users';
+import { usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
@@ -236,11 +236,10 @@ async function checkRecipientAndGrants(
  * The active users who can review a request in the region, ordered by name
  */
 export async function ttaRequestReviewers(regionId: number) {
-  return activeUsersWithPermissionAndRoles(
-    regionId,
-    SCOPES.READ_WRITE_REPORTS,
-    TTA_REQUEST_REVIEWER_ROLES
-  );
+  const reviewers = await usersByRoles(TTA_REQUEST_REVIEWER_ROLES, regionId, {
+    scopeId: SCOPES.READ_WRITE_REPORTS,
+  });
+  return reviewers.map(({ id, name }) => ({ id, name }));
 }
 
 /**
