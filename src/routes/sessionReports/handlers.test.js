@@ -1,3 +1,4 @@
+import { trSessionSubmittedForApproval } from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
@@ -27,6 +28,9 @@ import {
 } from './handlers';
 import { checkUpdateSessionBody } from './middleware';
 
+jest.mock('../../lib/mailer', () => ({
+  trSessionSubmittedForApproval: jest.fn(),
+}));
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
 jest.mock('../../policies/recipient');
@@ -423,6 +427,44 @@ describe('session report handlers', () => {
       updateSession.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('notifies the approver when the session becomes submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const submittedSession = { ...mockSession, submitted: true };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue(submittedSession);
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, submittedSession);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('does not notify the approver when the session was already submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: true });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: true });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
+    it('does not notify the approver when the session is not submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: false });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
     });
 
     it('allows update for event role only', async () => {
