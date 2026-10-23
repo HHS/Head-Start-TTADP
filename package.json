@@ -130,7 +130,7 @@
     "@babel/runtime": "^7.29.10",
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^10.6.0",
-    "@ttahub/common": "2.4.15",
+    "@ttahub/common": "2.4.19",
     "adm-zip": "^0.6.1",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",

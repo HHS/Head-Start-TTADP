@@ -441,7 +441,7 @@ export async function getCSVReports({
         ['calculatedStatus', 'status'],
         [
           sequelize.literal(`(
-            SELECT array_agg("reasonId")
+            SELECT array_agg("reasonId" ORDER BY "id" ASC)
             FROM "CollabReportReasons"
             WHERE "CollabReportReasons"."collabReportId" = "CollabReport"."id"
             AND "CollabReportReasons"."deletedAt" IS NULL
@@ -449,7 +449,7 @@ export async function getCSVReports({
           'reportReasons',
         ],
       ],
-      exclude: ['calculatedStatus', 'submissionStatus', 'lastUpdatedById'],
+      exclude: ['lastUpdatedById'],
     },
     where: {
       [Op.and]: [standardScopes, customScopes],
@@ -482,7 +482,7 @@ export async function getCSVReports({
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: ['id', 'status', 'note', 'updatedAt'],
         as: 'approvers',
         required: false,
         include: [
@@ -497,6 +497,30 @@ export async function getCSVReports({
                 attributes: ['name'],
               },
             ],
+          },
+        ],
+      },
+      {
+        model: CollabReportActivityState,
+        as: 'activityStates',
+        attributes: ['activityStateCode'],
+        separate: true,
+      },
+      {
+        model: CollabReportDataUsed,
+        as: 'dataUsed',
+        attributes: ['collabReportDatum'],
+        separate: true,
+      },
+      {
+        model: CollabReportGoal,
+        as: 'reportGoals',
+        separate: true,
+        include: [
+          {
+            model: GoalTemplate,
+            as: 'goalTemplate',
+            attributes: ['id', 'standard'],
           },
         ],
       },
