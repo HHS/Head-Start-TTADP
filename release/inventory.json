@@ -433,7 +433,7 @@
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "deployment_config/prod_vars.yml",
-        "note": "app_url in prod_vars.yml records tta-smarthub-prod.app.cloud.gov, which is not the mapped route. See disposition INV-2026-0004."
+        "note": "app_url in prod_vars.yml records this mapped route. See disposition INV-2026-0004."
       }
     },
     {
@@ -589,7 +589,7 @@
         "type": "repositoryFile",
         "value": "deployment_config/prod_vars.yml"
       },
-      "sha256": "a18e5d994ddcc5ca987c7d14f20e9764a40f6524be6017a4ad55ad7b890b5746",
+      "sha256": "cc00174839bd4046e4af2351e0fc993359f4d3adde7aad17fac9bf46c7078240",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
