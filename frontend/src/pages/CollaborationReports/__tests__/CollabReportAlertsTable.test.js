@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
@@ -218,6 +219,24 @@ describe('Delete Functionality', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it.each([
+    [/report id\. activate to sort/i, 'Report_ID'],
+    [/activity name\. activate to sort/i, 'Activity_name'],
+    [/date started\. activate to sort/i, 'Date_started'],
+    [/creator\. activate to sort/i, 'Creator'],
+    [/created date\. activate to sort/i, 'Created_date'],
+    [/collaborators\. activate to sort/i, 'Collaborators'],
+    [/approvers\. activate to sort/i, 'Approvers'],
+    [/status\. activate to sort/i, 'Status'],
+  ])('requests a sort by the backend key when %s is clicked', (label, sortKey) => {
+    const requestSort = jest.fn();
+    renderReportTable({ data: { rows: [mockReport], count: 1 }, requestSort });
+
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+    expect(requestSort).toHaveBeenCalledWith(sortKey);
   });
 
   it('shows delete action for report creator', async () => {

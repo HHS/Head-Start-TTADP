@@ -31,6 +31,30 @@ export interface UseWidgetSorting {
   setSortConfig: Dispatch<SetStateAction<WidgetSortConfig>>;
 }
 
+/**
+ * Canonical sort key for a column: whitespace (including the non-breaking space some
+ * headings use) becomes "_". `HorizontalTableWidget` sends keys in this form, and the
+ * comparisons here run both sides through it so columns declared either way still match.
+ */
+export const toSortKey = (value: string | number | null | undefined): string =>
+  String(value ?? '').replace(/\s+/g, '_');
+
+const sortKeysMatch = (
+  a: string | number | null | undefined,
+  b: string | number | null | undefined
+) => toSortKey(a) === toSortKey(b);
+
+const findCell = (row: WidgetSortableRow, sortBy: string) =>
+  row.data?.find((tp) => sortKeysMatch(tp.sortKey || tp.title, sortBy));
+
+const getRowValue = (row: WidgetSortableRow, sortBy: string) => {
+  if (sortBy in row) {
+    return row[sortBy];
+  }
+  const key = Object.keys(row).find((k) => sortKeysMatch(k, sortBy));
+  return key === undefined ? undefined : row[key];
+};
+
 export const parseValue = <T>(value: T): T | number => {
   const noCommasValue = String(value).replaceAll(',', '');
   const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
@@ -62,46 +86,40 @@ export default function useWidgetSorting<R extends WidgetSortableRow>(
       if (passedDirection) {
         // If the direction is passed, use it.
         direction = passedDirection;
-      } else if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
+      } else if (
+        sortConfig &&
+        sortKeysMatch(sortConfig.sortBy, sortBy) &&
+        sortConfig.direction === 'asc'
+      ) {
         direction = 'desc';
       }
 
       // make a lookup object with our columns and their types.
       const sorts: Record<string, 'string' | 'date' | 'key'> = {
-        ...stringColumns.reduce((acc, sc) => ({ ...acc, [sc]: 'string' }), {}),
-        ...dateColumns.reduce((acc, dc) => ({ ...acc, [dc]: 'date' }), {}),
-        ...keyColumns.reduce((acc, kc) => ({ ...acc, [kc]: 'key' }), {}),
+        ...stringColumns.reduce((acc, sc) => ({ ...acc, [toSortKey(sc)]: 'string' }), {}),
+        ...dateColumns.reduce((acc, dc) => ({ ...acc, [toSortKey(dc)]: 'date' }), {}),
+        ...keyColumns.reduce((acc, kc) => ({ ...acc, [toSortKey(kc)]: 'key' }), {}),
       };
 
       // default is "value", otherwise use the key from the lookup
-      const sortingBy = sorts[sortBy] || 'value';
+      const sortingBy = sorts[toSortKey(sortBy)] || 'value';
       let valuesToSort: (R & { sortBy: string | number | Date })[];
       switch (sortingBy) {
         case 'string':
-          valuesToSort = dataToUse.map((t) => {
-            const sortKey = sortBy;
-            return {
-              ...t,
-              sortBy: !t.data
-                ? t[sortKey].toString().toLowerCase() // If we don't have data, use the value.
-                : // eslint-disable-next-line max-len
-                  t.data
-                    .find((tp) => (tp.sortKey || tp.title) === sortKey)
-                    .value.toString()
-                    .toLowerCase(),
-            };
-          });
+          valuesToSort = dataToUse.map((t) => ({
+            ...t,
+            sortBy: !t.data
+              ? getRowValue(t, sortBy).toString().toLowerCase() // If we don't have data, use the value.
+              : findCell(t, sortBy).value.toString().toLowerCase(),
+          }));
           break;
         case 'date':
-          valuesToSort = dataToUse.map((t) => {
-            const sortKey = sortBy;
-            return {
-              ...t,
-              sortBy: !t.data
-                ? new Date(t[sortBy]) // If we don't have data, use the value.
-                : new Date((t.data.find((tp) => (tp.sortKey || tp.title) === sortKey) || {}).value),
-            };
-          });
+          valuesToSort = dataToUse.map((t) => ({
+            ...t,
+            sortBy: !t.data
+              ? new Date(getRowValue(t, sortBy)) // If we don't have data, use the value.
+              : new Date((findCell(t, sortBy) || ({} as WidgetSortableCell)).value),
+          }));
           break;
         case 'key':
           valuesToSort = dataToUse.map((t) => ({
@@ -110,17 +128,12 @@ export default function useWidgetSorting<R extends WidgetSortableRow>(
           }));
           break;
         default:
-          valuesToSort = dataToUse.map((t) => {
-            const sortKey = sortBy;
-            return {
-              ...t,
-              sortBy: !t.data
-                ? parseValue(t[sortKey]) // If we don't have data, use the value.
-                : parseValue(
-                    (t.data.find((tp) => (tp.sortKey || tp.title) === sortKey) || {}).value
-                  ),
-            };
-          });
+          valuesToSort = dataToUse.map((t) => ({
+            ...t,
+            sortBy: !t.data
+              ? parseValue(getRowValue(t, sortBy)) // If we don't have data, use the value.
+              : parseValue((findCell(t, sortBy) || ({} as WidgetSortableCell)).value),
+          }));
           break;
       }
 

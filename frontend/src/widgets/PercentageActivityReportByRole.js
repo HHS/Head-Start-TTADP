@@ -47,9 +47,9 @@ export default function PercentageActivityReportByRole({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    ['Specialist_role'], // stringColumns
+    EMPTY_ARRAY, // stringColumns
     EMPTY_ARRAY, // dateColumns
-    EMPTY_ARRAY // keyColumns
+    ['Specialist_role'] // keyColumns
   );
 
   const { exportRows } = useWidgetExport(
@@ -99,6 +99,7 @@ export default function PercentageActivityReportByRole({ data }) {
       tableData.push({
         heading: dataset.role_name,
         id: `${dataset.role_name}-${index + 1}`,
+        sortKey: dataset.role_name,
         data: [
           {
             value: dataset.role_count,

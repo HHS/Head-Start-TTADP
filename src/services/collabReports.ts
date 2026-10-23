@@ -41,7 +41,9 @@ export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') =>
     Date_started: 'startDate',
     Created_date: 'createdAt',
     Last_saved: 'updatedAt',
-    Creator: sequelize.literal('"_1"'),
+    Creator: sequelize.literal(
+      '(SELECT "Users"."name" FROM "Users" WHERE "Users"."id" = "CollabReport"."userId")'
+    ),
     Collaborators: sequelize.literal(
       '(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'
     ),
@@ -534,6 +536,7 @@ export async function getReports({
   return CollabReport.findAndCountAll({
     attributes: [
       'id',
+      'userId',
       'name',
       'startDate',
       'createdAt',
