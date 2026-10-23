@@ -20,7 +20,7 @@ describe('processDataCLI', () => {
     expect(processDataCalls).toBe(1);
   });
 
-  it('logs only the name, message and code of a database error', () => {
+  it('logs only the error name and code, with a fixed message', () => {
     const error = new Error('syntax error at or near "Keefe"');
     error.name = 'SequelizeDatabaseError';
     error.sql = "SELECT 'secret-sql-data'";
@@ -29,16 +29,40 @@ describe('processDataCLI', () => {
     logProcessDataError(error);
 
     expect(auditLogger.error).toHaveBeenCalledTimes(1);
-    const [message] = auditLogger.error.mock.calls[0];
-    expect(message).toBe(
-      'processData failed: SequelizeDatabaseError: syntax error at or near "Keefe" (code 42601)'
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'processData failed: SequelizeDatabaseError (code 42601)'
     );
-    expect(message).not.toContain('secret-sql-data');
   });
 
-  it('handles errors without a code or name', () => {
-    logProcessDataError('boom');
+  it('does not log sensitive input echoed in the error message', () => {
+    const error = new Error('invalid input syntax for type integer: "private.person@example.test"');
+    error.name = 'SequelizeDatabaseError';
+    error.parent = {
+      code: '22P02',
+      message: 'invalid input syntax for type integer: "private.person@example.test"',
+    };
 
-    expect(auditLogger.error).toHaveBeenCalledWith('processData failed: Error: boom');
+    logProcessDataError(error);
+
+    const [message] = auditLogger.error.mock.calls[0];
+    expect(message).toBe('processData failed: SequelizeDatabaseError (code 22P02)');
+    expect(message).not.toContain('private.person');
+    expect(message).not.toContain('invalid input syntax');
+  });
+
+  it('falls back to a generic name and omits an unsafe name or code', () => {
+    const error = new Error('boom');
+    error.name = 'Bad Name: someone@example.test';
+    error.code = 'not a code: secret value';
+
+    logProcessDataError(error);
+
+    expect(auditLogger.error).toHaveBeenCalledWith('processData failed: Error');
+  });
+
+  it('handles non-Error values', () => {
+    logProcessDataError('boom with secret');
+
+    expect(auditLogger.error).toHaveBeenCalledWith('processData failed: Error');
   });
 });
