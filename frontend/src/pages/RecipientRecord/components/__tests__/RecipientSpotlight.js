@@ -32,6 +32,22 @@ const mockSpotlightData = {
 
 // Mock data with all indicators set to false
 const noIndicatorsMockData = {
+<<<<<<< HEAD
+  recipients: [{
+    recipientId: 1,
+    regionId: 1,
+    recipientName: 'Recipient A',
+    grantIds: [1, 2, 3],
+    childIncidents: false,
+    deficiency: false,
+    newRecipients: false,
+    newStaff: false,
+    noTTA: false,
+    DRS: false,
+    FEI: false,
+    underenrolled: false,
+  }],
+=======
   recipients: [
     {
       recipientId: 1,
@@ -48,6 +64,7 @@ const noIndicatorsMockData = {
       underenrolled: false,
     },
   ],
+>>>>>>> main
   overview: {
     numRecipients: '0',
     totalRecipients: '1',
@@ -106,9 +123,13 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
+<<<<<<< HEAD
+      expect(screen.getByText(/Recipient grant may need prioritized attention/i)).toBeInTheDocument();
+=======
       expect(
         screen.getByText(/Recipient grant may need prioritized attention/i)
       ).toBeInTheDocument();
+>>>>>>> main
       expect(screen.getByText(/3 of 7 priority indicators/i)).toBeInTheDocument();
     });
   });
@@ -143,10 +164,14 @@ describe('RecipientSpotlight', () => {
       expect(badIndicators).toHaveLength(3);
 
       // Find all indicators with good-indicator class (false)
+<<<<<<< HEAD
+      const goodIndicators = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
+=======
       // DRS is hidden; the 4 falsy indicators are deficiency, FEI, newStaff, and underenrolled
       const goodIndicators = document.querySelectorAll(
         '.ttahub-recipient-spotlight-content-cell-good-indicator'
       );
+>>>>>>> main
       expect(goodIndicators).toHaveLength(4);
     });
 
@@ -154,6 +179,8 @@ describe('RecipientSpotlight', () => {
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipients')).toBeInTheDocument();
     expect(screen.getByText('No TTA')).toBeInTheDocument();
+    expect(screen.getByText('FEI')).toBeInTheDocument();
+    expect(screen.getByText('Underenrolled')).toBeInTheDocument();
   });
 
   it('handles API error gracefully with NoResultsFound', async () => {
@@ -223,6 +250,13 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
+<<<<<<< HEAD
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant is currently in the Full Enrollment Initiative \(FEI\) including 6-month evaluation/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant reports below 97% enrollment but has not reached 4 consecutive months of underenrollment/i)).toBeInTheDocument();
+=======
       expect(
         screen.getByText(/Recipient grant has experienced at least one child incident/i)
       ).toBeInTheDocument();
@@ -232,6 +266,7 @@ describe('RecipientSpotlight', () => {
       expect(
         screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)
       ).toBeInTheDocument();
+>>>>>>> main
     });
   });
 
@@ -243,6 +278,13 @@ describe('RecipientSpotlight', () => {
     renderRecipientSpotlight();
 
     await waitFor(() => {
+<<<<<<< HEAD
+      expect(screen.getByText(/Recipient grant has experienced more than one child incident/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant has changed the name of the director or fiscal officer/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient grant does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
+=======
       expect(
         screen.getByText(/Recipient grant has experienced at least one child incident/i)
       ).toBeInTheDocument();
@@ -259,6 +301,7 @@ describe('RecipientSpotlight', () => {
       expect(
         screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)
       ).toBeInTheDocument();
+>>>>>>> main
     });
   });
 
@@ -336,8 +379,13 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       // In our mockSpotlightData, we have:
+<<<<<<< HEAD
+      // childIncidents: true, deficiency: false, newRecipients: true,
+      // newStaff: false, noTTA: true, FEI: false, underenrolled: false
+=======
       // childIncidents: true, deficiency: false, FEI: false, newRecipients: true,
       // newStaff: false, noTTA: true, underenrolled: false
+>>>>>>> main
 
       // Check that cells with true values get the bad-indicator class
       const trueIndicatorCells = document.querySelectorAll(
@@ -346,10 +394,14 @@ describe('RecipientSpotlight', () => {
       expect(trueIndicatorCells).toHaveLength(3);
 
       // Check that cells with false values get the good-indicator class
+<<<<<<< HEAD
+      const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
+=======
       // (deficiency, FEI, newStaff, underenrolled)
       const falseIndicatorCells = document.querySelectorAll(
         '.ttahub-recipient-spotlight-content-cell-good-indicator'
       );
+>>>>>>> main
       expect(falseIndicatorCells).toHaveLength(4);
     });
   });

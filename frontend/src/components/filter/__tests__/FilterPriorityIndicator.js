@@ -28,7 +28,11 @@ describe('FilterPriorityIndicator', () => {
     const select = await findByText(/select priority indicator to filter by/i);
     await selectEvent.openMenu(select);
 
+<<<<<<< HEAD
+    // Verify visible options are present (DRS remains filtered out)
+=======
     // Verify options are present (only DRS is filtered out)
+>>>>>>> main
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('Deficiency')).toBeInTheDocument();
     expect(screen.getByText('FEI')).toBeInTheDocument();
@@ -37,7 +41,11 @@ describe('FilterPriorityIndicator', () => {
     expect(screen.getByText('No TTA')).toBeInTheDocument();
     expect(screen.getByText('Underenrolled')).toBeInTheDocument();
 
+<<<<<<< HEAD
+    // Verify DRS is not present
+=======
     // Verify DRS is not present (still hidden)
+>>>>>>> main
     expect(screen.queryByText('DRS')).not.toBeInTheDocument();
   });
 

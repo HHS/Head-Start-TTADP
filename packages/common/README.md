@@ -23,6 +23,10 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+<<<<<<< HEAD
+# 2.2.22
+Add additional indicators
+=======
 # 2.4.0
 Added new FEI statuses 
 
@@ -31,6 +35,7 @@ Include shared notification TypeScript types in `@ttahub/common` to replace `@tt
 
 # 2.2.26
 Add additional trace IDs
+>>>>>>> main
 
 # 2.2.21
 Add additional trace IDs
