@@ -1,6 +1,7 @@
 import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import cls from 'cls-hooked';
 import moment from 'moment';
-import { cast, type Model, Op, Sequelize, type Transaction } from 'sequelize';
+import { cast, type Model, Op, type Transaction } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
@@ -425,9 +426,9 @@ export async function updateSession(id: number, request) {
     // enough: a failed query aborts the request's transaction (transactionWrapper),
     // so every later query and the commit fail too. Running the notification in a
     // savepoint lets it roll back on its own.
-    const parentTransaction = (
-      Sequelize as unknown as { _cls?: { get: (key: string) => Transaction | undefined } }
-    )._cls?.get('transaction');
+    const parentTransaction: Transaction | undefined = cls
+      .getNamespace('transaction')
+      ?.get('transaction');
     try {
       // we need to run this in a transaction like so. This creates a SAVEPOINT
       // otherwise, a failed notification would abort the entire transaction.
