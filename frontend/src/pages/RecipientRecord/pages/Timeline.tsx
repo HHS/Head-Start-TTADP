@@ -116,9 +116,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                 query: ['Monitoring'],
               },
             ]
-          : nextMode === 'goals'
-            ? otherFilters
-            : supportedFilters
+          : otherFilters
       );
       return;
     }
@@ -136,6 +134,14 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
         .filter((group) => group.events.length > 0),
     [categories, events]
   );
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => new Set());
+  const allCategoriesCollapsed =
+    mode !== 'chronological' &&
+    groupedEvents.length > 0 &&
+    groupedEvents.every(({ category }) => collapsedCategories.has(category.label));
+  // A notification already queued by a disconnected observer must honor the latest state.
+  const automaticLoadingPaused = useRef(false);
+  automaticLoadingPaused.current = allCategoriesCollapsed;
   const sentinelRef = useRef<HTMLDivElement>(null);
   const supportsIntersectionObserver = typeof window.IntersectionObserver === 'function';
 
@@ -148,6 +154,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
       loading ||
       error ||
       !hasMore ||
+      allCategoriesCollapsed ||
       !sentinelRef.current ||
       !supportsIntersectionObserver
     ) {
@@ -155,13 +162,23 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
     }
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadMore();
+        if (!automaticLoadingPaused.current && entries.some((entry) => entry.isIntersecting)) {
+          loadMore();
+        }
       },
       { rootMargin: '200px' }
     );
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [restoring, loading, error, hasMore, loadMore, supportsIntersectionObserver]);
+  }, [
+    restoring,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    supportsIntersectionObserver,
+    allCategoriesCollapsed,
+  ]);
 
   return (
     <>
@@ -279,7 +296,19 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                 {mode !== 'chronological'
                   ? groupedEvents.map(({ category, events: categoryEvents }) => (
                       <li key={category.label}>
-                        <TimelineCategory category={category} events={categoryEvents} />
+                        <TimelineCategory
+                          category={category}
+                          events={categoryEvents}
+                          expanded={!collapsedCategories.has(category.label)}
+                          onExpandedChange={(expanded) => {
+                            setCollapsedCategories((current) => {
+                              const next = new Set(current);
+                              if (expanded) next.delete(category.label);
+                              else next.add(category.label);
+                              return next;
+                            });
+                          }}
+                        />
                       </li>
                     ))
                   : events.map((event, index) => (

@@ -11,10 +11,18 @@ import TimelineEvent from '../TimelineEvent';
 interface Props {
   category: RecipientTimelineCategory;
   events: RecipientTimelineEvent[];
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
-export default function TimelineCategory({ category, events }: Props): React.ReactElement {
-  const [expanded, setExpanded] = useState(true);
+export default function TimelineCategory({
+  category,
+  events,
+  expanded: controlledExpanded,
+  onExpandedChange,
+}: Props): React.ReactElement {
+  const [localExpanded, setExpanded] = useState(true);
+  const expanded = controlledExpanded ?? localExpanded;
   const [id] = useState(() => uniqueId('timeline-category-'));
   return (
     <div className="usa-accordion usa-accordion--bordered margin-bottom-3">
@@ -22,7 +30,10 @@ export default function TimelineCategory({ category, events }: Props): React.Rea
         id={id}
         headingSize={3}
         expanded={expanded}
-        handleToggle={() => setExpanded((value) => !value)}
+        handleToggle={() => {
+          setExpanded(!expanded);
+          onExpandedChange?.(!expanded);
+        }}
         title={
           <span className="display-inline-flex flex-wrap flex-align-center flex-gap-2">
             <span>{category.label}</span>
