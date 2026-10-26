@@ -1,5 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import { FILE_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
 import {
   ActivityReport,
   ActivityReportFile,
@@ -10,8 +11,9 @@ import {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
+import addToScanQueue from './scanQueue';
 
-const { UPLOADING } = FILE_STATUSES;
+const { UPLOADING, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
 const deleteFile = async (id) =>
   File.destroy({
     where: { id },
@@ -268,6 +270,35 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
   });
 };
 
+/**
+ * Marks uploaded files as queued for virus scanning. Call this inside the transaction that
+ * created the files, before queueFilesForScan, so the scan worker's later status updates
+ * can't be overwritten by this one.
+ * @param {{ id: number }[]} files
+ */
+const markFilesQueuedForScan = async (files) =>
+  Promise.all(files.map((file) => updateStatus(file.id, QUEUED)));
+
+/**
+ * Adds a virus scan job for each file, marking any file that can't be queued as
+ * QUEUEING_FAILED. The scan worker looks files up by key, so only call this once the
+ * transaction that created the File rows has committed.
+ * @param {{ id: number, key: string, originalFileName: string }[]} files
+ */
+const queueFilesForScan = async (files) =>
+  Promise.all(
+    files.map(async (file) => {
+      try {
+        await addToScanQueue({ key: file.key });
+      } catch (err) {
+        auditLogger.error(
+          `SERVICE:FILES:queueFilesForScan Failed to queue ${file.originalFileName}. Error: ${err}`
+        );
+        await updateStatus(file.id, QUEUEING_FAILED);
+      }
+    })
+  );
+
 export {
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
@@ -285,6 +316,8 @@ export {
   getActivityReportFilesById,
   getActivityReportObjectiveFilesById,
   getFileById,
+  markFilesQueuedForScan,
+  queueFilesForScan,
   updateStatus,
   updateStatusByKey,
 };

@@ -259,7 +259,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGINT');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGINT');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGINT');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGINT');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGINT)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGINT): {"some":"details"}'
@@ -274,7 +275,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGTERM');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGTERM');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGTERM');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGTERM');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGTERM)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGTERM): {"some":"details"}'
@@ -289,7 +291,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGUSR1');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGUSR1');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGUSR1');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGUSR1');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGUSR1)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGUSR1): {"some":"details"}'
@@ -304,7 +307,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGUSR2');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGUSR2');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGUSR2');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGUSR2');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGUSR2)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGUSR2): {"some":"details"}'
@@ -319,7 +323,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGQUIT');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGQUIT');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGQUIT');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGQUIT');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGQUIT)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGQUIT): {"some":"details"}'
@@ -334,7 +339,8 @@ describe('processHandler', () => {
 
       await emitProcessEvent('SIGHUP');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Received SIGHUP');
+      expect(auditLogger.info).toHaveBeenCalledWith('Received SIGHUP');
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Received SIGHUP');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGHUP)');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (SIGHUP): {"some":"details"}'
@@ -359,17 +365,12 @@ describe('processHandler', () => {
       );
     });
 
-    it('should handle exit event and log exit code', async () => {
-      closeAllQueues.mockResolvedValueOnce();
-      isConnectionOpen.mockReturnValueOnce(true);
-      sequelize.close.mockResolvedValueOnce();
-      await emitProcessEvent('exit', 0);
+    it('should log the exit code at info without running async cleanup', async () => {
+      await emitProcessEvent('exit', 1);
 
-      expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 0');
-      expect(closeAllQueues).toHaveBeenCalledWith('app termination (exit event) with code 0');
-      expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (exit event) with code 0: {"some":"details"}'
-      );
+      expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 1');
+      expect(auditLogger.error).not.toHaveBeenCalled();
+      expect(closeAllQueues).not.toHaveBeenCalled();
     });
   });
 });
