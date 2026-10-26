@@ -38,6 +38,9 @@ get:
     if URL signing fails, the filename remains without a link. Other TTA staff and next-step
     arrays are not card sections. A View communication log link opens the recipient's log view.
     Goal events use source `goalStatusChange` and the status-change row ID as `sourceId`.
+    When the associated goal is available, details include a `Goal number` entry with text
+    `G-<goalId>`. This is the goal ID, not the status-change sourceId. Grouped timeline views
+    use it to label cycle dividers for Goal added, Goal reopened, and Goal closed events.
     Initial non-draft statuses and transitions out of Draft are Goal added events;
     transitions to Suspended or Closed are Goal suspended or Goal closed events;
     transitions from Suspended or Closed to Not Started or In Progress are Goal reopened events.
@@ -66,7 +69,11 @@ get:
     Curated standard templates qualify without requiring the legacy isRttapa flag, which the
     current standard-goal creation flow leaves unset.
     View constraints combine with user filters before counts and pagination. Grouped responses
-    include categories with distinct current goal statuses, sorted alphabetically. An event
+    include categories sorted alphabetically. Each category's statuses array contains at most
+    one value: the current status of its eligible goal with the latest status change, using
+    performedAt or the history row's createdAt. Goals without history use their creation date;
+    timestamp ties use the higher goal ID. A missing status produces an empty array. Header
+    status is independent of event filters and pagination. An event
     can be displayed under several matching categories but counts once. Event pages retain
     date ordering; clients group the loaded slices by category. Omitted view retains the
     original response shape. Removing a user category filter cannot bypass a view constraint.

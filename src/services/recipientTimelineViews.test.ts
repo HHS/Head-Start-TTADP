@@ -2,10 +2,11 @@ import { Op } from 'sequelize';
 import db from '../models';
 import { getRecipientTimeline, getTimelineGoalCategories } from './recipientTimeline';
 
-const { Goal, sequelize } = db;
+const { Goal, GoalStatusChange, sequelize } = db;
 
 jest.mock('../models', () => ({
   Goal: { findAll: jest.fn() },
+  GoalStatusChange: { unscoped: jest.fn() },
   GoalTemplate: {},
   Grant: { unscoped: () => ({}) },
   sequelize: { query: jest.fn() },
@@ -27,12 +28,68 @@ const goal = (standard: string, status = 'In Progress') => ({ status, goalTempla
 beforeEach(() => {
   jest.clearAllMocks();
   (Goal.findAll as jest.Mock).mockResolvedValue([]);
+  (GoalStatusChange.unscoped as jest.Mock).mockReturnValue({
+    findAll: jest.fn().mockResolvedValue([]),
+  });
   (sequelize.query as jest.Mock).mockResolvedValue([
     { count: 0, source: null, sourceId: null, date: null, eventType: null },
   ]);
 });
 
 describe('timeline views', () => {
+  it.each(['monitoring', 'goals'] as const)(
+    'shows only the latest status in %s, independent of goal edits and event pagination',
+    async (view) => {
+      (Goal.findAll as jest.Mock).mockResolvedValue([
+        {
+          ...goal('Monitoring', 'Closed'),
+          id: 2,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-10-26',
+        },
+        { ...goal('Monitoring'), id: 1, createdAt: '2025-01-01', updatedAt: '2026-06-01' },
+      ]);
+      const findAll = jest.fn().mockResolvedValue([
+        { goalId: 2, lastStatusChangedAt: '2026-02-01' },
+        { goalId: 1, lastStatusChangedAt: '2026-06-01' },
+      ]);
+      (GoalStatusChange.unscoped as jest.Mock).mockReturnValue({ findAll });
+      const result = await getRecipientTimeline({ ...params, view, offset: 25 });
+      expect(result.categories).toEqual([{ label: 'Monitoring', statuses: ['In Progress'] }]);
+      expect(findAll).toHaveBeenCalledTimes(1);
+      expect(findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ goalId: { [Op.in]: [2, 1] } }),
+          group: ['goalId'],
+        })
+      );
+    }
+  );
+
+  it('uses creation dates without history and breaks timestamp ties by goal ID', async () => {
+    const goals = [
+      { ...goal('Monitoring', 'Closed'), id: 1, createdAt: '2026-01-01' },
+      { ...goal('Monitoring', 'In Progress'), id: 3, createdAt: '2026-06-01' },
+      { ...goal('Monitoring', 'Suspended'), id: 2, createdAt: '2026-06-01' },
+    ];
+    for (const rows of [goals, [...goals].reverse()]) {
+      (Goal.findAll as jest.Mock).mockResolvedValue(rows);
+      expect(await getTimelineGoalCategories(401, 1)).toEqual([
+        { label: 'Monitoring', statuses: ['In Progress'] },
+      ]);
+    }
+  });
+
+  it('keeps a category without a badge when its latest goal has no status', async () => {
+    (Goal.findAll as jest.Mock).mockResolvedValue([
+      { ...goal('Monitoring', 'Closed'), id: 1, createdAt: '2026-01-01' },
+      { ...goal('Monitoring'), status: null, id: 2, createdAt: '2026-06-01' },
+    ]);
+    expect(await getTimelineGoalCategories(401, 1)).toEqual([
+      { label: 'Monitoring', statuses: [] },
+    ]);
+  });
+
   it('scopes category lookup to recipient/region and non-draft unmerged RTTAPA goals', async () => {
     (Goal.findAll as jest.Mock).mockResolvedValue([
       goal('Monitoring'),
@@ -44,7 +101,7 @@ describe('timeline views', () => {
     ]);
     expect(await getTimelineGoalCategories(401, 1)).toEqual([
       { label: 'Family Support', statuses: ['Closed'] },
-      { label: 'Monitoring', statuses: ['Closed', 'In Progress'] },
+      { label: 'Monitoring', statuses: ['In Progress'] },
     ]);
     expect(Goal.findAll).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -214,6 +214,44 @@ describe('timeline navigation restoration', () => {
     expect(await screen.findByRole('combobox', { name: 'View' })).toHaveValue('goals');
   });
 
+  it.each(['monitoring', 'goals'])(
+    'keeps goal dividers visible and unique across pages in %s view',
+    async (mode) => {
+      const first = batch(1, 25).map((event) => ({
+        ...event,
+        tags: [{ label: 'Monitoring', flagged: true }],
+      }));
+      first[24] = {
+        ...first[24],
+        source: 'goalStatusChange',
+        eventType: 'Goal reopened',
+        details: [{ label: 'Goal number', items: [{ text: 'G-109560' }] }],
+      };
+      const second = [
+        {
+          ...first[24],
+          sourceId: 26,
+          eventType: 'Goal closed',
+          details: [{ label: 'Goal number', items: [{ text: 'G-103104' }] }],
+        },
+      ];
+      const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
+      getRecipientTimeline
+        .mockResolvedValueOnce({ count: 26, events: first, categories })
+        .mockResolvedValueOnce({ count: 26, events: second, categories });
+      renderTimeline(historyAt({ timelineView: { ...view, mode } }));
+      expect(await screen.findByText('Goal G-109560 reopened')).toBeVisible();
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
+      expect(await screen.findByText('Goal G-103104 closed')).toBeVisible();
+      expect(screen.getAllByText(/^Goal G-\d+ (closed|reopened)$/)).toHaveLength(2);
+      expect(screen.getAllByRole('article')).toHaveLength(26);
+      expect(screen.getByTestId('timeline-results')).toHaveTextContent('26 timeline events');
+      const toggle = screen.getByRole('button', { name: /Monitoring In Progress/ });
+      userEvent.click(toggle);
+      expect(screen.getByText('Goal G-103104 closed')).not.toBeVisible();
+    }
+  );
+
   it('groups multi-category events alphabetically in independently expanded accordions', async () => {
     const events = batch(1, 2).map((event) => ({
       ...event,

@@ -10,7 +10,7 @@ import type {
   RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
-import { Op, QueryTypes } from 'sequelize';
+import { col, fn, Op, QueryTypes } from 'sequelize';
 import { CREATION_METHOD } from '../constants';
 import { serviceError } from '../lib/serviceError';
 import { auditLogger } from '../logger';
@@ -22,7 +22,7 @@ import {
   type TimelineSourceBindings,
 } from './recipientTimelineSources';
 
-const { Goal, GoalTemplate, Grant, sequelize } = db;
+const { Goal, GoalStatusChange, GoalTemplate, Grant, sequelize } = db;
 
 interface RecipientTimelineEventIndex {
   source: string;
@@ -70,7 +70,7 @@ export async function getTimelineGoalCategories(
   regionId: number
 ): Promise<RecipientTimelineCategory[]> {
   const goals = await Goal.findAll({
-    attributes: ['status'],
+    attributes: ['id', 'status', 'createdAt'],
     where: {
       mapsToParentGoalId: null,
       [Op.and]: [
@@ -95,17 +95,44 @@ export async function getTimelineGoalCategories(
       { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: true },
     ],
   });
-  const categories = new Map<string, Set<string>>();
+  if (!goals.length) return [];
+  // Aggregate in one query: status history can be large and goal updatedAt also changes
+  // for edits unrelated to status. Do not derive header status from a filtered event page.
+  const changes = await GoalStatusChange.unscoped().findAll({
+    attributes: [
+      'goalId',
+      [fn('MAX', fn('COALESCE', col('performedAt'), col('createdAt'))), 'lastStatusChangedAt'],
+    ],
+    where: {
+      goalId: { [Op.in]: goals.map(({ id }) => id) },
+      newStatus: { [Op.ne]: null },
+      [Op.or]: [{ oldStatus: null }, { oldStatus: { [Op.ne]: col('newStatus') } }],
+    },
+    group: ['goalId'],
+    raw: true,
+  });
+  const changedAtByGoal = new Map(
+    changes.map((change) => [change.goalId, change.lastStatusChangedAt])
+  );
+  const categories = new Map<string, { status: string; changedAt: number; goalId: number }>();
   goals.forEach((goal) => {
     const label = goal.goalTemplate?.standard?.trim();
     if (!label) return;
-    const statuses = categories.get(label) ?? new Set<string>();
-    if (goal.status?.trim()) statuses.add(goal.status.trim());
-    categories.set(label, statuses);
+    const date = changedAtByGoal.get(goal.id) ?? goal.createdAt;
+    const timestamp = date ? new Date(date).getTime() : 0;
+    const changedAt = Number.isFinite(timestamp) ? timestamp : 0;
+    const current = categories.get(label);
+    if (
+      !current ||
+      changedAt > current.changedAt ||
+      (changedAt === current.changedAt && goal.id > current.goalId)
+    ) {
+      categories.set(label, { status: goal.status?.trim() || '', changedAt, goalId: goal.id });
+    }
   });
   return [...categories]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, statuses]) => ({ label, statuses: [...statuses].sort() }));
+    .map(([label, { status }]) => ({ label, statuses: status ? [status] : [] }));
 }
 
 const validateQueryOptions = ({

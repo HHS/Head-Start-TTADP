@@ -44,7 +44,11 @@ export default function TimelineCategory({ category, events }: Props): React.Rea
                 key={JSON.stringify([event.source, event.sourceId])}
                 data-timeline-event={JSON.stringify([event.source, event.sourceId, category.label])}
               >
-                <TimelineEvent event={event} isLast={index === events.length - 1} />
+                <TimelineEvent
+                  event={event}
+                  isLast={index === events.length - 1}
+                  showGoalCycleDivider
+                />
               </li>
             ))}
           </ol>
