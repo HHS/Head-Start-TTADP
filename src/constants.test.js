@@ -1,6 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { DISPLAY_DATE_FORMATS } from './constants';
+import {
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
+  DISPLAY_DATE_FORMATS,
+  NOTIFICATION_CONFIGURATION,
+  NOTIFICATION_TYPES,
+} from './constants';
 
 describe('DISPLAY_DATE_FORMATS', () => {
   /**
@@ -24,5 +29,25 @@ describe('DISPLAY_DATE_FORMATS', () => {
 
     expect(frontendFormats.length).toBeGreaterThan(0);
     expect([...DISPLAY_DATE_FORMATS].sort()).toEqual([...frontendFormats].sort());
+  });
+});
+
+describe('NOTIFICATION_CONFIGURATION', () => {
+  const activityReportConfigs = Object.entries(NOTIFICATION_CONFIGURATION).filter(([type]) =>
+    ACTIVITY_REPORT_NOTIFICATION_TYPES.includes(type)
+  );
+
+  it('covers activity report notification types', () => {
+    expect(activityReportConfigs.length).toBeGreaterThan(0);
+  });
+
+  it.each(activityReportConfigs)('%s relabels archived CTAs as "View AR"', (_type, config) => {
+    expect(config.archiveLabel({ hasApproved: false })).toBe('View AR');
+  });
+
+  it('does not define an archive label for global notifications', () => {
+    expect(
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE].archiveLabel
+    ).toBeUndefined();
   });
 });

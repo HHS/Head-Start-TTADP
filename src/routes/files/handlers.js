@@ -30,11 +30,13 @@ import {
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
   getFileById,
+  markFilesQueuedForScan,
+  queueFilesForScan,
   updateStatus,
 } from '../../services/files';
-import addToScanQueue from '../../services/scanQueue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const multiparty = require('multiparty');
 
@@ -44,7 +46,7 @@ const logContext = {
   namespace,
 };
 
-const { UPLOADED, UPLOAD_FAILED, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
+const { UPLOADED, UPLOAD_FAILED } = FILE_STATUSES;
 
 const altFileTypes = [
   {
@@ -513,27 +515,22 @@ const uploadHandler = async (req, res) => {
     })
   );
 
-  if (!res.headersSent) {
-    if (error) {
-      res.status(status).send({ error });
-    } else {
-      res.status(httpCodes.OK).send(fileResponse);
-    }
-  }
+  // Set QUEUED inside the transaction, before any scan job exists.
+  await markFilesQueuedForScan(fileResponse);
 
-  return Promise.all(
-    fileResponse.map(async (data) => {
-      try {
-        addToScanQueue({ key: data.key });
-        await updateStatus(data.id, QUEUED);
-      } catch (err) {
-        auditLogger.error(
-          `${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`
-        );
-        await updateStatus(data.id, QUEUEING_FAILED);
+  // Respond and queue scans only once the File rows are committed. The scan worker looks
+  // files up by key, and the client shouldn't get IDs for rows that might be rolled back.
+  onTransactionCommitted(req, async () => {
+    if (!res.headersSent) {
+      if (error) {
+        res.status(status).send({ error });
+      } else {
+        res.status(httpCodes.OK).send(fileResponse);
       }
-    })
-  );
+    }
+    await queueFilesForScan(fileResponse);
+  });
+  return undefined;
 };
 
 async function deleteActivityReportObjectiveFile(req, res) {
