@@ -62,7 +62,9 @@ get:
     when available.
     The optional view control accepts chronological (default), monitoring, and goals.
     Monitoring enforces a positive Monitoring standard constraint. Goals enforces membership
-    in categories of this recipient's non-draft, unmerged RTTAPA goals in this region.
+    in categories of this recipient's non-draft, unmerged standard or legacy RTTAPA goals in this region.
+    Curated standard templates qualify without requiring the legacy isRttapa flag, which the
+    current standard-goal creation flow leaves unset.
     View constraints combine with user filters before counts and pagination. Grouped responses
     include categories with distinct current goal statuses, sorted alphabetically. An event
     can be displayed under several matching categories but counts once. Event pages retain
