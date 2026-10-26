@@ -2,15 +2,18 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import UserContext from '../../../../../UserContext';
 import ActivityReportNotifications from '../ActivityReportNotifications';
 
-function renderComponent() {
+function renderComponent(user = { roles: [] }) {
   function Wrapper() {
     const methods = useForm();
     return (
-      <FormProvider {...methods}>
-        <ActivityReportNotifications />
-      </FormProvider>
+      <UserContext.Provider value={{ user }}>
+        <FormProvider {...methods}>
+          <ActivityReportNotifications />
+        </FormProvider>
+      </UserContext.Provider>
     );
   }
 
@@ -66,5 +69,19 @@ describe('ActivityReportNotifications', () => {
     expect(
       screen.getByText('Someone submits an Activity Report for approval that I created.')
     ).toBeInTheDocument();
+  });
+
+  const PS_LABEL = "One of my recipients' activity reports is available.";
+
+  it.each(['PS', 'SPS', 'GMS'])('renders the program specialist row for %s users', (role) => {
+    renderComponent({ roles: [{ name: role }] });
+
+    expect(screen.getByText(PS_LABEL)).toBeInTheDocument();
+  });
+
+  it('does not render the program specialist row for other users', () => {
+    renderComponent({ roles: [{ name: 'ECM' }] });
+
+    expect(screen.queryByText(PS_LABEL)).not.toBeInTheDocument();
   });
 });

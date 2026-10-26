@@ -24,6 +24,8 @@ export default function NotificationsSection({
     id: string;
     label: React.ReactNode;
     hideInApp?: boolean;
+    // Optional component to wrap the row in, e.g. to only show it to certain users
+    wrapper?: React.ComponentType<{ children: React.ReactNode }>;
   }>;
 }) {
   const [displayAlert, setDisplayAlert] = useState(false);
@@ -62,15 +64,16 @@ export default function NotificationsSection({
       )}
 
       <hr />
-      {items.map(({ id, label, hideInApp }) => (
-        <NotificationsRow
-          key={id}
-          id={id}
-          label={label}
-          emailVerified={emailVerified}
-          setDisplayAlert={setDisplayAlert}
-          hideInApp={hideInApp}
-        />
+      {items.map(({ id, label, hideInApp, wrapper: Wrapper = React.Fragment }) => (
+        <Wrapper key={id}>
+          <NotificationsRow
+            id={id}
+            label={label}
+            emailVerified={emailVerified}
+            setDisplayAlert={setDisplayAlert}
+            hideInApp={hideInApp}
+          />
+        </Wrapper>
       ))}
     </div>
   );

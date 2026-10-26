@@ -4,13 +4,17 @@ import { createTransport } from 'nodemailer';
 import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import db, {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
+  Grant,
+  Recipient,
   User,
 } from '../../models';
-import { usersWithSetting } from '../../services/userSettings';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
+import { createGrant, createUser } from '../../testUtils';
 import {
   approvedDigest,
   approverAssignedNotification,
@@ -647,11 +651,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`${mockRecipient.name}: Activity Report approved in TTA Hub`);
-      expect(message.text).toContain(`${mockReport.displayId}`);
+      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Approved`);
       expect(message.text).toContain(
-        'An Activity Report associated with one of your recipients has been approved.'
+        'An Activity Report for one of your recipients has been approved.'
       );
+      expect(message.text).toContain('Access this report in the TTA Hub.');
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no program specialists/recipients', async () => {
@@ -1547,7 +1551,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub daily digest: your recipients' approved Activity Reports"
+        "TTA Hub daily digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for today.');
@@ -1575,7 +1579,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub weekly digest: your recipients' approved Activity Reports"
+        "TTA Hub weekly digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
@@ -1603,7 +1607,7 @@ describe('mailer tests', () => {
       expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(
-        "TTA Hub monthly digest: your recipients' approved Activity Reports"
+        "TTA Hub monthly digest: Your recipients' approved Activity Reports"
       );
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
@@ -2188,6 +2192,56 @@ describe('mailer tests', () => {
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {
       await expect(recipientApprovedDigest('')).rejects.toThrow();
+    });
+
+    it('recipientApprovedDigest only sends each specialist reports for their own grants', async () => {
+      const [specialistA, specialistB] = await Promise.all([createUser(), createUser()]);
+      const [grantA, grantB] = await Promise.all([
+        createGrant({ programSpecialistEmail: specialistA.email.toUpperCase() }),
+        createGrant({ programSpecialistEmail: specialistB.email }),
+      ]);
+      const [reportA, reportB] = await Promise.all([
+        ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED }),
+        ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED }),
+      ]);
+      await Promise.all([
+        ActivityRecipient.create({ activityReportId: reportA.id, grantId: grantA.id }),
+        ActivityRecipient.create({ activityReportId: reportB.id, grantId: grantB.id }),
+      ]);
+
+      const specialistIds = [specialistA.id, specialistB.id];
+      userSettingOverridesById.mockImplementation((id) =>
+        Promise.resolve(specialistIds.includes(id) ? { value: 'today' } : null)
+      );
+      userById.mockImplementation((id) => Promise.resolve({ id }));
+
+      try {
+        const result = await recipientApprovedDigest('today', DAILY);
+        const reportIdsFor = (user) =>
+          result.find((r) => r.user.id === user.id).reports.map((r) => r.id);
+
+        expect(result).toHaveLength(2);
+        expect(reportIdsFor(specialistA)).toEqual([reportA.id]);
+        expect(reportIdsFor(specialistB)).toEqual([reportB.id]);
+      } finally {
+        userById.mockImplementation(() => Promise.resolve(mockUser));
+        userSettingOverridesById.mockImplementation(() =>
+          Promise.resolve([{ id: digestMockCollab.id }])
+        );
+        await ActivityRecipient.destroy({
+          where: { activityReportId: [reportA.id, reportB.id] },
+        });
+        await Grant.destroy({
+          where: { id: [grantA.id, grantB.id] },
+          individualHooks: true,
+          force: true,
+        });
+        await Recipient.destroy({
+          where: { id: [grantA.recipientId, grantB.recipientId] },
+          force: true,
+        });
+        await User.destroy({ where: { id: specialistIds } });
+      }
     });
   });
 
