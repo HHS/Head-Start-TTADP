@@ -16,6 +16,7 @@ import FilterPanel from '../../../components/filter/FilterPanel';
 import { UsersIcon } from '../../../components/icons';
 import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
+import FilterContext from '../../../FilterContext';
 import {
   deleteCommunicationLogById,
   getCommunicationLogsByRecipientId,
@@ -90,7 +91,7 @@ DeleteLogModal.defaultProps = {
   log: null,
 };
 
-export default function CommunicationLog({ regionId, recipientId }) {
+function CommunicationLogContent({ regionId, recipientId }) {
   const [logs, setLogs] = useState();
   const [error, setError] = useState();
   const [showTabularData, setShowTabularData] = useState(true);
@@ -112,7 +113,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
   );
 
   const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
-    'communication-log-table', // localStorageKey
+    `communication-log-table-${regionId}-${recipientId}`, // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
@@ -321,6 +322,19 @@ export default function CommunicationLog({ regionId, recipientId }) {
     </>
   );
 }
+
+export default function CommunicationLog({ regionId, recipientId }) {
+  return (
+    <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+      <CommunicationLogContent regionId={regionId} recipientId={recipientId} />
+    </FilterContext.Provider>
+  );
+}
+
+CommunicationLogContent.propTypes = {
+  recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+};
 
 CommunicationLog.propTypes = {
   recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

@@ -12,6 +12,7 @@ import { REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY, REPORTS_PER_PAGE } from '../../
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
 import { downloadReports, getReportsViaIdPost } from '../../fetchers/activityReports';
 import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../fetchers/helpers';
 import { fetchFlatResourceData } from '../../fetchers/Resources';
@@ -40,7 +41,7 @@ const additionalDefaultFilters = [
     query: defaultDate,
   },
 ];
-export default function ResourcesDashboard() {
+function ResourcesDashboardContent() {
   const { user } = useContext(UserContext);
   const [isLoading, setIsLoading] = useState(false);
   const [areReportsLoading, setAreReportsLoading] = useState(false);
@@ -253,6 +254,14 @@ export default function ResourcesDashboard() {
         activePage={activePage}
       />
     </div>
+  );
+}
+
+export default function ResourcesDashboard() {
+  return (
+    <FilterContext.Provider value={{ filterKey: REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY }}>
+      <ResourcesDashboardContent />
+    </FilterContext.Provider>
   );
 }
 

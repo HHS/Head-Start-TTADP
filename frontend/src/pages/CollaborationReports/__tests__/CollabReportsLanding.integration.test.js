@@ -161,6 +161,92 @@ describe('CollabReportsLanding integration', () => {
     getReports.mockImplementation(async (_, filters) => buildReportsResponse(filters));
   });
 
+  it.each([
+    ['collabReportsTable', getReports],
+    ['collabReportAlerts', getAlerts],
+  ])('restores the saved page for %s on return to the landing page', async (tableKey, fetcher) => {
+    const filterKey = 'collab-landing-filters';
+    const sortingKey = `${filterKey}-${tableKey}-sorting`;
+    sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'id', direction: 'desc', activePage: 3, offset: 20 })
+    );
+
+    const { unmount } = renderLanding();
+
+    await waitFor(() => {
+      expect(fetcher).toHaveBeenLastCalledWith(
+        expect.objectContaining({ activePage: 3, offset: 20 }),
+        []
+      );
+    });
+
+    unmount();
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
+  });
+
+  it.each([
+    [10, 10],
+    [25, 25],
+    [50, 50],
+    ['all', 'all'],
+    [undefined, 10],
+    [null, 10],
+    [0, 10],
+    [-1, 10],
+    [1.5, 10],
+    ['invalid', 10],
+  ])(
+    'restores page size %s and supports subsequent pagination',
+    async (savedPerPage, expectedPerPage) => {
+      const filterKey = 'collab-landing-filters';
+      const sortingKey = `${filterKey}-collabReportsTable-sorting`;
+      const offset = expectedPerPage === 'all' ? 0 : 2 * expectedPerPage;
+      sessionStorage.setItem(filterKey, '[]');
+      sessionStorage.setItem(
+        sortingKey,
+        JSON.stringify({
+          sortBy: 'id',
+          direction: 'desc',
+          activePage: 3,
+          offset,
+          perPage: savedPerPage,
+        })
+      );
+      getReports.mockResolvedValue({ count: 200, rows: [reportFixtures.virtual] });
+
+      const { unmount } = renderLanding();
+
+      await waitFor(() => {
+        expect(getReports).toHaveBeenLastCalledWith(
+          expect.objectContaining({ activePage: 3, offset, perPage: expectedPerPage }),
+          []
+        );
+      });
+
+      if (expectedPerPage !== 'all') {
+        const page4Buttons = await screen.findAllByRole('button', { name: /page 4/i });
+        await userEvent.click(page4Buttons[0]);
+        await waitFor(() => {
+          expect(getReports).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+              activePage: 4,
+              offset: 3 * expectedPerPage,
+              perPage: expectedPerPage,
+            }),
+            []
+          );
+        });
+      }
+
+      unmount();
+      sessionStorage.removeItem(filterKey);
+      sessionStorage.removeItem(sortingKey);
+    }
+  );
+
   it('selects a conduct method filter, queries the backend, and shows matching reports', async () => {
     renderLanding();
 

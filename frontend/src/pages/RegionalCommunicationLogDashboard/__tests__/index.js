@@ -81,7 +81,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   const renderComm = (u, route) => {
     history.push(route);
     const user = u || userCentralOffice;
-    render(
+    return render(
       <MemoryRouter initialEntries={[route]}>
         <AppLoadingContext.Provider
           value={{
@@ -139,6 +139,36 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   afterEach(() => {
     fetchMock.reset();
+  });
+
+  it('restores the saved communication log page when returning', async () => {
+    const filterKey = 'regional-communication-log-filters';
+    const sortingKey = `${filterKey}-communication-log-table-sorting`;
+    sessionStorage.setItem(
+      filterKey,
+      JSON.stringify([
+        {
+          id: 'saved-date',
+          topic: 'communicationDate',
+          condition: 'is within',
+          query: `2022/07/01-${currentYear}/${currentMonth}/${currentDay}`,
+        },
+      ])
+    );
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'Log_ID', direction: 'desc', activePage: 3, offset: 20 })
+    );
+    const restoredUrl = defaultURL.replace('offset=0', 'offset=20');
+    fetchMock.get(restoredUrl, { count: 0, rows: [] });
+
+    const { unmount } = renderComm(userCentralOffice, '/communication-log');
+
+    await waitFor(() => expect(fetchMock.called(restoredUrl)).toBe(true));
+    expect(fetchMock.called(defaultURL)).toBe(false);
+    unmount();
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
   });
 
   it('renders the page - user with one region', async () => {

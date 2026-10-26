@@ -72,6 +72,30 @@ describe('CommunicationLog', () => {
     fetchMock.restore();
   });
 
+  it('restores the saved page for this recipient without using another recipient page', async () => {
+    const filterKey = 'communication-log-filters';
+    const sortingKey = `${filterKey}-communication-log-table-5-1-sorting`;
+    const otherSortingKey = `${filterKey}-communication-log-table-5-2-sorting`;
+    sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'communicationDate', direction: 'desc', activePage: 3, offset: 20 })
+    );
+    sessionStorage.setItem(
+      otherSortingKey,
+      JSON.stringify({ sortBy: 'communicationDate', direction: 'desc', activePage: 2, offset: 10 })
+    );
+    const restoredUrl =
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=20&limit=10&format=json&';
+    fetchMock.get(restoredUrl, { count: 0, rows: [] });
+
+    renderTest();
+
+    await waitFor(() => expect(fetchMock.called(restoredUrl)).toBe(true));
+    sessionStorage.removeItem(sortingKey);
+    sessionStorage.removeItem(otherSortingKey);
+  });
+
   it('renders the communication log appropriately', async () => {
     fetchMock.get(
       '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&',
