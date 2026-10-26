@@ -223,7 +223,7 @@ application is bound to causes downtime, so plan a window and put the app into [
    ```
 
    Also check whether the instance is shared into other spaces (shown by `cf service`). Do not rotate while a job that
-   uses the instance is running (the nightly `restore_db_cron` job starts at 04:00 UTC). The automation jobs share a
+   uses the instance is running (the nightly `restore_db_cron` job starts at 04:00 UTC, which is midnight Eastern). The automation jobs share a
    CircleCI serial group (`tta-automation-lock`).
 
 3. **Production only: schedule a window and turn on maintenance mode.**
@@ -233,20 +233,21 @@ application is bound to causes downtime, so plan a window and put the app into [
    ```
 
 4. **Fingerprint the current credential without printing it.** From a shell in the app (`cf ssh <app> -t -c "/tmp/lifecycle/shell"`),
-   this prints only the first 12 characters of a SHA-256 hash:
+   this prints only the first 12 characters of a SHA-256 hash. It selects the binding by instance name, because an app can
+   be bound to more than one `aws-rds` instance:
 
    ```bash
-   node -e 'const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"][0].credentials;console.log(require("crypto").createHash("sha256").update(c.password).digest("hex").slice(0,12))'
+   node -e 'const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"].find((s)=>s.instance_name===process.argv[1]).credentials;console.log(require("crypto").createHash("sha256").update(c.password).digest("hex").slice(0,12))' <instance>
    ```
 
    For an instance with no bound app, use `cf service-key <instance> <key-name> | sha256sum` instead; the pipe keeps the
    password off your screen. Compare the hash after the rotation: a different hash means the credential changed.
 
-   **If you will run the old-credential check in step 9, capture the old connection values now.** A hash can't be turned back
+   **If you will run the old-credential check in step 11, capture the old connection values now.** A hash can't be turned back
    into the password, and step 6 replaces the binding and step 8 deletes old keys, so after the rotation there is no
    documented way to retrieve the old values. Copy the old database name, username and password to a secure,
    non-logging place that you control (for example your password manager's secure note), not into a terminal command,
-   shell history, chat, ticket or file in the repo. Delete that copy as soon as step 9 is done (step 11).
+   shell history, chat, ticket or file in the repo. Delete that copy as soon as step 11 is done (step 12).
 
 5. **Rotate the credential**, then wait for the update to finish before doing anything else:
 
@@ -275,7 +276,9 @@ application is bound to causes downtime, so plan a window and put the app into [
    ```
 
 8. **Rotate or recreate service keys.** Delete any key that predates the rotation, and recreate keys that are still needed.
-   (The automation jobs create their own temporary keys at run time.)
+   (The automation jobs create their own temporary keys at run time.) Look for a leftover `SERVICE_CONNECT` key too. That
+   is the temporary key `cf connect-to-service` creates for a session and normally deletes at the end. If one is still
+   listed, confirm nobody has a session open, then delete it.
 
    ```bash
    cf service-keys <instance>
@@ -294,34 +297,12 @@ application is bound to causes downtime, so plan a window and put the app into [
      ```bash
      cf ssh <app> -t -c "/tmp/lifecycle/shell"
      # then, in the app's shell:
-     node -e 'const {Client}=require("pg");const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"][0].credentials;const cl=new Client({connectionString:c.uri,ssl:{rejectUnauthorized:false}});cl.connect().then(()=>cl.query("select 1")).then(()=>{console.log("db ok");return cl.end()}).catch(e=>{console.log("db check failed:",e.code);process.exit(1)})'
+     node -e 'const {Client}=require("pg");const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"].find((s)=>s.instance_name===process.argv[1]).credentials;const cl=new Client({connectionString:c.uri,ssl:{rejectUnauthorized:false}});cl.connect().then(()=>cl.query("select 1")).then(()=>{console.log("db ok");return cl.end()}).catch(e=>{console.log("db check failed:",e.code);process.exit(1)})' <instance>
      ```
 
-     `db ok` means the app's new binding connects. Don't turn maintenance mode off (step 10) until you see it.
+     `db ok` means the app's new binding connects. Don't turn maintenance mode off (step 10) until you see it. This snippet
+     has been tested only against a fake binding, not yet through a real rotation, so adjust it if the environment differs.
    - The fingerprint from step 4 changed.
-   - The old credential no longer works. Open a tunnel and try the old credentials. Instance hosts are on a private network,
-     so you can't connect to them directly from outside cloud.gov.
-
-     ```bash
-     # terminal 1: open the tunnel through a running app in the space and leave it running.
-     # RDS_HOST is the instance's hostname (from the service's credentials); set it without echoing the rest
-     cf ssh -N -L 5433:$RDS_HOST:5432 <running-app>
-     ```
-
-     ```bash
-     # terminal 2: enter the OLD values at the prompts, never in the command itself
-     read "DBNAME?Database name: "
-     read "DBUSER?Old username: "
-     read -s "PGPASSWORD?Old password: "; echo
-     export PGPASSWORD
-     psql "host=localhost port=5433 dbname=$DBNAME user=$DBUSER sslmode=require connect_timeout=5" -c "select 1"
-     unset PGPASSWORD DBNAME DBUSER
-     ```
-
-     `password authentication failed` (or `role ... does not exist`) means the old credential is revoked. If it
-     returns a row, the old credential still works. A timeout or `connection refused` is inconclusive.
-     The `read` prompts above are zsh syntax. In bash use `read -p "Database name: " DBNAME`,
-     `read -p "Old username: " DBUSER` and `read -s -p "Old password: " PGPASSWORD`.
 
 10. **Production only: turn maintenance mode off**, only after the database check in step 9 passed.
 
@@ -329,7 +310,33 @@ application is bound to causes downtime, so plan a window and put the app into [
     ./bin/maintenance -m off -e prod
     ```
 
-11. **Clean up and record it.** Delete the copy of the old connection values from step 4, close the tunnel, run
+11. **Verify that the old credential is revoked.** Open a tunnel and try the old credentials. Instance hosts are on a
+    private network, so you can't connect to them directly from outside cloud.gov. This check doesn't need maintenance mode.
+
+    ```bash
+    # terminal 1: open the tunnel through a running app in the space and leave it running.
+    # RDS_HOST is the instance's hostname. To get it without printing credentials, run this from a shell in the app and copy
+    # only the host that it prints:
+    #   echo "$VCAP_SERVICES" | jq -r '."aws-rds"[] | select(.instance_name=="<instance>") | .credentials.host'
+    cf ssh -N -L 5433:$RDS_HOST:5432 <running-app>
+    ```
+
+    ```bash
+    # terminal 2: enter the OLD values at the prompts, never in the command itself
+    read "DBNAME?Database name: "
+    read "DBUSER?Old username: "
+    read -s "PGPASSWORD?Old password: "; echo
+    export PGPASSWORD
+    psql "host=localhost port=5433 dbname=$DBNAME user=$DBUSER sslmode=require connect_timeout=5" -c "select 1"
+    unset PGPASSWORD DBNAME DBUSER
+    ```
+
+    `password authentication failed` (or `role ... does not exist`) means the old credential is revoked. If it
+    returns a row, the old credential still works. A timeout or `connection refused` is inconclusive.
+    The `read` prompts above are zsh syntax. In bash use `read -p "Database name: " DBNAME`,
+    `read -p "Old username: " DBUSER` and `read -s -p "Old password: " PGPASSWORD`.
+
+12. **Clean up and record it.** Delete the copy of the old connection values from step 4, close the tunnel, run
     `unset PGPASSWORD DBNAME DBUSER`, and clear your terminal scrollback. Note the date, the instance, and that the old
     credential was rejected, in the ticket and the incident report. Record conclusions only: never the credential,
     connection string, username or hostname.
