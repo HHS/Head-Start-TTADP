@@ -12,8 +12,13 @@ import {
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
+  submitTtaRequest,
 } from './handlers';
-import { checkCreateTtaRequestBody, checkUpdateTtaRequestBody } from './middleware';
+import {
+  checkCreateTtaRequestBody,
+  checkSubmitTtaRequestBody,
+  checkUpdateTtaRequestBody,
+} from './middleware';
 
 const router = express.Router();
 
@@ -42,6 +47,14 @@ router.get(
   nameTransactionByBase,
   checkTtaRequestIdParam,
   transactionWrapper(getTtaRequest)
+);
+
+// submitTtaRequest
+router.put(
+  '/:ttaRequestId/submit',
+  checkTtaRequestIdParam,
+  checkSubmitTtaRequestBody,
+  transactionWrapper(submitTtaRequest)
 );
 
 // saveTtaRequest

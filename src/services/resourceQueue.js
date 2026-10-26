@@ -36,7 +36,13 @@ const onFailedResourceQueue = (job, error) =>
     error
   );
 const onCompletedResourceQueue = (job, result) => {
-  if (result.status === 200 || result.status === 201 || result.status === 202) {
+  // A skipReason marks an intentional skip (see getResourceMetaDataJob), not a failure.
+  if (
+    result.status === 200 ||
+    result.status === 201 ||
+    result.status === 202 ||
+    (result.status === 204 && result.data?.skipReason)
+  ) {
     logger.info(
       `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`
     );

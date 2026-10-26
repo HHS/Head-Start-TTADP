@@ -1,6 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import { auditLogger } from '../../logger';
-import { checkCreateTtaRequestBody, checkUpdateTtaRequestBody } from './middleware';
+import {
+  checkCreateTtaRequestBody,
+  checkSubmitTtaRequestBody,
+  checkUpdateTtaRequestBody,
+} from './middleware';
 
 jest.mock('../../logger', () => ({
   auditLogger: {
@@ -104,6 +108,61 @@ describe('TTA request body middleware', () => {
       const { next, status } = run(checkUpdateTtaRequestBody, { reviewerId: 'me' });
       expect(next).not.toHaveBeenCalled();
       expect(status).toHaveBeenCalledWith(400);
+    });
+  });
+
+  describe('checkSubmitTtaRequestBody', () => {
+    it('accepts a complete body and strips the region', () => {
+      const { req, next } = run(checkSubmitTtaRequestBody, fullBody);
+      expect(next).toHaveBeenCalled();
+      const { regionId: _regionId, ...expected } = fullBody;
+      expect(req.body).toEqual(expected);
+    });
+
+    it.each([
+      'recipientId',
+      'grantIds',
+      'recipientAware',
+      'originator',
+      'goalTemplateId',
+      'context',
+      'reviewerId',
+    ])('rejects a body without %s', (field) => {
+      const { next, status } = run(checkSubmitTtaRequestBody, { ...fullBody, [field]: null });
+      expect(next).not.toHaveBeenCalled();
+      expect(status).toHaveBeenCalledWith(400);
+    });
+
+    it('accepts context as the rich text editor sends it, with a trailing newline', () => {
+      const { next } = run(checkSubmitTtaRequestBody, { ...fullBody, context: '<p>context</p>\n' });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('rejects an empty grant list and blank context', () => {
+      expect(
+        run(checkSubmitTtaRequestBody, { ...fullBody, grantIds: [] }).next
+      ).not.toHaveBeenCalled();
+      expect(
+        run(checkSubmitTtaRequestBody, { ...fullBody, context: '  ' }).next
+      ).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['an empty paragraph', '<p></p>\n'],
+      ['a line break', '<p><br></p>'],
+      ['a whitespace entity', '<p>&nbsp;</p>'],
+      ['paragraphs of spaces', '<p>   </p>\n<p></p>\n'],
+    ])('rejects context that is only %s', (_name, context) => {
+      const { status, send, next } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
+      expect(next).not.toHaveBeenCalled();
+      expect(status).toHaveBeenCalledWith(400);
+      expect(send).toHaveBeenCalledWith(expect.stringContaining('"context" must have text'));
+    });
+
+    it('stores the context as HTML', () => {
+      const context = '<p><strong>Background</strong></p>\n';
+      const { req } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
+      expect(req.body.context).toBe(context);
     });
   });
 });

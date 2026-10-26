@@ -37,3 +37,11 @@ export const saveTtaRequest = async (ttaRequestId, data) => {
   const ttaRequest = await put(join(ttaRequestsUrl, ttaRequestId.toString(DECIMAL_BASE)), data);
   return ttaRequest.json();
 };
+
+export const submitTtaRequest = async (ttaRequestId, data) => {
+  const ttaRequest = await put(
+    join(ttaRequestsUrl, ttaRequestId.toString(DECIMAL_BASE), 'submit'),
+    data
+  );
+  return ttaRequest.json();
+};
