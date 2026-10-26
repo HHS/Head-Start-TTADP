@@ -250,6 +250,7 @@ const NOTIFICATION_CONFIGURATION = {
     actionable: false,
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
+    archiveLabel: () => 'View AR',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenRecipientReportApprovedProgramSpecialist',
   },
