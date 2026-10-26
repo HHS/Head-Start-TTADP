@@ -236,4 +236,44 @@ describe('useWidgetSorting', () => {
 
     expect(result.current.sortConfig.direction).toBe('desc');
   });
+
+  it('does not throw when a string column has no matching cell or value', () => {
+    const setDataToUse = jest.fn();
+    const { result } = renderHook(() =>
+      useWidgetSorting(
+        'testMissingStringCell',
+        { sortBy: 'Name', direction: 'asc', activePage: 1 },
+        [
+          { id: 1, data: [{ title: 'Other', value: 'b' }] },
+          { id: 2, data: [{ title: 'Name', value: 'a' }] },
+        ],
+        setDataToUse,
+        ['Name']
+      )
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.requestSort('Name', 'desc');
+      });
+    }).not.toThrow();
+    expect(setDataToUse.mock.calls.at(-1)[0].map((r) => r.id)).toEqual([2, 1]);
+
+    const { result: flat } = renderHook(() =>
+      useWidgetSorting(
+        'testMissingStringValue',
+        { sortBy: 'Name', direction: 'asc', activePage: 1 },
+        [{ id: 1 }, { id: 2, Name: 'a' }],
+        setDataToUse,
+        ['Name']
+      )
+    );
+
+    expect(() => {
+      act(() => {
+        flat.current.requestSort('Name', 'desc');
+      });
+    }).not.toThrow();
+    expect(setDataToUse.mock.calls.at(-1)[0].map((r) => r.id)).toEqual([2, 1]);
+  });
 });

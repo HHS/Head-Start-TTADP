@@ -109,8 +109,10 @@ export default function useWidgetSorting<R extends WidgetSortableRow>(
           valuesToSort = dataToUse.map((t) => ({
             ...t,
             sortBy: !t.data
-              ? getRowValue(t, sortBy).toString().toLowerCase() // If we don't have data, use the value.
-              : findCell(t, sortBy).value.toString().toLowerCase(),
+              ? String(getRowValue(t, sortBy) ?? '').toLowerCase() // If we don't have data, use the value.
+              : String(
+                  (findCell(t, sortBy) || ({} as WidgetSortableCell)).value ?? ''
+                ).toLowerCase(),
           }));
           break;
         case 'date':
