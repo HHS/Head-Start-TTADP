@@ -4,7 +4,7 @@ import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
-import { Grant, Permission, Role, sequelize, User, UserRole } from '../../models';
+import { Permission, Role, sequelize, User, UserRole } from '../../models';
 import { userAttributes, userById } from '../../services/users';
 import transactionWrapper from '../transactionWrapper';
 
