@@ -701,6 +701,34 @@ describe('Collab Reports Service', () => {
       }
     });
 
+    it('orders list associations by id without overriding report sorting', async () => {
+      const findAll = jest.spyOn(CollabReport, 'findAll').mockResolvedValueOnce([]);
+
+      try {
+        await getCSVReports({ sortBy: 'Activity_name', sortDir: 'asc' });
+
+        expect(findAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            include: expect.arrayContaining(
+              ['activityStates', 'dataUsed', 'reportGoals'].map((as) =>
+                expect.objectContaining({
+                  as,
+                  separate: true,
+                  order: [['id', 'ASC']],
+                })
+              )
+            ),
+            order: [
+              ['name', 'asc'],
+              [{ model: CollabReportStep, as: 'steps' }, 'id', 'ASC'],
+            ],
+          })
+        );
+      } finally {
+        findAll.mockRestore();
+      }
+    });
+
     it('respects limit parameter', async () => {
       const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       expect(result).toHaveLength(1);

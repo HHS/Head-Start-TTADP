@@ -505,17 +505,20 @@ export async function getCSVReports({
         as: 'activityStates',
         attributes: ['activityStateCode'],
         separate: true,
+        order: [['id', 'ASC']],
       },
       {
         model: CollabReportDataUsed,
         as: 'dataUsed',
         attributes: ['collabReportDatum'],
         separate: true,
+        order: [['id', 'ASC']],
       },
       {
         model: CollabReportGoal,
         as: 'reportGoals',
         separate: true,
+        order: [['id', 'ASC']],
         include: [
           {
             model: GoalTemplate,
@@ -532,7 +535,7 @@ export async function getCSVReports({
       },
     ],
     limit: limit === 'all' ? null : Number(limit),
-    order,
+    order: [...order, [{ model: CollabReportStep, as: 'steps' }, 'id', 'ASC']],
   });
 }
 
