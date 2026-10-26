@@ -1,6 +1,6 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
-import { auditLogger } from '../logger';
+import { auditLogger, logger } from '../logger';
 import db, { Resource } from '../models';
 import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 
@@ -697,6 +697,42 @@ describe('resource worker tests', () => {
       status: 500,
       data: { url: 'http://www.test.gov' },
     });
+  });
+
+  it('skips unsupported content types at info with a skip reason', async () => {
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'application/pdf' }, status: 200 })
+    );
+
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.test.gov/file.pdf' },
+    });
+
+    expect(got).toEqual({
+      status: 204,
+      data: { url: 'http://www.test.gov/file.pdf', skipReason: 'unsupported_mime_type' },
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      "Resource Queue: Warning, unable to process resource 'http://www.test.gov/file.pdf', received status code '200'."
+    );
+    expect(auditLogger.error).not.toHaveBeenCalled();
+    expect(mockAxios).not.toHaveBeenCalled();
+  });
+
+  it('skips unsupported content types quietly even when the status is not 200', async () => {
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'application/pdf' }, status: 404 })
+    );
+
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.test.gov/missing.pdf' },
+    });
+
+    expect(got).toEqual({
+      status: 204,
+      data: { url: 'http://www.test.gov/missing.pdf', skipReason: 'unsupported_mime_type' },
+    });
+    expect(auditLogger.error).not.toHaveBeenCalled();
   });
 });
 

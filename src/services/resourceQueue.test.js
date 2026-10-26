@@ -107,6 +107,33 @@ describe('Resource queue manager tests', () => {
     );
   });
 
+  it('onCompletedResourceQueue logs info for an intentional skip', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = {
+      status: 204,
+      data: { url: 'http://www.test.gov/file.pdf', skipReason: 'unsupported_mime_type' },
+    };
+    const loggerSpy = jest.spyOn(logger, 'info');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
+    onCompletedResourceQueue(job, result);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 204 and result {"url":"http://www.test.gov/file.pdf","skipReason":"unsupported_mime_type"}'
+    );
+    expect(auditLoggerSpy).not.toHaveBeenCalled();
+  });
+
+  it('onCompletedResourceQueue still alerts on a 204 without a skip reason', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = { status: 204, data: { url: 'http://www.test.gov' } };
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
+    onCompletedResourceQueue(job, result);
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 204 and result {"url":"http://www.test.gov"}',
+      'queue_job_non_success_status',
+      result
+    );
+  });
+
   it('resourceQueue on failed event triggers onFailedResourceQueue', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');

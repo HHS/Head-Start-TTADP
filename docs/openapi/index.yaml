@@ -460,9 +460,14 @@ components:
           type: string
           enum:
             - draft
+            - submitted
         createdAt:
           type: string
           format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
         creator:
           type: object
           properties:
@@ -494,6 +499,9 @@ components:
               type: integer
             templateName:
               type: string
+            standard:
+              type: string
+              nullable: true
         grants:
           type: array
           items:
@@ -517,6 +525,7 @@ components:
           type: string
           enum:
             - draft
+            - submitted
         userId:
           type: integer
         lastUpdatedById:
@@ -543,6 +552,10 @@ components:
           nullable: true
         reviewerId:
           type: integer
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
           nullable: true
         createdAt:
           type: string
@@ -893,7 +906,7 @@ components:
             type: string
         lastTTADate:
           type: string
-            description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
+          description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
         reviews:
           type: array
           items:

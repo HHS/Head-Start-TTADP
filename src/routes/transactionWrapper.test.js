@@ -4,7 +4,10 @@ import { hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
 import db from '../models';
 import { removeFromAuditedTransactions } from '../models/auditModelGenerator';
-import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
+import transactionWrapper, {
+  onTransactionCommitted,
+  readOnlyTransactionWrapper,
+} from './transactionWrapper';
 
 jest.mock('../lib/apiErrorHandler', () =>
   jest.fn((req, _res, err, context) => {
@@ -214,5 +217,79 @@ describe('transactionWrapper', () => {
       { isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ },
       expect.any(Function)
     );
+  });
+
+  describe('onTransactionCommitted', () => {
+    it('runs registered callbacks after the transaction commits, outside the wrapper', async () => {
+      const events = [];
+      db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+        const result = await callback({ id: 'transaction-id' });
+        events.push('committed');
+        return result;
+      });
+      let inTransactionWrapperDuringCallback;
+      const req = {};
+      originalFunction = jest.fn(async () => {
+        onTransactionCommitted(req, async () => {
+          inTransactionWrapperDuringCallback = req.inTransactionWrapper;
+          events.push('first');
+        });
+        onTransactionCommitted(req, () => {
+          events.push('second');
+        });
+        return 'result';
+      });
+      wrapper = transactionWrapper(originalFunction);
+
+      const result = await wrapper(req, {}, jest.fn());
+
+      expect(result).toBe('result');
+      expect(events).toEqual(['committed', 'first', 'second']);
+      expect(inTransactionWrapperDuringCallback).toBe(false);
+      expect(req.transactionCommittedCallbacks).toBeUndefined();
+    });
+
+    it('does not run callbacks when the commit fails', async () => {
+      const commitError = new Error('COMMIT failed');
+      db.sequelize.transaction.mockImplementationOnce(async (_options, callback) => {
+        await callback({ id: 'transaction-id' });
+        throw commitError;
+      });
+      const committedCallback = jest.fn();
+      const req = {};
+      originalFunction = jest.fn(async () => {
+        onTransactionCommitted(req, committedCallback);
+      });
+      wrapper = transactionWrapper(originalFunction);
+      const res = {};
+
+      await wrapper(req, res, jest.fn());
+
+      expect(committedCallback).not.toHaveBeenCalled();
+      expect(handleErrors).toHaveBeenCalledWith(req, res, commitError, {
+        namespace: 'SERVICE:WRAPPER',
+      });
+      expect(req.transactionCommittedCallbacks).toBeUndefined();
+    });
+
+    it('does not run callbacks when the handler throws', async () => {
+      const committedCallback = jest.fn();
+      const req = {};
+      originalFunction = jest.fn(async () => {
+        onTransactionCommitted(req, committedCallback);
+        throw new Error('handler failed');
+      });
+      wrapper = transactionWrapper(originalFunction);
+
+      await wrapper(req, {}, jest.fn());
+
+      expect(committedCallback).not.toHaveBeenCalled();
+    });
+
+    it('throws when called outside transactionWrapper', () => {
+      expect(() => onTransactionCommitted({}, jest.fn())).toThrow(
+        'onTransactionCommitted must be called from within transactionWrapper'
+      );
+    });
   });
 });

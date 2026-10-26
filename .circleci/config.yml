@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:24.21.0-browsers
+    - image: cimg/node:24.22.1-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:24.21.0-browsers
+    - image: cimg/node:24.22.1-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -2513,38 +2513,6 @@ commands:
             -o ${cg_org} \
             -s ${cg_space}
     - run:
-        name: Watch task logs
-        background: true
-        command: |
-          #!/bin/bash
-
-          CONTROL_FILE="/tmp/stop_tail"
-          rm -f $CONTROL_FILE
-
-          # Function to start tailing logs
-          start_log_tailing() {
-              echo "Starting cf logs for tta-automation..."
-              cf logs tta-automation &
-              TAIL_PID=$!
-          }
-
-          # Start tailing logs for the first time
-          start_log_tailing
-
-          # Monitor the cf logs process
-          while [ ! -f $CONTROL_FILE ]; do
-              # Check if the cf logs process is still running
-              if ! kill -0 $TAIL_PID 2>/dev/null; then
-                  echo "cf logs command has stopped unexpectedly. Restarting..."
-                  start_log_tailing
-              fi
-              sleep 1
-          done
-
-          # Kill the cf logs command
-          kill -9 $TAIL_PID
-          echo "cf logs command for tta-automation has been terminated."
-    - run:
         name: |
           "Running cmd: << parameters.task_name >>
               in << parameters.target_env >>
@@ -2575,13 +2543,6 @@ commands:
     - run:
         name: Logout of service account
         command: |
-          # Signal the log monitoring to stop
-          CONTROL_FILE="/tmp/stop_tail"
-          touch $CONTROL_FILE
-
-          # Wait for the log monitoring process to terminate
-          sleep 5
-
           # Logout from Cloud Foundry
           cf logout
 

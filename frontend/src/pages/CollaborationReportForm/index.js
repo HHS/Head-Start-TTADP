@@ -21,8 +21,8 @@ import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
 } from '../../Constants';
-import MeshPresenceManager from '../../components/MeshPresenceManager';
 import Navigator from '../../components/Navigator';
+import PresenceManager from '../../components/PresenceManager';
 import { HTTPError } from '../../fetchers';
 import { getApprovers } from '../../fetchers/activityReports';
 import {
@@ -752,9 +752,9 @@ function CollaborationReport({ match, location }) {
     <div className="smart-hub-collab-report" ref={formRef} tabIndex={-1}>
       {error && <Alert type="warning">{error}</Alert>}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
-      {/* Don't render the Mesh component unless working on a saved report */}
+      {/* Don't render the presence component unless working on a saved report */}
       {collabReportId !== 'new' && (
-        <MeshPresenceManager
+        <PresenceManager
           room={`cr-${collabReportId}`}
           onPresenceUpdate={handlePresenceUpdate}
           onRevisionUpdate={handleRevisionUpdate}

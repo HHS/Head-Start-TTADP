@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { auditLogger } from '../logger';
 import db, {
   Grant,
   Recipient,
@@ -1255,12 +1256,15 @@ describe('session reports service', () => {
     });
 
     it('should fall back to id sort when sortBy is invalid', async () => {
+      const warnSpy = jest.spyOn(auditLogger, 'warn').mockImplementation(() => {});
       const result = await getSessionReports({
         sortBy: 'invalidField',
         sortDir: 'DESC',
         'eventId.ctn': [testEventLongId],
       });
 
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"invalidField"'));
+      warnSpy.mockRestore();
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
       // Should not throw and should return results
       expect(result).toHaveProperty('count');
