@@ -5,7 +5,7 @@
   "license": "ISC",
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "24.21.0"
+    "node": "24.22.1"
   },
   "scripts": {
     "start": "vite",
