@@ -242,6 +242,12 @@ application is bound to causes downtime, so plan a window and put the app into [
    For an instance with no bound app, use `cf service-key <instance> <key-name> | sha256sum` instead; the pipe keeps the
    password off your screen. Compare the hash after the rotation: a different hash means the credential changed.
 
+   **If you will run the old-credential check in step 9, capture the old connection values now.** A hash can't be turned back
+   into the password, and step 6 replaces the binding and step 8 deletes old keys, so after the rotation there is no
+   documented way to retrieve the old values. Copy the old database name, username and password to a secure,
+   non-logging place that you control (for example your password manager's secure note), not into a terminal command,
+   shell history, chat, ticket or file in the repo. Delete that copy as soon as step 9 is done (step 11).
+
 5. **Rotate the credential**, then wait for the update to finish before doing anything else:
 
    ```bash
@@ -278,7 +284,20 @@ application is bound to causes downtime, so plan a window and put the app into [
    ```
 
 9. **Verify.**
-   - The app is healthy: `cf app <app>` and the site loads; `cf logs <app> --recent` shows no database connection errors.
+   - The app is healthy: `cf app <app>` shows the instances running, and `cf logs <app> --recent` shows no database
+     connection errors.
+   - **The app can reach the database with its new binding.** Don't rely on loading the public site for this. While an
+     environment is in maintenance mode, its public route points at the maintenance page, not the application (see
+     `bin/maintenance`), so a page that loads says nothing about the rotated credential. Check from inside the app
+     instead; this prints only a fixed result, never the connection string:
+
+     ```bash
+     cf ssh <app> -t -c "/tmp/lifecycle/shell"
+     # then, in the app's shell:
+     node -e 'const {Client}=require("pg");const c=JSON.parse(process.env.VCAP_SERVICES)["aws-rds"][0].credentials;const cl=new Client({connectionString:c.uri,ssl:{rejectUnauthorized:false}});cl.connect().then(()=>cl.query("select 1")).then(()=>{console.log("db ok");return cl.end()}).catch(e=>{console.log("db check failed:",e.code);process.exit(1)})'
+     ```
+
+     `db ok` means the app's new binding connects. Don't turn maintenance mode off (step 10) until you see it.
    - The fingerprint from step 4 changed.
    - The old credential no longer works. Open a tunnel and try the old credentials. Instance hosts are on a private network,
      so you can't connect to them directly from outside cloud.gov.
@@ -304,14 +323,16 @@ application is bound to causes downtime, so plan a window and put the app into [
      The `read` prompts above are zsh syntax. In bash use `read -p "Database name: " DBNAME`,
      `read -p "Old username: " DBUSER` and `read -s -p "Old password: " PGPASSWORD`.
 
-10. **Production only: turn maintenance mode off.**
+10. **Production only: turn maintenance mode off**, only after the database check in step 9 passed.
 
     ```bash
     ./bin/maintenance -m off -e prod
     ```
 
-11. **Record it.** Note the date, the instance, and that the old credential was rejected, in the ticket and the incident
-    report. Record conclusions only: never the credential, connection string, username or hostname.
+11. **Clean up and record it.** Delete the copy of the old connection values from step 4, close the tunnel, run
+    `unset PGPASSWORD DBNAME DBUSER`, and clear your terminal scrollback. Note the date, the instance, and that the old
+    credential was rejected, in the ticket and the incident report. Record conclusions only: never the credential,
+    connection string, username or hostname.
 
 ## Interacting with a deployed application or database
 
