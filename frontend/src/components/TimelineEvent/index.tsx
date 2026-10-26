@@ -165,7 +165,7 @@ function TimelineEvent({
                     <FontAwesomeIcon
                       aria-hidden="true"
                       className="flex-align-self-start margin-top-05"
-                      color={colors.warning}
+                      color={colors.error}
                       icon={faFlag}
                       focusable="false"
                     />
