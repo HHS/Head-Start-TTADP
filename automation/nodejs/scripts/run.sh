@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # Function to log messages with a timestamp
 function log() {
@@ -72,7 +72,6 @@ cd /home/vcap/app || exit
 
 echo "Current directory:" "$(pwd)" >&2
 echo "JS File Path:" $1 >&2
-echo "env:" "$(env)" >&2
 
 # Set the PATH from the lifecycle environment
 export PATH=/home/vcap/deps/0/bin:/bin:/usr/bin:/home/vcap/app/bin:/home/vcap/app/node_modules/.bin
