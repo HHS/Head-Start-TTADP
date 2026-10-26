@@ -39,6 +39,7 @@ For detailed testing patterns including database state management helpers, see `
 ### Error Handling & Logging
 - Use consistent error handling patterns in the surrounding code; avoid introducing new styles.
 - Log actionable context (request IDs, relevant entity IDs) without leaking PII.
+- **Never dump the environment or print secret values.** CI logs on this project are public. Don't use `env`, `printenv`, `set -x`, `cf env` or `echo`/`printf` of credential-named variables; log a length or whether it is set instead. `tools/checkSecretPrinting.js` enforces this in CI; exceptions need justification and review (see [docs/guides/circle-ci.md](docs/guides/circle-ci.md#secret-printing-check)).
 
 ### Validation
 - Leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)

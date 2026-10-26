@@ -65,6 +65,8 @@ workflows:
         filters: &branch_build_filters
           tags:
             ignore: /.*/
+    - secret_printing_check:
+        filters: *branch_build_filters
     - checkpoint:
         name: build_done
         requires:
@@ -116,6 +118,7 @@ workflows:
         - test_cucumber
         - sast_scan
         - release_inventory_check
+        - secret_printing_check
         - dynamic_security_scan
         filters: *branch_build_filters
     - deploy_job:
@@ -473,12 +476,16 @@ jobs:
             ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
             grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
             circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
+            line_number=0
             while IFS= read -r line; do
+              line_number=$((line_number + 1))
               key="${line%%=*}"
               value="${line#*=}"
 
+              # Report only the line number: a malformed line has no "=", so ${key} would be the whole
+              # line, and these lines carry substituted secret values.
               if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-                echo "Invalid frontend environment variable name: ${key}"
+                echo "Invalid frontend environment variable name on line ${line_number} of frontend-build.vars"
                 exit 1
               fi
 
@@ -757,6 +764,19 @@ jobs:
     - store_artifacts:
         path: reports/semgrep
 
+  secret_printing_check:
+    executor: docker-executor
+    resource_class: small
+    steps:
+    - checkout
+    - run:
+        name: Check scripts for commands that print the environment or secrets
+        command: |
+          # CircleCI logs for this project are public. This fails on env dumps, shell tracing and echoing
+          # secret-named variables in automation/, bin/ and this config. It uses only Node built-ins, so it
+          # needs no dependencies. Exceptions: tools/secretPrintingExceptions.json (see docs/guides/circle-ci.md).
+          node ./tools/checkSecretPrinting.js
+
   release_inventory_check:
     executor: docker-executor
     resource_class: small
@@ -934,10 +954,10 @@ jobs:
     - run:
         name: Run database migrations
         command: |
-          set -x
           mkdir -p reports/migrations
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
           echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+          echo "Running database migrations as task ${TASK_NAME}"
 
           set +e
           cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait

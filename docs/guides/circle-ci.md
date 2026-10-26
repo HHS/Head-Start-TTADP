@@ -15,6 +15,7 @@ This document provides an overview of the CircleCI configuration for the project
   - [Daily Scheduled Workflows](#daily-scheduled-workflows)
   - [Manually Triggered Workflows](#manually-triggered-workflows)
 - [Environment Variables and Secrets](#environment-variables-and-secrets)
+- [Secret-Printing Check](#secret-printing-check)
 - [Conclusion](#conclusion)
 
 ---
@@ -58,6 +59,7 @@ The configuration includes jobs tailored to specific purposes:
 - **Test Frontend**: Executes frontend tests using Jest, with coverage checks for modified lines.
 - **Test End-to-End**: Uses Playwright for E2E testing, ensuring workflows function correctly.
 - **Dynamic Security Scan**: Runs OWASP ZAP scans to identify vulnerabilities in the application.
+- **Secret Printing Check**: Fails the build on shell commands that print the environment or secret values (see [Secret-Printing Check](#secret-printing-check)).
 - **Deploy**: Pushes applications to appropriate Cloud Foundry environments based on branch.
 - **Backup Upload Production**: Creates a backup of the production database and uploads it to a secure location.
 - **Restore and Process Data**: Restores a backup to a processing environment and runs scripts to anonymize or prepare the data.
@@ -73,7 +75,7 @@ Workflows orchestrate the execution of jobs, grouping them by purpose and defini
 This workflow automates the building, testing, and deployment process for the application. It triggers on pushes to specific branches unless manual flags are set. It consists of:
 
 1. **Build and Lint**
-2. **Backend, Frontend, and E2E Tests**
+2. **Backend, Frontend, and E2E Tests**, and the **Secret Printing Check**, which runs in parallel with the build and is required for the `tests_done` gate
 3. **Dynamic Security Scan**
 4. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
 
@@ -123,6 +125,71 @@ Key variables include:
 - **Authentication Credentials**: For Cloud Foundry and other external services.
 - **Database Connection Details**: For running migrations, tests, and backups.
 - **Slack and New Relic Keys**: For notifications and deployment tracking.
+
+---
+
+## Secret-Printing Check
+
+CircleCI job logs for this project are **publicly readable**, so any command that prints the environment or a secret value
+publishes it. (A database credential was exposed this way in TTAHUB-5932, by an `env` dump in an automation script.)
+The `secret_printing_check` job runs `node ./tools/checkSecretPrinting.js` on every branch build and fails when it finds
+one of the commands below. Run it locally with `yarn lint:secret-printing`.
+
+**What it scans:** shell scripts under `automation/` and `bin/` (files ending in `.sh`/`.bash`, or with a shell shebang),
+and `.circleci/config.yml`. It is a static check that does not run anything. It reads each command as a shell
+reader would: backslash-continued lines are joined into one command, and control prefixes (`if ... then`, `do`, `{`, `!`,
+function and `case` headers, leading `VAR=value`) are looked through. In the CircleCI config it scans only the values of
+`run:` and `command:` keys, both inline (`- run: env`, `command: "set -x"`) and block scalars (`command: |` and the lines
+under it). Names, descriptions and parameter values are not commands and are not scanned. Flow-style mappings such as
+`run: { command: env }` are not handled.
+
+| Rule | Flags | Why it is unsafe |
+| ---- | ----- | ---------------- |
+| `env-dump` | `env`, `printenv`, `export -p`, `/proc/*/environ` used to write the environment out | Prints every variable, including credentials |
+| `cf-env` | any `cf env` that is not itself captured into a variable, such as `VAR=$(cf env APP \| ...)`; each `cf env` is judged on its own | Prints the whole app environment, including `VCAP_SERVICES` |
+| `shell-trace` | `set -x`, `set -ex`, `set -o xtrace`, `bash -x`, or a `-x` shebang | Prints every command with its variables expanded |
+| `print-secret` | `echo`/`printf` of `DATABASE_URL`, `POSTGRES_URL`, `VCAP_*`, or a variable whose name contains `PASSWORD`, `SECRET`, `TOKEN` or `KEY` | Writes the value into the log |
+
+It does **not** flag ordinary uses: `#!/usr/bin/env bash`, `env FOO=bar cmd`, passing a secret to a command
+(`cf login -p "$PASSWORD"`), printing a secret's length (`${#TOKEN}`) or whether it is set (`${TOKEN:+set}`), text that only
+mentions a name, or variables ending in `_NAME`, `_PATH`, `_FILE`, `_DIR`, `_ID`, `_COUNT` or `_LENGTH` (for example
+`service_key_name`).
+
+**Commented lines are not scanned.** A comment such as `# set -x` or `# echo "$PASSWORD"` cannot run, so it passes. If a
+commented example would be dangerous when someone uncomments it, say so in the comment and don't leave the live-looking
+command behind (see the note in `automation/db-backup/scripts/db_restore.sh`).
+
+### Requesting an exception
+
+If a command is flagged but cannot print a secret, add an entry to
+[`tools/secretPrintingExceptions.json`](../../tools/secretPrintingExceptions.json):
+
+```json
+{
+  "file": "bin/example-script",
+  "rule": "shell-trace",
+  "text": "set -euxo pipefail",
+  "justification": "Only runs docker compose commands with fixed arguments; no credential variables are referenced.",
+  "ticket": "TTAHUB-0000"
+}
+```
+
+- `text` is the exact command, trimmed (for a command continued with a backslash, the lines joined by single spaces).
+  An exception covers matching commands in that file for that rule only, so editing the command, or adding the same
+  one elsewhere, is flagged again.
+- Every field is required, and the justification must say why no secret can reach the output. A reviewer must approve
+  the exception in the PR, and should check that no credential-named variable can reach the command.
+- An exception that no longer matches any line fails the check, so remove entries when you remove the code they cover.
+- The check never prints the flagged line, because it could contain a secret. Failures show only the file, line number,
+  rule and fix.
+
+Before adding an exception, prefer a fix: print only non-secret fields, a length, or a `${VAR:+set}` check.
+
+### Code review: do not dump the environment or secrets
+
+When reviewing a script or CI change, reject anything that dumps the environment or logs a secret value, even for
+debugging: `env`, `printenv`, `set -x`, `cf env`, `echo "$SOME_TOKEN"`, or error messages that echo a value from a
+secrets-bearing file.
 
 ---
 
