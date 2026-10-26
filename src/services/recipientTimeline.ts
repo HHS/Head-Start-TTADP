@@ -11,6 +11,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
+import { CREATION_METHOD } from '../constants';
 import { serviceError } from '../lib/serviceError';
 import { auditLogger } from '../logger';
 import db from '../models';
@@ -71,9 +72,17 @@ export async function getTimelineGoalCategories(
   const goals = await Goal.findAll({
     attributes: ['status'],
     where: {
-      isRttapa: 'Yes',
       mapsToParentGoalId: null,
-      [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }],
+      [Op.and]: [
+        { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+        // Current standard goals do not set the legacy isRttapa flag.
+        {
+          [Op.or]: [
+            { isRttapa: 'Yes' },
+            { '$goalTemplate.creationMethod$': CREATION_METHOD.CURATED },
+          ],
+        },
+      ],
     },
     include: [
       {

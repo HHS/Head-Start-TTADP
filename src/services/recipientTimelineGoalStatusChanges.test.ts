@@ -36,6 +36,24 @@ describe('goal status change timeline integration', () => {
   let templates;
   let user;
 
+  it('includes current standard goals created without the legacy RTTAPA flag', async () => {
+    const originalCreatedVia = goals[0].createdVia;
+    try {
+      // newStandardGoal creates goals via rtr without setting isRttapa.
+      await goals[0].update({ createdVia: 'rtr' }, { hooks: false });
+      expect(goals[0].isRttapa).toBeNull();
+      const expected = [{ label: standards[0], statuses: ['In Progress'] }];
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
+        expected
+      );
+      const result = await getRecipientTimeline({ ...params, view: 'goals' });
+      expect(result.categories).toEqual(expected);
+      expect(result.count).toBeGreaterThan(0);
+    } finally {
+      await goals[0].update({ createdVia: originalCreatedVia }, { hooks: false });
+    }
+  });
+
   it('retains the category of an RTTAPA goal with a NULL status', async () => {
     const originalStatus = goals[0].status;
     const originalIsRttapa = goals[0].isRttapa;
@@ -62,9 +80,14 @@ describe('goal status change timeline integration', () => {
       creationMethod: 'Curated',
     });
     templates.push(draftTemplate);
+    const nonStandardTemplate = await GoalTemplate.create({
+      templateName: `Non-standard ${getUniqueId()}`,
+      creationMethod: 'Automatic',
+    });
+    templates.push(nonStandardTemplate);
     const extraGoals = await Goal.bulkCreate(
       [
-        { status: 'Closed', isRttapa: 'No' },
+        { status: 'Closed', isRttapa: 'No', goalTemplateId: nonStandardTemplate.id },
         { status: 'Draft', goalTemplateId: draftTemplate.id },
         { status: 'Closed', grantId: grantIds[1] },
         { status: 'Closed', grantId: grantIds[2] },

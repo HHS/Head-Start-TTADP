@@ -49,9 +49,11 @@ describe('timeline views', () => {
     expect(Goal.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          isRttapa: 'Yes',
           mapsToParentGoalId: null,
-          [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }],
+          [Op.and]: [
+            { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+            { [Op.or]: [{ isRttapa: 'Yes' }, { '$goalTemplate.creationMethod$': 'Curated' }] },
+          ],
         },
         include: expect.arrayContaining([
           expect.objectContaining({
