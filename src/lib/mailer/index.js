@@ -304,10 +304,8 @@ export const notifyApproverReportApproved = (job, transport = defaultTransport) 
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, programSpecialists, recipients } = job.data;
+  const { report, programSpecialists } = job.data;
   const { id, displayId } = report;
-  const recipientNames = recipients.map((r) => r.name);
-  const recipientNamesDisplay = recipientNames.join(', ').trim();
 
   logger.info(
     `MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`
@@ -323,7 +321,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
       message: { to: toEmails },
-      locals: { reportPath, displayId, recipientNamesDisplay },
+      locals: { reportPath, displayId },
     });
   });
 };
@@ -940,11 +938,11 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     const reports = await activityReportsApprovedByDate(null, date);
     const reportIds = reports.map((r) => r.id);
 
-    // Get all specialists that are subscribed to RECIPIENT_APPROVAL notifications given this freq.
+    // Get the program specialist for each approved report's grants.
     // FIXME: TTAHUB-1253
-    let specialists = await sequelize.query(
+    const rows = await sequelize.query(
       `
-      SELECT DISTINCT u.id
+      SELECT DISTINCT u.id AS "userId", a.id AS "reportId"
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar
       ON a.id = ar."activityReportId"
@@ -957,27 +955,35 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
       { type: QueryTypes.SELECT }
     );
 
+    // Each specialist only receives reports on their own recipients' grants.
+    const reportIdsByUser = new Map();
+    rows.forEach(({ userId, reportId }) => {
+      if (!reportIdsByUser.has(userId)) reportIdsByUser.set(userId, new Set());
+      reportIdsByUser.get(userId).add(reportId);
+    });
+
     // Filter to only those who have opted into this notification setting and freq.
-    specialists = await Promise.all(
-      specialists.map(async (ps) => {
+    let specialistIds = await Promise.all(
+      [...reportIdsByUser.keys()].map(async (userId) => {
         const setting = await userSettingOverridesById(
-          ps.id,
+          userId,
           USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL
         );
 
-        if (setting && setting.value === freq) return ps;
+        if (setting && setting.value === freq) return userId;
         return null;
       })
     );
 
-    specialists = specialists.filter((s) => s !== null);
+    specialistIds = specialistIds.filter((id) => id !== null);
 
-    const users = await Promise.all(specialists.map(async (s) => userById(s.id, true)));
+    const users = await Promise.all(specialistIds.map(async (id) => userById(id, true)));
 
-    const records = users.map((user) => {
+    const records = users.map((user, i) => {
+      const userReportIds = reportIdsByUser.get(specialistIds[i]);
       const data = {
         user,
-        reports,
+        reports: reports.filter((r) => userReportIds.has(r.id)),
         type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
         freq,
         subjectFreq,
@@ -991,7 +997,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     return Promise.all(records);
   } catch (err) {
     logger.info(
-      `MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`
+      `MAILER: RecipientApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL} freq ${freq} error ${err}`
     );
     throw err;
   }
