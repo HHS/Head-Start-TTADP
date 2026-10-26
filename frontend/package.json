@@ -87,7 +87,7 @@
     "@babel/preset-env": "^7.29.7",
     "@babel/preset-react": "^7.29.7",
     "@babel/preset-typescript": "^7.29.7",
-    "@biomejs/biome": "^2.5.15",
+    "@biomejs/biome": "2.6.2",
     "@figma/code-connect": "^2",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
