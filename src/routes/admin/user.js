@@ -162,24 +162,6 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
-    // TEMP TTAHUB-5913: keep Grants.programSpecialistEmail in sync with user email changes
-    // so the program specialist notification can be tested in deployed envs. Remove before merge.
-    const existingUser = await User.findByPk(userId, { attributes: ['email'] });
-    const oldEmail = existingUser?.email;
-    const newEmail = requestUser.email;
-    if (oldEmail && newEmail && oldEmail.toLowerCase() !== newEmail.toLowerCase()) {
-      await Grant.update(
-        { programSpecialistEmail: newEmail },
-        {
-          where: sequelize.where(
-            sequelize.fn('LOWER', sequelize.col('programSpecialistEmail')),
-            oldEmail.toLowerCase()
-          ),
-        }
-      );
-    }
-    // END TEMP TTAHUB-5913
-
     await User.update(requestUser, {
       include: [
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
