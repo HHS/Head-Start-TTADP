@@ -20,7 +20,6 @@ const defaultFlags = [
 // mock child components lightly to ensure they render *something* identifiable
 // this avoids needing to mock deeply nested dependencies of each page
 jest.mock('../pages/Home', () => () => <div>Home Page Welcome</div>);
-jest.mock('../pages/Home/NewHome', () => () => <div>New Home Page Welcome</div>);
 jest.mock('../pages/Landing', () => () => <div>Activity Reports Landing</div>);
 jest.mock('../pages/ActivityReport', () => () => <div>Activity Report Form</div>);
 jest.mock('../pages/ApprovedActivityReport', () => () => <div>Approved Activity Report View</div>);
@@ -211,16 +210,7 @@ describe('Routes', () => {
 
   // --- authenticated routes ---
 
-  it('renders the legacy Home page for an unflagged non-admin', async () => {
-    await RenderRoutes('/', true, {
-      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
-      roles: [],
-    });
-    expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
-    expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
-  });
-
-  it('renders the legacy Home page for a non-admin without a flags array', async () => {
+  it('renders the Home page', async () => {
     await RenderRoutes('/', true, {
       flags: undefined,
       permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
@@ -228,26 +218,6 @@ describe('Routes', () => {
     });
     expect(await screen.findByText('Home Page Welcome')).toBeInTheDocument();
     expect(screen.queryByText('New Home Page Welcome')).not.toBeInTheDocument();
-  });
-
-  it('renders the new Home page for a flagged non-admin', async () => {
-    await RenderRoutes('/', true, {
-      flags: [...defaultFlags, 'actionable_notifications'],
-      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
-      roles: [],
-    });
-    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
-    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
-  });
-
-  it('renders the new Home page for an admin without the flag', async () => {
-    await RenderRoutes('/', true, {
-      flags: defaultFlags,
-      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
-      roles: [{ name: 'Admin' }],
-    });
-    expect(await screen.findByText('New Home Page Welcome')).toBeInTheDocument();
-    expect(screen.queryByText('Home Page Welcome')).not.toBeInTheDocument();
   });
 
   it('renders the Landing page for "/activity-reports"', async () => {
