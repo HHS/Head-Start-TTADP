@@ -2,7 +2,6 @@ import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common
 import stringify from 'csv-stringify/lib/sync';
 import { once } from 'events';
 import { uniq } from 'lodash';
-import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -24,7 +23,6 @@ import {
   ActivityReportGoal,
   ActivityReport as ActivityReportModel,
   Role,
-  sequelize,
   User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
@@ -68,6 +66,7 @@ import {
   createResubmittedNotificationForApprovers,
   createResubmittedNotificationForCollaborators,
   createResubmittedNotificationForCreator,
+  programSpecialistsForReport,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -458,23 +457,7 @@ async function checkEmailSettings(report, setting) {
         })
       : [];
 
-  // FIXME: This should be temporary until we have a solid relationship between
-  // program specialists and grants.
-  // Related: TTAHUB-1253
-  let programSpecialistsToNotify = await sequelize.query(
-    `
-    SELECT DISTINCT u.id
-    FROM "ActivityReports" a
-    JOIN "ActivityRecipients" ar
-    ON a.id = ar."activityReportId"
-    JOIN "Grants" gr
-    ON ar."grantId" = gr.id
-    JOIN "Users" u
-    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
-    WHERE a.id = ${report.id}
-  `,
-    { type: QueryTypes.SELECT }
-  );
+  let programSpecialistsToNotify = await programSpecialistsForReport(report.id);
 
   // For each program specialist ID number, I want to make sure they
   // are subscribed to immediate notifications given the `setting` key.
