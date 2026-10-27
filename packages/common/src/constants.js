@@ -542,6 +542,42 @@ const TRACE_IDS = {
 
 exports.TRACE_IDS = TRACE_IDS;
 
+const COLLAB_REPORT_CONDUCT_METHODS = [
+  { label: 'Email', value: 'email' },
+  { label: 'Phone', value: 'phone' },
+  { label: 'In person', value: 'in_person' },
+  { label: 'Virtual', value: 'virtual' },
+];
+exports.COLLAB_REPORT_CONDUCT_METHODS = COLLAB_REPORT_CONDUCT_METHODS;
+
+const COLLAB_REPORT_REASONS = {
+  participate_work_groups:
+    'Participate in national, regional, state, and local work groups and meetings',
+  support_coordination:
+    'Support partnerships, coordination, and collaboration with state/regional partners',
+  agg_regional_data: 'Aggregate, analyze, and/or present regional data',
+  develop_presentations:
+    'Develop and provide presentations, training, and resources to RO and/or state/regional partners',
+};
+exports.COLLAB_REPORT_REASONS = COLLAB_REPORT_REASONS;
+
+const COLLAB_REPORT_DATA = {
+  census_data: 'Census data',
+  child_abuse_and_neglect: 'Child abuse and neglect',
+  child_safety: 'Child safety',
+  child_family_health: 'Child/family health',
+  disabilities: 'Disabilities',
+  foster_care: 'Foster care',
+  homelessness: 'Homelessness',
+  kids_count: 'Kids Count',
+  licensing_data: 'Licensing data',
+  ohs_monitoring: 'OHS Monitoring',
+  pir: 'PIR',
+  tta_hub: 'TTA Hub',
+  other: 'Other',
+};
+exports.COLLAB_REPORT_DATA = COLLAB_REPORT_DATA;
+
 const COLLAB_REPORT_PARTICIPANTS = [
   'Child Care and Development Fund',
   'Child care licensing',
@@ -722,6 +758,8 @@ const NOTIFICATION_TYPES = {
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
   // TR-3: Creator submits a session for approval
   TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  // Event collaborators are notified when the creator submits a session for approval.
+  TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator',
   // TR-4: Approver requests changes to a session
   TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
   // TR-5/6: Creator or collaborator re-submits a session for review
@@ -814,6 +852,7 @@ const EMAIL_NOTIFICATION_SETTING_KEYS = [
   'emailWhenAddedAsRecipientCommLog',
   'emailWhenAddedAsPocTrainingReport',
   'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionSubmittedCollaboratorTrainingReport',
   'emailWhenSessionReviewRequestedTrainingReport',
   'emailWhenSessionChangesRequestedTrainingReport',
   'emailWhenSessionDetails20DaysCreatorCollaborator',
@@ -853,6 +892,7 @@ const IN_APP_NOTIFICATION_SETTING_KEYS = [
   'inAppWhenAddedAsRecipientCommLog',
   'inAppWhenAddedAsPocTrainingReport',
   'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',

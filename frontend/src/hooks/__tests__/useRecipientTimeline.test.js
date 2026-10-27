@@ -25,6 +25,30 @@ const deferred = () => {
 describe('useRecipientTimeline', () => {
   beforeEach(() => getRecipientTimeline.mockReset());
 
+  it('discards stale events and category metadata when the view changes', async () => {
+    const previous = deferred();
+    const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
+    getRecipientTimeline
+      .mockReturnValueOnce(previous.promise)
+      .mockResolvedValueOnce({ count: 1, events: events(9, 1), categories });
+    const { result, rerender, waitFor } = renderHook(
+      (query) => useRecipientTimeline('401', '1', query),
+      { initialProps: { ...options, view: 'chronological' } }
+    );
+    rerender({ ...options, view: 'goals' });
+    await waitFor(() => expect(result.current.events).toEqual(events(9, 1)));
+    await act(async () =>
+      previous.resolve({
+        count: 50,
+        events: events(1, 25),
+        categories: [{ label: 'Unrelated', statuses: [] }],
+      })
+    );
+    expect(result.current.events).toEqual(events(9, 1));
+    expect(result.current.categories).toEqual(categories);
+    expect(result.current.count).toBe(1);
+  });
+
   it('loads 25 automatically, locks concurrent requests, retains events and deduplicates batches', async () => {
     const next = deferred();
     getRecipientTimeline

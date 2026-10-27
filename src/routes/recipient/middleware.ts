@@ -24,6 +24,7 @@ const recipientTimelineQuerySchema = Joi.object({
   offset: Joi.number().integer().min(0).default(0),
   sortBy: Joi.string().valid('date').default('date'),
   direction: Joi.string().valid('asc', 'desc').default('desc'),
+  view: Joi.string().valid('chronological', 'monitoring', 'goals'),
   'date.in': Joi.array().items(dateQuery).length(1).single(),
   'date.win': dateQuery,
   'date.aft': dateQuery,

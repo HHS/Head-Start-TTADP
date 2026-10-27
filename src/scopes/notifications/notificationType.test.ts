@@ -59,6 +59,7 @@ describe('notifications/notificationType scope', () => {
           NOTIFICATION_TYPES.TRAINING_REPORT_COLLABORATOR_ADDED,
           NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_CREATED,
           NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED,
+          NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR,
           NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
           NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_RESUBMITTED,
           NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_COMPLETED,
@@ -248,6 +249,19 @@ describe('notifications/notificationType scope', () => {
       });
       expect(found).toHaveLength(1);
       expect(found[0].id).toBe(trainingNotification.id);
+    });
+
+    it('supports every shared notification type in inclusive and exclusive filters', async () => {
+      const categories = Object.keys(NOTIFICATION_TYPE_MAP);
+      const included = await Notification.findAll({
+        where: { [Op.and]: [withNotificationType(categories), { id: allIds }] },
+      });
+      expect(included.map((notification) => notification.id).sort()).toEqual([...allIds].sort());
+
+      const excluded = await Notification.findAll({
+        where: { [Op.and]: [withoutNotificationType(categories), { id: allIds }] },
+      });
+      expect(excluded).toHaveLength(0);
     });
 
     it('returns only systemRelated notifications for the systemRelated category', async () => {
