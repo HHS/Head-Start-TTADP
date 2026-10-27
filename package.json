@@ -266,7 +266,7 @@
     "nodemailer": "^10.2.1",
     "protobufjs": "^7.6.5",
     "proxy-addr": "~2.0.8",
-    "qs": "^6.16.0",
+    "qs": "~6.16.1",
     "filelist": "^2.0.2",
     "test-exclude": "^8.0.0",
     "tar": "^7.5.21",

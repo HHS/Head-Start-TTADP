@@ -203,11 +203,13 @@ describe('ManageNotifications', () => {
   const validatedUser = {
     id: 1,
     validationStatus: [{ type: 'email', validatedAt: '2024-01-01T00:00:00.000Z' }],
+    flags: ['actionable_notifications'],
   };
 
   const unvalidatedUser = {
     id: 1,
     validationStatus: [],
+    flags: ['actionable_notifications'],
   };
 
   const emailSettings = [
@@ -225,7 +227,11 @@ describe('ManageNotifications', () => {
     updateUser = jest.fn(),
     history,
   }: {
-    user?: { id: number; validationStatus: Array<{ type: string; validatedAt?: string }> };
+    user?: {
+      id: number;
+      validationStatus: Array<{ type: string; validatedAt?: string }>;
+      flags: string[];
+    };
     setIsAppLoading?: jest.Mock;
     updateUser?: jest.Mock;
     history?: MemoryHistory;
@@ -276,6 +282,26 @@ describe('ManageNotifications', () => {
       'Other',
     ].forEach((section) => {
       expect(screen.getByText(section)).toBeInTheDocument();
+    });
+  });
+
+  it('only renders the Activity Reports section without the actionable_notifications flag', async () => {
+    fetchMock.get('/api/settings', settings);
+
+    renderManageNotifications({ user: { ...validatedUser, flags: [] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Activity Reports')).toBeInTheDocument();
+    });
+
+    [
+      'Collaboration Reports',
+      'Communication Logs',
+      'Training Reports',
+      'System Related',
+      'Other',
+    ].forEach((section) => {
+      expect(screen.queryByText(section)).not.toBeInTheDocument();
     });
   });
 
