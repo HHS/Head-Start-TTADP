@@ -25,8 +25,7 @@ import CollaborationReportsLanding from './pages/CollaborationReports';
 import CourseDashboard from './pages/CourseDashboard';
 import GoalDashboard from './pages/GoalDashboard';
 import GoalDashboardPrintPreview from './pages/GoalDashboard/GoalDashboardPrintPreview';
-import LegacyHome from './pages/Home';
-import NewHome from './pages/Home/NewHome';
+import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
 import Logout from './pages/Logout';
@@ -55,7 +54,7 @@ import ViewCollabReport from './pages/ViewCollabReport';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import ViewTtaRequest from './pages/ViewTtaRequest';
 import WhatsNewPage from './pages/WhatsNewPage';
-import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
+import isAdmin from './permissions';
 import UserContext from './UserContext';
 
 export default function Routes({
@@ -73,7 +72,6 @@ export default function Routes({
   whatsNewNotifications,
 }) {
   const admin = isAdmin(user);
-  const Home = canSeeBehindFeatureFlag(user, 'actionable_notifications') ? NewHome : LegacyHome;
 
   const locationRef = useLocation();
   const isLogoutPage = locationRef.pathname === '/logout';
