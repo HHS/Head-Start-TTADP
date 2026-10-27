@@ -168,7 +168,7 @@ describe('SiteNav', () => {
     test('marks Home active only on the exact root path', () => {
       const user = {
         name: 'Flagged user',
-        flags: ['actionable_notifications'],
+        flags: [],
         permissions: [nonAdminPermission],
       };
       const { unmount } = render(
