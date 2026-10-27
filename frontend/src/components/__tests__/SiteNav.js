@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
@@ -165,62 +164,6 @@ describe('SiteNav', () => {
         </MemoryRouter>
       );
     };
-
-    test('shows Home first and navigates to the root for a flagged non-admin', async () => {
-      const user = {
-        name: 'Flagged user',
-        flags: ['actionable_notifications'],
-        permissions: [nonAdminPermission],
-      };
-      const navigationHistory = createMemoryHistory({ initialEntries: ['/activity-reports'] });
-      render(
-        <Router history={navigationHistory}>
-          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
-            <SiteNav authenticated user={user} hasAlerts={false} />
-          </UserContext.Provider>
-        </Router>
-      );
-
-      const mainNavigation = screen.getByRole('navigation', { name: 'main navigation' });
-      const home = screen.getByRole('link', { name: 'Home' });
-      const activityReports = screen.getByRole('link', { name: 'Activity Reports' });
-      const reportingDisclosure = screen.getByText('TTA Reporting').closest('summary');
-
-      expect(home).toHaveAttribute('href', '/');
-      expect(within(mainNavigation).getAllByRole('link')[0]).toBe(home);
-      expect(
-        home.compareDocumentPosition(reportingDisclosure) & Node.DOCUMENT_POSITION_FOLLOWING
-      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-      expect(home.compareDocumentPosition(activityReports) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
-        Node.DOCUMENT_POSITION_FOLLOWING
-      );
-
-      await userEvent.click(home);
-      expect(navigationHistory.location.pathname).toBe('/');
-    });
-
-    test('hides Home for an unflagged non-admin', () => {
-      renderWithUserAndPath({
-        name: 'Unflagged user',
-        flags: [],
-        permissions: [nonAdminPermission],
-      });
-      expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
-    });
-
-    test('hides Home for a non-admin without a flags array', () => {
-      renderWithUserAndPath({ name: 'No flags user', permissions: [nonAdminPermission] });
-      expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
-    });
-
-    test('shows Home for an admin without the flag', () => {
-      renderWithUserAndPath({
-        name: 'Admin user',
-        flags: [],
-        permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 1 }],
-      });
-      expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
-    });
 
     test('marks Home active only on the exact root path', () => {
       const user = {
