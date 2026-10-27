@@ -308,7 +308,7 @@ export async function collabReportById(crId: string) {
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: ['id', 'status', 'note', 'updatedAt'],
         as: 'approvers',
         required: false,
         separate: true,

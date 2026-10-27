@@ -182,6 +182,32 @@ describe('Collab Reports Service', () => {
       expect(result.name).toEqual(reportObject.name);
     });
 
+    it('returns the actual approval date for an approved report', async () => {
+      const approvedAt = new Date('2025-01-25T09:15:00.000Z');
+      const report = await CollabReport.create(
+        {
+          ...reportObject,
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+        { hooks: false }
+      );
+      await CollabReportApprover.create(
+        {
+          collabReportId: report.id,
+          userId: mockUserTwo.id,
+          status: REPORT_STATUSES.APPROVED,
+          updatedAt: approvedAt,
+        },
+        { hooks: false, silent: true }
+      );
+
+      const result = await collabReportById(String(report.id));
+
+      expect(result.approvedAt).toEqual(approvedAt);
+      expect(result.toJSON().approvedAt).toEqual(approvedAt);
+    });
+
     it('returns null when given an invalid ID', async () => {
       expect(await collabReportById(99999999)).toBeNull();
     });
