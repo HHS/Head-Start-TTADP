@@ -72,6 +72,8 @@ export const DEFAULT_SETTINGS: SettingFormData = {
   inAppWhenAddedAsPocTrainingReport: true,
   emailWhenAddedAsCollaboratorTrainingReport: 'never',
   inAppWhenAddedAsCollaboratorTrainingReport: true,
+  emailWhenSessionSubmittedCollaboratorTrainingReport: 'never',
+  inAppWhenSessionSubmittedCollaboratorTrainingReport: true,
   emailWhenSessionReviewRequestedTrainingReport: 'never',
   inAppWhenSessionReviewRequestedTrainingReport: true,
   emailWhenSessionChangesRequestedTrainingReport: 'never',

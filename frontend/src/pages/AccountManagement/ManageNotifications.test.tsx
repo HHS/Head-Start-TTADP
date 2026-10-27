@@ -381,6 +381,41 @@ describe('ManageNotifications', () => {
     expect(Object.fromEntries(payload.map(({ key, value }) => [key, value]))).toEqual(expected);
   });
 
+  it('keeps saved session submitted collaborator settings through an unchanged save', async () => {
+    fetchMock.get('/api/settings', [
+      ...settings,
+      { key: 'emailWhenSessionSubmittedCollaboratorTrainingReport', value: 'today' },
+      { key: 'inAppWhenSessionSubmittedCollaboratorTrainingReport', value: false },
+    ]);
+    fetchMock.put('/api/settings', 204);
+
+    const { container } = renderManageNotifications();
+
+    await waitFor(() => {
+      expect(
+        container.querySelector('input[name="inAppWhenSessionSubmittedCollaboratorTrainingReport"]')
+      ).not.toBeChecked();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Your preferences have been saved.')).toBeInTheDocument();
+    });
+
+    const lastCall = fetchMock.lastCall('/api/settings');
+    const payload = JSON.parse(String(lastCall?.[1]?.body));
+
+    expect(payload).toContainEqual({
+      key: 'emailWhenSessionSubmittedCollaboratorTrainingReport',
+      value: 'today',
+    });
+    expect(payload).toContainEqual({
+      key: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
+      value: false,
+    });
+  });
+
   it('shows an error alert when updating settings fails', async () => {
     fetchMock.get('/api/settings', settings);
     fetchMock.put('/api/settings', { throws: new Error('Unable to save preferences') });
