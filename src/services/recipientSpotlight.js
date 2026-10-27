@@ -37,6 +37,7 @@ const INDICATOR_LABEL_TO_COLUMN = {
   'New recipient': 'newRecipients',
   'New staff': 'newStaff',
   'No TTA': 'noTTA',
+  Underenrolled: 'underenrolled',
   DRS: 'DRS',
   FEI: 'FEI',
   Underenrolled: 'underenrolled',
@@ -53,6 +54,7 @@ const ALLOWED_SORT_COLUMNS = [
   'newRecipients',
   'newStaff',
   'noTTA',
+  'underenrolled',
   'DRS',
   'FEI',
   'underenrolled',
@@ -450,6 +452,7 @@ export async function getRecipientSpotlightIndicators(
         new_recip_rid IS NOT NULL "newRecipients",
         new_staff_rid IS NOT NULL "newStaff",
         no_tta_rid IS NOT NULL "noTTA",
+        FALSE AS "underenrolled", -- Placeholder for future implementation
         FALSE AS "DRS",  -- Placeholder for future implementation
         fei_rid IS NOT NULL "FEI",
         underenrolled_rid IS NOT NULL "underenrolled",
@@ -458,8 +461,12 @@ export async function getRecipientSpotlightIndicators(
         (new_recip_rid IS NOT NULL)::int +
         (new_staff_rid IS NOT NULL)::int +
         (no_tta_rid IS NOT NULL)::int +
+<<<<<<< HEAD
+        FALSE::int "indicatorCount"
+=======
         (fei_rid IS NOT NULL)::int +
         (underenrolled_rid IS NOT NULL)::int "indicatorCount"
+>>>>>>> main
       FROM recipients
       LEFT JOIN child_incidents ci
         ON rid = incident_rid

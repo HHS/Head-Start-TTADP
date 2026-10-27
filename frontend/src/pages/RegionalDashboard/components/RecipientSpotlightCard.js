@@ -7,7 +7,10 @@ import ExpanderButton from '../../../components/ExpanderButton';
 import IndicatorCounter from '../../RecipientRecord/components/IndicatorCounter';
 import './RecipientSpotlightCard.scss';
 
+<<<<<<< HEAD
+=======
 // Number of priority indicators currently shown (DRS temporarily hidden)
+>>>>>>> main
 const DISPLAYED_INDICATOR_COUNT = 7;
 
 const INDICATOR_DETAILS = {
@@ -22,6 +25,10 @@ const INDICATOR_DETAILS = {
   },
   FEI: {
     label: 'FEI',
+<<<<<<< HEAD
+    description: 'Recipient is currently in the Full Enrollment Initiative (FEI) including 6-month evaluation and designated chronically underenrolled (DCU) periods',
+  },
+=======
     description:
       'Recipient is currently in the Full Enrollment Initiative (FEI) including 6-month evaluation and designated chronically underenrolled (DCU) periods',
   },
@@ -30,6 +37,7 @@ const INDICATOR_DETAILS = {
   //   label: 'DRS',
   //   description: 'Recipient meets the conditions for the Designation Renewal System (DRS)',
   // },
+>>>>>>> main
   newRecipients: {
     label: 'New recipient',
     description:
@@ -46,8 +54,12 @@ const INDICATOR_DETAILS = {
   },
   underenrolled: {
     label: 'Underenrolled',
+<<<<<<< HEAD
+    description: 'Recipient reports below 97% enrollment but has not reached 4 consecutive months of underenrollment',
+=======
     description:
       'Recipient reports below 97% enrollment but has not reached 4 consecutive months of underenrollment',
+>>>>>>> main
   },
 };
 
@@ -67,8 +79,11 @@ export default function RecipientSpotlightCard({ recipient }) {
       recip.newStaff,
       recip.noTTA,
       recip.underenrolled,
+<<<<<<< HEAD
+=======
       // Temporarily hidden - will be added back later
       // recip.DRS,
+>>>>>>> main
     ];
     return indicators.filter(Boolean).length;
   };
@@ -185,5 +200,6 @@ RecipientSpotlightCard.propTypes = {
     noTTA: PropTypes.bool,
     DRS: PropTypes.bool,
     FEI: PropTypes.bool,
+    underenrolled: PropTypes.bool,
   }).isRequired,
 };

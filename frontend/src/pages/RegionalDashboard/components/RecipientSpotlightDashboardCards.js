@@ -116,6 +116,24 @@ export default function RecipientSpotlightDashboardCards({
 }
 
 RecipientSpotlightDashboardCards.propTypes = {
+<<<<<<< HEAD
+  recipients: PropTypes.arrayOf(PropTypes.shape({
+    recipientId: PropTypes.number.isRequired,
+    regionId: PropTypes.number.isRequired,
+    recipientName: PropTypes.string.isRequired,
+    grantIds: PropTypes.arrayOf(PropTypes.string),
+    lastTTA: PropTypes.string,
+    childIncidents: PropTypes.bool,
+    deficiency: PropTypes.bool,
+    newRecipients: PropTypes.bool,
+    newStaff: PropTypes.bool,
+    noTTA: PropTypes.bool,
+    DRS: PropTypes.bool,
+    FEI: PropTypes.bool,
+    underenrolled: PropTypes.bool,
+    indicatorCount: PropTypes.number,
+  })),
+=======
   recipients: PropTypes.arrayOf(
     PropTypes.shape({
       recipientId: PropTypes.number.isRequired,
@@ -133,6 +151,7 @@ RecipientSpotlightDashboardCards.propTypes = {
       indicatorCount: PropTypes.number,
     })
   ),
+>>>>>>> main
   count: PropTypes.number.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string.isRequired,
