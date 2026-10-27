@@ -8,6 +8,7 @@ import db from '../../models';
 import { stateFilter } from '../../scopes/notifications/state';
 import {
   archiveApproverApprovedNotifications,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotificationForApprovers,
 } from './activityReport';
 import {
@@ -432,6 +433,48 @@ describe('Notification service', () => {
             },
           });
           expect(count).toBe(2);
+        });
+
+        it('creates a fresh unread recipient approval notification after it is archived', async () => {
+          const report = await createTrackedActivityReport();
+          const savedReport = {
+            id: report.id,
+            displayId: `R01-AR-${report.id}`,
+            activityRecipients: [{ name: 'Recipient A' }],
+          };
+          const [first] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(first);
+          const firstState = await NotificationUserState.create({
+            notificationId: first.id,
+            userId: user.id,
+            viewedAt: null,
+            archivedAt: null,
+          });
+
+          await archiveNotificationsByEntityAndType(
+            report.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+          );
+
+          await firstState.reload();
+          expect(firstState.archivedAt).not.toBeNull();
+          expect(firstState.viewedAt).toBeNull();
+
+          const [second] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(second);
+
+          expect(second.id).not.toBe(first.id);
+          expect(
+            await NotificationUserState.findOne({
+              where: { notificationId: second.id, userId: user.id },
+            })
+          ).toBeNull();
         });
 
         it('reuses the existing notification when the user state is not archived', async () => {
