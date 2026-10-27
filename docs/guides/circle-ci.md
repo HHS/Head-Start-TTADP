@@ -29,7 +29,6 @@ This CircleCI configuration is designed to automate various tasks such as buildi
 ## Executors
 
 CircleCI executors define the environment in which each job runs.
-
 - **Docker Executor**: Used for most tasks, leveraging a Node.js image with browser support for building and testing.
 - **Docker Postgres Executor**: Combines Node.js with a PostgreSQL instance for database-related testing.
 - **Machine Executor**: Provides a full virtual machine for tasks requiring more control, like dynamic security scans.
@@ -40,7 +39,6 @@ CircleCI executors define the environment in which each job runs.
 ## Commands
 
 Commands in this configuration abstract common steps for reuse across multiple jobs:
-
 1. **Sparse Checkout**: Enables cloning only the necessary parts of the repository for specific workflows, reducing resource usage.
 2. **Create Combined Yarn Lock**: Merges multiple `yarn.lock` files into one to use as a cache key.
 3. **Notify New Relic**: Sends deployment notifications to New Relic for tracking environment changes.
@@ -53,7 +51,6 @@ Commands in this configuration abstract common steps for reuse across multiple j
 ## Jobs
 
 The configuration includes jobs tailored to specific purposes:
-
 - **Build and Lint**: Runs lint checks for backend and frontend code and builds assets.
 - **Test Backend**: Runs backend tests, including database migration and seeding.
 - **Test Frontend**: Executes frontend tests using Jest, with coverage checks for modified lines.
@@ -73,7 +70,6 @@ Workflows orchestrate the execution of jobs, grouping them by purpose and defini
 ### Build, Test, and Deploy Workflow
 
 This workflow automates the building, testing, and deployment process for the application. It triggers on pushes to specific branches unless manual flags are set. It consists of:
-
 1. **Build and Lint**
 2. **Backend, Frontend, and E2E Tests**, and the **Secret Printing Check**, which runs in parallel with the build and is required for the `tests_done` gate
 3. **Dynamic Security Scan**
@@ -84,7 +80,6 @@ This workflow automates the building, testing, and deployment process for the ap
 ### Daily Scheduled Workflows
 
 These workflows are triggered at regular intervals using cron schedules:
-
 1. **Daily Security Scan**:
    - Runs a comprehensive set of tests and OWASP ZAP scans to detect vulnerabilities.
    - Scheduled at 12:00 UTC, Monday to Friday.
@@ -98,7 +93,6 @@ These workflows are triggered at regular intervals using cron schedules:
 ### Manually Triggered Workflows
 
 The configuration supports several workflows that can be manually triggered using flag variables:
-
 1. **Manual Backup Upload Production** (`manual-trigger`):
    - Backs up the production database and uploads it to a secure location.
 
@@ -121,7 +115,6 @@ The configuration supports several workflows that can be manually triggered usin
 Environment variables store sensitive information such as API keys, database credentials, and Cloud Foundry login details. These are securely managed in CircleCI’s settings and passed into jobs as needed.
 
 Key variables include:
-
 - **Authentication Credentials**: For Cloud Foundry and other external services.
 - **Database Connection Details**: For running migrations, tests, and backups.
 - **Slack and New Relic Keys**: For notifications and deployment tracking.
@@ -133,7 +126,9 @@ Key variables include:
 CircleCI job logs for this project are **publicly readable**, so any command that prints the environment or a secret value
 publishes it. (A database credential was exposed this way in TTAHUB-5932, by an `env` dump in an automation script.)
 The `secret_printing_check` job runs `node ./tools/checkSecretPrinting.js` on every branch build and fails when it finds
-one of the commands below. Run it locally with `yarn lint:secret-printing`.
+one of the commands below. Run it locally with `yarn lint:secret-printing`. The pre-commit hook (`.githooks/pre-commit`)
+runs it as `node ./tools/checkSecretPrinting.js --staged`, which reads the git index (including the staged exceptions file)
+instead of the working tree.
 
 **What it scans:** shell scripts under `automation/` and `bin/` (files ending in `.sh`/`.bash`, or with a shell shebang),
 and `.circleci/config.yml`. It is a static check that does not run anything. It reads each command as a shell
@@ -143,12 +138,12 @@ function and `case` headers, leading `VAR=value`) are looked through. In the Cir
 under it). Names, descriptions and parameter values are not commands and are not scanned. Flow-style mappings such as
 `run: { command: env }` are not handled.
 
-| Rule | Flags | Why it is unsafe |
-| ---- | ----- | ---------------- |
-| `env-dump` | `env`, `printenv`, `export -p`, `/proc/*/environ` used to write the environment out | Prints every variable, including credentials |
-| `cf-env` | any `cf env` that is not itself captured into a variable, such as `VAR=$(cf env APP \| ...)`; each `cf env` is judged on its own | Prints the whole app environment, including `VCAP_SERVICES` |
-| `shell-trace` | `set -x`, `set -ex`, `set -o xtrace`, `bash -x`, or a `-x` shebang | Prints every command with its variables expanded |
-| `print-secret` | `echo`/`printf` of `DATABASE_URL`, `POSTGRES_URL`, `VCAP_*`, or a variable whose name contains `PASSWORD`, `SECRET`, `TOKEN` or `KEY` | Writes the value into the log |
+| Rule           | Flags                                                                                                                                 | Why it is unsafe                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `env-dump`     | `env`, `printenv`, `export -p`, `/proc/*/environ` used to write the environment out                                                   | Prints every variable, including credentials                |
+| `cf-env`       | any `cf env` that is not itself captured into a variable, such as `VAR=$(cf env APP \| ...)`; each `cf env` is judged on its own      | Prints the whole app environment, including `VCAP_SERVICES` |
+| `shell-trace`  | `set -x`, `set -ex`, `set -o xtrace`, `bash -x`, or a `-x` shebang                                                                    | Prints every command with its variables expanded            |
+| `print-secret` | `echo`/`printf` of `DATABASE_URL`, `POSTGRES_URL`, `VCAP_*`, or a variable whose name contains `PASSWORD`, `SECRET`, `TOKEN` or `KEY` | Writes the value into the log                               |
 
 It does **not** flag ordinary uses: `#!/usr/bin/env bash`, `env FOO=bar cmd`, passing a secret to a command
 (`cf login -p "$PASSWORD"`), printing a secret's length (`${#TOKEN}`) or whether it is set (`${TOKEN:+set}`), text that only

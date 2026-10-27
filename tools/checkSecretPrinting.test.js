@@ -1,7 +1,9 @@
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const {
+  CheckError,
   ExceptionsError,
   applyExceptions,
   checkRepository,
@@ -451,5 +453,154 @@ describe('checkSecretPrinting repository scan', () => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('not valid JSON'));
       errorSpy.mockRestore();
     });
+  });
+});
+
+describe('checkSecretPrinting --staged (reads the git index, not the working tree)', () => {
+  let repoDir;
+
+  const git = (...args) =>
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'user.name=test',
+        '-c',
+        'user.email=test@example.com',
+        '-c',
+        'commit.gpgsign=false',
+        ...args,
+      ],
+      { cwd: repoDir, encoding: 'utf8' }
+    ).trim();
+
+  const write = (file, contents) => {
+    const absolute = path.join(repoDir, file);
+    fs.mkdirSync(path.dirname(absolute), { recursive: true });
+    fs.writeFileSync(absolute, contents);
+  };
+
+  const staged = () => checkRepository({ root: repoDir, staged: true });
+  const workingTree = () => checkRepository({ root: repoDir });
+  const files = (result) => result.violations.map((violation) => violation.file);
+
+  const exception = (file, text) => ({
+    file,
+    rule: 'shell-trace',
+    text,
+    justification: 'Runs only fixed non-secret commands in CI; no credential variables.',
+    ticket: 'TTAHUB-0000',
+  });
+  const exceptionsJson = (...exceptions) => JSON.stringify({ exceptions });
+
+  beforeEach(() => {
+    repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'secret-printing-staged-'));
+    git('init', '-q');
+    write('README.md', 'base\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'base');
+  });
+
+  afterEach(() => {
+    fs.rmSync(repoDir, { recursive: true, force: true });
+  });
+
+  it('flags a violation that is staged', () => {
+    write('bin/leaky.sh', '#!/bin/bash\nenv\n');
+    git('add', 'bin/leaky.sh');
+
+    expect(files(staged())).toEqual(['bin/leaky.sh']);
+  });
+
+  it('ignores a violation that is only in the working tree', () => {
+    write('bin/leaky.sh', '#!/bin/bash\nenv\n');
+
+    expect(files(workingTree())).toEqual(['bin/leaky.sh']);
+    expect(files(staged())).toEqual([]);
+  });
+
+  it('judges the staged content when the working tree has since changed', () => {
+    write('bin/script.sh', '#!/bin/bash\nenv\n');
+    git('add', 'bin/script.sh');
+    write('bin/script.sh', '#!/bin/bash\necho clean\n');
+    expect(files(staged())).toEqual(['bin/script.sh']);
+
+    git('add', 'bin/script.sh');
+    write('bin/script.sh', '#!/bin/bash\nenv\n');
+    git('commit', '-q', '-m', 'script');
+    git('rm', '-q', '--cached', 'bin/script.sh');
+    expect(files(staged())).toEqual([]);
+  });
+
+  it('honors an exception only when the exception is staged', () => {
+    write('bin/traced.sh', '#!/bin/bash -x\n');
+    git('add', 'bin/traced.sh');
+    write(
+      'tools/secretPrintingExceptions.json',
+      exceptionsJson(exception('bin/traced.sh', '#!/bin/bash -x'))
+    );
+
+    expect(files(staged())).toEqual(['bin/traced.sh']);
+
+    git('add', 'tools/secretPrintingExceptions.json');
+    expect(staged().violations).toEqual([]);
+  });
+
+  it('ignores an exception edit that is not staged', () => {
+    write('bin/traced.sh', '#!/bin/bash -x\n');
+    write(
+      'tools/secretPrintingExceptions.json',
+      exceptionsJson(exception('bin/traced.sh', '#!/bin/bash -x'))
+    );
+    git('add', 'bin/traced.sh', 'tools/secretPrintingExceptions.json');
+    write('tools/secretPrintingExceptions.json', exceptionsJson());
+
+    expect(staged().violations).toEqual([]);
+    expect(workingTree().violations.map((v) => v.file)).toEqual(['bin/traced.sh']);
+  });
+
+  it('does not report a staged exception as unused when its file is staged', () => {
+    write('bin/traced.sh', '#!/bin/bash -x\n');
+    write(
+      'tools/secretPrintingExceptions.json',
+      exceptionsJson(exception('bin/traced.sh', '#!/bin/bash -x'))
+    );
+    git('add', '-A');
+
+    expect(staged().unusedExceptions).toEqual([]);
+  });
+
+  it('does not scan staged files outside the scanned paths', () => {
+    write('src/other.sh', '#!/bin/bash\nenv\n');
+    git('add', 'src/other.sh');
+
+    expect(staged().violations).toEqual([]);
+  });
+
+  it('main --staged exits 1 on a staged violation and 0 otherwise', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    write('bin/leaky.sh', '#!/bin/bash\nenv\n');
+
+    expect(main(['--root', repoDir, '--staged'])).toBe(0);
+
+    git('add', 'bin/leaky.sh');
+    expect(main(['--root', repoDir, '--staged'])).toBe(1);
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('bin/leaky.sh:2 [env-dump]'));
+    errorSpy.mockRestore();
+    logSpy.mockRestore();
+  });
+
+  it('fails closed with a sanitized error outside a git repository', () => {
+    const notRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'not-a-repo-'));
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(() => checkRepository({ root: notRepo, staged: true })).toThrow(CheckError);
+      expect(main(['--root', notRepo, '--staged'])).toBe(1);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('git ls-files failed'));
+    } finally {
+      errorSpy.mockRestore();
+      fs.rmSync(notRepo, { recursive: true, force: true });
+    }
   });
 });

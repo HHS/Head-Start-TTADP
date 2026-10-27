@@ -15,7 +15,9 @@
 //                  *SECRET*, *TOKEN* or *KEY*
 //
 // Its diagnostics never include the text of the matching line, because that line could itself
-// contain a secret. See docs/guides/circle-ci.md for how to request an exception.
+// contain a secret. See docs/guides/circle-ci.md for how to request an exception. With --staged it
+// reads the git index instead of the working tree (used by .githooks/pre-commit).
+const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -23,6 +25,7 @@ const SCAN_TARGETS = ['automation', 'bin', '.circleci/config.yml'];
 const DEFAULT_EXCEPTIONS_PATH = 'tools/secretPrintingExceptions.json';
 const SKIPPED_DIRECTORIES = new Set(['node_modules', '.git']);
 const MAX_FILE_BYTES = 1024 * 1024;
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 const MIN_JUSTIFICATION_LENGTH = 20;
 
 const SENSITIVE_NAME =
@@ -346,6 +349,11 @@ const isShellFile = (file, firstLine) =>
   file.endsWith('.circleci/config.yml') ||
   SHELL_SHEBANG.test(firstLine);
 
+// Raised for a failure to run the check, as opposed to a finding. Its message never includes git
+// output or file contents.
+class CheckError extends Error {}
+class ExceptionsError extends CheckError {}
+
 const listFiles = (root, target) => {
   const absolute = path.join(root, target);
   if (!fs.existsSync(absolute)) {
@@ -364,17 +372,57 @@ const listFiles = (root, target) => {
   });
 };
 
-const scanRepository = (root, targets = SCAN_TARGETS) => {
+// A source supplies the files to scan and their contents: `listFiles(target)` returns repository
+// paths under a target, and `read(file, { optional })` returns a Buffer (null for a missing or
+// oversized file when optional).
+const workingTreeSource = (root) => ({
+  listFiles: (target) => listFiles(root, target),
+  read: (file) => {
+    const absolute = path.join(root, file);
+    if (!fs.existsSync(absolute) || fs.statSync(absolute).size > MAX_FILE_BYTES) {
+      return null;
+    }
+    return fs.readFileSync(absolute);
+  },
+});
+
+// Reads from the git index, i.e. what `git commit` would commit, ignoring unstaged edits. Used by
+// the pre-commit hook so the check sees exactly the content (and the exceptions) being committed.
+const indexSource = (root) => {
+  const git = (args) => {
+    try {
+      return execFileSync('git', args, {
+        cwd: root,
+        maxBuffer: GIT_MAX_BUFFER,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+    } catch {
+      throw new CheckError(`git ${args[0]} failed while reading the staged files`);
+    }
+  };
+  return {
+    listFiles: (target) =>
+      git(['ls-files', '-z', '--', target])
+        .toString('utf8')
+        .split('\0')
+        .filter((file) => file && !file.split('/').some((part) => SKIPPED_DIRECTORIES.has(part))),
+    read: (file, { optional = false } = {}) => {
+      if (optional && !git(['ls-files', '-z', '--', file]).length) {
+        return null;
+      }
+      const buffer = git(['show', `:${file}`]);
+      return buffer.length > MAX_FILE_BYTES ? null : buffer;
+    },
+  };
+};
+
+const scanRepository = (root, targets = SCAN_TARGETS, source = workingTreeSource(root)) => {
   const violations = [];
   targets
-    .flatMap((target) => listFiles(root, target))
+    .flatMap((target) => source.listFiles(target))
     .forEach((file) => {
-      const absolute = path.join(root, file);
-      if (fs.statSync(absolute).size > MAX_FILE_BYTES) {
-        return;
-      }
-      const buffer = fs.readFileSync(absolute);
-      if (buffer.includes(0)) {
+      const buffer = source.read(file);
+      if (!buffer || buffer.includes(0)) {
         return;
       }
       const text = buffer.toString('utf8');
@@ -385,16 +433,18 @@ const scanRepository = (root, targets = SCAN_TARGETS) => {
   return violations;
 };
 
-class ExceptionsError extends Error {}
-
-const loadExceptions = (root, exceptionsPath = DEFAULT_EXCEPTIONS_PATH) => {
-  const absolute = path.join(root, exceptionsPath);
-  if (!fs.existsSync(absolute)) {
+const loadExceptions = (
+  root,
+  exceptionsPath = DEFAULT_EXCEPTIONS_PATH,
+  source = workingTreeSource(root)
+) => {
+  const buffer = source.read(exceptionsPath, { optional: true });
+  if (!buffer) {
     return [];
   }
   let parsed;
   try {
-    parsed = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+    parsed = JSON.parse(buffer.toString('utf8'));
   } catch {
     throw new ExceptionsError(`${exceptionsPath} is not valid JSON`);
   }
@@ -439,13 +489,16 @@ const applyExceptions = (violations, exceptions) => {
   return { remaining, unused };
 };
 
+// With `staged: true` the check reads the git index (files and exceptions) instead of the working tree.
 const checkRepository = ({
   root = process.cwd(),
   exceptionsPath = DEFAULT_EXCEPTIONS_PATH,
   targets = SCAN_TARGETS,
+  staged = false,
 } = {}) => {
-  const exceptions = loadExceptions(root, exceptionsPath);
-  const { remaining, unused } = applyExceptions(scanRepository(root, targets), exceptions);
+  const source = staged ? indexSource(root) : workingTreeSource(root);
+  const exceptions = loadExceptions(root, exceptionsPath, source);
+  const { remaining, unused } = applyExceptions(scanRepository(root, targets, source), exceptions);
   return { violations: remaining, unusedExceptions: unused, exceptionsPath };
 };
 
@@ -489,9 +542,9 @@ const main = (argv) => {
   const root = rootIndex === -1 ? process.cwd() : path.resolve(argv[rootIndex + 1]);
   let result;
   try {
-    result = checkRepository({ root });
+    result = checkRepository({ root, staged: argv.includes('--staged') });
   } catch (error) {
-    if (error instanceof ExceptionsError) {
+    if (error instanceof CheckError) {
       console.error(error.message);
       return 1;
     }
@@ -512,7 +565,10 @@ if (require.main === module) {
 module.exports = {
   RULES,
   SCAN_TARGETS,
+  CheckError,
   ExceptionsError,
+  workingTreeSource,
+  indexSource,
   scanText,
   scanRepository,
   loadExceptions,
