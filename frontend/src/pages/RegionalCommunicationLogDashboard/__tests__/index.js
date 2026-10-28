@@ -238,6 +238,45 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('has an actions menu with View and Delete - can Delete', async () => {
+    const filterKey = 'regional-communication-log-filters';
+    const sortingKey = `${filterKey}-communication-log-table-sorting`;
+    sessionStorage.setItem(
+      filterKey,
+      JSON.stringify([
+        {
+          id: 'saved-date',
+          topic: 'communicationDate',
+          condition: 'is within',
+          query: `2022/07/01-${currentYear}/${currentMonth}/${currentDay}`,
+        },
+      ])
+    );
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'Log_ID', direction: 'desc', activePage: 2, offset: 10 })
+    );
+    const pageTwoUrl = defaultURL.replace('offset=0', 'offset=10');
+    fetchMock.get(pageTwoUrl, {
+      count: 11,
+      rows: [
+        {
+          id: 1,
+          displayId: 'R01-CL-0001',
+          userId: 1,
+          data: {
+            regionId: 4,
+            communicationDate: '2023-01-01',
+            purpose: 'Purpose',
+            goals: [{ label: 'Goal' }],
+            result: 'A great result',
+          },
+          otherStaff: [{ label: 'Other Staff', value: 1 }],
+          authorName: 'Author',
+          recipients: [{ id: 1 }],
+        },
+      ],
+    });
+
     act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() =>
       expect(
@@ -282,6 +321,14 @@ describe('RegionalCommunicationLogDashboard', () => {
     // confirm delete
     act(() => userEvent.click(confirmDeleteButton));
     await waitFor(() => expect(fetchMock.called(deleteURL)).toBe(true));
+    await waitFor(() => {
+      expect(JSON.parse(sessionStorage.getItem(sortingKey))).toMatchObject({
+        activePage: 1,
+        offset: 0,
+      });
+    });
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
   });
 
   it('handles delete error', async () => {

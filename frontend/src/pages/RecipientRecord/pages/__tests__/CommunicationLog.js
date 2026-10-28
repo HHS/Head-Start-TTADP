@@ -14,6 +14,9 @@ import CommunicationLog from '../CommunicationLog';
 const fakeResponse = {
   rows: [
     {
+      id: 1,
+      displayId: 'R01-CL-00001',
+      userId: 1,
       data: {
         goals: [
           { label: 'First goal', value: '16' },
@@ -57,7 +60,7 @@ describe('CommunicationLog', () => {
     render(
       <AriaLiveContext.Provider value={{ announce: () => {} }}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
-          <UserContext.Provider value={{ user: { homeRegionId: 5 } }}>
+          <UserContext.Provider value={{ user: { id: 1, homeRegionId: 5 } }}>
             <Router history={history}>
               <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
             </Router>
@@ -118,6 +121,42 @@ describe('CommunicationLog', () => {
     await act(() => waitFor(() => renderTest()));
 
     expect(screen.getByText('Communication log')).toBeInTheDocument();
+  });
+
+  it('resets the saved page before reloading after deleting a log', async () => {
+    const filterKey = 'communication-log-filters';
+    const sortingKey = `${filterKey}-communication-log-table-5-1-sorting`;
+    const pageTwoUrl =
+      '/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=10&limit=10&format=json&';
+    sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'communicationDate', direction: 'desc', activePage: 2, offset: 10 })
+    );
+    fetchMock.get(pageTwoUrl, { ...fakeResponse, count: 11 });
+
+    renderTest();
+
+    const actions = await screen.findByRole('button', { name: 'Actions for R01-CL-00001' });
+    act(() => userEvent.click(actions));
+    await screen.findByRole('menu');
+    const deleteButton = await screen.findByRole('button', { name: /delete/i });
+    act(() => userEvent.click(deleteButton));
+
+    const confirmDeleteButton = await screen.findByRole('button', {
+      name: /confirm delete and reload page/i,
+    });
+    fetchMock.delete('/api/communication-logs/log/1', 204);
+    act(() => userEvent.click(confirmDeleteButton));
+
+    await waitFor(() => {
+      expect(JSON.parse(sessionStorage.getItem(sortingKey))).toMatchObject({
+        activePage: 1,
+        offset: 0,
+      });
+    });
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
   });
 
   it('you can apply a filter', async () => {

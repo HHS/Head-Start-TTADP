@@ -103,6 +103,7 @@ function CommunicationLogContent({ regionId, recipientId }) {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { filterKey } = useContext(FilterContext);
 
   const { filters, onApplyFilters, onRemoveFilter } = useFilters(
     user,
@@ -243,6 +244,10 @@ function CommunicationLogContent({ regionId, recipientId }) {
   const deleteLog = async (log) => {
     try {
       await deleteCommunicationLogById(log.id);
+      window.sessionStorage.setItem(
+        `${filterKey}-communication-log-table-${regionId}-${recipientId}-sorting`,
+        JSON.stringify({ ...sortConfig, activePage: 1, offset: 0 })
+      );
       window.location.reload();
     } catch (err) {
       // eslint-disable-next-line no-console
