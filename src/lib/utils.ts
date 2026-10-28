@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { DATE_FORMAT } from '../constants';
 
 /**
  * Ensures the input is an array. If the input is not an array, returns an empty array.
@@ -26,6 +27,17 @@ export function formatDate(value: string | null | undefined): string | null {
   }
 
   return parsed.format('MM/DD/YYYY');
+}
+
+/**
+ * Parses a date stored in a JSONB data field into a moment. Stored dates use DATE_FORMAT,
+ * but older or test data may be ISO. Passing explicit formats avoids moment's deprecated
+ * fallback to the Date constructor.
+ * @param value - The stored date value to parse.
+ * @returns A moment, which is invalid if the value matches neither format.
+ */
+export function parseStoredDate(value: string | Date | null | undefined): moment.Moment {
+  return moment(value, [DATE_FORMAT, moment.ISO_8601]);
 }
 
 /**
