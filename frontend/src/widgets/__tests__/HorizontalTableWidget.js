@@ -1178,4 +1178,54 @@ describe('Horizontal Table Widget', () => {
       await waitFor(() => expect(selectAll).toBeChecked());
     });
   });
+  describe('sort keys', () => {
+    const renderSortable = (props) => {
+      const requestSort = jest.fn();
+      render(
+        <Router history={history}>
+          <HorizontalTableWidget
+            headers={['Activity name', { displayName: 'Session name', name: 'sessionName' }]}
+            data={[]}
+            firstHeading="Report&nbsp;ID"
+            showTotalColumn={false}
+            enableSorting
+            sortConfig={{ sortBy: '', direction: '', activePage: 1 }}
+            requestSort={requestSort}
+            {...props}
+          />
+        </Router>
+      );
+      return requestSort;
+    };
+
+    it.each([
+      [/activity name\. activate/i, 'Activity_name'],
+      [/session name\. activate/i, 'sessionName'],
+      [/report.id\. activate/i, 'Report_ID'],
+    ])('sends an underscored key unless a name is given (%s)', (label, sortKey) => {
+      const requestSort = renderSortable();
+      userEvent.click(screen.getByRole('button', { name: label }));
+      expect(requestSort).toHaveBeenCalledWith(sortKey);
+    });
+
+    it('uses firstHeadingSortKey for the first column when given', () => {
+      const requestSort = renderSortable({ firstHeadingSortKey: 'eventId' });
+      userEvent.click(screen.getByRole('button', { name: /report.id\. activate/i }));
+      expect(requestSort).toHaveBeenCalledWith('eventId');
+    });
+
+    it('marks the active column when the stored sort key uses spaces', () => {
+      renderSortable({ sortConfig: { sortBy: 'Activity name', direction: 'asc', activePage: 1 } });
+      expect(screen.getByRole('button', { name: /activity name\. activate/i })).toHaveClass(
+        'sortable asc'
+      );
+    });
+
+    it('hides the sort button for object headers listed in hiddenSortIndicators', () => {
+      renderSortable({
+        sortConfig: { sortBy: '', direction: '', hiddenSortIndicators: ['Session name'] },
+      });
+      expect(screen.queryByRole('button', { name: /session name\. activate/i })).toBeNull();
+    });
+  });
 });

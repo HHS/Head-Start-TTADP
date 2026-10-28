@@ -32,6 +32,61 @@ const renderEvent = (overrides: Partial<RecipientTimelineEvent> = {}, defaultExp
   );
 
 describe('TimelineEvent', () => {
+  it.each(['Goal added', 'Goal reopened', 'Goal closed'] as const)(
+    'shows the numbered cycle boundary for %s with details collapsed',
+    (eventType) => {
+      render(
+        <MemoryRouter>
+          <TimelineEvent
+            event={{
+              ...event,
+              source: 'goalStatusChange',
+              sourceId: 98765,
+              eventType,
+              title: eventType,
+              details: [{ label: 'Goal number', items: [{ text: 'G-12345' }] }],
+            }}
+            showGoalCycleDivider
+          />
+        </MemoryRouter>
+      );
+      const label = `Goal G-12345 ${eventType.split(' ')[1]}`;
+      const divider = screen.getByText(label);
+      expect(divider).toBeVisible();
+      const heading = screen.getByRole('heading');
+      const position = divider.compareDocumentPosition(heading);
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        eventType === 'Goal closed' ? Node.DOCUMENT_POSITION_FOLLOWING : 0
+      );
+      expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+      userEvent.click(screen.getByRole('button'));
+      expect(screen.getAllByText(label)).toHaveLength(1);
+    }
+  );
+
+  it.each([
+    ['chronological view', 'goalStatusChange', 'Goal closed', 'G-12345', false],
+    ['missing number', 'goalStatusChange', 'Goal added', undefined, true],
+    ['malformed number', 'goalStatusChange', 'Goal added', 'not-a-goal', true],
+    ['suspension', 'goalStatusChange', 'Goal suspended', 'G-12345', true],
+    ['another source', 'communicationLog', 'Goal closed', 'G-12345', true],
+  ] as const)('omits cycle dividers for %s', (_, source, eventType, number, enabled) => {
+    render(
+      <MemoryRouter>
+        <TimelineEvent
+          event={{
+            ...event,
+            source,
+            eventType,
+            details: number ? [{ label: 'Goal number', items: [{ text: number }] }] : [],
+          }}
+          showGoalCycleDivider={enabled}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.queryByText(/^Goal G-\d+ (added|reopened|closed)$/)).not.toBeInTheDocument();
+  });
+
   it.each(TIMELINE_EVENT_TYPES)('supports the %s presentation', (eventType) => {
     renderEvent({ eventType, title: eventType });
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent(eventType);

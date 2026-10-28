@@ -12,22 +12,22 @@ export default function EmailVerifier({ token, updateUser }) {
     if (verified) return;
     if (!token) return;
 
+    const validationStatus = user.validationStatus || [];
+    const emailValidation = validationStatus.find((status) => status.type === 'email');
+    if (emailValidation?.validatedAt) {
+      setVerified(true);
+      return;
+    }
+
     verifyEmailToken(token)
       .then(() => {
         setVerified(true);
-        // Get the first validationStatus object in user.validationStatus where type is email.
-        // There should only ever be one of these anyways.
-        const validation = user.validationStatus.find((s) => s.type === 'email');
-
-        // Set the verified field to true. This is hacky because normally this would
-        // be a date - but for now this avoids having to making another API call to update the user,
-        // and validatedAt (in date form) isn't used by the UI.
-        validation.validatedAt = true;
+        const validation = { ...emailValidation, type: 'email', validatedAt: true };
 
         const newUser = {
           ...user,
-          validationStatus: user.validationStatus
-            .filter((s) => s.type !== 'email')
+          validationStatus: validationStatus
+            .filter((status) => status.type !== 'email')
             .concat(validation),
         };
 
@@ -48,8 +48,7 @@ export default function EmailVerifier({ token, updateUser }) {
 
       {verified === false && (
         <Alert type="error" className="margin-bottom-3">
-          Your email could not be verified. Please return to account management to request a new
-          verification email.
+          Your email could not be verified. Please request a new verification email.
         </Alert>
       )}
 

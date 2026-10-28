@@ -1,7 +1,7 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { frequencyValues } from '../..';
+import { frequencyValues } from './constants';
 
 export default function NotificationsGroupController({
   groupName,
@@ -38,7 +38,7 @@ export default function NotificationsGroupController({
     const { checked } = e.target;
     setGroupInAppSelected(checked);
     ids.forEach((id) => {
-      setValue(`inApp${id}`, checked);
+      setValue(`inApp${id}`, checked, { shouldDirty: true });
     });
   };
 
@@ -50,7 +50,7 @@ export default function NotificationsGroupController({
     const { value } = e.target;
     setGroupEmailSelected(value);
     ids.forEach((id) => {
-      setValue(`email${id}`, value);
+      setValue(`email${id}`, value, { shouldDirty: true });
     });
   };
 

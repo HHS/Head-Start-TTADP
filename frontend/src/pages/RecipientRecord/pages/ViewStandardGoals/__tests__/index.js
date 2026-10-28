@@ -255,6 +255,7 @@ const mockGoalHistory = [
 
 const mockOverview = {
   activityReports: 2,
+  trainingReports: 4,
   objectives: 3,
   closures: 1,
   suspensions: 0,
@@ -262,6 +263,7 @@ const mockOverview = {
 
 const emptyOverview = {
   activityReports: 0,
+  trainingReports: 0,
   objectives: 0,
   closures: 0,
   suspensions: 0,
@@ -1242,7 +1244,7 @@ describe('ViewGoalDetails', () => {
     expect(within(resourceContainer).getByText('files-only-test.pdf')).toBeInTheDocument();
   });
 
-  test('renders all four overview widget labels', async () => {
+  test('renders all five overview widget labels in order with the TR tooltip and icon', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
@@ -1252,11 +1254,33 @@ describe('ViewGoalDetails', () => {
     expect(screen.getByText('Goal objectives')).toBeInTheDocument();
     expect(screen.getByText('Goal closures')).toBeInTheDocument();
     expect(screen.getByText('Goal suspensions')).toBeInTheDocument();
+    const dashboard = screen.getByText('Activity reports').closest('.goal-history-dashboard');
+    const widgets = dashboard.querySelectorAll('.smart-hub--dashboard-overview-widget-field');
+    expect(widgets).toHaveLength(5);
+    expect(within(widgets[0]).getByText('Activity reports')).toBeInTheDocument();
+    expect(within(widgets[1]).getByText('Training Reports')).toBeInTheDocument();
+    expect(within(widgets[1]).getByText('4')).toBeInTheDocument();
+    expect(within(widgets[2]).getByText('Goal objectives')).toBeInTheDocument();
+    expect(widgets[1].querySelector('svg').outerHTML).toBe(
+      widgets[0].querySelector('svg').outerHTML
+    );
+    const tooltipTrigger = within(widgets[1]).getByRole('button', {
+      name: 'The number of TR sessions the goal was used on click to visually reveal this information',
+    });
+    userEvent.hover(tooltipTrigger);
+    expect(within(widgets[1]).getByRole('tooltip', { hidden: true })).toHaveTextContent(
+      'The number of TR sessions the goal was used on'
+    );
+    userEvent.click(tooltipTrigger);
+    expect(within(widgets[1]).getByRole('tooltip')).toHaveTextContent(
+      'The number of TR sessions the goal was used on'
+    );
   });
 
   test('displays correct counts from overview data', async () => {
     const overview = {
       activityReports: 5,
+      trainingReports: 9,
       objectives: 7,
       closures: 2,
       suspensions: 1,
@@ -1270,6 +1294,7 @@ describe('ViewGoalDetails', () => {
     const allBoldSpans = await screen.findAllByText(/^\d+$/);
     const values = allBoldSpans.map((el) => el.textContent);
     expect(values).toContain('5');
+    expect(values).toContain('9');
     expect(values).toContain('7');
     expect(values).toContain('2');
     expect(values).toContain('1');
@@ -1282,8 +1307,7 @@ describe('ViewGoalDetails', () => {
     });
     await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
     const zeroSpans = await screen.findAllByText('0');
-    // All four widgets should show 0
-    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(5);
   });
 
   test('renders print goal information values from overview', async () => {
@@ -1298,6 +1322,7 @@ describe('ViewGoalDetails', () => {
 
     expect(normalizedText).toContain('Goal information:');
     expect(normalizedText).toContain('2 Activity Reports');
+    expect(normalizedText).toContain('4 Training Reports');
     expect(normalizedText).toContain('3 goal objectives');
     expect(normalizedText).toContain('1 goal closures');
     expect(normalizedText).toContain('0 goal suspensions');
@@ -1329,12 +1354,13 @@ describe('ViewGoalDetails', () => {
     const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
 
     expect(normalizedText).toContain('0 Activity Reports');
+    expect(normalizedText).toContain('0 Training Reports');
     expect(normalizedText).toContain('0 goal objectives');
     expect(normalizedText).toContain('0 goal closures');
     expect(normalizedText).toContain('0 goal suspensions');
 
     const zeroSpans = await screen.findAllByText('0');
-    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(5);
   });
 });
 
