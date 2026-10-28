@@ -7,6 +7,7 @@ import { NOOP } from '../../../Constants';
 import FilterContext from '../../../FilterContext';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import CollabReports from '../components/CollabReports';
 
 jest.mock('../../../fetchers/collaborationReports');
@@ -100,9 +101,11 @@ describe('CollabReports', () => {
 
   test('preserves the saved page when returning to the reports table', async () => {
     const filterKey = 'collab-pagination-test';
+    const filterQueryKey = `${filterKey}-collabReportsTable-filter-query`;
     const savedSort = { sortBy: 'id', direction: 'desc', activePage: 3, offset: 20, perPage: 10 };
     sessionStorage.setItem(filterKey, '[]');
     sessionStorage.setItem(`${filterKey}-collabReportsTable-sorting`, JSON.stringify(savedSort));
+    sessionStorage.setItem(filterQueryKey, filtersToQueryString([]));
     getReports.mockResolvedValue({ count: 30, rows: [] });
 
     const renderTable = (filters) => (
@@ -141,5 +144,40 @@ describe('CollabReports', () => {
     unmount();
     sessionStorage.removeItem(filterKey);
     sessionStorage.removeItem(`${filterKey}-collabReportsTable-sorting`);
+    sessionStorage.removeItem(filterQueryKey);
+  });
+
+  test('resets the saved page when returning with different filters', async () => {
+    const filterKey = 'collab-pagination-different-filters-test';
+    const filterQueryKey = `${filterKey}-collabReportsTable-filter-query`;
+    const savedSort = { sortBy: 'id', direction: 'desc', activePage: 3, offset: 20, perPage: 10 };
+    const oldFilters = [{ topic: 'region', condition: 'is', query: '2' }];
+    const currentFilters = [{ id: 'region', topic: 'region', condition: 'is', query: '1' }];
+    sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(`${filterKey}-collabReportsTable-sorting`, JSON.stringify(savedSort));
+    sessionStorage.setItem(filterQueryKey, filtersToQueryString(oldFilters));
+    getReports.mockResolvedValue({ count: 1, rows: mockReports.slice(0, 1) });
+
+    render(
+      <FilterContext.Provider value={{ filterKey }}>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
+          <UserContext.Provider value={{ user: { id: 1 } }}>
+            <CollabReports filters={currentFilters} />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </FilterContext.Provider>
+    );
+
+    await waitFor(() => {
+      expect(getReports).toHaveBeenLastCalledWith(
+        expect.objectContaining({ activePage: 1, offset: 0 }),
+        currentFilters
+      );
+    });
+
+    expect(sessionStorage.getItem(filterQueryKey)).toBe(filtersToQueryString(currentFilters));
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(`${filterKey}-collabReportsTable-sorting`);
+    sessionStorage.removeItem(filterQueryKey);
   });
 });
