@@ -5,6 +5,7 @@ import { cast, type Model, Op, type Transaction } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import { trSessionSubmittedToCollaborators } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
@@ -441,6 +442,9 @@ export async function updateSession(id: number, request) {
     } catch (err) {
       auditLogger.error(`Error creating session submitted notifications for session ${id}:`, err);
     }
+
+    // TR-3d: the mailer logs its own errors, so this cannot fail the save
+    await trSessionSubmittedToCollaborators(event, { id, data: newData });
   }
 
   if (goalTemplates) {
