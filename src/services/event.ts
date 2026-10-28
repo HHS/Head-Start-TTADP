@@ -688,6 +688,8 @@ export async function getTrainingReportAlerts(
       );
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
@@ -726,19 +728,16 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
         // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
-        // POC is normally not involved — the Regional owner fills the POC-side
-        // pages and tracks completion via ownerComplete. However, POCs can now
-        // create sessions (canCreateSession() includes isPoc()), and when they
-        // do they still set pocComplete on submit (see SessionForm/index.js).
-        // Only skip the alert when we have evidence the session is using
-        // ownerComplete and not pocComplete (i.e. owner-created in the new
-        // flow); otherwise fall through and check pocComplete as usual.
-        if (
-          isNationalCenterFacilitator(event, session) &&
-          session.data.pocComplete === undefined &&
-          session.data.ownerComplete !== undefined
-        ) {
+        // POC is not part of submission — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. pocComplete is read by
+        // truthiness: a missing key and an explicit false (e.g. from a form
+        // default) both mean the POC has nothing outstanding, so skip the alert.
+        // A POC who created and submitted the session has pocComplete: true,
+        // so there is nothing to alert on either way.
+        if (isNationalCenterFacilitator(event, session) && !session.data.pocComplete) {
           return;
         }
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)

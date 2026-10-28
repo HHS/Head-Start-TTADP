@@ -25,6 +25,19 @@ import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
 import { isNationalCenterFacilitator } from './sessionFlow';
 
+// Completion flags and their audit fields; only the submit handler writes these.
+const COMPLETION_FIELDS = [
+  'pocComplete',
+  'pocCompleteId',
+  'pocCompleteDate',
+  'collabComplete',
+  'collabCompleteId',
+  'collabCompleteDate',
+  'ownerComplete',
+  'ownerCompleteId',
+  'ownerCompleteDate',
+];
+
 const reduceDataToMatchKeys = (keys, data) =>
   keys.reduce((acc, key) => {
     if (data && Object.hasOwn(data, key)) {
@@ -506,6 +519,13 @@ export default function SessionForm({ match }) {
 
         // Remove complete property data based on current role.
         roleData = removeCompleteDataBaseOnRole(roleData);
+
+        // Draft saves never write completion flags. Only submit sets them, and the
+        // backend resets them when facilitation changes. Otherwise form defaults
+        // (e.g. pocComplete: false) get persisted and trigger spurious alerts.
+        COMPLETION_FIELDS.forEach((field) => {
+          delete roleData[field];
+        });
 
         if (!isPoc && roleData.objectiveResources) {
           roleData = {
