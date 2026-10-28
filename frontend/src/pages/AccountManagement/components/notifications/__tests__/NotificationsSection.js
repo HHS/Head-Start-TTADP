@@ -188,3 +188,26 @@ describe('NotificationsSection alert clearing', () => {
     expect(sendVerificationEmail).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('NotificationsSection item wrapper', () => {
+  it('renders a row inside its wrapper', () => {
+    const Hidden = () => null;
+    function Labeled({ children }) {
+      return <div data-testid="wrapper">{children}</div>;
+    }
+
+    renderSection({
+      items: [
+        { id: 'Wrapped', label: 'Wrapped row', wrapper: Labeled },
+        { id: 'Hidden', label: 'Hidden row', wrapper: Hidden },
+        { id: 'Plain', label: 'Plain row' },
+      ],
+    });
+
+    expect(screen.getByTestId('wrapper')).toContainElement(
+      screen.getByTestId('trigger-alert-row-Wrapped')
+    );
+    expect(screen.queryByTestId('trigger-alert-row-Hidden')).not.toBeInTheDocument();
+    expect(screen.getByTestId('trigger-alert-row-Plain')).toBeInTheDocument();
+  });
+});

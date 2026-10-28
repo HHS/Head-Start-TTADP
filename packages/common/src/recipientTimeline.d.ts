@@ -13,6 +13,12 @@ export type RecipientTimelineFilterCondition =
   | RecipientTimelineDateFilterCondition
   | RecipientTimelineSelectFilterCondition;
 export type RecipientTimelineEventType = (typeof TIMELINE_EVENT_TYPES)[number];
+export type RecipientTimelineView = 'chronological' | 'monitoring' | 'goals';
+
+export interface RecipientTimelineCategory {
+  label: string;
+  statuses: string[];
+}
 
 export interface RecipientTimelineFilter {
   topic: RecipientTimelineFilterTopic;
@@ -21,6 +27,7 @@ export interface RecipientTimelineFilter {
 }
 
 export interface RecipientTimelineRequestParams {
+  view?: RecipientTimelineView;
   recipientId: number;
   regionId: number;
   limit: number;
@@ -50,6 +57,7 @@ export interface RecipientTimelineEvent extends RecipientTimelineEventPresentati
 }
 
 export interface RecipientTimelineResponse {
+  categories?: RecipientTimelineCategory[];
   count: number;
   events: RecipientTimelineEvent[];
 }

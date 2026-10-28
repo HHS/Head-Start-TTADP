@@ -112,42 +112,42 @@ export const registerEventListener = () => {
 
   // Listen for SIGINT (Ctrl+C)
   process.on('SIGINT', async () => {
-    auditLogger.error('Received SIGINT');
+    auditLogger.info('Received SIGINT');
     await gracefulShutdown('app termination (SIGINT)');
     process.exit(0);
   });
 
   // Listen for SIGTERM (e.g., kill command)
   process.on('SIGTERM', async () => {
-    auditLogger.error('Received SIGTERM');
+    auditLogger.info('Received SIGTERM');
     await gracefulShutdown('app termination (SIGTERM)');
     process.exit(0);
   });
 
   // Listen for SIGUSR1
   process.on('SIGUSR1', async () => {
-    auditLogger.error('Received SIGUSR1');
+    auditLogger.info('Received SIGUSR1');
     await gracefulShutdown('app termination (SIGUSR1)');
     process.exit(0); // Handle user-defined signal 1
   });
 
   // Listen for SIGUSR2
   process.on('SIGUSR2', async () => {
-    auditLogger.error('Received SIGUSR2');
+    auditLogger.info('Received SIGUSR2');
     await gracefulShutdown('app termination (SIGUSR2)');
     process.exit(0); // Handle user-defined signal 2
   });
 
   // Listen for SIGQUIT
   process.on('SIGQUIT', async () => {
-    auditLogger.error('Received SIGQUIT');
+    auditLogger.info('Received SIGQUIT');
     await gracefulShutdown('app termination (SIGQUIT)');
     process.exit(0); // Or perform graceful shutdown
   });
 
   // Listen for SIGHUP
   process.on('SIGHUP', async () => {
-    auditLogger.error('Received SIGHUP');
+    auditLogger.info('Received SIGHUP');
     await gracefulShutdown('app termination (SIGHUP)');
     process.exit(0); // Reload configuration or perform appropriate action
   });
@@ -162,11 +162,10 @@ export const registerEventListener = () => {
     auditLogger.info('A previously unhandled promise rejection was handled:', promise);
   });
 
-  // Listen for exit event as a fallback
-  process.on('exit', async (code) => {
+  // Listen for exit event. Node runs 'exit' listeners synchronously, so async cleanup
+  // cannot complete here; shutdown is handled by the signal and error handlers above.
+  // Non-zero exits are already alerted by the handlers that call process.exit(1).
+  process.on('exit', (code) => {
     auditLogger.info(`About to exit with code: ${code}`);
-    // If not already handled, you might want to ensure any remaining cleanup
-    // is performed here. This is a last resort.
-    await gracefulShutdown(`app termination (exit event) with code ${code}`);
   });
 };
