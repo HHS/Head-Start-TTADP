@@ -66,8 +66,11 @@ const ENV_DUMP_PATTERNS = [
   /\/proc\/[^\s/]+\/environ\b/,
 ];
 
+// `set` takes any number of option groups, so tracing can follow others: `set -e -x`, `set -eu -x`,
+// `set -o pipefail -x`. A group is -abc / +abc, or -o NAME / -eo NAME (an option with its argument).
+const SET_OPTION_GROUP = '(?:[-+][a-zA-Z]*o\\s+[A-Za-z]+|[-+][a-zA-Z]+)\\s+';
 const SET_TRACE = new RegExp(
-  `${COMMAND_START}set\\s+(?:-[a-zA-Z]*x[a-zA-Z]*|(?:-[a-zA-Z]+\\s+)*-o\\s+xtrace)\\b`
+  `${COMMAND_START}set\\s+(?:${SET_OPTION_GROUP})*(?:-[a-zA-Z]*x[a-zA-Z]*|-[a-zA-Z]*o\\s+xtrace)\\b`
 );
 const SHELL_TRACE_INVOCATION = new RegExp(
   `${COMMAND_START}(?:ba|da|z|k)?sh\\s+(?:-[a-zA-Z]+\\s+)*-[a-zA-Z]*x`
@@ -75,8 +78,20 @@ const SHELL_TRACE_INVOCATION = new RegExp(
 const TRACE_SHEBANG = /^#!\s*\S+(?:\s+\S+)*?\s-[a-zA-Z]*x/;
 
 const CF_ENV = /(?:^|[\s;&|({`])cf\s+env\b/g;
-const ASSIGNMENT_BEFORE =
-  /(?:^|[\s;&|(])(?:(?:local|export|readonly|declare)\s+)*[A-Za-z_][A-Za-z0-9_]*=$/;
+// What may precede the `$(` of a captured command substitution, within its own simple command: an
+// optional declaration keyword, any number of VAR=value assignments, then the VAR= that receives the
+// output. Anything else (for example `echo DATA=$(...)`, where DATA= is just an argument) is not capture.
+const ASSIGNMENT_PREFIX =
+  /^\s*(?:(?:local|export|readonly|declare)\s+(?:-[a-zA-Z]+\s+)*)?(?:[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|'[^']*'|\S*)\s+)*[A-Za-z_][A-Za-z0-9_]*=$/;
+const COMMAND_SEPARATOR = /[;&|({`]|\b(?:then|do|else)\b/g;
+
+const capturesIntoAssignment = (before) => {
+  let start = 0;
+  for (const separator of before.matchAll(COMMAND_SEPARATOR)) {
+    start = separator.index + separator[0].length;
+  }
+  return ASSIGNMENT_PREFIX.test(before.slice(start));
+};
 
 // True when the `cf env` at `index` sits inside a command substitution that is assigned to a
 // variable, i.e. VAR=$(... cf env ...) or VAR=`... cf env ...`, so its output is captured, not printed.
@@ -87,14 +102,14 @@ const isCapturedByAssignment = (code, index) => {
       depth += 1;
     } else if (code[i] === '(') {
       if (depth === 0) {
-        return code[i - 1] === '$' && ASSIGNMENT_BEFORE.test(code.slice(0, i - 1));
+        return code[i - 1] === '$' && capturesIntoAssignment(code.slice(0, i - 1));
       }
       depth -= 1;
     }
   }
   const before = code.slice(0, index);
   if ((before.match(/`/g) || []).length % 2 === 1) {
-    return ASSIGNMENT_BEFORE.test(code.slice(0, before.lastIndexOf('`')));
+    return capturesIntoAssignment(code.slice(0, before.lastIndexOf('`')));
   }
   return false;
 };
@@ -223,6 +238,15 @@ const printsSecret = (code) =>
     return expandedReferences(command).some(isSensitiveName);
   });
 
+// Checks the raw code (which sees substitutions such as `$(env)`) and each command with its prefixes
+// removed, so `DEBUG=1 env`, `command printenv` and `if printenv; then :; fi` are caught too.
+const dumpsEnvironment = (code) =>
+  ENV_DUMP_PATTERNS.some(
+    (pattern) =>
+      pattern.test(code) ||
+      splitCommands(code).some((fragment) => pattern.test(normalizeCommand(fragment)))
+  );
+
 // A line ending in an odd number of backslashes continues onto the next line.
 const endsWithContinuation = (code) => {
   const match = code.match(/(\\+)\s*$/);
@@ -275,18 +299,55 @@ const unquoteYaml = (value) => {
 const YAML_COMMAND_KEY = /^(\s*(?:-\s+)*)(?:run|command)\s*:\s*(.*)$/;
 const YAML_BLOCK_INDICATOR = /^[|>][-+0-9]*\s*(?:#.*)?$/;
 
+// A folded block scalar (`>`) joins consecutive lines of equal indentation into one line with
+// spaces, which is what the shell receives. A blank line or a more-indented line ends the fold.
+// `entries` carry { line, raw, block, folded }; the result has folded runs joined into one entry
+// that keeps the line number of its first line.
+const foldYamlEntries = (entries) => {
+  const result = [];
+  let group = null;
+  const flush = () => {
+    if (group) {
+      result.push({ line: group.line, raw: group.parts.join(' ') });
+      group = null;
+    }
+  };
+  entries.forEach((entry) => {
+    if (!entry.folded) {
+      flush();
+      result.push({ line: entry.line, raw: entry.raw });
+      return;
+    }
+    const text = entry.raw.trim();
+    const indent = entry.raw.length - entry.raw.trimStart().length;
+    if (!text) {
+      flush();
+    } else if (group && group.block === entry.block && group.indent === indent) {
+      group.parts.push(text);
+    } else {
+      flush();
+      group = { line: entry.line, block: entry.block, indent, parts: [text] };
+    }
+  });
+  flush();
+  return result;
+};
+
 // In CircleCI YAML, shell is only the value of a `run:` or `command:` key: either inline
-// (`- run: env`, `command: "set -x"`) or a block scalar (`command: |` and the indented lines under
-// it). Everything else (names, parameters, descriptions) is not executed and is not scanned.
-// Flow-style mappings such as `run: { command: env }` are not handled.
+// (`- run: env`, `command: "set -x"`) or a block scalar (`command: |` / `command: >` and the indented
+// lines under it; a folded `>` block is joined the way YAML folds it before the shell sees it). Everything
+// else (names, parameters, descriptions) is not executed and is not scanned. Flow-style mappings such as
+// `run: { command: env }` are not handled.
 const yamlCommandEntries = (lines) => {
   const entries = [];
   let blockColumn = null;
+  let blockId = 0;
+  let blockFolded = false;
   lines.forEach((raw, index) => {
     if (blockColumn !== null) {
       const indent = raw.match(/^\s*/)[0].length;
       if (!raw.trim() || indent > blockColumn) {
-        entries.push({ line: index + 1, raw });
+        entries.push({ line: index + 1, raw, block: blockId, folded: blockFolded });
         return;
       }
       blockColumn = null;
@@ -298,11 +359,13 @@ const yamlCommandEntries = (lines) => {
     const value = match[2].trim();
     if (YAML_BLOCK_INDICATOR.test(value)) {
       blockColumn = match[1].length;
+      blockId += 1;
+      blockFolded = value.startsWith('>');
     } else if (value) {
       entries.push({ line: index + 1, raw: unquoteYaml(stripComment(value).trim()) });
     }
   });
-  return entries;
+  return foldYamlEntries(entries);
 };
 
 // Scans one file's text. Returns [{ file, line, rule, text }]; `text` is the trimmed source
@@ -326,7 +389,7 @@ const scanText = (file, text) => {
     }
     const add = (rule) => violations.push({ file, line, rule, text: sourceText });
 
-    if (ENV_DUMP_PATTERNS.some((pattern) => pattern.test(code))) {
+    if (dumpsEnvironment(code)) {
       add('env-dump');
     }
     if (hasUncapturedCfEnv(code)) {

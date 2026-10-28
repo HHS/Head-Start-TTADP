@@ -31,6 +31,13 @@ describe('checkSecretPrinting scanText', () => {
       'if true; then env; fi',
       'export -p',
       'cat /proc/self/environ',
+      'DEBUG=1 env',
+      'command printenv',
+      'if printenv; then :; fi',
+      'FOO=bar printenv HOME',
+      'exec env',
+      'while true; do env; done',
+      'DEBUG=1 FOO=bar env | sort',
     ])('flags %s', (line) => {
       expect(rules(line)).toContain('env-dump');
     });
@@ -45,6 +52,10 @@ describe('checkSecretPrinting scanText', () => {
       'export EXAMPLE_VALUE=1',
       '# env',
       'run_env=$(pwd) # env | sort',
+      'DEBUG=1 env FOO=bar ./run.sh',
+      'command -v env',
+      'if [ -x "$(command -v env)" ]; then true; fi',
+      'FOO=bar ./env.sh',
     ])('allows %s', (line) => {
       expect(rules(line)).not.toContain('env-dump');
     });
@@ -72,6 +83,13 @@ describe('checkSecretPrinting scanText', () => {
       'bash -x ./script.sh',
       'sh -ex ./script.sh',
       'true && set -x',
+      'set -e -x',
+      'set -e -u -x',
+      'set -eu -x',
+      'set -o pipefail -x',
+      'set -eo pipefail -x',
+      'set -e -o xtrace',
+      'set -euo pipefail -x',
     ])('flags %s', (line) => {
       expect(rules(line)).toContain('shell-trace');
     });
@@ -87,6 +105,10 @@ describe('checkSecretPrinting scanText', () => {
       'set -e',
       'set -euo pipefail',
       'set -o pipefail',
+      'set -e -u',
+      'set -e +x',
+      'set -eo pipefail',
+      'set -e -o pipefail',
       '#!/bin/bash',
       '#!/usr/bin/env bash',
       'echo "run bash -x to debug"',
@@ -193,6 +215,58 @@ describe('checkSecretPrinting scanText', () => {
       expect(yamlRules(yaml)).toEqual([]);
     });
 
+    describe('folded block scalars (command: >)', () => {
+      it('joins folded lines the way YAML does before scanning', () => {
+        const yaml = [
+          '    - run:',
+          '        command: >',
+          '          echo',
+          '          "$EXAMPLE_PASSWORD"',
+        ].join('\n');
+
+        expect(yamlRules(yaml)).toEqual(['3:print-secret']);
+      });
+
+      it.each([
+        ['command: >-', ['set', '-x'], '3:shell-trace'],
+        ['command: >+', ['printenv'], '3:env-dump'],
+        ['command: >2', ['echo', '"$DATABASE_URL"'], '3:print-secret'],
+      ])('flags %s', (key, lines, expected) => {
+        const yaml = [
+          '    - run:',
+          `        ${key}`,
+          ...lines.map((line) => `          ${line}`),
+        ].join('\n');
+
+        expect(yamlRules(yaml)).toEqual([expected]);
+      });
+
+      it('does not join lines of a literal block (|), which are separate commands', () => {
+        const yaml = [
+          '    - run:',
+          '        command: |',
+          '          echo',
+          '          "$EXAMPLE_PASSWORD"',
+        ].join('\n');
+
+        expect(yamlRules(yaml)).toEqual([]);
+      });
+
+      it('does not fold across a blank line or into a more-indented line', () => {
+        const blank = ['command: >', '  echo', '', '  "$EXAMPLE_PASSWORD"'].join('\n');
+        const indented = ['command: >', '  echo', '    "$EXAMPLE_PASSWORD"'].join('\n');
+
+        expect(yamlRules(blank)).toEqual([]);
+        expect(yamlRules(indented)).toEqual([]);
+      });
+
+      it('still ends the block at the next key', () => {
+        const yaml = ['command: >', '  echo ok', 'name: set -x'].join('\n');
+
+        expect(yamlRules(yaml)).toEqual([]);
+      });
+    });
+
     it('allows safe inline commands', () => {
       expect(yamlRules('- run: echo "length ${#EXAMPLE_TOKEN}"')).toEqual([]);
       expect(yamlRules('- run: node ./tools/checkSecretPrinting.js')).toEqual([]);
@@ -254,6 +328,10 @@ describe('checkSecretPrinting scanText', () => {
       'echo $(cf env app)',
       'echo "$(cf env app)"',
       'cf env app > out.txt',
+      'echo DATA=$(cf env app)',
+      'echo DATA=`cf env app`',
+      "printf '%s' DATA=$(cf env app)",
+      'echo prefix OTHER=$(cf env app)',
     ])('flags %s', (line) => {
       expect(rules(line)).toContain('cf-env');
     });
@@ -265,6 +343,10 @@ describe('checkSecretPrinting scanText', () => {
       'DATA=`cf env app`',
       'local data=$(cf env app)',
       'export DATA=$(cf env app)',
+      'A=1 B=$(cf env app)',
+      'declare -x DATA=$(cf env app)',
+      'cmd; DATA=$(cf env app)',
+      'if true; then DATA=$(cf env app); fi',
     ])('allows %s', (line) => {
       expect(rules(line)).not.toContain('cf-env');
     });

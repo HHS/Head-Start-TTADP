@@ -126,7 +126,8 @@ Key variables include:
 CircleCI job logs for this project are **publicly readable**, so any command that prints the environment or a secret value
 publishes it. (A database credential was exposed this way in TTAHUB-5932, by an `env` dump in an automation script.)
 The `secret_printing_check` job runs `node ./tools/checkSecretPrinting.js` on every branch build and fails when it finds
-one of the commands below. Run it locally with `yarn lint:secret-printing`. The pre-commit hook (`.githooks/pre-commit`)
+one of the commands below. It runs **before** `build_and_lint` (which requires it) in the build/test/deploy, manual
+deploy and nightly reset workflows, so a build script that prints credentials can't run first and publish them. Run it locally with `yarn lint:secret-printing`. The pre-commit hook (`.githooks/pre-commit`)
 runs it as `node ./tools/checkSecretPrinting.js --staged`, which reads the git index (including the staged exceptions file)
 instead of the working tree.
 
@@ -135,8 +136,9 @@ and `.circleci/config.yml`. It is a static check that does not run anything. It 
 reader would: backslash-continued lines are joined into one command, and control prefixes (`if ... then`, `do`, `{`, `!`,
 function and `case` headers, leading `VAR=value`) are looked through. In the CircleCI config it scans only the values of
 `run:` and `command:` keys, both inline (`- run: env`, `command: "set -x"`) and block scalars (`command: |` and the lines
-under it). Names, descriptions and parameter values are not commands and are not scanned. Flow-style mappings such as
-`run: { command: env }` are not handled.
+under it; a folded `>` block is joined the way YAML folds it, so `echo` on one line and `"$VAR"` on the next are
+read as one command). Names, descriptions and parameter values are not commands and are not scanned. Flow-style mappings
+such as `run: { command: env }` are not handled.
 
 | Rule           | Flags                                                                                                                                 | Why it is unsafe                                            |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
