@@ -366,9 +366,9 @@ describe('NOTIFICATION_CONFIGURATION', () => {
   describe(NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED];
 
-    it('textFn interpolates author', () => {
-      expect(config.textFn({ author: 'Alice' })).toBe(
-        'Alice added you as a Regional point of contact on their Training Report.'
+    it('textFn returns the static POC added text', () => {
+      expect(config.textFn()).toBe(
+        'You were added as a Regional point of contact on their Training Report.'
       );
     });
 
@@ -382,6 +382,10 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('linkText returns "View TR"', () => {
       expect(config.linkText()).toBe('View TR');
+    });
+
+    it('archiveLabel returns "View TR"', () => {
+      expect(config.archiveLabel()).toBe('View TR');
     });
 
     it('displayId returns the displayId param', () => {
