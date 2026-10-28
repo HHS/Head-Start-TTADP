@@ -11,6 +11,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
+import { HTTPError } from '../../fetchers';
 import {
   createTtaRequest,
   getTtaRequest,
@@ -287,8 +288,11 @@ function TtaRequestFormBody({
       };
 
       history.push(backLinkTo, { message });
-    } catch {
-      setSaveError(SUBMIT_ERROR);
+    } catch (e) {
+      // a request the server rejects says why, which retrying would not change
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
+      setSaveError(validationMessage || SUBMIT_ERROR);
     } finally {
       setIsAppLoading(false);
     }

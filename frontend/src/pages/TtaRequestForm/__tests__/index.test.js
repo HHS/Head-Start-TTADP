@@ -859,6 +859,21 @@ describe('TtaRequestForm', () => {
     expect(mockSetIsAppLoading).toHaveBeenLastCalledWith(false);
   });
 
+  it('shows why the server refused the submit', async () => {
+    const reason = 'The reviewer must be able to review TTA requests in the request region';
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42/submit', { status: 400, body: { error: reason } });
+    const history = createMemoryHistory();
+    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
+
+    await fillCompleteRequest();
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText(reason)).toBeVisible();
+    expect(screen.queryByText(SUBMIT_ERROR)).toBeNull();
+    expect(history.location.pathname).not.toBe(BACK_LINK);
+  });
+
   it('offers the region reviewers', async () => {
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
