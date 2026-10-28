@@ -20,6 +20,21 @@ const mockResponse = () => {
 };
 
 describe('checkRecipientTimelineQuery', () => {
+  it.each(['chronological', 'monitoring', 'goals'])('accepts the %s view', (view) => {
+    const res = mockResponse();
+    const next = jest.fn();
+    checkRecipientTimelineQuery({ query: { view } }, res, next);
+    expect(res.locals.recipientTimelineQuery.view).toBe(view);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects unknown views', () => {
+    const res = mockResponse();
+    const next = jest.fn();
+    checkRecipientTimelineQuery({ query: { view: 'unknown' } }, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     jest.clearAllMocks();
   });

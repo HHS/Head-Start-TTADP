@@ -1,7 +1,10 @@
 import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
 import db from '../models';
 import { queryTimelineEventIndex } from './recipientTimeline';
-import { ACTIVITY_REPORT_TIMELINE_SOURCE } from './recipientTimelineSources';
+import {
+  ACTIVITY_REPORT_TIMELINE_SOURCE,
+  GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
+} from './recipientTimelineSources';
 
 const {
   ActivityRecipient,
@@ -26,6 +29,32 @@ const params: RecipientTimelineRequestParams = {
   filters: [],
   excludeMultiRecipientCommunications: false,
 };
+
+describe('goal cycle divider metadata', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it.each([null, { id: 12345, name: 'Monitoring goal' }])(
+    'uses the associated goal number rather than the status-change ID, with goal %j',
+    async (goal) => {
+      const findAll = jest.fn().mockResolvedValue([
+        {
+          id: 98765,
+          oldStatus: 'In Progress',
+          newStatus: 'Closed',
+          userRoles: [],
+          goal,
+          get: () => false,
+        },
+      ]);
+      jest.spyOn(db.GoalStatusChange, 'unscoped').mockReturnValue({ findAll } as never);
+      const populated = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([98765], params);
+      const number = populated.get(98765)?.details.find(({ label }) => label === 'Goal number');
+      expect(number).toEqual(
+        goal ? { label: 'Goal number', items: [{ text: 'G-12345' }] } : undefined
+      );
+    }
+  );
+});
 
 describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
   afterEach(() => jest.restoreAllMocks());

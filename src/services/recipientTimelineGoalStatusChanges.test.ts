@@ -3,7 +3,11 @@ import { Op } from 'sequelize';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import db from '../models';
 import { getUniqueId } from '../testUtils';
-import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
+import {
+  getRecipientTimeline,
+  getTimelineGoalCategories,
+  queryTimelineEventIndex,
+} from './recipientTimeline';
 import { GOAL_STATUS_CHANGE_TIMELINE_SOURCE } from './recipientTimelineSources';
 import { newStandardGoal } from './standardGoals';
 
@@ -31,6 +35,160 @@ describe('goal status change timeline integration', () => {
   let changes;
   let templates;
   let user;
+
+  it('shows the latest status change across goals and falls back to history creation time', async () => {
+    const extraGoal = await Goal.create(
+      {
+        grantId: grantIds[0],
+        goalTemplateId: templates[0].id,
+        isRttapa: 'Yes',
+        status: 'Closed',
+        createdAt: new Date('2020-01-01'),
+      },
+      { hooks: false }
+    );
+    const addedChanges = [];
+    try {
+      addedChanges.push(
+        await GoalStatusChange.create(
+          {
+            goalId: extraGoal.id,
+            oldStatus: 'In Progress',
+            newStatus: 'Closed',
+            performedAt: new Date('2099-01-01'),
+          },
+          { hooks: false }
+        )
+      );
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual([
+        { label: standards[0], statuses: ['Closed'] },
+      ]);
+      addedChanges.push(
+        await GoalStatusChange.create(
+          {
+            goalId: goals[0].id,
+            oldStatus: 'Closed',
+            newStatus: 'In Progress',
+            performedAt: new Date('2100-01-01'),
+          },
+          { hooks: false }
+        )
+      );
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual([
+        { label: standards[0], statuses: ['In Progress'] },
+      ]);
+      addedChanges.push(
+        await GoalStatusChange.create(
+          {
+            goalId: extraGoal.id,
+            oldStatus: 'In Progress',
+            newStatus: 'Closed',
+            performedAt: null,
+            createdAt: new Date('2101-01-01'),
+          },
+          { hooks: false }
+        )
+      );
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual([
+        { label: standards[0], statuses: ['Closed'] },
+      ]);
+    } finally {
+      await GoalStatusChange.destroy({
+        where: { id: addedChanges.map(({ id }) => id) },
+        force: true,
+      });
+      await Goal.unscoped().destroy({ where: { id: extraGoal.id }, force: true, hooks: false });
+    }
+  });
+
+  it('includes current standard goals created without the legacy RTTAPA flag', async () => {
+    const originalCreatedVia = goals[0].createdVia;
+    try {
+      // newStandardGoal creates goals via rtr without setting isRttapa.
+      await goals[0].update({ createdVia: 'rtr' }, { hooks: false });
+      expect(goals[0].isRttapa).toBeNull();
+      const expected = [{ label: standards[0], statuses: ['In Progress'] }];
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
+        expected
+      );
+      const result = await getRecipientTimeline({ ...params, view: 'goals' });
+      expect(result.categories).toEqual(expected);
+      expect(result.count).toBeGreaterThan(0);
+    } finally {
+      await goals[0].update({ createdVia: originalCreatedVia }, { hooks: false });
+    }
+  });
+
+  it('retains the category of an RTTAPA goal with a NULL status', async () => {
+    const originalStatus = goals[0].status;
+    const originalIsRttapa = goals[0].isRttapa;
+    try {
+      await goals[0].update({ status: null, isRttapa: 'Yes' }, { hooks: false });
+      const expected = [{ label: standards[0], statuses: [] }];
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
+        expected
+      );
+      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual(
+        expected
+      );
+    } finally {
+      await goals[0].update(
+        { status: originalStatus, isRttapa: originalIsRttapa },
+        { hooks: false }
+      );
+    }
+  });
+
+  it('only groups categories from non-draft, unmerged RTTAPA goals for this recipient and region', async () => {
+    const draftTemplate = await GoalTemplate.create({
+      templateName: `(Draft ${getUniqueId()}) Ineligible category`,
+      creationMethod: 'Curated',
+    });
+    templates.push(draftTemplate);
+    const nonStandardTemplate = await GoalTemplate.create({
+      templateName: `Non-standard ${getUniqueId()}`,
+      creationMethod: 'Automatic',
+    });
+    templates.push(nonStandardTemplate);
+    const extraGoals = await Goal.bulkCreate(
+      [
+        { status: 'Closed', isRttapa: 'No', goalTemplateId: nonStandardTemplate.id },
+        { status: 'Draft', goalTemplateId: draftTemplate.id },
+        { status: 'Closed', grantId: grantIds[1] },
+        { status: 'Closed', grantId: grantIds[2] },
+        { status: 'Closed', mapsToParentGoalId: goals[0].id },
+        { status: 'Closed', deletedAt: new Date() },
+      ].map((goal) => ({
+        grantId: grantIds[0],
+        goalTemplateId: templates[0].id,
+        isRttapa: 'Yes',
+        ...goal,
+      })),
+      { hooks: false }
+    );
+    const extraIds = extraGoals.map(({ id }) => id);
+    try {
+      await goals[0].update({ isRttapa: 'Yes' }, { hooks: false });
+      expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual([
+        { label: standards[0], statuses: ['In Progress'] },
+      ]);
+      const expected = await queryTimelineEventIndex({
+        ...params,
+        sources: [GOAL_STATUS_CHANGE_TIMELINE_SOURCE],
+        filters: [{ topic: 'standard', condition: 'is', query: [standards[0]] }],
+      });
+      const grouped = await getRecipientTimeline({ ...params, view: 'goals', limit: 2 });
+      expect(grouped.categories).toEqual([{ label: standards[0], statuses: ['In Progress'] }]);
+      expect(grouped.count).toBe(expected.count);
+      expect(grouped.events.map(({ sourceId }) => sourceId)).toEqual(
+        expected.events.slice(0, 2).map(({ sourceId }) => sourceId)
+      );
+    } finally {
+      await goals[0].update({ isRttapa: null }, { hooks: false });
+      await GoalStatusChange.destroy({ where: { goalId: extraIds }, force: true });
+      await Goal.unscoped().destroy({ where: { id: extraIds }, force: true, hooks: false });
+    }
+  });
 
   beforeAll(async () => {
     await sequelize.transaction(async (transaction) => {
@@ -189,6 +347,7 @@ describe('goal status change timeline integration', () => {
         indicators: [],
         tags: [{ label: standards[0], flagged: false }],
         details: [
+          { label: 'Goal number', items: [{ text: `G-${goals[0].id}` }] },
           { label: 'Previous status', items: [{ text: 'In Progress' }] },
           { label: 'New status', items: [{ text: 'Closed' }] },
           { label: 'Reason', items: [{ text: 'All objectives achieved' }] },
@@ -235,6 +394,7 @@ describe('goal status change timeline integration', () => {
       byline: null,
       tags: [],
       details: [
+        { label: 'Goal number', items: [{ text: `G-${goals[1].id}` }] },
         { label: 'Previous status', items: [{ text: 'In Progress' }] },
         { label: 'New status', items: [{ text: 'Closed' }] },
         { label: 'Grant number', items: [{ text: `Timeline-${grantIds[0]}` }] },
@@ -408,7 +568,10 @@ describe('goal status change detail loading', () => {
         subtitle: null,
         byline: null,
         tags: [],
-        details: [{ label: 'New status', items: [{ text: 'Not Started' }] }],
+        details: [
+          { label: 'Goal number', items: [{ text: 'G-20' }] },
+          { label: 'New status', items: [{ text: 'Not Started' }] },
+        ],
       });
       expect(findAll).toHaveBeenCalledTimes(1);
       expect(findAll).toHaveBeenCalledWith(

@@ -109,6 +109,7 @@ export const getRecipientTimeline = async (
   recipientId,
   regionId,
   {
+    view,
     direction = 'desc',
     filters = [],
     excludeMultiRecipientCommunications = false,
@@ -141,6 +142,7 @@ export const getRecipientTimeline = async (
     limit: String(parsedLimit),
     offset: String(parsedOffset),
   });
+  if (view) controls.set('view', view);
   controls.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
   const filterQuery = filtersToQueryString(filters);
 
