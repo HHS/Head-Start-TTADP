@@ -13,7 +13,7 @@ import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
-import orderReportsBy from '../lib/orderReportsBy';
+import orderReportsBy, { normalizeSortDir } from '../lib/orderReportsBy';
 import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
@@ -541,11 +541,18 @@ export async function activityReportAndRecipientsById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export async function activityReports(
-  { sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters },
+  {
+    sortBy = 'updatedAt',
+    sortDir: rawSortDir = 'desc',
+    offset = 0,
+    limit = REPORTS_PER_PAGE,
+    ...filters
+  },
   excludeLegacy = false,
   userId = 0,
   ids = []
 ) {
+  const sortDir = normalizeSortDir(rawSortDir);
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
   const where = {
@@ -819,8 +826,9 @@ export async function activityReportsForCleanup(userId) {
  */
 export async function activityReportAlerts(
   userId,
-  { sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters }
+  { sortBy = 'startDate', sortDir: rawSortDir = 'desc', offset = 0, ...filters }
 ) {
+  const sortDir = normalizeSortDir(rawSortDir);
   const updatedFilters = await setReadRegions(filters, userId);
   const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
