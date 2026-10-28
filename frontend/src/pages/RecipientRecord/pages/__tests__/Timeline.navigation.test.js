@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
@@ -32,6 +32,7 @@ const batch = (start, length) =>
     links: [],
   }));
 const view = {
+  mode: 'chronological',
   recipientId: '401',
   regionId: '1',
   direction: 'desc',
@@ -99,6 +100,320 @@ describe('timeline navigation restoration', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it.each(['monitoring', 'goals'])(
+    'restores the original view and filters with Back after switching to %s',
+    async (mode) => {
+      mockRealFilters();
+      const initialFilters = [
+        { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+      ];
+      const initialSearch = `?${filtersToQueryString(initialFilters)}`;
+      const history = createMemoryHistory({
+        initialEntries: [
+          {
+            pathname: '/timeline',
+            search: initialSearch,
+            state: { timelineView: view },
+          },
+        ],
+      });
+      getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+      renderTimeline(history);
+      await screen.findByText('No results found.');
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), mode)
+      );
+      await waitFor(() =>
+        expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+          '401',
+          '1',
+          expect.objectContaining({ view: mode })
+        )
+      );
+      expect(history.length).toBe(2);
+      act(() => history.goBack());
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc')
+      );
+      expect(history.location.search).toBe(initialSearch);
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          filters: [expect.objectContaining({ topic: 'standard', query: ['Family Support'] })],
+        })
+      );
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].view).toBeUndefined();
+      act(() => history.goForward());
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual(
+        mode === 'goals'
+          ? []
+          : [expect.objectContaining({ topic: 'standard', query: ['Monitoring'] })]
+      );
+    }
+  );
+
+  it('switches views, replaces only goal filters, and restores the chosen view after details', async () => {
+    mockRealFilters();
+    const initialFilters = [
+      { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+      { id: 'event', topic: 'eventType', condition: 'is', query: ['TTA activity'] },
+    ];
+    const history = createMemoryHistory({
+      initialEntries: [
+        {
+          pathname: '/timeline',
+          search: `?${filtersToQueryString(initialFilters)}`,
+        },
+      ],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.click(screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' }))
+    );
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'monitoring')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          view: 'monitoring',
+          offset: 0,
+          excludeMultiRecipientCommunications: true,
+          filters: [
+            expect.objectContaining({ topic: 'eventType' }),
+            expect.objectContaining({ topic: 'standard', query: ['Monitoring'] }),
+          ],
+        })
+      )
+    );
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({
+          view: 'goals',
+          offset: 0,
+          excludeMultiRecipientCommunications: true,
+          filters: [expect.objectContaining({ topic: 'eventType' })],
+        })
+      )
+    );
+    expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
+    await act(async () => userEvent.click(screen.getByRole('link', { name: 'View details' })));
+    act(() => history.goBack());
+    expect(await screen.findByRole('combobox', { name: 'View' })).toHaveValue('goals');
+  });
+
+  it.each([
+    ['monitoring', 'desc'],
+    ['monitoring', 'asc'],
+    ['goals', 'desc'],
+    ['goals', 'asc'],
+  ])(
+    'clears only goal categories when moving from %s to date order %s',
+    async (mode, direction) => {
+      mockRealFilters();
+      const otherFilters = [
+        { id: 'date', topic: 'date', condition: 'is within', query: '2025/10/01-2026/10/26' },
+        { id: 'event', topic: 'eventType', condition: 'is', query: ['TTA activity'] },
+        { id: 'purpose', topic: 'purpose', condition: 'is', query: [COMMUNICATION_PURPOSES[0]] },
+      ];
+      const initialFilters = [
+        ...otherFilters,
+        { id: 'goal', topic: 'standard', condition: 'is', query: ['Monitoring'] },
+        { id: 'excludedGoal', topic: 'standard', condition: 'is not', query: ['Family Support'] },
+      ];
+      const history = createMemoryHistory({
+        initialEntries: [
+          {
+            pathname: '/timeline',
+            search: `?${filtersToQueryString(initialFilters)}`,
+            state: { timelineView: { ...view, mode, excludeMultiRecipientCommunications: true } },
+          },
+        ],
+      });
+      getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+      renderTimeline(history);
+      await screen.findByText('No results found.');
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), direction)
+      );
+      await waitFor(() => {
+        const request = getRecipientTimeline.mock.calls.at(-1)[2];
+        expect(request.view).toBeUndefined();
+        expect(request).toMatchObject({
+          direction,
+          offset: 0,
+          excludeMultiRecipientCommunications: true,
+        });
+        expect(request.filters).toHaveLength(otherFilters.length);
+        expect(request.filters).toEqual(
+          expect.arrayContaining(
+            otherFilters.map(({ id, ...filter }) => expect.objectContaining(filter))
+          )
+        );
+      });
+      expect(history.location.search).not.toContain('standard.');
+      expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' })
+      ).toBeChecked();
+      // A view switch is one history entry, and Back still restores the old view and filters.
+      expect(history.length).toBe(2);
+      act(() => history.goBack());
+      await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
+      expect(
+        getRecipientTimeline.mock.calls
+          .at(-1)[2]
+          .filters.filter(({ topic }) => topic === 'standard')
+      ).toHaveLength(2);
+    }
+  );
+
+  it.each(['monitoring', 'goals'])(
+    'keeps goal dividers visible and unique across pages in %s view',
+    async (mode) => {
+      const first = batch(1, 25).map((event) => ({
+        ...event,
+        tags: [{ label: 'Monitoring', flagged: true }],
+      }));
+      first[24] = {
+        ...first[24],
+        source: 'goalStatusChange',
+        eventType: 'Goal reopened',
+        details: [{ label: 'Goal number', items: [{ text: 'G-109560' }] }],
+      };
+      const second = [
+        {
+          ...first[24],
+          sourceId: 26,
+          eventType: 'Goal closed',
+          details: [{ label: 'Goal number', items: [{ text: 'G-103104' }] }],
+        },
+      ];
+      const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
+      getRecipientTimeline
+        .mockResolvedValueOnce({ count: 26, events: first, categories })
+        .mockResolvedValueOnce({ count: 26, events: second, categories });
+      renderTimeline(historyAt({ timelineView: { ...view, mode } }));
+      expect(await screen.findByText('Goal G-109560 reopened')).toBeVisible();
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
+      expect(await screen.findByText('Goal G-103104 closed')).toBeVisible();
+      expect(screen.getAllByText(/^Goal G-\d+ (closed|reopened)$/)).toHaveLength(2);
+      expect(screen.getAllByRole('article')).toHaveLength(26);
+      expect(screen.getByTestId('timeline-results')).toHaveTextContent('26 timeline events');
+      const toggle = screen.getByRole('button', { name: /Monitoring In Progress/ });
+      userEvent.click(toggle);
+      expect(screen.getByText('Goal G-103104 closed')).not.toBeVisible();
+    }
+  );
+
+  it.each(['monitoring', 'goals'])(
+    'pauses automatic loading when every category is collapsed and resumes on expansion in %s',
+    async (mode) => {
+      const originalObserver = window.IntersectionObserver;
+      const observers = [];
+      window.IntersectionObserver = jest.fn().mockImplementation((callback) => {
+        const observer = { callback, observe: jest.fn(), disconnect: jest.fn() };
+        observers.push(observer);
+        return observer;
+      });
+      try {
+        const categories = [
+          ...(mode === 'goals' ? [{ label: 'Family Support', statuses: ['Closed'] }] : []),
+          { label: 'Monitoring', statuses: ['In Progress'] },
+        ];
+        const page = (offset) => ({
+          count: 75,
+          categories,
+          events: batch(offset + 1, 25).map((event) => ({
+            ...event,
+            tags: categories.map(({ label }) => ({ label, flagged: false })),
+          })),
+        });
+        let resolveSecondPage;
+        getRecipientTimeline
+          .mockResolvedValueOnce(page(0))
+          .mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                resolveSecondPage = resolve;
+              })
+          )
+          .mockResolvedValueOnce(page(50));
+        renderTimeline(historyAt({ timelineView: { ...view, mode } }));
+        await screen.findByRole('button', { name: /Monitoring In Progress/ });
+        await waitFor(() => expect(observers.length).toBeGreaterThan(0));
+        if (mode === 'goals') {
+          userEvent.click(screen.getByRole('button', { name: /Family Support Closed/ }));
+        }
+        // One open category must still allow automatic pagination.
+        const queuedObserver = observers.at(-1);
+        act(() => queuedObserver.callback([{ isIntersecting: true }]));
+        await waitFor(() => expect(getRecipientTimeline).toHaveBeenCalledTimes(2));
+        userEvent.click(screen.getByRole('button', { name: /Monitoring In Progress/ }));
+        const observerCount = observers.length;
+        await act(async () => resolveSecondPage(page(25)));
+        expect(screen.queryByText('Loading timeline events...')).not.toBeInTheDocument();
+        expect(observers).toHaveLength(observerCount);
+        // Notifications queued before disconnection must not request another slice.
+        act(() => queuedObserver.callback([{ isIntersecting: true }]));
+        expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
+        userEvent.click(screen.getByRole('button', { name: /Monitoring In Progress/ }));
+        await waitFor(() => expect(observers.length).toBeGreaterThan(observerCount));
+        act(() => observers.at(-1).callback([{ isIntersecting: true }]));
+        await waitFor(() => expect(getRecipientTimeline).toHaveBeenCalledTimes(3));
+        expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+        await screen.findByRole('heading', { name: 'Event 75' });
+      } finally {
+        window.IntersectionObserver = originalObserver;
+      }
+    }
+  );
+
+  it('groups multi-category events alphabetically in independently expanded accordions', async () => {
+    const events = batch(1, 2).map((event) => ({
+      ...event,
+      tags: [
+        { label: 'Family Support', flagged: false },
+        { label: 'Monitoring', flagged: true },
+      ],
+    }));
+    getRecipientTimeline.mockResolvedValue({
+      count: 2,
+      events,
+      categories: [
+        { label: 'Family Support', statuses: ['Closed'] },
+        { label: 'Monitoring', statuses: ['In Progress'] },
+      ],
+    });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    const family = await screen.findByRole('list', { name: 'Family Support timeline events' });
+    const monitoring = screen.getByRole('list', { name: 'Monitoring timeline events' });
+    expect(within(family).getAllByRole('article')).toHaveLength(2);
+    expect(within(monitoring).getAllByRole('article')).toHaveLength(2);
+    expect(screen.getByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+    const headings = within(screen.getByRole('list', { name: 'Timeline events' })).getAllByRole(
+      'heading',
+      { level: 3 }
+    );
+    expect(headings[0]).toHaveTextContent('Family Support');
+    const toggle = screen.getByRole('button', { name: /Family Support Closed/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await act(async () => userEvent.click(toggle));
+    expect(family).not.toBeVisible();
+    expect(monitoring).toBeVisible();
+  });
 
   it.each(['is', 'is not'])(
     'applies multiple communication purposes with %s',
