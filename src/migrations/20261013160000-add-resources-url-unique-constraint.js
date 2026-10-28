@@ -6,25 +6,29 @@ const { prepMigration } = require('../lib/migration');
 // (ObjectiveResources / ObjectiveTemplateResources were dropped by
 // 20240531163151-remove-unused-objective-tables.)
 const RESOURCE_REFERENCING_TABLES = [
-    { table: 'ActivityReportResources', idColumn: 'activityReportId', hasArFlags: false },
-    { table: 'ActivityReportGoalResources', idColumn: 'activityReportGoalId', hasArFlags: false },
-    { table: 'ActivityReportObjectiveResources', idColumn: 'activityReportObjectiveId', hasArFlags: false },
-    { table: 'GoalResources', idColumn: 'goalId', hasArFlags: true },
-    { table: 'GoalTemplateResources', idColumn: 'goalTemplateId', hasArFlags: false },
-    { table: 'NextStepResources', idColumn: 'nextStepId', hasArFlags: false },
+  { table: 'ActivityReportResources', idColumn: 'activityReportId', hasArFlags: false },
+  { table: 'ActivityReportGoalResources', idColumn: 'activityReportGoalId', hasArFlags: false },
+  {
+    table: 'ActivityReportObjectiveResources',
+    idColumn: 'activityReportObjectiveId',
+    hasArFlags: false,
+  },
+  { table: 'GoalResources', idColumn: 'goalId', hasArFlags: true },
+  { table: 'GoalTemplateResources', idColumn: 'goalTemplateId', hasArFlags: false },
+  { table: 'NextStepResources', idColumn: 'nextStepId', hasArFlags: false },
 ];
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-    up: async (queryInterface) =>
-        queryInterface.sequelize.transaction(async (transaction) => {
-            await prepMigration(queryInterface, transaction, __filename);
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename);
 
-            // Duplicate "Resources" rows (same url) can exist because the previous race-prone
-            // find-then-create logic allowed two concurrent requests to both insert a row for
-            // the same url. Collapse each duplicate group onto the lowest id ("canonical" row)
-            // before adding the unique constraint below.
-            await queryInterface.sequelize.query(
+      // Duplicate "Resources" rows (same url) can exist because the previous race-prone
+      // find-then-create logic allowed two concurrent requests to both insert a row for
+      // the same url. Collapse each duplicate group onto the lowest id ("canonical" row)
+      // before adding the unique constraint below.
+      await queryInterface.sequelize.query(
         /* sql */ `
           DROP TABLE IF EXISTS tmp_resource_dedup;
           CREATE TEMP TABLE tmp_resource_dedup AS
@@ -35,20 +39,20 @@ module.exports = {
           ) x
           WHERE id <> canonical_id;
         `,
-                { transaction }
-            );
+        { transaction }
+      );
 
-            // Repointing a join row's resourceId to the canonical id can make it collide with
-            // another row that already referenced the same (parentId, canonical resourceId)
-            // pair -- these tables key on a surrogate "id", so simply repointing the FK would
-            // leave both rows in place. Merge every such colliding group onto its lowest-id row,
-            // unioning "sourceFields" (and, for GoalResources, OR-ing the onAR/onApprovedAR
-            // flags) before discarding the extra rows. Only groups containing a repointed row are
-            // touched; every other row is left exactly as it is.
-            // eslint-disable-next-line no-restricted-syntax
-            for (const { table, idColumn, hasArFlags } of RESOURCE_REFERENCING_TABLES) {
-                // eslint-disable-next-line no-await-in-loop
-                await queryInterface.sequelize.query(
+      // Repointing a join row's resourceId to the canonical id can make it collide with
+      // another row that already referenced the same (parentId, canonical resourceId)
+      // pair -- these tables key on a surrogate "id", so simply repointing the FK would
+      // leave both rows in place. Merge every such colliding group onto its lowest-id row,
+      // unioning "sourceFields" (and, for GoalResources, OR-ing the onAR/onApprovedAR
+      // flags) before discarding the extra rows. Only groups containing a repointed row are
+      // touched; every other row is left exactly as it is.
+      // eslint-disable-next-line no-restricted-syntax
+      for (const { table, idColumn, hasArFlags } of RESOURCE_REFERENCING_TABLES) {
+        // eslint-disable-next-line no-await-in-loop
+        await queryInterface.sequelize.query(
           /* sql */ `
             DROP TABLE IF EXISTS tmp_join_merge;
             CREATE TEMP TABLE tmp_join_merge AS
@@ -102,11 +106,11 @@ module.exports = {
 
             DROP TABLE IF EXISTS tmp_join_merge;
           `,
-                    { transaction }
-                );
-            }
+          { transaction }
+        );
+      }
 
-            await queryInterface.sequelize.query(
+      await queryInterface.sequelize.query(
         /* sql */ `
           UPDATE "Resources" r
           SET "mapsTo" = d.canonical_id
@@ -118,33 +122,33 @@ module.exports = {
 
           DROP TABLE IF EXISTS tmp_resource_dedup;
         `,
-                { transaction }
-            );
+        { transaction }
+      );
 
-            // Index a digest rather than the raw url: a btree entry is capped at ~2.7KB, so
-            // indexing unbounded TEXT directly would reject long urls (e.g. with large query
-            // strings) at insert time, and fail this migration outright if any already exist.
-            await queryInterface.sequelize.query(
+      // Index a digest rather than the raw url: a btree entry is capped at ~2.7KB, so
+      // indexing unbounded TEXT directly would reject long urls (e.g. with large query
+      // strings) at insert time, and fail this migration outright if any already exist.
+      await queryInterface.sequelize.query(
         /* sql */ `
           CREATE UNIQUE INDEX IF NOT EXISTS "Resources_url_md5_unique_idx" ON "Resources" (md5(url));
         `,
-                { transaction }
-            );
-        }),
+        { transaction }
+      );
+    }),
 
-    // NOTE: this only reverts the constraint/index -- it cannot undo the dedup above (merged
-    // duplicate Resources rows and their re-pointed join-table references are gone for good).
-    // There's no canonical way to un-merge deleted duplicates, so this down() is a one-way
-    // trip for the data even though the schema change itself is fully reverted.
-    down: async (queryInterface) =>
-        queryInterface.sequelize.transaction(async (transaction) => {
-            await prepMigration(queryInterface, transaction, __filename);
+  // NOTE: this only reverts the constraint/index -- it cannot undo the dedup above (merged
+  // duplicate Resources rows and their re-pointed join-table references are gone for good).
+  // There's no canonical way to un-merge deleted duplicates, so this down() is a one-way
+  // trip for the data even though the schema change itself is fully reverted.
+  down: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
+      await prepMigration(queryInterface, transaction, __filename);
 
-            await queryInterface.sequelize.query(
+      await queryInterface.sequelize.query(
         /* sql */ `
           DROP INDEX IF EXISTS "Resources_url_md5_unique_idx";
         `,
-                { transaction }
-            );
-        }),
+        { transaction }
+      );
+    }),
 };

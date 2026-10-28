@@ -236,6 +236,28 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED];
+
+    it('textFn interpolates recipientName and displayId', () => {
+      expect(config.textFn({ recipientName: 'Test Recipient', displayId: 'R01-AR-17967' })).toBe(
+        'Test Recipient R01-AR-17967 is available to view.'
+      );
+    });
+
+    it('is not actionable and links to the report with a View AR CTA', () => {
+      expect(config.actionable).toBe(false);
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+      expect(config.linkText()).toBe('View AR');
+      expect(config.displayId({ displayId: 'R01-AR-17967' })).toBe('R01-AR-17967');
+    });
+
+    it('uses the program specialist in-app settings key', () => {
+      expect(config.settingsKey).toBe('inAppWhenRecipientReportApprovedProgramSpecialist');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER];
 
@@ -338,6 +360,67 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('uses the approver submitted-for-review settings key', () => {
       expect(config.settingsKey).toBe('inAppWhenReportSubmittedForReview');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED];
+
+    it('textFn interpolates author', () => {
+      expect(config.textFn({ author: 'Alice' })).toBe(
+        'Alice added you as a Regional point of contact on their Training Report.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the training report view path with the display id', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe('/training-report/view/R01-TR-1234');
+    });
+
+    it('linkText returns "View TR"', () => {
+      expect(config.linkText()).toBe('View TR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenAddedAsPocTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenAddedAsPocTrainingReport');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR];
+
+    it('textFn interpolates the session name', () => {
+      expect(config.textFn({ sessionName: 'Opening session' })).toBe(
+        'Session: Opening session submitted for approval.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the training report view path with the display id', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe('/training-report/view/R01-TR-1234');
+    });
+
+    it('linkText returns "View TR"', () => {
+      expect(config.linkText()).toBe('View TR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenSessionSubmittedCollaboratorTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionSubmittedCollaboratorTrainingReport');
     });
   });
 
