@@ -1,7 +1,7 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { frequencyValues } from '../..';
+import { frequencyValues } from './constants';
 
 export default function NotificationsGroupController({
   groupName,

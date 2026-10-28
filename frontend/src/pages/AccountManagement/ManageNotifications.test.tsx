@@ -203,11 +203,13 @@ describe('ManageNotifications', () => {
   const validatedUser = {
     id: 1,
     validationStatus: [{ type: 'email', validatedAt: '2024-01-01T00:00:00.000Z' }],
+    flags: ['actionable_notifications'],
   };
 
   const unvalidatedUser = {
     id: 1,
     validationStatus: [],
+    flags: ['actionable_notifications'],
   };
 
   const emailSettings = [
@@ -225,7 +227,11 @@ describe('ManageNotifications', () => {
     updateUser = jest.fn(),
     history,
   }: {
-    user?: { id: number; validationStatus: Array<{ type: string; validatedAt?: string }> };
+    user?: {
+      id: number;
+      validationStatus: Array<{ type: string; validatedAt?: string }>;
+      flags: string[];
+    };
     setIsAppLoading?: jest.Mock;
     updateUser?: jest.Mock;
     history?: MemoryHistory;
@@ -276,6 +282,26 @@ describe('ManageNotifications', () => {
       'Other',
     ].forEach((section) => {
       expect(screen.getByText(section)).toBeInTheDocument();
+    });
+  });
+
+  it('only renders the Activity Reports section without the actionable_notifications flag', async () => {
+    fetchMock.get('/api/settings', settings);
+
+    renderManageNotifications({ user: { ...validatedUser, flags: [] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Activity Reports')).toBeInTheDocument();
+    });
+
+    [
+      'Collaboration Reports',
+      'Communication Logs',
+      'Training Reports',
+      'System Related',
+      'Other',
+    ].forEach((section) => {
+      expect(screen.queryByText(section)).not.toBeInTheDocument();
     });
   });
 
@@ -379,6 +405,41 @@ describe('ManageNotifications', () => {
     };
 
     expect(Object.fromEntries(payload.map(({ key, value }) => [key, value]))).toEqual(expected);
+  });
+
+  it('keeps saved session submitted collaborator settings through an unchanged save', async () => {
+    fetchMock.get('/api/settings', [
+      ...settings,
+      { key: 'emailWhenSessionSubmittedCollaboratorTrainingReport', value: 'today' },
+      { key: 'inAppWhenSessionSubmittedCollaboratorTrainingReport', value: false },
+    ]);
+    fetchMock.put('/api/settings', 204);
+
+    const { container } = renderManageNotifications();
+
+    await waitFor(() => {
+      expect(
+        container.querySelector('input[name="inAppWhenSessionSubmittedCollaboratorTrainingReport"]')
+      ).not.toBeChecked();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Your preferences have been saved.')).toBeInTheDocument();
+    });
+
+    const lastCall = fetchMock.lastCall('/api/settings');
+    const payload = JSON.parse(String(lastCall?.[1]?.body));
+
+    expect(payload).toContainEqual({
+      key: 'emailWhenSessionSubmittedCollaboratorTrainingReport',
+      value: 'today',
+    });
+    expect(payload).toContainEqual({
+      key: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
+      value: false,
+    });
   });
 
   it('shows an error alert when updating settings fails', async () => {
