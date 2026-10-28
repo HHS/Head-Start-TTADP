@@ -3,8 +3,8 @@ get:
     - tta request
   summary: List the users who can review TTA requests in a region
   description: >-
-    Reviewers are active users with the REVIEW_TTA_REQUESTS, APPROVE_TTA_REQUESTS
-    or BACKUP_APPROVE_TTA_REQUESTS permission in the region.
+    Reviewers are active users with the REVIEW_TTA_REQUESTS permission in the region.
+    Primary and backup approvers are not listed unless they also hold that permission.
   parameters:
     - name: regionId
       in: path

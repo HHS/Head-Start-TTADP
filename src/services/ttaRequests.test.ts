@@ -317,20 +317,27 @@ describe('ttaRequests service', () => {
       await User.destroy({ where: { id: ids } });
     });
 
-    it('lists users who can review, approve or backup approve in the region, once each', async () => {
+    it('lists users who can review in the region, once each', async () => {
       const reviewers = await ttaRequestReviewers(1);
       const ids = reviewers.map((u) => u.id);
 
-      expect(ids).toEqual(expect.arrayContaining([reviewer.id, approver.id, backupApprover.id]));
+      expect(ids).toEqual(expect.arrayContaining([reviewer.id, twoScopes.id]));
       expect(ids.filter((id) => id === twoScopes.id)).toHaveLength(1);
     });
 
-    it('leaves out inactive users and those without a reviewing permission in the region', async () => {
+    it('leaves out approvers, inactive users and those without the review permission in the region', async () => {
       const ids = (await ttaRequestReviewers(1)).map((u) => u.id);
 
-      [writeOnly, readOnly, otherRegion, inactive, creator].forEach((user) => {
-        expect(ids).not.toContain(user.id);
-      });
+      [approver, backupApprover, writeOnly, readOnly, otherRegion, inactive, creator].forEach(
+        (user) => {
+          expect(ids).not.toContain(user.id);
+        }
+      );
+    });
+
+    it('drops a saved reviewer who can only approve in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: approver.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
     });
 
     it('drops a saved reviewer who can only write in the region', async () => {

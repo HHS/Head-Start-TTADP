@@ -22,12 +22,11 @@ const {
   User,
 } = db;
 
-/** Who can review a TTA request: any active user who holds one of these scopes in its region */
-export const TTA_REQUEST_REVIEWER_SCOPES = [
-  SCOPES.REVIEW_TTA_REQUESTS,
-  SCOPES.APPROVE_TTA_REQUESTS,
-  SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
-];
+/**
+ * Who can review a TTA request: any active user who holds one of these scopes in its region.
+ * Primary and backup approvers are deliberately left out unless they can also review.
+ */
+export const TTA_REQUEST_REVIEWER_SCOPES = [SCOPES.REVIEW_TTA_REQUESTS];
 
 /** the request body, after src/routes/ttaRequests/middleware.ts has validated it */
 export type TtaRequestData = Partial<TtaRequestPayload>;
