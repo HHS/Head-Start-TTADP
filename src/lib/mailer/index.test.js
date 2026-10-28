@@ -54,6 +54,7 @@ import {
   trCollaboratorAdded,
   trEventComplete,
   trOwnerAdded,
+  trSessionChangesRequested,
   trSessionCreated,
   trSessionSubmittedForApproval,
 } from '.';
@@ -2361,6 +2362,84 @@ describe('mailer tests', () => {
       it('returns early on CI', async () => {
         process.env.CI = 'true';
         await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('trSessionChangesRequested', () => {
+      const mockNeedsActionSession = {
+        id: 7,
+        approverId: 8,
+        data: { sessionName: 'Session one', managerNotes: '<p>Fix the dates</p>' },
+      };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('notifies an opted-in owner with the approver name and comments', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 8
+              ? { name: 'approver', fullName: 'Approver Person' }
+              : { email: 'owner@test.gov' }
+          )
+        );
+        await trSessionChangesRequested({ ...mockEvent, ownerId: 3 }, mockNeedsActionSession);
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          3,
+          EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            sessionName: 'Session one',
+            approverName: 'Approver Person',
+            comments: '<p>Fix the dates</p>',
+            emailTo: ['owner@test.gov'],
+            templatePath: 'tr_session_changes_requested',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/7`,
+          })
+        );
+      });
+
+      it('does not notify an owner who has not opted in', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify an owner opted in to a digest', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          ...immediately,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        });
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify a no-send owner', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'no-send_owner@test.gov' });
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the owner does not exist', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue(null);
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
         expect(userSettingOverridesById).not.toHaveBeenCalled();
         expect(notificationQueueMock.add).not.toHaveBeenCalled();
       });
