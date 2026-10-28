@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
 import { Op, QueryTypes } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import SCOPES from '../middleware/scopeConstants';
@@ -15,6 +15,9 @@ import {
 import { formatNumber } from '../widgets/helpers';
 
 const { SITE_ACCESS } = SCOPES;
+
+// the admin page's stand-in for every region, which is never saved as a permission
+const ALL_REGIONS = 15;
 
 export const userAttributes = [
   'id',
@@ -157,6 +160,65 @@ export async function activeUsersWithScopesInRegion(scopeIds, regionId) {
     ],
     order: [['name', 'ASC']],
   });
+}
+
+/**
+ * The regions where the permissions hold both scopes of a mutually exclusive pair
+ *
+ * @param {{ scopeId: number, regionId: number }[]} permissions
+ * @returns {number[]}
+ */
+export function regionsWithExclusiveScopeConflicts(permissions = []) {
+  const regionPermissions = permissions.filter((p) => p.regionId !== ALL_REGIONS);
+  const regions = new Set();
+
+  MUTUALLY_EXCLUSIVE_SCOPES.forEach(([first, second]) => {
+    regionPermissions
+      .filter((p) => p.scopeId === first)
+      .forEach(({ regionId }) => {
+        if (regionPermissions.some((p) => p.scopeId === second && p.regionId === regionId)) {
+          regions.add(regionId);
+        }
+      });
+  });
+
+  return [...regions];
+}
+
+/** the message shown when a region already has its one primary TTA request approver */
+export const primaryApproverMessage = (regionId, name) =>
+  `Region ${regionId} already has a primary COR approver: ${name}`;
+
+/**
+ * Each region has one primary TTA request approver (APPROVE_TTA_REQUESTS), though any number
+ * of backup approvers. Returns a message for each region the permissions would make the user
+ * a second primary approver in.
+ *
+ * @param {number|string} userId - the user being updated
+ * @param {{ scopeId: number, regionId: number }[]} permissions
+ * @returns {Promise<string[]>}
+ */
+export async function primaryApproverConflicts(userId, permissions = []) {
+  const regionIds = permissions
+    .filter((p) => p.scopeId === SCOPES.APPROVE_TTA_REQUESTS && p.regionId !== ALL_REGIONS)
+    .map((p) => p.regionId);
+
+  if (!regionIds.length) {
+    return [];
+  }
+
+  const existing = await Permission.findAll({
+    attributes: ['regionId'],
+    where: {
+      scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+      regionId: regionIds,
+      userId: { [Op.ne]: userId },
+    },
+    include: [{ model: User, as: 'user', attributes: ['name'] }],
+    order: [['regionId', 'ASC']],
+  });
+
+  return existing.map(({ regionId, user }) => primaryApproverMessage(regionId, user.name));
 }
 
 /**

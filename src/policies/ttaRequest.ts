@@ -2,6 +2,7 @@ import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
+// matches getUserTtaRequestReadRegions in src/services/accessValidation.js
 const READ_SCOPES = [
   SCOPES.READ_REPORTS,
   SCOPES.READ_WRITE_TTA_REQUESTS,

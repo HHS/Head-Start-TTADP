@@ -1,53 +1,21 @@
 import { Button, Form } from '@trussworks/react-uswds';
-import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES, SCOPE_IDS } from '@ttahub/common';
+import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
-import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import {
+  primaryApproversByRegion,
+  userGlobalPermissions,
+  userRegionalPermissions,
+  withoutExclusivePartners,
+} from './PermissionHelpers';
 import UserFeatureFlags from './UserFeatureFlags';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 
 const NUMBER_FIELDS = ['homeRegionId'];
-
-/**
- * Drops the permissions that can't be held alongside the scope in the regions. Dropping a
- * partner from any region also drops its "all regions" entry, which would otherwise keep it
- * checked there.
- */
-export function withoutExclusivePartners(permissions, scope, regions) {
-  const partners = MUTUALLY_EXCLUSIVE_SCOPES.filter((pair) => pair.includes(scope))
-    .flat()
-    .filter((s) => s !== scope);
-
-  return permissions.filter(
-    (permission) =>
-      !(
-        partners.includes(permission.scopeId) &&
-        [...regions, ALL_REGIONS].includes(permission.regionId)
-      )
-  );
-}
-
-/**
- * The name of whoever else is each region's primary TTA request approver, keyed by region,
- * as a region can only have one
- */
-export function primaryApproversByRegion(users, userId) {
-  const approvers = {};
-  users
-    .filter((u) => u.id !== userId)
-    .forEach((u) => {
-      (u.permissions || [])
-        .filter((p) => p.scopeId === SCOPE_IDS.APPROVE_TTA_REQUESTS)
-        .forEach(({ regionId }) => {
-          approvers[regionId] = u.name;
-        });
-    });
-  return approvers;
-}
 
 /**
  * The user section of the Admin UI. Editing existing users is done inside this component.

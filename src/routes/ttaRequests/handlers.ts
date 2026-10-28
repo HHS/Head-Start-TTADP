@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { respondWithServiceError } from '../../lib/serviceError';
 import TtaRequestPolicy from '../../policies/ttaRequest';
 import filtersToScopes from '../../scopes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
@@ -27,7 +27,7 @@ export async function getTtaRequests(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     // filter the query so that only regions the user has permission to are included
-    const query = await setReadRegions(req.query, userId);
+    const query = await setTtaRequestReadRegions(req.query, userId);
     const { ttaRequest: scopes } = await filtersToScopes(query, { userId });
 
     const ttaRequests = await getTtaRequestsService(scopes, userId);

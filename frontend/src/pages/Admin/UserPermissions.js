@@ -13,7 +13,11 @@ import {
 import RegionDropdown from '../../components/RegionDropdown';
 import CurrentPermissions from './components/CurrentPermissions';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
-import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
+import {
+  createRegionalScopeObject,
+  primaryApproverMessage,
+  scopeFromId,
+} from './PermissionHelpers';
 
 const PRIMARY_APPROVER_SCOPE = SCOPE_IDS.APPROVE_TTA_REQUESTS.toString(DECIMAL_BASE);
 
@@ -94,10 +98,7 @@ function UserPermissions({
       const regions = selectedRegion === ALL_REGIONS ? REGIONS : [selectedRegion];
       const errors = regions
         .filter((region) => primaryApprovers[region])
-        .map(
-          (region) =>
-            `Region ${region} already has a primary COR approver: ${primaryApprovers[region]}`
-        );
+        .map((region) => primaryApproverMessage(region, primaryApprovers[region]));
 
       if (errors.length) {
         updatePrimaryApproverErrors(errors);

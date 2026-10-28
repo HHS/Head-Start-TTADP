@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { serviceError } from '../../lib/serviceError';
 import SCOPES from '../../middleware/scopeConstants';
 import filtersToScopes from '../../scopes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
@@ -95,14 +95,14 @@ describe('TTA request handlers', () => {
 
     beforeEach(() => {
       req.query = { 'region.in': ['1'] };
-      (setReadRegions as jest.Mock).mockResolvedValue({ 'region.in': [1] });
+      (setTtaRequestReadRegions as jest.Mock).mockResolvedValue({ 'region.in': [1] });
       (filtersToScopes as jest.Mock).mockResolvedValue({ ttaRequest: SCOPED });
     });
 
     it("lists the user's requests in the regions they can read", async () => {
       (getTtaRequestsService as jest.Mock).mockResolvedValue(LIST);
       await getTtaRequests(req as Request, res as Response);
-      expect(setReadRegions).toHaveBeenCalledWith(req.query, CREATOR_ID);
+      expect(setTtaRequestReadRegions).toHaveBeenCalledWith(req.query, CREATOR_ID);
       expect(filtersToScopes).toHaveBeenCalledWith({ 'region.in': [1] }, { userId: CREATOR_ID });
       expect(getTtaRequestsService).toHaveBeenCalledWith(SCOPED, CREATOR_ID);
       expect(json).toHaveBeenCalledWith(LIST);
