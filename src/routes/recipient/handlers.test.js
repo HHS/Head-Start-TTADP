@@ -12,6 +12,7 @@ import {
   recipientById,
   recipientLeadership,
   recipientsByName,
+  recipientsByTtaRequestUserId,
   recipientsByUserId,
 } from '../../services/recipient';
 import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
@@ -21,6 +22,7 @@ import {
   getGoalsByIdandRecipient,
   getGoalsByRecipient,
   getRecipient,
+  getRecipientAndGrantsByTtaRequestUser,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
   getRecipientTimeline,
@@ -41,6 +43,7 @@ jest.mock('../../services/recipient', () => ({
   getGoalsByActivityRecipient: jest.fn(),
   getUserReadRegions: jest.fn(),
   updateRecipientGoalStatusById: jest.fn(),
+  recipientsByTtaRequestUserId: jest.fn(),
   recipientsByUserId: jest.fn(),
   recipientLeadership: jest.fn(),
   allArUserIdsByRecipientAndRegion: jest.fn(),
@@ -557,6 +560,25 @@ describe('getRecipientAndGrantsByUser', () => {
 
     await getRecipientAndGrantsByUser(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+});
+
+describe('getRecipientAndGrantsByTtaRequestUser', () => {
+  it('retrieves recipients and grants for the user’s TTA-request write regions', async () => {
+    const req = { session: { userId: 1000 } };
+    const recipients = [{ id: 1, name: 'test' }];
+    const mockResponse = {
+      json: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+
+    currentUserId.mockResolvedValueOnce(1000);
+    recipientsByTtaRequestUserId.mockResolvedValueOnce(recipients);
+
+    await getRecipientAndGrantsByTtaRequestUser(req, mockResponse);
+
+    expect(recipientsByTtaRequestUserId).toHaveBeenCalledWith(1000);
+    expect(mockResponse.json).toHaveBeenCalledWith(recipients);
   });
 });
 
