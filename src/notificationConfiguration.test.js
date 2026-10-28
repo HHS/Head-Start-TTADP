@@ -236,6 +236,28 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED];
+
+    it('textFn interpolates recipientName and displayId', () => {
+      expect(config.textFn({ recipientName: 'Test Recipient', displayId: 'R01-AR-17967' })).toBe(
+        'Test Recipient R01-AR-17967 is available to view.'
+      );
+    });
+
+    it('is not actionable and links to the report with a View AR CTA', () => {
+      expect(config.actionable).toBe(false);
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+      expect(config.linkText()).toBe('View AR');
+      expect(config.displayId({ displayId: 'R01-AR-17967' })).toBe('R01-AR-17967');
+    });
+
+    it('uses the program specialist in-app settings key', () => {
+      expect(config.settingsKey).toBe('inAppWhenRecipientReportApprovedProgramSpecialist');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER];
 
