@@ -298,7 +298,7 @@ describe('ttaRequests service', () => {
         permit(readOnly.id, SCOPES.READ_REPORTS),
         permit(otherRegion.id, SCOPES.REVIEW_TTA_REQUESTS, 2),
         permit(twoScopes.id, SCOPES.REVIEW_TTA_REQUESTS),
-        permit(twoScopes.id, SCOPES.APPROVE_TTA_REQUESTS),
+        permit(twoScopes.id, SCOPES.BACKUP_APPROVE_TTA_REQUESTS),
         permit(inactive.id, SCOPES.REVIEW_TTA_REQUESTS),
       ]);
     });

@@ -1,6 +1,7 @@
 const { prepMigration } = require('../lib/migration');
 
 const TTA_REQUEST_SCOPE_IDS = [10, 11, 12, 13];
+const PRIMARY_TTA_APPROVER_INDEX = 'unique_primary_tta_approver_per_region';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -24,22 +25,30 @@ module.exports = {
           {
             id: 12,
             name: 'APPROVE_TTA_REQUESTS',
-            description: 'Can review and approve TTA requests as the COR in the region',
+            description: 'Can approve TTA requests as the COR in the region',
           },
           {
             id: 13,
             name: 'BACKUP_APPROVE_TTA_REQUESTS',
-            description: 'Can review and approve TTA requests as the backup COR in the region',
+            description: 'Can approve TTA requests as the backup COR in the region',
           },
         ],
         { ignoreDuplicates: true, transaction }
       );
+
+      await queryInterface.addIndex('Permissions', ['regionId'], {
+        name: PRIMARY_TTA_APPROVER_INDEX,
+        unique: true,
+        where: { scopeId: 12 },
+        transaction,
+      });
     }),
 
   down: async (queryInterface) =>
     queryInterface.sequelize.transaction(async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
+      await queryInterface.removeIndex('Permissions', PRIMARY_TTA_APPROVER_INDEX, { transaction });
       await queryInterface.bulkDelete(
         'Permissions',
         { scopeId: TTA_REQUEST_SCOPE_IDS },

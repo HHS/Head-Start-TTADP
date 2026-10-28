@@ -279,7 +279,7 @@ describe('User route handler', () => {
       const uniquenessError = new UniqueConstraintError({
         message: 'duplicate key',
         fields: { regionId: 4 },
-        cause: { constraint: 'unique_primary_tta_approver_per_region' },
+        parent: { constraint: 'unique_primary_tta_approver_per_region' },
       });
       const bulkCreate = jest.spyOn(Permission, 'bulkCreate').mockRejectedValue(uniquenessError);
 

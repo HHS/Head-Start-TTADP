@@ -13,7 +13,11 @@ export default function useUserDefaultRegionFilters(
   const regions = getUserRegions(user);
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const defaultRegion = regions.includes(user.homeRegionId) ? user.homeRegionId : regions[0] || 0;
+  // a custom resolver (e.g. TTA requests) can leave out the home region, so only default to it
+  // when it is one of the resolved regions
+  const homeRegionAllowed =
+    getUserRegions === allRegionsUserHasPermissionTo || regions.includes(user.homeRegionId);
+  const defaultRegion = (homeRegionAllowed && user.homeRegionId) || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
   let defaultFilters = () => [];
