@@ -43,9 +43,8 @@ describe('PercentageActivityReportByRole', () => {
     await userEvent.click(screen.getByRole('button', { name: /Specialist role/ }));
 
     const rows = screen.getByRole('table').querySelectorAll('tbody tr');
-    expect(Array.from(rows, (row) => row.querySelectorAll('td')[1].textContent)).toEqual([
-      'Zulu role',
-      'Alpha role',
-    ]);
+    expect(
+      Array.from(rows, (row) => row.querySelectorAll('td')[1].textContent)
+    ).toEqual(['Zulu role', 'Alpha role']);
   });
 });
