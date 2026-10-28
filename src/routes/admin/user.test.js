@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { UniqueConstraintError } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -272,6 +273,34 @@ describe('User route handler', () => {
           where: { userId: other.id, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
         })
       ).toBe(0);
+    });
+
+    it('returns a 400 when concurrent saves violate the primary approver index', async () => {
+      const uniquenessError = new UniqueConstraintError({
+        message: 'duplicate key',
+        fields: { regionId: 4 },
+        cause: { constraint: 'unique_primary_tta_approver_per_region' },
+      });
+      const bulkCreate = jest.spyOn(Permission, 'bulkCreate').mockRejectedValue(uniquenessError);
+
+      const req = {
+        ...mockRequest,
+        inTransactionWrapper: true,
+        params: { userId: other.id },
+        body: {
+          ...other.toJSON(),
+          permissions: [{ userId: other.id, regionId: 4, scopeId: SCOPES.APPROVE_TTA_REQUESTS }],
+        },
+      };
+
+      try {
+        await expect(updateUser(req, mockResponse)).rejects.toMatchObject({
+          statusCode: 400,
+          responseBody: { message: 'Region 4 already has a primary COR approver' },
+        });
+      } finally {
+        bulkCreate.mockRestore();
+      }
     });
   });
 

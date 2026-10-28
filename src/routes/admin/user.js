@@ -1,6 +1,6 @@
 import express from 'express';
 import httpCodes from 'http-codes';
-import { Op } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
@@ -15,6 +15,7 @@ import {
 import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:USER';
+const PRIMARY_TTA_APPROVER_INDEX = 'unique_primary_tta_approver_per_region';
 
 const logContext = {
   namespace,
@@ -233,6 +234,21 @@ export async function updateUser(req, res) {
     const user = await userById(userId);
     res.json(user);
   } catch (error) {
+    if (
+      error instanceof UniqueConstraintError &&
+      (error.parent?.constraint === PRIMARY_TTA_APPROVER_INDEX ||
+        error.original?.constraint === PRIMARY_TTA_APPROVER_INDEX)
+    ) {
+      const regionId = error.fields?.regionId;
+      const message = regionId
+        ? `Region ${regionId} already has a primary COR approver`
+        : 'A primary COR approver already exists for one or more regions';
+      throw Object.assign(new Error(message), {
+        statusCode: httpCodes.BAD_REQUEST,
+        responseBody: { message },
+      });
+    }
+
     await handleErrors(req, res, error, logContext);
   }
 }
