@@ -23,6 +23,19 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.20
+
+Reconciles the published 2.4.15–2.4.19 releases without dropping their shared contracts:
+
+- TTA request constants and request/response declarations from 2.4.15.
+- Session-submission collaborator notifications, preference keys, and notification `sessionName` from 2.4.16.
+- Collaboration-report constants and declarations from 2.4.17 and 2.4.19.
+- Timeline view and category declarations from 2.4.18.
+
+Before publishing a new version, compare its source against intervening published releases as
+well as the current branch. A newer version number alone does not guarantee those changes
+are present in the checkout. Keep runtime constants and their declaration overlays together.
+
 # 2.4.0
 Added new FEI statuses 
 
