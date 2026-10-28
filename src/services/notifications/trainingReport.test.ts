@@ -7,6 +7,7 @@ import {
   createNotificationForNewPocs,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
+  createSessionNeedsActionNotificationForCollaborators,
 } from './trainingReport';
 
 jest.mock('./index', () => ({
@@ -260,4 +261,91 @@ describe('archiveSessionNeedsActionNotifications', () => {
       NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
     ]);
   });
+});
+
+describe('createSessionNeedsActionNotificationForCollaborators', () => {
+  let findAllSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  const buildCollabEvent = (collaboratorIds: number[] | null) => ({
+    eventId: 'R01-TR-1234',
+    ownerId: 1,
+    collaboratorIds,
+  });
+
+  const session = { id: 55, approverId: 9, data: { sessionName: 'Opening session' } };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findAllSpy = jest
+      .spyOn(db.User, 'findAll')
+      .mockImplementation(({ where }) =>
+        Promise.resolve((where.id as number[]).map((id) => ({ id, flags: [], permissions: [] })))
+      );
+    jest
+      .spyOn(db.User, 'findOne')
+      .mockResolvedValue({ name: 'approver', fullName: 'Approver Person' });
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies each collaborator with the correct type, entityId and metadata', async () => {
+    await createSessionNeedsActionNotificationForCollaborators(buildCollabEvent([2, 3]), session);
+
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+    [2, 3].forEach((userId) => {
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        userId,
+        55,
+        NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            approver: 'Approver Person',
+            sessionName: 'Opening session',
+            displayId: 'R01-TR-1234',
+            id: 55,
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+  });
+
+  it('skips the owner and removes duplicate ids', async () => {
+    await createSessionNeedsActionNotificationForCollaborators(
+      buildCollabEvent([1, 4, 4]),
+      session
+    );
+
+    expect(findAllSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: [4] } }));
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification.mock.calls[0][0]).toBe(4);
+  });
+
+  it('skips users without the feature flag', async () => {
+    flagSpy.mockReset();
+    flagSpy.mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+    await createSessionNeedsActionNotificationForCollaborators(buildCollabEvent([3, 4]), session);
+
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification.mock.calls[0][0]).toBe(4);
+  });
+
+  it.each([[[]], [null], [[1]]])(
+    'makes no calls when there are no collaborators to notify (%p)',
+    async (collaboratorIds) => {
+      await createSessionNeedsActionNotificationForCollaborators(
+        buildCollabEvent(collaboratorIds),
+        session
+      );
+
+      expect(findAllSpy).not.toHaveBeenCalled();
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    }
+  );
 });
