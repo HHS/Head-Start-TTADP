@@ -1,4 +1,6 @@
+import { MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
 import express from 'express';
+import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -152,6 +154,28 @@ export async function createUser(req, res) {
 }
 
 /**
+ * The regions where the permissions hold both scopes of a mutually exclusive pair
+ *
+ * @param {{ scopeId: number, regionId: number }[]} permissions
+ * @returns {number[]}
+ */
+export function regionsWithExclusiveScopeConflicts(permissions = []) {
+  const regions = new Set();
+
+  MUTUALLY_EXCLUSIVE_SCOPES.forEach(([first, second]) => {
+    permissions
+      .filter((p) => p.scopeId === first)
+      .forEach(({ regionId }) => {
+        if (permissions.some((p) => p.scopeId === second && p.regionId === regionId)) {
+          regions.add(regionId);
+        }
+      });
+  });
+
+  return [...regions];
+}
+
+/**
  * Updates one user in the database.
  *
  * @param {*} req - request
@@ -162,6 +186,14 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
+    const conflicts = regionsWithExclusiveScopeConflicts(requestUser.permissions);
+    if (conflicts.length) {
+      res.status(httpCodes.BAD_REQUEST).json({
+        message: `Mutually exclusive permissions are both set in region(s) ${conflicts.join(', ')}`,
+      });
+      return;
+    }
+
     await User.update(requestUser, {
       include: [
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },

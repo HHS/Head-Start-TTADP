@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
 import db, { EventReportPilot, Permission, Role, User, UserRole } from '../models';
 import {
+  activeUsersWithScopesInRegion,
   findAllUsersWithScope,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
@@ -761,58 +762,63 @@ describe('Users DB service', () => {
       const results = await usersByRoles(['Wiggler'], 999);
       expect(results.length).toBe(0);
     });
+  });
 
-    describe('with a scope', () => {
-      let inRegion;
-      let otherRegion;
-      let noAccess;
+  describe('activeUsersWithScopesInRegion', () => {
+    let both;
+    let one;
+    let otherScope;
+    let otherRegion;
+    let inactive;
 
-      beforeAll(async () => {
-        [inRegion, otherRegion, noAccess] = await Promise.all(
-          ['inRegion', 'otherRegion', 'noAccess'].map((name) =>
-            User.create({
-              id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
-              name,
-              email: `${name}@test.gov`,
-              // the home region doesn't count once a scope is given
-              homeRegionId: 2,
-              hsesUsername: faker.string.sample(),
-              hsesUserId: faker.string.sample(),
-              lastLogin: new Date(),
-            })
-          )
-        );
+    beforeAll(async () => {
+      [both, one, otherScope, otherRegion, inactive] = await Promise.all(
+        ['both', 'one', 'otherScope', 'otherRegion', 'inactive'].map((name) =>
+          User.create({
+            id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+            name: `activeUsersWithScopesInRegion ${name}`,
+            email: `${name}@test.gov`,
+            hsesUsername: faker.string.sample(),
+            hsesUserId: faker.string.sample(),
+            lastLogin: new Date(),
+          })
+        )
+      );
 
-        await Promise.all([
-          db.UserRole.bulkCreate([
-            { userId: inRegion.id, roleId: role1.id },
-            { userId: inRegion.id, roleId: role2.id },
-            { userId: otherRegion.id, roleId: role1.id },
-            { userId: noAccess.id, roleId: role1.id },
-          ]),
-          Permission.bulkCreate([
-            { userId: inRegion.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS },
-            { userId: inRegion.id, regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS },
-            { userId: otherRegion.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS },
-            { userId: otherRegion.id, regionId: 2, scopeId: SCOPES.READ_WRITE_REPORTS },
-            { userId: noAccess.id, regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS },
-          ]),
-        ]);
-      });
+      const active = [both, one, otherScope, otherRegion];
 
-      afterAll(async () => {
-        const ids = [inRegion.id, otherRegion.id, noAccess.id];
-        await db.UserRole.destroy({ where: { userId: ids } });
-        await Permission.destroy({ where: { userId: ids } });
-        await User.destroy({ where: { id: ids } });
-      });
+      await Permission.bulkCreate([
+        ...active.map((user) => ({ userId: user.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS })),
+        { userId: both.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+        { userId: both.id, regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { userId: one.id, regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        { userId: otherScope.id, regionId: 1, scopeId: SCOPES.READ_WRITE_TTA_REQUESTS },
+        { userId: otherRegion.id, regionId: 2, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+        { userId: inactive.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+      ]);
+    });
 
-      it('returns active users who hold the scope in the region, once each', async () => {
-        const results = await usersByRoles(['Wiggler', 'Waggler'], 1, {
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        });
+    afterAll(async () => {
+      const ids = [both, one, otherScope, otherRegion, inactive].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
 
-        expect(results.map((u) => u.id)).toEqual([inRegion.id]);
+    it('returns active users holding any of the scopes in the region, once each', async () => {
+      const results = await activeUsersWithScopesInRegion(
+        [
+          SCOPES.REVIEW_TTA_REQUESTS,
+          SCOPES.APPROVE_TTA_REQUESTS,
+          SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+        ],
+        1
+      );
+      const ids = results.map((u) => u.id);
+
+      expect(ids.filter((id) => id === both.id)).toHaveLength(1);
+      expect(ids).toContain(one.id);
+      [otherScope, otherRegion, inactive].forEach((user) => {
+        expect(ids).not.toContain(user.id);
       });
     });
   });

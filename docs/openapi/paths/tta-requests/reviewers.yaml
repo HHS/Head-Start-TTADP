@@ -3,8 +3,8 @@ get:
     - tta request
   summary: List the users who can review TTA requests in a region
   description: >-
-    Reviewers are active users with write permission in the region and at least
-    one of the ECS, GS, SS, AA, FES, HS, PS, CO, TTAC, ECM, GSM or RPM roles.
+    Reviewers are active users with the REVIEW_TTA_REQUESTS, APPROVE_TTA_REQUESTS
+    or BACKUP_APPROVE_TTA_REQUESTS permission in the region.
   parameters:
     - name: regionId
       in: path

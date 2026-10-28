@@ -31,31 +31,15 @@ export const userAttributes = [
   'fullName',
 ];
 
-/**
- * Active users (those with site access) who hold at least one of the roles, ordered by name
- *
- * Without a scope, the region filters on the user's home region. With one, it filters on
- * users who hold that scope in the region, whatever their home region.
- *
- * @param {string[]} roles role names, such as 'TTAC'
- * @param {number|number[]|null} regionId
- * @param {{ scopeId?: number }} options
- */
-export async function usersByRoles(roles = [], regionId = null, { scopeId } = {}) {
+export async function usersByRoles(roles = [], regionId = null) {
   return User.findAll({
-    where: scopeId
-      ? {
-          // site access is a second permission row, which the permissions include below can't
-          // also require
-          id: {
-            [Op.in]: sequelize.literal(
-              `(SELECT "userId" FROM "Permissions" WHERE "scopeId" = ${SITE_ACCESS})`
-            ),
-          },
-        }
-      : {
-          ...(regionId ? { homeRegionId: regionId } : {}),
-        },
+    where: {
+      ...(regionId
+        ? {
+            homeRegionId: regionId,
+          }
+        : {}),
+    },
     attributes: ['id', 'name', 'fullName', 'email', 'homeRegionId'],
     include: [
       {
@@ -71,9 +55,9 @@ export async function usersByRoles(roles = [], regionId = null, { scopeId } = {}
         model: Permission,
         as: 'permissions',
         attributes: ['scopeId'],
-        where: scopeId
-          ? { scopeId, ...(regionId ? { regionId } : {}) }
-          : { scopeId: SCOPES.SITE_ACCESS },
+        where: {
+          scopeId: SCOPES.SITE_ACCESS,
+        },
         required: true,
       },
     ],
@@ -140,6 +124,38 @@ export async function usersWithPermissions(regions, scopes) {
       { model: Permission, as: 'permissions', attributes: [] },
       { model: Role, as: 'roles' },
     ],
+  });
+}
+
+/**
+ * Active users (those with site access) who hold at least one of the scopes in the region,
+ * once each, ordered by name
+ *
+ * @param {number[]} scopeIds
+ * @param {number} regionId
+ */
+export async function activeUsersWithScopesInRegion(scopeIds, regionId) {
+  return User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      // site access is a second permission row, which the permissions include below can't
+      // also require
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT "userId" FROM "Permissions" WHERE "scopeId" = ${SITE_ACCESS})`
+        ),
+      },
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: [],
+        where: { scopeId: scopeIds, regionId },
+        required: true,
+      },
+    ],
+    order: [['name', 'ASC']],
   });
 }
 

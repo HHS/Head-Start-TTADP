@@ -1,5 +1,5 @@
 import { Button, Form } from '@trussworks/react-uswds';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
@@ -11,6 +11,25 @@ import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 
 const NUMBER_FIELDS = ['homeRegionId'];
+
+/**
+ * Drops the permissions that can't be held alongside the scope in the regions. Dropping a
+ * partner from any region also drops its "all regions" entry, which would otherwise keep it
+ * checked there.
+ */
+export function withoutExclusivePartners(permissions, scope, regions) {
+  const partners = MUTUALLY_EXCLUSIVE_SCOPES.filter((pair) => pair.includes(scope))
+    .flat()
+    .filter((s) => s !== scope);
+
+  return permissions.filter(
+    (permission) =>
+      !(
+        partners.includes(permission.scopeId) &&
+        [...regions, ALL_REGIONS].includes(permission.regionId)
+      )
+  );
+}
 
 /**
  * The user section of the Admin UI. Editing existing users is done inside this component.
@@ -70,7 +89,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, REGIONS),
           { userId: user.id, scopeId: scope, regionId: region },
           ...REGIONS.map((r) => ({ userId: user.id, scopeId: scope, regionId: r })),
         ],
@@ -79,7 +98,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, [region]),
           { userId: user.id, scopeId: scope, regionId: region },
         ],
       });

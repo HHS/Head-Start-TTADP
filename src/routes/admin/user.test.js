@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { FEATURE_FLAGS } from '../../constants';
+import SCOPES from '../../middleware/scopeConstants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db, { Permission, Role, User, UserRole } from '../../models';
 import {
@@ -9,6 +10,7 @@ import {
   getFeatures,
   getUser,
   getUsers,
+  regionsWithExclusiveScopeConflicts,
   updateUser,
 } from './user';
 
@@ -205,6 +207,51 @@ describe('User route handler', () => {
     const perm = permissions.find((p) => p.regionId === 1);
 
     expect(perm.toJSON()).toEqual(testUpdateUser.permissions[0]);
+  });
+
+  it('rejects approve and backup approve TTA request permissions in the same region', async () => {
+    const json = jest.fn();
+    const res = { ...mockResponse, status: jest.fn(() => ({ json })) };
+    mockRequest.body = {
+      ...mockUser,
+      permissions: [
+        { userId: mockUser.id, regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { userId: mockUser.id, regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+      ],
+    };
+
+    await updateUser(mockRequest, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith({
+      message: 'Mutually exclusive permissions are both set in region(s) 1',
+    });
+  });
+
+  describe('regionsWithExclusiveScopeConflicts', () => {
+    it('lists the regions holding both approve and backup approve', () => {
+      expect(
+        regionsWithExclusiveScopeConflicts([
+          { regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+          { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 3, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        ])
+      ).toEqual([1, 3]);
+    });
+
+    it('allows approve in one region and backup approve in another', () => {
+      expect(
+        regionsWithExclusiveScopeConflicts([
+          { regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 2, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        ])
+      ).toEqual([]);
+    });
+
+    it('is empty without permissions', () => {
+      expect(regionsWithExclusiveScopeConflicts()).toEqual([]);
+    });
   });
 
   it('Deletes a user', async () => {

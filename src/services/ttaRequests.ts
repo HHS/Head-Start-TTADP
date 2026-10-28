@@ -6,7 +6,7 @@ import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
-import { usersByRoles } from './users';
+import { activeUsersWithScopesInRegion } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
@@ -22,23 +22,11 @@ const {
   User,
 } = db;
 
-/**
- * Who can review a TTA request: any active user who can write reports in the request's
- * region and holds one of these roles
- */
-export const TTA_REQUEST_REVIEWER_ROLES = [
-  'AA',
-  'CO',
-  'ECM',
-  'ECS',
-  'FES',
-  'GS',
-  'GSM',
-  'HS',
-  'PS',
-  'RPM',
-  'SS',
-  'TTAC',
+/** Who can review a TTA request: any active user who holds one of these scopes in its region */
+export const TTA_REQUEST_REVIEWER_SCOPES = [
+  SCOPES.REVIEW_TTA_REQUESTS,
+  SCOPES.APPROVE_TTA_REQUESTS,
+  SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
 ];
 
 /** the request body, after src/routes/ttaRequests/middleware.ts has validated it */
@@ -236,9 +224,7 @@ async function checkRecipientAndGrants(
  * The active users who can review a request in the region, ordered by name
  */
 export async function ttaRequestReviewers(regionId: number) {
-  const reviewers = await usersByRoles(TTA_REQUEST_REVIEWER_ROLES, regionId, {
-    scopeId: SCOPES.READ_WRITE_REPORTS,
-  });
+  const reviewers = await activeUsersWithScopesInRegion(TTA_REQUEST_REVIEWER_SCOPES, regionId);
   return reviewers.map(({ id, name }) => ({ id, name }));
 }
 
@@ -404,9 +390,7 @@ export async function submitTtaRequest(
   const saved = await updateTtaRequest(existing, data, userId);
 
   if (!saved.reviewerId) {
-    throw dataError(
-      'The reviewer must have write permission and a reviewing role in the request region'
-    );
+    throw dataError('The reviewer must be able to review TTA requests in the request region');
   }
 
   if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {

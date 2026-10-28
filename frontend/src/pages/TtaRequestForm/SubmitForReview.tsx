@@ -18,8 +18,8 @@ interface SubmitForReviewProps {
 
 /**
  * Notes for whoever picks the request up, and the person who will review it. The reviewers
- * are the region's users who can write reports and hold a reviewing role, so there is
- * nothing to choose from until the grant - and with it the region - is known.
+ * are the region's users who can review, approve or backup approve TTA requests, so there
+ * is nothing to choose from until the grant - and with it the region - is known.
  */
 export default function SubmitForReview({ regionId }: SubmitForReviewProps): React.ReactElement {
   const { control, register } = useFormContext();

@@ -101,6 +101,31 @@ describe('UserSection', () => {
     expect(checkbox).toBeChecked();
   });
 
+  it('checking approve or backup approve TTA requests unchecks the other in that region only', () => {
+    const permissions = screen.getByRole('group', { name: 'Regional Permissions' });
+    const regionalDropdown = within(permissions).getByLabelText('Region');
+    const approve = () =>
+      within(permissions).getByRole('checkbox', { name: /^APPROVE_TTA_REQUESTS/ });
+    const backup = () =>
+      within(permissions).getByRole('checkbox', { name: /^BACKUP_APPROVE_TTA_REQUESTS/ });
+
+    userEvent.selectOptions(regionalDropdown, '1');
+    userEvent.click(approve());
+    expect(approve()).toBeChecked();
+
+    userEvent.click(backup());
+    expect(backup()).toBeChecked();
+    expect(approve()).not.toBeChecked();
+
+    userEvent.selectOptions(regionalDropdown, '2');
+    userEvent.click(approve());
+    expect(approve()).toBeChecked();
+
+    userEvent.selectOptions(regionalDropdown, '1');
+    expect(backup()).toBeChecked();
+    expect(approve()).not.toBeChecked();
+  });
+
   it('checking a feature selects that feature', () => {
     const checkbox = screen.getByRole('checkbox', { name: /half goat/i });
     expect(checkbox).not.toBeChecked();

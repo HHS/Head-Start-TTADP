@@ -2,6 +2,14 @@ import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 
+const READ_SCOPES = [
+  SCOPES.READ_REPORTS,
+  SCOPES.READ_WRITE_TTA_REQUESTS,
+  SCOPES.REVIEW_TTA_REQUESTS,
+  SCOPES.APPROVE_TTA_REQUESTS,
+  SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+];
+
 interface UserType {
   id: number;
   permissions: {
@@ -83,15 +91,18 @@ export default class TtaRequest {
   canWriteInRegion() {
     return this.user.permissions.some(
       (permission) =>
-        permission.regionId === this.regionId && permission.scopeId === SCOPES.READ_WRITE_REPORTS
+        permission.regionId === this.regionId &&
+        permission.scopeId === SCOPES.READ_WRITE_TTA_REQUESTS
     );
   }
 
+  /**
+   * Requests are read with the reports read permission, or any TTA request permission
+   */
   canReadInRegion() {
     return this.user.permissions.some(
       (permission) =>
-        permission.regionId === this.regionId &&
-        [SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS].includes(permission.scopeId)
+        permission.regionId === this.regionId && READ_SCOPES.includes(permission.scopeId)
     );
   }
 

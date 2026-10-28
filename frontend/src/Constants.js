@@ -78,6 +78,24 @@ export const REGIONAL_SCOPES = {
     description:
       'Can serve as a regional point of contact in the region (A regional POC can create sessions, view and edit reports)',
   },
+  [SCOPE_IDS.READ_WRITE_TTA_REQUESTS]: {
+    name: 'READ_WRITE_TTA_REQUESTS',
+    description: 'Can view and create/edit TTA requests in the region',
+  },
+  [SCOPE_IDS.REVIEW_TTA_REQUESTS]: {
+    name: 'REVIEW_TTA_REQUESTS',
+    description: 'Can review TTA requests in the region',
+  },
+  [SCOPE_IDS.APPROVE_TTA_REQUESTS]: {
+    name: 'APPROVE_TTA_REQUESTS',
+    description:
+      'Can review and approve TTA requests as the COR in the region (cannot be combined with BACKUP_APPROVE_TTA_REQUESTS)',
+  },
+  [SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS]: {
+    name: 'BACKUP_APPROVE_TTA_REQUESTS',
+    description:
+      'Can review and approve TTA requests as the backup COR in the region (cannot be combined with APPROVE_TTA_REQUESTS)',
+  },
 };
 
 export const READ_WRITE_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => !scope.readOnly));

@@ -50,7 +50,7 @@ const CREATOR_ID = 123;
 
 const writer = {
   id: CREATOR_ID,
-  permissions: [{ scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 1 }],
+  permissions: [{ scopeId: SCOPES.READ_WRITE_TTA_REQUESTS, regionId: 1 }],
 };
 
 const stranger = {
