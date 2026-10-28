@@ -668,6 +668,62 @@ export const trSessionSubmittedForApproval = async (event, session) => {
 };
 
 /**
+ * Notifies each event collaborator (except the owner) that a TR session was submitted for
+ * approval, provided they have opted in to receiving this email immediately. Callers are
+ * responsible for only invoking this on a first submission; resubmissions are TR-5d.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionSubmittedToCollaborators = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const { eventId, ownerId } = event;
+    const collaboratorIds = [...new Set(event.collaboratorIds ?? [])].filter(
+      (collaboratorId) => collaboratorId !== ownerId
+    );
+
+    await Promise.all(
+      collaboratorIds.map(async (collaboratorId) => {
+        const setting = await userSettingOverridesById(
+          collaboratorId,
+          EMAIL_ACTIONS.SESSION_SUBMITTED_COLLABORATOR_TRAINING_REPORT
+        );
+        if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return null;
+
+        const collaborator = await userById(collaboratorId, true);
+        if (!collaborator) return null;
+
+        const emailTo = filterAndDeduplicateEmails([collaborator.email]);
+        if (emailTo.length === 0) {
+          logger.info(
+            `Did not send tr session submitted collaborator notification for ${eventId} preferences are not set or marked as "no-send"`
+          );
+          return null;
+        }
+
+        const data = {
+          displayId: eventId,
+          sessionName: session.data.sessionName,
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId}`,
+          emailTo,
+          debugMessage: `MAILER: Notifying ${collaborator.email} that session ${session.id} for TR ${event.id} was submitted for approval`,
+          templatePath: 'tr_session_submitted',
+          report: {
+            displayId: eventId,
+          },
+          ...referenceData(),
+        };
+
+        return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
+      })
+    );
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
  * Notifies the event creator (owner) that the approver requested changes to a TR session,
  * provided they have opted in to receiving this email immediately.
  *
