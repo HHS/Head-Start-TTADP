@@ -14,6 +14,7 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
+import { parseStoredDate } from '../lib/utils';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
@@ -657,8 +658,10 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
-    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterStart = parseStoredDate(event.data.startDate)
+      .startOf('day')
+      .add(19, 'days');
+    const nineteenDaysAfterEnd = parseStoredDate(event.data.endDate).startOf('day').add(19, 'days');
 
     // one alert triggers just for the owner
     if (ownerUserIdFilter(event, userId)) {
@@ -690,7 +693,7 @@ export async function getTrainingReportAlerts(
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         // Submitted sessions belong to the approval workflow alerts below.
         if (isSessionSubmitted(event, session)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -740,7 +743,7 @@ export async function getTrainingReportAlerts(
         if (isNationalCenterFacilitator(event, session) && !session.data.pocComplete) {
           return;
         }
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
