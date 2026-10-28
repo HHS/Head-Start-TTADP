@@ -772,6 +772,8 @@ const NOTIFICATION_TYPES = {
   TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator',
   // TR-4: Approver requests changes to a session
   TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
+  // TR-4c: Approver requests changes to a session (collaborator, informational)
+  TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR: 'trainingReportSessionNeedsActionCollaborator',
   // TR-5/6: Creator or collaborator re-submits a session for review
   TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted',
   // Event completed (existing)

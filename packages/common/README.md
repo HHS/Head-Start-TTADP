@@ -23,6 +23,11 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.23
+
+Merges 2.4.22 (`NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR`) with the
+TTA request scopes and `MUTUALLY_EXCLUSIVE_SCOPES` from 2.4.21.
+
 ## 2.4.21
 
 Adds the TTA request scopes to `SCOPE_IDS` (`READ_WRITE_TTA_REQUESTS`, `REVIEW_TTA_REQUESTS`,
