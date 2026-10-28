@@ -1,13 +1,21 @@
-import { Checkbox, Fieldset, Grid } from '@trussworks/react-uswds';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { Checkbox, ErrorMessage, Fieldset, Grid } from '@trussworks/react-uswds';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { ALL_REGIONS, READ_ONLY_SCOPES, READ_WRITE_SCOPES, REGIONAL_SCOPES } from '../../Constants';
+import {
+  ALL_REGIONS,
+  READ_ONLY_SCOPES,
+  READ_WRITE_SCOPES,
+  REGIONAL_SCOPES,
+  REGIONS,
+} from '../../Constants';
 import RegionDropdown from '../../components/RegionDropdown';
 import CurrentPermissions from './components/CurrentPermissions';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import { createRegionalScopeObject, scopeFromId } from './PermissionHelpers';
+
+const PRIMARY_APPROVER_SCOPE = SCOPE_IDS.APPROVE_TTA_REQUESTS.toString(DECIMAL_BASE);
 
 /**
  * Display the current permissions for the selected user
@@ -55,12 +63,15 @@ function UserPermissions({
   onGlobalPermissionChange,
   regionalPermissions,
   onRegionalPermissionChange,
+  primaryApprovers,
 }) {
   // State of the region select dropdown
   const [selectedRegion, updateSelectedRegion] = useState();
   // State of the regional permissions checkboxes, I.E. {"3": true, ...}
   const [permissionsForRegion, updatePermissionsForRegion] = useState(createRegionalScopeObject());
   const enablePermissions = selectedRegion !== undefined;
+  // Why the primary TTA request approver box couldn't be checked, one message per region
+  const [primaryApproverErrors, updatePrimaryApproverErrors] = useState([]);
 
   // We need to reset the selected region and the state of regional checkboxes when
   // another user is selected
@@ -68,6 +79,35 @@ function UserPermissions({
     updateSelectedRegion();
     updatePermissionsForRegion(createRegionalScopeObject());
   }, [userId]);
+
+  // an error only applies to the user and region it was raised for
+  useEffect(() => {
+    updatePrimaryApproverErrors([]);
+  }, [userId, selectedRegion]);
+
+  // A region can only have one primary TTA request approver, so checking the box where
+  // someone else already is one is refused with a message naming them
+  const onRegionalCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+
+    if (name === PRIMARY_APPROVER_SCOPE && checked) {
+      const regions = selectedRegion === ALL_REGIONS ? REGIONS : [selectedRegion];
+      const errors = regions
+        .filter((region) => primaryApprovers[region])
+        .map(
+          (region) =>
+            `Region ${region} already has a primary COR approver: ${primaryApprovers[region]}`
+        );
+
+      if (errors.length) {
+        updatePrimaryApproverErrors(errors);
+        return;
+      }
+    }
+
+    updatePrimaryApproverErrors([]);
+    onRegionalPermissionChange(e, selectedRegion);
+  };
 
   // The user has selected a new region in the regional dropdown so we need to update
   // what regional permissions are shown
@@ -91,13 +131,17 @@ function UserPermissions({
       const { name, description } = scopeFromId(scopeId);
       return (
         <Grid key={name} col={12}>
+          {scopeId === PRIMARY_APPROVER_SCOPE &&
+            primaryApproverErrors.map((error) => (
+              <ErrorMessage key={error} className="margin-top-1">
+                {error}
+              </ErrorMessage>
+            ))}
           <Checkbox
             id={name}
             name={scopeId}
             checked={checked}
-            onChange={(e) => {
-              onRegionalPermissionChange(e, selectedRegion);
-            }}
+            onChange={onRegionalCheckboxChange}
             description={description}
             disabled={!enablePermissions}
             label={<PermissionCheckboxLabel name={name} description={description} />}
@@ -158,10 +202,13 @@ UserPermissions.propTypes = {
   onGlobalPermissionChange: PropTypes.func.isRequired,
   regionalPermissions: PropTypes.objectOf(PropTypes.objectOf(PropTypes.bool)).isRequired,
   onRegionalPermissionChange: PropTypes.func.isRequired,
+  // the name of whoever else is each region's primary TTA request approver, by region
+  primaryApprovers: PropTypes.objectOf(PropTypes.string),
 };
 
 UserPermissions.defaultProps = {
   userId: null,
+  primaryApprovers: {},
 };
 
 export default UserPermissions;

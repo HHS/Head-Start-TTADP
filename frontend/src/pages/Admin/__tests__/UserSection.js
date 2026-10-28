@@ -5,7 +5,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import selectEvent from 'react-select-event';
-import UserSection from '../UserSection';
+import UserSection, { primaryApproversByRegion } from '../UserSection';
 
 const { ADMIN, READ_ACTIVITY_REPORTS, UNLOCK_APPROVED_REPORTS } = SCOPE_IDS;
 
@@ -163,5 +163,77 @@ describe('UserSection', () => {
     const impersonate = screen.getByRole('button', { name: 'Impersonate user' });
     userEvent.click(impersonate);
     expect(window.location.pathname).toEqual('/');
+  });
+});
+
+describe('UserSection with a region that has a primary TTA request approver', () => {
+  const onSave = jest.fn();
+
+  beforeEach(() => {
+    fetchMock.get('/api/admin/roles', []);
+  });
+
+  afterEach(() => fetchMock.restore());
+
+  it('keeps a second primary TTA request approver out of a region that has one', async () => {
+    const { APPROVE_TTA_REQUESTS } = SCOPE_IDS;
+    const users = [
+      {
+        id: 2,
+        name: 'Monica Geller',
+        permissions: [{ regionId: 3, scopeId: APPROVE_TTA_REQUESTS }],
+      },
+    ];
+    const permissions = () => screen.getByRole('group', { name: 'Regional Permissions' });
+
+    await act(() =>
+      waitFor(() => {
+        render(
+          <UserSection
+            user={{
+              id: 1,
+              name: 'Ross Geller',
+              email: 'ross@test.gov',
+              homeRegionId: 3,
+              roles: [],
+              permissions: [],
+              flags: [],
+            }}
+            users={users}
+            onSave={onSave}
+          />
+        );
+      })
+    );
+
+    userEvent.selectOptions(within(permissions()).getByLabelText('Region'), '3');
+    const approve = within(permissions()).getByRole('checkbox', { name: /^APPROVE_TTA_REQUESTS/ });
+    userEvent.click(approve);
+
+    expect(
+      within(permissions()).getByText('Region 3 already has a primary COR approver: Monica Geller')
+    ).toBeVisible();
+    expect(approve).not.toBeChecked();
+  });
+});
+
+describe('primaryApproversByRegion', () => {
+  const { APPROVE_TTA_REQUESTS, BACKUP_APPROVE_TTA_REQUESTS } = SCOPE_IDS;
+
+  it("names each region's primary approver, leaving out the user being edited and backups", () => {
+    const users = [
+      { id: 1, name: 'Ross Geller', permissions: [{ regionId: 2, scopeId: APPROVE_TTA_REQUESTS }] },
+      {
+        id: 2,
+        name: 'Monica Geller',
+        permissions: [
+          { regionId: 3, scopeId: APPROVE_TTA_REQUESTS },
+          { regionId: 4, scopeId: BACKUP_APPROVE_TTA_REQUESTS },
+        ],
+      },
+      { id: 3, name: 'No Permissions' },
+    ];
+
+    expect(primaryApproversByRegion(users, 1)).toEqual({ 3: 'Monica Geller' });
   });
 });

@@ -45,9 +45,15 @@ const DRAFT = {
   grants: [],
 };
 
-const renderTtaRequests = (initialEntries = ['/tta-requests']) =>
+// can write TTA requests in a region other than the one the page is filtered to
+const writer = {
+  ...user,
+  permissions: [...user.permissions, { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS }],
+};
+
+const renderTtaRequests = (initialEntries = ['/tta-requests'], currentUser = user) =>
   render(
-    <UserContext.Provider value={{ user }}>
+    <UserContext.Provider value={{ user: currentUser }}>
       <MemoryRouter initialEntries={initialEntries}>
         <TtaRequests />
       </MemoryRouter>
@@ -97,13 +103,28 @@ describe('TTA Requests', () => {
     ).toBeVisible();
   });
 
-  it('renders the add request button', () => {
-    renderTtaRequests();
+  it('renders the add request button for someone who can write requests in any region', () => {
+    renderTtaRequests(['/tta-requests'], writer);
 
     expect(screen.getByRole('link', { name: /add request/i })).toHaveAttribute(
       'href',
       '/tta-requests/new'
     );
+  });
+
+  it('hides the add request button from someone who can only read', () => {
+    renderTtaRequests();
+
+    expect(screen.queryByRole('link', { name: /add request/i })).toBeNull();
+  });
+
+  it('hides the add request button from an admin who cannot write requests', () => {
+    renderTtaRequests(['/tta-requests'], {
+      ...user,
+      permissions: [...user.permissions, { regionId: 14, scopeId: SCOPE_IDS.ADMIN }],
+    });
+
+    expect(screen.queryByRole('link', { name: /add request/i })).toBeNull();
   });
 
   it('renders the filter panel', () => {

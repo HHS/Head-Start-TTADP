@@ -228,6 +228,39 @@ const canCreateCommunicationLog = (user, regionId) => {
 };
 
 /**
+ * Search the user's permissions for TTA request read/write in any region, which is what
+ * lets them start a request on the all regions page
+ * @param {object} user - user object
+ * @returns {boolean} - True if the user can create TTA requests in some region
+ */
+const hasTtaRequestReadWrite = (user) => {
+  const { permissions } = user;
+  return !!permissions && permissions.some((p) => p.scopeId === SCOPE_IDS.READ_WRITE_TTA_REQUESTS);
+};
+
+/**
+ * Check if user can create TTA requests in a specific region.
+ * Requires READ_WRITE_TTA_REQUESTS permission for the region.
+ * Region 14 is excluded as it is not an actual region.
+ * @param {object} user - user object
+ * @param {number} regionId - region id
+ * @returns {boolean} - True if the user can create TTA requests in the region
+ */
+const canCreateTtaRequest = (user, regionId) => {
+  if (!user || !regionId || regionId === 14) {
+    return false;
+  }
+
+  const { permissions } = user;
+  return !!(
+    permissions &&
+    permissions.find(
+      (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TTA_REQUESTS && p.regionId === regionId
+    )
+  );
+};
+
+/**
  *
  * // probably makes sense to seperate this logic
  * @param {object} user user object
@@ -257,6 +290,7 @@ export {
   canChangeGoalStatus,
   canChangeObjectiveStatus,
   canCreateCommunicationLog,
+  canCreateTtaRequest,
   canEditOrCreateGoals,
   canEditOrCreateSessionReports,
   canSeeBehindFeatureFlag,
@@ -266,5 +300,6 @@ export {
   hasApproveActivityReportInRegion,
   hasReadWrite,
   hasTrainingReportWritePermissions,
+  hasTtaRequestReadWrite,
   isAdmin as default,
 };

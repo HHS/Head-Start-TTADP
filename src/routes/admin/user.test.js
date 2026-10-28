@@ -3,6 +3,7 @@ import { FEATURE_FLAGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db, { Permission, Role, User, UserRole } from '../../models';
+import { createUser as createTestUser } from '../../testUtils';
 import {
   createUser,
   createUserRoles,
@@ -10,6 +11,7 @@ import {
   getFeatures,
   getUser,
   getUsers,
+  primaryApproverConflicts,
   regionsWithExclusiveScopeConflicts,
   updateUser,
 } from './user';
@@ -251,6 +253,75 @@ describe('User route handler', () => {
 
     it('is empty without permissions', () => {
       expect(regionsWithExclusiveScopeConflicts()).toEqual([]);
+    });
+  });
+
+  describe('one primary TTA request approver per region', () => {
+    let primary;
+    let other;
+
+    beforeAll(async () => {
+      [primary, other] = await Promise.all([
+        createTestUser({ name: 'Monica Geller' }),
+        createTestUser({}),
+      ]);
+      await Permission.create({
+        userId: primary.id,
+        regionId: 3,
+        scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+      });
+    });
+
+    afterAll(async () => {
+      await Permission.destroy({ where: { userId: [primary.id, other.id] } });
+      await User.destroy({ where: { id: [primary.id, other.id] } });
+    });
+
+    it('names the primary approver a second one would clash with', async () => {
+      const conflicts = await primaryApproverConflicts(other.id, [
+        { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { regionId: 4, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual(['Region 3 already has a primary COR approver: Monica Geller']);
+    });
+
+    it('allows backup approvers alongside the primary', async () => {
+      const conflicts = await primaryApproverConflicts(other.id, [
+        { regionId: 3, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual([]);
+    });
+
+    it("doesn't count the primary approver against themselves", async () => {
+      const conflicts = await primaryApproverConflicts(primary.id, [
+        { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual([]);
+    });
+
+    it('rejects saving a second primary approver', async () => {
+      const json = jest.fn();
+      const res = { ...mockResponse, status: jest.fn(() => ({ json })) };
+      const req = {
+        ...mockRequest,
+        params: { userId: other.id },
+        body: {
+          ...other.toJSON(),
+          permissions: [{ userId: other.id, regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS }],
+        },
+      };
+
+      await updateUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({
+        message: 'Region 3 already has a primary COR approver: Monica Geller',
+      });
+      expect(
+        await Permission.count({
+          where: { userId: other.id, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        })
+      ).toBe(0);
     });
   });
 

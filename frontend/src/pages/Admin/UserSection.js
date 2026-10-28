@@ -1,5 +1,5 @@
 import { Button, Form } from '@trussworks/react-uswds';
-import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
+import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES, SCOPE_IDS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
@@ -32,14 +32,33 @@ export function withoutExclusivePartners(permissions, scope, regions) {
 }
 
 /**
+ * The name of whoever else is each region's primary TTA request approver, keyed by region,
+ * as a region can only have one
+ */
+export function primaryApproversByRegion(users, userId) {
+  const approvers = {};
+  users
+    .filter((u) => u.id !== userId)
+    .forEach((u) => {
+      (u.permissions || [])
+        .filter((p) => p.scopeId === SCOPE_IDS.APPROVE_TTA_REQUESTS)
+        .forEach(({ regionId }) => {
+          approvers[regionId] = u.name;
+        });
+    });
+  return approvers;
+}
+
+/**
  * The user section of the Admin UI. Editing existing users is done inside this component.
  * This component holds all the state for the user that is currently being edited. New users
  * are not created in this component, nor anywhere in the Admin UI. New users are created
  * automatically the first time they attempt to login to the Smart Hub
  */
-function UserSection({ user, onSave, features }) {
+function UserSection({ user, users, onSave, features }) {
   const [formUser, updateUser] = useState();
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
+  const primaryApprovers = useMemo(() => primaryApproversByRegion(users, user.id), [users, user]);
 
   useEffect(() => {
     updateUser(user);
@@ -155,6 +174,7 @@ function UserSection({ user, onSave, features }) {
         onGlobalPermissionChange={onGlobalPermissionChange}
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
+        primaryApprovers={primaryApprovers}
       />
       <UserFeatureFlags
         onFeaturesChange={onFeaturesChange}
@@ -184,6 +204,19 @@ UserSection.propTypes = {
       })
     ),
   }).isRequired,
+  // every user, to find each region's primary TTA request approver
+  users: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      permissions: PropTypes.arrayOf(
+        PropTypes.shape({
+          regionId: PropTypes.number,
+          scopeId: PropTypes.number,
+        })
+      ),
+    })
+  ),
   features: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
@@ -193,6 +226,7 @@ UserSection.propTypes = {
 };
 
 UserSection.defaultProps = {
+  users: [],
   features: [],
 };
 

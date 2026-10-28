@@ -287,7 +287,7 @@ function Admin(props) {
             )}
             {!selectedUser && <p className="margin-top-3 text-bold">Select a user...</p>}
             {selectedUser && (
-              <UserSection onSave={onSave} user={selectedUser} features={features} />
+              <UserSection onSave={onSave} user={selectedUser} users={users} features={features} />
             )}
           </Grid>
         </Grid>

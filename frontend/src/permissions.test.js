@@ -1,5 +1,9 @@
 import { SCOPE_IDS } from '@ttahub/common';
-import { canCreateCommunicationLog } from './permissions';
+import {
+  canCreateCommunicationLog,
+  canCreateTtaRequest,
+  hasTtaRequestReadWrite,
+} from './permissions';
 
 describe('canCreateCommunicationLog', () => {
   const createMockUser = (permissions = []) => ({
@@ -220,5 +224,59 @@ describe('canCreateCommunicationLog', () => {
       expect(resultForRegion1).toBe(true);
       expect(resultForRegion14).toBe(false);
     });
+  });
+});
+
+describe('hasTtaRequestReadWrite', () => {
+  it('is true with TTA request write permission in any region', () => {
+    const user = { permissions: [{ scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 3 }] };
+    expect(hasTtaRequestReadWrite(user)).toBe(true);
+  });
+
+  it('is false with only activity report write or reviewing permissions', () => {
+    const user = {
+      permissions: [
+        { scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, regionId: 1 },
+        { scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 1 },
+      ],
+    };
+    expect(hasTtaRequestReadWrite(user)).toBe(false);
+  });
+
+  it('is false for an admin without TTA request write permission', () => {
+    const user = { permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+    expect(hasTtaRequestReadWrite(user)).toBe(false);
+  });
+
+  it('is false without permissions', () => {
+    expect(hasTtaRequestReadWrite({})).toBe(false);
+  });
+});
+
+describe('canCreateTtaRequest', () => {
+  const writer = {
+    permissions: [{ scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 1 }],
+  };
+
+  it('is true with TTA request write permission in the region', () => {
+    expect(canCreateTtaRequest(writer, 1)).toBe(true);
+  });
+
+  it('is false with TTA request write permission in another region', () => {
+    expect(canCreateTtaRequest(writer, 2)).toBe(false);
+  });
+
+  it('is false for an admin without TTA request write permission in the region', () => {
+    const admin = { permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+    expect(canCreateTtaRequest(admin, 1)).toBe(false);
+  });
+
+  it('is false for region 14, a missing region or a missing user', () => {
+    const user = {
+      permissions: [{ scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 14 }],
+    };
+    expect(canCreateTtaRequest(user, 14)).toBe(false);
+    expect(canCreateTtaRequest(writer, null)).toBe(false);
+    expect(canCreateTtaRequest(null, 1)).toBe(false);
   });
 });
