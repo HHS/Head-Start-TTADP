@@ -10,7 +10,11 @@ import db, {
 } from '../models';
 import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
-import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForSessionSubmittedCollaborators,
+  createSessionNeedsActionNotification,
+} from './notifications/trainingReport';
 import {
   createSession,
   destroySession,
@@ -29,7 +33,9 @@ import {
 jest.mock('bull');
 jest.mock('./notifications/trainingReport', () => ({
   ...jest.requireActual('./notifications/trainingReport'),
+  archiveSessionNeedsActionNotifications: jest.fn(),
   createNotificationForSessionSubmittedCollaborators: jest.fn(),
+  createSessionNeedsActionNotification: jest.fn(),
 }));
 
 describe('session reports service', () => {
@@ -222,6 +228,125 @@ describe('session reports service', () => {
 
       expect(updated.data.sessionName).toBe('renamed');
       expect(updated.data.someLegacyKeyNoLongerInTheForm).toBe('still here');
+
+      await destroySession(created.id);
+    });
+  });
+
+  describe('updateSession session needs action notification', () => {
+    let needsActionEvent;
+    let approver;
+    const needsActionEventId = `R01-PD-${faker.number.int({ min: 800_000, max: 899_999 })}`;
+
+    beforeAll(async () => {
+      [needsActionEvent, approver] = await Promise.all([
+        createEvent({
+          ownerId: faker.number.int({ min: 0, max: 99999 }),
+          regionId: 1,
+          pocIds: [],
+          collaboratorIds: [],
+          data: { eventId: needsActionEventId },
+        }),
+        createUser({}),
+      ]);
+    });
+
+    afterAll(async () => {
+      await destroyEvent(needsActionEvent.id);
+      await db.User.destroy({ where: { id: approver.id } });
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    // A submitted session waiting on the approver
+    const createSubmittedSession = async () => {
+      const created = await createSession({
+        eventId: needsActionEvent.id,
+        data: { sessionName: 'Opening session', pocComplete: true, collabComplete: true },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+      return created;
+    };
+
+    const requestChanges = (id) =>
+      updateSession(id, {
+        eventId: needsActionEventId,
+        data: { status: REPORT_STATUSES.NEEDS_ACTION },
+      });
+
+    const resubmit = (id) =>
+      updateSession(id, {
+        eventId: needsActionEventId,
+        data: { collabComplete: true, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+
+    it('notifies the owner when the approver requests changes', async () => {
+      const created = await createSubmittedSession();
+
+      await requestChanges(created.id);
+
+      expect(createSessionNeedsActionNotification).toHaveBeenCalledTimes(1);
+      expect(createSessionNeedsActionNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: needsActionEventId }),
+        expect.objectContaining({
+          id: created.id,
+          approverId: approver.id,
+          data: expect.objectContaining({ sessionName: 'Opening session' }),
+        })
+      );
+      expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify again while the session stays in needs action', async () => {
+      const created = await createSubmittedSession();
+      await requestChanges(created.id);
+      jest.clearAllMocks();
+
+      await updateSession(created.id, {
+        eventId: needsActionEventId,
+        data: { sessionName: 'Renamed' },
+      });
+
+      expect(createSessionNeedsActionNotification).not.toHaveBeenCalled();
+      expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('archives on resubmit and notifies again on a second request for changes', async () => {
+      const created = await createSubmittedSession();
+      await requestChanges(created.id);
+
+      await resubmit(created.id);
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(created.id);
+
+      await requestChanges(created.id);
+      expect(createSessionNeedsActionNotification).toHaveBeenCalledTimes(2);
+
+      await destroySession(created.id);
+    });
+
+    it('archives when the session is deleted', async () => {
+      const created = await createSubmittedSession();
+      await requestChanges(created.id);
+      jest.clearAllMocks();
+
+      await destroySession(created.id);
+
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(created.id);
+    });
+
+    it('still saves the session when the notification fails', async () => {
+      createSessionNeedsActionNotification.mockRejectedValueOnce(new Error('boom'));
+      const created = await createSubmittedSession();
+
+      const updated = await requestChanges(created.id);
+
+      expect(updated.data.status).toBe(REPORT_STATUSES.NEEDS_ACTION);
 
       await destroySession(created.id);
     });

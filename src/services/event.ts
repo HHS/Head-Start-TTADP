@@ -17,7 +17,10 @@ import { trEventComplete } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
-import { createNotificationForNewPocs } from './notifications/trainingReport';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
 import type {
   CreateEventRequest,
   EventShape,
@@ -147,6 +150,17 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
+  try {
+    const sessions = await SessionReportPilot.findAll({
+      where: { eventId: id },
+      attributes: ['id'],
+    });
+    await Promise.all(
+      sessions.map((session) => archiveSessionNeedsActionNotifications(session.id))
+    );
+  } catch (e) {
+    auditLogger.error(`Error archiving session notifications for event ${id}:`, e);
+  }
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
     await SessionReportPilot.destroy({ where: { eventId: id } });

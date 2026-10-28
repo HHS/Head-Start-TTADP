@@ -397,6 +397,40 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION];
+
+    it('textFn interpolates the approver and session name', () => {
+      expect(config.textFn({ approver: 'Alice', sessionName: 'Opening session' })).toBe(
+        'Alice has requested changes to session Opening session.'
+      );
+    });
+
+    it('actionable is true', () => {
+      expect(config.actionable).toBe(true);
+    });
+
+    it('linkFn returns the session form path', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234', id: 55 })).toBe(
+        '/training-report/R01-TR-1234/session/55'
+      );
+    });
+
+    it('linkText returns "Take action" and archiveLabel returns "View TR"', () => {
+      expect(config.linkText()).toBe('Take action');
+      expect(config.archiveLabel()).toBe('View TR');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenSessionChangesRequestedTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionChangesRequestedTrainingReport');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR, () => {
     const config =
       NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR];

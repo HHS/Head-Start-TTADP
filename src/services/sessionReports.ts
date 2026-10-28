@@ -10,7 +10,11 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
-import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForSessionSubmittedCollaborators,
+  createSessionNeedsActionNotification,
+} from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
@@ -166,6 +170,29 @@ export const validateFields = (request, requiredFields: string[]) => {
   }
 };
 
+/**
+ * Runs a notification side effect without letting it fail the save. Catching the error is not
+ * enough: a failed query aborts the request's transaction (transactionWrapper), so every later
+ * query and the commit fail too. Running it in a nested transaction creates a SAVEPOINT, so a
+ * failure rolls back on its own.
+ * @param fn The notification work to run.
+ * @param errorMessage Logged with the error when the work fails.
+ * @returns {Promise<void>} Resolves once the work finishes or its error is logged.
+ */
+export async function runNotificationSafely(
+  fn: () => Promise<unknown>,
+  errorMessage: string
+): Promise<void> {
+  const parentTransaction: Transaction | undefined = cls
+    .getNamespace('transaction')
+    ?.get('transaction');
+  try {
+    await sequelize.transaction({ transaction: parentTransaction }, fn);
+  } catch (err) {
+    auditLogger.error(errorMessage, err);
+  }
+}
+
 export async function destroySession(id: number): Promise<void> {
   // Delete files.
   await SessionReportPilotFile.destroy(
@@ -177,6 +204,11 @@ export async function destroySession(id: number): Promise<void> {
   await SessionReportPilotSupportingAttachment.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true }
+  );
+
+  await runNotificationSafely(
+    () => archiveSessionNeedsActionNotifications(id),
+    `Error archiving session needs action notifications for session ${id}:`
   );
 
   // Delete session.
@@ -422,25 +454,36 @@ export async function updateSession(id: number, request) {
   });
 
   if (isFirstSubmission) {
-    // A notification failure must never fail the save. Catching the error is not
-    // enough: a failed query aborts the request's transaction (transactionWrapper),
-    // so every later query and the commit fail too. Running the notification in a
-    // savepoint lets it roll back on its own.
-    const parentTransaction: Transaction | undefined = cls
-      .getNamespace('transaction')
-      ?.get('transaction');
-    try {
-      // we need to run this in a transaction like so. This creates a SAVEPOINT
-      // otherwise, a failed notification would abort the entire transaction.
-      await sequelize.transaction({ transaction: parentTransaction }, () =>
+    await runNotificationSafely(
+      () =>
         createNotificationForSessionSubmittedCollaborators(event, {
           id,
           data: newData as { sessionName?: string },
-        })
-      );
-    } catch (err) {
-      auditLogger.error(`Error creating session submitted notifications for session ${id}:`, err);
-    }
+        }),
+      `Error creating session submitted notifications for session ${id}:`
+    );
+  }
+
+  const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
+
+  if (isNeedsAction && !wasNeedsAction) {
+    // TR-4a: the approver requested changes
+    await runNotificationSafely(
+      () =>
+        createSessionNeedsActionNotification(event, {
+          id,
+          approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+          data: newData as { sessionName?: string },
+        }),
+      `Error creating session needs action notifications for session ${id}:`
+    );
+  } else if (wasNeedsAction && !isNeedsAction && isSubmitted) {
+    // resubmitted, so the owner no longer needs to act
+    await runNotificationSafely(
+      () => archiveSessionNeedsActionNotifications(id),
+      `Error archiving session needs action notifications for session ${id}:`
+    );
   }
 
   if (goalTemplates) {

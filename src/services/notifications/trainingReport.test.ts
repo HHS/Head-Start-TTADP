@@ -1,13 +1,16 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import db from '../../models';
 import Users from '../../policies/user';
-import { createNotification } from './index';
+import { archiveNotificationsByEntityAndType, createNotification } from './index';
 import {
+  archiveSessionNeedsActionNotifications,
   createNotificationForNewPocs,
   createNotificationForSessionSubmittedCollaborators,
+  createSessionNeedsActionNotification,
 } from './trainingReport';
 
 jest.mock('./index', () => ({
+  archiveNotificationsByEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
@@ -184,4 +187,77 @@ describe('createNotificationForSessionSubmittedCollaborators', () => {
       expect(mockCreateNotification).not.toHaveBeenCalled();
     }
   );
+});
+
+describe('createSessionNeedsActionNotification', () => {
+  let findOneSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  const event = { eventId: 'R01-TR-1234', ownerId: 1 };
+  const session = { id: 55, approverId: 9, data: { sessionName: 'Opening session' } };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findOneSpy = jest
+      .spyOn(db.User, 'findOne')
+      .mockImplementation(({ where }) =>
+        Promise.resolve(
+          where.id === 9
+            ? { name: 'approver', fullName: 'Approver Person' }
+            : { id: where.id, flags: [], permissions: [] }
+        )
+      );
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies the owner with the approver name, skipping only archived notifications', async () => {
+    await createSessionNeedsActionNotification(event, session);
+
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      1,
+      55,
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+      {
+        metadata: {
+          approver: 'Approver Person',
+          sessionName: 'Opening session',
+          displayId: 'R01-TR-1234',
+          id: 55,
+        },
+        skipExisting: 'archived',
+      }
+    );
+  });
+
+  it('does not notify an owner without the feature flag', async () => {
+    flagSpy.mockReturnValue(false);
+
+    await createSessionNeedsActionNotification(event, session);
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not notify when the owner is not found', async () => {
+    findOneSpy.mockResolvedValue(null);
+
+    await createSessionNeedsActionNotification(event, { ...session, approverId: null });
+
+    expect(findOneSpy).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('archiveSessionNeedsActionNotifications', () => {
+  it('archives only the TR-4a type for the session', async () => {
+    await archiveSessionNeedsActionNotifications(55);
+
+    expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(55, [
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+    ]);
+  });
 });

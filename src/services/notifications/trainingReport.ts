@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import db from '../../models';
 import Users from '../../policies/user';
 import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from '../eventFlow';
-import { createNotification } from './index';
+import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
 
@@ -105,4 +105,61 @@ export async function createNotificationForSessionSubmittedCollaborators(
       )
     )
   );
+}
+
+/**
+ * Creates the "approver requested changes to a session" in-app notification (TR-4a) for the
+ * Event Creator (owner) of a Training Report. Skipped when the owner lacks the
+ * `actionable_notifications` feature flag. The user's in-app setting is applied by
+ * `createNotification`. An archived notification from an earlier round of changes does not
+ * block a new one.
+ * @param event The Training Report (EventReportPilot) the session belongs to.
+ * @param session The session that changes were requested on.
+ * @returns {Promise<void>} Resolves once the notification is created.
+ */
+export async function createSessionNeedsActionNotification(
+  event: { eventId: string; ownerId: number },
+  session: { id: number; approverId: number | null | undefined; data: { sessionName?: string } }
+): Promise<void> {
+  const [owner, approver] = await Promise.all([
+    db.User.findOne({
+      where: { id: event.ownerId },
+      attributes: ['id', 'flags'],
+      include: [{ model: db.Permission, as: 'permissions' }],
+    }),
+    session.approverId
+      ? db.User.findOne({ where: { id: session.approverId }, attributes: ['name', 'fullName'] })
+      : null,
+  ]);
+
+  if (!owner || !new Users(owner).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)) {
+    return;
+  }
+
+  await createNotification(
+    owner.id,
+    session.id,
+    NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+    {
+      metadata: {
+        approver: approver?.fullName || approver?.name,
+        sessionName: session.data?.sessionName,
+        displayId: event.eventId,
+        id: session.id,
+      },
+      skipExisting: 'archived',
+    }
+  );
+}
+
+/**
+ * Archives the "approver requested changes to a session" in-app notification (TR-4a) for a
+ * session. Called when the session is resubmitted or deleted.
+ * @param sessionId The session whose needs action notifications to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+export async function archiveSessionNeedsActionNotifications(sessionId: number): Promise<void> {
+  return archiveNotificationsByEntityAndType(sessionId, [
+    NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+  ]);
 }
