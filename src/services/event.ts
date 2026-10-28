@@ -38,7 +38,7 @@ const {
 type WhereOptions = {
   id?: number;
   ownerId?: number;
-  pocIds?: number;
+  pocIds?: number[];
   collaboratorIds?: number[];
   regionId?: number;
 };
@@ -97,7 +97,7 @@ const injectSessionColumnDates = (session) => {
  *
  * @param {CreateEventRequest} request - The request data for creating the event.
  * @param {string} request.ownerId - The ID of the owner.
- * @param {string} request.pocIds - The ID of the point of contact.
+ * @param {number[]} request.pocIds - The IDs of the points of contact.
  * @param {string[]} request.collaboratorIds - An array of IDs of collaborators.
  * @param {string} request.regionId - The ID of the region where the event will take place.
  * @param {unknown} request.data - The data associated with the event.
