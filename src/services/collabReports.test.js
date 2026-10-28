@@ -661,6 +661,93 @@ describe('Collab Reports Service', () => {
     });
   });
 
+  describe('getReports sorting', () => {
+    let first;
+    let second;
+
+    beforeAll(async () => {
+      // Created in sequence so ids, createdAt, and updatedAt also sort first < second.
+      // User names sort mockUser < mockUserTwo < mockUserThree.
+      first = await CollabReport.create({
+        ...reportObject,
+        name: 'Sort test A',
+        startDate: '2020-01-01',
+        userId: mockUser.id,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      });
+      second = await CollabReport.create({
+        ...reportObject,
+        name: 'Sort test B',
+        startDate: '2021-01-01',
+        userId: mockUserThree.id,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      await Promise.all([
+        CollabReportSpecialist.create({ collabReportId: first.id, specialistId: mockUserTwo.id }),
+        CollabReportSpecialist.create({
+          collabReportId: second.id,
+          specialistId: mockUserThree.id,
+        }),
+        CollabReportApprover.create(
+          { collabReportId: first.id, userId: mockUserTwo.id },
+          { hooks: false }
+        ),
+        CollabReportApprover.create(
+          { collabReportId: second.id, userId: mockUserThree.id },
+          { hooks: false }
+        ),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [first.id, second.id];
+      await Promise.all([
+        CollabReportSpecialist.destroy({ where: { collabReportId: ids }, force: true }),
+        CollabReportApprover.destroy({ where: { collabReportId: ids }, force: true }),
+      ]);
+      await CollabReport.destroy({ where: { id: ids }, force: true });
+    });
+
+    it.each([
+      'Report_ID',
+      'Activity_name',
+      'Date_started',
+      'Creator',
+      'Created_date',
+      'Last_saved',
+      'Collaborators',
+      'Approvers',
+      'Status',
+    ])('sorts by %s in both directions', async (sortBy) => {
+      const fetchIds = async (sortDir) => {
+        const { rows } = await getReports({
+          'id.in': [first.id, second.id],
+          status: [REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED],
+          limit: 'all',
+          sortBy,
+          sortDir,
+        });
+        return rows.map(({ id }) => id);
+      };
+
+      expect(await fetchIds('asc')).toEqual([first.id, second.id]);
+      expect(await fetchIds('desc')).toEqual([second.id, first.id]);
+    });
+
+    it('sorts by creator with a finite limit', async () => {
+      const { rows } = await getReports({
+        'id.in': [first.id, second.id],
+        status: [REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED],
+        limit: '1',
+        sortBy: 'Creator',
+        sortDir: 'asc',
+      });
+
+      expect(rows.map(({ id }) => id)).toEqual([first.id]);
+    });
+  });
+
   describe('createOrUpdateReport with steps, dataUsed, and statesInvolved', () => {
     let testReport;
 

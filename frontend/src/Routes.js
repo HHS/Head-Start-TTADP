@@ -12,7 +12,6 @@ import RequestPermissions from './components/RequestPermissions';
 import ScrollToTop from './components/ScrollToTop';
 import SiteNav from './components/SiteNav';
 import SomethingWentWrong from './components/SomethingWentWrong';
-import VerifyEmailSwitch from './components/VerifyEmailSwitch';
 import useGaPageView from './hooks/useGaPageView';
 import AccountManagement from './pages/AccountManagement';
 import Group from './pages/AccountManagement/Group';
@@ -26,8 +25,7 @@ import CollaborationReportsLanding from './pages/CollaborationReports';
 import CourseDashboard from './pages/CourseDashboard';
 import GoalDashboard from './pages/GoalDashboard';
 import GoalDashboardPrintPreview from './pages/GoalDashboard/GoalDashboardPrintPreview';
-import LegacyHome from './pages/Home';
-import NewHome from './pages/Home/NewHome';
+import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
 import Logout from './pages/Logout';
@@ -56,7 +54,7 @@ import ViewCollabReport from './pages/ViewCollabReport';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import ViewTtaRequest from './pages/ViewTtaRequest';
 import WhatsNewPage from './pages/WhatsNewPage';
-import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
+import isAdmin from './permissions';
 import UserContext from './UserContext';
 
 export default function Routes({
@@ -74,7 +72,6 @@ export default function Routes({
   whatsNewNotifications,
 }) {
   const admin = isAdmin(user);
-  const Home = canSeeBehindFeatureFlag(user, 'actionable_notifications') ? NewHome : LegacyHome;
 
   const locationRef = useLocation();
   const isLogoutPage = locationRef.pathname === '/logout';
@@ -401,11 +398,9 @@ export default function Routes({
           exact
           path="/account/notifications/:token?"
           render={() => (
-            <FeatureFlag renderNotFound flag="actionable_notifications">
-              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-                <ManageNotifications updateUser={updateUser} />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+              <ManageNotifications updateUser={updateUser} />
+            </AppWrapper>
           )}
         />
         <Route
@@ -413,7 +408,7 @@ export default function Routes({
           path="/account"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-              <AccountManagement updateUser={updateUser} />
+              <AccountManagement />
             </AppWrapper>
           )}
         />
@@ -421,23 +416,26 @@ export default function Routes({
           exact
           path="/notifications/archive"
           render={() => (
-            <FeatureFlag renderNotFound flag="actionable_notifications">
-              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-                <Notifications />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+              <Notifications />
+            </AppWrapper>
           )}
         />
         <Route
           exact
           path="/notifications"
           render={() => (
-            <FeatureFlag renderNotFound flag="actionable_notifications">
-              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-                <Notifications />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+              <Notifications />
+            </AppWrapper>
           )}
+        />
+        {/* TODO: remove after one verification token lifetime (7 days) post-release;
+            keeps links in previously sent verification emails working */}
+        <Route
+          exact
+          path="/notifications/verify-email/:token"
+          render={({ match }) => <Redirect to={`/account/notifications/${match.params.token}`} />}
         />
         <Route
           exact
@@ -445,24 +443,6 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <WhatsNewPage notifications={whatsNewNotifications} />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/notifications/verify-email/:token"
-          render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-              <VerifyEmailSwitch />
-            </AppWrapper>
-          )}
-        />
-        <Route
-          exact
-          path="/account/verify-email/:token"
-          render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-              <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
         />

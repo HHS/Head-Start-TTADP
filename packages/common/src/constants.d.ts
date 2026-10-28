@@ -1,3 +1,6 @@
+export const COLLAB_REPORT_CONDUCT_METHODS: ReadonlyArray<{ label: string; value: string }>;
+export const COLLAB_REPORT_REASONS: Readonly<Record<string, string>>;
+export const COLLAB_REPORT_DATA: Readonly<Record<string, string>>;
 // Targeted TypeScript declaration overlay for runtime constants whose
 // literal-typed shape must flow to consumers (notably the shared
 // notification types in src/notifications.d.ts, which
