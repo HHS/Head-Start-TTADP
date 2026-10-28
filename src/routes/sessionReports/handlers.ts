@@ -260,9 +260,11 @@ export const updateHandler = async (req: Request, res: Response) => {
     }
 
     // Likewise, only email the owner on the transition into "needs action".
+    const previousStatus = (session?.data as { status?: string } | undefined)?.status;
+    const updatedStatus = (updatedSession?.data as { status?: string } | undefined)?.status;
     if (
-      session?.data?.status !== REPORT_STATUSES.NEEDS_ACTION &&
-      updatedSession?.data?.status === REPORT_STATUSES.NEEDS_ACTION
+      previousStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+      updatedStatus === REPORT_STATUSES.NEEDS_ACTION
     ) {
       await trSessionChangesRequested(event, updatedSession);
     }
