@@ -8,7 +8,10 @@ import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert'
 import ActiveTtaRequestsTable from '../../components/TtaRequestsTable/ActiveTtaRequestsTable';
 import ApprovedTtaRequestsTable from '../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../hooks/useFilters';
-import { hasTtaRequestReadWrite } from '../../permissions';
+import {
+  allRegionsUserHasTtaRequestPermissionTo,
+  hasTtaRequestReadWrite,
+} from '../../permissions';
 import UserContext from '../../UserContext';
 import { showFilterWithMyRegions } from '../regionHelpers';
 
@@ -36,7 +39,10 @@ export default function TtaRequests(): React.ReactElement {
     FILTER_KEY,
     true, // manage regions
     [],
-    TTA_REQUESTS_FILTER_CONFIG
+    TTA_REQUESTS_FILTER_CONFIG,
+    undefined,
+    undefined,
+    allRegionsUserHasTtaRequestPermissionTo
   );
 
   // like the activity reports landing page, a request can be started by anyone who can
@@ -58,6 +64,7 @@ export default function TtaRequests(): React.ReactElement {
       <RegionPermissionModal
         filters={filters}
         user={user}
+        accessibleRegions={regions}
         showFilterWithMyRegions={
           // istanbul ignore next = not easily tested
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)

@@ -103,6 +103,26 @@ export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) =>
     ...allRegionsUserHasTrainingReportPermissionTo(user, includeAdmin),
   ]);
 
+export const allRegionsUserHasTtaRequestPermissionTo = (user) => {
+  const permissions = _.get(user, 'permissions');
+
+  if (!permissions) return [];
+
+  const readScopes = [
+    SCOPE_IDS.READ_REPORTS,
+    SCOPE_IDS.READ_WRITE_TTA_REQUESTS,
+    SCOPE_IDS.REVIEW_TTA_REQUESTS,
+    SCOPE_IDS.APPROVE_TTA_REQUESTS,
+    SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS,
+  ];
+
+  return _.uniq(
+    permissions
+      .filter((permission) => readScopes.includes(permission.scopeId))
+      .map((permission) => permission.regionId)
+  );
+};
+
 /**
  * Search the user's permissions the ability to unlock approved reports.
  *

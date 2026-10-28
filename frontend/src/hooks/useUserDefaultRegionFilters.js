@@ -5,11 +5,15 @@ import { allRegionsUserHasPermissionTo } from '../permissions';
 
 const ADMIN_REGION = 14;
 
-export default function useUserDefaultRegionFilters(user, manageRegions) {
-  const regions = allRegionsUserHasPermissionTo(user);
+export default function useUserDefaultRegionFilters(
+  user,
+  manageRegions,
+  getUserRegions = allRegionsUserHasPermissionTo
+) {
+  const regions = getUserRegions(user);
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const defaultRegion = regions.includes(user.homeRegionId) ? user.homeRegionId : regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
   let defaultFilters = () => [];

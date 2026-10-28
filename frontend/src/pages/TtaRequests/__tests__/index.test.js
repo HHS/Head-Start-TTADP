@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
+import { allRegionsUserHasTtaRequestPermissionTo } from '../../../permissions';
 import { MemoryRouter } from 'react-router-dom';
 import useFilters from '../../../hooks/useFilters';
 import UserContext from '../../../UserContext';
@@ -137,7 +138,16 @@ describe('TTA Requests', () => {
   it('sets up filters with region management', () => {
     renderTtaRequests();
 
-    expect(useFilters).toHaveBeenCalledWith(user, 'tta-requests-filters', true, [], []);
+    expect(useFilters).toHaveBeenCalledWith(
+      user,
+      'tta-requests-filters',
+      true,
+      [],
+      [],
+      undefined,
+      undefined,
+      allRegionsUserHasTtaRequestPermissionTo
+    );
   });
   it('renders both request tables', () => {
     renderTtaRequests();

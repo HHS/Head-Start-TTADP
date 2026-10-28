@@ -1,9 +1,27 @@
 import { SCOPE_IDS } from '@ttahub/common';
 import {
+  allRegionsUserHasTtaRequestPermissionTo,
   canCreateCommunicationLog,
   canCreateTtaRequest,
   hasTtaRequestReadWrite,
 } from './permissions';
+
+describe('allRegionsUserHasTtaRequestPermissionTo', () => {
+  it('returns regions from TTA-request read scopes, but not unrelated report scopes', () => {
+    const user = {
+      permissions: [
+        { scopeId: SCOPE_IDS.READ_REPORTS, regionId: 1 },
+        { scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 2 },
+        { scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 },
+        { scopeId: SCOPE_IDS.APPROVE_TTA_REQUESTS, regionId: 4 },
+        { scopeId: SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS, regionId: 5 },
+        { scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS, regionId: 6 },
+      ],
+    };
+
+    expect(allRegionsUserHasTtaRequestPermissionTo(user)).toEqual([1, 2, 3, 4, 5]);
+  });
+});
 
 describe('canCreateCommunicationLog', () => {
   const createMockUser = (permissions = []) => ({
