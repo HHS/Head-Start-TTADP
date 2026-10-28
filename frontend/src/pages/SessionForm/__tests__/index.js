@@ -14,6 +14,15 @@ import UserContext from '../../../UserContext';
 import SessionForm from '..';
 import { istKeys, pocKeys } from '../constants';
 
+// Draft saves never write completion flags; only submit does.
+const COMPLETION_FLAGS = ['pocComplete', 'collabComplete', 'ownerComplete'];
+const withoutCompletionFlags = (keys) => keys.filter((key) => !COMPLETION_FLAGS.includes(key));
+const expectNoCompletionFlags = (data) => {
+  COMPLETION_FLAGS.forEach((flag) => {
+    expect(Object.hasOwn(data, flag)).toBe(false);
+  });
+};
+
 const istAndPocFields = {
   id: 1,
   reviewStatus: REPORT_STATUSES.DRAFT,
@@ -487,7 +496,9 @@ describe('SessionReportForm', () => {
       await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
       expect(session.data.facilitation).toBe(next);
       expect(session.data.sessionName).toBe(istAndPocFields.sessionName);
-      expect(session.data.collabComplete).toBe(false);
+      // Draft saves don't send completion flags; the backend resets them on a
+      // facilitation change.
+      expect(Object.hasOwn(session.data, 'collabComplete')).toBe(false);
       expect(session.data.approverId).toBe('');
 
       unmount();
@@ -553,11 +564,11 @@ describe('SessionReportForm', () => {
       expect.objectContaining({
         facilitation: 'national_center',
         approverId: '',
-        ownerComplete: false,
-        collabComplete: false,
-        pocComplete: false,
       })
     );
+    // The backend resets completion flags on a facilitation change, so the
+    // draft save doesn't send them.
+    expectNoCompletionFlags(putBody);
 
     unmount();
     renderSessionForm('1', 'review', '1', adminUser);
@@ -1177,10 +1188,56 @@ describe('SessionReportForm', () => {
     // Assert the put contains the correct data
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
-    const allKeys = [...istKeys, ...pocKeys];
+    const allKeys = withoutCompletionFlags([...istKeys, ...pocKeys]);
     allKeys.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
+    expectNoCompletionFlags(putBodyJson.data);
+  });
+
+  it('does not send completion flags on an admin draft save in the national center facilitation flow', async () => {
+    const adminUser = {
+      user: {
+        id: 1,
+        permissions: [{ userId: 1, regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
+        name: 'Ted User',
+      },
+    };
+
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
+        eventId: 1,
+        ...istAndPocFields,
+        facilitation: 'national_center',
+        ownerComplete: false,
+      },
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [3],
+        collaboratorIds: [4],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1', adminUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    userEvent.click(screen.getByText(/Save draft/i));
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    const putBodyJson = JSON.parse(fetchMock.lastOptions(url).body);
+    expectNoCompletionFlags(putBodyJson.data);
   });
 
   it('calls the resetFormData function with IST and removes POC fields for NC owner on national_center facilitation', async () => {
@@ -1229,9 +1286,9 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
     // Assert the body has istkey properties using the hasOwnProperty method
-    // NC Owner (not admin) should only get IST keys, and pocComplete should be removed.
-    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
-    istKeysWithoutPocComplete.forEach((key) => {
+    // NC Owner (not admin) should only get IST keys, without completion flags.
+    const istKeysWithoutCompletionFlags = withoutCompletionFlags(istKeys);
+    istKeysWithoutCompletionFlags.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
     // Assert POC-only fields are NOT present (fields in pocKeys but not in istKeys)
@@ -1282,17 +1339,12 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
 
     // Regional owner edits POC-side pages now, so the body should contain POC keys.
-    // collabComplete is the owner's flag, so it must still be present.
-    // pocComplete is stripped because removeCompleteDataBaseOnRole deletes it for non-POC users.
-    const pocKeysOwnerWrites = pocKeys.filter(
-      (key) => key !== 'collabComplete' && key !== 'pocComplete'
-    );
+    // Completion flags are only written on submit, never on a draft save.
+    const pocKeysOwnerWrites = withoutCompletionFlags(pocKeys);
     pocKeysOwnerWrites.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
-
-    // pocComplete is tracked by POCs, so it must be stripped for a Regional owner.
-    expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+    expectNoCompletionFlags(putBodyJson.data);
 
     // IST-only fields (Session Summary) must NOT be present for a Regional owner
     // in this combo, since they no longer have access to the Session Summary page.
@@ -1345,10 +1397,9 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
 
-    // Collaborator writes IST (session summary) keys. pocComplete is stripped
-    // because the user is not a POC.
-    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
-    istKeysWithoutPocComplete.forEach((key) => {
+    // Collaborator writes IST (session summary) keys, without completion flags.
+    const istKeysWithoutCompletionFlags = withoutCompletionFlags(istKeys);
+    istKeysWithoutCompletionFlags.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
 
@@ -1399,11 +1450,13 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
 
     // Assert the body has POC key properties using the hasOwnProperty method
-    // POC (not admin) should only get POC keys, and collabComplete should be removed.
-    const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
-    pocKeysWithoutcollabComplete.forEach((key) => {
+    // POC (not admin) should only get POC keys. A draft save must not send
+    // pocComplete (the form default is false) or the other completion flags.
+    const pocKeysWithoutCompletionFlags = withoutCompletionFlags(pocKeys);
+    pocKeysWithoutCompletionFlags.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
+    expectNoCompletionFlags(putBodyJson.data);
     // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
     const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
     istOnlyKeys.forEach((key) => {
@@ -2197,14 +2250,14 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify IST keys are included
-      const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
-      istKeysWithoutPocComplete.forEach((key) => {
+      const istKeysWithoutCompletionFlags = withoutCompletionFlags(istKeys);
+      istKeysWithoutCompletionFlags.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
 
       // Verify POC keys are included
-      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
-      pocKeysWithoutcollabComplete.forEach((key) => {
+      const pocKeysWithoutCompletionFlags = withoutCompletionFlags(pocKeys);
+      pocKeysWithoutCompletionFlags.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
     });
@@ -2296,9 +2349,7 @@ describe('SessionReportForm', () => {
 
       // Verify both IST and POC keys are included
       const allKeys = [...istKeys, ...pocKeys];
-      const allKeysWithoutComplete = allKeys.filter(
-        (key) => key !== 'pocComplete' && key !== 'collabComplete'
-      );
+      const allKeysWithoutComplete = withoutCompletionFlags(allKeys);
       allKeysWithoutComplete.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
@@ -2350,8 +2401,8 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify POC keys are included
-      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
-      pocKeysWithoutcollabComplete.forEach((key) => {
+      const pocKeysWithoutCompletionFlags = withoutCompletionFlags(pocKeys);
+      pocKeysWithoutCompletionFlags.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
 
@@ -2403,7 +2454,7 @@ describe('SessionReportForm', () => {
       const putBody = fetchMock.lastOptions(url).body;
       const putBodyJson = JSON.parse(putBody);
 
-      const allKeys = [...istKeys, ...pocKeys];
+      const allKeys = withoutCompletionFlags([...istKeys, ...pocKeys]);
       allKeys.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });

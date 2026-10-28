@@ -34,6 +34,8 @@ export const isNationalCenterUser = (
  * In the national center facilitation flow the Regional owner's side of the session is tracked via
  * `ownerComplete` and the NC collaborator's side via `collabComplete`; POC is
  * normally not involved (but may create sessions and fill `pocComplete`).
+ * All completion flags are read by truthiness: a missing key and an explicit
+ * `false` both mean "not complete".
  */
 export const isNationalCenterFacilitator = (event: EventShape, session: SessionShape): boolean =>
   event?.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
