@@ -284,7 +284,7 @@ const NOTIFICATION_CONFIGURATION = {
     settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
   },
   [NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED]: {
-    textFn: () => 'You were added as a Regional point of contact on their Training Report.',
+    textFn: () => 'You were added as a Regional point of contact on a Training Report.',
     actionable: false,
     linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
     linkText: () => 'View TR',
