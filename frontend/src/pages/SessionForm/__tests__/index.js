@@ -2260,6 +2260,13 @@ describe('SessionReportForm', () => {
       pocKeysWithoutCompletionFlags.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
+
+      // Owner and collaborators have no step when facilitation includes region,
+      // so a POC draft save still auto-completes the collaborator side. The form
+      // default pocComplete: false is not sent.
+      expect(putBodyJson.data.collabComplete).toBe(true);
+      expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+      expect(Object.hasOwn(putBodyJson.data, 'ownerComplete')).toBe(false);
     });
 
     it('POC loads existing IST data when facilitation is "regional_tta_staff"', async () => {
@@ -2458,6 +2465,10 @@ describe('SessionReportForm', () => {
       allKeys.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
+
+      // This flow has no POC step, so a draft save still auto-completes the POC side.
+      expect(putBodyJson.data.pocComplete).toBe(true);
+      expect(Object.hasOwn(putBodyJson.data, 'collabComplete')).toBe(false);
     });
   });
 
