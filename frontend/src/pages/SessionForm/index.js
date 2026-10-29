@@ -517,15 +517,16 @@ export default function SessionForm({ match }) {
         });
         let roleData = reduceDataToMatchKeys(keyArray, data);
 
-        // Remove complete property data based on current role.
-        roleData = removeCompleteDataBaseOnRole(roleData);
-
-        // Draft saves never write completion flags. Only submit sets them, and the
-        // backend resets them when facilitation changes. Otherwise form defaults
-        // (e.g. pocComplete: false) get persisted and trigger spurious alerts.
+        // Draft saves don't send the form's completion values. Only submit sets them,
+        // and the backend resets them when facilitation changes. Otherwise form
+        // defaults (e.g. pocComplete: false) get persisted and trigger spurious alerts.
         COMPLETION_FIELDS.forEach((field) => {
           delete roleData[field];
         });
+
+        // Remove complete property data based on current role. This runs after the
+        // strip above so flows with no step for a role still auto-complete it.
+        roleData = removeCompleteDataBaseOnRole(roleData);
 
         if (!isPoc && roleData.objectiveResources) {
           roleData = {
