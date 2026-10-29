@@ -422,6 +422,12 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       expect(config.archiveLabel()).toBe('View TR');
     });
 
+    it('archiveLinkFn returns the Training Report view path', () => {
+      expect(config.archiveLinkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/view/R01-TR-1234'
+      );
+    });
+
     it('displayId returns the displayId param', () => {
       expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
     });

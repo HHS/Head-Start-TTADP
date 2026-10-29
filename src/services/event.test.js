@@ -174,7 +174,9 @@ describe('event service', () => {
 
       expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(2);
       sessions.forEach((session) => {
-        expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(session.id);
+        expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(session.id, {
+          removeLink: true,
+        });
       });
       expect(await db.SessionReportPilot.count({ where: { eventId: created.id } })).toBe(0);
     });

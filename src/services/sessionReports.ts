@@ -460,8 +460,10 @@ export async function updateSession(id: number, request) {
       () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
       `Error creating session needs action collaborator notifications for session ${id}:`
     );
-  } else if (wasNeedsAction && !isNeedsAction && isSubmitted) {
-    // resubmitted, so the owner no longer needs to act
+  } else if (isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted)) {
+    // resubmitted, so the owner no longer needs to act. A session reset by a facilitation
+    // change can leave needs action before it is complete, so also archive once it is
+    // submitted again.
     await runInSavepoint(
       () => archiveSessionNeedsActionNotifications(id),
       `Error archiving session needs action notifications for session ${id}:`

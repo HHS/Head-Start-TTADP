@@ -1288,6 +1288,27 @@ describe('Notification service', () => {
       });
     });
 
+    it('points the link at the archive link for types that have one', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const needsAction = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+        label: 'Take action',
+        displayId: 'R01-TR-1234',
+        link: `/training-report/R01-TR-1234/session/${entityId}`,
+      });
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+      ]);
+
+      const updated = await Notification.findByPk(needsAction.id);
+      expect(updated.label).toBe('View TR');
+      expect(updated.link).toBe('/training-report/view/R01-TR-1234');
+
+      await NotificationUserState.destroy({ where: { notificationId: needsAction.id } });
+    });
+
     it('does not relabel global notifications, since their row is shared across users', async () => {
       const entityId = faker.number.int({ min: 99001, max: 99999 });
       const globalNotification = await createTrackedNotification({

@@ -156,7 +156,9 @@ export async function destroyEvent(id: number): Promise<void> {
       attributes: ['id'],
     });
     await Promise.all(
-      sessions.map((session) => archiveSessionNeedsActionNotifications(session.id))
+      sessions.map((session) =>
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
+      )
     );
   }, `Error archiving session notifications for event ${id}:`);
   try {
