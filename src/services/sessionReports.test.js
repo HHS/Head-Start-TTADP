@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db, {
   Grant,
@@ -10,6 +10,7 @@ import db, {
 } from '../models';
 import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
+import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
 import {
   createSession,
   destroySession,
@@ -26,6 +27,10 @@ import {
 } from './sessionReports';
 
 jest.mock('bull');
+jest.mock('./notifications/trainingReport', () => ({
+  ...jest.requireActual('./notifications/trainingReport'),
+  createNotificationForSessionSubmittedCollaborators: jest.fn(),
+}));
 
 describe('session reports service', () => {
   let event;
@@ -217,6 +222,204 @@ describe('session reports service', () => {
 
       expect(updated.data.sessionName).toBe('renamed');
       expect(updated.data.someLegacyKeyNoLongerInTheForm).toBe('still here');
+
+      await destroySession(created.id);
+    });
+  });
+
+  describe('updateSession session submitted notification', () => {
+    let submitEvent;
+    let approver;
+    const submitEventId = `R01-PD-${faker.number.int({ min: 900_000, max: 999_999 })}`;
+    const collaboratorIds = [
+      faker.number.int({ min: 100_000, max: 199_999 }),
+      faker.number.int({ min: 200_000, max: 299_999 }),
+    ];
+
+    beforeAll(async () => {
+      [submitEvent, approver] = await Promise.all([
+        createEvent({
+          ownerId: faker.number.int({ min: 0, max: 99999 }),
+          regionId: 1,
+          pocIds: [],
+          collaboratorIds,
+          data: { eventId: submitEventId },
+        }),
+        createUser({}),
+      ]);
+    });
+
+    afterAll(async () => {
+      await destroyEvent(submitEvent.id);
+      await db.User.destroy({ where: { id: approver.id } });
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    // Everything but collabComplete is in place, so completing it submits the session
+    const createReadySession = async (data = {}) => {
+      const created = await createSession({
+        eventId: submitEvent.id,
+        data: { sessionName: 'Opening session', pocComplete: true, ...data },
+      });
+      await SessionReportPilot.update({ approverId: approver.id }, { where: { id: created.id } });
+      return created;
+    };
+
+    it('notifies collaborators when the session is submitted for the first time', async () => {
+      const created = await createReadySession();
+
+      const updated = await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { collabComplete: true },
+      });
+
+      expect(updated.submitted).toBe(true);
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: submitEventId, collaboratorIds }),
+        expect.objectContaining({
+          id: created.id,
+          data: expect.objectContaining({ sessionName: 'Opening session' }),
+        })
+      );
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify when the session was already submitted', async () => {
+      const created = await createReadySession({ collabComplete: true });
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { sessionName: 'Renamed', collabComplete: true },
+      });
+
+      expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify when the session is not yet submitted', async () => {
+      const created = await createReadySession({ pocComplete: false });
+
+      const updated = await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { collabComplete: true },
+      });
+
+      expect(updated.submitted).toBe(false);
+      expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify on a resubmission after changes were requested', async () => {
+      const created = await createReadySession({ status: REPORT_STATUSES.NEEDS_ACTION });
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { collabComplete: true, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+
+      expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('still saves the session when the notification fails', async () => {
+      createNotificationForSessionSubmittedCollaborators.mockRejectedValueOnce(new Error('boom'));
+      const created = await createReadySession();
+
+      const updated = await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { collabComplete: true },
+      });
+
+      expect(updated.submitted).toBe(true);
+
+      await destroySession(created.id);
+    });
+
+    it('still saves the session when a notification query fails inside the request transaction', async () => {
+      // A failed query aborts the surrounding Postgres transaction, so this only
+      // passes if the notification is isolated in a savepoint
+      createNotificationForSessionSubmittedCollaborators.mockImplementationOnce(() =>
+        db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"')
+      );
+      const created = await createReadySession();
+
+      const updated = await db.sequelize.transaction(() =>
+        updateSession(created.id, {
+          eventId: submitEventId,
+          data: { collabComplete: true, sessionName: 'Saved anyway' },
+        })
+      );
+
+      expect(updated.submitted).toBe(true);
+      const saved = await findSessionById(created.id);
+      expect(saved.data.sessionName).toBe('Saved anyway');
+
+      await destroySession(created.id);
+    });
+
+    // Changes requested, facilitation changed (which resets completion and the
+    // approver), then participants submit separately so status leaves NEEDS_ACTION
+    // before the session is complete again
+    const resetAndResubmitInParts = async (sessionId) => {
+      const reset = await updateSession(sessionId, {
+        eventId: submitEventId,
+        data: { facilitation: 'regional_tta_staff' },
+      });
+      expect(reset.submitted).toBe(false);
+
+      const partial = await updateSession(sessionId, {
+        eventId: submitEventId,
+        data: {
+          approverId: approver.id,
+          pocComplete: true,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+      expect(partial.submitted).toBe(false);
+
+      return updateSession(sessionId, {
+        eventId: submitEventId,
+        data: {
+          collabComplete: true,
+          sessionName: 'Renamed session',
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        },
+      });
+    };
+
+    it('does not notify again when a previously submitted session is reset and resubmitted', async () => {
+      const created = await createReadySession();
+      await updateSession(created.id, { eventId: submitEventId, data: { collabComplete: true } });
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+      expect((await findSessionById(created.id)).data.hasBeenSubmitted).toBe(true);
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { status: REPORT_STATUSES.NEEDS_ACTION },
+      });
+      const resubmitted = await resetAndResubmitInParts(created.id);
+
+      expect(resubmitted.submitted).toBe(true);
+      expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify when a session in needs action from before the marker is reset and resubmitted', async () => {
+      const created = await createReadySession({ status: REPORT_STATUSES.NEEDS_ACTION });
+
+      const resubmitted = await resetAndResubmitInParts(created.id);
+
+      expect(resubmitted.submitted).toBe(true);
+      expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
 
       await destroySession(created.id);
     });

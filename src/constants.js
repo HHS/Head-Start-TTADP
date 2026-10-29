@@ -283,6 +283,23 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
   },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED]: {
+    textFn: ({ author }) =>
+      `${author} added you as a Regional point of contact on their Training Report.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenAddedAsPocTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR]: {
+    textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -328,6 +345,7 @@ const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
@@ -345,6 +363,8 @@ const EMAIL_ACTIONS = {
   ADDED_AS_RECIPIENT_COMM_LOG: 'emailWhenAddedAsRecipientCommLog',
   ADDED_AS_POC_TRAINING_REPORT: 'emailWhenAddedAsPocTrainingReport',
   ADDED_AS_COLLABORATOR_TRAINING_REPORT: 'emailWhenAddedAsCollaboratorTrainingReport',
+  SESSION_SUBMITTED_COLLABORATOR_TRAINING_REPORT:
+    'emailWhenSessionSubmittedCollaboratorTrainingReport',
   SESSION_REVIEW_REQUESTED_TRAINING_REPORT: 'emailWhenSessionReviewRequestedTrainingReport',
   SESSION_CHANGES_REQUESTED_TRAINING_REPORT: 'emailWhenSessionChangesRequestedTrainingReport',
   SESSION_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenSessionDetails20DaysCreatorCollaborator',
@@ -385,6 +405,7 @@ const IN_APP_NOTIFICATION_SETTING_KEYS = [
   'inAppWhenAddedAsRecipientCommLog',
   'inAppWhenAddedAsPocTrainingReport',
   'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',
