@@ -14,6 +14,7 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
+import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
@@ -131,11 +132,10 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
   });
 
   // a notification failure must never fail the save
-  try {
-    await createNotificationForNewPocs(created, [], pocIds);
-  } catch (err) {
-    auditLogger.error(`Error creating POC added notifications for event ${created.id}:`, err);
-  }
+  await runInSavepoint(
+    () => createNotificationForNewPocs(created, [], pocIds),
+    `Error creating POC added notifications for event ${created.id}:`
+  );
 
   return created;
 }
@@ -479,15 +479,15 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   );
 
   // a notification failure must never fail the save
-  try {
-    await createNotificationForNewPocs(
-      { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
-      previousPocIds,
-      pocIds
-    );
-  } catch (err) {
-    auditLogger.error(`Error creating POC added notifications for event ${evt.id}:`, err);
-  }
+  await runInSavepoint(
+    () =>
+      createNotificationForNewPocs(
+        { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+        previousPocIds,
+        pocIds
+      ),
+    `Error creating POC added notifications for event ${evt.id}:`
+  );
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
