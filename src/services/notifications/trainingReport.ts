@@ -154,12 +154,29 @@ export async function createSessionNeedsActionNotification(
 
 /**
  * Archives the "approver requested changes to a session" in-app notification (TR-4a) for a
- * session. Called when the session is resubmitted or deleted.
+ * session. Called when the session is resubmitted or deleted. Archiving points the link at
+ * the Training Report; pass `removeLink` when the Training Report itself is being deleted.
  * @param sessionId The session whose needs action notifications to archive.
+ * @param options.removeLink Clear the link instead of pointing it at the Training Report.
  * @returns {Promise<void>} Resolves once archiving is complete.
  */
-export async function archiveSessionNeedsActionNotifications(sessionId: number): Promise<void> {
-  return archiveNotificationsByEntityAndType(sessionId, [
+export async function archiveSessionNeedsActionNotifications(
+  sessionId: number,
+  { removeLink = false }: { removeLink?: boolean } = {}
+): Promise<void> {
+  await archiveNotificationsByEntityAndType(sessionId, [
     NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
   ]);
+
+  if (removeLink) {
+    await db.Notification.update(
+      { link: null },
+      {
+        where: {
+          entityId: sessionId,
+          type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+        },
+      }
+    );
+  }
 }

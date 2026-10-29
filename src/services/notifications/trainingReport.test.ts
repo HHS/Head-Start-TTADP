@@ -260,4 +260,30 @@ describe('archiveSessionNeedsActionNotifications', () => {
       NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
     ]);
   });
+
+  it('keeps the link by default', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([0]);
+
+    await archiveSessionNeedsActionNotifications(55);
+
+    expect(updateSpy).not.toHaveBeenCalled();
+    updateSpy.mockRestore();
+  });
+
+  it('clears the link when removeLink is set', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([1]);
+
+    await archiveSessionNeedsActionNotifications(55, { removeLink: true });
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      { link: null },
+      {
+        where: {
+          entityId: 55,
+          type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+        },
+      }
+    );
+    updateSpy.mockRestore();
+  });
 });

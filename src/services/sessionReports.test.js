@@ -530,10 +530,14 @@ describe('session reports service', () => {
         eventId: submitEventId,
         data: { status: REPORT_STATUSES.NEEDS_ACTION },
       });
+      archiveSessionNeedsActionNotifications.mockClear();
       const resubmitted = await resetAndResubmitInParts(created.id);
 
       expect(resubmitted.submitted).toBe(true);
       expect(createNotificationForSessionSubmittedCollaborators).toHaveBeenCalledTimes(1);
+      // status left needs action before the session was complete, so archive on completion
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(1);
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(created.id);
 
       await destroySession(created.id);
     });
@@ -545,6 +549,8 @@ describe('session reports service', () => {
 
       expect(resubmitted.submitted).toBe(true);
       expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(1);
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(created.id);
 
       await destroySession(created.id);
     });

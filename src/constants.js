@@ -307,6 +307,8 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}`,
     linkText: () => 'Take action',
     archiveLabel: () => 'View TR',
+    // the archived CTA reads "View TR", and the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
