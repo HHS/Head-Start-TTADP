@@ -988,6 +988,7 @@ describe('session reports service', () => {
             startDate: '01/15/2024',
             endDate: '01/16/2024',
             objectiveTopics: ['Topic A', 'Topic B'],
+            otherTrainers: 'Guest Trainer',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -998,6 +999,7 @@ describe('session reports service', () => {
             startDate: '01/10/2024',
             endDate: '01/11/2024',
             objectiveTopics: ['Topic C'],
+            otherTrainers: 'Other-only Trainer',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -1008,6 +1010,7 @@ describe('session reports service', () => {
             startDate: '01/20/2024',
             endDate: '01/21/2024',
             objectiveTopics: [],
+            otherTrainers: '   ',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -1652,7 +1655,7 @@ describe('session reports service', () => {
         await db.User.destroy({ where: { id: trainer.id } });
       });
 
-      it('includes trainer full names on each row', async () => {
+      it('includes associated and other trainer names on each row', async () => {
         const result = await getSessionReports({
           'eventId.ctn': [testEventLongId],
           limit: 'all',
@@ -1668,8 +1671,12 @@ describe('session reports service', () => {
 
         expect(rowsBySession['Alpha Session'].trainers.map((t) => t.fullName)).toEqual([
           expectedTrainer.fullName,
+          'Guest Trainer',
         ]);
-        expect(rowsBySession['Beta Session'].trainers).toEqual([]);
+        expect(rowsBySession['Beta Session'].trainers).toEqual([
+          { fullName: 'Other-only Trainer' },
+        ]);
+        expect(rowsBySession['Gamma Session'].trainers).toEqual([]);
       });
     });
 
