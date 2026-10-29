@@ -14,6 +14,7 @@ import {
   archiveSessionNeedsActionNotifications,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
+  createSessionNeedsActionNotificationForCollaborators,
 } from './notifications/trainingReport';
 import {
   createSession,
@@ -36,6 +37,7 @@ jest.mock('./notifications/trainingReport', () => ({
   archiveSessionNeedsActionNotifications: jest.fn(),
   createNotificationForSessionSubmittedCollaborators: jest.fn(),
   createSessionNeedsActionNotification: jest.fn(),
+  createSessionNeedsActionNotificationForCollaborators: jest.fn(),
 }));
 
 describe('session reports service', () => {
@@ -296,7 +298,24 @@ describe('session reports service', () => {
           data: expect.objectContaining({ sessionName: 'Opening session' }),
         })
       );
+      expect(createSessionNeedsActionNotificationForCollaborators).toHaveBeenCalledTimes(1);
+      expect(createSessionNeedsActionNotificationForCollaborators).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: needsActionEventId }),
+        expect.objectContaining({ id: created.id, approverId: approver.id })
+      );
       expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+    });
+
+    it('still notifies the owner when the collaborator notification fails', async () => {
+      createSessionNeedsActionNotificationForCollaborators.mockRejectedValueOnce(new Error('boom'));
+      const created = await createSubmittedSession();
+
+      const updated = await requestChanges(created.id);
+
+      expect(updated.data.status).toBe(REPORT_STATUSES.NEEDS_ACTION);
+      expect(createSessionNeedsActionNotification).toHaveBeenCalledTimes(1);
 
       await destroySession(created.id);
     });
@@ -312,6 +331,7 @@ describe('session reports service', () => {
       });
 
       expect(createSessionNeedsActionNotification).not.toHaveBeenCalled();
+      expect(createSessionNeedsActionNotificationForCollaborators).not.toHaveBeenCalled();
       expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
 
       await destroySession(created.id);
@@ -326,6 +346,7 @@ describe('session reports service', () => {
 
       await requestChanges(created.id);
       expect(createSessionNeedsActionNotification).toHaveBeenCalledTimes(2);
+      expect(createSessionNeedsActionNotificationForCollaborators).toHaveBeenCalledTimes(2);
 
       await destroySession(created.id);
     });

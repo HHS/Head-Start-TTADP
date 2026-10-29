@@ -14,6 +14,7 @@ import {
   archiveSessionNeedsActionNotifications,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
+  createSessionNeedsActionNotificationForCollaborators,
 } from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
@@ -445,15 +446,19 @@ export async function updateSession(id: number, request) {
   const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
 
   if (isNeedsAction && !wasNeedsAction) {
-    // TR-4a: the approver requested changes
+    // the approver requested changes: TR-4a for the owner, TR-4c for collaborators
+    const needsActionSession = {
+      id,
+      approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+      data: newData as { sessionName?: string },
+    };
     await runInSavepoint(
-      () =>
-        createSessionNeedsActionNotification(event, {
-          id,
-          approverId: update.approverId !== undefined ? update.approverId : session.approverId,
-          data: newData as { sessionName?: string },
-        }),
+      () => createSessionNeedsActionNotification(event, needsActionSession),
       `Error creating session needs action notifications for session ${id}:`
+    );
+    await runInSavepoint(
+      () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
+      `Error creating session needs action collaborator notifications for session ${id}:`
     );
   } else if (isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted)) {
     // resubmitted, so the owner no longer needs to act. A session reset by a facilitation
