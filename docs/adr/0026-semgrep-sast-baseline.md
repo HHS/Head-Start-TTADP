@@ -2,20 +2,18 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
 During a configuration management audit performed on March 30, 2026, no evidence verifiable from The TTA Hub repository showed that a dedicated static application security testing (SAST) control had been run for the baseline.
 
 The TTA Hub repository already contained adjacent security controls:
-
 - Biome linting for static code quality checks
 - Yarn audit for dependency vulnerability checks
 - OWASP ZAP in CircleCI for dynamic application scanning
 
 Those controls do not satisfy the missing requirement on their own:
-
 - linting is not a dedicated SAST control
 - dependency audit is software composition analysis (SCA)
 - ZAP is dynamic application security testing (DAST)
@@ -29,7 +27,6 @@ The repository also already has a Semgrep GitHub app installation available, but
 We will add a dedicated SAST control in CircleCI using Semgrep Community Edition.
 
 The implementation stores its control definition and evidence in the repository:
-
 - `security/sast/scan-config.json`
 - `security/sast/baseline.json`
 - `security/sast/dispositions.json`
@@ -43,7 +40,6 @@ Finding identity is based on a stable match key that does not include line numbe
 Baseline refresh always runs a fresh scan before writing the committed baseline and records provenance including the git HEAD SHA, the hash of the committed scan configuration, and git worktree fingerprints that indicate whether the scan came from a dirty checkout. The committed baseline keeps only hashes and counts for local untracked content, while the richer path-level detail remains limited to the ephemeral CI artifact provenance. That prevents a new baseline from being generated silently from stale scan output, reduces unnecessary local filename exposure in repository history, and keeps the audit trail tied to the scanned repository state.
 
 We chose Semgrep over alternatives such as SonarQube, Checkmarx, and CodeQL for The TTA Hub because:
-
 - it fits the existing CircleCI enforcement model without requiring a separate platform to become the control plane
 - it can run locally and in CI with the same committed configuration
 - it can emit JSON and SARIF directly for artifact retention
@@ -57,7 +53,6 @@ We are intentionally not using the Semgrep GitHub app as part of the authoritati
 This adds another CI job and increases scan time modestly.
 
 The team must maintain three committed artifacts:
-
 - the scan configuration
 - the baseline scan snapshot
 - the disposition log for unresolved baseline findings

@@ -8,13 +8,13 @@ import { auditLogger } from '../../logger';
 const errorMessage = 'Received malformed request query';
 
 const dateQuery = Joi.string().trim().min(1).max(500);
-const selectQuery = Joi.array()
-  .items(Joi.string().trim().min(1).max(100))
-  .min(1)
-  .max(20)
-  .single();
+const selectQuery = Joi.array().items(Joi.string().trim().min(1).max(100)).min(1).max(20).single();
 const purposeQuery = Joi.array()
-  .items(Joi.string().trim().valid(...COMMUNICATION_PURPOSES))
+  .items(
+    Joi.string()
+      .trim()
+      .valid(...COMMUNICATION_PURPOSES)
+  )
   .min(1)
   .max(20)
   .single();
@@ -24,6 +24,7 @@ const recipientTimelineQuerySchema = Joi.object({
   offset: Joi.number().integer().min(0).default(0),
   sortBy: Joi.string().valid('date').default('date'),
   direction: Joi.string().valid('asc', 'desc').default('desc'),
+  view: Joi.string().valid('chronological', 'monitoring', 'goals'),
   'date.in': Joi.array().items(dateQuery).length(1).single(),
   'date.win': dateQuery,
   'date.aft': dateQuery,

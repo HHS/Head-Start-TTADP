@@ -502,7 +502,7 @@ describe('Objectives DB service', () => {
             ],
             staleReport
           )
-).resolves.toBeUndefined();
+        ).resolves.toBeUndefined();
 
         expect(await Objective.findAll({ where: { title: staleTitle } })).toHaveLength(0);
         expect(

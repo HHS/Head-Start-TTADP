@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
+import { trSessionSubmittedForApproval } from '../../lib/mailer';
 import EventReport from '../../policies/event';
 import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
@@ -252,6 +253,12 @@ export const updateHandler = async (req: Request, res: Response) => {
     }
 
     const updatedSession = await updateSession(Number(id), req.body);
+
+    // Only notify on the transition into "submitted" so later saves don't resend.
+    if (!session?.submitted && updatedSession?.submitted) {
+      await trSessionSubmittedForApproval(event, updatedSession);
+    }
+
     return res.status(httpCodes.CREATED).send(updatedSession);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
