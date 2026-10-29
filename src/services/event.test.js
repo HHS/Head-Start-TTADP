@@ -1072,6 +1072,21 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       });
     });
 
+    it('notifies newly added POCs on import without failing the import on error', async () => {
+      createNotificationForNewPocs.mockReset();
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+
+      const result = await csvImport(Buffer.from(buildImport(email, `${eventId}-poc`)));
+
+      expect(result.errors).toEqual([]);
+      expect(result.count).toEqual(1);
+      expect(createNotificationForNewPocs).toHaveBeenCalledTimes(1);
+      const [evt, previous, current] = createNotificationForNewPocs.mock.calls[0];
+      expect(evt.eventId).toEqual(`${eventId}-poc`);
+      expect(previous).toEqual([]);
+      expect(current).toEqual([pocId]);
+    });
+
     it('imports good data correctly', async () => {
       const result = await csvImport(buffer);
 

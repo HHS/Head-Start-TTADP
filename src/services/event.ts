@@ -1196,7 +1196,7 @@ export async function csvImport(buffer: Buffer) {
       // (the single source of truth); it is not persisted back into the JSONB `data`.
       delete data.eventId;
 
-      await db.EventReportPilot.create({
+      const created = await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
@@ -1206,6 +1206,12 @@ export async function csvImport(buffer: Buffer) {
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,
       });
+
+      // a notification failure must never fail the import
+      await runInSavepoint(
+        () => createNotificationForNewPocs(created, [], pocs),
+        `Error creating POC added notifications for event ${created.id}:`
+      );
 
       return true;
     } catch (error) {
