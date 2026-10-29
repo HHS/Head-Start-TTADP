@@ -42,16 +42,21 @@ const BLANK = '';
 
 const EXPORT_FILE_NAME = 'active-tta-requests.csv';
 
-// the widget title is an h2, so the empty state picks up at h3
-const emptyState = (newRequestUrl: string) => (
+// the widget title is an h2, so the empty state picks up at h3. Only those who can create
+// a request are offered one, as the activity report alerts do.
+const emptyState = (newRequestUrl: string, canCreate: boolean) => (
   <div className="text-center padding-10">
     <h3 className="font-serif-md text-bold margin-top-0 margin-bottom-1">
       You&apos;re all caught up!
     </h3>
-    <p className="usa-prose text-center margin-top-0 margin-bottom-2">
-      Would you like to begin a new TTA request?
-    </p>
-    <AddTtaRequestButton label="New TTA request" to={newRequestUrl} />
+    {canCreate && (
+      <>
+        <p className="usa-prose text-center margin-top-0 margin-bottom-2">
+          Would you like to begin a new TTA request?
+        </p>
+        <AddTtaRequestButton label="New TTA request" to={newRequestUrl} />
+      </>
+    )}
   </div>
 );
 
@@ -196,6 +201,8 @@ interface ActiveTtaRequestsTableProps {
   showRecipientColumns?: boolean;
   /** the all regions page's filters, which pick the regions to list */
   filters?: { topic: string; condition: string; query: string | string[] }[];
+  /** whether the empty state offers to start a new request */
+  canCreate: boolean;
 }
 
 const NO_FILTERS = [];
@@ -205,6 +212,7 @@ export default function ActiveTtaRequestsTable({
   regionId,
   showRecipientColumns = false,
   filters = NO_FILTERS,
+  canCreate,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
   // where a request lives depends on whether this table spans regions or one recipient
   const requestRoot = showRecipientColumns
@@ -264,7 +272,7 @@ export default function ActiveTtaRequestsTable({
       rows={rows}
       loading={loading}
       error={error}
-      emptyState={emptyState(`${requestRoot}/new`)}
+      emptyState={emptyState(`${requestRoot}/new`, canCreate)}
       // Status stays frozen to the right as the table scrolls horizontally
       stickyLastDataColumn
     />
