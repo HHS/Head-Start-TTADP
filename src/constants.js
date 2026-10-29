@@ -346,6 +346,7 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
   TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
