@@ -368,7 +368,7 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('textFn returns the static POC added text', () => {
       expect(config.textFn()).toBe(
-        'You were added as a Regional point of contact on their Training Report.'
+        'You were added as a Regional point of contact on a Training Report.'
       );
     });
 
