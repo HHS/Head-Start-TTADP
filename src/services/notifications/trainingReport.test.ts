@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
@@ -13,6 +14,13 @@ jest.mock('./index', () => ({
   archiveNotificationsByEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
+
+jest.mock('../../lib/runInSavepoint', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+const mockRunInSavepoint = runInSavepoint as jest.MockedFunction<typeof runInSavepoint>;
 
 const mockCreateNotification = createNotification as jest.MockedFunction<typeof createNotification>;
 
@@ -37,6 +45,9 @@ describe('createNotificationForNewPocs', () => {
         Promise.resolve((where.id as number[]).map((id) => ({ id, flags: [], permissions: [] })))
       );
     flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+    mockRunInSavepoint.mockImplementation(async (fn) => {
+      await fn();
+    });
   });
 
   afterEach(() => {
@@ -54,9 +65,27 @@ describe('createNotificationForNewPocs', () => {
         userId,
         77,
         NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED,
-        { metadata: { displayId: 'R01-TR-1234', id: 77 } }
+        { metadata: { displayId: 'R01-TR-1234', id: 77 }, skipExisting: 'archived' }
       );
     });
+  });
+
+  it('runs each recipient in its own savepoint so one failure does not block the others', async () => {
+    mockRunInSavepoint.mockImplementationOnce(async () => {});
+
+    await createNotificationForNewPocs(buildEvent(REGIONAL_PD), [], [3, 4]);
+
+    expect(mockRunInSavepoint).toHaveBeenCalledTimes(2);
+    expect(mockRunInSavepoint).toHaveBeenCalledWith(
+      expect.any(Function),
+      'Error creating POC added notification for user 3 on event 77:'
+    );
+    expect(mockRunInSavepoint).toHaveBeenCalledWith(
+      expect.any(Function),
+      'Error creating POC added notification for user 4 on event 77:'
+    );
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification.mock.calls[0][0]).toBe(4);
   });
 
   it('skips POCs that were already present', async () => {
