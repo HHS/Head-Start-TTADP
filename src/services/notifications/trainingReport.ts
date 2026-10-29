@@ -1,4 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
+import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
 import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from '../eventFlow';
@@ -45,16 +46,22 @@ export async function createNotificationForNewPocs(
     new Users(user).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)
   );
 
-  await Promise.all(
-    recipients.map((user) =>
-      createNotification(user.id, event.id, NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED, {
-        metadata: {
-          displayId: event.eventId,
-          id: event.id,
-        },
-      })
-    )
-  );
+  // one savepoint per recipient so a failure only skips that recipient; run sequentially
+  // because concurrent savepoints on the same transaction connection would interleave
+  for (const user of recipients) {
+    await runInSavepoint(
+      () =>
+        createNotification(user.id, event.id, NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED, {
+          metadata: {
+            displayId: event.eventId,
+            id: event.id,
+          },
+          // a removed and re-added POC gets a new notification once they archived the old one
+          skipExisting: 'archived',
+        }),
+      `Error creating POC added notification for user ${user.id} on event ${event.id}:`
+    );
+  }
 }
 
 /**
