@@ -397,6 +397,76 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION];
+
+    it('textFn interpolates the approver and session name', () => {
+      expect(config.textFn({ approver: 'Alice', sessionName: 'Opening session' })).toBe(
+        'Alice has requested changes to session Opening session.'
+      );
+    });
+
+    it('actionable is true', () => {
+      expect(config.actionable).toBe(true);
+    });
+
+    it('linkFn returns the session form path', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234', id: 55 })).toBe(
+        '/training-report/R01-TR-1234/session/55'
+      );
+    });
+
+    it('linkText returns "Take action" and archiveLabel returns "View TR"', () => {
+      expect(config.linkText()).toBe('Take action');
+      expect(config.archiveLabel()).toBe('View TR');
+    });
+
+    it('archiveLinkFn returns the Training Report view path', () => {
+      expect(config.archiveLinkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/view/R01-TR-1234'
+      );
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenSessionChangesRequestedTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionChangesRequestedTrainingReport');
+    });
+  });
+
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[
+        NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR
+      ];
+
+    it('textFn interpolates the approver and session name', () => {
+      expect(config.textFn({ approver: 'Alice', sessionName: 'Opening session' })).toBe(
+        'Alice has requested changes to session Opening session.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the training report view path with the display id', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe('/training-report/view/R01-TR-1234');
+    });
+
+    it('linkText and archiveLabel return "View TR"', () => {
+      expect(config.linkText()).toBe('View TR');
+      expect(config.archiveLabel()).toBe('View TR');
+    });
+
+    it('uses the inAppWhenSessionChangesRequestedTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionChangesRequestedTrainingReport');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR, () => {
     const config =
       NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR];

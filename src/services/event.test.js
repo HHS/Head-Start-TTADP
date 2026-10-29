@@ -25,9 +25,13 @@ import {
   updateEvent,
   validateFields,
 } from './event';
-import { createNotificationForNewPocs } from './notifications/trainingReport';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
 
 jest.mock('./notifications/trainingReport', () => ({
+  archiveSessionNeedsActionNotifications: jest.fn(),
   createNotificationForNewPocs: jest.fn(),
 }));
 
@@ -156,6 +160,25 @@ describe('event service', () => {
       expect(created).toHaveProperty('id');
       expect(created).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
+    });
+
+    it('archives session needs action notifications for each session when destroyed', async () => {
+      const created = await createAnEvent(98_989);
+      const sessions = await Promise.all([
+        db.SessionReportPilot.create({ eventId: created.id, data: {} }),
+        db.SessionReportPilot.create({ eventId: created.id, data: {} }),
+      ]);
+      archiveSessionNeedsActionNotifications.mockClear();
+
+      await destroyEvent(created.id);
+
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(2);
+      sessions.forEach((session) => {
+        expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(session.id, {
+          removeLink: true,
+        });
+      });
+      expect(await db.SessionReportPilot.count({ where: { eventId: created.id } })).toBe(0);
     });
 
     it('stores the eventId in the dedicated column and not in the JSONB data', async () => {

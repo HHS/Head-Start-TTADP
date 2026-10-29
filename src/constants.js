@@ -300,6 +300,28 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the archived CTA reads "View TR", and the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    archiveLabel: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
