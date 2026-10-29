@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { trSessionSubmittedToCollaborators } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db, {
   Grant,
@@ -27,6 +28,10 @@ import {
 } from './sessionReports';
 
 jest.mock('bull');
+jest.mock('../lib/mailer', () => ({
+  trEventComplete: jest.fn(),
+  trSessionSubmittedToCollaborators: jest.fn(),
+}));
 jest.mock('./notifications/trainingReport', () => ({
   ...jest.requireActual('./notifications/trainingReport'),
   createNotificationForSessionSubmittedCollaborators: jest.fn(),
@@ -285,6 +290,10 @@ describe('session reports service', () => {
           data: expect.objectContaining({ sessionName: 'Opening session' }),
         })
       );
+      expect(trSessionSubmittedToCollaborators).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: submitEventId, collaboratorIds }),
+        expect.objectContaining({ id: created.id })
+      );
 
       await destroySession(created.id);
     });
@@ -325,6 +334,7 @@ describe('session reports service', () => {
       });
 
       expect(createNotificationForSessionSubmittedCollaborators).not.toHaveBeenCalled();
+      expect(trSessionSubmittedToCollaborators).not.toHaveBeenCalled();
 
       await destroySession(created.id);
     });
