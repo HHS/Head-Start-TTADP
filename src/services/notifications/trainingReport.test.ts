@@ -283,11 +283,12 @@ describe('createSessionNeedsActionNotification', () => {
 });
 
 describe('archiveSessionNeedsActionNotifications', () => {
-  it('archives only the TR-4a type for the session', async () => {
+  it('archives the TR-4a and TR-4c types for the session', async () => {
     await archiveSessionNeedsActionNotifications(55);
 
     expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(55, [
       NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
     ]);
   });
 
@@ -310,7 +311,10 @@ describe('archiveSessionNeedsActionNotifications', () => {
       {
         where: {
           entityId: 55,
-          type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+          type: [
+            NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+            NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+          ],
         },
       }
     );
