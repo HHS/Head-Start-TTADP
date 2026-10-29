@@ -138,6 +138,23 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('saves the event when a notification query fails inside the request transaction', async () => {
+      createNotificationForNewPocs.mockImplementationOnce(() =>
+        db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"')
+      );
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      // without a savepoint, the failed query aborts the transaction and the commit fails
+      const created = await db.sequelize.transaction(() => createAnEvent(98_989));
+
+      const saved = await db.EventReportPilot.findByPk(created.id);
+      expect(saved).not.toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('works', async () => {
       const created = await createAnEvent(98_989);
       expect(created).toHaveProperty('id');
@@ -251,9 +268,9 @@ describe('event service', () => {
     });
 
     it('does not throw when the notification helper rejects', async () => {
+      const created = await createAnEvent(98_989);
       createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
       const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
-      const created = await createAnEvent(98_989);
 
       const updated = await updateEvent(created.id, {
         ownerId: 98_989,
@@ -264,7 +281,10 @@ describe('event service', () => {
       });
 
       expect(updated).toHaveProperty('id', created.id);
-      expect(errorSpy).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        `Error creating POC added notifications for event ${created.id}:`,
+        expect.any(Error)
+      );
 
       errorSpy.mockRestore();
       await destroyEvent(created.id);
