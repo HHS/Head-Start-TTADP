@@ -703,6 +703,11 @@ async function fetchSessionReports(
         through: { attributes: [] },
         required: false,
       },
+      {
+        ...userInclude('trainers'),
+        through: { attributes: [] },
+        required: false,
+      },
     ],
     order: orderClause,
     subQuery: false,
@@ -725,6 +730,7 @@ async function fetchSessionReports(
       participants: plain.participants,
       participantCount: getActivityReportParticipantCount(plain),
       deliveryMethod: plain.deliveryMethod,
+      trainers: plain.trainers || [],
     };
   });
 

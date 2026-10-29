@@ -44,6 +44,7 @@ export type SessionReportTableRow = {
   duration: number;
   participantCount: number;
   deliveryMethod: string | null;
+  trainers: { fullName: string }[];
 };
 
 export type GetSessionReportsResponse = {

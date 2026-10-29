@@ -1636,6 +1636,43 @@ describe('session reports service', () => {
       });
     });
 
+    describe('trainers', () => {
+      let trainer;
+
+      beforeAll(async () => {
+        trainer = await createUser({});
+        await db.SessionReportPilotTrainer.create({
+          sessionReportPilotId: testSessions[0].id,
+          userId: trainer.id,
+        });
+      });
+
+      afterAll(async () => {
+        await db.SessionReportPilotTrainer.destroy({ where: { userId: trainer.id } });
+        await db.User.destroy({ where: { id: trainer.id } });
+      });
+
+      it('includes trainer full names on each row', async () => {
+        const result = await getSessionReports({
+          'eventId.ctn': [testEventLongId],
+          limit: 'all',
+        });
+
+        const rowsBySession = result.rows.reduce(
+          (acc, row) => ({ ...acc, [row.sessionName]: row }),
+          {}
+        );
+        const expectedTrainer = await db.User.findByPk(trainer.id, {
+          include: [{ model: db.Role, as: 'roles' }],
+        });
+
+        expect(rowsBySession['Alpha Session'].trainers.map((t) => t.fullName)).toEqual([
+          expectedTrainer.fullName,
+        ]);
+        expect(rowsBySession['Beta Session'].trainers).toEqual([]);
+      });
+    });
+
     describe('participant counts with non-numeric data', () => {
       // The session form writes '' into whichever participant fields don't apply to the
       // selected delivery method, so these values are routine. Casting them to ::integer in
