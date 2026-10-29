@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
+import { getTtaRequestRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import useFetch from '../../hooks/useFetch';
 import TtaRequestForm from './index';
 import type { TtaRequestRecipient } from './types';
@@ -11,7 +11,7 @@ const NO_RECIPIENTS: TtaRequestRecipient[] = [];
  * still has to be chosen from every recipient the user can see.
  */
 export default function AllRegionsTtaRequestForm(): React.ReactElement {
-  const fetcher = useCallback(() => getRecipientAndGrantsByUser(), []);
+  const fetcher = useCallback(() => getTtaRequestRecipientAndGrantsByUser(), []);
   const { data: recipients } = useFetch(
     NO_RECIPIENTS,
     fetcher,

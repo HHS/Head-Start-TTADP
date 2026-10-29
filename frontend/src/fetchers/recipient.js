@@ -99,6 +99,11 @@ export const getRecipientAndGrantsByUser = async () => {
   return recipients.json();
 };
 
+export const getTtaRequestRecipientAndGrantsByUser = async () => {
+  const recipients = await get(join(recipientUrl, 'user', 'tta-requests'));
+  return recipients.json();
+};
+
 export const getRecipientLeadership = async (recipientId, regionId) => {
   const url = join(recipientUrl, recipientId, 'region', regionId, 'leadership');
   const leadership = await get(url);

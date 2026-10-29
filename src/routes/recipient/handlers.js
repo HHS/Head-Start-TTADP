@@ -15,6 +15,7 @@ import {
   recipientById,
   recipientLeadership,
   recipientsByName,
+  recipientsByTtaRequestUserId,
   recipientsByUserId,
 } from '../../services/recipient';
 import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
@@ -72,6 +73,27 @@ export async function getRecipientAndGrantsByUser(req, res) {
     }
 
     const recipients = await recipientsByUserId(userId);
+    if (!recipients || !recipients.length) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    res.json(recipients);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientAndGrantsByTtaRequestUser(req, res) {
+  try {
+    const userId = await currentUserId(req, res);
+
+    if (!userId) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
+    }
+
+    const recipients = await recipientsByTtaRequestUserId(userId);
     if (!recipients || !recipients.length) {
       res.sendStatus(httpCodes.NOT_FOUND);
       return;

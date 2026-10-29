@@ -13,6 +13,10 @@ const arrayFields = [
   'READ_WRITE_TRAINING_REPORTS regions',
   'POC_TRAINING_REPORTS',
   'POC_TRAINING_REPORTS regions',
+  'READ_WRITE_TTA_REQUESTS regions',
+  'REVIEW_TTA_REQUESTS regions',
+  'APPROVE_TTA_REQUESTS regions',
+  'BACKUP_APPROVE_TTA_REQUESTS regions',
   'Flags',
 ];
 
@@ -118,6 +122,14 @@ SELECT
     array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'READ_WRITE_TRAINING_REPORTS') AS "READ_WRITE_TRAINING_REPORTS regions",
     MIN(CASE WHEN "ActiveUsers"."scope" = 'POC_TRAINING_REPORTS' THEN 'Yes' END) AS "POC_TRAINING_REPORTS",
     array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'POC_TRAINING_REPORTS') AS "POC_TRAINING_REPORTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'READ_WRITE_TTA_REQUESTS' THEN 'Yes' END) AS "READ_WRITE_TTA_REQUESTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'READ_WRITE_TTA_REQUESTS') AS "READ_WRITE_TTA_REQUESTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'REVIEW_TTA_REQUESTS' THEN 'Yes' END) AS "REVIEW_TTA_REQUESTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'REVIEW_TTA_REQUESTS') AS "REVIEW_TTA_REQUESTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'APPROVE_TTA_REQUESTS' THEN 'Yes' END) AS "APPROVE_TTA_REQUESTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'APPROVE_TTA_REQUESTS') AS "APPROVE_TTA_REQUESTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'BACKUP_APPROVE_TTA_REQUESTS' THEN 'Yes' END) AS "BACKUP_APPROVE_TTA_REQUESTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'BACKUP_APPROVE_TTA_REQUESTS') AS "BACKUP_APPROVE_TTA_REQUESTS regions",
     "ActiveUsers"."flags" AS "Flags"
 FROM
     "ActiveUsers"
