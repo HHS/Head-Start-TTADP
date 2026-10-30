@@ -1,3 +1,8 @@
+/* no USWDS utility for the TTA Hub blue */
+.ttahub-notes-summary__header {
+  border-bottom: 2px solid var(--ttahub-medium-blue);
+}
+
 /* matches the avatar beside it */
 .ttahub-notes-summary__author {
   color: var(--ttahub-medium-blue);

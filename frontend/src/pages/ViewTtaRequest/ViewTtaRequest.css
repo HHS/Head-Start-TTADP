@@ -1,6 +1,19 @@
-/* the section's own bottom padding spaces the notes summary below it, so drop the last row's margin */
+/* each row's own bottom margin spaces it from what follows, in place of the section's padding */
+.ttahub-view-tta-request__section .ttahub-read-only-content-section {
+  padding-bottom: 0;
+}
+
+.ttahub-view-tta-request__who .ttahub-read-only-content-section--heading--section-row-data {
+  margin-bottom: 1.5rem;
+}
+
+.ttahub-view-tta-request__goal-and-context h2 {
+  margin-bottom: 1rem;
+}
+
+/* the last row sits 24px above the notes summary */
 .ttahub-view-tta-request__goal-and-context
   .ttahub-read-only-content-section--heading--section-row:last-child
   .ttahub-read-only-content-section--heading--section-row-data {
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
 }

@@ -157,26 +157,27 @@ export default function ViewTtaRequest({
       <div className="margin-top-2">
         <ApprovedReportSpecialButtons />
       </div>
-      <Container className="width-tablet margin-top-2" paddingX={4} paddingY={4}>
+      <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
         <h1 className="font-serif-2xl margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
         <div className="margin-bottom-4">
-          <p>
+          <p className="margin-top-0 margin-bottom-1">
             <strong>Creator:</strong> {ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}
           </p>
-          <p>
+          <p className="margin-top-0 margin-bottom-1">
             <strong>Reviewer:</strong> {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
           </p>
-          <p>
+          <p className="margin-top-0 margin-bottom-1">
             <strong>Date Created:</strong> {formatDate(ttaRequest.createdAt)}
           </p>
           {ttaRequest.submittedAt && (
-            <p>
+            <p className="margin-top-0 margin-bottom-1">
               <strong>Date submitted:</strong> {formatDate(ttaRequest.submittedAt)}
             </p>
           )}
         </div>
         <ReadOnlyContent
           title="Who is the request for?"
+          className="ttahub-view-tta-request__section ttahub-view-tta-request__who"
           sections={[
             {
               data: {
@@ -196,7 +197,7 @@ export default function ViewTtaRequest({
         />
         <ReadOnlyContent
           title="Goal and context"
-          className="ttahub-view-tta-request__goal-and-context"
+          className="ttahub-view-tta-request__section ttahub-view-tta-request__goal-and-context"
           sections={[
             {
               data: {

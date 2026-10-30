@@ -35,9 +35,9 @@ export default function TtaRequestNotesSummary({
   }
 
   return (
-    <Container paddingX={0} paddingY={0}>
+    <Container className="margin-bottom-0" paddingX={0} paddingY={0}>
       <section aria-labelledby="ttahub-notes-summary-heading">
-        <div className="padding-x-3 padding-y-2 border-bottom-2px border-primary-dark">
+        <div className="ttahub-notes-summary__header padding-x-3 padding-y-2">
           <h2
             id="ttahub-notes-summary-heading"
             className="font-serif-md margin-top-0 margin-bottom-1"
