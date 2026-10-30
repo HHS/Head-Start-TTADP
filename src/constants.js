@@ -315,7 +315,7 @@ const NOTIFICATION_CONFIGURATION = {
   [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR]: {
     textFn: ({ approver, sessionName }) =>
       `${approver} has requested changes to session ${sessionName}.`,
-    actionable: false,
+    actionable: true,
     linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
     linkText: () => 'Take action',
     archiveLabel: () => 'View TR',

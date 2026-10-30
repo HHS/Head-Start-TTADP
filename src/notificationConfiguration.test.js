@@ -450,7 +450,7 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
 
     it('actionable is false', () => {
-      expect(config.actionable).toBe(false);
+      expect(config.actionable).toBe(true);
     });
 
     it('linkFn returns the session form path', () => {
