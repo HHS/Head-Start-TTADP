@@ -644,15 +644,22 @@ export async function getReports({
 }
 
 /**
- * Returns a submitted report to draft so its creator can edit and resubmit it. Approvers
- * who are the creator or a collaborator are removed, since they can never review the report
- * and would block resubmission; other approvers keep their status.
+ * Returns a submitted report to draft so its creator can edit and resubmit it. All approvals
+ * are cleared, so the resubmitted report must be reviewed again. Approvers who are the creator
+ * or a collaborator are removed, since they can never review the report and would block
+ * resubmission.
  */
 export async function resetReportToDraft(report) {
-  // reset first, so removing approvers doesn't recalculate a submitted report's status
+  // reset first, so changing approvers doesn't recalculate a submitted report's status
   await CollabReport.update(
     { submissionStatus: REPORT_STATUSES.DRAFT, calculatedStatus: REPORT_STATUSES.DRAFT },
     { where: { id: report.id }, individualHooks: true }
+  );
+
+  // clear prior approvals, or resubmitting could approve the report without a new review
+  await CollabReportApprover.update(
+    { status: null },
+    { where: { collabReportId: report.id }, individualHooks: true }
   );
 
   const participantIds = [

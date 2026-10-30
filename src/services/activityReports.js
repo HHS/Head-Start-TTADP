@@ -1156,14 +1156,21 @@ export async function setStatus(report, status, transaction = undefined) {
 }
 
 /**
- * Resets a report awaiting approval to draft for an admin. Approvers who are the creator or a
- * collaborator are removed, since they can never review the report; other approvers are kept.
+ * Resets a report awaiting approval to draft for an admin. All approvals are cleared, so the
+ * resubmitted report must be reviewed again. Approvers who are the creator or a collaborator
+ * are removed, since they can never review the report; other approvers are kept.
  *
  * @param {*} report - report loaded with activityReportCollaborators and approvers
  */
 export async function adminResetReportToDraft(report) {
-  // reset first, so removing approvers doesn't recalculate a submitted report's status
+  // reset first, so changing approvers doesn't recalculate a submitted report's status
   await report.update({ submissionStatus: REPORT_STATUSES.DRAFT });
+
+  // clear prior approvals, or resubmitting could approve the report without a new review
+  await ActivityReportApprover.update(
+    { status: null },
+    { where: { activityReportId: report.id }, individualHooks: true }
+  );
 
   const participantIds = [
     report.userId,

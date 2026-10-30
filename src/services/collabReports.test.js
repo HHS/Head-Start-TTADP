@@ -290,7 +290,7 @@ describe('Collab Reports Service', () => {
         )
       );
       await CollabReportApprover.update(
-        { status: 'needs_action', note: 'Fix the dates' },
+        { status: 'approved' },
         { where: { collabReportId: report.id, userId: mockUserThree.id } }
       );
     });
@@ -301,7 +301,7 @@ describe('Collab Reports Service', () => {
       await CollabReport.destroy({ where: { id: report.id }, force: true });
     });
 
-    it('returns the report to draft and removes participant approvers', async () => {
+    it('returns to draft, clears approvals, and removes participant approvers', async () => {
       const loaded = await collabReportById(String(report.id));
 
       const reset = await resetReportToDraft(loaded);
@@ -309,7 +309,7 @@ describe('Collab Reports Service', () => {
       expect(reset.submissionStatus).toBe(REPORT_STATUSES.DRAFT);
       expect(reset.calculatedStatus).toBe(REPORT_STATUSES.DRAFT);
       expect(reset.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
-      expect(reset.approvers[0].status).toBe('needs_action');
+      expect(reset.approvers[0].status).toBeNull();
     });
   });
 

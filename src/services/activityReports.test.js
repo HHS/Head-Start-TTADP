@@ -1699,7 +1699,7 @@ describe('Activity report service', () => {
       });
     });
     describe('adminResetReportToDraft', () => {
-      it('resets to draft and removes approvers who are the creator or a collaborator', async () => {
+      it('resets to draft, clears approvals, and removes participant approvers', async () => {
         const report = await ActivityReport.create(submittedReport);
         await ActivityReportCollaborator.create({
           activityReportId: report.id,
@@ -1713,8 +1713,7 @@ describe('Activity report service', () => {
         await ActivityReportApprover.create({
           activityReportId: report.id,
           userId: mockUserThree.id,
-          status: APPROVER_STATUSES.NEEDS_ACTION,
-          note: 'please fix',
+          status: APPROVER_STATUSES.APPROVED,
         });
 
         const [foundReport] = await activityReportAndRecipientsById(report.id);
@@ -1723,7 +1722,7 @@ describe('Activity report service', () => {
         expect(resetReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
         expect(resetReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
         expect(resetReport.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
-        expect(resetReport.approvers[0].status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+        expect(resetReport.approvers[0].status).toBeNull();
       });
     });
   });
