@@ -8,6 +8,10 @@ import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert'
 import ActiveTtaRequestsTable from '../../components/TtaRequestsTable/ActiveTtaRequestsTable';
 import ApprovedTtaRequestsTable from '../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../hooks/useFilters';
+import {
+  allRegionsUserHasTtaRequestPermissionTo,
+  hasTtaRequestReadWrite,
+} from '../../permissions';
 import UserContext from '../../UserContext';
 import { showFilterWithMyRegions } from '../regionHelpers';
 
@@ -35,8 +39,15 @@ export default function TtaRequests(): React.ReactElement {
     FILTER_KEY,
     true, // manage regions
     [],
-    TTA_REQUESTS_FILTER_CONFIG
+    TTA_REQUESTS_FILTER_CONFIG,
+    undefined,
+    undefined,
+    allRegionsUserHasTtaRequestPermissionTo
   );
+
+  // like the activity reports landing page, a request can be started by anyone who can
+  // write one in some region
+  const canCreate = hasTtaRequestReadWrite(user);
 
   const regionLabel = () => {
     if (defaultRegion === ADMIN_REGION || hasMultipleRegions) {
@@ -53,6 +64,7 @@ export default function TtaRequests(): React.ReactElement {
       <RegionPermissionModal
         filters={filters}
         user={user}
+        accessibleRegions={regions}
         showFilterWithMyRegions={
           // istanbul ignore next = not easily tested
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
@@ -65,7 +77,7 @@ export default function TtaRequests(): React.ReactElement {
             <h1 className="landing margin-top-0 margin-bottom-0">
               {`TTA requests - ${regionLabel()}`}
             </h1>
-            <AddTtaRequestButton label="Add request" to="/tta-requests/new" />
+            {canCreate && <AddTtaRequestButton label="Add request" to="/tta-requests/new" />}
           </div>
         </Grid>
         <Grid col={12}>
@@ -84,7 +96,7 @@ export default function TtaRequests(): React.ReactElement {
               />
             </div>
             {/* these tables span every recipient the user can see, so they name each one */}
-            <ActiveTtaRequestsTable showRecipientColumns filters={filters} />
+            <ActiveTtaRequestsTable showRecipientColumns filters={filters} canCreate={canCreate} />
             <div className="margin-top-3">
               <ApprovedTtaRequestsTable showRecipientColumns />
             </div>

@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { serviceError } from '../../lib/serviceError';
 import SCOPES from '../../middleware/scopeConstants';
 import filtersToScopes from '../../scopes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
@@ -12,12 +12,14 @@ import {
   lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
@@ -30,6 +32,7 @@ jest.mock('../../services/ttaRequests', () => ({
   lockTtaRequest: jest.fn(),
   submitTtaRequest: jest.fn(),
   ttaRequestById: jest.fn(),
+  ttaRequestReviewers: jest.fn(),
   updateTtaRequest: jest.fn(),
 }));
 jest.mock('../../services/currentUser');
@@ -47,7 +50,7 @@ const CREATOR_ID = 123;
 
 const writer = {
   id: CREATOR_ID,
-  permissions: [{ scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 1 }],
+  permissions: [{ scopeId: SCOPES.READ_WRITE_TTA_REQUESTS, regionId: 1 }],
 };
 
 const stranger = {
@@ -92,14 +95,14 @@ describe('TTA request handlers', () => {
 
     beforeEach(() => {
       req.query = { 'region.in': ['1'] };
-      (setReadRegions as jest.Mock).mockResolvedValue({ 'region.in': [1] });
+      (setTtaRequestReadRegions as jest.Mock).mockResolvedValue({ 'region.in': [1] });
       (filtersToScopes as jest.Mock).mockResolvedValue({ ttaRequest: SCOPED });
     });
 
     it("lists the user's requests in the regions they can read", async () => {
       (getTtaRequestsService as jest.Mock).mockResolvedValue(LIST);
       await getTtaRequests(req as Request, res as Response);
-      expect(setReadRegions).toHaveBeenCalledWith(req.query, CREATOR_ID);
+      expect(setTtaRequestReadRegions).toHaveBeenCalledWith(req.query, CREATOR_ID);
       expect(filtersToScopes).toHaveBeenCalledWith({ 'region.in': [1] }, { userId: CREATOR_ID });
       expect(getTtaRequestsService).toHaveBeenCalledWith(SCOPED, CREATOR_ID);
       expect(json).toHaveBeenCalledWith(LIST);
@@ -139,6 +142,34 @@ describe('TTA request handlers', () => {
     it('hands unexpected errors to handleErrors', async () => {
       (getTtaRequestsService as jest.Mock).mockRejectedValue(new Error('boom'));
       await getTtaRequestsByRecipient(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTtaRequestReviewers', () => {
+    const REVIEWERS = [{ id: 5, name: 'Rachel Green' }];
+
+    beforeEach(() => {
+      req.params = { regionId: '1' };
+    });
+
+    it("lists the region's reviewers", async () => {
+      (ttaRequestReviewers as jest.Mock).mockResolvedValue(REVIEWERS);
+      await getTtaRequestReviewers(req as Request, res as Response);
+      expect(ttaRequestReviewers).toHaveBeenCalledWith(1);
+      expect(json).toHaveBeenCalledWith(REVIEWERS);
+    });
+
+    it('returns 403 without read permission in the region', async () => {
+      (userById as jest.Mock).mockResolvedValue(stranger);
+      await getTtaRequestReviewers(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(ttaRequestReviewers).not.toHaveBeenCalled();
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (ttaRequestReviewers as jest.Mock).mockRejectedValue(new Error('boom'));
+      await getTtaRequestReviewers(req as Request, res as Response);
       expect(handleErrors).toHaveBeenCalled();
     });
   });

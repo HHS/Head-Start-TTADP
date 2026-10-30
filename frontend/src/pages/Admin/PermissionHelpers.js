@@ -1,4 +1,4 @@
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES, SCOPE_IDS } from '@ttahub/common';
 import _ from 'lodash';
 import {
   ALL_REGIONS,
@@ -78,3 +78,44 @@ export function userGlobalPermissions(user) {
 
   return globals;
 }
+
+/**
+ * Drops the permissions that can't be held alongside the scope in the regions. Dropping a
+ * partner from any region also drops its "all regions" entry, which would otherwise keep it
+ * checked there.
+ */
+export function withoutExclusivePartners(permissions, scope, regions) {
+  const partners = MUTUALLY_EXCLUSIVE_SCOPES.filter((pair) => pair.includes(scope))
+    .flat()
+    .filter((s) => s !== scope);
+
+  return permissions.filter(
+    (permission) =>
+      !(
+        partners.includes(permission.scopeId) &&
+        [...regions, ALL_REGIONS].includes(permission.regionId)
+      )
+  );
+}
+
+/**
+ * The name of whoever else is each region's primary TTA request approver, keyed by region,
+ * as a region can only have one
+ */
+export function primaryApproversByRegion(users, userId) {
+  const approvers = {};
+  users
+    .filter((u) => u.id !== userId)
+    .forEach((u) => {
+      (u.permissions || [])
+        .filter((p) => p.scopeId === SCOPE_IDS.APPROVE_TTA_REQUESTS)
+        .forEach(({ regionId }) => {
+          approvers[regionId] = u.name;
+        });
+    });
+  return approvers;
+}
+
+/** why a region can't take a second primary TTA request approver */
+export const primaryApproverMessage = (regionId, name) =>
+  `Region ${regionId} already has a primary COR approver: ${name}`;
