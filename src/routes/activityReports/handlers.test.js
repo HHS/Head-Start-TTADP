@@ -3124,7 +3124,13 @@ describe('Activity Report handlers', () => {
       }));
       adminResetReportToDraft.mockResolvedValue([{ dataValues: { ...result } }, [], [], []]);
       setStatus.mockClear();
+      lockActivityReport.mockClear();
+      activityReportAndRecipientsById.mockClear();
       await resetToDraft(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder[0]).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder[0]
+      );
       expect(adminResetReportToDraft).toHaveBeenCalledWith(report);
       expect(setStatus).not.toHaveBeenCalled();
       expect(mockResponse.json).toHaveBeenCalledWith({

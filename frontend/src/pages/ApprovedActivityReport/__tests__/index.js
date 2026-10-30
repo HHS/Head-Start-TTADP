@@ -405,6 +405,39 @@ describe('Activity report print and share view', () => {
 
       expect(await screen.findByText('Unable to reset this report to draft.')).toBeVisible();
     });
+
+    it('does not carry a reset over to another report', async () => {
+      fetchMock.get('/api/activity-reports/5008', submitted, { overwriteRoutes: true });
+      fetchMock.get(
+        '/api/activity-reports/5009',
+        { ...submitted, id: 5009, displayId: 'Canoe' },
+        { overwriteRoutes: true }
+      );
+      fetchMock.put('/api/activity-reports/5008/reset', {
+        ...submitted,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      });
+      const renderFor = (id) => (
+        <Router history={history}>
+          <ApprovedActivityReport
+            user={user}
+            match={{ path: '', url: '', params: { activityReportId: id } }}
+          />
+        </Router>
+      );
+      const { rerender } = render(renderFor(5008));
+
+      userEvent.click(await screen.findByRole('button', { name: /reset to draft/i }));
+      userEvent.click(screen.getByRole('button', { name: /reset activity report to draft/i }));
+      expect(await screen.findByText('This report has been reset to draft.')).toBeVisible();
+
+      rerender(renderFor(5009));
+
+      expect(await screen.findByText(/Canoe/)).toBeVisible();
+      expect(screen.queryByText('This report has been reset to draft.')).toBeNull();
+      expect(screen.getByRole('button', { name: /^reset to draft$/i })).toBeVisible();
+    });
   });
 
   it('hides unlock report button', async () => {

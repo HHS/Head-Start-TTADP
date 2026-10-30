@@ -713,6 +713,8 @@ export async function resetToDraft(req, res) {
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
+    // Lock before reading, so a concurrent approval can't land between the status check and the reset
+    await lockActivityReport(activityReportId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 

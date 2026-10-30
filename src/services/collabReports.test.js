@@ -21,6 +21,7 @@ import {
   deleteReport,
   getCSVReports,
   getReports,
+  lockCollabReport,
   orderCollabReportsBy,
   resetReportToDraft,
 } from './collabReports';
@@ -309,6 +310,17 @@ describe('Collab Reports Service', () => {
       expect(reset.calculatedStatus).toBe(REPORT_STATUSES.DRAFT);
       expect(reset.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
       expect(reset.approvers[0].status).toBe('needs_action');
+    });
+  });
+
+  describe('lockCollabReport', () => {
+    it('returns the locked report row', async () => {
+      const report = await CollabReport.create({ ...reportObject, name: 'Test Report for Lock' });
+
+      const locked = await db.sequelize.transaction(() => lockCollabReport(report.id));
+
+      expect(locked.id).toBe(report.id);
+      await CollabReport.destroy({ where: { id: report.id }, force: true });
     });
   });
 

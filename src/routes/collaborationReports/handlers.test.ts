@@ -31,6 +31,7 @@ jest.mock('../../services/collabReports', () => ({
   deleteReport: jest.fn(),
   getCSVReports: jest.fn(),
   getReports: jest.fn(),
+  lockCollabReport: jest.fn(),
   resetReportToDraft: jest.fn(),
 }));
 jest.mock('../../lib/mailer', () => ({
@@ -1757,6 +1758,19 @@ describe('Collaboration Reports Handlers', () => {
 
       expect(CRServices.resetReportToDraft).toHaveBeenCalledWith(mockReport);
       expect(mockJson).toHaveBeenCalledWith(draft);
+    });
+
+    it('should lock the report before reading it', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.resetReportToDraft as jest.Mock).mockResolvedValue({ toJSON: () => mockReport });
+      mockPolicy(true);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.lockCollabReport).toHaveBeenCalledWith('1');
+      expect((CRServices.lockCollabReport as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+        (CRServices.collabReportById as jest.Mock).mock.invocationCallOrder[0]
+      );
     });
 
     it('should call handleErrors when an exception occurs', async () => {

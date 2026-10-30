@@ -16,6 +16,7 @@ import {
   deleteReport,
   getCSVReports,
   getReports as getReportsService,
+  lockCollabReport,
   resetReportToDraft,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
@@ -458,6 +459,8 @@ export async function createReport(req: Request, res: Response) {
 export async function resetToDraft(req: Request, res: Response) {
   try {
     const { collabReportId } = req.params;
+    // Lock before reading, so a concurrent approval can't land between the status check and the reset
+    await lockCollabReport(collabReportId);
     const report = await collabReportById(collabReportId);
 
     if (!report) {

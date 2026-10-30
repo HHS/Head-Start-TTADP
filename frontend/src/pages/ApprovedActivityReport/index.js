@@ -19,12 +19,16 @@ import './index.scss';
 
 export default function ApprovedActivityReport({ match, user }) {
   const fetchedReport = useReadOnlyReportFetch(match, user);
-  const [resetReport, setResetReport] = useState(null);
-  const [resetMessage, setResetMessage] = useState(null);
+  // The reset result and message, keyed by the report they belong to, so neither carries over
+  // if the route changes to another report without remounting
+  const [reset, setReset] = useState(null);
   const [justUnlocked, updatedJustUnlocked] = useState(false);
   const modalRef = useRef();
   const resetModalRef = useRef();
-  const report = resetReport || fetchedReport;
+  const { activityReportId } = match.params;
+  const currentReset = reset && reset.reportId === activityReportId ? reset : null;
+  const report = (currentReset && currentReset.report) || fetchedReport;
+  const resetMessage = currentReset && currentReset.message;
 
   const { id: reportId, displayId, version } = report;
 
@@ -74,10 +78,16 @@ export default function ApprovedActivityReport({ match, user }) {
   const onReset = async () => {
     resetModalRef.current.toggleModal(false);
     try {
-      setResetReport(await resetToDraft(reportId));
-      setResetMessage({ type: 'success', text: 'This report has been reset to draft.' });
+      setReset({
+        reportId: activityReportId,
+        report: await resetToDraft(reportId),
+        message: { type: 'success', text: 'This report has been reset to draft.' },
+      });
     } catch (e) {
-      setResetMessage({ type: 'error', text: 'Unable to reset this report to draft.' });
+      setReset({
+        reportId: activityReportId,
+        message: { type: 'error', text: 'Unable to reset this report to draft.' },
+      });
     }
   };
 

@@ -1,6 +1,6 @@
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
-import { type Model, Op } from 'sequelize';
+import { type Model, Op, Transaction } from 'sequelize';
 import syncJoinRows from '../lib/syncJoinRows';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
@@ -224,6 +224,18 @@ async function update(newReport, oldReport) {
     fields: _.keys(fields),
   });
   return updatedReport;
+}
+
+/**
+ * Locks the collab report row for the rest of the caller's transaction (the ambient CLS
+ * transaction from `transactionWrapper`), so a concurrent approval can't change the report's
+ * status between reading and writing it.
+ */
+export async function lockCollabReport(collabReportId: number | string) {
+  return CollabReport.findByPk(collabReportId, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
 }
 
 // Get a CR by its id
