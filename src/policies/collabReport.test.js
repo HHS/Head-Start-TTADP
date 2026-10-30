@@ -443,6 +443,34 @@ describe('CollabReport Policy', () => {
     });
   });
 
+  describe('canAdminReset', () => {
+    it.each([REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'should return true when user is admin and report is %s',
+      (status) => {
+        collabReport.calculatedStatus = status;
+        user.permissions.push({ scopeId: SCOPES.ADMIN, regionId: 14 });
+        const policy = new CollabReport(user, collabReport);
+        expect(policy.canAdminReset()).toBe(true);
+      }
+    );
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.APPROVED])(
+      'should return false when user is admin and report is %s',
+      (status) => {
+        collabReport.calculatedStatus = status;
+        user.permissions.push({ scopeId: SCOPES.ADMIN, regionId: 14 });
+        const policy = new CollabReport(user, collabReport);
+        expect(policy.canAdminReset()).toBe(false);
+      }
+    );
+
+    it('should return false when user is not admin, even as author', () => {
+      collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
+      const policy = new CollabReport(user, collabReport);
+      expect(policy.canAdminReset()).toBe(false);
+    });
+  });
+
   describe('canGet', () => {
     it('should return true when user is author', () => {
       const policy = new CollabReport(user, collabReport);
@@ -469,6 +497,25 @@ describe('CollabReport Policy', () => {
       user.permissions.push({ scopeId: SCOPES.ADMIN, regionId: 1 });
       const policy = new CollabReport(user, collabReport);
       expect(policy.canGet()).toBe(true);
+    });
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'should return true when report is %s and user is admin outside its region',
+      (status) => {
+        collabReport.userId = 2;
+        collabReport.regionId = 3;
+        collabReport.calculatedStatus = status;
+        user.permissions.push({ scopeId: SCOPES.ADMIN, regionId: 14 });
+        const policy = new CollabReport(user, collabReport);
+        expect(policy.canGet()).toBe(true);
+      }
+    );
+
+    it('should return false when report is not approved and user can only read in region', () => {
+      collabReport.userId = 2;
+      collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
+      const policy = new CollabReport(user, collabReport);
+      expect(policy.canGet()).toBe(false);
     });
 
     it('should return true when report is approved and user can read in region', () => {

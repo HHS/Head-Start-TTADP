@@ -8,6 +8,7 @@ import {
   getAlerts,
   getReport,
   getReports,
+  resetToDraft,
   reviewReport,
   saveReport,
   softDeleteReport,
@@ -50,6 +51,9 @@ router.put('/:collabReportId/review', checkCollabReportIdParam, transactionWrapp
 
 // submitReport
 router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));
+
+// resetToDraft
+router.put('/:collabReportId/reset', checkCollabReportIdParam, transactionWrapper(resetToDraft));
 
 // unlockReport
 router.put('/:collabReportId/unlock', checkCollabReportIdParam, transactionWrapper(unlockReport));

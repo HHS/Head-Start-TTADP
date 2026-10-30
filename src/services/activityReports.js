@@ -1156,6 +1156,30 @@ export async function setStatus(report, status, transaction = undefined) {
 }
 
 /**
+ * Resets a report awaiting approval to draft for an admin. Approvers who are the creator or a
+ * collaborator are removed, since they can never review the report; other approvers are kept.
+ *
+ * @param {*} report - report loaded with activityReportCollaborators and approvers
+ */
+export async function adminResetReportToDraft(report) {
+  // reset first, so removing approvers doesn't recalculate a submitted report's status
+  await report.update({ submissionStatus: REPORT_STATUSES.DRAFT });
+
+  const participantIds = [
+    report.userId,
+    ...(report.activityReportCollaborators || []).map((c) => c.user.id),
+  ];
+  const approverIds = (report.approvers || []).map((a) => a.user.id);
+  const remainingApproverIds = approverIds.filter((id) => !participantIds.includes(id));
+
+  if (remainingApproverIds.length !== approverIds.length) {
+    await syncApprovers(report.id, remainingApproverIds);
+  }
+
+  return activityReportAndRecipientsById(report.id);
+}
+
+/**
  * Removes ActivityReportObjectives and Objectives that become orphaned when a
  * report is soft-deleted.
  *

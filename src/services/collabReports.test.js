@@ -22,6 +22,7 @@ import {
   getCSVReports,
   getReports,
   orderCollabReportsBy,
+  resetReportToDraft,
 } from './collabReports';
 
 const mockUser = {
@@ -264,6 +265,50 @@ describe('Collab Reports Service', () => {
       };
 
       await expect(createOrUpdateReport(reportObject, nonExistentReport)).rejects.toThrow();
+    });
+  });
+
+  describe('resetReportToDraft', () => {
+    let report;
+
+    beforeEach(async () => {
+      report = await CollabReport.create({
+        ...reportObject,
+        name: 'Test Report for Reset',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      await CollabReportSpecialist.create({
+        collabReportId: report.id,
+        specialistId: mockUserTwo.id,
+      });
+      // the creator and a collaborator were assigned as approvers before that was disallowed
+      await Promise.all(
+        [mockUser.id, mockUserTwo.id, mockUserThree.id].map((userId) =>
+          CollabReportApprover.create({ collabReportId: report.id, userId })
+        )
+      );
+      await CollabReportApprover.update(
+        { status: 'needs_action', note: 'Fix the dates' },
+        { where: { collabReportId: report.id, userId: mockUserThree.id } }
+      );
+    });
+
+    afterEach(async () => {
+      await CollabReportApprover.destroy({ where: { collabReportId: report.id }, force: true });
+      await CollabReportSpecialist.destroy({ where: { collabReportId: report.id }, force: true });
+      await CollabReport.destroy({ where: { id: report.id }, force: true });
+    });
+
+    it('returns the report to draft and removes participant approvers', async () => {
+      const loaded = await collabReportById(String(report.id));
+
+      const reset = await resetReportToDraft(loaded);
+
+      expect(reset.submissionStatus).toBe(REPORT_STATUSES.DRAFT);
+      expect(reset.calculatedStatus).toBe(REPORT_STATUSES.DRAFT);
+      expect(reset.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
+      expect(reset.approvers[0].status).toBe('needs_action');
     });
   });
 

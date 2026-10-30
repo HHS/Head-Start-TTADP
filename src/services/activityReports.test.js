@@ -40,6 +40,7 @@ import {
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsWhereCollaboratorByDate,
+  adminResetReportToDraft,
   batchQuery,
   cleanupOrphanedObjectivesAndAROs,
   createOrUpdate,
@@ -1695,6 +1696,34 @@ describe('Activity report service', () => {
         const updatedReport = await ActivityReport.findOne({ where: { id: report.id } });
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+      });
+    });
+    describe('adminResetReportToDraft', () => {
+      it('resets to draft and removes approvers who are the creator or a collaborator', async () => {
+        const report = await ActivityReport.create(submittedReport);
+        await ActivityReportCollaborator.create({
+          activityReportId: report.id,
+          userId: mockUserTwo.id,
+        });
+        await ActivityReportApprover.create({ activityReportId: report.id, userId: mockUser.id });
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUserTwo.id,
+        });
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUserThree.id,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+          note: 'please fix',
+        });
+
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
+        const [resetReport] = await adminResetReportToDraft(foundReport);
+
+        expect(resetReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(resetReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(resetReport.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
+        expect(resetReport.approvers[0].status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
       });
     });
   });

@@ -36,6 +36,7 @@ import {
   activityReportByLegacyId,
   activityReports,
   activityReportsForCleanup,
+  adminResetReportToDraft,
   assertApproversAreNotParticipants,
   createOrUpdate,
   getAllDownloadableActivityReportAlerts,
@@ -717,25 +718,33 @@ export async function resetToDraft(req, res) {
 
     const canReset = authorization.canReset();
     const isApproverAndCreator = authorization.isApproverAndCreator();
+    const canAdminReset = authorization.canAdminReset();
 
-    if (!isApproverAndCreator && !canReset) {
+    if (!isApproverAndCreator && !canReset && !canAdminReset) {
       res.sendStatus(403);
       return;
     }
 
-    if (isApproverAndCreator) {
-      // Reset all Approving Managers to null status.
-      await ActivityReportApprover.update(
-        { status: null },
-        {
-          where: { activityReportId },
-          individualHooks: true,
-        }
-      );
+    let resetReport;
+    if (canAdminReset) {
+      resetReport = await adminResetReportToDraft(report);
+    } else {
+      if (isApproverAndCreator) {
+        // Reset all Approving Managers to null status.
+        await ActivityReportApprover.update(
+          { status: null },
+          {
+            where: { activityReportId },
+            individualHooks: true,
+          }
+        );
+      }
+
+      resetReport = await setStatus(report, REPORT_STATUSES.DRAFT);
     }
 
     const [savedReport, activityRecipients, goalsAndObjectives, objectivesWithoutGoals] =
-      await setStatus(report, REPORT_STATUSES.DRAFT);
+      resetReport;
 
     res.json({
       ...savedReport.dataValues,

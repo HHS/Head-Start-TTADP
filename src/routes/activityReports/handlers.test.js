@@ -20,6 +20,7 @@ import {
   activityReportByLegacyId,
   activityReports,
   activityReportsForCleanup,
+  adminResetReportToDraft,
   assertApproversAreNotParticipants,
   createOrUpdate,
   getAllDownloadableActivityReportAlerts,
@@ -73,6 +74,7 @@ jest.mock('../../services/activityReports', () => ({
   possibleRecipients: jest.fn(),
   review: jest.fn(),
   setStatus: jest.fn(),
+  adminResetReportToDraft: jest.fn(),
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
   activityReportByLegacyId: jest.fn(),
@@ -3066,6 +3068,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
         isApproverAndCreator: () => false,
+        canAdminReset: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -3084,6 +3087,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => false,
         isApproverAndCreator: () => false,
+        canAdminReset: () => false,
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -3095,6 +3099,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         isApproverAndCreator: () => true,
         canReset: () => false,
+        canAdminReset: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -3107,6 +3112,27 @@ describe('Activity Report handlers', () => {
         objectivesWithoutGoals: [],
       };
       expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
+    });
+
+    it('lets admins reset a report awaiting approval', async () => {
+      const result = { status: 'draft', displayId: 'mockreport-1', objectivesWithoutGoals: [] };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
+      ActivityReport.mockImplementation(() => ({
+        isApproverAndCreator: () => false,
+        canReset: () => false,
+        canAdminReset: () => true,
+      }));
+      adminResetReportToDraft.mockResolvedValue([{ dataValues: { ...result } }, [], [], []]);
+      setStatus.mockClear();
+      await resetToDraft(request, mockResponse);
+      expect(adminResetReportToDraft).toHaveBeenCalledWith(report);
+      expect(setStatus).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        ...result,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+        objectivesWithoutGoals: [],
+      });
     });
   });
 

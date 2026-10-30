@@ -90,6 +90,12 @@ export const submitReport = async (reportId, data) => {
   return response.json();
 };
 
+export const resetReportToDraft = async (reportId) => {
+  const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'reset');
+  const response = await put(url);
+  return response.json();
+};
+
 export const unlockReport = async (reportId) => {
   const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
   const response = await put(url);

@@ -631,6 +631,32 @@ export async function getReports({
   });
 }
 
+/**
+ * Returns a submitted report to draft so its creator can edit and resubmit it. Approvers
+ * who are the creator or a collaborator are removed, since they can never review the report
+ * and would block resubmission; other approvers keep their status.
+ */
+export async function resetReportToDraft(report) {
+  // reset first, so removing approvers doesn't recalculate a submitted report's status
+  await CollabReport.update(
+    { submissionStatus: REPORT_STATUSES.DRAFT, calculatedStatus: REPORT_STATUSES.DRAFT },
+    { where: { id: report.id }, individualHooks: true }
+  );
+
+  const participantIds = [
+    report.userId,
+    ...(report.collabReportSpecialists || []).map((s) => s.specialistId),
+  ];
+  const approverIds = (report.approvers || []).map((a) => a.user.id);
+  const remainingApproverIds = approverIds.filter((id) => !participantIds.includes(id));
+
+  if (remainingApproverIds.length !== approverIds.length) {
+    await syncCRApprovers(report.id, remainingApproverIds);
+  }
+
+  return collabReportById(String(report.id));
+}
+
 export async function deleteReport(report: Model) {
   // there's no need to remove related models at this time
   // since populating deletedAt should a) remove all trace of

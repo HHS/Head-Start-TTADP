@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -14,6 +14,7 @@ describe('Activity report print and share view', () => {
   const report = {
     version: 1,
     regionId: 45,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     activityRecipients: [
       { name: 'Tim', grantId: 400 },
       { name: 'Tina', grantId: 401 },
@@ -314,6 +315,96 @@ describe('Activity report print and share view', () => {
       hidden: true,
     });
     expect(heading).toBeInTheDocument();
+  });
+
+  it('hides unlock report button on reports that are not approved', async () => {
+    const unlockUser = {
+      id: 2,
+      permissions: [
+        { regionId: 45, userId: 2, scopeId: 4 },
+        { regionId: 14, userId: 2, scopeId: 6 },
+      ],
+    };
+    fetchMock.get(
+      '/api/activity-reports/5008',
+      { ...report, calculatedStatus: REPORT_STATUSES.SUBMITTED },
+      { overwriteRoutes: true }
+    );
+    act(() => renderApprovedActivityReport(5008, unlockUser));
+    await screen.findByText(report.author.fullName);
+    expect(screen.queryByRole('button', { name: /unlock report/i })).toBeNull();
+  });
+
+  describe('reset to draft button', () => {
+    const submitted = { ...report, id: 5008, calculatedStatus: REPORT_STATUSES.SUBMITTED };
+
+    it.each([REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'is shown to admins on %s reports',
+      async (calculatedStatus) => {
+        fetchMock.get(
+          '/api/activity-reports/5008',
+          { ...report, calculatedStatus },
+          { overwriteRoutes: true }
+        );
+        act(() => renderApprovedActivityReport(5008));
+        expect(await screen.findByRole('button', { name: /reset to draft/i })).toBeVisible();
+      }
+    );
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.APPROVED])(
+      'is hidden from admins on %s reports',
+      async (calculatedStatus) => {
+        fetchMock.get(
+          '/api/activity-reports/5008',
+          { ...report, calculatedStatus },
+          { overwriteRoutes: true }
+        );
+        act(() => renderApprovedActivityReport(5008));
+        await screen.findByText(report.author.fullName);
+        expect(screen.queryByRole('button', { name: /reset to draft/i })).toBeNull();
+      }
+    );
+
+    it('is hidden from non-admins', async () => {
+      fetchMock.get('/api/activity-reports/5008', submitted, { overwriteRoutes: true });
+      act(() =>
+        renderApprovedActivityReport(5008, {
+          id: 2,
+          permissions: [{ regionId: 45, userId: 2, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS }],
+        })
+      );
+      await screen.findByText(report.author.fullName);
+      expect(screen.queryByRole('button', { name: /reset to draft/i })).toBeNull();
+    });
+
+    it('resets the report after confirming', async () => {
+      fetchMock.get('/api/activity-reports/5008', submitted, { overwriteRoutes: true });
+      fetchMock.put('/api/activity-reports/5008/reset', {
+        ...report,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      });
+      act(() => renderApprovedActivityReport(5008));
+
+      userEvent.click(await screen.findByRole('button', { name: /reset to draft/i }));
+      expect(fetchMock.called('/api/activity-reports/5008/reset')).toBe(false);
+      userEvent.click(screen.getByRole('button', { name: /reset activity report to draft/i }));
+
+      expect(await screen.findByText('This report has been reset to draft.')).toBeVisible();
+      expect(fetchMock.called('/api/activity-reports/5008/reset', 'PUT')).toBe(true);
+      expect(screen.queryByRole('button', { name: /^reset to draft$/i })).toBeNull();
+    });
+
+    it('shows an error when the reset fails', async () => {
+      fetchMock.get('/api/activity-reports/5008', submitted, { overwriteRoutes: true });
+      fetchMock.put('/api/activity-reports/5008/reset', 403);
+      act(() => renderApprovedActivityReport(5008));
+
+      userEvent.click(await screen.findByRole('button', { name: /reset to draft/i }));
+      userEvent.click(screen.getByRole('button', { name: /reset activity report to draft/i }));
+
+      expect(await screen.findByText('Unable to reset this report to draft.')).toBeVisible();
+    });
   });
 
   it('hides unlock report button', async () => {
