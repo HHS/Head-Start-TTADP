@@ -1,16 +1,21 @@
 import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import cls from 'cls-hooked';
 import moment from 'moment';
-import { cast, type Model, Op, type Transaction } from 'sequelize';
+import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
-import { createNotificationForSessionSubmittedCollaborators } from './notifications/trainingReport';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForSessionSubmittedCollaborators,
+  createSessionNeedsActionNotification,
+  createSessionNeedsActionNotificationForCollaborators,
+} from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
@@ -177,6 +182,11 @@ export async function destroySession(id: number): Promise<void> {
   await SessionReportPilotSupportingAttachment.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true }
+  );
+
+  await runInSavepoint(
+    () => archiveSessionNeedsActionNotifications(id),
+    `Error archiving session needs action notifications for session ${id}:`
   );
 
   // Delete session.
@@ -422,25 +432,42 @@ export async function updateSession(id: number, request) {
   });
 
   if (isFirstSubmission) {
-    // A notification failure must never fail the save. Catching the error is not
-    // enough: a failed query aborts the request's transaction (transactionWrapper),
-    // so every later query and the commit fail too. Running the notification in a
-    // savepoint lets it roll back on its own.
-    const parentTransaction: Transaction | undefined = cls
-      .getNamespace('transaction')
-      ?.get('transaction');
-    try {
-      // we need to run this in a transaction like so. This creates a SAVEPOINT
-      // otherwise, a failed notification would abort the entire transaction.
-      await sequelize.transaction({ transaction: parentTransaction }, () =>
+    await runInSavepoint(
+      () =>
         createNotificationForSessionSubmittedCollaborators(event, {
           id,
           data: newData as { sessionName?: string },
-        })
-      );
-    } catch (err) {
-      auditLogger.error(`Error creating session submitted notifications for session ${id}:`, err);
-    }
+        }),
+      `Error creating session submitted notifications for session ${id}:`
+    );
+  }
+
+  const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
+
+  if (isNeedsAction && !wasNeedsAction) {
+    // the approver requested changes: TR-4a for the owner, TR-4c for collaborators
+    const needsActionSession = {
+      id,
+      approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+      data: newData as { sessionName?: string },
+    };
+    await runInSavepoint(
+      () => createSessionNeedsActionNotification(event, needsActionSession),
+      `Error creating session needs action notifications for session ${id}:`
+    );
+    await runInSavepoint(
+      () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
+      `Error creating session needs action collaborator notifications for session ${id}:`
+    );
+  } else if (isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted)) {
+    // resubmitted, so the owner no longer needs to act. A session reset by a facilitation
+    // change can leave needs action before it is complete, so also archive once it is
+    // submitted again.
+    await runInSavepoint(
+      () => archiveSessionNeedsActionNotifications(id),
+      `Error archiving session needs action notifications for session ${id}:`
+    );
   }
 
   if (goalTemplates) {

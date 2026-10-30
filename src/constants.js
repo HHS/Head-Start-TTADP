@@ -284,11 +284,11 @@ const NOTIFICATION_CONFIGURATION = {
     settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
   },
   [NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED]: {
-    textFn: ({ author }) =>
-      `${author} added you as a Regional point of contact on their Training Report.`,
+    textFn: () => 'You were added as a Regional point of contact on a Training Report.',
     actionable: false,
     linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
     linkText: () => 'View TR',
+    archiveLabel: () => 'View TR',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenAddedAsPocTrainingReport',
   },
@@ -299,6 +299,30 @@ const NOTIFICATION_CONFIGURATION = {
     linkText: () => 'View TR',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the archived CTA reads "View TR", and the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
