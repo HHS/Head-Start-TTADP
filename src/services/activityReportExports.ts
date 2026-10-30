@@ -16,9 +16,11 @@
 //      keep pulling past the deadline, and a race against the per-chunk
 //      backpressure wait stops a client stalled on 'drain' (which Postgres'
 //      statement/idle timeouts can't catch, since no query is in flight there).
+import { REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
-import { QueryTypes, type Transaction } from 'sequelize';
+import { Op, QueryTypes, type Transaction } from 'sequelize';
 import db from '../models';
+import filtersToScopes from '../scopes';
 import { readJsonHeaderFromFile } from './ssdi';
 
 export const EXPORT_DATA_SETS = {
@@ -48,8 +50,7 @@ const FETCH_BATCH_SIZE = 2000;
 const EXPORT_CURSOR = 'ttahub_export_cursor';
 const STATEMENT_TIMEOUT = '180s';
 const IDLE_IN_TRANSACTION_TIMEOUT = '30s';
-// Cap on how many reports one export may cover, to stay inside the performance
-// envelope. Callers over this must narrow their filters.
+// Cap on client-supplied selections. Full-table exports resolve IDs on the server.
 export const MAX_EXPORT_REPORT_IDS = 10000;
 // Hard cap on total export duration, enforced regardless of client speed. Bounds
 // both how long one export can hold a pooled connection and how much a single
@@ -100,10 +101,9 @@ export class ExportTimeoutError extends Error {
 export interface ActivityReportExportOptions {
   // Raw request values; validated here so the handler stays thin.
   dataSet: unknown;
-  // Already-resolved AR ids from the page. Required: exports must be scoped to a
-  // bounded set, never the whole table. An empty list yields an empty export.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  reportIds: any;
+  reportIds?: unknown;
+  filters?: Record<string, unknown>;
+  userId?: number;
   // User's accessible regions; enforced in-query as defense in depth.
   regionIds: number[];
   sortBy?: string;
@@ -191,13 +191,13 @@ const setExportConfig = async (
   }
 };
 
-// Runs one export: the caller passes an already-resolved AR id list plus the
-// user's regions; the heavy setup runs once, then rows stream from the cursor.
+// Runs one export for selected IDs or server-resolved filters and the user's
+// regions; the heavy setup runs once, then rows stream from the cursor.
 export async function streamActivityReportExportCsv(
   options: ActivityReportExportOptions,
   { onStart, onChunk }: StreamCallbacks
 ): Promise<{ rowCount: number }> {
-  const { dataSet, reportIds, regionIds, sortBy, direction } = options;
+  const { dataSet, reportIds, filters, userId, regionIds, sortBy, direction } = options;
 
   if (!isValidDataSet(dataSet)) {
     throw new ExportRequestError(
@@ -205,7 +205,7 @@ export async function streamActivityReportExportCsv(
     );
   }
   const filePath = EXPORT_DATA_SETS[dataSet];
-  const ids = validateReportIds(reportIds);
+  let ids = filters === undefined ? validateReportIds(reportIds) : [];
 
   const cachedFile = await readJsonHeaderFromFile(filePath);
   if (!cachedFile) {
@@ -220,15 +220,6 @@ export async function streamActivityReportExportCsv(
     direction
   );
   const { setup, finalSelect } = splitExportSql(query);
-
-  const config: Array<[string, unknown]> = [
-    ['ssdi.activityReportIds', ids],
-    ['ssdi.region', regionIds],
-  ];
-  if (sort) {
-    config.push(['ssdi.sortOrder.column', [sort.column]]);
-    config.push(['ssdi.sortOrder.direction', [sort.direction]]);
-  }
 
   // Reserve a slot before we take a connection; reject rather than pile onto the
   // shared pool. Released in the finally below, so every early return/throw frees
@@ -273,6 +264,29 @@ export async function streamActivityReportExportCsv(
       { transaction, type: QueryTypes.RAW }
     );
 
+    if (filters !== undefined) {
+      const { activityReport: scopes } = await filtersToScopes(filters, { userId });
+      const reports = await db.ActivityReport.findAll({
+        attributes: ['id'],
+        where: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          regionId: { [Op.in]: regionIds },
+          [Op.and]: scopes,
+        },
+        raw: true,
+        transaction,
+      });
+      ids = reports.map((report: { id: number }) => report.id);
+    }
+
+    const config: Array<[string, unknown]> = [
+      ['ssdi.activityReportIds', ids],
+      ['ssdi.region', regionIds],
+    ];
+    if (sort) {
+      config.push(['ssdi.sortOrder.column', [sort.column]]);
+      config.push(['ssdi.sortOrder.direction', [sort.direction]]);
+    }
     await setExportConfig(transaction, config);
 
     if (setup.trim()) {

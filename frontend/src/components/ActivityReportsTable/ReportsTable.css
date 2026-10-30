@@ -1,3 +1,12 @@
 .tta-smarthub--report-heading .usa-checkbox__label {
   padding-left: 0;
 }
+
+.ttahub-ar-table :not(:disabled):focus {
+  outline: 0;
+}
+
+.ttahub-ar-table :not(:disabled):focus-visible {
+  outline: 2px solid #1b1b1b;
+  outline-offset: 2px;
+}

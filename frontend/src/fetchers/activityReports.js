@@ -161,6 +161,15 @@ export const downloadReports = async (url) => {
   return download.blob();
 };
 
+export const downloadActivityReportExport = async (dataSet, reportIds, filterQuery) => {
+  const query = reportIds === undefined && filterQuery ? `?${filterQuery}` : '';
+  const download = await post(`${activityReportUrl}/export${query}`, {
+    dataSet,
+    ...(reportIds === undefined ? { exportAll: true } : { reportIds }),
+  });
+  return download.blob();
+};
+
 export const resetToDraft = async (reportId) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'reset');
   const response = await put(url);

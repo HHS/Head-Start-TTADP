@@ -181,19 +181,20 @@ describe('activityReportExports', () => {
   // An empty id set matches no reports, so the full pipeline runs and yields
   // zero rows.
   describe('streaming pipeline', () => {
-    it.each(
-      Object.keys(EXPORT_DATA_SETS)
-    )('runs the %s export end to end for an empty id set', async (dataSet) => {
-      const { rowCount, outputName, csv } = await collect({
-        dataSet,
-        reportIds: [],
-        regionIds: ALL_REGIONS,
-      });
-      expect(rowCount).toBe(0);
-      expect(outputName).toEqual(expect.any(String));
-      expect(outputName.length).toBeGreaterThan(0);
-      expect(csv).toBe('');
-    });
+    it.each(Object.keys(EXPORT_DATA_SETS))(
+      'runs the %s export end to end for an empty id set',
+      async (dataSet) => {
+        const { rowCount, outputName, csv } = await collect({
+          dataSet,
+          reportIds: [],
+          regionIds: ALL_REGIONS,
+        });
+        expect(rowCount).toBe(0);
+        expect(outputName).toEqual(expect.any(String));
+        expect(outputName.length).toBeGreaterThan(0);
+        expect(csv).toBe('');
+      }
+    );
 
     it('accepts a validated custom sort without error', async () => {
       const { rowCount } = await collect({
@@ -253,6 +254,52 @@ describe('activityReportExports', () => {
         regionIds: [REGION_ID],
       });
       expect(rowCount).toBe(0);
+    });
+
+    it('exports the full filtered table without client-supplied ids', async () => {
+      const { csv } = await collect({
+        dataSet: 'activity-reports',
+        filters: { 'region.in': [REGION_ID] },
+        regionIds: [REGION_ID],
+      });
+      expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+    });
+
+    it('applies filters and accessible regions to full-table exports', async () => {
+      const filtered = await collect({
+        dataSet: 'activity-reports',
+        filters: { 'region.in': [999] },
+        regionIds: [REGION_ID],
+      });
+      expect(filtered.rowCount).toBe(0);
+      const inaccessible = await collect({
+        dataSet: 'activity-reports',
+        filters: { 'region.in': [REGION_ID] },
+        regionIds: [1],
+      });
+      expect(inaccessible.rowCount).toBe(0);
+    });
+
+    it('allows server-resolved full-table exports above the selected-id limit', async () => {
+      const reports = Array.from({ length: MAX_EXPORT_REPORT_IDS }, (_, index) => ({
+        id: index + 90000000,
+      }));
+      reports.push({ id: report.id });
+      const findReports = jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValueOnce(reports);
+      try {
+        const { csv, rowCount } = await collect({
+          dataSet: 'activity-reports',
+          filters: { 'region.in': [REGION_ID] },
+          regionIds: [REGION_ID],
+        });
+        expect(rowCount).toBe(1);
+        expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+        expect(findReports).toHaveBeenCalledWith(
+          expect.objectContaining({ attributes: ['id'], raw: true })
+        );
+      } finally {
+        findReports.mockRestore();
+      }
     });
   });
 

@@ -1330,7 +1330,7 @@ export async function downloadAllAlerts(req, res) {
   }
 }
 
-// Streams a flat CSV export for the reportIds pulled for the page. This includes
+// Streams a flat CSV export for selected IDs or the full filtered table. This includes
 // AR, Goal, or Objective focused exports. Region policy is re-enforced in the SQL.
 export async function downloadActivityReportExport(req, res) {
   let responseStarted = false;
@@ -1351,6 +1351,9 @@ export async function downloadActivityReportExport(req, res) {
       {
         dataSet: params.dataSet,
         reportIds: params.reportIds,
+        ...(params.exportAll === true
+          ? { filters: await setReadRegions(req.query, userId), userId }
+          : {}),
         regionIds,
         sortBy: params.sortBy,
         direction: params.direction,
