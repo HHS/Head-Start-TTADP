@@ -1,0 +1,9 @@
+/* matches the avatar beside it */
+.ttahub-notes-summary__author {
+  color: var(--ttahub-medium-blue);
+}
+
+/* notes come from a textarea, so keep the line breaks the user typed */
+.ttahub-notes-summary__note {
+  white-space: pre-line;
+}

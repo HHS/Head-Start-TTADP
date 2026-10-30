@@ -1,4 +1,6 @@
-/* creator notes come from a textarea, so keep the line breaks the creator typed */
-.ttahub-view-tta-request--creator-notes {
-  white-space: pre-line;
+/* the section's own bottom padding spaces the notes summary below it, so drop the last row's margin */
+.ttahub-view-tta-request__goal-and-context
+  .ttahub-read-only-content-section--heading--section-row:last-child
+  .ttahub-read-only-content-section--heading--section-row-data {
+  margin-bottom: 0;
 }

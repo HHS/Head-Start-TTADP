@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -123,26 +123,41 @@ describe('ViewTtaRequest', () => {
     expect(screen.queryByText('Citations addressed')).toBeNull();
   });
 
-  it('shows the creator notes as plain text with their line breaks', async () => {
+  it('shows the creator notes in the notes summary', async () => {
     fetchMock.get(URL, {
       ...SUBMITTED_REQUEST,
       creatorNotes: 'First line <b>not bold</b>\nSecond line',
     });
     renderView();
 
-    expect(await screen.findByText('Creator notes')).toBeVisible();
-    const notes = screen.getByText(/First line/);
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Notes summary' });
+    const summary = heading.closest('section');
+    expect(within(summary).getByText('Draft TTA Request')).toBeVisible();
+    expect(within(summary).getByText('Avery Example, GS')).toBeVisible();
+    expect(within(summary).getByText('Creator')).toBeVisible();
+    expect(within(summary).getByText('June 23, 2026 • 17:00 UTC')).toBeVisible();
+    const notes = within(summary).getByText(/First line/);
     expect(notes.textContent).toBe('First line <b>not bold</b>\nSecond line');
     expect(notes.querySelector('b')).toBeNull();
-    expect(notes).toHaveClass('ttahub-view-tta-request--creator-notes');
+
+    // the notes are no longer repeated under the goal and context
+    expect(screen.queryByText('Creator notes')).toBeNull();
   });
 
-  it('leaves out the creator notes when there are none', async () => {
+  it('shows the creator submission even when there are no creator notes', async () => {
     fetchMock.get(URL, SUBMITTED_REQUEST);
     renderView();
 
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Notes summary' });
+    expect(within(heading.closest('section')).getByText('Draft TTA Request')).toBeVisible();
+  });
+
+  it('leaves out the notes summary when the request has not been submitted', async () => {
+    fetchMock.get(URL, { ...SUBMITTED_REQUEST, status: 'draft', submittedAt: null });
+    renderView();
+
     await screen.findByRole('heading', { name: 'Goal and context' });
-    expect(screen.queryByText('Creator notes')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Notes summary' })).toBeNull();
   });
 
   it('shows the goal without a standard prefix when the goal has no standard', async () => {
