@@ -1,16 +1,23 @@
 import { Alert, Button } from '@trussworks/react-uswds';
+import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import { isEqual } from 'lodash';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
-import { createTtaRequest, getTtaRequest, saveTtaRequest } from '../../fetchers/ttaRequests';
+import { HTTPError } from '../../fetchers';
+import {
+  createTtaRequest,
+  getTtaRequest,
+  saveTtaRequest,
+  submitTtaRequest,
+} from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import {
@@ -20,7 +27,9 @@ import {
   LOAD_ERROR,
   NO_REGION_ERROR,
   SAVE_ERROR,
+  SUBMIT_ERROR,
   TTA_REQUEST_FIELDS,
+  ttaRequestViewPath,
 } from './constants';
 import { toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
@@ -54,7 +63,8 @@ const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.i
  * A draft is saved as it stands, by the Save draft button and on an interval. The first save
  * of a new request creates it and puts its id in the URL, so later saves update it.
  *
- * TODO: submitting validates and navigates but does not persist yet; that is its own ticket.
+ * Submitting saves the request as it stands and submits it for review, then returns the user
+ * to where they came from with a message saying so.
  */
 export default function TtaRequestForm(props: TtaRequestFormProps): React.ReactElement {
   const { ttaRequestId } = useParams<{ ttaRequestId?: string }>();
@@ -131,12 +141,12 @@ function TtaRequestFormBody({
 
   const selectedGrants: TtaRequestGrant[] = watch(TTA_REQUEST_FIELDS.GRANTS);
 
-  // the region follows the grants, which is what the goals, citations and approvers hang off.
+  // the region follows the grants, which is what the goals, citations and reviewers hang off.
   // A saved draft's region is fixed, whichever record's link it was opened from.
   const effectiveRegionId =
     savedRequest?.regionId ?? regionId ?? selectedGrants[0]?.regionId ?? null;
 
-  // goals belong to grants and approvers to a region, so neither survives a change of grant
+  // goals belong to grants and reviewers to a region, so neither survives a change of grant
   const grantKey = grantIdsKey(selectedGrants);
   const previousGrantKey = useRef(grantKey);
 
@@ -170,6 +180,12 @@ function TtaRequestFormBody({
     setValue(TTA_REQUEST_FIELDS.REVIEWER, null);
   }, [grantKey, setValue]);
 
+  // later saves update the request just created, and the URL is its, as if it had been opened
+  const rememberCreatedRequest = (id: number) => {
+    ttaRequestIdRef.current = id;
+    window.history.replaceState(null, null, location.pathname.replace(/\/new\/?$/, `/${id}`));
+  };
+
   /**
    * A draft is saved as it stands, so this deliberately sidesteps validation. The form is then
    * reset to what was saved, as the activity report does, which clears its dirty state so an
@@ -200,12 +216,7 @@ function TtaRequestFormBody({
         saved = await saveTtaRequest(ttaRequestId, payload);
       } else {
         saved = await createTtaRequest({ ...payload, regionId: effectiveRegionId });
-        ttaRequestIdRef.current = saved.id;
-        window.history.replaceState(
-          null,
-          null,
-          location.pathname.replace(/\/new\/?$/, `/${saved.id}`)
-        );
+        rememberCreatedRequest(saved.id);
       }
 
       // anything changed while the save was in flight stays, and stays dirty for the next save
@@ -246,9 +257,45 @@ function TtaRequestFormBody({
     }
   }, AUTOSAVE_INTERVAL);
 
-  const onSubmit = () => {
-    // TODO: submit the request once the TTA request API exists
-    history.push(backLinkTo);
+  /**
+   * Validation has passed by the time this runs. A request that was never saved is created
+   * first, since submitting needs its id. The loading overlay also holds off the autosave.
+   */
+  const onSubmit = async () => {
+    setAppLoadingText('Submitting');
+    setIsAppLoading(true);
+
+    try {
+      const payload = toApiPayload(getValues() as TtaRequestFormValues);
+
+      let ttaRequestId = ttaRequestIdRef.current;
+      if (ttaRequestId === null) {
+        const created = await createTtaRequest({ ...payload, regionId: effectiveRegionId });
+        ttaRequestId = created.id;
+        rememberCreatedRequest(ttaRequestId);
+      }
+
+      const submitted: TtaRequestResponse = await submitTtaRequest(ttaRequestId, payload);
+
+      // Prepare success message
+      const timezone = moment.tz.guess();
+      const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+      const message = {
+        time,
+        reportId: submitted.id,
+        displayId: submitted.displayId,
+        status: 'submitted',
+      };
+
+      history.push(backLinkTo, { message });
+    } catch (e) {
+      // a request the server rejects says why, which retrying would not change
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
+      setSaveError(validationMessage || SUBMIT_ERROR);
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
   // nothing to show until the draft in the route has been fetched, as the other forms wait for
@@ -261,6 +308,12 @@ function TtaRequestFormBody({
         {error}
       </Alert>
     ) : null;
+  }
+
+  // only a draft can be edited; a submitted request is shown read-only, as collaboration
+  // reports do
+  if (savedRequest && savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT) {
+    return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
   }
 
   return (
@@ -305,7 +358,7 @@ function TtaRequestFormBody({
               </Alert>
             )}
             <div className="display-flex margin-top-4">
-              <Button type="submit" className="margin-right-1">
+              <Button type="submit" className="margin-right-1" disabled={weAreAutoSaving}>
                 Submit
               </Button>
               <Button

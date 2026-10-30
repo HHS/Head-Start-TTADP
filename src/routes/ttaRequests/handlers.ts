@@ -4,12 +4,15 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { respondWithServiceError } from '../../lib/serviceError';
 import TtaRequestPolicy from '../../policies/ttaRequest';
 import filtersToScopes from '../../scopes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
+  lockTtaRequest,
+  submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
@@ -24,7 +27,7 @@ export async function getTtaRequests(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     // filter the query so that only regions the user has permission to are included
-    const query = await setReadRegions(req.query, userId);
+    const query = await setTtaRequestReadRegions(req.query, userId);
     const { ttaRequest: scopes } = await filtersToScopes(query, { userId });
 
     const ttaRequests = await getTtaRequestsService(scopes, userId);
@@ -50,6 +53,25 @@ export async function getTtaRequestsByRecipient(req: Request, res: Response) {
 
     const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId));
     res.json(ttaRequests);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getTtaRequestReviewers(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const reviewers = await ttaRequestReviewers(Number(regionId));
+    res.json(reviewers);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -106,6 +128,7 @@ export async function createTtaRequest(req: Request, res: Response) {
 export async function saveTtaRequest(req: Request, res: Response) {
   try {
     const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
     const existing = await ttaRequestById(Number(ttaRequestId));
 
     if (!existing) {
@@ -126,6 +149,45 @@ export async function saveTtaRequest(req: Request, res: Response) {
     res.json(ttaRequest);
   } catch (error) {
     if (respondWithServiceError(res, error)) {
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function submitTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    // only the creator's draft can be submitted, as only it can be saved
+    if (!authorization.canUpdate()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await submitTtaRequestService(existing, req.body, userId);
+    res.json(ttaRequest);
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      const responseBody = error.responseBody ?? { error: error.message };
+      // the draft was saved before the check failed, so the wrapper must roll it back
+      // before it sends the response
+      if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+        throw Object.assign(error, { responseBody });
+      }
+      res.status(error.statusCode).json(responseBody);
       return;
     }
     await handleErrors(req, res, error, logContext);

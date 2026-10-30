@@ -123,6 +123,24 @@ export async function getUserTrainingReportReadRegions(userId) {
   }
 }
 
+export async function getUserTtaRequestReadRegions(userId) {
+  try {
+    // matches canReadInRegion in src/policies/ttaRequest.ts
+    const readTtaRequestScopes = [
+      SCOPES.READ_REPORTS,
+      SCOPES.READ_WRITE_TTA_REQUESTS,
+      SCOPES.REVIEW_TTA_REQUESTS,
+      SCOPES.APPROVE_TTA_REQUESTS,
+      SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+    ];
+
+    return await getUserRegionsByPermissions(userId, readTtaRequestScopes);
+  } catch (error) {
+    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
+    throw error;
+  }
+}
+
 /**
  *
  * @param {Number} userId
@@ -172,6 +190,12 @@ export async function setReadRegions(query, userId) {
 
 export async function setTrainingReportReadRegions(query, userId) {
   const readRegions = await getUserTrainingReportReadRegions(userId);
+
+  return setRegionsInQuery(query, readRegions);
+}
+
+export async function setTtaRequestReadRegions(query, userId) {
+  const readRegions = await getUserTtaRequestReadRegions(userId);
 
   return setRegionsInQuery(query, readRegions);
 }

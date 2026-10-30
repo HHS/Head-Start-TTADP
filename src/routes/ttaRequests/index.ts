@@ -9,11 +9,17 @@ import transactionWrapper from '../transactionWrapper';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
+  submitTtaRequest,
 } from './handlers';
-import { checkCreateTtaRequestBody, checkUpdateTtaRequestBody } from './middleware';
+import {
+  checkCreateTtaRequestBody,
+  checkSubmitTtaRequestBody,
+  checkUpdateTtaRequestBody,
+} from './middleware';
 
 const router = express.Router();
 
@@ -33,6 +39,13 @@ router.get(
   transactionWrapper(getTtaRequestsByRecipient)
 );
 
+// getTtaRequestReviewers
+router.get(
+  '/region/:regionId/reviewers',
+  checkRegionIdParam,
+  transactionWrapper(getTtaRequestReviewers)
+);
+
 // createTtaRequest
 router.post('/', checkCreateTtaRequestBody, transactionWrapper(createTtaRequest));
 
@@ -42,6 +55,14 @@ router.get(
   nameTransactionByBase,
   checkTtaRequestIdParam,
   transactionWrapper(getTtaRequest)
+);
+
+// submitTtaRequest
+router.put(
+  '/:ttaRequestId/submit',
+  checkTtaRequestIdParam,
+  checkSubmitTtaRequestBody,
+  transactionWrapper(submitTtaRequest)
 );
 
 // saveTtaRequest

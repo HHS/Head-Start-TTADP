@@ -8,6 +8,7 @@ import db from '../../models';
 import { stateFilter } from '../../scopes/notifications/state';
 import {
   archiveApproverApprovedNotifications,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotificationForApprovers,
 } from './activityReport';
 import {
@@ -432,6 +433,48 @@ describe('Notification service', () => {
             },
           });
           expect(count).toBe(2);
+        });
+
+        it('creates a fresh unread recipient approval notification after it is archived', async () => {
+          const report = await createTrackedActivityReport();
+          const savedReport = {
+            id: report.id,
+            displayId: `R01-AR-${report.id}`,
+            activityRecipients: [{ name: 'Recipient A' }],
+          };
+          const [first] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(first);
+          const firstState = await NotificationUserState.create({
+            notificationId: first.id,
+            userId: user.id,
+            viewedAt: null,
+            archivedAt: null,
+          });
+
+          await archiveNotificationsByEntityAndType(
+            report.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+          );
+
+          await firstState.reload();
+          expect(firstState.archivedAt).not.toBeNull();
+          expect(firstState.viewedAt).toBeNull();
+
+          const [second] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(second);
+
+          expect(second.id).not.toBe(first.id);
+          expect(
+            await NotificationUserState.findOne({
+              where: { notificationId: second.id, userId: user.id },
+            })
+          ).toBeNull();
         });
 
         it('reuses the existing notification when the user state is not archived', async () => {
@@ -1214,6 +1257,56 @@ describe('Notification service', () => {
       });
     });
 
+    it('swaps the CTA label for the archive label and leaves other types untouched', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      // created sequentially: both share an entityId, so the helper's AR creation would race
+      const needsAction = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        label: 'Take Action',
+      });
+      const otherType = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        label: 'Take action',
+      });
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      ]);
+
+      const [updatedNeedsAction, updatedOther] = await Promise.all([
+        Notification.findByPk(needsAction.id),
+        Notification.findByPk(otherType.id),
+      ]);
+
+      expect(updatedNeedsAction.label).toBe('View AR');
+      expect(updatedOther.label).toBe('Take action');
+
+      await NotificationUserState.destroy({
+        where: { notificationId: [needsAction.id, otherType.id] },
+      });
+    });
+
+    it('does not relabel global notifications, since their row is shared across users', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const globalNotification = await createTrackedNotification({
+        entityId,
+        userId: null,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        label: 'Take Action',
+      });
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      ]);
+
+      const updated = await Notification.findByPk(globalNotification.id);
+      expect(updated.label).toBe('Take Action');
+
+      await NotificationUserState.destroy({ where: { notificationId: globalNotification.id } });
+    });
+
     it('creates an archived and viewed state row for notifications with a userId but no state', async () => {
       const entityId = faker.number.int({ min: 99001, max: 99999 });
       const notification = await createTrackedNotification({
@@ -1334,6 +1427,41 @@ describe('Notification service', () => {
 
       expect(updatedUserState.archivedAt).not.toBeNull();
       expect(updatedOtherUserState.archivedAt).toBeNull();
+
+      await NotificationUserState.destroy({
+        where: { notificationId: [userNotification.id, otherUserNotification.id] },
+      });
+    });
+
+    it("swaps the CTA label for the archive label on only the target user's notification", async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      // created sequentially: both share an entityId, so the helper's AR creation would race
+      const userNotification = await createTrackedNotification({
+        entityId,
+        userId: user.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        label: 'Take action',
+      });
+      const otherUserNotification = await createTrackedNotification({
+        entityId,
+        userId: otherUser.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER,
+        label: 'Take action',
+      });
+
+      await archiveNotificationsByUserEntityAndType(
+        entityId,
+        user.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED_APPROVER
+      );
+
+      const [updatedUserNotification, updatedOtherUserNotification] = await Promise.all([
+        Notification.findByPk(userNotification.id),
+        Notification.findByPk(otherUserNotification.id),
+      ]);
+
+      expect(updatedUserNotification.label).toBe('View AR');
+      expect(updatedOtherUserNotification.label).toBe('Take action');
 
       await NotificationUserState.destroy({
         where: { notificationId: [userNotification.id, otherUserNotification.id] },

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
+import { allRegionsUserHasTtaRequestPermissionTo } from '../../../permissions';
 import { MemoryRouter } from 'react-router-dom';
 import useFilters from '../../../hooks/useFilters';
 import UserContext from '../../../UserContext';
@@ -45,10 +46,16 @@ const DRAFT = {
   grants: [],
 };
 
-const renderTtaRequests = () =>
+// can write TTA requests in a region other than the one the page is filtered to
+const writer = {
+  ...user,
+  permissions: [...user.permissions, { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS }],
+};
+
+const renderTtaRequests = (initialEntries = ['/tta-requests'], currentUser = user) =>
   render(
-    <UserContext.Provider value={{ user }}>
-      <MemoryRouter>
+    <UserContext.Provider value={{ user: currentUser }}>
+      <MemoryRouter initialEntries={initialEntries}>
         <TtaRequests />
       </MemoryRouter>
     </UserContext.Provider>
@@ -97,13 +104,28 @@ describe('TTA Requests', () => {
     ).toBeVisible();
   });
 
-  it('renders the add request button', () => {
-    renderTtaRequests();
+  it('renders the add request button for someone who can write requests in any region', () => {
+    renderTtaRequests(['/tta-requests'], writer);
 
     expect(screen.getByRole('link', { name: /add request/i })).toHaveAttribute(
       'href',
       '/tta-requests/new'
     );
+  });
+
+  it('hides the add request button from someone who can only read', () => {
+    renderTtaRequests();
+
+    expect(screen.queryByRole('link', { name: /add request/i })).toBeNull();
+  });
+
+  it('hides the add request button from an admin who cannot write requests', () => {
+    renderTtaRequests(['/tta-requests'], {
+      ...user,
+      permissions: [...user.permissions, { regionId: 14, scopeId: SCOPE_IDS.ADMIN }],
+    });
+
+    expect(screen.queryByRole('link', { name: /add request/i })).toBeNull();
   });
 
   it('renders the filter panel', () => {
@@ -116,7 +138,16 @@ describe('TTA Requests', () => {
   it('sets up filters with region management', () => {
     renderTtaRequests();
 
-    expect(useFilters).toHaveBeenCalledWith(user, 'tta-requests-filters', true, [], []);
+    expect(useFilters).toHaveBeenCalledWith(
+      user,
+      'tta-requests-filters',
+      true,
+      [],
+      [],
+      undefined,
+      undefined,
+      allRegionsUserHasTtaRequestPermissionTo
+    );
   });
   it('renders both request tables', () => {
     renderTtaRequests();
@@ -138,5 +169,29 @@ describe('TTA Requests', () => {
     // the page spans every region the user can see, so the rows have to say which
     expect(await screen.findByRole('columnheader', { name: /recipient/i })).toBeVisible();
     expect(screen.getByRole('columnheader', { name: /region/i })).toBeVisible();
+  });
+
+  it('says a request was submitted when the form returns here', async () => {
+    renderTtaRequests([
+      {
+        pathname: '/tta-requests',
+        state: {
+          message: {
+            reportId: 99,
+            displayId: 'R01-REQ-99',
+            time: '06/23/2026 at 11:00 am EDT',
+            status: 'submitted',
+          },
+        },
+      },
+    ]);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You submitted request R01-REQ-99 on 06/23/2026 at 11:00 am EDT.'
+    );
+    expect(screen.getByRole('link', { name: 'R01-REQ-99' })).toHaveAttribute(
+      'href',
+      '/tta-requests/view/99'
+    );
   });
 });

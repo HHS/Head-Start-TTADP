@@ -1,5 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import RolesOnly, { userHasRole } from '../../../../components/RolesOnly';
+import UserContext from '../../../../UserContext';
 import NotificationsSection from './NotificationsSection';
+
+const PROGRAM_SPECIALIST_ROLES = ['PS', 'SPS', 'GMS'];
+const PROGRAM_SPECIALIST_NOTIFICATION_ID = 'WhenRecipientReportApprovedProgramSpecialist';
+
+function ProgramSpecialistsOnly({ children }: { children: React.ReactNode }) {
+  return <RolesOnly roles={PROGRAM_SPECIALIST_ROLES}>{children}</RolesOnly>;
+}
 
 export default function ActivityReportNotifications({
   emailVerified,
@@ -12,6 +21,9 @@ export default function ActivityReportNotifications({
   emailVerificationSent: boolean;
   clearAlerts?: boolean;
 }) {
+  const { user } = (useContext(UserContext) || {}) as { user?: { roles?: { name: string }[] } };
+  const isProgramSpecialist = userHasRole(user, PROGRAM_SPECIALIST_ROLES);
+
   return (
     <NotificationsSection
       emailVerified={emailVerified}
@@ -25,7 +37,8 @@ export default function ActivityReportNotifications({
           'WhenReportSubmittedForReview',
           'WhenChangeRequested',
           'WhenAppointedCollaborator',
-          'WhenRecipientReportApprovedProgramSpecialist',
+          // the group control should not change a setting the user cannot see
+          ...(isProgramSpecialist ? [PROGRAM_SPECIALIST_NOTIFICATION_ID] : []),
           'WhenReportApproval',
           'WhenCollaboratorReportSubmittedForReview',
           'WhenCreatorReportSubmittedForReview',
@@ -59,13 +72,9 @@ export default function ActivityReportNotifications({
           label: "I'm added as a collaborator on an activity report.",
         },
         {
-          id: 'WhenRecipientReportApprovedProgramSpecialist',
-          label: (
-            <>
-              <em>Program specialists only:</em>
-              <br /> One of my recipients&apos; activity reports is available.
-            </>
-          ),
+          id: PROGRAM_SPECIALIST_NOTIFICATION_ID,
+          label: "One of my recipients' activity reports is available.",
+          wrapper: ProgramSpecialistsOnly,
         },
       ]}
     />

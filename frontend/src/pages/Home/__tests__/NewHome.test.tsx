@@ -6,7 +6,7 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 import { SUPPORT_LINK } from '../../../Constants';
 import UserContext from '../../../UserContext';
-import NewHome from '../NewHome';
+import Home from '..';
 
 const USER_GUIDE_LINK = 'https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/';
 
@@ -15,7 +15,7 @@ function renderHome(user: { name?: string | null } = { name: 'Annika Lewis' }) {
   const result = render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        <NewHome />
+        <Home />
       </UserContext.Provider>
     </Router>
   );
@@ -109,7 +109,7 @@ describe('New Home page', () => {
   test('uses the fallback heading when user context is unavailable', () => {
     render(
       <Router history={createMemoryHistory()}>
-        <NewHome />
+        <Home />
       </Router>
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Welcome to the TTA Hub$/);

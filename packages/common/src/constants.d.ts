@@ -1,3 +1,6 @@
+export const COLLAB_REPORT_CONDUCT_METHODS: ReadonlyArray<{ label: string; value: string }>;
+export const COLLAB_REPORT_REASONS: Readonly<Record<string, string>>;
+export const COLLAB_REPORT_DATA: Readonly<Record<string, string>>;
 // Targeted TypeScript declaration overlay for runtime constants whose
 // literal-typed shape must flow to consumers (notably the shared
 // notification types in src/notifications.d.ts, which
@@ -29,7 +32,9 @@ export const NOTIFICATION_TYPES: {
   readonly TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded';
   readonly TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated';
   readonly TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted';
+  readonly TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator';
   readonly TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction';
+  readonly TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR: 'trainingReportSessionNeedsActionCollaborator';
   readonly TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted';
   readonly TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted';
   readonly TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications';
@@ -89,6 +94,7 @@ export const EMAIL_NOTIFICATION_SETTING_KEYS: readonly [
   'emailWhenAddedAsRecipientCommLog',
   'emailWhenAddedAsPocTrainingReport',
   'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionSubmittedCollaboratorTrainingReport',
   'emailWhenSessionReviewRequestedTrainingReport',
   'emailWhenSessionChangesRequestedTrainingReport',
   'emailWhenSessionDetails20DaysCreatorCollaborator',
@@ -122,6 +128,7 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenAddedAsRecipientCommLog',
   'inAppWhenAddedAsPocTrainingReport',
   'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',
@@ -135,6 +142,20 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenAddedAsCoOwner',
   'inAppWhenSharedMyGroup',
 ];
+
+export const TTA_REQUEST_STATUSES: {
+  readonly DRAFT: 'draft';
+  readonly SUBMITTED: 'submitted';
+};
+
+export const TTA_REQUEST_ORIGINATORS: readonly [
+  'Central Office',
+  'Recipient',
+  'Regional Office',
+  'TTA Staff',
+];
+
+export const TTA_REQUEST_MONITORING_STANDARD: 'Monitoring';
 
 export const TIMELINE_FILTER_TOPICS: readonly ['date', 'purpose', 'standard', 'eventType'];
 

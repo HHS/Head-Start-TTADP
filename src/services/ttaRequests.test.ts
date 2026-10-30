@@ -3,10 +3,28 @@ import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import { createGoalTemplate, createGrant, createRecipient, createUser } from '../testUtils';
-import { createTtaRequest, getTtaRequests, ttaRequestById, updateTtaRequest } from './ttaRequests';
+import {
+  createTtaRequest,
+  getTtaRequests,
+  lockTtaRequest,
+  submitTtaRequest,
+  ttaRequestById,
+  ttaRequestReviewers,
+  updateTtaRequest,
+} from './ttaRequests';
 
-const { Goal, Grant, GoalTemplate, Permission, Recipient, TtaRequest, TtaRequestCitation, User } =
-  db;
+const {
+  Goal,
+  Grant,
+  GoalTemplate,
+  Permission,
+  Recipient,
+  Role,
+  TtaRequest,
+  TtaRequestCitation,
+  User,
+  UserRole,
+} = db;
 
 describe('ttaRequests service', () => {
   let creator;
@@ -33,8 +51,9 @@ describe('ttaRequests service', () => {
       createGrant({ recipientId: recipient.id, regionId: 1 }),
       createGrant({ recipientId: recipient.id, regionId: 2 }),
       createGrant({ recipientId: otherRecipient.id, regionId: 1 }),
-      // the reviewer approves in region 1, where these requests are
-      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.APPROVE_REPORTS }),
+      // the reviewer is active and can review in region 1, where these requests are
+      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS }),
+      Permission.create({ userId: reviewer.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
     ]);
   });
 
@@ -49,6 +68,7 @@ describe('ttaRequests service', () => {
     await Recipient.destroy({ where: { id: [recipient.id, otherRecipient.id] }, force: true });
     await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
     await Permission.destroy({ where: { userId: [creator.id, reviewer.id] } });
+    await UserRole.destroy({ where: { userId: [creator.id, reviewer.id] } });
     await User.destroy({ where: { id: [creator.id, reviewer.id] } });
     await db.sequelize.close();
   });
@@ -137,12 +157,12 @@ describe('ttaRequests service', () => {
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const saved = await createTtaRequest({ regionId: 1, reviewerId: creator.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
 
-    it('drops a reviewer who approves in another region', async () => {
+    it('drops a reviewer who can review in another region', async () => {
       const saved = await createTtaRequest({ regionId: 2, reviewerId: reviewer.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
@@ -251,14 +271,89 @@ describe('ttaRequests service', () => {
     });
   });
 
+  describe('ttaRequestReviewers', () => {
+    let approver;
+    let backupApprover;
+    let writeOnly;
+    let readOnly;
+    let otherRegion;
+    let twoScopes;
+    let inactive;
+
+    const permit = (userId: number, scopeId: number, regionId = 1) =>
+      Permission.create({ userId, regionId, scopeId });
+
+    beforeAll(async () => {
+      [approver, backupApprover, writeOnly, readOnly, otherRegion, twoScopes, inactive] =
+        await Promise.all(Array.from({ length: 7 }, () => createUser({})));
+
+      // everyone but the inactive user can sign in
+      const active = [approver, backupApprover, writeOnly, readOnly, otherRegion, twoScopes];
+
+      await Promise.all([
+        ...active.map((user) => permit(user.id, SCOPES.SITE_ACCESS, 14)),
+        permit(approver.id, SCOPES.APPROVE_TTA_REQUESTS),
+        permit(backupApprover.id, SCOPES.BACKUP_APPROVE_TTA_REQUESTS),
+        permit(writeOnly.id, SCOPES.READ_WRITE_TTA_REQUESTS),
+        permit(readOnly.id, SCOPES.READ_REPORTS),
+        permit(otherRegion.id, SCOPES.REVIEW_TTA_REQUESTS, 2),
+        permit(twoScopes.id, SCOPES.REVIEW_TTA_REQUESTS),
+        permit(twoScopes.id, SCOPES.BACKUP_APPROVE_TTA_REQUESTS),
+        permit(inactive.id, SCOPES.REVIEW_TTA_REQUESTS),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [
+        approver,
+        backupApprover,
+        writeOnly,
+        readOnly,
+        otherRegion,
+        twoScopes,
+        inactive,
+      ].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
+
+    it('lists users who can review in the region, once each', async () => {
+      const reviewers = await ttaRequestReviewers(1);
+      const ids = reviewers.map((u) => u.id);
+
+      expect(ids).toEqual(expect.arrayContaining([reviewer.id, twoScopes.id]));
+      expect(ids.filter((id) => id === twoScopes.id)).toHaveLength(1);
+    });
+
+    it('leaves out approvers, inactive users and those without the review permission in the region', async () => {
+      const ids = (await ttaRequestReviewers(1)).map((u) => u.id);
+
+      [approver, backupApprover, writeOnly, readOnly, otherRegion, inactive, creator].forEach(
+        (user) => {
+          expect(ids).not.toContain(user.id);
+        }
+      );
+    });
+
+    it('drops a saved reviewer who can only approve in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: approver.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
+    });
+
+    it('drops a saved reviewer who can only write in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: writeOnly.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
+    });
+  });
+
   describe('updateTtaRequest reviewer', () => {
-    it('saves an approver in the region as the reviewer', async () => {
+    it('saves a reviewer in the region as the reviewer', async () => {
       const created = await createTtaRequest({ regionId: 1 }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: reviewer.id }, creator.id);
       expect(updated.reviewer.id).toBe(reviewer.id);
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: creator.id }, creator.id);
       expect(updated.reviewerId).toBeNull();
@@ -269,26 +364,37 @@ describe('ttaRequests service', () => {
     let ownDraft;
     let otherRecipientDraft;
     let someoneElsesDraft;
+    let someoneElsesSubmitted;
 
     beforeAll(async () => {
-      [ownDraft, otherRecipientDraft, someoneElsesDraft] = await Promise.all([
-        createTtaRequest(
-          {
-            regionId: 1,
-            recipientId: recipient.id,
-            grantIds: [grantOne.id],
-            goalTemplateId: goalTemplate.id,
-            reviewerId: reviewer.id,
-          },
-          creator.id
-        ),
-        createTtaRequest({ regionId: 1, recipientId: otherRecipient.id }, creator.id),
-        createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
-      ]);
+      [ownDraft, otherRecipientDraft, someoneElsesDraft, someoneElsesSubmitted] = await Promise.all(
+        [
+          createTtaRequest(
+            {
+              regionId: 1,
+              recipientId: recipient.id,
+              grantIds: [grantOne.id],
+              goalTemplateId: goalTemplate.id,
+              reviewerId: reviewer.id,
+            },
+            creator.id
+          ),
+          createTtaRequest({ regionId: 1, recipientId: otherRecipient.id }, creator.id),
+          createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
+          createTtaRequest({ regionId: 1, recipientId: recipient.id }, reviewer.id),
+        ]
+      );
+      await TtaRequest.update(
+        { status: TTA_REQUEST_STATUSES.SUBMITTED, submittedAt: new Date() },
+        { where: { id: someoneElsesSubmitted.id } }
+      );
     });
 
     afterAll(async () => {
-      await TtaRequest.destroy({ where: { id: someoneElsesDraft.id }, force: true });
+      await TtaRequest.destroy({
+        where: { id: [someoneElsesDraft.id, someoneElsesSubmitted.id] },
+        force: true,
+      });
     });
 
     const scopesFor = async (filters) => {
@@ -303,6 +409,7 @@ describe('ttaRequests service', () => {
       expect(ids).toContain(ownDraft.id);
       expect(ids).toContain(otherRecipientDraft.id);
       expect(ids).not.toContain(someoneElsesDraft.id);
+      expect(ids).toContain(someoneElsesSubmitted.id);
 
       const row = rows.find((r) => r.id === ownDraft.id).toJSON();
       expect(row.displayId).toBe(`R01-REQ-${ownDraft.id}`);
@@ -310,6 +417,8 @@ describe('ttaRequests service', () => {
       expect(row.creator.id).toBe(creator.id);
       expect(row.reviewer.id).toBe(reviewer.id);
       expect(row.goalTemplate.id).toBe(goalTemplate.id);
+      // the tables show the goal's category
+      expect(row.goalTemplate).toHaveProperty('standard');
       expect(row.grants.map((g) => g.id)).toEqual([grantOne.id]);
     });
 
@@ -331,9 +440,137 @@ describe('ttaRequests service', () => {
     });
   });
 
+  describe('submitTtaRequest', () => {
+    let monitoringTemplate;
+
+    const complete = {
+      recipientId: null,
+      grantIds: [],
+      recipientAware: true,
+      originator: 'Recipient',
+      goalTemplateId: null,
+      citations: [],
+      context: '<p>Context</p>',
+      creatorNotes: '',
+      reviewerId: null,
+    };
+
+    beforeAll(async () => {
+      // standard is generated from the template name, and the monitoring template is unique
+      monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+      Object.assign(complete, {
+        recipientId: recipient.id,
+        grantIds: [grantOne.id],
+        goalTemplateId: goalTemplate.id,
+        reviewerId: reviewer.id,
+      });
+    });
+
+    it('saves the request and marks it submitted', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(draft, complete, creator.id);
+
+      expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(submitted.submittedAt).toBeInstanceOf(Date);
+      expect(submitted.recipient.id).toBe(recipient.id);
+      expect(submitted.grants.map((g) => g.id)).toEqual([grantOne.id]);
+      expect(submitted.reviewer.id).toBe(reviewer.id);
+      expect(submitted.context).toBe('<p>Context</p>');
+    });
+
+    it('rejects a reviewer who cannot review in the region', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await expect(
+        submitTtaRequest(draft, { ...complete, reviewerId: creator.id }, creator.id)
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('leaves the draft as it was when a rejected submission rolls back', async () => {
+      const draft = await createTtaRequest(
+        { regionId: 1, context: '<p>Before</p>', reviewerId: reviewer.id },
+        creator.id
+      );
+
+      // the route runs this in transactionWrapper, which rolls back when it throws
+      await expect(
+        db.sequelize.transaction(() =>
+          submitTtaRequest(
+            draft,
+            { ...complete, context: '<p>After</p>', reviewerId: creator.id },
+            creator.id
+          )
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(draft.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.DRAFT);
+      expect(stored.context).toBe('<p>Before</p>');
+      expect(stored.reviewerId).toBe(reviewer.id);
+      expect(stored.grants).toHaveLength(0);
+    });
+
+    it('rejects the monitoring goal without citations', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await expect(
+        submitTtaRequest(draft, { ...complete, goalTemplateId: monitoringTemplate.id }, creator.id)
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('submits the monitoring goal with citations', async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(
+        draft,
+        {
+          ...complete,
+          goalTemplateId: monitoringTemplate.id,
+          citations: [{ citation: '1302.47(b)(5)(iv)', findingType: 'Deficiency' }],
+        },
+        creator.id
+      );
+
+      expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+    });
+  });
+
   describe('ttaRequestById', () => {
     it('returns null for a missing request', async () => {
       expect(await ttaRequestById(0)).toBeNull();
+    });
+
+    it('names the creator and reviewer with their roles', async () => {
+      const grantsSpecialist = await Role.findOne({ where: { name: 'GS' } });
+      await UserRole.create({ userId: creator.id, roleId: grantsSpecialist.id });
+      const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
+
+      const found = await ttaRequestById(created.id);
+
+      expect(found.creator.fullName).toBe(`${creator.name}, GS`);
+      // the reviewer has no role, so it is just their name
+      expect(found.reviewer.fullName).toBe(reviewer.name);
+    });
+  });
+
+  describe('lockTtaRequest', () => {
+    it('holds the row until the transaction ends', async () => {
+      const created = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      await db.sequelize.transaction(async () => {
+        await lockTtaRequest(created.id);
+
+        // another transaction can't take the same lock while this one holds it
+        const lockedElsewhere = await db.sequelize.transaction(async (other) =>
+          TtaRequest.findByPk(created.id, {
+            lock: other.LOCK.NO_KEY_UPDATE,
+            skipLocked: true,
+            transaction: other,
+          })
+        );
+        expect(lockedElsewhere).toBeNull();
+      });
     });
   });
 });

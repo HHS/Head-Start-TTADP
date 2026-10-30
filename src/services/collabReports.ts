@@ -41,7 +41,9 @@ export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') =>
     Date_started: 'startDate',
     Created_date: 'createdAt',
     Last_saved: 'updatedAt',
-    Creator: sequelize.literal('"_1"'),
+    Creator: sequelize.literal(
+      '(SELECT "Users"."name" FROM "Users" WHERE "Users"."id" = "CollabReport"."userId")'
+    ),
     Collaborators: sequelize.literal(
       '(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'
     ),
@@ -306,7 +308,7 @@ export async function collabReportById(crId: string) {
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: ['id', 'status', 'note', 'updatedAt'],
         as: 'approvers',
         required: false,
         separate: true,
@@ -441,7 +443,7 @@ export async function getCSVReports({
         ['calculatedStatus', 'status'],
         [
           sequelize.literal(`(
-            SELECT array_agg("reasonId")
+            SELECT array_agg("reasonId" ORDER BY "id" ASC)
             FROM "CollabReportReasons"
             WHERE "CollabReportReasons"."collabReportId" = "CollabReport"."id"
             AND "CollabReportReasons"."deletedAt" IS NULL
@@ -449,7 +451,7 @@ export async function getCSVReports({
           'reportReasons',
         ],
       ],
-      exclude: ['calculatedStatus', 'submissionStatus', 'lastUpdatedById'],
+      exclude: ['lastUpdatedById'],
     },
     where: {
       [Op.and]: [standardScopes, customScopes],
@@ -482,7 +484,7 @@ export async function getCSVReports({
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: ['id', 'status', 'note', 'updatedAt'],
         as: 'approvers',
         required: false,
         include: [
@@ -501,6 +503,33 @@ export async function getCSVReports({
         ],
       },
       {
+        model: CollabReportActivityState,
+        as: 'activityStates',
+        attributes: ['activityStateCode'],
+        separate: true,
+        order: [['id', 'ASC']],
+      },
+      {
+        model: CollabReportDataUsed,
+        as: 'dataUsed',
+        attributes: ['collabReportDatum'],
+        separate: true,
+        order: [['id', 'ASC']],
+      },
+      {
+        model: CollabReportGoal,
+        as: 'reportGoals',
+        separate: true,
+        order: [['id', 'ASC']],
+        include: [
+          {
+            model: GoalTemplate,
+            as: 'goalTemplate',
+            attributes: ['id', 'standard'],
+          },
+        ],
+      },
+      {
         model: CollabReportStep,
         as: 'steps',
         required: false,
@@ -508,7 +537,7 @@ export async function getCSVReports({
       },
     ],
     limit: limit === 'all' ? null : Number(limit),
-    order,
+    order: [...order, [{ model: CollabReportStep, as: 'steps' }, 'id', 'ASC']],
   });
 }
 
@@ -534,6 +563,7 @@ export async function getReports({
   return CollabReport.findAndCountAll({
     attributes: [
       'id',
+      'userId',
       'name',
       'startDate',
       'createdAt',

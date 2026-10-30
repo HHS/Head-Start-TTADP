@@ -5,6 +5,7 @@ import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { parseCheckboxEvent } from '../Constants';
+import { toSortKey } from '../hooks/useWidgetSorting';
 import './HorizontalTableWidget.scss';
 import ContextMenu from '../components/ContextMenu';
 import HorizontalTableWidgetCell from './HorizontalTableWidgetCell';
@@ -13,6 +14,7 @@ export default function HorizontalTableWidget({
   headers,
   data,
   firstHeading,
+  firstHeadingSortKey,
   enableSorting,
   lastHeading,
   sortConfig,
@@ -62,7 +64,8 @@ export default function HorizontalTableWidget({
   // user pages through a selection that spans more than one page.
   const allCheckBoxesChecked = data.length > 0 && data.every((d) => checkboxes[d.id]);
 
-  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+  const getClassNamesFor = (name) =>
+    toSortKey(sortConfig.sortBy) === toSortKey(name) ? sortConfig.direction : '';
   const { hiddenSortIndicators } = sortConfig;
 
   const makeCheckboxes = (itemsArr, checked) =>
@@ -98,7 +101,7 @@ export default function HorizontalTableWidget({
             requestSort(sortKey);
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${name}. Activate to sort ${
+          aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
@@ -147,7 +150,8 @@ export default function HorizontalTableWidget({
 
   const Header = ({ header, sortingEnabled, className }) => {
     let displayName = header;
-    let name = header;
+    // only an explicit name overrides the sort key; otherwise it comes from the display name
+    let name = null;
 
     if (header.displayName) {
       displayName = header.displayName;
@@ -157,7 +161,7 @@ export default function HorizontalTableWidget({
       name = header.name;
     }
 
-    const key = displayName.replaceAll(' ', '_');
+    const key = toSortKey(displayName);
 
     if (sortingEnabled) {
       return renderSortableColumnHeader(displayName, key, name, className);
@@ -165,7 +169,7 @@ export default function HorizontalTableWidget({
 
     return (
       <th key={key} scope="col" className={`text-left data-header ${className}`.trim()}>
-        <span className="usa-sr-only">{name}</span>
+        <span className="usa-sr-only">{name || displayName}</span>
         <span aria-hidden="true">{displayName}</span>
       </th>
     );
@@ -251,8 +255,8 @@ export default function HorizontalTableWidget({
             {enableSorting ? (
               renderSortableColumnHeader(
                 firstHeading,
-                firstHeading.replaceAll(' ', '_'),
-                firstHeading,
+                toSortKey(firstHeading),
+                firstHeadingSortKey,
                 firstHeadingClasses()
               )
             ) : (
@@ -262,7 +266,9 @@ export default function HorizontalTableWidget({
               <Header
                 header={h}
                 key={`header-${uniqueId()}`}
-                sortingEnabled={enableSorting && !hiddenSortIndicators?.includes(h)}
+                sortingEnabled={
+                  enableSorting && !hiddenSortIndicators?.includes(h.displayName || h)
+                }
                 className={getStickyLastDataColumnClass(index === headers.length - 1)}
               />
             ))}
@@ -284,7 +290,7 @@ export default function HorizontalTableWidget({
                 return enableSorting ? (
                   renderSortableColumnHeader(
                     lastHeading,
-                    lastHeading.replaceAll(' ', '_'),
+                    toSortKey(lastHeading),
                     'total',
                     `${totalColumnStickyClass} border-bottom-0 bg-white position-0`.trim()
                   )
@@ -424,7 +430,15 @@ export default function HorizontalTableWidget({
 }
 
 HorizontalTableWidget.propTypes = {
-  headers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  headers: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        displayName: PropTypes.string,
+        name: PropTypes.string,
+      }),
+    ])
+  ).isRequired,
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -442,6 +456,7 @@ HorizontalTableWidget.propTypes = {
     PropTypes.shape({}),
   ]),
   firstHeading: PropTypes.string.isRequired,
+  firstHeadingSortKey: PropTypes.string,
   selectAllIdPrefix: PropTypes.string,
   lastHeading: PropTypes.string,
   sortConfig: PropTypes.shape({
@@ -472,6 +487,7 @@ HorizontalTableWidget.propTypes = {
 
 HorizontalTableWidget.defaultProps = {
   footerData: false,
+  firstHeadingSortKey: null,
   data: [],
   lastHeading: 'Total',
   sortConfig: {

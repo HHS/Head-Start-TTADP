@@ -1,21 +1,45 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import { GOAL_COLLABORATORS } from '../../../constants';
 import db from '../../../models';
-import { createGrant, createRecipient, createUser, getUniqueId } from '../../../testUtils';
+import { createGrant, createRecipient, createReport, createUser } from '../../../testUtils';
 import { findOrCreateCollaborator } from '../genericCollaborator';
 
-const { sequelize, Goal, GoalCollaborator, Grant, Recipient, User } = db;
+const {
+  sequelize,
+  ActivityReport,
+  Goal,
+  GoalCollaborator,
+  GoalCollaboratorActivityReport,
+  Grant,
+  Recipient,
+  User,
+} = db;
 
 describe('findOrCreateCollaborator concurrency', () => {
   let recipient;
   let grant;
   let goal;
   let user;
+  let reportIds;
 
   beforeAll(async () => {
     recipient = await createRecipient();
     grant = await createGrant({ recipientId: recipient.id });
     goal = await Goal.create({ grantId: grant.id, name: 'concurrency test goal' });
     user = await createUser();
+    // Collaborator links reference real reports.
+    const reports = await Promise.all(
+      [1, 2].map(() =>
+        createReport({
+          activityRecipients: [],
+          userId: user.id,
+          regionId: grant.regionId,
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        })
+      )
+    );
+    reportIds = reports.map((report) => report.id);
   });
 
   afterAll(async () => {
@@ -25,6 +49,7 @@ describe('findOrCreateCollaborator concurrency', () => {
       force: true,
     });
     await Goal.destroy({ where: { id: goal.id }, individualHooks: false, force: true });
+    await ActivityReport.destroy({ where: { id: reportIds }, individualHooks: false, force: true });
     await User.destroy({ where: { id: user.id } });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
     await Recipient.destroy({ where: { id: recipient.id }, force: true });
@@ -39,9 +64,8 @@ describe('findOrCreateCollaborator concurrency', () => {
     });
   });
 
-  it('creates exactly one row and merges linkBack when two requests race', async () => {
-    const reportIdA = getUniqueId();
-    const reportIdB = getUniqueId();
+  it('creates exactly one row and links both reports when two requests race', async () => {
+    const [reportIdA, reportIdB] = reportIds;
 
     const [resultA, resultB] = await Promise.all([
       findOrCreateCollaborator(
@@ -72,13 +96,17 @@ describe('findOrCreateCollaborator concurrency', () => {
     expect(resultA).toBeDefined();
     expect(resultB).toBeDefined();
 
-    // Neither concurrent linkBack merge should have clobbered the other's contribution.
-    const finalLinkBack = rows[0].linkBack;
-    expect(finalLinkBack.activityReportIds).toEqual(expect.arrayContaining([reportIdA, reportIdB]));
+    // Neither concurrent call should have lost the other's report link.
+    const links = await GoalCollaboratorActivityReport.findAll({
+      where: { goalCollaboratorId: rows[0].id },
+    });
+    expect(links.map((link) => link.activityReportId).sort((a, b) => a - b)).toEqual(
+      [reportIdA, reportIdB].sort((a, b) => a - b)
+    );
   });
 
   it('joins the caller-provided transaction instead of opening its own', async () => {
-    const reportId = getUniqueId();
+    const [reportId] = reportIds;
 
     const where = { goalId: goal.id, userId: user.id };
 

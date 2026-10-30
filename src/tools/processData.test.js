@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -427,6 +428,28 @@ describe('processData', () => {
       expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email);
     });
 
+    it('handles generated specialist names containing single quotes', async () => {
+      await Grant.update(
+        {
+          // earlier tests already anonymized this grant's number, so restore it to be selected
+          number: '01GN011411',
+          grantSpecialistName: 'Quote Tester',
+          grantSpecialistEmail: 'quote.tester@apostrophe.test',
+        },
+        { where: { id: GRANT_ID_TWO } }
+      );
+      const fullNameSpy = jest.spyOn(faker.person, 'fullName').mockReturnValue("Dana O'Keefe");
+
+      try {
+        await hideRecipientsGrants(reportObject.imported.granteeName);
+      } finally {
+        fullNameSpy.mockRestore();
+      }
+
+      const transformedGrant = await Grant.findOne({ where: { id: GRANT_ID_TWO } });
+      expect(transformedGrant.grantSpecialistName).toBe("Dana O'Keefe");
+    });
+
     it('updates grant numbers in the GrantNumberLink table', async () => {
       const grantNumberLinkRecordBefore = await GrantNumberLink.findOne({
         where: { grantId: GRANT_ID_ONE },
@@ -652,6 +675,29 @@ describe('processData', () => {
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
     });
+
+    it('repoints grant specialists to the updated bootstrapped user', async () => {
+      const user = await User.findOne({ where: { hsesUserId: '51113' } });
+      const anonymizedEmail = 'no-send_bootstrap.specialist@test.com';
+      await user.update({ email: anonymizedEmail });
+      await Grant.update(
+        {
+          programSpecialistName: 'Anonymized Name',
+          programSpecialistEmail: anonymizedEmail.toUpperCase(),
+          grantSpecialistName: 'Anonymized Name',
+          grantSpecialistEmail: anonymizedEmail,
+        },
+        { where: { id: GRANT_ID_TWO } }
+      );
+
+      await bootstrapUsers();
+
+      const grant = await Grant.findOne({ where: { id: GRANT_ID_TWO } });
+      expect(grant.programSpecialistName).toBe('Kelly tta');
+      expect(grant.programSpecialistEmail).toBe('kelly.born@adhocteam.us');
+      expect(grant.grantSpecialistName).toBe('Kelly tta');
+      expect(grant.grantSpecialistEmail).toBe('kelly.born@adhocteam.us');
+    });
   });
 
   describe('convertName', () => {
@@ -662,6 +708,36 @@ describe('processData', () => {
         id: expect.any(Number),
         name: expect.any(String),
       });
+    });
+
+    it('maps a program specialist to their anonymized user regardless of email casing', async () => {
+      await User.update(
+        { email: mockCollaboratorOne.email },
+        { where: { id: mockCollaboratorOne.id } }
+      );
+      await hideUsers([mockCollaboratorOne.id]);
+      const transformedUser = await User.findOne({ where: { id: mockCollaboratorOne.id } });
+
+      const specialist = convertName('Some Name', ` ${mockCollaboratorOne.email.toUpperCase()} `);
+      expect(specialist.id).toBe(mockCollaboratorOne.id);
+      expect(specialist.name).toBe(transformedUser.name);
+      expect(specialist.email).toBe(transformedUser.email);
+    });
+
+    it('gives each specialist not in the hub their own consistent identity', () => {
+      const first = convertName('First Person', 'first.person@test.com');
+      const second = convertName('Second Person', 'second.person@test.com');
+      const firstAgain = convertName('First Person', 'First.Person@test.com');
+
+      expect(first).not.toEqual(second);
+      expect(firstAgain).toBe(first);
+      expect(first.email).not.toBe('first.person@test.com');
+    });
+
+    it('handles a program specialist without an email', () => {
+      const specialist = convertName('No Email', null);
+      expect(specialist.name).not.toBe('No Email');
+      expect(specialist.email).toBeNull();
     });
   });
 });

@@ -8,7 +8,7 @@ import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
-import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR } from '../constants';
+import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR, SUBMIT_ERROR } from '../constants';
 import TtaRequestForm from '../index';
 
 // eslint-disable-next-line react/prop-types
@@ -85,7 +85,7 @@ const CITATIONS = [
   },
 ];
 
-const APPROVERS = [
+const REVIEWERS = [
   { id: 5, name: 'Rachel Green' },
   { id: 6, name: 'Ross Geller' },
 ];
@@ -93,7 +93,7 @@ const APPROVERS = [
 const mockFetches = () => {
   fetchMock.get('begin:/api/goal-templates', [MONITORING_GOAL, OTHER_GOAL]);
   fetchMock.get('begin:/api/citations/region', CITATIONS);
-  fetchMock.get('begin:/api/activity-reports/approvers', APPROVERS);
+  fetchMock.get('begin:/api/tta-requests/region/', REVIEWERS);
   fetchMock.get('begin:/api/feeds/item', '');
 };
 
@@ -231,13 +231,13 @@ describe('TtaRequestForm', () => {
   it('takes the region from the chosen grant when it was not given one', async () => {
     renderForm({ recipientOptions: [RECIPIENT] });
 
-    expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(false);
+    expect(fetchMock.called('begin:/api/tta-requests/region/')).toBe(false);
 
     await selectEvent.select(screen.getByLabelText(/recipient/i), 'Children and Families First');
 
-    // the grant is in region 14, so that is whose approvers and goals are offered
+    // the grant is in region 14, so that is whose reviewers and goals are offered
     await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers?region=14')).toBe(true);
+      expect(fetchMock.called('begin:/api/tta-requests/region/14/reviewers')).toBe(true);
     });
     expect(fetchMock.called('begin:/api/goal-templates')).toBe(true);
   });
@@ -387,6 +387,17 @@ describe('TtaRequestForm', () => {
     expect(screen.getByText('Regional Office')).toBeVisible();
     expect(screen.getByText(OTHER_GOAL.name)).toBeVisible();
     expect(screen.getByText('Ross Geller')).toBeVisible();
+  });
+
+  it('sends a submitted request to its read-only view', async () => {
+    fetchMock.get('/api/tta-requests/42', { ...SAVED_REQUEST, status: 'submitted' });
+    const history = renderFormAt('/tta-requests/42', {
+      recipient: RECIPIENT,
+      recipientOptions: [RECIPIENT],
+      regionId: 14,
+    });
+
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
   });
 
   it('saves to the draft in the route after moving from one draft to another', async () => {
@@ -560,7 +571,7 @@ describe('TtaRequestForm', () => {
 
     expect(await screen.findByDisplayValue('Saved notes')).toBeVisible();
     await waitFor(() => {
-      expect(fetchMock.called('/api/activity-reports/approvers?region=14')).toBe(true);
+      expect(fetchMock.called('begin:/api/tta-requests/region/14/reviewers')).toBe(true);
     });
   });
 
@@ -776,10 +787,7 @@ describe('TtaRequestForm', () => {
     }
   });
 
-  it('returns to the list once a complete request is submitted', async () => {
-    const history = createMemoryHistory();
-    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
-
+  const fillCompleteRequest = async () => {
     userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
     await selectEvent.select(screen.getByLabelText(/who originated this request/i), 'TTA Staff');
     await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
@@ -788,20 +796,90 @@ describe('TtaRequestForm', () => {
       'Some context'
     );
     await selectEvent.select(screen.getByLabelText(/reviewing ttac or manager/i), 'Rachel Green');
+  };
 
+  it('creates, submits and returns to the list with a message once a request is submitted', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42/submit', { ...SAVED_REQUEST, status: 'submitted' });
+    const history = createMemoryHistory();
+    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
+
+    await fillCompleteRequest();
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() => {
       expect(history.location.pathname).toBe(BACK_LINK);
     });
+    expect(history.location.state.message).toEqual({
+      reportId: 42,
+      displayId: 'R14-REQ-42',
+      time: expect.stringMatching(/^\d{2}\/\d{2}\/\d{4} at \d{1,2}:\d{2} (am|pm) \w+$/),
+      status: 'submitted',
+    });
+    const submitted = JSON.parse(fetchMock.lastOptions('/api/tta-requests/42/submit').body);
+    expect(submitted).toEqual(
+      expect.objectContaining({
+        recipientAware: true,
+        originator: 'TTA Staff',
+        context: 'Some context',
+      })
+    );
+    expect(mockSetAppLoadingText).toHaveBeenCalledWith('Submitting');
+    expect(mockSetIsAppLoading).toHaveBeenLastCalledWith(false);
   });
 
-  it('offers the region approvers as reviewers', async () => {
+  it('submits a saved draft without creating another', async () => {
+    fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42/submit', { ...SAVED_REQUEST, status: 'submitted' });
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    const history = renderFormAt('/tta-requests/42', { recipientOptions: [RECIPIENT] });
+
+    await screen.findByRole('button', { name: 'Submit' });
+    await fillCompleteRequest();
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(history.location.pathname).toBe('/tta-requests');
+    });
+    expect(fetchMock.called('/api/tta-requests', { method: 'POST' })).toBe(false);
+    expect(history.location.state.message.reportId).toBe(42);
+  });
+
+  it('stays on the form and says so when the submit fails', async () => {
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42/submit', 500);
+    const history = createMemoryHistory();
+    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
+
+    await fillCompleteRequest();
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText(SUBMIT_ERROR)).toBeVisible();
+    expect(history.location.pathname).not.toBe(BACK_LINK);
+    expect(mockSetIsAppLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it('shows why the server refused the submit', async () => {
+    const reason = 'The reviewer must be able to review TTA requests in the request region';
+    fetchMock.post('/api/tta-requests', SAVED_REQUEST);
+    fetchMock.put('/api/tta-requests/42/submit', { status: 400, body: { error: reason } });
+    const history = createMemoryHistory();
+    renderForm({ recipient: RECIPIENT, regionId: 14 }, history);
+
+    await fillCompleteRequest();
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText(reason)).toBeVisible();
+    expect(screen.queryByText(SUBMIT_ERROR)).toBeNull();
+    expect(history.location.pathname).not.toBe(BACK_LINK);
+  });
+
+  it('offers the region reviewers', async () => {
     renderForm({ recipient: RECIPIENT, regionId: 14 });
 
     const reviewer = screen.getByLabelText(/reviewing ttac or manager/i);
     await waitFor(() => {
-      expect(fetchMock.called('begin:/api/activity-reports/approvers')).toBe(true);
+      expect(fetchMock.called('begin:/api/tta-requests/region/')).toBe(true);
     });
 
     selectEvent.openMenu(reviewer);
