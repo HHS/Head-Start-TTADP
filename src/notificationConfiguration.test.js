@@ -413,7 +413,7 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('linkFn returns the session form path', () => {
       expect(config.linkFn({ displayId: 'R01-TR-1234', id: 55 })).toBe(
-        '/training-report/R01-TR-1234/session/55'
+        '/training-report/R01-TR-1234/session/55/review'
       );
     });
 
@@ -453,13 +453,21 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       expect(config.actionable).toBe(false);
     });
 
-    it('linkFn returns the training report view path with the display id', () => {
-      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe('/training-report/view/R01-TR-1234');
+    it('linkFn returns the session form path', () => {
+      expect(config.linkFn({ displayId: 'R01-TR-1234', id: 55 })).toBe(
+        '/training-report/R01-TR-1234/session/55/review'
+      );
     });
 
     it('linkText and archiveLabel return "View TR"', () => {
       expect(config.linkText()).toBe('View TR');
       expect(config.archiveLabel()).toBe('View TR');
+    });
+
+    it('archiveLinkFn returns the Training Report view path', () => {
+      expect(config.archiveLinkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/view/R01-TR-1234'
+      );
     });
 
     it('uses the inAppWhenSessionChangesRequestedTrainingReport setting', () => {

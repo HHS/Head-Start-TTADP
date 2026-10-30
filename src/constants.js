@@ -304,7 +304,7 @@ const NOTIFICATION_CONFIGURATION = {
     textFn: ({ approver, sessionName }) =>
       `${approver} has requested changes to session ${sessionName}.`,
     actionable: true,
-    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}`,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
     linkText: () => 'Take action',
     archiveLabel: () => 'View TR',
     // the archived CTA reads "View TR", and the session it pointed at may have been deleted
@@ -316,9 +316,11 @@ const NOTIFICATION_CONFIGURATION = {
     textFn: ({ approver, sessionName }) =>
       `${approver} has requested changes to session ${sessionName}.`,
     actionable: false,
-    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
     linkText: () => 'View TR',
     archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
