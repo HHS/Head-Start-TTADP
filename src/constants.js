@@ -317,7 +317,7 @@ const NOTIFICATION_CONFIGURATION = {
       `${approver} has requested changes to session ${sessionName}.`,
     actionable: false,
     linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
-    linkText: () => 'View TR',
+    linkText: () => 'Take action',
     archiveLabel: () => 'View TR',
     // the session it pointed at may have been deleted
     archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,

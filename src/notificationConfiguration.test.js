@@ -459,8 +459,8 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       );
     });
 
-    it('linkText and archiveLabel return "View TR"', () => {
-      expect(config.linkText()).toBe('View TR');
+    it('linkText returns "Take action" and archiveLabel returns "View TR"', () => {
+      expect(config.linkText()).toBe('Take action');
       expect(config.archiveLabel()).toBe('View TR');
     });
 
