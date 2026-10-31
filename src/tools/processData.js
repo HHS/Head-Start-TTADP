@@ -6,7 +6,14 @@
 
 import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
-import { Permission, RequestErrors, sequelize, User } from '../models';
+import {
+  Notification,
+  NotificationUserState,
+  Permission,
+  RequestErrors,
+  sequelize,
+  User,
+} from '../models';
 
 // Define constants representing different permission scopes that can be assigned to users
 const { SITE_ACCESS, ADMIN, READ_WRITE_REPORTS, READ_REPORTS, APPROVE_REPORTS } = SCOPES;
@@ -17,7 +24,8 @@ const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter((scopeId) => scopeId !==
 
 /**
  * The processData script is responsible for anonymizing sensitive user data, including names,
- * emails, recipient information, grant details, and certain HTML fields.
+ * emails, recipient information, grant details, and certain HTML fields. Notifications are
+ * deleted rather than anonymized, since their text is stored pre-rendered with names.
  * This anonymization ensures that the resulting database, which can then be restored in
  * non-production environments, preserves existing relationships and non-personally identifiable
  * information (non-PII) data.
@@ -896,6 +904,13 @@ export const processFiles = async () =>
   WHERE "originalFileName" IS NOT NULL;
 `);
 
+// Notification text is stored pre-rendered with user and recipient names, so it can't be
+// anonymized in place; remove notifications from non-production copies instead
+export const deleteNotifications = async () => {
+  await NotificationUserState.destroy({ where: {}, truncate: true });
+  await Notification.destroy({ where: {}, truncate: true, cascade: true });
+};
+
 // Function to process and anonymize sensitive data in Activity Reports by replacing specific
 // fields with generated fake data
 export const processActivityReports = async (where = '') =>
@@ -1232,6 +1247,9 @@ const processData = async (mockReport) =>
       where: {},
       truncate: true,
     });
+
+    // Delete all notifications, which contain real user and recipient names
+    await deleteNotifications();
 
     // Drop the database functions used for data processing
     await processHtmlDrop();
