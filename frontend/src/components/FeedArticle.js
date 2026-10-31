@@ -9,7 +9,14 @@ const TAG_CLASSES = {
   UL: 'usa-list',
 };
 
-const FeedArticle = ({ title, content, unread, partial, openLinksInNewTab, hideEmptyParagraphs }) => {
+const FeedArticle = ({
+  title,
+  content,
+  unread,
+  partial,
+  openLinksInNewTab,
+  hideEmptyParagraphs,
+}) => {
   /**
    * to match the styling in the design system, we attach USWDS classes to the
    * appropriate elements
@@ -27,7 +34,11 @@ const FeedArticle = ({ title, content, unread, partial, openLinksInNewTab, hideE
         tag.classList.add(tagClass);
       }
       // Hide paragraphs that contain only &nbsp; or whitespace (common Confluence spacers)
-      if (hideEmptyParagraphs && tag.tagName === 'P' && tag.textContent.replace(/\u00a0/g, '').trim() === '') {
+      if (
+        hideEmptyParagraphs &&
+        tag.tagName === 'P' &&
+        tag.textContent.replace(/\u00a0/g, '').trim() === ''
+      ) {
         tag.style.display = 'none';
       }
     });

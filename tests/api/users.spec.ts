@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 
@@ -14,10 +14,9 @@ test.describe('get /users/collaborators', () => {
   });
 
   test('home region - 200 case', async ({ request }) => {
-    const response = await request.get(
-      `${root}/users/collaborators?region=14`,
-      { headers: { 'playwright-user-id': '1' } }
-    );
+    const response = await request.get(`${root}/users/collaborators?region=14`, {
+      headers: { 'playwright-user-id': '1' },
+    });
     expect(response.status()).toBe(200);
     const schema = Joi.array().items(Joi.any());
     await validateSchema(response, schema, expect);
@@ -32,7 +31,7 @@ test.describe('get /users/stateCodes', () => {
   test('403', async ({ request }) => {
     const response = await request.get(
       `${root}/users/stateCodes`,
-      { headers: { 'playwright-user-id': '2' } }, // has no home region
+      { headers: { 'playwright-user-id': '2' } } // has no home region
     );
     expect(response.status()).toBe(403);
   });
@@ -46,7 +45,7 @@ test.describe('get /users/active-users', () => {
   test('200', async ({ request }) => {
     const response = await request.get(
       `${root}/users/active-users`,
-      { headers: { 'playwright-user-id': '1' } }, // has no home region
+      { headers: { 'playwright-user-id': '1' } } // has no home region
     );
     expect(response.status()).toBe(200);
 
@@ -63,7 +62,7 @@ test.describe('get /users/training-report-users', () => {
   test('200', async ({ request }) => {
     const response = await request.get(
       `${root}/users/training-report-users?regionId=1`,
-      { headers: { 'playwright-user-id': '1' } }, // has no home region
+      { headers: { 'playwright-user-id': '1' } } // has no home region
     );
     expect(response.status()).toBe(200);
 
@@ -85,7 +84,7 @@ test.describe('get /users/names', () => {
   test('200', async ({ request }) => {
     const response = await request.get(
       `${root}/users/names?ids=1&ids=2`,
-      { headers: { 'playwright-user-id': '1' } }, // has no home region
+      { headers: { 'playwright-user-id': '1' } } // has no home region
     );
     expect(response.status()).toBe(200);
 

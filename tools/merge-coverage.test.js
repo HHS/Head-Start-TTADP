@@ -63,9 +63,7 @@ describe('merge-coverage script', () => {
 
   describe('mergeCoverageFiles', () => {
     it('should throw an error when coverageFiles is empty', () => {
-      expect(() => mergeCoverageFiles([])).toThrow(
-        'No coverage-final.json files found to merge.',
-      );
+      expect(() => mergeCoverageFiles([])).toThrow('No coverage-final.json files found to merge.');
     });
 
     it('should merge coverage files correctly', () => {
@@ -129,8 +127,12 @@ describe('merge-coverage script', () => {
   describe('writeMergedCoverage', () => {
     it('should write the merged coverage data to the specified file', () => {
       const mergedCoverage = {
-        'file1.js': { /* coverage data */ },
-        'file2.js': { /* coverage data */ },
+        'file1.js': {
+          /* coverage data */
+        },
+        'file2.js': {
+          /* coverage data */
+        },
       };
 
       const mergedCoverageFile = pathModule.join(tmpDir, 'coverage-final.json');
@@ -191,11 +193,11 @@ describe('merge-coverage script', () => {
 
       fs.writeFileSync(
         pathModule.join(coverageDir1, 'coverage-final.json'),
-        JSON.stringify(coverageData1),
+        JSON.stringify(coverageData1)
       );
       fs.writeFileSync(
         pathModule.join(coverageDir2, 'coverage-final.json'),
-        JSON.stringify(coverageData2),
+        JSON.stringify(coverageData2)
       );
 
       const mergedCoverageFile = pathModule.join(tmpDir, 'coverage-final.json');
@@ -206,18 +208,12 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Found coverage files:', expect.any(Array));
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.log).toHaveBeenCalledWith('Writing merged coverage report...');
-      expect(console.log).toHaveBeenCalledWith(
-        `Merged coverage written to ${mergedCoverageFile}`,
-      );
-      expect(console.log).toHaveBeenCalledWith(
-        'Coverage merging completed successfully.',
-      );
+      expect(console.log).toHaveBeenCalledWith(`Merged coverage written to ${mergedCoverageFile}`);
+      expect(console.log).toHaveBeenCalledWith('Coverage merging completed successfully.');
       expect(process.exit).not.toHaveBeenCalled();
 
       // Verify that the merged coverage file was written
-      const mergedCoverage = JSON.parse(
-        fs.readFileSync(mergedCoverageFile, 'utf8'),
-      );
+      const mergedCoverage = JSON.parse(fs.readFileSync(mergedCoverageFile, 'utf8'));
       expect(mergedCoverage['file1.js']).toBeDefined();
       expect(mergedCoverage['file2.js']).toBeDefined();
     });
@@ -232,7 +228,7 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.error).toHaveBeenCalledWith(
         'Error during coverage merging:',
-        'No coverage-final.json files found to merge.',
+        'No coverage-final.json files found to merge.'
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });

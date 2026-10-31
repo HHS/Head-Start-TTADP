@@ -79,8 +79,8 @@ const patternConfigByStatusKey = createPatternConfig().reduce((acc, config) => {
 const getPatternConfigByStatusKey = (statusKey = '') => patternConfigByStatusKey[statusKey] || null;
 
 export {
-  nodeColorByStatusKey,
-  patternIdByStatusKey,
   createPatternConfig,
   getPatternConfigByStatusKey,
+  nodeColorByStatusKey,
+  patternIdByStatusKey,
 };

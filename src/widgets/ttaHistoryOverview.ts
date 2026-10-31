@@ -1,6 +1,6 @@
+import { formatNumber, parseFormattedNumber } from './helpers';
 import overview from './overview';
 import trSessionsForRecipient from './trSessionsForRecipient';
-import { formatNumber, parseFormattedNumber } from './helpers';
 import type { IScopes } from './types';
 
 /**
@@ -28,24 +28,19 @@ export default async function ttaHistoryOverview(
   // src/routes/widgets/handlers.js; not currently used by this widget.
   _query: Record<string, unknown>
 ): Promise<Record<string, string | number> & { numSessions: string }> {
-  const [arData, trData] = await Promise.all([
-    overview(scopes),
-    trSessionsForRecipient(scopes),
-  ]);
+  const [arData, trData] = await Promise.all([overview(scopes), trSessionsForRecipient(scopes)]);
 
   // `overview` returns AR aggregates as locale-formatted strings (e.g.
   // "1,234.5"), so use `parseFormattedNumber` to strip thousands separators
   // and coerce to a number before summing with the raw numeric TR values.
   const combinedSumDuration = formatNumber(
     parseFormattedNumber(arData.sumDuration) + trData.sumDuration,
-    1,
+    1
   );
   const combinedNumParticipants = formatNumber(
-    parseFormattedNumber(arData.numParticipants) + trData.numParticipants,
+    parseFormattedNumber(arData.numParticipants) + trData.numParticipants
   );
-  const combinedInPerson = formatNumber(
-    parseFormattedNumber(arData.inPerson) + trData.numInPerson,
-  );
+  const combinedInPerson = formatNumber(parseFormattedNumber(arData.inPerson) + trData.numInPerson);
 
   return {
     ...arData,

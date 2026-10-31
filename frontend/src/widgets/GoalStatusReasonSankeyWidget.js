@@ -6,6 +6,7 @@ import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import NoResultsFound from '../components/NoResultsFound';
+import SimpleSortableTable from '../components/SimpleSortableTable';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -17,7 +18,6 @@ import {
   nodeColorByStatusKey,
 } from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
-import SimpleSortableTable from '../components/SimpleSortableTable';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
 const MAX_WIDTH_SMALL = 850;
@@ -68,7 +68,7 @@ const getLegendSwatchStyle = (statusKey) => {
     // Suspended intentionally follows the link color from the mockup.
     backgroundColor: LEGEND_USES_PATTERN_COLOR.has(statusKey)
       ? patternConfig.baseColor
-      : (nodeColorByStatusKey[statusKey] || patternConfig.baseColor),
+      : nodeColorByStatusKey[statusKey] || patternConfig.baseColor,
   };
 
   if (!patternConfig.stripePath) {

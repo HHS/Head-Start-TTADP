@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { ApprovedARAndTRByGoalCategory } from '../ApprovedARAndTRByGoalCategory';
@@ -29,16 +29,14 @@ describe('ApprovedARAndTRByGoalCategory', () => {
   it('renders the widget title', () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
     const titles = screen.getAllByText(
-      'Approved Activity Reports and Training Session Reports by goal category',
+      'Approved Activity Reports and Training Session Reports by goal category'
     );
     expect(titles.length).toBeGreaterThan(0);
   });
 
   it('renders the description subtitle', () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
-    expect(
-      screen.getByText('Data reflects activity starting on 09/01/2025.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Data reflects activity starting on 09/01/2025.')).toBeInTheDocument();
   });
 
   it('renders the About this data button', () => {
@@ -103,28 +101,46 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     // Open Actions and click Display table
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     // Now switch back to graph
     const menuButton2 = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton2); });
+    act(() => {
+      userEvent.click(menuButton2);
+    });
     const displayGraphButton = await screen.findByRole('button', { name: /display graph/i });
-    act(() => { userEvent.click(displayGraphButton); });
+    act(() => {
+      userEvent.click(displayGraphButton);
+    });
 
     // Graph checkboxes should be visible again
     expect(screen.getByTestId('graph-checkboxes')).toBeInTheDocument();
   });
 
   it('shows no results found when all category totals are zero', () => {
-    const zeroCounts = mockData.map((d) => ({ ...d, activityReportCount: 0, sessionReportCount: 0, total: 0 }));
+    const zeroCounts = mockData.map((d) => ({
+      ...d,
+      activityReportCount: 0,
+      sessionReportCount: 0,
+      total: 0,
+    }));
     render(<ApprovedARAndTRByGoalCategory data={zeroCounts} loading={false} />);
     expect(screen.getByText(/no results found/i)).toBeInTheDocument();
   });
 
   it('hides the actions menu when there are no results', () => {
-    const zeroCounts = mockData.map((d) => ({ ...d, activityReportCount: 0, sessionReportCount: 0, total: 0 }));
+    const zeroCounts = mockData.map((d) => ({
+      ...d,
+      activityReportCount: 0,
+      sessionReportCount: 0,
+      total: 0,
+    }));
     render(<ApprovedARAndTRByGoalCategory data={zeroCounts} loading={false} />);
     expect(screen.queryByRole('button', { name: /open actions/i })).not.toBeInTheDocument();
   });
@@ -145,9 +161,13 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     const arHeadings = await screen.findAllByText('Number of Activity Reports');
     expect(arHeadings.length).toBeGreaterThan(0);
@@ -163,13 +183,19 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     // Click the Goal category column header to sort ascending
     const goalCategoryBtn = await screen.findByText('Goal category');
-    act(() => { fireEvent.click(goalCategoryBtn); });
+    act(() => {
+      fireEvent.click(goalCategoryBtn);
+    });
     expect(goalCategoryBtn).toBeInTheDocument();
   });
 
@@ -178,16 +204,24 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     // First click: sort ascending
     const goalCategoryBtn = await screen.findByText('Goal category');
-    act(() => { fireEvent.click(goalCategoryBtn); });
+    act(() => {
+      fireEvent.click(goalCategoryBtn);
+    });
 
     // Second click: toggle to descending
-    act(() => { fireEvent.click(goalCategoryBtn); });
+    act(() => {
+      fireEvent.click(goalCategoryBtn);
+    });
     expect(goalCategoryBtn).toBeInTheDocument();
   });
 
@@ -196,9 +230,13 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     // Sort dropdown should still be visible in table view
     expect(screen.getByRole('combobox', { name: /sort by/i })).toBeInTheDocument();
@@ -215,9 +253,13 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     render(<ApprovedARAndTRByGoalCategory data={[...mockData, ...tiedData]} loading={false} />);
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     await screen.findByRole('table');
 
@@ -248,9 +290,13 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     render(<ApprovedARAndTRByGoalCategory data={data} loading={false} />);
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     await screen.findByRole('table');
 
@@ -277,9 +323,13 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     render(<ApprovedARAndTRByGoalCategory data={tiedData} loading={false} />);
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
-    act(() => { userEvent.click(menuButton); });
+    act(() => {
+      userEvent.click(menuButton);
+    });
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
-    act(() => { userEvent.click(viewTableButton); });
+    act(() => {
+      userEvent.click(viewTableButton);
+    });
 
     await screen.findByRole('table');
 

@@ -45,7 +45,7 @@ describe('ContentFromFeedByTag', () => {
     content = DEFAULT_RESPONSE,
     selector = null,
     openLinksInNewTab = false,
-    hideEmptyParagraphs = false,
+    hideEmptyParagraphs = false
   ) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
     // eslint-disable-next-line max-len

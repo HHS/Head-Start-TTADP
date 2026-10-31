@@ -265,7 +265,7 @@ function dashboardGoalWhere(scopes) {
           { createdVia: { [Op.ne]: 'activityReport' } },
           { createdVia: null },
         ],
-      }
+      },
     ],
   };
 }

@@ -202,7 +202,9 @@ describe('GoalDashboard page', () => {
 
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
     await waitForGoalCardsFetch();
-    expect(screen.getByText('Data reflects standard goals created on or after 09/01/2025.')).toBeVisible();
+    expect(
+      screen.getByText('Data reflects standard goals created on or after 09/01/2025.')
+    ).toBeVisible();
 
     const sort = screen.getByLabelText('Sort by');
     expect(sort).toHaveValue('goalStatus-asc');

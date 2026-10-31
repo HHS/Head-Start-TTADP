@@ -31,8 +31,9 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
   } = data || {};
 
   if (deliveryMethod === 'hybrid') {
-    return (Number(numberOfParticipantsInPerson) || 0)
-      + (Number(numberOfParticipantsVirtually) || 0);
+    return (
+      (Number(numberOfParticipantsInPerson) || 0) + (Number(numberOfParticipantsVirtually) || 0)
+    );
   }
 
   return Number(numberOfParticipants) || 0;
@@ -59,9 +60,7 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
  * intentionally excluded so the combined "In person activities" widget stays
  * consistent with the AR-only behavior.
  */
-export default async function trSessionsForRecipient(
-  scopes: IScopes
-): Promise<{
+export default async function trSessionsForRecipient(scopes: IScopes): Promise<{
   numSessions: string;
   sumDuration: number;
   numParticipants: number;
@@ -85,7 +84,10 @@ export default async function trSessionsForRecipient(
 
   if (grantIdList.length === 0) {
     return {
-      numSessions: '0', sumDuration: 0, numParticipants: 0, numInPerson: 0,
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 0,
+      numInPerson: 0,
     };
   }
 
@@ -129,35 +131,43 @@ export default async function trSessionsForRecipient(
   // number in JSONB, but we parseFloat defensively to match the activity report
   // overview's handling of legacy/string-typed durations.
   const sumDuration = reports.reduce(
-    (sum, r) => sum + r.sessionReports.reduce(
-      (sessionSum, s) => sessionSum + (parseFloat(s.data?.duration as string) || 0),
-      0,
-    ),
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.reduce(
+        (sessionSum, s) => sessionSum + (parseFloat(s.data?.duration as string) || 0),
+        0
+      ),
+    0
   );
 
   // Sum participants across every matching session using the same per-delivery-method
   // logic as `trOverview`, so the combined widget value stays consistent with the
   // global TR overview.
   const numParticipants = reports.reduce(
-    (sum, r) => sum + r.sessionReports.reduce(
-      (sessionSum, s) => sessionSum + getSessionParticipantCount(s.data),
-      0,
-    ),
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.reduce(
+        (sessionSum, s) => sessionSum + getSessionParticipantCount(s.data),
+        0
+      ),
+    0
   );
 
   // Count sessions whose delivery method is strictly 'in-person', mirroring the
   // AR overview's equality check so the combined "In person activities" widget
   // counts AR and TR sessions the same way.
   const numInPerson = reports.reduce(
-    (sum, r) => sum + r.sessionReports.filter(
-      (s) => (s.data?.deliveryMethod || '').toLowerCase() === 'in-person',
-    ).length,
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.filter((s) => (s.data?.deliveryMethod || '').toLowerCase() === 'in-person')
+        .length,
+    0
   );
 
   return {
-    numSessions: formatNumber(numSessions), sumDuration, numParticipants, numInPerson,
+    numSessions: formatNumber(numSessions),
+    sumDuration,
+    numParticipants,
+    numInPerson,
   };
 }

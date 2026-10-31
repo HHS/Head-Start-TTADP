@@ -293,7 +293,7 @@ module.exports = {
           (SELECT COUNT(*) FROM trimmed_linkers) AS linkers_trimmed,
           (SELECT COUNT(*) FROM deleted_linkers) AS linkers_soft_deleted;
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

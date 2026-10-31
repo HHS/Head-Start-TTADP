@@ -181,19 +181,20 @@ describe('activityReportExports', () => {
   // An empty id set matches no reports, so the full pipeline runs and yields
   // zero rows.
   describe('streaming pipeline', () => {
-    it.each(
-      Object.keys(EXPORT_DATA_SETS)
-    )('runs the %s export end to end for an empty id set', async (dataSet) => {
-      const { rowCount, outputName, csv } = await collect({
-        dataSet,
-        reportIds: [],
-        regionIds: ALL_REGIONS,
-      });
-      expect(rowCount).toBe(0);
-      expect(outputName).toEqual(expect.any(String));
-      expect(outputName.length).toBeGreaterThan(0);
-      expect(csv).toBe('');
-    });
+    it.each(Object.keys(EXPORT_DATA_SETS))(
+      'runs the %s export end to end for an empty id set',
+      async (dataSet) => {
+        const { rowCount, outputName, csv } = await collect({
+          dataSet,
+          reportIds: [],
+          regionIds: ALL_REGIONS,
+        });
+        expect(rowCount).toBe(0);
+        expect(outputName).toEqual(expect.any(String));
+        expect(outputName.length).toBeGreaterThan(0);
+        expect(csv).toBe('');
+      }
+    );
 
     it('accepts a validated custom sort without error', async () => {
       const { rowCount } = await collect({

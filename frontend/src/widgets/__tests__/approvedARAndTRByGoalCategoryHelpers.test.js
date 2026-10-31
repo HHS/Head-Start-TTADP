@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 import {
-  sortDataForChart,
-  buildTabularData,
-  buildPlotlyTraces,
-  computeChartDimensions,
-  buildPlotlyChartLayout,
   buildPlotlyBottomAxisLayout,
+  buildPlotlyChartLayout,
+  buildPlotlyTraces,
+  buildTabularData,
+  computeChartDimensions,
+  sortDataForChart,
 } from '../approvedARAndTRByGoalCategoryHelpers';
 
 const mockData = [

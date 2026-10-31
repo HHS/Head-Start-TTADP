@@ -9,12 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      return updateUsersFlagsEnum(
-        queryInterface,
-        transaction,
-        ['goal_dashboard'],
-        FEATURE_FLAGS
-      );
+      return updateUsersFlagsEnum(queryInterface, transaction, ['goal_dashboard'], FEATURE_FLAGS);
     });
   },
 
