@@ -1,4 +1,5 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { EventEmitter } from 'events';
 import { NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -14,6 +15,7 @@ import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { syncApprovers, upsertApprover } from '../../services/activityReportApprovers';
+import { streamActivityReportExportCsv } from '../../services/activityReportExports';
 import {
   activityReportAlerts,
   activityReportAndRecipientsById,
@@ -41,6 +43,7 @@ import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
 import {
   createReport,
+  downloadActivityReportExport,
   downloadAllAlerts,
   downloadAllReports,
   downloadReports,
@@ -109,6 +112,9 @@ jest.mock('../../services/notifications', () => ({
 }));
 
 jest.mock('../../services/accessValidation');
+jest.mock('../../services/activityReportExports', () => ({
+  streamActivityReportExportCsv: jest.fn(),
+}));
 
 jest.mock('../../goalServices/goals', () => ({
   copyGoalsToGrants: jest.fn(),
@@ -143,6 +149,78 @@ const mockRequest = {
     userId: 1,
   },
 };
+
+describe('downloadActivityReportExport', () => {
+  let response;
+
+  beforeEach(() => {
+    response = Object.assign(new EventEmitter(), {
+      writeHead: jest.fn(),
+      write: jest.fn().mockReturnValue(true),
+      end: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    });
+    getUserReadRegions.mockResolvedValue([1, 2]);
+    setReadRegions.mockResolvedValue({ 'region.in': [1], 'recipient.in': [42] });
+    streamActivityReportExportCsv.mockImplementation(async (_options, callbacks) => {
+      await callbacks.onStart({ outputName: 'goals_export' });
+      await callbacks.onChunk('goal_id\n1');
+    });
+  });
+
+  it('resolves full-table filters with the current user policy', async () => {
+    const query = { 'region.in': [1], 'recipient.in': [42] };
+    await downloadActivityReportExport(
+      { ...mockRequest, query, body: { dataSet: 'goals', exportAll: true } },
+      response
+    );
+    expect(setReadRegions).toHaveBeenCalledWith(query, 1);
+    expect(streamActivityReportExportCsv).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataSet: 'goals',
+        filters: query,
+        userId: 1,
+        regionIds: [1, 2],
+      }),
+      expect.any(Object)
+    );
+    expect(response.writeHead).toHaveBeenCalledWith(
+      200,
+      expect.objectContaining({ 'Content-Disposition': 'attachment; filename="goals_export.csv"' })
+    );
+    expect(response.write).toHaveBeenCalledWith('goal_id\n1');
+    expect(response.end).toHaveBeenCalled();
+  });
+
+  it('keeps selected-row downloads scoped to the supplied IDs', async () => {
+    await downloadActivityReportExport(
+      { ...mockRequest, query: {}, body: { dataSet: 'objectives', reportIds: [10, 11] } },
+      response
+    );
+    const options = streamActivityReportExportCsv.mock.calls.at(-1)[0];
+    expect(options).toMatchObject({
+      dataSet: 'objectives',
+      reportIds: [10, 11],
+      regionIds: [1, 2],
+    });
+    expect(options).not.toHaveProperty('filters');
+  });
+
+  it('surfaces export capacity errors before starting the response', async () => {
+    streamActivityReportExportCsv.mockRejectedValueOnce(
+      Object.assign(new Error('Please try again.'), { statusCode: 429 })
+    );
+    await downloadActivityReportExport(
+      { ...mockRequest, query: {}, body: { dataSet: 'goals', reportIds: [10] } },
+      response
+    );
+    expect(response.status).toHaveBeenCalledWith(429);
+    expect(response.json).toHaveBeenCalledWith({ error: 'Please try again.' });
+    expect(response.writeHead).not.toHaveBeenCalled();
+  });
+});
+
 const mockManager = {
   id: 1843,
   hsesUserId: '1843',

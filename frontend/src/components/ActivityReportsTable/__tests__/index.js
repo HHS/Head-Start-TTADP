@@ -1,12 +1,13 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import AriaLiveContext from '../../../AriaLiveContext';
-import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../../fetchers/helpers';
+import { downloadActivityReportExport } from '../../../fetchers/activityReports';
+import { getReportsDownloadURL } from '../../../fetchers/helpers';
 import { convertToResponse, mockWindowProperty } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
 import ActivityReportsTable from '../index';
@@ -14,8 +15,12 @@ import activityReports, { activityReportsSorted, generateXFakeReports } from '..
 
 jest.mock('../../../fetchers/helpers', () => ({
   ...jest.requireActual('../../../fetchers/helpers'),
-  getAllReportsDownloadURL: jest.fn(),
   getReportsDownloadURL: jest.fn(),
+}));
+
+jest.mock('../../../fetchers/activityReports', () => ({
+  ...jest.requireActual('../../../fetchers/activityReports'),
+  downloadActivityReportExport: jest.fn(),
 }));
 
 const oldWindowLocation = window.location;
@@ -248,8 +253,8 @@ describe('ActivityReportsTable', () => {
       });
     });
 
-    describe('Selected count badge', () => {
-      it('can de-select all reports', async () => {
+    describe('Selection without a count badge', () => {
+      it('can de-select all reports using the header checkbox without a selected pill', async () => {
         fetchMock.reset();
         fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(generateXFakeReports(10)));
 
@@ -274,8 +279,11 @@ describe('ActivityReportsTable', () => {
           checkboxes.forEach((c) => expect(c).toBeChecked());
         });
 
-        const deselect = await screen.findByRole('button', { name: 'deselect all reports' });
-        fireEvent.click(deselect);
+        expect(
+          screen.queryByRole('button', { name: 'deselect all reports' })
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText(/^10 selected$/)).not.toBeInTheDocument();
+        userEvent.click(selectAllCheckbox);
         await waitFor(() => {
           const checkboxes = screen.getAllByRole('checkbox');
           expect(checkboxes).toHaveLength(11); // 1 selectAllCheckbox + 10 report checkboxes
@@ -285,16 +293,12 @@ describe('ActivityReportsTable', () => {
     });
 
     describe('download all reports button', () => {
-      afterAll(() => {
-        getAllReportsDownloadURL.mockClear();
-      });
-
       beforeAll(async () => {
         fetchMock.reset();
         fetchMock.get(defaultBaseUrlWithRegionOne, { count: 10, rows: [], recipients: [] });
       });
 
-      it('downloads all reports', async () => {
+      it('opens the full-table format chooser without starting a download', async () => {
         const user = {
           name: 'test@test.com',
           homeRegionId: 14,
@@ -309,13 +313,14 @@ describe('ActivityReportsTable', () => {
         renderTable(user);
         const reportMenu = await screen.findByLabelText(/reports menu/i);
         userEvent.click(reportMenu);
-        const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+        const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
         userEvent.click(downloadButton);
-        expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+        expect(screen.getByRole('dialog', { name: 'Export entire table' })).toBeVisible();
+        expect(downloadActivityReportExport).not.toHaveBeenCalled();
       });
     });
 
-    it('disables download button while downloading', async () => {
+    it('offers all three full-table formats', async () => {
       const user = {
         name: 'test@test.com',
         permissions: [
@@ -329,13 +334,12 @@ describe('ActivityReportsTable', () => {
       renderTable(user);
       const reportMenu = await screen.findByLabelText(/reports menu/i);
       userEvent.click(reportMenu);
-      expect(
-        await screen.findByRole('menuitem', { name: /export table data/i })
-      ).not.toBeDisabled();
-      const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+      expect(await screen.findByRole('menuitem', { name: /^export table$/i })).not.toBeDisabled();
+      const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
       userEvent.click(downloadButton);
-      expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
-      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+      expect(screen.getByRole('button', { name: 'AR' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Goals' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Objectives' })).toBeEnabled();
     });
   });
 
@@ -362,6 +366,23 @@ describe('ActivityReportsTable', () => {
 
       renderTable(user);
       await screen.findByText('Activity Reports');
+    });
+
+    it('places pagination below the table and keeps only Actions in the header', async () => {
+      const pagination = await screen.findByRole('navigation', { name: 'Pagination, bottom' });
+      const table = screen.getByRole('table');
+      const header = screen
+        .getByRole('heading', { name: 'Activity Reports' })
+        .closest('.ttahub-table-header');
+
+      expect(within(header).getByRole('button', { name: 'Reports menu' })).toHaveTextContent(
+        'Actions'
+      );
+      expect(within(header).queryByTestId('pagination-card')).not.toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Pagination, top' })).not.toBeInTheDocument();
+      expect(
+        table.compareDocumentPosition(pagination) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     });
 
     it('clicking Last saved column header will sort by updatedAt', async () => {
@@ -580,16 +601,20 @@ describe('ActivityReportsTable', () => {
       expect(activePage).toBeVisible();
     });
 
-    it('downloads all reports', async () => {
+    it('shows the full filtered-table count in the chooser', async () => {
       const reportMenu = await screen.findByLabelText(/reports menu/i);
       userEvent.click(reportMenu);
-      const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+      const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
       userEvent.click(downloadButton);
-      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+      expect(
+        screen.getByText('Choose a format for the full 17 approved activity reports.')
+      ).toBeVisible();
     });
   });
 
-  it('disables download button while downloading', async () => {
+  it('waits for a format choice before downloading', async () => {
+    fetchMock.reset();
+    mockFetchWithRegionOne();
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -601,12 +626,81 @@ describe('ActivityReportsTable', () => {
     };
 
     renderTable(user);
+    await screen.findAllByRole('checkbox', { name: /select /i });
     const reportMenu = await screen.findByLabelText(/reports menu/i);
     userEvent.click(reportMenu);
-    expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
-    const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+    expect(await screen.findByRole('menuitem', { name: /^export table$/i })).not.toBeDisabled();
+    const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
     userEvent.click(downloadButton);
-    expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
-    expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+    expect(screen.getByRole('dialog', { name: 'Export entire table' })).toBeVisible();
+    expect(downloadActivityReportExport).not.toHaveBeenCalled();
+  });
+
+  describe('format downloads', () => {
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    let click;
+
+    beforeEach(async () => {
+      fetchMock.reset();
+      mockFetchWithRegionOne();
+      URL.createObjectURL = jest.fn(() => 'blob:export');
+      URL.revokeObjectURL = jest.fn();
+      click = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+      downloadActivityReportExport.mockResolvedValue(new Blob(['csv']));
+      renderTable({ permissions: [{ scopeId: 3, regionId: 1 }] });
+      await screen.findAllByRole('checkbox', { name: /select /i });
+    });
+
+    afterEach(() => {
+      click.mockRestore();
+      URL.createObjectURL = originalCreateObjectURL;
+      URL.revokeObjectURL = originalRevokeObjectURL;
+      fetchMock.restore();
+    });
+
+    it.each(['activity-reports', 'goals', 'objectives'])(
+      'downloads the full %s dataset with active filters',
+      async (dataSet) => {
+        await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Export table' }));
+        const label = { 'activity-reports': 'AR', goals: 'Goals', objectives: 'Objectives' }[
+          dataSet
+        ];
+        await userEvent.click(screen.getByRole('button', { name: label }));
+        await waitFor(() => expect(click).toHaveBeenCalled());
+        expect(downloadActivityReportExport).toHaveBeenCalledWith(
+          dataSet,
+          undefined,
+          'region.in[]=1'
+        );
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:export');
+      }
+    );
+
+    it('downloads only checked reports', async () => {
+      const checkboxes = screen.getAllByRole('checkbox', { name: /select /i });
+      await userEvent.click(checkboxes[1]);
+      await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Goals' }));
+      await waitFor(() => expect(click).toHaveBeenCalled());
+      expect(downloadActivityReportExport).toHaveBeenCalledWith(
+        'goals',
+        [Number(checkboxes[1].value)],
+        'region.in[]=1'
+      );
+    });
+
+    it('shows a recoverable error when the export fails', async () => {
+      downloadActivityReportExport.mockRejectedValueOnce(new Error('Network failed'));
+      await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Export table' }));
+      await userEvent.click(screen.getByRole('button', { name: 'AR' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Sorry, something went wrong. Please try your request again.'
+      );
+      expect(screen.getByRole('button', { name: 'AR' })).toBeEnabled();
+    });
   });
 });

@@ -3,6 +3,7 @@ import join from 'url-join';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import {
   deleteReport,
+  downloadActivityReportExport,
   downloadReports,
   getGroupsForActivityReport,
   getReportAlerts,
@@ -174,6 +175,48 @@ describe('activityReports fetcher', () => {
       fetchMock.get('url', new Blob());
       await downloadReports('url');
       expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('downloadActivityReportExport', () => {
+    it.each(['activity-reports', 'goals', 'objectives'])(
+      'downloads the %s dataset',
+      async (dataSet) => {
+        const url = join('api', 'activity-reports', 'export');
+        fetchMock.post(url, 'Report ID\n1');
+
+        const blob = await downloadActivityReportExport(dataSet, [1, 2]);
+
+        expect(await blob.text()).toBe('Report ID\n1');
+        expect(JSON.parse(fetchMock.lastOptions(url).body)).toEqual({ dataSet, reportIds: [1, 2] });
+      }
+    );
+
+    it('rejects failed exports', async () => {
+      fetchMock.post(join('api', 'activity-reports', 'export'), 429);
+      await expect(downloadActivityReportExport('goals', [1])).rejects.toMatchObject({
+        status: 429,
+      });
+    });
+
+    it('sends full-table filters without requesting a limited page of IDs', async () => {
+      const url = '/api/activity-reports/export?region.in[]=1&recipient.in[]=2';
+      fetchMock.post(url, 'Report ID\n1');
+      await downloadActivityReportExport('objectives', undefined, 'region.in[]=1&recipient.in[]=2');
+      expect(JSON.parse(fetchMock.lastOptions(url).body)).toEqual({
+        dataSet: 'objectives',
+        exportAll: true,
+      });
+    });
+
+    it('does not apply table filters to explicitly selected IDs', async () => {
+      const url = '/api/activity-reports/export';
+      fetchMock.post(url, 'Report ID\n1');
+      await downloadActivityReportExport('goals', [1], 'region.in[]=1');
+      expect(JSON.parse(fetchMock.lastOptions(url).body)).toEqual({
+        dataSet: 'goals',
+        reportIds: [1],
+      });
     });
   });
 
