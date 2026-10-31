@@ -72,8 +72,11 @@ export async function getCitationsByGrantIds(
   grantIds: number[],
   reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
-  if (grantIds.some((id) => Number.isNaN(parseInt(String(id), 10)))) {
-    throw new Error(`Invalid grantIds: ${grantIds}`);
+  // grantIds come from the query string and are interpolated into SQL below,
+  // so every value must be a positive integer (parseInt('1) UNION ...') is 1).
+  const ids = grantIds.map((id) => Number(id));
+  if (!ids.length || !ids.every((id) => Number.isInteger(id) && id > 0)) {
+    throw new Error('Invalid grantIds');
   }
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(reportStartDate)) {
@@ -142,7 +145,7 @@ export async function getCitationsByGrantIds(
     -- Only include citations where the last closed goal was before the latest report delivery date... 
     -- ...except in the case of an admin-reopened goal. Since those are createdVia 'rtr' we can narrowly select those here.
       AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'))
-      AND gc."grantId" IN (${grantIds.join(',')})
+      AND gc."grantId" IN (${ids.join(',')})
     GROUP BY 1, 2
     ORDER BY 2, 1`
   );
@@ -151,7 +154,7 @@ export async function getCitationsByGrantIds(
 
   if (results.length === 0) {
     auditLogger.warn(
-      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. ` +
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${ids.join(', ')}]. ` +
         'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.'
     );
   }
