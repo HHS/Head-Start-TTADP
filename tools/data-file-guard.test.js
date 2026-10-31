@@ -8,6 +8,7 @@ const {
   MAX_FIXTURE_BYTES,
   MAX_FIXTURE_LINES,
   checkRange,
+  checkStaged,
   evaluate,
   findBinaryDataFiles,
   findForbiddenPaths,
@@ -570,5 +571,107 @@ describe('data file guard', () => {
         expect(result.stderr).toContain('BASE_REF is required');
       });
     });
+  });
+});
+
+describe('checkStaged against a real git repository', () => {
+  let repoDir;
+
+  const git = (...args) =>
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'user.name=test',
+        '-c',
+        'user.email=test@example.com',
+        '-c',
+        'commit.gpgsign=false',
+        ...args,
+      ],
+      { cwd: repoDir, encoding: 'utf8' }
+    ).trim();
+
+  const writeFile = (relativePath, contents) => {
+    const fullPath = path.join(repoDir, relativePath);
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, contents);
+  };
+
+  beforeEach(() => {
+    repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'data-file-guard-staged-'));
+    git('init', '-q');
+    writeFile('README.md', 'base\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'base');
+  });
+
+  afterEach(() => {
+    fs.rmSync(repoDir, { recursive: true, force: true });
+  });
+
+  it('passes when nothing is staged', () => {
+    expect(checkStaged({ cwd: repoDir }).valid).toBe(true);
+  });
+
+  it('passes a harmless staged change', () => {
+    writeFile('data/ok.csv', 'name,email\nPat,pat@example.com\n');
+    git('add', 'data/ok.csv');
+
+    expect(checkStaged({ cwd: repoDir }).valid).toBe(true);
+  });
+
+  it('flags a staff email in a staged data file without printing it', () => {
+    writeFile('data/staff.csv', 'name,email\nPat,pat@acf.hhs.gov\n');
+    git('add', 'data/staff.csv');
+
+    const result = checkStaged({ cwd: repoDir });
+
+    expect(result.valid).toBe(false);
+    expect(result.message).toContain('data/staff.csv:2');
+    expect(result.message).not.toContain('pat@acf.hhs.gov');
+  });
+
+  it('flags a staged HSES data file', () => {
+    writeFile('hses/agency.xml', '<a/>\n');
+    git('add', '-f', 'hses/agency.xml');
+
+    const result = checkStaged({ cwd: repoDir });
+
+    expect(result.valid).toBe(false);
+    expect(result.message).toContain('hses/agency.xml');
+  });
+
+  it('checks the staged content, not later edits in the working tree', () => {
+    writeFile('data/staff.csv', 'name,email\nPat,pat@acf.hhs.gov\n');
+    git('add', 'data/staff.csv');
+    writeFile('data/staff.csv', 'name,email\nPat,pat@example.com\n');
+
+    expect(checkStaged({ cwd: repoDir }).valid).toBe(false);
+  });
+
+  it('ignores a working tree change that is not staged', () => {
+    writeFile('data/staff.csv', 'name,email\nPat,pat@acf.hhs.gov\n');
+
+    expect(checkStaged({ cwd: repoDir }).valid).toBe(true);
+  });
+
+  it('flags a staged fixture that is too large to be synthetic', () => {
+    writeFile('temp/agency.xml', 'x'.repeat(MAX_FIXTURE_BYTES + 1));
+    git('add', 'temp/agency.xml');
+
+    const result = checkStaged({ cwd: repoDir });
+
+    expect(result.valid).toBe(false);
+    expect(result.message).toContain('temp/agency.xml');
+  });
+
+  it('fails closed with a sanitized error outside a git repository', () => {
+    const notRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'not-a-repo-'));
+    try {
+      expect(() => checkStaged({ cwd: notRepo })).toThrow(GuardError);
+    } finally {
+      fs.rmSync(notRepo, { recursive: true, force: true });
+    }
   });
 });

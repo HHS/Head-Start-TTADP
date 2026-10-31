@@ -8,31 +8,31 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:24.22.1-browsers
+      - image: cimg/node:24.22.1-browsers
   docker-semgrep-executor:
     docker:
-    - image: semgrep/semgrep:1.163.0
+      - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:24.22.1-browsers
-      environment:
-        DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-        REDIS_HOST: localhost
-        REDIS_PASS: secretpass
-    - image: cimg/postgres:15.12
-      environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: secretpass
-        POSTGRES_DB: ttasmarthub
-    - image: cimg/redis:6.2.17
-      environment:
-        REDIS_PASSWORD: secretpass
+      - image: cimg/node:24.22.1-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+          REDIS_HOST: localhost
+          REDIS_PASS: secretpass
+      - image: cimg/postgres:15.12
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+      - image: cimg/redis:6.2.17
+        environment:
+          REDIS_PASSWORD: secretpass
   docker-python-executor:
     docker:
-    - image: cimg/python:3.9.21
+      - image: cimg/python:3.9.21
   docker-base:
     docker:
-    - image: cimg/base:2021.04
+      - image: cimg/base:2021.04
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -43,13 +43,22 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, validation_watchdog, restore_db, backup_prod, clear_cache ]
+    enum:
+      [
+        build_test_deploy,
+        deploy_only,
+        import_data,
+        validation_watchdog,
+        restore_db,
+        backup_prod,
+        clear_cache,
+      ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
-    default: '-'
+    enum: ["-", dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging]
+    default: "-"
 
 # ----------------- Workflows -----------------
 
@@ -61,187 +70,200 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     max_auto_reruns: 2
     jobs:
-    - build_and_lint:
-        filters: &branch_build_filters
-          tags:
-            ignore: /.*/
-    - checkpoint:
-        name: build_done
-        requires:
-        - build_and_lint
-        filters: *branch_build_filters
-    - test_frontend:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - test_backend:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - test_e2e_app:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - test_e2e_api:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - test_e2e_utils:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - test_cucumber:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - sast_scan:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - release_inventory_check:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - dynamic_security_scan:
-        requires:
-        - build_done
-        filters: *branch_build_filters
-    - tests_done:
-        requires:
-        - test_frontend
-        - test_backend
-        - test_e2e_app
-        - test_e2e_api
-        - test_e2e_utils
-        - test_cucumber
-        - sast_scan
-        - release_inventory_check
-        - dynamic_security_scan
-        filters: *branch_build_filters
-    - deploy_job:
-        name: autodeploy_staging
-        serial-group: deploy-lock/staging
-        target_env: "staging"
-        requires:
-        - tests_done
-        filters:
-          tags:
-            ignore: /.*/
-          branches:
-            only:
-            - main
-    - deploy_job:
-        name: autodeploy_prod
-        serial-group: deploy-lock/prod
-        target_env: "prod"
-        requires:
-        - tests_done
-        filters:
-          tags:
-            ignore: /.*/
-          branches:
-            only:
-            - production
+      # The check runs first and gates the build: a build script that prints credentials would publish
+      # them to the (public) job log before a parallel check could fail the pipeline.
+      - secret_printing_check:
+          filters: &branch_build_filters
+            tags:
+              ignore: /.*/
+      - build_and_lint:
+          requires:
+            - secret_printing_check
+          filters: *branch_build_filters
+      - checkpoint:
+          name: build_done
+          requires:
+            - build_and_lint
+          filters: *branch_build_filters
+      - test_frontend:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - test_backend:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - test_e2e_app:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - test_e2e_api:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - test_e2e_utils:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - test_cucumber:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - sast_scan:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - release_inventory_check:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - dynamic_security_scan:
+          requires:
+            - build_done
+          filters: *branch_build_filters
+      - tests_done:
+          requires:
+            - test_frontend
+            - test_backend
+            - test_e2e_app
+            - test_e2e_api
+            - test_e2e_utils
+            - test_cucumber
+            - sast_scan
+            - release_inventory_check
+            - secret_printing_check
+            - dynamic_security_scan
+          filters: *branch_build_filters
+      - deploy_job:
+          name: autodeploy_staging
+          serial-group: deploy-lock/staging
+          target_env: "staging"
+          requires:
+            - tests_done
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only:
+                - main
+      - deploy_job:
+          name: autodeploy_prod
+          serial-group: deploy-lock/prod
+          target_env: "prod"
+          requires:
+            - tests_done
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only:
+                - production
 
   deploy_only:
     # job to be triggered manually, will build the app and deploy to target env
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger.type == "api"
     jobs:
-    - build_and_lint
-    - deploy_job:
-        name: deploy (<< pipeline.parameters.target_env >>)
-        serial-group: deploy-lock/<< pipeline.parameters.target_env >>
-        target_env: << pipeline.parameters.target_env >>
-        requires:
-        - build_and_lint
+      - secret_printing_check
+      - build_and_lint:
+          requires:
+            - secret_printing_check
+      - deploy_job:
+          name: deploy (<< pipeline.parameters.target_env >>)
+          serial-group: deploy-lock/<< pipeline.parameters.target_env >>
+          target_env: << pipeline.parameters.target_env >>
+          requires:
+            - build_and_lint
 
   import_data_cron:
     # scheduled job to download and process monitoring data
     triggers:
-    - schedule:
-        cron: "0 13 * * *" # 1PM UTC = 9AM EST
-        filters:
-          branches:
-            only:
-            - production
+      - schedule:
+          cron: "0 13 * * *" # 1PM UTC = 9AM EST
+          filters:
+            branches:
+              only:
+                - production
     jobs:
-    - run_import_job:
-        serial-group: import-data/prod
-        target_env: "prod"
-        slack_channel: acf-head-start-alerts
-        ohs_channel: acf-ohs-ttahub--contractor-customer-team
-        team_notification_channel: acf-head-start-alerts-lower
+      - run_import_job:
+          serial-group: import-data/prod
+          target_env: "prod"
+          slack_channel: acf-head-start-alerts
+          ohs_channel: acf-ohs-ttahub--contractor-customer-team
+          team_notification_channel: acf-head-start-alerts-lower
 
   import_data_manual:
     # for manual testing of the data import workflow
     when: pipeline.parameters.action == "import_data" and pipeline.trigger.type == "api"
     jobs:
-    - run_import_job:
-        serial-group: import-data/<< pipeline.parameters.target_env >>
-        target_env: "<< pipeline.parameters.target_env >>"
-        slack_channel: acf-head-start-alerts-lower
+      - run_import_job:
+          serial-group: import-data/<< pipeline.parameters.target_env >>
+          target_env: "<< pipeline.parameters.target_env >>"
+          slack_channel: acf-head-start-alerts-lower
 
   validation_watchdog_cron:
     # verify the monitoring data validation ran; one hour after import_data_cron
     # (the whole import including validation should take well under ten minutes,
     # and we don't want to wait long to find out something went wrong)
     triggers:
-    - schedule:
-        cron: "0 14 * * *" # 2PM UTC = 10AM EST
-        filters:
-          branches:
-            only:
-            - production
+      - schedule:
+          cron: "0 14 * * *" # 2PM UTC = 10AM EST
+          filters:
+            branches:
+              only:
+                - production
     jobs:
-    - run_validation_watchdog:
-        target_env: "prod"
-        slack_channel_failure: acf-head-start-alerts
+      - run_validation_watchdog:
+          target_env: "prod"
+          slack_channel_failure: acf-head-start-alerts
 
   validation_watchdog_manual:
     # for manual testing of the monitoring validation watchdog against a lower env
     when: pipeline.parameters.action == "validation_watchdog" and pipeline.trigger.type == "api"
     jobs:
-    - run_validation_watchdog:
-        target_env: "<< pipeline.parameters.target_env >>"
-        slack_channel: acf-head-start-alerts-lower
+      - run_validation_watchdog:
+          target_env: "<< pipeline.parameters.target_env >>"
+          slack_channel: acf-head-start-alerts-lower
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state
     triggers:
-    - schedule:
-        cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
-        filters:
-          branches:
-            only:
-            - main
+      - schedule:
+          cron: "0 3 * * 0" # 3AM UTC = 11PM EST Sunday night
+          filters:
+            branches:
+              only:
+                - main
     jobs:
-    - build_and_lint:
-        load_deploy_frontend_env: false
-    - deploy_job:
-        name: reset (dev-blue)
-        target_env: "dev-blue"
-        requires:
-        - build_and_lint
-    - deploy_job:
-        name: reset (dev-green)
-        target_env: "dev-green"
-        requires:
-        - build_and_lint
-    - deploy_job:
-        name: reset (dev-red)
-        target_env: "dev-red"
-        requires:
-        - build_and_lint
-    - deploy_job:
-        name: reset (dev-pink)
-        target_env: "dev-pink"
-        requires:
-          - build_and_lint
-    - deploy_job:
-        name: reset (dev-gold)
-        target_env: "dev-gold"
-        requires:
-        - build_and_lint
+      - secret_printing_check
+      - build_and_lint:
+          load_deploy_frontend_env: false
+          requires:
+            - secret_printing_check
+      - deploy_job:
+          name: reset (dev-blue)
+          target_env: "dev-blue"
+          requires:
+            - build_and_lint
+      - deploy_job:
+          name: reset (dev-green)
+          target_env: "dev-green"
+          requires:
+            - build_and_lint
+      - deploy_job:
+          name: reset (dev-red)
+          target_env: "dev-red"
+          requires:
+            - build_and_lint
+      - deploy_job:
+          name: reset (dev-pink)
+          target_env: "dev-pink"
+          requires:
+            - build_and_lint
+      - deploy_job:
+          name: reset (dev-gold)
+          target_env: "dev-gold"
+          requires:
+            - build_and_lint
 
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
@@ -252,110 +274,109 @@ workflows:
     # restore temp snapshot to lower env dbs
     # run migrations
     triggers:
-    - schedule:
-        cron: "0 4 * * *" # 4AM UTC = 12AM EST
-        filters:
-          branches:
-            only:
-            - main
+      - schedule:
+          cron: "0 4 * * *" # 4AM UTC = 12AM EST
+          filters:
+            branches:
+              only:
+                - main
     jobs:
-    - backup_prod_db:
-        serial-group: "tta-automation-lock"
-    - restore_prod_to_temp:
-        serial-group: "tta-automation-lock"
-        requires:
-        - backup_prod_db
-    - process_temp_db:
-        serial-group: "tta-automation-lock"
-        requires:
-        - restore_prod_to_temp
-    - backup_temp_db:
-        serial-group: "tta-automation-lock"
-        requires:
-        - process_temp_db
-    - restore_db_job:
-        name: restore (dev-green)
-        serial-group: "tta-automation-lock"
-        target_env: "dev-green"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (dev-blue)
-        serial-group: "tta-automation-lock"
-        target_env: "dev-blue"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (dev-red)
-        serial-group: "tta-automation-lock"
-        target_env: "dev-red"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (dev-gold)
-        serial-group: "tta-automation-lock"
-        target_env: "dev-gold"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (dev-pink)
-        serial-group: "tta-automation-lock"
-        target_env: "dev-pink"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (staging)
-        serial-group: "tta-automation-lock"
-        target_env: "staging"
-        requires:
-        - backup_temp_db
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - restore_prod_to_temp:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
+      - process_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - restore_prod_to_temp
+      - backup_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - process_temp_db
+      - restore_db_job:
+          name: restore (dev-green)
+          serial-group: "tta-automation-lock"
+          target_env: "dev-green"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          name: restore (dev-blue)
+          serial-group: "tta-automation-lock"
+          target_env: "dev-blue"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          name: restore (dev-red)
+          serial-group: "tta-automation-lock"
+          target_env: "dev-red"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          name: restore (dev-gold)
+          serial-group: "tta-automation-lock"
+          target_env: "dev-gold"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          name: restore (dev-pink)
+          serial-group: "tta-automation-lock"
+          target_env: "dev-pink"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          name: restore (staging)
+          serial-group: "tta-automation-lock"
+          target_env: "staging"
+          requires:
+            - backup_temp_db
 
   backup_prod_manual:
     # backup prod db, process(anonymize) it, then backup the processed db
     when: pipeline.parameters.action == "backup_prod" and pipeline.trigger.type == "api"
     jobs:
-    - backup_prod_db:
-        serial-group: "tta-automation-lock"
-    - restore_prod_to_temp:
-        serial-group: "tta-automation-lock"
-        requires:
-        - backup_prod_db
-    - process_temp_db:
-        serial-group: "tta-automation-lock"
-        requires:
-        - restore_prod_to_temp
-    - backup_temp_db:
-        serial-group: "tta-automation-lock"
-        requires:
-        - process_temp_db
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - restore_prod_to_temp:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
+      - process_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - restore_prod_to_temp
+      - backup_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - process_temp_db
 
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger.type == "api"
     jobs:
-    - restore_db_job:
-        serial-group: tta-automation-lock
-        target_env: "<< pipeline.parameters.target_env >>"
+      - restore_db_job:
+          serial-group: tta-automation-lock
+          target_env: "<< pipeline.parameters.target_env >>"
 
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger.type == "api"
     jobs:
-    - clear_cache_job
+      - clear_cache_job
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
     # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
     triggers:
-    - schedule:
-        cron: "0 0 * * 0" # midnight Sunday
-        filters:
-          branches:
-            only:
-            - main
+      - schedule:
+          cron: "0 0 * * 0" # midnight Sunday
+          filters:
+            branches:
+              only:
+                - main
     jobs:
-    - clear_cache_job
-
+      - clear_cache_job
 
 # ----------------- Jobs -----------------
 
@@ -368,153 +389,157 @@ jobs:
         type: boolean
         default: true
     steps:
-    - checkout
-    - run:
-        name: Prepare production release tag
-        command: |
-          if [ "${CIRCLE_BRANCH}" != "production" ] || [ "<< pipeline.parameters.action >>" != "build_test_deploy" ]; then
-            echo "No production release tag required for branch ${CIRCLE_BRANCH} action << pipeline.parameters.action >>"
-            exit 0
-          fi
-
-          release_tag="prod-${CIRCLE_SHA1:0:10}"
-          tag_message=$(printf '%s\n%s\n%s\n%s' \
-            "Environment: prod" \
-            "Branch: ${CIRCLE_BRANCH}" \
-            "Commit: ${CIRCLE_SHA1}" \
-            "Pipeline: << pipeline.number >>")
-          tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
-
-          git config user.name "circleci"
-          git config user.email "circleci@users.noreply.github.com"
-
-          if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
-            existing_commit=$(git rev-list -n 1 "${release_tag}")
-            if [ "${existing_commit}" != "${CIRCLE_SHA1}" ]; then
-              echo "Production release tag ${release_tag} already exists for ${existing_commit}"
-              exit 1
+      - checkout
+      - run:
+          name: Prepare production release tag
+          command: |
+            if [ "${CIRCLE_BRANCH}" != "production" ] || [ "<< pipeline.parameters.action >>" != "build_test_deploy" ]; then
+              echo "No production release tag required for branch ${CIRCLE_BRANCH} action << pipeline.parameters.action >>"
+              exit 0
             fi
 
-            tag_type=$(git cat-file -t "refs/tags/${release_tag}")
-            if [ "${tag_type}" != "tag" ]; then
-              echo "Production release tag ${release_tag} must be an annotated tag"
-              exit 1
-            fi
+            release_tag="prod-${CIRCLE_SHA1:0:10}"
+            tag_message=$(printf '%s\n%s\n%s\n%s' \
+              "Environment: prod" \
+              "Branch: ${CIRCLE_BRANCH}" \
+              "Commit: ${CIRCLE_SHA1}" \
+              "Pipeline: << pipeline.number >>")
+            tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
 
-            echo "Production release tag ${release_tag} already exists for ${CIRCLE_SHA1}"
-          else
-            GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
-          fi
+            git config user.name "circleci"
+            git config user.email "circleci@users.noreply.github.com"
 
-          git checkout --detach "${release_tag}"
-    - create_combined_yarnlock
-    - restore_cache:
-        name: Restore tarball cache
-        keys:
-        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-    - restore_cache:
-        name: Restore deps cache
-        keys:
-        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        # If checksum is new, restore partial cache
-        - yarn-deps-
-    - run:
-        name: Install dependencies
-        no_output_timeout: 20m
-        command: |
-          # print the yarn cache dirs for debugging purposes
-          yarn cache dir
-          yarn --cwd frontend cache dir
-          yarn deps
-    - save_cache:
-        name: Save tarball cache
-        paths:
-        - /home/circleci/.cache/yarn
-        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
-    - save_cache:
-        name: Save deps cache
-        paths:
-        - node_modules
-        - frontend/node_modules
-        key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-    - run:
-        name: Ensure directories exist
-        command: mkdir -p reports frontend/reports frontend/lint-reports
-    - run:
-        name: Build backend
-        command: yarn build
-    - run:
-        name: Audit backend packages
-        command: |
-          chmod 744 ./tools/run-yarn-audit.js
-          ./tools/run-yarn-audit.js;
-    - run:
-        name: Build frontend
-        command: |
-          frontend_env_config=""
-
-          if [ "<< parameters.load_deploy_frontend_env >>" = "true" ]; then
-            if [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
-              case "${CIRCLE_BRANCH}" in
-                main)
-                  frontend_env_config="./deployment_config/staging_vars.yml"
-                  ;;
-                production)
-                  frontend_env_config="./deployment_config/prod_vars.yml"
-                  ;;
-              esac
-            elif [ "<< pipeline.parameters.action >>" = "deploy_only" ] \
-              && [ "<< pipeline.parameters.target_env >>" = "staging" ]; then
-              frontend_env_config="./deployment_config/staging_vars.yml"
-            fi
-          fi
-
-          if [ -n "${frontend_env_config}" ]; then
-            ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
-            grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
-            circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
-            while IFS= read -r line; do
-              key="${line%%=*}"
-              value="${line#*=}"
-
-              if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-                echo "Invalid frontend environment variable name: ${key}"
+            if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
+              existing_commit=$(git rev-list -n 1 "${release_tag}")
+              if [ "${existing_commit}" != "${CIRCLE_SHA1}" ]; then
+                echo "Production release tag ${release_tag} already exists for ${existing_commit}"
                 exit 1
               fi
 
-              if [[ "${value}" == \"*\" ]] || [[ "${value}" == \'*\' ]]; then
-                value="${value:1:${#value}-2}"
+              tag_type=$(git cat-file -t "refs/tags/${release_tag}")
+              if [ "${tag_type}" != "tag" ]; then
+                echo "Production release tag ${release_tag} must be an annotated tag"
+                exit 1
               fi
 
-              export "${key}=${value}"
-            done < ./frontend-build.vars
-            rm -f ./temp.vars ./frontend-build.template.vars ./frontend-build.vars
-          fi
+              echo "Production release tag ${release_tag} already exists for ${CIRCLE_SHA1}"
+            else
+              GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
+            fi
 
-          yarn --cwd frontend run build
-    - run:
-        name: Run lint
-        command: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-          yarn lint:ci
-          yarn lint:shell
-          cat reports/lint.json
-    - run:
-        name: Audit frontend packages
-        command: |
-          cd frontend
-          chmod 744 ../tools/run-yarn-audit.js
-          ../tools/run-yarn-audit.js;
-    - store_artifacts:
-        path: reports
-        destination: lint.json
-    - persist_to_workspace:
-        root: .
-        paths:
-        - build
-        - node_modules
-        - frontend/node_modules
+            git checkout --detach "${release_tag}"
+      - create_combined_yarnlock
+      - restore_cache:
+          name: Restore tarball cache
+          keys:
+            - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+      - restore_cache:
+          name: Restore deps cache
+          keys:
+            - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - yarn-deps-
+      - run:
+          name: Install dependencies
+          no_output_timeout: 20m
+          command: |
+            # print the yarn cache dirs for debugging purposes
+            yarn cache dir
+            yarn --cwd frontend cache dir
+            yarn deps
+      - save_cache:
+          name: Save tarball cache
+          paths:
+            - /home/circleci/.cache/yarn
+          key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+      - save_cache:
+          name: Save deps cache
+          paths:
+            - node_modules
+            - frontend/node_modules
+          key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+      - run:
+          name: Ensure directories exist
+          command: mkdir -p reports frontend/reports frontend/lint-reports
+      - run:
+          name: Build backend
+          command: yarn build
+      - run:
+          name: Audit backend packages
+          command: |
+            chmod 744 ./tools/run-yarn-audit.js
+            ./tools/run-yarn-audit.js;
+      - run:
+          name: Build frontend
+          command: |
+            frontend_env_config=""
+
+            if [ "<< parameters.load_deploy_frontend_env >>" = "true" ]; then
+              if [ "<< pipeline.parameters.action >>" = "build_test_deploy" ]; then
+                case "${CIRCLE_BRANCH}" in
+                  main)
+                    frontend_env_config="./deployment_config/staging_vars.yml"
+                    ;;
+                  production)
+                    frontend_env_config="./deployment_config/prod_vars.yml"
+                    ;;
+                esac
+              elif [ "<< pipeline.parameters.action >>" = "deploy_only" ] \
+                && [ "<< pipeline.parameters.target_env >>" = "staging" ]; then
+                frontend_env_config="./deployment_config/staging_vars.yml"
+              fi
+            fi
+
+            if [ -n "${frontend_env_config}" ]; then
+              ./tools/parse-env-CLI.js "${frontend_env_config}" ./temp.vars
+              grep -E '^REACT_APP_(GTM|INCLUDE_ACCESSIBILITY_CSS)' ./temp.vars > ./frontend-build.template.vars
+              circleci env subst < ./frontend-build.template.vars > ./frontend-build.vars
+              line_number=0
+              while IFS= read -r line; do
+                line_number=$((line_number + 1))
+                key="${line%%=*}"
+                value="${line#*=}"
+
+                # Report only the line number: a malformed line has no "=", so ${key} would be the whole
+                # line, and these lines carry substituted secret values.
+                if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+                  echo "Invalid frontend environment variable name on line ${line_number} of frontend-build.vars"
+                  exit 1
+                fi
+
+                if [[ "${value}" == \"*\" ]] || [[ "${value}" == \'*\' ]]; then
+                  value="${value:1:${#value}-2}"
+                fi
+
+                export "${key}=${value}"
+              done < ./frontend-build.vars
+              rm -f ./temp.vars ./frontend-build.template.vars ./frontend-build.vars
+            fi
+
+            yarn --cwd frontend run build
+      - run:
+          name: Run lint
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+            yarn lint:ci
+            yarn lint:shell
+            cat reports/lint.json
+      - run:
+          name: Audit frontend packages
+          command: |
+            cd frontend
+            chmod 744 ../tools/run-yarn-audit.js
+            ../tools/run-yarn-audit.js;
+      - store_artifacts:
+          path: reports
+          destination: lint.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - build
+            - node_modules
+            - frontend/node_modules
 
   test_backend:
     executor: docker-postgres-executor
@@ -523,263 +548,276 @@ jobs:
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Run migrations ci
-        command: yarn db:migrate:ci
-    - run:
-        name: Run seeders
-        command: yarn db:seed:ci
-    - run:
-        name: Test backend
-        command: |
-          chmod 744 ./bin/test-backend-ci
-          ./bin/test-backend-ci
-    - run:
-        name: Merge node coverage
-        when: always
-        command: |
-          if [ -f ./coverage-expected ]; then
-            node ./tools/merge-coverage.js
-          else
-            echo "Coverage not expected on this node. Skipping merge."
-          fi
-    - run:
-        name: Prepare coverage workspace
-        when: always
-        command: |
-          mkdir -p coverage-workspace
-          chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
-          ./tools/ci/prepare-backend-coverage-workspace.sh
-          if [ -f ./coverage/coverage-final.json ]; then
-            zip -r backend-coverage-artifacts.zip coverage/
-          fi
-    - run:
-        name: Check coverage for modified lines
-        when: always
-        command: |
-          if [ ! -f ./coverage/coverage-final.json ]; then
-            echo "No merged coverage file on this node. Skipping coverage check."
-          elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-            chmod +x ./tools/check-coverage.js
-            node ./tools/check-coverage.js \
-              --directory-filter=src/,tools/ \
-              --fail-on-uncovered=false \
-              --output-format=json,html
-          else
-            echo "Not a PR build. Skipping coverage check for modified lines."
-          fi
-    - store_artifacts:
-        path: backend-coverage-artifacts.zip
-    - store_artifacts:
-        path: coverage-artifacts/
-        destination: uncovered-lines
-    - persist_to_workspace:
-        root: .
-        paths:
-        - coverage-workspace
-    - store_test_results:
-        path: reports/
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Run seeders
+          command: yarn db:seed:ci
+      - run:
+          name: Test backend
+          command: |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      - run:
+          name: Merge node coverage
+          when: always
+          command: |
+            if [ -f ./coverage-expected ]; then
+              node ./tools/merge-coverage.js
+            else
+              echo "Coverage not expected on this node. Skipping merge."
+            fi
+      - run:
+          name: Prepare coverage workspace
+          when: always
+          command: |
+            mkdir -p coverage-workspace
+            chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
+            ./tools/ci/prepare-backend-coverage-workspace.sh
+            if [ -f ./coverage/coverage-final.json ]; then
+              zip -r backend-coverage-artifacts.zip coverage/
+            fi
+      - run:
+          name: Check coverage for modified lines
+          when: always
+          command: |
+            if [ ! -f ./coverage/coverage-final.json ]; then
+              echo "No merged coverage file on this node. Skipping coverage check."
+            elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chmod +x ./tools/check-coverage.js
+              node ./tools/check-coverage.js \
+                --directory-filter=src/,tools/ \
+                --fail-on-uncovered=false \
+                --output-format=json,html
+            else
+              echo "Not a PR build. Skipping coverage check for modified lines."
+            fi
+      - store_artifacts:
+          path: backend-coverage-artifacts.zip
+      - store_artifacts:
+          path: coverage-artifacts/
+          destination: uncovered-lines
+      - persist_to_workspace:
+          root: .
+          paths:
+            - coverage-workspace
+      - store_test_results:
+          path: reports/
 
   tests_done:
     executor: docker-executor
     resource_class: medium
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Merge backend coverage across nodes
-        command: |
-          chmod +x ./tools/ci/merge-backend-coverage-workspace.sh
-          ./tools/ci/merge-backend-coverage-workspace.sh
-    - run:
-        name: Summarize merged coverage
-        command: |
-          chmod +x ./tools/ci/summarize-backend-coverage.sh
-          ./tools/ci/summarize-backend-coverage.sh ./coverage-merge-temp/merged-coverage.json 90
-    - store_artifacts:
-        path: coverage-merge-report/
-    - store_artifacts:
-        path: coverage-merge-temp/merged-coverage.json
-    - run:
-        name: Merge frontend coverage across nodes
-        command: |
-          chmod +x ./tools/ci/merge-frontend-coverage-workspace.sh
-          ./tools/ci/merge-frontend-coverage-workspace.sh
-    - run:
-        name: Check frontend coverage thresholds
-        command: |
-          chmod +x ./tools/ci/summarize-frontend-coverage.sh
-          ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
-          npx nyc check-coverage \
-            --temp-dir frontend-coverage-merge-temp \
-            --statements 90 \
-            --functions 90 \
-            --branches 90 \
-            --lines 90
-    - run:
-        name: Check coverage for modified lines
-        command: |
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-            chmod +x ./tools/check-coverage.js
-            node ./tools/check-coverage.js \
-              --coverage-file=../frontend/coverage/coverage-final.json \
-              --artifact-dir=../frontend/coverage-artifacts \
-              --directory-filter=frontend/ \
-              --fail-on-uncovered=false \
-              --output-format=json,html
-          else
-            echo "Not a PR build. Skipping coverage check."
-          fi
-        when: always
-    - store_artifacts:
-        path: frontend-coverage-merge-report/
-    - store_artifacts:
-        path: frontend/coverage/coverage-final.json
-    - store_artifacts:
-        path: frontend/coverage-artifacts/
-        destination: uncovered-lines
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Merge backend coverage across nodes
+          command: |
+            chmod +x ./tools/ci/merge-backend-coverage-workspace.sh
+            ./tools/ci/merge-backend-coverage-workspace.sh
+      - run:
+          name: Summarize merged coverage
+          command: |
+            chmod +x ./tools/ci/summarize-backend-coverage.sh
+            ./tools/ci/summarize-backend-coverage.sh ./coverage-merge-temp/merged-coverage.json 90
+      - store_artifacts:
+          path: coverage-merge-report/
+      - store_artifacts:
+          path: coverage-merge-temp/merged-coverage.json
+      - run:
+          name: Merge frontend coverage across nodes
+          command: |
+            chmod +x ./tools/ci/merge-frontend-coverage-workspace.sh
+            ./tools/ci/merge-frontend-coverage-workspace.sh
+      - run:
+          name: Check frontend coverage thresholds
+          command: |
+            chmod +x ./tools/ci/summarize-frontend-coverage.sh
+            ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
+            npx nyc check-coverage \
+              --temp-dir frontend-coverage-merge-temp \
+              --statements 90 \
+              --functions 90 \
+              --branches 90 \
+              --lines 90
+      - run:
+          name: Check coverage for modified lines
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chmod +x ./tools/check-coverage.js
+              node ./tools/check-coverage.js \
+                --coverage-file=../frontend/coverage/coverage-final.json \
+                --artifact-dir=../frontend/coverage-artifacts \
+                --directory-filter=frontend/ \
+                --fail-on-uncovered=false \
+                --output-format=json,html
+            else
+              echo "Not a PR build. Skipping coverage check."
+            fi
+          when: always
+      - store_artifacts:
+          path: frontend-coverage-merge-report/
+      - store_artifacts:
+          path: frontend/coverage/coverage-final.json
+      - store_artifacts:
+          path: frontend/coverage-artifacts/
+          destination: uncovered-lines
 
   test_frontend:
     executor: docker-executor
     resource_class: large
     parallelism: 4
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Audit checksums of color files
-        command: |
-          chmod 744 ./frontend/checkcolorhash.sh
-          cd frontend && ./checkcolorhash.sh;
-    - run:
-        name: Test frontend
-        command: ./tools/ci/run-frontend-tests-ci.sh
-    - persist_to_workspace:
-        root: .
-        paths:
-        - frontend-coverage-workspace
-    - store_test_results:
-        path: frontend/reports/
-    - store_artifacts:
-        path: frontend/coverage/
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Audit checksums of color files
+          command: |
+            chmod 744 ./frontend/checkcolorhash.sh
+            cd frontend && ./checkcolorhash.sh;
+      - run:
+          name: Test frontend
+          command: ./tools/ci/run-frontend-tests-ci.sh
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend-coverage-workspace
+      - store_test_results:
+          path: frontend/reports/
+      - store_artifacts:
+          path: frontend/coverage/
 
   test_e2e_app:
     executor: docker-postgres-executor
     resource_class: large
     steps:
-    - run_e2e_test:
-        cmd: yarn test:e2e
-        artifact_path: tests/e2e
+      - run_e2e_test:
+          cmd: yarn test:e2e
+          artifact_path: tests/e2e
 
   test_e2e_api:
     executor: docker-postgres-executor
     steps:
-    - run_e2e_test:
-        cmd: yarn test:e2e:api
-        artifact_path: tests/api
+      - run_e2e_test:
+          cmd: yarn test:e2e:api
+          artifact_path: tests/api
 
   test_e2e_utils:
     executor: docker-postgres-executor
     steps:
-    - run_e2e_test:
-        cmd: yarn test:e2e:utils
-        artifact_path: tests/utilsTests
+      - run_e2e_test:
+          cmd: yarn test:e2e:utils
+          artifact_path: tests/utilsTests
 
   test_cucumber:
     executor: docker-postgres-executor
     steps:
-    - browser-tools/install_chrome:
-        timeout: 10m
-    - run_e2e_test:
-        cmd: |
-          echo "Running Cucumber Tests"
-          PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
-          export PUPPETEER_EXECUTABLE_PATH
-          "$PUPPETEER_EXECUTABLE_PATH" --version
-          yarn test:bdd:ci
-        artifact_path: reports
+      - browser-tools/install_chrome:
+          timeout: 10m
+      - run_e2e_test:
+          cmd: |
+            echo "Running Cucumber Tests"
+            PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+            export PUPPETEER_EXECUTABLE_PATH
+            "$PUPPETEER_EXECUTABLE_PATH" --version
+            yarn test:bdd:ci
+          artifact_path: reports
 
   dynamic_security_scan:
     executor: machine-executor
     resource_class: large
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - set_env_vars:
-        target_env: staging
-    - run:
-        name: Build and start server
-        command: ./bin/prod-style-server
-        background: true
-    - run:
-        name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080 localhost "" 40
-    - run:
-        name: Pull OWASP ZAP docker image
-        command: docker pull zaproxy/zap-stable:latest
-    - run:
-        name: Run OWASP ZAP full scan
-        command: ./bin/run-owasp-scan --target http://server:8080 --full
-    - run:
-        name: Capture container logs
-        when: always
-        command: |
-          mkdir -p reports/server
-          docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
-    - run:
-        name: Tear down scan services
-        when: always
-        command: docker compose -f docker/compose/dss.yml down -v
-    - store_artifacts:
-        path: reports
+      - checkout
+      - attach_workspace:
+          at: .
+      - set_env_vars:
+          target_env: staging
+      - run:
+          name: Build and start server
+          command: ./bin/prod-style-server
+          background: true
+      - run:
+          name: Wait for Node.js server to start
+          command: ./bin/ping-server 8080 localhost "" 40
+      - run:
+          name: Pull OWASP ZAP docker image
+          command: docker pull zaproxy/zap-stable:latest
+      - run:
+          name: Run OWASP ZAP full scan
+          command: ./bin/run-owasp-scan --target http://server:8080 --full
+      - run:
+          name: Capture container logs
+          when: always
+          command: |
+            mkdir -p reports/server
+            docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
+      - run:
+          name: Tear down scan services
+          when: always
+          command: docker compose -f docker/compose/dss.yml down -v
+      - store_artifacts:
+          path: reports
 
   sast_scan:
     executor: docker-semgrep-executor
     resource_class: medium
     steps:
-    - checkout
-    - run:
-        name: Install Node.js for Semgrep comparator
-        command: |
-          apk add --no-cache nodejs
-    - run:
-        name: Run Semgrep scan
-        command: node ./tools/semgrep-sast.js scan
-    - run:
-        name: Check Semgrep baseline
-        command: node ./tools/semgrep-sast.js check
-    - store_artifacts:
-        path: reports/semgrep
+      - checkout
+      - run:
+          name: Install Node.js for Semgrep comparator
+          command: |
+            apk add --no-cache nodejs
+      - run:
+          name: Run Semgrep scan
+          command: node ./tools/semgrep-sast.js scan
+      - run:
+          name: Check Semgrep baseline
+          command: node ./tools/semgrep-sast.js check
+      - store_artifacts:
+          path: reports/semgrep
+
+  secret_printing_check:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Check scripts for commands that print the environment or secrets
+          command: |
+            # CircleCI logs for this project are public. This fails on env dumps, shell tracing and echoing
+            # secret-named variables in automation/, bin/ and this config. It uses only Node built-ins, so it
+            # needs no dependencies. Exceptions: tools/secretPrintingExceptions.json (see docs/guides/circle-ci.md).
+            node ./tools/checkSecretPrinting.js
 
   release_inventory_check:
     executor: docker-executor
     resource_class: small
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Reconcile declared inventory against repository state
-        command: |
-          # Repository scope only. This job never contacts a live space, so it
-          # needs no platform credentials and runs on every branch build.
-          #
-          # Reporting mode until the first clean production reconciliation is
-          # accepted as the starting baseline, at which point --enforce is added
-          # here and the job is scoped to the paths that define the deployed
-          # shape. See ADR 0029.
-          node ./tools/releaseInventory.js verify \
-            --scope repository \
-            --out reports/release-inventory/inventoryReconciliation.json
-    - store_artifacts:
-        path: reports/release-inventory
-        destination: release-inventory
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Reconcile declared inventory against repository state
+          command: |
+            # Repository scope only. This job never contacts a live space, so it
+            # needs no platform credentials and runs on every branch build.
+            #
+            # Reporting mode until the first clean production reconciliation is
+            # accepted as the starting baseline, at which point --enforce is added
+            # here and the job is scoped to the paths that define the deployed
+            # shape. See ADR 0029.
+            node ./tools/releaseInventory.js verify \
+              --scope repository \
+              --out reports/release-inventory/inventoryReconciliation.json
+      - store_artifacts:
+          path: reports/release-inventory
+          destination: release-inventory
 
   deploy_job:
     executor: docker-executor
@@ -788,481 +826,481 @@ jobs:
       target_env:
         type: string
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - install_cf_tools
-    - run:
-        name: Preflight check for release tag prerequisites
-        command: |
-          case "<< parameters.target_env >>" in
-            prod)
-              if [ "${CIRCLE_BRANCH}" != "production" ]; then
-                echo "Production deploys must run from the production branch"
-                exit 1
-              fi
-
-              release_tag="prod-${CIRCLE_SHA1:0:10}"
-
-              if [ -z "${GITHUB_TOKEN}" ]; then
-                echo "GITHUB_TOKEN is required to verify production release tags but is not set"
-                exit 1
-              fi
-
-              auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
-              git fetch --force --no-tags "${auth_git_url}" "+refs/heads/production:refs/remotes/origin/production"
-
-              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}" | awk '{print $1}')
-              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}^{}" | awk '{print $1}')
-              if [ -n "${remote_tag_ref}" ]; then
-                if [ -z "${remote_target_ref}" ] || [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
-                  echo "Remote production release tag ${release_tag} must be annotated"
+      - checkout
+      - attach_workspace:
+          at: .
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - install_cf_tools
+      - run:
+          name: Preflight check for release tag prerequisites
+          command: |
+            case "<< parameters.target_env >>" in
+              prod)
+                if [ "${CIRCLE_BRANCH}" != "production" ]; then
+                  echo "Production deploys must run from the production branch"
                   exit 1
                 fi
 
-                if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
-                  echo "Remote production release tag ${release_tag} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
+                release_tag="prod-${CIRCLE_SHA1:0:10}"
+
+                if [ -z "${GITHUB_TOKEN}" ]; then
+                  echo "GITHUB_TOKEN is required to verify production release tags but is not set"
                   exit 1
                 fi
 
-                git fetch --force --no-tags "${auth_git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
-                fetched_tag_ref=$(git rev-parse "refs/tags/${release_tag}")
-                if [ "${fetched_tag_ref}" != "${remote_tag_ref}" ]; then
-                  echo "Fetched production release tag ${release_tag} is ${fetched_tag_ref}, not remote tag object ${remote_tag_ref}"
+                auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+                git fetch --force --no-tags "${auth_git_url}" "+refs/heads/production:refs/remotes/origin/production"
+
+                remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}" | awk '{print $1}')
+                remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}^{}" | awk '{print $1}')
+                if [ -n "${remote_tag_ref}" ]; then
+                  if [ -z "${remote_target_ref}" ] || [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
+                    echo "Remote production release tag ${release_tag} must be annotated"
+                    exit 1
+                  fi
+
+                  if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
+                    echo "Remote production release tag ${release_tag} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
+                    exit 1
+                  fi
+
+                  git fetch --force --no-tags "${auth_git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
+                  fetched_tag_ref=$(git rev-parse "refs/tags/${release_tag}")
+                  if [ "${fetched_tag_ref}" != "${remote_tag_ref}" ]; then
+                    echo "Fetched production release tag ${release_tag} is ${fetched_tag_ref}, not remote tag object ${remote_tag_ref}"
+                    exit 1
+                  fi
+                fi
+
+                if ! git merge-base --is-ancestor "${CIRCLE_SHA1}" origin/production; then
+                  echo "Production release commit ${CIRCLE_SHA1} must be contained in origin/production"
                   exit 1
                 fi
-              fi
 
-              if ! git merge-base --is-ancestor "${CIRCLE_SHA1}" origin/production; then
-                echo "Production release commit ${CIRCLE_SHA1} must be contained in origin/production"
-                exit 1
-              fi
+                tag_message=$(printf '%s\n%s\n%s\n%s' \
+                  "Environment: prod" \
+                  "Branch: ${CIRCLE_BRANCH}" \
+                  "Commit: ${CIRCLE_SHA1}" \
+                  "Pipeline: << pipeline.number >>")
+                tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
 
-              tag_message=$(printf '%s\n%s\n%s\n%s' \
-                "Environment: prod" \
-                "Branch: ${CIRCLE_BRANCH}" \
-                "Commit: ${CIRCLE_SHA1}" \
-                "Pipeline: << pipeline.number >>")
-              tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
+                git config user.name "circleci"
+                git config user.email "circleci@users.noreply.github.com"
 
-              git config user.name "circleci"
-              git config user.email "circleci@users.noreply.github.com"
+                if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
+                  tag_target_sha=$(git rev-parse "${release_tag}^{}")
+                  if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
+                    echo "Production release tag ${release_tag} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
+                    exit 1
+                  fi
+                else
+                  GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
+                fi
 
-              if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
+                tag_type=$(git cat-file -t "refs/tags/${release_tag}" 2>/dev/null || true)
+                if [ "${tag_type}" != "tag" ]; then
+                  echo "Production release tag ${release_tag} must be an annotated tag"
+                  exit 1
+                fi
+
+                tag_object_sha=$(git rev-parse "refs/tags/${release_tag}")
                 tag_target_sha=$(git rev-parse "${release_tag}^{}")
-                if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
-                  echo "Production release tag ${release_tag} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
+
+                printf 'export RELEASE_TAG_OBJECT_SHA=%q\n' "${tag_object_sha}" >> "$BASH_ENV"
+                printf 'export RELEASE_TAG_TARGET_SHA=%q\n' "${tag_target_sha}" >> "$BASH_ENV"
+                printf 'export RELEASE_TAG_TYPE=%q\n' "${tag_type}" >> "$BASH_ENV"
+                printf 'export RELEASE_SOURCE_BRANCH=%q\n' "production" >> "$BASH_ENV"
+                ;;
+              staging)
+                if [ "${CIRCLE_BRANCH}" = "main" ] && [ -z "${GITHUB_TOKEN}" ]; then
+                  echo "GITHUB_TOKEN is required to push release tags for << parameters.target_env >> but is not set"
                   exit 1
                 fi
-              else
-                GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
-              fi
+                ;;
+            esac
+      - run:
+          name: Prepare release metadata
+          command: |
+            mkdir -p release-artifacts
 
-              tag_type=$(git cat-file -t "refs/tags/${release_tag}" 2>/dev/null || true)
-              if [ "${tag_type}" != "tag" ]; then
-                echo "Production release tag ${release_tag} must be an annotated tag"
-                exit 1
-              fi
+            release_timestamp_utc=""
+            release_tag=""
+            source_branch="${CIRCLE_BRANCH:-}"
+            build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-              tag_object_sha=$(git rev-parse "refs/tags/${release_tag}")
-              tag_target_sha=$(git rev-parse "${release_tag}^{}")
-
-              printf 'export RELEASE_TAG_OBJECT_SHA=%q\n' "${tag_object_sha}" >> "$BASH_ENV"
-              printf 'export RELEASE_TAG_TARGET_SHA=%q\n' "${tag_target_sha}" >> "$BASH_ENV"
-              printf 'export RELEASE_TAG_TYPE=%q\n' "${tag_type}" >> "$BASH_ENV"
-              printf 'export RELEASE_SOURCE_BRANCH=%q\n' "production" >> "$BASH_ENV"
-              ;;
-            staging)
-              if [ "${CIRCLE_BRANCH}" = "main" ] && [ -z "${GITHUB_TOKEN}" ]; then
-                echo "GITHUB_TOKEN is required to push release tags for << parameters.target_env >> but is not set"
-                exit 1
-              fi
-              ;;
-          esac
-    - run:
-        name: Prepare release metadata
-        command: |
-          mkdir -p release-artifacts
-
-          release_timestamp_utc=""
-          release_tag=""
-          source_branch="${CIRCLE_BRANCH:-}"
-          build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-
-          case "<< parameters.target_env >>" in
-            prod)
-              release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              release_tag="prod-${CIRCLE_SHA1:0:10}"
-              source_branch="${RELEASE_SOURCE_BRANCH:-production}"
-              echo "Prepared production release from tag ${release_tag}"
-              ;;
-            staging)
-              if [ "${CIRCLE_BRANCH}" = "main" ]; then
+            case "<< parameters.target_env >>" in
+              prod)
                 release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-                release_tag="staging-${CIRCLE_SHA1:0:10}"
-                echo "Prepared staging release tag ${release_tag}"
-              else
+                release_tag="prod-${CIRCLE_SHA1:0:10}"
+                source_branch="${RELEASE_SOURCE_BRANCH:-production}"
+                echo "Prepared production release from tag ${release_tag}"
+                ;;
+              staging)
+                if [ "${CIRCLE_BRANCH}" = "main" ]; then
+                  release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                  release_tag="staging-${CIRCLE_SHA1:0:10}"
+                  echo "Prepared staging release tag ${release_tag}"
+                else
+                  echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
+                fi
+                ;;
+              *)
                 echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
-              fi
-              ;;
-            *)
-              echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
-              ;;
-          esac
+                ;;
+            esac
 
-          printf 'export BUILD_RELEASE_TAG=%q\n' "${release_tag}" >> "$BASH_ENV"
-          printf 'export DEPLOY_BUILD_BRANCH=%q\n' "${source_branch}" >> "$BASH_ENV"
-          printf 'export DEPLOY_BUILD_TIMESTAMP=%q\n' "${build_timestamp}" >> "$BASH_ENV"
-          printf 'export RELEASE_CREATED_AT_UTC=%q\n' "${release_timestamp_utc}" >> "$BASH_ENV"
-          printf 'export RELEASE_MANIFEST_PATH=%q\n' "release-artifacts/release-manifest.json" >> "$BASH_ENV"
-    - run:
-        name: Check build files
-        command: find build -type f | wc -l
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, prod ]
-        steps:
-        - run:
-            name: Create production robots.txt
-            command: ./bin/robot-factory
-    - cf_deploy:
-        target_env: << parameters.target_env >>
-    - write_envs:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Run database migrations
-        command: |
-          set -x
-          mkdir -p reports/migrations
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+            printf 'export BUILD_RELEASE_TAG=%q\n' "${release_tag}" >> "$BASH_ENV"
+            printf 'export DEPLOY_BUILD_BRANCH=%q\n' "${source_branch}" >> "$BASH_ENV"
+            printf 'export DEPLOY_BUILD_TIMESTAMP=%q\n' "${build_timestamp}" >> "$BASH_ENV"
+            printf 'export RELEASE_CREATED_AT_UTC=%q\n' "${release_timestamp_utc}" >> "$BASH_ENV"
+            printf 'export RELEASE_MANIFEST_PATH=%q\n' "release-artifacts/release-manifest.json" >> "$BASH_ENV"
+      - run:
+          name: Check build files
+          command: find build -type f | wc -l
+      - when:
+          condition:
+            equal: [<< parameters.target_env >>, prod]
+          steps:
+            - run:
+                name: Create production robots.txt
+                command: ./bin/robot-factory
+      - cf_deploy:
+          target_env: << parameters.target_env >>
+      - write_envs:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Run database migrations
+          command: |
+            mkdir -p reports/migrations
+            TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+            echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+            echo "Running database migrations as task ${TASK_NAME}"
 
-          set +e
-          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait
-          TASK_EXIT=$?
-          set -e
+            set +e
+            cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait
+            TASK_EXIT=$?
+            set -e
 
-          echo "${TASK_EXIT}" > reports/migrations/exit-code.txt
-          echo "export MIGRATION_TASK_EXIT=${TASK_EXIT}" >> "$BASH_ENV"
+            echo "${TASK_EXIT}" > reports/migrations/exit-code.txt
+            echo "export MIGRATION_TASK_EXIT=${TASK_EXIT}" >> "$BASH_ENV"
 
-          sleep 15
-          cf logs tta-smarthub-${full_env} --recent \
-            | grep -F "${TASK_NAME}" \
-            | tee "reports/migrations/${TASK_NAME}.log" \
-            || true
-    - store_artifacts:
-        path: reports/migrations
-        destination: migration-task-logs
-    - run:
-        name: Fail if database migrations failed
-        command: exit "${MIGRATION_TASK_EXIT:-0}"
-    - run:
-        name: Create release manifest
-        command: |
-          if [ -z "${BUILD_RELEASE_TAG}" ]; then
-            echo "No release manifest required for this deploy"
-            exit 0
-          fi
-
-          mkdir -p "$(dirname "${RELEASE_MANIFEST_PATH}")"
-
-          pr_number=""
-          pr_url=""
-          pr_data=$(curl -sf \
-            -H "Authorization: token ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/HHS/Head-Start-TTADP/commits/${CIRCLE_SHA1}/pulls" || true)
-          if [ -n "${pr_data}" ]; then
-            pr_number=$(echo "${pr_data}" | jq -r '.[0].number // empty')
-            pr_url=$(echo "${pr_data}" | jq -r '.[0].html_url // empty')
-          fi
-
-          find build -type f -print | sort | while read -r file; do sha256sum "${file}"; done > release-artifacts/build-checksums.txt
-          build_dir_hash=$(tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - build | sha256sum | awk '{print $1}')
-          build_checksum_manifest_hash=$(sha256sum release-artifacts/build-checksums.txt | awk '{print $1}')
-          manifest_hash=$(sha256sum manifest.yml | awk '{print $1}')
-          deployment_config_hash=$(sha256sum "./deployment_config/${cfg_env}_vars.yml" | awk '{print $1}')
-          backend_lockfile_hash=$(sha256sum yarn.lock | awk '{print $1}')
-          frontend_lockfile_hash=$(sha256sum frontend/yarn.lock | awk '{print $1}')
-
-          jq -n \
-            --arg releaseTag "${BUILD_RELEASE_TAG}" \
-            --arg environment "<< parameters.target_env >>" \
-            --arg createdAtUtc "${RELEASE_CREATED_AT_UTC}" \
-            --arg branch "${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
-            --arg commitSha "${CIRCLE_SHA1}" \
-            --arg commitShortSha "$(echo "${CIRCLE_SHA1}" | cut -c1-10)" \
-            --arg tagObjectSha "${RELEASE_TAG_OBJECT_SHA:-}" \
-            --arg tagTargetSha "${RELEASE_TAG_TARGET_SHA:-}" \
-            --arg tagType "${RELEASE_TAG_TYPE:-}" \
-            --arg prNumber "${pr_number}" \
-            --arg prUrl "${pr_url}" \
-            --arg pipelineNumber "<< pipeline.number >>" \
-            --arg buildUrl "${CIRCLE_BUILD_URL}" \
-            --arg buildTimestamp "${DEPLOY_BUILD_TIMESTAMP}" \
-            --arg configFile "./deployment_config/${cfg_env}_vars.yml" \
-            --arg manifestPath "manifest.yml" \
-            --arg migrationTaskName "${MIGRATION_TASK_NAME:-}" \
-            --arg migrationExitCode "${MIGRATION_TASK_EXIT:-}" \
-            --arg appName "tta-smarthub-${full_env}" \
-            --arg serviceDb "ttahub-${full_env}" \
-            --arg serviceRedis "ttahub-redis-${full_env}" \
-            --arg serviceUploads "ttahub-document-upload-${full_env}" \
-            --arg buildDirHash "${build_dir_hash}" \
-            --arg buildChecksumManifestHash "${build_checksum_manifest_hash}" \
-            --arg manifestHash "${manifest_hash}" \
-            --arg deploymentConfigHash "${deployment_config_hash}" \
-            --arg backendLockfileHash "${backend_lockfile_hash}" \
-            --arg frontendLockfileHash "${frontend_lockfile_hash}" \
-            '{
-              schemaVersion: 1,
-              releaseTag: $releaseTag,
-              environment: $environment,
-              createdAtUtc: $createdAtUtc,
-              git: {
-                branch: $branch,
-                commitSha: $commitSha,
-                commitShortSha: $commitShortSha,
-                releaseTag: {
-                  name: $releaseTag,
-                  objectSha: (if $tagObjectSha == "" then null else $tagObjectSha end),
-                  targetSha: (if $tagTargetSha == "" then null else $tagTargetSha end),
-                  type: (if $tagType == "" then null else $tagType end)
-                },
-                prNumber: (if $prNumber == "" then null else ($prNumber | tonumber) end),
-                prUrl: (if $prUrl == "" then null else $prUrl end)
-              },
-              ci: {
-                provider: "circleci",
-                workflow: "<< pipeline.parameters.action >>",
-                pipelineNumber: ($pipelineNumber | tonumber),
-                buildUrl: $buildUrl
-              },
-              deployment: {
-                targetEnv: $environment,
-                configFile: $configFile,
-                manifestPath: $manifestPath,
-                migration: {
-                  taskName: (if $migrationTaskName == "" then null else $migrationTaskName end),
-                  exitCode: (if $migrationExitCode == "" then null else ($migrationExitCode | tonumber) end)
-                },
-                apps: [{
-                  name: $appName,
-                  processes: ["web", "worker"],
-                  services: [$serviceDb, $serviceRedis, $serviceUploads]
-                }]
-              },
-              artifacts: {
-                buildDir: {
-                  path: "build/",
-                  sha256: $buildDirHash
-                },
-                buildChecksumManifest: {
-                  path: "release-artifacts/build-checksums.txt",
-                  sha256: $buildChecksumManifestHash
-                },
-                backendLockfile: {
-                  path: "yarn.lock",
-                  sha256: $backendLockfileHash
-                },
-                frontendLockfile: {
-                  path: "frontend/yarn.lock",
-                  sha256: $frontendLockfileHash
-                },
-                manifest: {
-                  path: "manifest.yml",
-                  sha256: $manifestHash
-                },
-                deploymentConfig: {
-                  path: $configFile,
-                  sha256: $deploymentConfigHash
-                }
-              },
-              runtimeBuildInfo: {
-                buildBranch: $branch,
-                buildCommit: $commitSha,
-                buildNumber: $pipelineNumber,
-                buildReleaseTag: $releaseTag,
-                buildTimestamp: $buildTimestamp
-              }
-            }' > "${RELEASE_MANIFEST_PATH}"
-    - run:
-        name: Reconcile release inventory
-        command: |
-          if [ -z "${BUILD_RELEASE_TAG}" ]; then
-            echo "No inventory reconciliation required for this deploy"
-            exit 0
-          fi
-
-          if [ "<< parameters.target_env >>" != "prod" ]; then
-            echo "Live space reconciliation targets production only"
-            exit 0
-          fi
-
-          # The cf session established by the deploy step is still active, so no
-          # additional login is required. Reporting mode until the first clean
-          # production reconciliation is accepted as the baseline, per ADR 0029.
-          #
-          # The repository half reads the deployed checkout rather than the release
-          # tag, because the tag is not fetched into this job. The content is the
-          # same commit. Auditors reproduce this later with --tag against the
-          # published tag.
-          reconciliation_path="release-artifacts/inventoryReconciliation.json"
-          inventory_path="release-artifacts/inventory.json"
-          cms_export_path="release-artifacts/cmsApprovedCiVersions.json"
-          cms_csv_export_path="release-artifacts/cmsApprovedCiVersions.csv"
-          rm -f "${reconciliation_path}" "${inventory_path}" "${cms_export_path}" "${cms_csv_export_path}"
-
-          if ! cp release/inventory.json "${inventory_path}"; then
-            msg="Production deploy succeeded, but inventory evidence preparation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-
-          reconciliation_exit=2
-
-          for attempt in 1 2 3; do
-            if node ./tools/releaseInventory.js verify \
-              --scope all \
-              --out "${reconciliation_path}"; then
-              reconciliation_exit=0
-              break
-            else
-              reconciliation_exit=$?
-            fi
-
-            # Exit 1 is reserved for findings in blocking mode. Retrying cannot
-            # change those findings, and the deploy must remain failed once
-            # --enforce is enabled. Exit 2 represents a tooling/collection error.
-            if [ "${reconciliation_exit}" -eq 1 ]; then
-              exit 1
-            fi
-
-            if [ "${attempt}" -lt 3 ]; then
-              echo "Inventory reconciliation attempt ${attempt} failed; retrying in 10 seconds"
-              rm -f "${reconciliation_path}"
-              sleep 10
-            fi
-          done
-
-          if [ "${reconciliation_exit}" -ne 0 ] || [ ! -s "${reconciliation_path}" ]; then
-            rm -f "${reconciliation_path}"
-            msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-
-          if ! node ./tools/releaseInventory.js cms-export \
-            --out "${cms_export_path}" \
-            --csv-out "${cms_csv_export_path}" \
-            --release-tag "${BUILD_RELEASE_TAG}" \
-            --release-commit "${CIRCLE_SHA1}" \
-            --pipeline-url "${CIRCLE_BUILD_URL}"; then
-            rm -f "${cms_export_path}" "${cms_csv_export_path}"
-            msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-
-          inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
-          cms_export_hash=$(sha256sum "${cms_export_path}" | awk '{print $1}')
-          cms_csv_export_hash=$(sha256sum "${cms_csv_export_path}" | awk '{print $1}')
-          manifest_with_inventory=$(mktemp)
-          if ! jq \
-            --arg inventoryHash "${inventory_hash}" \
-            --arg cmsExportHash "${cms_export_hash}" \
-            --arg cmsCsvExportHash "${cms_csv_export_hash}" \
-            --slurpfile reconciliation "${reconciliation_path}" \
-            '.schemaVersion = 2
-             | .inventory = {
-                 declaredPath: "release/inventory.json",
-                 declaredSha256: $inventoryHash,
-                 reconciliationPath: "release-artifacts/inventoryReconciliation.json",
-                 enforcement: $reconciliation[0].enforcement,
-                 validationErrorCount: ($reconciliation[0].validationErrors | length),
-                 scopes: ($reconciliation[0].scopes | map_values(.summary))
-               }
-             | .cmsApprovedCiVersions = {
-                 jsonPath: "release-artifacts/cmsApprovedCiVersions.json",
-                 jsonSha256: $cmsExportHash,
-                 csvPath: "release-artifacts/cmsApprovedCiVersions.csv",
-                 csvSha256: $cmsCsvExportHash,
-                 source: "release/inventory.json",
-                 ticket: "TTAHUB-5244"
-               }' "${RELEASE_MANIFEST_PATH}" > "${manifest_with_inventory}"; then
-            rm -f "${manifest_with_inventory}"
-            msg="Production deploy succeeded, but release manifest inventory enrichment failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
-            exit 0
-          fi
-          mv "${manifest_with_inventory}" "${RELEASE_MANIFEST_PATH}"
-    - store_artifacts:
-        path: release-artifacts
-        destination: release-artifacts
-    - run:
-        name: Finalize release tag
-        command: |
-          if [ -z "${BUILD_RELEASE_TAG}" ]; then
-            echo "No release tag required for this deploy"
-            exit 0
-          fi
-
-          if [ "<< parameters.target_env >>" = "prod" ]; then
-            echo "Production release tag ${BUILD_RELEASE_TAG} will be published with GitHub Release evidence"
-            exit 0
-          fi
-
-          if [ -z "${GITHUB_TOKEN}" ]; then
-            echo "GITHUB_TOKEN is required to push release tags"
-            exit 1
-          fi
-
-          git config user.name "circleci"
-          git config user.email "circleci@users.noreply.github.com"
-
-          auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
-          git fetch --tags "${auth_git_url}"
-
-          if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
-            existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
-            if [ "${existing_commit}" = "${CIRCLE_SHA1}" ]; then
-              echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${CIRCLE_SHA1}"
+            sleep 15
+            cf logs tta-smarthub-${full_env} --recent \
+              | grep -F "${TASK_NAME}" \
+              | tee "reports/migrations/${TASK_NAME}.log" \
+              || true
+      - store_artifacts:
+          path: reports/migrations
+          destination: migration-task-logs
+      - run:
+          name: Fail if database migrations failed
+          command: exit "${MIGRATION_TASK_EXIT:-0}"
+      - run:
+          name: Create release manifest
+          command: |
+            if [ -z "${BUILD_RELEASE_TAG}" ]; then
+              echo "No release manifest required for this deploy"
               exit 0
             fi
 
-            echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${existing_commit}"
+            mkdir -p "$(dirname "${RELEASE_MANIFEST_PATH}")"
+
+            pr_number=""
+            pr_url=""
+            pr_data=$(curl -sf \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/HHS/Head-Start-TTADP/commits/${CIRCLE_SHA1}/pulls" || true)
+            if [ -n "${pr_data}" ]; then
+              pr_number=$(echo "${pr_data}" | jq -r '.[0].number // empty')
+              pr_url=$(echo "${pr_data}" | jq -r '.[0].html_url // empty')
+            fi
+
+            find build -type f -print | sort | while read -r file; do sha256sum "${file}"; done > release-artifacts/build-checksums.txt
+            build_dir_hash=$(tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - build | sha256sum | awk '{print $1}')
+            build_checksum_manifest_hash=$(sha256sum release-artifacts/build-checksums.txt | awk '{print $1}')
+            manifest_hash=$(sha256sum manifest.yml | awk '{print $1}')
+            deployment_config_hash=$(sha256sum "./deployment_config/${cfg_env}_vars.yml" | awk '{print $1}')
+            backend_lockfile_hash=$(sha256sum yarn.lock | awk '{print $1}')
+            frontend_lockfile_hash=$(sha256sum frontend/yarn.lock | awk '{print $1}')
+
+            jq -n \
+              --arg releaseTag "${BUILD_RELEASE_TAG}" \
+              --arg environment "<< parameters.target_env >>" \
+              --arg createdAtUtc "${RELEASE_CREATED_AT_UTC}" \
+              --arg branch "${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
+              --arg commitSha "${CIRCLE_SHA1}" \
+              --arg commitShortSha "$(echo "${CIRCLE_SHA1}" | cut -c1-10)" \
+              --arg tagObjectSha "${RELEASE_TAG_OBJECT_SHA:-}" \
+              --arg tagTargetSha "${RELEASE_TAG_TARGET_SHA:-}" \
+              --arg tagType "${RELEASE_TAG_TYPE:-}" \
+              --arg prNumber "${pr_number}" \
+              --arg prUrl "${pr_url}" \
+              --arg pipelineNumber "<< pipeline.number >>" \
+              --arg buildUrl "${CIRCLE_BUILD_URL}" \
+              --arg buildTimestamp "${DEPLOY_BUILD_TIMESTAMP}" \
+              --arg configFile "./deployment_config/${cfg_env}_vars.yml" \
+              --arg manifestPath "manifest.yml" \
+              --arg migrationTaskName "${MIGRATION_TASK_NAME:-}" \
+              --arg migrationExitCode "${MIGRATION_TASK_EXIT:-}" \
+              --arg appName "tta-smarthub-${full_env}" \
+              --arg serviceDb "ttahub-${full_env}" \
+              --arg serviceRedis "ttahub-redis-${full_env}" \
+              --arg serviceUploads "ttahub-document-upload-${full_env}" \
+              --arg buildDirHash "${build_dir_hash}" \
+              --arg buildChecksumManifestHash "${build_checksum_manifest_hash}" \
+              --arg manifestHash "${manifest_hash}" \
+              --arg deploymentConfigHash "${deployment_config_hash}" \
+              --arg backendLockfileHash "${backend_lockfile_hash}" \
+              --arg frontendLockfileHash "${frontend_lockfile_hash}" \
+              '{
+                schemaVersion: 1,
+                releaseTag: $releaseTag,
+                environment: $environment,
+                createdAtUtc: $createdAtUtc,
+                git: {
+                  branch: $branch,
+                  commitSha: $commitSha,
+                  commitShortSha: $commitShortSha,
+                  releaseTag: {
+                    name: $releaseTag,
+                    objectSha: (if $tagObjectSha == "" then null else $tagObjectSha end),
+                    targetSha: (if $tagTargetSha == "" then null else $tagTargetSha end),
+                    type: (if $tagType == "" then null else $tagType end)
+                  },
+                  prNumber: (if $prNumber == "" then null else ($prNumber | tonumber) end),
+                  prUrl: (if $prUrl == "" then null else $prUrl end)
+                },
+                ci: {
+                  provider: "circleci",
+                  workflow: "<< pipeline.parameters.action >>",
+                  pipelineNumber: ($pipelineNumber | tonumber),
+                  buildUrl: $buildUrl
+                },
+                deployment: {
+                  targetEnv: $environment,
+                  configFile: $configFile,
+                  manifestPath: $manifestPath,
+                  migration: {
+                    taskName: (if $migrationTaskName == "" then null else $migrationTaskName end),
+                    exitCode: (if $migrationExitCode == "" then null else ($migrationExitCode | tonumber) end)
+                  },
+                  apps: [{
+                    name: $appName,
+                    processes: ["web", "worker"],
+                    services: [$serviceDb, $serviceRedis, $serviceUploads]
+                  }]
+                },
+                artifacts: {
+                  buildDir: {
+                    path: "build/",
+                    sha256: $buildDirHash
+                  },
+                  buildChecksumManifest: {
+                    path: "release-artifacts/build-checksums.txt",
+                    sha256: $buildChecksumManifestHash
+                  },
+                  backendLockfile: {
+                    path: "yarn.lock",
+                    sha256: $backendLockfileHash
+                  },
+                  frontendLockfile: {
+                    path: "frontend/yarn.lock",
+                    sha256: $frontendLockfileHash
+                  },
+                  manifest: {
+                    path: "manifest.yml",
+                    sha256: $manifestHash
+                  },
+                  deploymentConfig: {
+                    path: $configFile,
+                    sha256: $deploymentConfigHash
+                  }
+                },
+                runtimeBuildInfo: {
+                  buildBranch: $branch,
+                  buildCommit: $commitSha,
+                  buildNumber: $pipelineNumber,
+                  buildReleaseTag: $releaseTag,
+                  buildTimestamp: $buildTimestamp
+                }
+              }' > "${RELEASE_MANIFEST_PATH}"
+      - run:
+          name: Reconcile release inventory
+          command: |
+            if [ -z "${BUILD_RELEASE_TAG}" ]; then
+              echo "No inventory reconciliation required for this deploy"
+              exit 0
+            fi
+
+            if [ "<< parameters.target_env >>" != "prod" ]; then
+              echo "Live space reconciliation targets production only"
+              exit 0
+            fi
+
+            # The cf session established by the deploy step is still active, so no
+            # additional login is required. Reporting mode until the first clean
+            # production reconciliation is accepted as the baseline, per ADR 0029.
+            #
+            # The repository half reads the deployed checkout rather than the release
+            # tag, because the tag is not fetched into this job. The content is the
+            # same commit. Auditors reproduce this later with --tag against the
+            # published tag.
+            reconciliation_path="release-artifacts/inventoryReconciliation.json"
+            inventory_path="release-artifacts/inventory.json"
+            cms_export_path="release-artifacts/cmsApprovedCiVersions.json"
+            cms_csv_export_path="release-artifacts/cmsApprovedCiVersions.csv"
+            rm -f "${reconciliation_path}" "${inventory_path}" "${cms_export_path}" "${cms_csv_export_path}"
+
+            if ! cp release/inventory.json "${inventory_path}"; then
+              msg="Production deploy succeeded, but inventory evidence preparation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+              exit 0
+            fi
+
+            reconciliation_exit=2
+
+            for attempt in 1 2 3; do
+              if node ./tools/releaseInventory.js verify \
+                --scope all \
+                --out "${reconciliation_path}"; then
+                reconciliation_exit=0
+                break
+              else
+                reconciliation_exit=$?
+              fi
+
+              # Exit 1 is reserved for findings in blocking mode. Retrying cannot
+              # change those findings, and the deploy must remain failed once
+              # --enforce is enabled. Exit 2 represents a tooling/collection error.
+              if [ "${reconciliation_exit}" -eq 1 ]; then
+                exit 1
+              fi
+
+              if [ "${attempt}" -lt 3 ]; then
+                echo "Inventory reconciliation attempt ${attempt} failed; retrying in 10 seconds"
+                rm -f "${reconciliation_path}"
+                sleep 10
+              fi
+            done
+
+            if [ "${reconciliation_exit}" -ne 0 ] || [ ! -s "${reconciliation_path}" ]; then
+              rm -f "${reconciliation_path}"
+              msg="Production deploy succeeded, but inventory reconciliation evidence collection failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower "${SLACK_BOT_TOKEN}" || true
+              exit 0
+            fi
+
+            if ! node ./tools/releaseInventory.js cms-export \
+              --out "${cms_export_path}" \
+              --csv-out "${cms_csv_export_path}" \
+              --release-tag "${BUILD_RELEASE_TAG}" \
+              --release-commit "${CIRCLE_SHA1}" \
+              --pipeline-url "${CIRCLE_BUILD_URL}"; then
+              rm -f "${cms_export_path}" "${cms_csv_export_path}"
+              msg="Production deploy succeeded, but approved CI version CMS export generation failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (TTAHUB-5244): ${CIRCLE_BUILD_URL}"
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+              exit 0
+            fi
+
+            inventory_hash=$(sha256sum release/inventory.json | awk '{print $1}')
+            cms_export_hash=$(sha256sum "${cms_export_path}" | awk '{print $1}')
+            cms_csv_export_hash=$(sha256sum "${cms_csv_export_path}" | awk '{print $1}')
+            manifest_with_inventory=$(mktemp)
+            if ! jq \
+              --arg inventoryHash "${inventory_hash}" \
+              --arg cmsExportHash "${cms_export_hash}" \
+              --arg cmsCsvExportHash "${cms_csv_export_hash}" \
+              --slurpfile reconciliation "${reconciliation_path}" \
+              '.schemaVersion = 2
+               | .inventory = {
+                   declaredPath: "release/inventory.json",
+                   declaredSha256: $inventoryHash,
+                   reconciliationPath: "release-artifacts/inventoryReconciliation.json",
+                   enforcement: $reconciliation[0].enforcement,
+                   validationErrorCount: ($reconciliation[0].validationErrors | length),
+                   scopes: ($reconciliation[0].scopes | map_values(.summary))
+                 }
+               | .cmsApprovedCiVersions = {
+                   jsonPath: "release-artifacts/cmsApprovedCiVersions.json",
+                   jsonSha256: $cmsExportHash,
+                   csvPath: "release-artifacts/cmsApprovedCiVersions.csv",
+                   csvSha256: $cmsCsvExportHash,
+                   source: "release/inventory.json",
+                   ticket: "TTAHUB-5244"
+                 }' "${RELEASE_MANIFEST_PATH}" > "${manifest_with_inventory}"; then
+              rm -f "${manifest_with_inventory}"
+              msg="Production deploy succeeded, but release manifest inventory enrichment failed for ${BUILD_RELEASE_TAG}. Remediate the release record from retained artifacts (ADR 0029): ${CIRCLE_BUILD_URL}"
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+              exit 0
+            fi
+            mv "${manifest_with_inventory}" "${RELEASE_MANIFEST_PATH}"
+      - store_artifacts:
+          path: release-artifacts
+          destination: release-artifacts
+      - run:
+          name: Finalize release tag
+          command: |
+            if [ -z "${BUILD_RELEASE_TAG}" ]; then
+              echo "No release tag required for this deploy"
+              exit 0
+            fi
+
+            if [ "<< parameters.target_env >>" = "prod" ]; then
+              echo "Production release tag ${BUILD_RELEASE_TAG} will be published with GitHub Release evidence"
+              exit 0
+            fi
+
+            if [ -z "${GITHUB_TOKEN}" ]; then
+              echo "GITHUB_TOKEN is required to push release tags"
+              exit 1
+            fi
+
+            git config user.name "circleci"
+            git config user.email "circleci@users.noreply.github.com"
+
+            auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+            git fetch --tags "${auth_git_url}"
+
+            if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
+              existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
+              if [ "${existing_commit}" = "${CIRCLE_SHA1}" ]; then
+                echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${CIRCLE_SHA1}"
+                exit 0
+              fi
+
+              echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${existing_commit}"
+              exit 1
+            fi
+
+            pr_url=$(jq -r '.git.prUrl // "n/a"' "${RELEASE_MANIFEST_PATH}")
+            tag_message=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+              "Environment: << parameters.target_env >>" \
+              "Branch: ${CIRCLE_BRANCH}" \
+              "Commit: ${CIRCLE_SHA1}" \
+              "Pipeline: << pipeline.number >>" \
+              "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
+              "PR: ${pr_url}")
+            git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
+
+            if git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+              exit 0
+            fi
+
+            echo "Release tag push reported failure; checking remote state"
+            remote_commit=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
+            if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
+              echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
+              exit 0
+            fi
+
+            echo "Remote tag ${BUILD_RELEASE_TAG} not confirmed after failed push"
             exit 1
-          fi
-
-          pr_url=$(jq -r '.git.prUrl // "n/a"' "${RELEASE_MANIFEST_PATH}")
-          tag_message=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
-            "Environment: << parameters.target_env >>" \
-            "Branch: ${CIRCLE_BRANCH}" \
-            "Commit: ${CIRCLE_SHA1}" \
-            "Pipeline: << pipeline.number >>" \
-            "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
-            "PR: ${pr_url}")
-          git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
-
-          if git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
-            exit 0
-          fi
-
-          echo "Release tag push reported failure; checking remote state"
-          remote_commit=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
-          if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
-            echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
-            exit 0
-          fi
-
-          echo "Remote tag ${BUILD_RELEASE_TAG} not confirmed after failed push"
-          exit 1
-    - run:
-        name: Alert on migration failure
-        when: on_fail
-        command: |
+      - run:
+          name: Alert on migration failure
+          when: on_fail
+          command: |
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
             target_env="<< parameters.target_env >>"
             case "${target_env}" in
@@ -1270,301 +1308,301 @@ jobs:
                 ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}"
                 ;;
             esac
-    - notify_new_relic:
-        target_env: << parameters.target_env >>
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, prod ]
-        steps:
-        - notify_slack_deploy:
-            slack_bot_token: $SLACK_BOT_TOKEN
-            slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-            target_env: << parameters.target_env >>
-    - run:
-        name: Publish GitHub Release evidence
-        command: |
-          publish_release_evidence() {
-            if [ "<< parameters.target_env >>" != "prod" ]; then
-              echo "GitHub Release evidence is only published for production releases"
-              return 0
-            fi
-
-            if [ -z "${BUILD_RELEASE_TAG}" ]; then
-              echo "No release tag available for production release evidence"
-              return 1
-            fi
-
-            if [ -z "${GITHUB_TOKEN}" ]; then
-              echo "GITHUB_TOKEN is required to publish production release evidence"
-              return 1
-            fi
-
-            auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
-
-            remote_tag_matches_release() {
-              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}" | awk '{print $1}') || return 1
-              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}') || return 1
-
-              if [ -z "${remote_tag_ref}" ]; then
-                return 2
+      - notify_new_relic:
+          target_env: << parameters.target_env >>
+      - when:
+          condition:
+            equal: [<< parameters.target_env >>, prod]
+          steps:
+            - notify_slack_deploy:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+                target_env: << parameters.target_env >>
+      - run:
+          name: Publish GitHub Release evidence
+          command: |
+            publish_release_evidence() {
+              if [ "<< parameters.target_env >>" != "prod" ]; then
+                echo "GitHub Release evidence is only published for production releases"
+                return 0
               fi
 
-              if [ -z "${remote_target_ref}" ]; then
-                remote_target_ref="${remote_tag_ref}"
-              fi
-
-              if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
-                echo "Remote release tag ${BUILD_RELEASE_TAG} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
+              if [ -z "${BUILD_RELEASE_TAG}" ]; then
+                echo "No release tag available for production release evidence"
                 return 1
               fi
 
-              if [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
-                echo "Remote release tag ${BUILD_RELEASE_TAG} must be annotated"
+              if [ -z "${GITHUB_TOKEN}" ]; then
+                echo "GITHUB_TOKEN is required to publish production release evidence"
                 return 1
               fi
 
-              return 0
-            }
+              auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
 
-            tag_message=$(printf '%s\n%s\n%s\n%s' \
-              "Environment: prod" \
-              "Branch: ${CIRCLE_BRANCH}" \
-              "Commit: ${CIRCLE_SHA1}" \
-              "Pipeline: << pipeline.number >>")
-            tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}") || return 1
+              remote_tag_matches_release() {
+                remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}" | awk '{print $1}') || return 1
+                remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}') || return 1
 
-            git config user.name "circleci"
-            git config user.email "circleci@users.noreply.github.com"
+                if [ -z "${remote_tag_ref}" ]; then
+                  return 2
+                fi
 
-            if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
-              tag_target_sha=$(git rev-parse "${BUILD_RELEASE_TAG}^{}") || return 1
-              if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
-                echo "Local release tag ${BUILD_RELEASE_TAG} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
-                return 1
-              fi
-            else
-              GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}" || return 1
-            fi
+                if [ -z "${remote_target_ref}" ]; then
+                  remote_target_ref="${remote_tag_ref}"
+                fi
 
-            tag_type=$(git cat-file -t "refs/tags/${BUILD_RELEASE_TAG}" 2>/dev/null || true)
-            if [ "${tag_type}" != "tag" ]; then
-              echo "Local release tag ${BUILD_RELEASE_TAG} must be annotated"
-              return 1
-            fi
-
-            remote_tag_matches_release
-            remote_tag_status=$?
-            if [ "${remote_tag_status}" -eq 2 ]; then
-              if ! git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
-                echo "Release tag push reported failure; checking remote state"
-                remote_tag_matches_release
-                remote_tag_status=$?
-                if [ "${remote_tag_status}" -ne 0 ]; then
-                  echo "Remote release tag ${BUILD_RELEASE_TAG} was not confirmed after failed push"
+                if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
+                  echo "Remote release tag ${BUILD_RELEASE_TAG} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
                   return 1
                 fi
-              fi
-            elif [ "${remote_tag_status}" -ne 0 ]; then
-              return 1
-            fi
 
-            release_body_path="release-artifacts/github-release-body.md"
-            {
-              echo "Production release ${BUILD_RELEASE_TAG}"
-              echo
-              echo "Commit: ${CIRCLE_SHA1}"
-              echo "CircleCI pipeline: ${CIRCLE_BUILD_URL}"
-              echo
-              echo "Attached evidence:"
-              for evidence_path in \
-                "${RELEASE_MANIFEST_PATH}" \
-                "release-artifacts/build-checksums.txt" \
-                "release-artifacts/inventory.json" \
-                "release-artifacts/inventoryReconciliation.json" \
-                "release-artifacts/cmsApprovedCiVersions.json" \
-                "release-artifacts/cmsApprovedCiVersions.csv"; do
-                if [ -f "${evidence_path}" ]; then
-                  echo "- $(basename "${evidence_path}")"
+                if [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
+                  echo "Remote release tag ${BUILD_RELEASE_TAG} must be annotated"
+                  return 1
                 fi
-              done
-            } > "${release_body_path}"
 
-            releases_api="https://api.github.com/repos/HHS/Head-Start-TTADP/releases"
-            release_payload="release-artifacts/github-release-payload.json"
-            jq -n \
-              --arg tag "${BUILD_RELEASE_TAG}" \
-              --arg target "${CIRCLE_SHA1}" \
-              --arg name "Production release ${BUILD_RELEASE_TAG}" \
-              --rawfile body "${release_body_path}" \
-              '{
-                tag_name: $tag,
-                target_commitish: $target,
-                name: $name,
-                body: $body,
-                draft: false,
-                prerelease: false
-              }' > "${release_payload}" || return 1
+                return 0
+              }
 
-            release_response="release-artifacts/github-release-response.json"
-            http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
-              -X POST \
-              -H "Authorization: token ${GITHUB_TOKEN}" \
-              -H "Accept: application/vnd.github+json" \
-              -H "Content-Type: application/json" \
-              --data @"${release_payload}" \
-              "${releases_api}")
+              tag_message=$(printf '%s\n%s\n%s\n%s' \
+                "Environment: prod" \
+                "Branch: ${CIRCLE_BRANCH}" \
+                "Commit: ${CIRCLE_SHA1}" \
+                "Pipeline: << pipeline.number >>")
+              tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}") || return 1
 
-            if [ "${http_code}" = "422" ]; then
-              http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
-                -H "Authorization: token ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github+json" \
-                "${releases_api}/tags/${BUILD_RELEASE_TAG}")
+              git config user.name "circleci"
+              git config user.email "circleci@users.noreply.github.com"
 
-              if [ "${http_code}" != "200" ]; then
-                echo "GitHub Release lookup failed with HTTP ${http_code}"
-                cat "${release_response}"
+              if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
+                tag_target_sha=$(git rev-parse "${BUILD_RELEASE_TAG}^{}") || return 1
+                if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
+                  echo "Local release tag ${BUILD_RELEASE_TAG} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
+                  return 1
+                fi
+              else
+                GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}" || return 1
+              fi
+
+              tag_type=$(git cat-file -t "refs/tags/${BUILD_RELEASE_TAG}" 2>/dev/null || true)
+              if [ "${tag_type}" != "tag" ]; then
+                echo "Local release tag ${BUILD_RELEASE_TAG} must be annotated"
                 return 1
               fi
 
-              release_id=$(jq -r '.id' "${release_response}") || return 1
+              remote_tag_matches_release
+              remote_tag_status=$?
+              if [ "${remote_tag_status}" -eq 2 ]; then
+                if ! git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+                  echo "Release tag push reported failure; checking remote state"
+                  remote_tag_matches_release
+                  remote_tag_status=$?
+                  if [ "${remote_tag_status}" -ne 0 ]; then
+                    echo "Remote release tag ${BUILD_RELEASE_TAG} was not confirmed after failed push"
+                    return 1
+                  fi
+                fi
+              elif [ "${remote_tag_status}" -ne 0 ]; then
+                return 1
+              fi
+
+              release_body_path="release-artifacts/github-release-body.md"
+              {
+                echo "Production release ${BUILD_RELEASE_TAG}"
+                echo
+                echo "Commit: ${CIRCLE_SHA1}"
+                echo "CircleCI pipeline: ${CIRCLE_BUILD_URL}"
+                echo
+                echo "Attached evidence:"
+                for evidence_path in \
+                  "${RELEASE_MANIFEST_PATH}" \
+                  "release-artifacts/build-checksums.txt" \
+                  "release-artifacts/inventory.json" \
+                  "release-artifacts/inventoryReconciliation.json" \
+                  "release-artifacts/cmsApprovedCiVersions.json" \
+                  "release-artifacts/cmsApprovedCiVersions.csv"; do
+                  if [ -f "${evidence_path}" ]; then
+                    echo "- $(basename "${evidence_path}")"
+                  fi
+                done
+              } > "${release_body_path}"
+
+              releases_api="https://api.github.com/repos/HHS/Head-Start-TTADP/releases"
+              release_payload="release-artifacts/github-release-payload.json"
+              jq -n \
+                --arg tag "${BUILD_RELEASE_TAG}" \
+                --arg target "${CIRCLE_SHA1}" \
+                --arg name "Production release ${BUILD_RELEASE_TAG}" \
+                --rawfile body "${release_body_path}" \
+                '{
+                  tag_name: $tag,
+                  target_commitish: $target,
+                  name: $name,
+                  body: $body,
+                  draft: false,
+                  prerelease: false
+                }' > "${release_payload}" || return 1
+
+              release_response="release-artifacts/github-release-response.json"
               http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
-                -X PATCH \
+                -X POST \
                 -H "Authorization: token ${GITHUB_TOKEN}" \
                 -H "Accept: application/vnd.github+json" \
                 -H "Content-Type: application/json" \
                 --data @"${release_payload}" \
-                "${releases_api}/${release_id}")
+                "${releases_api}")
 
-              if [ "${http_code}" != "200" ]; then
-                echo "GitHub Release update failed with HTTP ${http_code}"
+              if [ "${http_code}" = "422" ]; then
+                http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
+                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  "${releases_api}/tags/${BUILD_RELEASE_TAG}")
+
+                if [ "${http_code}" != "200" ]; then
+                  echo "GitHub Release lookup failed with HTTP ${http_code}"
+                  cat "${release_response}"
+                  return 1
+                fi
+
+                release_id=$(jq -r '.id' "${release_response}") || return 1
+                http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
+                  -X PATCH \
+                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: application/json" \
+                  --data @"${release_payload}" \
+                  "${releases_api}/${release_id}")
+
+                if [ "${http_code}" != "200" ]; then
+                  echo "GitHub Release update failed with HTTP ${http_code}"
+                  cat "${release_response}"
+                  return 1
+                fi
+              elif [ "${http_code}" != "201" ]; then
+                echo "GitHub Release creation failed with HTTP ${http_code}"
                 cat "${release_response}"
                 return 1
               fi
-            elif [ "${http_code}" != "201" ]; then
-              echo "GitHub Release creation failed with HTTP ${http_code}"
-              cat "${release_response}"
-              return 1
-            fi
 
-            upload_url=$(jq -r '.upload_url | sub("\\{.*$"; "")' "${release_response}") || return 1
-            assets_url=$(jq -r '.assets_url' "${release_response}") || return 1
+              upload_url=$(jq -r '.upload_url | sub("\\{.*$"; "")' "${release_response}") || return 1
+              assets_url=$(jq -r '.assets_url' "${release_response}") || return 1
 
-            upload_release_asset() {
-              asset_path="$1"
-              content_type="$2"
-              asset_name=$(basename "${asset_path}")
-              assets_response="release-artifacts/github-release-assets-${asset_name}.json"
+              upload_release_asset() {
+                asset_path="$1"
+                content_type="$2"
+                asset_name=$(basename "${asset_path}")
+                assets_response="release-artifacts/github-release-assets-${asset_name}.json"
 
-              curl -sS -o "${assets_response}" \
-                -H "Authorization: token ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github+json" \
-                "${assets_url}"
-
-              existing_asset_id=$(jq -r --arg name "${asset_name}" '.[] | select(.name == $name) | .id' "${assets_response}" | head -n 1)
-              if [ -n "${existing_asset_id}" ]; then
-                delete_code=$(curl -sS -o /dev/null -w "%{http_code}" \
-                  -X DELETE \
+                curl -sS -o "${assets_response}" \
                   -H "Authorization: token ${GITHUB_TOKEN}" \
                   -H "Accept: application/vnd.github+json" \
-                  "${releases_api}/assets/${existing_asset_id}")
+                  "${assets_url}"
 
-                if [ "${delete_code}" != "204" ]; then
-                  echo "Could not replace existing release asset ${asset_name}; delete returned HTTP ${delete_code}"
+                existing_asset_id=$(jq -r --arg name "${asset_name}" '.[] | select(.name == $name) | .id' "${assets_response}" | head -n 1)
+                if [ -n "${existing_asset_id}" ]; then
+                  delete_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+                    -X DELETE \
+                    -H "Authorization: token ${GITHUB_TOKEN}" \
+                    -H "Accept: application/vnd.github+json" \
+                    "${releases_api}/assets/${existing_asset_id}")
+
+                  if [ "${delete_code}" != "204" ]; then
+                    echo "Could not replace existing release asset ${asset_name}; delete returned HTTP ${delete_code}"
+                    return 1
+                  fi
+                fi
+
+                upload_response="release-artifacts/github-release-upload-${asset_name}.json"
+                upload_code=$(curl -sS -o "${upload_response}" -w "%{http_code}" \
+                  -X POST \
+                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: ${content_type}" \
+                  --data-binary @"${asset_path}" \
+                  "${upload_url}?name=${asset_name}")
+
+                if [ "${upload_code}" != "201" ]; then
+                  echo "GitHub Release asset upload failed for ${asset_name} with HTTP ${upload_code}"
+                  cat "${upload_response}"
                   return 1
                 fi
+              }
+
+              upload_release_asset "${RELEASE_MANIFEST_PATH}" "application/json" || return 1
+              upload_release_asset "release-artifacts/build-checksums.txt" "text/plain" || return 1
+              if [ -f "release-artifacts/inventory.json" ]; then
+                upload_release_asset "release-artifacts/inventory.json" "application/json" || return 1
               fi
-
-              upload_response="release-artifacts/github-release-upload-${asset_name}.json"
-              upload_code=$(curl -sS -o "${upload_response}" -w "%{http_code}" \
-                -X POST \
-                -H "Authorization: token ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github+json" \
-                -H "Content-Type: ${content_type}" \
-                --data-binary @"${asset_path}" \
-                "${upload_url}?name=${asset_name}")
-
-              if [ "${upload_code}" != "201" ]; then
-                echo "GitHub Release asset upload failed for ${asset_name} with HTTP ${upload_code}"
-                cat "${upload_response}"
-                return 1
+              if [ -f "release-artifacts/inventoryReconciliation.json" ]; then
+                upload_release_asset "release-artifacts/inventoryReconciliation.json" "application/json" || return 1
+              fi
+              if [ -f "release-artifacts/cmsApprovedCiVersions.json" ]; then
+                upload_release_asset "release-artifacts/cmsApprovedCiVersions.json" "application/json" || return 1
+              fi
+              if [ -f "release-artifacts/cmsApprovedCiVersions.csv" ]; then
+                upload_release_asset "release-artifacts/cmsApprovedCiVersions.csv" "text/csv" || return 1
               fi
             }
 
-            upload_release_asset "${RELEASE_MANIFEST_PATH}" "application/json" || return 1
-            upload_release_asset "release-artifacts/build-checksums.txt" "text/plain" || return 1
-            if [ -f "release-artifacts/inventory.json" ]; then
-              upload_release_asset "release-artifacts/inventory.json" "application/json" || return 1
-            fi
-            if [ -f "release-artifacts/inventoryReconciliation.json" ]; then
-              upload_release_asset "release-artifacts/inventoryReconciliation.json" "application/json" || return 1
-            fi
-            if [ -f "release-artifacts/cmsApprovedCiVersions.json" ]; then
-              upload_release_asset "release-artifacts/cmsApprovedCiVersions.json" "application/json" || return 1
-            fi
-            if [ -f "release-artifacts/cmsApprovedCiVersions.csv" ]; then
-              upload_release_asset "release-artifacts/cmsApprovedCiVersions.csv" "text/csv" || return 1
-            fi
-          }
+            set +e
+            publish_release_evidence
+            publish_exit=$?
+            set -e
 
-          set +e
-          publish_release_evidence
-          publish_exit=$?
-          set -e
+            if [ "${publish_exit}" -ne 0 ]; then
+              msg="Production deploy succeeded, but GitHub Release evidence publishing failed for ${BUILD_RELEASE_TAG}. CircleCI retained release-artifacts for manual remediation: ${CIRCLE_BUILD_URL}"
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+            fi
 
-          if [ "${publish_exit}" -ne 0 ]; then
-            msg="Production deploy succeeded, but GitHub Release evidence publishing failed for ${BUILD_RELEASE_TAG}. CircleCI retained release-artifacts for manual remediation: ${CIRCLE_BUILD_URL}"
-            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
-          fi
-
-          exit 0
-    - store_artifacts:
-        path: release-artifacts
-        destination: release-artifacts-with-github-release
+            exit 0
+      - store_artifacts:
+          path: release-artifacts
+          destination: release-artifacts-with-github-release
 
   backup_prod_db:
     executor: docker-executor
     steps:
-    - checkout
-    - cf_backup:
-        target_env: prod
-        rds_service_name: ttahub-prod
-        s3_service_name: ttahub-db-backups
-        backup_prefix: production
+      - checkout
+      - cf_backup:
+          target_env: prod
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 
   restore_prod_to_temp:
     executor: docker-executor
     steps:
-    - checkout
-    - cf_restore:
-        target_env: prod
-        rds_service_name: ttahub-process
-        s3_service_name: ttahub-db-backups
-        backup_prefix: production
+      - checkout
+      - cf_restore:
+          target_env: prod
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 
   process_temp_db:
     executor: docker-executor
     steps:
-    - checkout
-    - create_combined_yarnlock
-    - restore_cache:
-        keys:
-        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - yarn-deps-
-    - run: |
-        yarn deps
-        yarn build
-    - cf_process:
-        target_env: prod
+      - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - yarn-deps-
+      - run: |
+          yarn deps
+          yarn build
+      - cf_process:
+          target_env: prod
 
   backup_temp_db:
     executor: docker-executor
     steps:
-    - checkout
-    - cf_backup:
-        target_env: prod
-        rds_service_name: ttahub-process
-        s3_service_name: ttahub-db-backups
-        backup_prefix: processed
+      - checkout
+      - cf_backup:
+          target_env: prod
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
 
   restore_db_job:
     executor: docker-executor
@@ -1572,15 +1610,15 @@ jobs:
       target_env:
         type: string
     steps:
-    - checkout
-    - cf_restore:
-        target_env: prod # this is the source of the backup
-        rds_service_name: "ttahub-<< parameters.target_env >>"
-        s3_service_name: ttahub-db-backups
-        backup_prefix: processed
-    - cf_migrate:
-        app_name: "tta-smarthub-<< parameters.target_env >>"
-        target_env: << parameters.target_env >>
+      - checkout
+      - cf_restore:
+          target_env: prod # this is the source of the backup
+          rds_service_name: "ttahub-<< parameters.target_env >>"
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: "tta-smarthub-<< parameters.target_env >>"
+          target_env: << parameters.target_env >>
 
   run_cmd:
     # run given command in the target environment
@@ -1591,14 +1629,14 @@ jobs:
       target_env:
         type: string
     steps:
-    - cf_task:
-        the_command: << parameters.command >>
-        target_env: "<< parameters.target_env >>"
+      - cf_task:
+          the_command: << parameters.command >>
+          target_env: "<< parameters.target_env >>"
 
   # no-op job used for checkpointing others
   checkpoint:
     executor: docker-base
-    steps: [ no-op ]
+    steps: [no-op]
 
   run_import_job:
     # run the data import / monitoring job in target environment
@@ -1616,176 +1654,176 @@ jobs:
         type: string
         default: ""
     steps:
-    - checkout
-    - install_cf_tools
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Run monitoring import
-        no_output_timeout: 30m
-        command: |
-          set -u
-          set -o pipefail
+      - checkout
+      - install_cf_tools
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Run monitoring import
+          no_output_timeout: 30m
+          command: |
+            set -u
+            set -o pipefail
 
-          # define a status file, each phase writes to it
-          # results are collected and sent at the end
+            # define a status file, each phase writes to it
+            # results are collected and sent at the end
 
-          TARGET_ENV="<< parameters.target_env >>"
-          APP_NAME="tta-smarthub-${TARGET_ENV}"
-          ARTIFACT_DIR="import-artifacts"
-          STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
-          LOG_DIR="${ARTIFACT_DIR}/logs"
-          mkdir -p "${LOG_DIR}"
+            TARGET_ENV="<< parameters.target_env >>"
+            APP_NAME="tta-smarthub-${TARGET_ENV}"
+            ARTIFACT_DIR="import-artifacts"
+            STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
+            LOG_DIR="${ARTIFACT_DIR}/logs"
+            mkdir -p "${LOG_DIR}"
 
-          # report_updates runs right after create_monitoring_goals - not at the
-          # end - so its "Recent Monitoring Updates" log line (the only source of
-          # goal-creation content for the Slack summary) is captured even if
-          # maintain_monitoring_data or validate_monitoring_data fails afterward.
-          # See build_import_summary.sh (write_goal_summary).
-          PHASE_NAMES=(
-            "download"
-            "process"
-            "validate_monitoring_gate"
-            "update_fact_tables"
-            "create_monitoring_goals"
-            "report_updates"
-            "maintain_monitoring_data"
-            "validate_monitoring_data"
-          )
+            # report_updates runs right after create_monitoring_goals - not at the
+            # end - so its "Recent Monitoring Updates" log line (the only source of
+            # goal-creation content for the Slack summary) is captured even if
+            # maintain_monitoring_data or validate_monitoring_data fails afterward.
+            # See build_import_summary.sh (write_goal_summary).
+            PHASE_NAMES=(
+              "download"
+              "process"
+              "validate_monitoring_gate"
+              "update_fact_tables"
+              "create_monitoring_goals"
+              "report_updates"
+              "maintain_monitoring_data"
+              "validate_monitoring_data"
+            )
 
-          PHASE_COMMANDS=(
-            "yarn cli:import-system download 1"
-            "yarn cli:import-system process 1"
-            "yarn cli:validate-monitoring-gate"
-            "yarn cli:updateMonitoringFactTables"
-            "yarn cli:create-monitoring-goals"
-            "yarn cli:query-monitoring-data"
-            "yarn cli:maintain-monitoring-data"
-            "yarn cli:validate-monitoring-data"
-          )
+            PHASE_COMMANDS=(
+              "yarn cli:import-system download 1"
+              "yarn cli:import-system process 1"
+              "yarn cli:validate-monitoring-gate"
+              "yarn cli:updateMonitoringFactTables"
+              "yarn cli:create-monitoring-goals"
+              "yarn cli:query-monitoring-data"
+              "yarn cli:maintain-monitoring-data"
+              "yarn cli:validate-monitoring-data"
+            )
 
-          # write initial status file
-          jq -n \
-            --arg target_env "${TARGET_ENV}" \
-            --arg app_name "${APP_NAME}" \
-            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-            --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
-            '{
-              metadata: {
-                targetEnv: $target_env,
-                appName: $app_name,
-                startedAt: $started_at,
-                triggerSource: $trigger_source
-              },
-              taskRuns: []
-            }' > "${STATUS_FILE}"
+            # write initial status file
+            jq -n \
+              --arg target_env "${TARGET_ENV}" \
+              --arg app_name "${APP_NAME}" \
+              --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+              --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
+              '{
+                metadata: {
+                  targetEnv: $target_env,
+                  appName: $app_name,
+                  startedAt: $started_at,
+                  triggerSource: $trigger_source
+                },
+                taskRuns: []
+              }' > "${STATUS_FILE}"
 
-          # cf login
-          if ! cf login -a "${cg_api}" \
-            -u "${cg_username}" \
-            -p "${cg_password}" \
-            -o "${cg_org}" \
-            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
-            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
-            exit 1
-          fi
-
-          # iterate through the phases and store results
-          for ((idx=0; idx<${#PHASE_NAMES[@]}; idx+=1)); do
-            phase_name="${PHASE_NAMES[$idx]}"
-            command="${PHASE_COMMANDS[$idx]}"
-            log_file="${LOG_DIR}/phase-${phase_name}.log"
-            task_name="import-${phase_name}-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}"
-
-            echo "PHASE_START ${phase_name} ${task_name}" | tee -a "${log_file}"
-
-            if ./bin/run-task.js "${APP_NAME}" \
-              --status-file "${STATUS_FILE}" \
-              --log-file "${log_file}" \
-              --command "${command}" \
-              --name "${task_name}" \
-              -m 2GB \
-              -k 2GB >>"${log_file}" 2>&1; then
-              echo "PHASE_SUCCESS ${phase_name}" | tee -a "${log_file}"
-            else
-              phase_exit=$?
-              echo "PHASE_FAILURE ${phase_name} exit ${phase_exit}" | tee -a "${log_file}"
-              break
+            # cf login
+            if ! cf login -a "${cg_api}" \
+              -u "${cg_username}" \
+              -p "${cg_password}" \
+              -o "${cg_org}" \
+              -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+              echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+              exit 1
             fi
-          done
 
-          cf logout >/dev/null 2>&1 || true
-    - run:
-        when: always
-        name: Create monitoring updates summary
-        command: |
-          chmod +x ./.circleci/scripts/build_import_summary.sh
-          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
-            monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt \
-            monitoring-validation-team-notifications.txt
-    - notify_slack:
-        step_when: always
-        message_text_file: monitoring-updates.txt
-        slack_channel: << parameters.slack_channel >>
-    - notify_slack:
-        step_when: always
-        # monitoring-ohs-updates.txt already has the OHS_MONITORING_ALERTS_ENABLED
-        # decision baked in (goal-creation only vs. goal-creation + validation
-        # alerts) by build_import_summary.sh, so this posts unconditionally -
-        # empty ohs_channel on non-prod invocations makes it a no-op (notify_slack
-        # skips sending when slack_channel is empty). best_effort: a Slack-side
-        # failure here (bad channel, transient outage) must not fail an otherwise
-        # successful import job. See docs/monitoring-data-validation.md (Channels).
-        message_text_file: monitoring-ohs-updates.txt
-        slack_channel: << parameters.ohs_channel >>
-        best_effort: true
-    - notify_slack:
-        step_when: always
-        # team_notification-severity content, kept out of monitoring-updates.txt
-        # entirely - its own channel, its own message. Empty
-        # team_notification_channel on non-prod invocations makes this a no-op
-        # (same idiom as ohs_channel above). best_effort: same reasoning as the
-        # OHS post. See docs/monitoring-data-validation.md (Channels).
-        message_text_file: monitoring-validation-team-notifications.txt
-        slack_channel: << parameters.team_notification_channel >>
-        best_effort: true
-    - store_artifacts:
-        when: always
-        path: import-artifacts
-    - store_artifacts:
-        when: always
-        path: monitoring-updates.txt
-    - store_artifacts:
-        when: always
-        path: monitoring-goal-updates.txt
-    - store_artifacts:
-        when: always
-        path: monitoring-validation-alerts.txt
-    - store_artifacts:
-        when: always
-        path: monitoring-ohs-updates.txt
-    - store_artifacts:
-        when: always
-        path: monitoring-validation-team-notifications.txt
-    - run:
-        when: always
-        name: Fail if any import phase failed
-        command: |
-          STATUS_FILE="import-artifacts/import-status.json"
-          EXPECTED_TASKS=8
+            # iterate through the phases and store results
+            for ((idx=0; idx<${#PHASE_NAMES[@]}; idx+=1)); do
+              phase_name="${PHASE_NAMES[$idx]}"
+              command="${PHASE_COMMANDS[$idx]}"
+              log_file="${LOG_DIR}/phase-${phase_name}.log"
+              task_name="import-${phase_name}-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}"
 
-          if [[ ! -f "${STATUS_FILE}" ]]; then
-            echo "Import status file not found."
-            exit 1
-          fi
+              echo "PHASE_START ${phase_name} ${task_name}" | tee -a "${log_file}"
 
-          task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
-          failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+              if ./bin/run-task.js "${APP_NAME}" \
+                --status-file "${STATUS_FILE}" \
+                --log-file "${log_file}" \
+                --command "${command}" \
+                --name "${task_name}" \
+                -m 2GB \
+                -k 2GB >>"${log_file}" 2>&1; then
+                echo "PHASE_SUCCESS ${phase_name}" | tee -a "${log_file}"
+              else
+                phase_exit=$?
+                echo "PHASE_FAILURE ${phase_name} exit ${phase_exit}" | tee -a "${log_file}"
+                break
+              fi
+            done
 
-          if [[ "${task_count}" -ne "${EXPECTED_TASKS}" || "${failed_count}" -ne 0 ]]; then
-            echo "Import data cron failed or ran partially."
-            exit 1
-          fi
+            cf logout >/dev/null 2>&1 || true
+      - run:
+          when: always
+          name: Create monitoring updates summary
+          command: |
+            chmod +x ./.circleci/scripts/build_import_summary.sh
+            ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
+              monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt \
+              monitoring-validation-team-notifications.txt
+      - notify_slack:
+          step_when: always
+          message_text_file: monitoring-updates.txt
+          slack_channel: << parameters.slack_channel >>
+      - notify_slack:
+          step_when: always
+          # monitoring-ohs-updates.txt already has the OHS_MONITORING_ALERTS_ENABLED
+          # decision baked in (goal-creation only vs. goal-creation + validation
+          # alerts) by build_import_summary.sh, so this posts unconditionally -
+          # empty ohs_channel on non-prod invocations makes it a no-op (notify_slack
+          # skips sending when slack_channel is empty). best_effort: a Slack-side
+          # failure here (bad channel, transient outage) must not fail an otherwise
+          # successful import job. See docs/monitoring-data-validation.md (Channels).
+          message_text_file: monitoring-ohs-updates.txt
+          slack_channel: << parameters.ohs_channel >>
+          best_effort: true
+      - notify_slack:
+          step_when: always
+          # team_notification-severity content, kept out of monitoring-updates.txt
+          # entirely - its own channel, its own message. Empty
+          # team_notification_channel on non-prod invocations makes this a no-op
+          # (same idiom as ohs_channel above). best_effort: same reasoning as the
+          # OHS post. See docs/monitoring-data-validation.md (Channels).
+          message_text_file: monitoring-validation-team-notifications.txt
+          slack_channel: << parameters.team_notification_channel >>
+          best_effort: true
+      - store_artifacts:
+          when: always
+          path: import-artifacts
+      - store_artifacts:
+          when: always
+          path: monitoring-updates.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-goal-updates.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-validation-alerts.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-ohs-updates.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-validation-team-notifications.txt
+      - run:
+          when: always
+          name: Fail if any import phase failed
+          command: |
+            STATUS_FILE="import-artifacts/import-status.json"
+            EXPECTED_TASKS=8
+
+            if [[ ! -f "${STATUS_FILE}" ]]; then
+              echo "Import status file not found."
+              exit 1
+            fi
+
+            task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
+            failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+
+            if [[ "${task_count}" -ne "${EXPECTED_TASKS}" || "${failed_count}" -ne 0 ]]; then
+              echo "Import data cron failed or ran partially."
+              exit 1
+            fi
 
   run_validation_watchdog:
     # verify the daily monitoring data validation actually ran; scheduled a few
@@ -1804,151 +1842,150 @@ jobs:
         type: string
         default: ""
     steps:
-    - checkout
-    - install_cf_tools
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Run monitoring validation watchdog
-        no_output_timeout: 10m
-        command: |
-          set -u
-          set -o pipefail
+      - checkout
+      - install_cf_tools
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Run monitoring validation watchdog
+          no_output_timeout: 10m
+          command: |
+            set -u
+            set -o pipefail
 
-          TARGET_ENV="<< parameters.target_env >>"
-          APP_NAME="tta-smarthub-${TARGET_ENV}"
-          ARTIFACT_DIR="watchdog-artifacts"
-          STATUS_FILE="${ARTIFACT_DIR}/watchdog-status.json"
-          LOG_DIR="${ARTIFACT_DIR}/logs"
-          LOG_FILE="${LOG_DIR}/phase-watchdog.log"
-          mkdir -p "${LOG_DIR}"
+            TARGET_ENV="<< parameters.target_env >>"
+            APP_NAME="tta-smarthub-${TARGET_ENV}"
+            ARTIFACT_DIR="watchdog-artifacts"
+            STATUS_FILE="${ARTIFACT_DIR}/watchdog-status.json"
+            LOG_DIR="${ARTIFACT_DIR}/logs"
+            LOG_FILE="${LOG_DIR}/phase-watchdog.log"
+            mkdir -p "${LOG_DIR}"
 
-          jq -n \
-            --arg target_env "${TARGET_ENV}" \
-            --arg app_name "${APP_NAME}" \
-            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-            '{
-              metadata: {
-                targetEnv: $target_env,
-                appName: $app_name,
-                startedAt: $started_at
-              },
-              taskRuns: []
-            }' > "${STATUS_FILE}"
+            jq -n \
+              --arg target_env "${TARGET_ENV}" \
+              --arg app_name "${APP_NAME}" \
+              --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+              '{
+                metadata: {
+                  targetEnv: $target_env,
+                  appName: $app_name,
+                  startedAt: $started_at
+                },
+                taskRuns: []
+              }' > "${STATUS_FILE}"
 
-          if ! cf login -a "${cg_api}" \
-            -u "${cg_username}" \
-            -p "${cg_password}" \
-            -o "${cg_org}" \
-            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
-            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
-            exit 1
-          fi
+            if ! cf login -a "${cg_api}" \
+              -u "${cg_username}" \
+              -p "${cg_password}" \
+              -o "${cg_org}" \
+              -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+              echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+              exit 1
+            fi
 
-          ./bin/run-task.js "${APP_NAME}" \
-            --status-file "${STATUS_FILE}" \
-            --log-file "${LOG_FILE}" \
-            --command "yarn cli:check-monitoring-validation-ran" \
-            --name "validation-watchdog-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}" \
-            -m 2GB \
-            -k 2GB >>"${LOG_FILE}" 2>&1 || true
+            ./bin/run-task.js "${APP_NAME}" \
+              --status-file "${STATUS_FILE}" \
+              --log-file "${LOG_FILE}" \
+              --command "yarn cli:check-monitoring-validation-ran" \
+              --name "validation-watchdog-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}" \
+              -m 2GB \
+              -k 2GB >>"${LOG_FILE}" 2>&1 || true
 
-          cf logout >/dev/null 2>&1 || true
-    - run:
-        when: always
-        name: Create watchdog summary
-        command: |
-          LOG_FILE="watchdog-artifacts/logs/phase-watchdog.log"
-          SUMMARY_FILE="watchdog-summary.txt"
+            cf logout >/dev/null 2>&1 || true
+      - run:
+          when: always
+          name: Create watchdog summary
+          command: |
+            LOG_FILE="watchdog-artifacts/logs/phase-watchdog.log"
+            SUMMARY_FILE="watchdog-summary.txt"
 
-          result=$(grep -o "Monitoring Validation Watchdog: .*" "${LOG_FILE}" 2>/dev/null | tail -n 1 || true)
-          if [[ -n "${result}" ]]; then
-            echo "${result}" > "${SUMMARY_FILE}"
-            ok=$(echo "${result#*: }" | jq -r '.ok // false' 2>/dev/null || echo false)
-          else
-            echo "Monitoring Validation Watchdog: no result (task failed to run)" > "${SUMMARY_FILE}"
-            ok=false
-          fi
-          cat "${SUMMARY_FILE}"
+            result=$(grep -o "Monitoring Validation Watchdog: .*" "${LOG_FILE}" 2>/dev/null | tail -n 1 || true)
+            if [[ -n "${result}" ]]; then
+              echo "${result}" > "${SUMMARY_FILE}"
+              ok=$(echo "${result#*: }" | jq -r '.ok // false' 2>/dev/null || echo false)
+            else
+              echo "Monitoring Validation Watchdog: no result (task failed to run)" > "${SUMMARY_FILE}"
+              ok=false
+            fi
+            cat "${SUMMARY_FILE}"
 
-          # slack_channel_failure only gets posted to on a real failure - resolved
-          # here, not as a step-level `when`, since notify_slack's slack_channel
-          # parameter is substituted at config-compile time, not from this job's
-          # runtime output. Empty channel = notify_slack's own no-op skip (same
-          # idiom as ohs_channel).
-          if [[ "${ok}" == "true" ]]; then
-            echo "export WATCHDOG_FAILURE_CHANNEL=" >> "$BASH_ENV"
-          else
-            echo "export WATCHDOG_FAILURE_CHANNEL=<< parameters.slack_channel_failure >>" >> "$BASH_ENV"
-          fi
-    - notify_slack:
-        step_when: always
-        message_text_file: watchdog-summary.txt
-        slack_channel: << parameters.slack_channel >>
-    - notify_slack:
-        step_when: always
-        message_text_file: watchdog-summary.txt
-        slack_channel: "${WATCHDOG_FAILURE_CHANNEL}"
-        best_effort: true
-    - store_artifacts:
-        when: always
-        path: watchdog-artifacts
-    - store_artifacts:
-        when: always
-        path: watchdog-summary.txt
-    - run:
-        when: always
-        name: Fail if the validation did not run cleanly
-        command: |
-          STATUS_FILE="watchdog-artifacts/watchdog-status.json"
+            # slack_channel_failure only gets posted to on a real failure - resolved
+            # here, not as a step-level `when`, since notify_slack's slack_channel
+            # parameter is substituted at config-compile time, not from this job's
+            # runtime output. Empty channel = notify_slack's own no-op skip (same
+            # idiom as ohs_channel).
+            if [[ "${ok}" == "true" ]]; then
+              echo "export WATCHDOG_FAILURE_CHANNEL=" >> "$BASH_ENV"
+            else
+              echo "export WATCHDOG_FAILURE_CHANNEL=<< parameters.slack_channel_failure >>" >> "$BASH_ENV"
+            fi
+      - notify_slack:
+          step_when: always
+          message_text_file: watchdog-summary.txt
+          slack_channel: << parameters.slack_channel >>
+      - notify_slack:
+          step_when: always
+          message_text_file: watchdog-summary.txt
+          slack_channel: "${WATCHDOG_FAILURE_CHANNEL}"
+          best_effort: true
+      - store_artifacts:
+          when: always
+          path: watchdog-artifacts
+      - store_artifacts:
+          when: always
+          path: watchdog-summary.txt
+      - run:
+          when: always
+          name: Fail if the validation did not run cleanly
+          command: |
+            STATUS_FILE="watchdog-artifacts/watchdog-status.json"
 
-          if [[ ! -f "${STATUS_FILE}" ]]; then
-            echo "Watchdog status file not found."
-            exit 1
-          fi
+            if [[ ! -f "${STATUS_FILE}" ]]; then
+              echo "Watchdog status file not found."
+              exit 1
+            fi
 
-          task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
-          failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+            task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
+            failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
 
-          if [[ "${task_count}" -ne 1 || "${failed_count}" -ne 0 ]]; then
-            echo "Monitoring validation watchdog reported a problem."
-            exit 1
-          fi
+            if [[ "${task_count}" -ne 1 || "${failed_count}" -ne 0 ]]; then
+              echo "Monitoring validation watchdog reported a problem."
+              exit 1
+            fi
 
   clear_cache_job:
     executor: docker-executor
     steps:
-    - checkout
-    - install_cf_tools
-    - cf_cache_clear:
-        space: dev
-        target_app: tta-smarthub-dev-blue
-    - cf_cache_clear:
-        space: dev
-        target_app: tta-smarthub-dev-red
-    - cf_cache_clear:
-        space: dev
-        target_app: tta-smarthub-dev-green
-    - cf_cache_clear:
-        space: dev
-        target_app: tta-smarthub-dev-pink
-    - cf_cache_clear:
-        space: dev
-        target_app: tta-smarthub-dev-gold
-    - cf_cache_clear:
-        space: staging
-        target_app: tta-smarthub-staging
-    - cf_cache_clear:
-        space: prod
-        target_app: tta-automation
-    - cf_cache_clear:
-        space: prod
-        target_app: tta-smarthub-prod
+      - checkout
+      - install_cf_tools
+      - cf_cache_clear:
+          space: dev
+          target_app: tta-smarthub-dev-blue
+      - cf_cache_clear:
+          space: dev
+          target_app: tta-smarthub-dev-red
+      - cf_cache_clear:
+          space: dev
+          target_app: tta-smarthub-dev-green
+      - cf_cache_clear:
+          space: dev
+          target_app: tta-smarthub-dev-pink
+      - cf_cache_clear:
+          space: dev
+          target_app: tta-smarthub-dev-gold
+      - cf_cache_clear:
+          space: staging
+          target_app: tta-smarthub-staging
+      - cf_cache_clear:
+          space: prod
+          target_app: tta-automation
+      - cf_cache_clear:
+          space: prod
+          target_app: tta-smarthub-prod
 
 # ----------------- Commands -----------------
 
 commands:
-
   set_env_vars:
     # set env vars, based on (ci) template in deployment_config
     # these will persist across steps in a job, but not across jobs
@@ -1965,40 +2002,40 @@ commands:
         type: boolean
         default: true
     steps:
-    - run:
-        name: Set env vars (<< parameters.target_env >>)
-        command: |
-          # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
-          # $cfg_env maps to the primary "level" (dev, staging, prod)
-          export full_env=<< parameters.target_env >>
-          export cfg_env=${full_env}
-          if [[ $full_env == *"dev"* ]]; then cfg_env="dev"; fi
-          echo "export full_env=${full_env}" >> "$BASH_ENV"
-          echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
-          # convert yml cfg to env style
-          ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
-          # substitute actual values from circle into env.vars file
-          circleci env subst < ./temp.vars > env.vars
-          # iterate through env.vars file and export each line
-          while read line; do
-            if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
-              echo "export ${line}">>"$BASH_ENV"
-            fi
-          done < env.vars
+      - run:
+          name: Set env vars (<< parameters.target_env >>)
+          command: |
+            # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
+            # $cfg_env maps to the primary "level" (dev, staging, prod)
+            export full_env=<< parameters.target_env >>
+            export cfg_env=${full_env}
+            if [[ $full_env == *"dev"* ]]; then cfg_env="dev"; fi
+            echo "export full_env=${full_env}" >> "$BASH_ENV"
+            echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
+            # convert yml cfg to env style
+            ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
+            # substitute actual values from circle into env.vars file
+            circleci env subst < ./temp.vars > env.vars
+            # iterate through env.vars file and export each line
+            while read line; do
+              if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
+                echo "export ${line}">>"$BASH_ENV"
+              fi
+            done < env.vars
 
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
     steps:
-    - run:
-        name: Install CF tools
-        command: |
-          # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-          sudo apt-get update
-          sudo apt-get install -y cf8-cli
-          # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
+      - run:
+          name: Install CF tools
+          command: |
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+            echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
   run_e2e_test:
     parameters:
@@ -2007,62 +2044,62 @@ commands:
       artifact_path:
         type: string
     steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Run migrations ci
-        command: yarn db:migrate:ci
-    - run:
-        name: Seed database
-        command: yarn db:seed:ci
-    - run:
-        name: Install browser dependencies
-        command: |
-          yarn playwright install
-    - run:
-        name: Start backend (8080) & watch logs
-        command: |
-          export BYPASS_AUTH=true
-          export CURRENT_USER_ID=5
-          export POSTGRES_USERNAME="postgres"
-          export POSTGRES_DB="ttasmarthub"
-          yarn start:be
-        background: true
-    - run:
-        name: Start frontend (3000) & watch logs
-        command: |
-          export POSTGRES_USERNAME="postgres"
-          export POSTGRES_DB="ttasmarthub"
-          export BYPASS_AUTH=true
-          export CURRENT_USER_ID=5
-          export TTA_SMART_HUB_URI="http://localhost:3000"
-          yarn start:fe
-        background: true
-    - run:
-        name: Start testing server (9999) & watch logs
-        command: |
-          export POSTGRES_USERNAME="postgres"
-          export POSTGRES_DB="ttasmarthub"
-          yarn start:testingonly
-        background: true
-    - run:
-        name: Wait for server to start
-        command: |
-          ./bin/ping-server 3000 # frontend
-          ./bin/ping-server 9999 localhost "/testingonly" # testonly
-          #./bin/ping-server 8080 localhost "/health" # backend
-          sleep 30s # there is no way to check backend health without auth
-    - run:
-        name: << parameters.cmd >>
-        command: |
-          export TTA_SMART_HUB_URI="http://localhost:3000"
-          export PLAYWRIGHT_WORKERS=1
-          << parameters.cmd >>
-    - store_artifacts:
-        path: << parameters.artifact_path >>
-    - store_test_results:
-        path: << parameters.artifact_path >>
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Install browser dependencies
+          command: |
+            yarn playwright install
+      - run:
+          name: Start backend (8080) & watch logs
+          command: |
+            export BYPASS_AUTH=true
+            export CURRENT_USER_ID=5
+            export POSTGRES_USERNAME="postgres"
+            export POSTGRES_DB="ttasmarthub"
+            yarn start:be
+          background: true
+      - run:
+          name: Start frontend (3000) & watch logs
+          command: |
+            export POSTGRES_USERNAME="postgres"
+            export POSTGRES_DB="ttasmarthub"
+            export BYPASS_AUTH=true
+            export CURRENT_USER_ID=5
+            export TTA_SMART_HUB_URI="http://localhost:3000"
+            yarn start:fe
+          background: true
+      - run:
+          name: Start testing server (9999) & watch logs
+          command: |
+            export POSTGRES_USERNAME="postgres"
+            export POSTGRES_DB="ttasmarthub"
+            yarn start:testingonly
+          background: true
+      - run:
+          name: Wait for server to start
+          command: |
+            ./bin/ping-server 3000 # frontend
+            ./bin/ping-server 9999 localhost "/testingonly" # testonly
+            #./bin/ping-server 8080 localhost "/health" # backend
+            sleep 30s # there is no way to check backend health without auth
+      - run:
+          name: << parameters.cmd >>
+          command: |
+            export TTA_SMART_HUB_URI="http://localhost:3000"
+            export PLAYWRIGHT_WORKERS=1
+            << parameters.cmd >>
+      - store_artifacts:
+          path: << parameters.artifact_path >>
+      - store_test_results:
+          path: << parameters.artifact_path >>
 
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file. File is used as checksum source for part of caching key."
@@ -2071,9 +2108,9 @@ commands:
         type: string
         default: "combined-yarnlock.txt"
     steps:
-    - run:
-        name: Combine package-lock.json files to single file
-        command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
+      - run:
+          name: Combine package-lock.json files to single file
+          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
 
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
@@ -2085,24 +2122,24 @@ commands:
         type: string
         description: "Branch to checkout"
     steps:
-    - run:
-        name: Install Git
-        command: |
-          sudo apt-get update && sudo apt-get install -y git
-    - run:
-        name: Clone Repository
-        command: |
-          REPO_URL="<< pipeline.git.repo_url >>"
-          git clone --no-checkout --filter=blob:none "${REPO_URL%.git}.git" .
-    - run:
-        name: Sparse Checkout
-        environment:
-          DIRECTORIES: "<< parameters.directories >>"
-        command: |
-          git config core.sparseCheckout true
-          echo $DIRECTORIES | tr ',' '\n' | while read dir; do
-            echo "$dir" | tee -a .git/info/sparse-checkout
-          done
+      - run:
+          name: Install Git
+          command: |
+            sudo apt-get update && sudo apt-get install -y git
+      - run:
+          name: Clone Repository
+          command: |
+            REPO_URL="<< pipeline.git.repo_url >>"
+            git clone --no-checkout --filter=blob:none "${REPO_URL%.git}.git" .
+      - run:
+          name: Sparse Checkout
+          environment:
+            DIRECTORIES: "<< parameters.directories >>"
+          command: |
+            git config core.sparseCheckout true
+            echo $DIRECTORIES | tr ',' '\n' | while read dir; do
+              echo "$dir" | tee -a .git/info/sparse-checkout
+            done
 
   notify_new_relic:
     description: "Notify new relic of a deploy"
@@ -2110,21 +2147,21 @@ commands:
       target_env:
         type: string
     steps:
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Notify New Relic
-        command: |
-          curl -X POST "https://api.newrelic.com/v2/applications/${new_relic_app_id}/deployments.json" \
-          -H "X-Api-Key: $NEW_RELIC_REST_API_KEY" -i \
-          -H "Content-Type: application/json" \
-          -d \
-          "{
-            \"deployment\": {
-              \"revision\": \"<< pipeline.git.revision >>\",
-              \"description\": \"${full_env} Successfully Deployed\"
-            }
-          }"
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Notify New Relic
+          command: |
+            curl -X POST "https://api.newrelic.com/v2/applications/${new_relic_app_id}/deployments.json" \
+            -H "X-Api-Key: $NEW_RELIC_REST_API_KEY" -i \
+            -H "Content-Type: application/json" \
+            -d \
+            "{
+              \"deployment\": {
+                \"revision\": \"<< pipeline.git.revision >>\",
+                \"description\": \"${full_env} Successfully Deployed\"
+              }
+            }"
 
   cf_login:
     description: "Login to Cloud Foundry space with service account credentials"
@@ -2132,16 +2169,16 @@ commands:
       target_env:
         type: string
     steps:
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Login with service account
-        command: |
-          cf login -a ${cg_api} \
-            -u ${cg_username} \
-            -p ${cg_password} \
-            -o ${cg_org} \
-            -s ${cg_space}
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
 
   cf_cache_clear:
     description: "Clear the build cache for a given app"
@@ -2151,16 +2188,16 @@ commands:
       target_app:
         type: string
     steps:
-    - cf_login:
-        target_env: << parameters.space >>
-    - run:
-        name: Clear build cache (<< parameters.target_app >>)
-        command: |
-          app_name=<< parameters.target_app >>
-          app_guid=$(cf app --guid ${app_name})
-          echo "Clearing build cache for ${app_name} (${app_guid})"
-          cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-          echo "Build cache cleared"
+      - cf_login:
+          target_env: << parameters.space >>
+      - run:
+          name: Clear build cache (<< parameters.target_app >>)
+          command: |
+            app_name=<< parameters.target_app >>
+            app_guid=$(cf app --guid ${app_name})
+            echo "Clearing build cache for ${app_name} (${app_guid})"
+            cf curl -f -i -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+            echo "Build cache cleared"
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials and push application using deployment configuration file."
@@ -2168,75 +2205,75 @@ commands:
       target_env:
         type: string
     steps:
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Login with service account
-        command: |
-          cf login -a ${cg_api} \
-            -u ${cg_username} \
-            -p ${cg_password} \
-            -o ${cg_org} \
-            -s ${cg_space}
-    - run:
-        name: Push application
-        command: |
-          circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-          printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
-          cat app.vars
-          echo "Deploying app@branch:[${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}] to [${full_env}]"
-          cf push \
-            --vars-file app.vars \
-            --var BUILD_BRANCH="${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
-            --var BUILD_COMMIT=${CIRCLE_SHA1} \
-            --var BUILD_NUMBER=<< pipeline.number >> \
-            --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
-            --var BUILD_TIMESTAMP="${DEPLOY_BUILD_TIMESTAMP}"
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
+      - run:
+          name: Push application
+          command: |
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+            printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
+            cat app.vars
+            echo "Deploying app@branch:[${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}] to [${full_env}]"
+            cf push \
+              --vars-file app.vars \
+              --var BUILD_BRANCH="${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
+              --var BUILD_COMMIT=${CIRCLE_SHA1} \
+              --var BUILD_NUMBER=<< pipeline.number >> \
+              --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
+              --var BUILD_TIMESTAMP="${DEPLOY_BUILD_TIMESTAMP}"
 
   write_envs:
     parameters:
       target_env:
         type: string
     steps:
-    - restore_cache:
-        key: env-owners-
-    - run:
-        name: Update env owners canvas
-        command: |
-          mkdir -p environments
-          current_env="<< parameters.target_env >>"
+      - restore_cache:
+          key: env-owners-
+      - run:
+          name: Update env owners canvas
+          command: |
+            mkdir -p environments
+            current_env="<< parameters.target_env >>"
 
-          cd environments
-          ls -la
-          echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
-          data="Env | Name | Branch | Date |\n|---|---|---|---|"
-          for file in *; do
-            if [ ! -d ${file} ]; then
-              data="${data}\n$(cat ${file})"
-            fi;
-          done
+            cd environments
+            ls -la
+            echo "${current_env} | ${CIRCLE_USERNAME} | ${CIRCLE_BRANCH} | $(date +"%Y-%m-%d")" > ${current_env}
+            data="Env | Name | Branch | Date |\n|---|---|---|---|"
+            for file in *; do
+              if [ ! -d ${file} ]; then
+                data="${data}\n$(cat ${file})"
+              fi;
+            done
 
-          echo -e "Updating canvas with data:\n${data}"
+            echo -e "Updating canvas with data:\n${data}"
 
-          curl -w "\n%{http_code}\n" --fail-with-body -X POST \
-          https://slack.com/api/canvases.edit \
-          -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data '{
-            "canvas_id": "F09459NAEKB",
-            "changes": [{
-              "operation": "replace",
-              "document_content": {
-                "type": "markdown",
-                "markdown": "'"$data"'"
-              }
-            }]
-          }'
+            curl -w "\n%{http_code}\n" --fail-with-body -X POST \
+            https://slack.com/api/canvases.edit \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data '{
+              "canvas_id": "F09459NAEKB",
+              "changes": [{
+                "operation": "replace",
+                "document_content": {
+                  "type": "markdown",
+                  "markdown": "'"$data"'"
+                }
+              }]
+            }'
 
-    - save_cache:
-        key: env-owners-{{ epoch }}
-        paths:
-        - environments
+      - save_cache:
+          key: env-owners-{{ epoch }}
+          paths:
+            - environments
 
   cf_task:
     description: "Login, run task, send notification"
@@ -2251,55 +2288,55 @@ commands:
         type: string
         default: cmd_log.txt
     steps:
-    - checkout
-    - install_cf_tools
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Login with service account
-        command: |
-          cf login -a ${cg_api} \
-          -u ${cg_username} \
-          -p ${cg_password} \
-          -o ${cg_org} \
-          -s ${cg_space}
-    - run:
-        name: Set task name
-        command: |
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
-    - run:
-        name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
-        background: true
-        command: |
-          cf run-task \
-            tta-smarthub-<< parameters.target_env >> \
-            --command "<< parameters.the_command >>" \
-            --name ${TASK_NAME} \
-            -m 2GB \
-            -k 2GB
+      - checkout
+      - install_cf_tools
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a ${cg_api} \
+            -u ${cg_username} \
+            -p ${cg_password} \
+            -o ${cg_org} \
+            -s ${cg_space}
+      - run:
+          name: Set task name
+          command: |
+            TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+            echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+      - run:
+          name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
+          background: true
+          command: |
+            cf run-task \
+              tta-smarthub-<< parameters.target_env >> \
+              --command "<< parameters.the_command >>" \
+              --name ${TASK_NAME} \
+              -m 2GB \
+              -k 2GB
 
-          echo "Watching logs..."
-          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+            echo "Watching logs..."
+            cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
 
-    - run:
-        name: "Wait for task to complete"
-        no_output_timeout: 30m
-        command: |
-          sleep 15
-          TASK_EXIT=0
-          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME} || TASK_EXIT=$?
-          sleep 30
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep -F "${TASK_NAME}" | tee << parameters.logfile >> || true
-          exit ${TASK_EXIT}
+      - run:
+          name: "Wait for task to complete"
+          no_output_timeout: 30m
+          command: |
+            sleep 15
+            TASK_EXIT=0
+            ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME} || TASK_EXIT=$?
+            sleep 30
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep -F "${TASK_NAME}" | tee << parameters.logfile >> || true
+            exit ${TASK_EXIT}
 
-    - run:
-        name: Logout of service account
-        command: |
-          # Wait for the log monitoring process to terminate
-          sleep 5
-          # Logout from Cloud Foundry
-          cf logout
+      - run:
+          name: Logout of service account
+          command: |
+            # Wait for the log monitoring process to terminate
+            sleep 5
+            # Logout from Cloud Foundry
+            cf logout
 
   cf_backup:
     description: "Backup database to S3"
@@ -2309,28 +2346,28 @@ commands:
       s3_service_name: { type: string }
       backup_prefix: { type: string }
     steps:
-    - cf_automation_task:
-        task_name: "backup"
-        target_env: << parameters.target_env >>
-        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
-        task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-        config: "<< parameters.backup_prefix >>-backup"
-        success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
+      - cf_automation_task:
+          task_name: "backup"
+          target_env: << parameters.target_env >>
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
 
   cf_process:
     description: "Process database from S3"
     parameters:
       target_env: { type: string }
     steps:
-    - cf_automation_task:
-        target_env: << parameters.target_env >>
-        task_name: "process"
-        task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
-        task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
-        config: "process"
-        success_message: ':database: Restored data processed'
-        directory: "./"
-        timeout: "3000"
+      - cf_automation_task:
+          target_env: << parameters.target_env >>
+          task_name: "process"
+          task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
+          task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
+          config: "process"
+          success_message: ":database: Restored data processed"
+          directory: "./"
+          timeout: "3000"
 
   cf_restore:
     description: "Restore db from S3 to << parameters.target_env >>"
@@ -2340,27 +2377,26 @@ commands:
       s3_service_name: { type: string }
       backup_prefix: { type: string }
     steps:
-    - run:
-        name: Validate Parameters (<< parameters.target_env >>)
-        command: |
-          if [ "<< parameters.rds_service_name >>" == "ttahub-prod" ]; then
-            echo "Error: rds_service_name cannot be 'ttahub-prod'"
-            exit 1
-          fi
-    - cf_automation_task:
-        target_env: << parameters.target_env >>
-        task_name: "restore_s3:<< parameters.backup_prefix >>->rds:<< parameters.rds_service_name >>"
-        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
-        task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-        config: "<< parameters.backup_prefix >>-restore"
-        success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
-        timeout: "1800"
-    - run:
-        when: on_fail
-        command: |
-          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
-
+      - run:
+          name: Validate Parameters (<< parameters.target_env >>)
+          command: |
+            if [ "<< parameters.rds_service_name >>" == "ttahub-prod" ]; then
+              echo "Error: rds_service_name cannot be 'ttahub-prod'"
+              exit 1
+            fi
+      - cf_automation_task:
+          target_env: << parameters.target_env >>
+          task_name: "restore_s3:<< parameters.backup_prefix >>->rds:<< parameters.rds_service_name >>"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-restore"
+          success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
+          timeout: "1800"
+      - run:
+          when: on_fail
+          command: |
+            msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -2369,13 +2405,13 @@ commands:
       s3_service_name: { type: string }
       backup_prefix: { type: string }
     steps:
-    - cf_automation_task:
-        target_env: << parameters.target_env >>
-        task_name: "retention"
-        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
-        task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
-        config: "<< parameters.backup_prefix >>-backup"
-        success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
+      - cf_automation_task:
+          target_env: << parameters.target_env >>
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 
   cf_migrate:
     description: "Login to Cloud Foundry space, run migration"
@@ -2391,82 +2427,82 @@ commands:
         type: string
         default: "https://api.fr.cloud.gov"
     steps:
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Login with service account
-        command: |
-          cf login -a ${cg_api} \
-            -u ${cg_username} \
-            -p ${cg_password} \
-            -o ${cg_org} \
-            -s ${cg_space}
-    - run:
-        name: "Migrate database: << parameters.app_name >>"
-        command: |
-          cf run-task << parameters.app_name >> \
-            --command "yarn db:migrate:prod" \
-            --name "migrate"
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
+      - run:
+          name: "Migrate database: << parameters.app_name >>"
+          command: |
+            cf run-task << parameters.app_name >> \
+              --command "yarn db:migrate:prod" \
+              --name "migrate"
 
   install_automation_deps:
     steps:
-    - run:
-        name: Install Automation Dependencies
-        command: |
-          set -e
-          set -u
-          set -o pipefail
-          set -o noglob
-          set -o noclobber
+      - run:
+          name: Install Automation Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
 
-          # update
-          sudo apt-get update
-          # Install uuid-runtime to have access to uuidgen
-          # Install pv wget
-          sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
 
-          # Install Cloud Foundry CLI
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-          sudo apt-get update
-          sudo apt-get install -y cf8-cli
-          # Install plugin needed for connect-to-service
-          retry_with_backoff() {
-            local max_attempts="$1"
-            local delay_seconds="$2"
-            shift 2
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
+            echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            retry_with_backoff() {
+              local max_attempts="$1"
+              local delay_seconds="$2"
+              shift 2
 
-            local attempt=1
-            while true; do
-              if "$@"; then
-                return 0
-              fi
-              if [ "$attempt" -ge "$max_attempts" ]; then
-                echo "Command failed after ${attempt} attempts: $*"
-                return 1
-              fi
-              echo "Attempt ${attempt}/${max_attempts} failed. Retrying in ${delay_seconds}s: $*"
-              attempt=$((attempt + 1))
-              sleep "${delay_seconds}"
-            done
-          }
+              local attempt=1
+              while true; do
+                if "$@"; then
+                  return 0
+                fi
+                if [ "$attempt" -ge "$max_attempts" ]; then
+                  echo "Command failed after ${attempt} attempts: $*"
+                  return 1
+                fi
+                echo "Attempt ${attempt}/${max_attempts} failed. Retrying in ${delay_seconds}s: $*"
+                attempt=$((attempt + 1))
+                sleep "${delay_seconds}"
+              done
+            }
 
-          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
+            retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v2.0.2/cf-service-connect_linux_amd64
 
-          # The line you want to ensure exists in the /etc/hosts file
-          line="127.0.0.1        localhost"
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
 
-          # Check if the line already exists
-          if ! grep -qF "$line" /etc/hosts; then
-              # If the line does not exist, append it
-              echo "$line" | sudo tee -a /etc/hosts > /dev/null
-              echo "Line added to /etc/hosts"
-          else
-              echo "Line already exists in /etc/hosts"
-          fi
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
 
-          # cleanup
-          sudo rm -rf /var/lib/apt/lists/*
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
 
   cf_automation_task:
     description: "Running [<< parameters.task_name >>] from [<< parameters.target_env >>: << parameters.task_args >>]"
@@ -2495,56 +2531,56 @@ commands:
         type: string
         default: "1800"
       directory:
-        description: 'directory to root to push'
+        description: "directory to root to push"
         type: string
         default: "./automation"
     steps:
-    - install_automation_deps
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-        do_export: false
-    - run:
-        name: Login with service account
-        command: |
-          source env.vars
-          cf login -a ${cg_api} \
-            -u ${cg_username} \
-            -p ${cg_password} \
-            -o ${cg_org} \
-            -s ${cg_space}
-    - run:
-        name: |
-          "Running cmd: << parameters.task_name >>
-              in << parameters.target_env >>
-              args:<< parameters.task_args >>
-              cmd: << parameters.task_command >>"
-        command: |
-          json_data=$(jq -n \
-            --arg directory "<< parameters.directory >>" \
-            --arg config "<< parameters.config >>" \
-            --arg task_name "<< parameters.task_name >>" \
-            --arg command "<< parameters.task_command >>" \
-            --arg timeout_active_tasks "<< parameters.timeout >>" \
-            --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
-            --argjson args '<< parameters.task_args >>' \
-            '{
-              directory: $directory,
-              config: $config,
-              task_name: $task_name,
-              command: $command,
-              timeout_active_tasks: $timeout_active_tasks,
-              timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
-              args: $args
-            }')
+      - install_automation_deps
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+          do_export: false
+      - run:
+          name: Login with service account
+          command: |
+            source env.vars
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
+      - run:
+          name: |
+            "Running cmd: << parameters.task_name >>
+                in << parameters.target_env >>
+                args:<< parameters.task_args >>
+                cmd: << parameters.task_command >>"
+          command: |
+            json_data=$(jq -n \
+              --arg directory "<< parameters.directory >>" \
+              --arg config "<< parameters.config >>" \
+              --arg task_name "<< parameters.task_name >>" \
+              --arg command "<< parameters.task_command >>" \
+              --arg timeout_active_tasks "<< parameters.timeout >>" \
+              --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+              --argjson args '<< parameters.task_args >>' \
+              '{
+                directory: $directory,
+                config: $config,
+                task_name: $task_name,
+                command: $command,
+                timeout_active_tasks: $timeout_active_tasks,
+                timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+                args: $args
+              }')
 
-          # Set execute permission
-          find ./automation -name "*.sh" -exec chmod +x {} \;
-          ./automation/ci/scripts/cf_lambda.sh "$json_data"
-    - run:
-        name: Logout of service account
-        command: |
-          # Logout from Cloud Foundry
-          cf logout
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+      - run:
+          name: Logout of service account
+          command: |
+            # Logout from Cloud Foundry
+            cf logout
 
   notify_slack:
     description: "Notify Slack @ << parameters.slack_channel >>"
@@ -2579,81 +2615,80 @@ commands:
         type: boolean
         default: false
     steps:
-    - run:
-        when: << parameters.step_when >>
-        name: Notify Slack
-        command: |
-          if [[ -n "<< parameters.message_text >>" ]]; then
-            MESSAGE="<< parameters.message_text >>"
-          else
-            MESSAGE=$(cat "<< parameters.message_text_file >>")
-          fi
-
-          echo "Sending: ${MESSAGE}"
-          # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
-            echo "Missing required parameter. Notification will not be sent."
-            exit 0
-          fi
-
-          # Build the payload with jq so the message is JSON-escaped. The text
-          # can carry double quotes and newlines (e.g. the watchdog logs raw
-          # JSON, import summaries are multi-line).
-          payload=$(jq -cn \
-            --arg channel "<< parameters.slack_channel >>" \
-            --arg text "$MESSAGE" \
-            '{channel: $channel, text: $text}')
-          # The `|| echo ...` fallback keeps this assignment's exit status 0 even
-          # when curl itself fails (no connection, DNS, timeout) - CircleCI runs
-          # steps with errexit, so without it a transport failure here would exit
-          # the whole step before the .ok check (and best_effort) ever run.
-          response=$(curl -s -X POST \
-            -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "$payload" \
-            https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
-          # Same reasoning applies to a non-JSON response (an HTML error page from
-          # a proxy/edge in front of Slack's API): jq's parse failure must not
-          # escape via errexit before the .ok check runs either.
-          ok=$(echo $response | jq -r '.ok' 2>/dev/null || echo 'false')
-          error=$(echo $response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
-          if [ "$ok" != "true" ]; then
-            echo "Slack notification failed: $error"
-            if [ "<< parameters.best_effort >>" != "true" ]; then
-              exit 1
+      - run:
+          when: << parameters.step_when >>
+          name: Notify Slack
+          command: |
+            if [[ -n "<< parameters.message_text >>" ]]; then
+              MESSAGE="<< parameters.message_text >>"
+            else
+              MESSAGE=$(cat "<< parameters.message_text_file >>")
             fi
-          else
-            echo "Slack notification sent successfully"
-          fi
 
-          # Optionally mirror the same message to the OHS contractor-customer
-          # channel. Two independent guards so a lower environment can never leak
-          # there: the caller must pass a non-empty ohs_channel (only the prod
-          # invocations do), AND the OHS_MONITORING_ALERTS_ENABLED env var must be
-          # truthy (off by default). See docs/monitoring-data-validation.md
-          # (Channels).
-          OHS_CHANNEL="<< parameters.ohs_channel >>"
-          OHS_ENABLED=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
-          if [ -n "$OHS_CHANNEL" ] && { [ "$OHS_ENABLED" = "true" ] || [ "$OHS_ENABLED" = "1" ] || [ "$OHS_ENABLED" = "yes" ]; }; then
-            echo "OHS_MONITORING_ALERTS_ENABLED set; mirroring to ${OHS_CHANNEL}"
-            ohs_payload=$(jq -cn \
-              --arg channel "${OHS_CHANNEL}" \
+            echo "Sending: ${MESSAGE}"
+            # Ensure all parameters are provided
+            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+              echo "Missing required parameter. Notification will not be sent."
+              exit 0
+            fi
+
+            # Build the payload with jq so the message is JSON-escaped. The text
+            # can carry double quotes and newlines (e.g. the watchdog logs raw
+            # JSON, import summaries are multi-line).
+            payload=$(jq -cn \
+              --arg channel "<< parameters.slack_channel >>" \
               --arg text "$MESSAGE" \
               '{channel: $channel, text: $text}')
-            ohs_response=$(curl -s -X POST \
+            # The `|| echo ...` fallback keeps this assignment's exit status 0 even
+            # when curl itself fails (no connection, DNS, timeout) - CircleCI runs
+            # steps with errexit, so without it a transport failure here would exit
+            # the whole step before the .ok check (and best_effort) ever run.
+            response=$(curl -s -X POST \
               -H "Authorization: Bearer << parameters.slack_bot_token >>" \
               -H 'Content-type: application/json;charset=utf-8' \
-              --data "$ohs_payload" \
+              --data "$payload" \
               https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
-            ohs_ok=$(echo $ohs_response | jq -r '.ok' 2>/dev/null || echo 'false')
-            ohs_error=$(echo $ohs_response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
-            if [ "$ohs_ok" != "true" ]; then
-              echo "OHS Slack notification failed: $ohs_error"
+            # Same reasoning applies to a non-JSON response (an HTML error page from
+            # a proxy/edge in front of Slack's API): jq's parse failure must not
+            # escape via errexit before the .ok check runs either.
+            ok=$(echo $response | jq -r '.ok' 2>/dev/null || echo 'false')
+            error=$(echo $response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
+            if [ "$ok" != "true" ]; then
+              echo "Slack notification failed: $error"
+              if [ "<< parameters.best_effort >>" != "true" ]; then
+                exit 1
+              fi
             else
-              echo "OHS Slack notification sent successfully"
+              echo "Slack notification sent successfully"
             fi
-          fi
 
+            # Optionally mirror the same message to the OHS contractor-customer
+            # channel. Two independent guards so a lower environment can never leak
+            # there: the caller must pass a non-empty ohs_channel (only the prod
+            # invocations do), AND the OHS_MONITORING_ALERTS_ENABLED env var must be
+            # truthy (off by default). See docs/monitoring-data-validation.md
+            # (Channels).
+            OHS_CHANNEL="<< parameters.ohs_channel >>"
+            OHS_ENABLED=$(echo "${OHS_MONITORING_ALERTS_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
+            if [ -n "$OHS_CHANNEL" ] && { [ "$OHS_ENABLED" = "true" ] || [ "$OHS_ENABLED" = "1" ] || [ "$OHS_ENABLED" = "yes" ]; }; then
+              echo "OHS_MONITORING_ALERTS_ENABLED set; mirroring to ${OHS_CHANNEL}"
+              ohs_payload=$(jq -cn \
+                --arg channel "${OHS_CHANNEL}" \
+                --arg text "$MESSAGE" \
+                '{channel: $channel, text: $text}')
+              ohs_response=$(curl -s -X POST \
+                -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+                -H 'Content-type: application/json;charset=utf-8' \
+                --data "$ohs_payload" \
+                https://slack.com/api/chat.postMessage || echo '{"ok":false,"error":"curl request failed"}')
+              ohs_ok=$(echo $ohs_response | jq -r '.ok' 2>/dev/null || echo 'false')
+              ohs_error=$(echo $ohs_response | jq -r '.error' 2>/dev/null || echo 'unparseable response')
+              if [ "$ohs_ok" != "true" ]; then
+                echo "OHS Slack notification failed: $ohs_error"
+              else
+                echo "OHS Slack notification sent successfully"
+              fi
+            fi
 
   notify_slack_deploy:
     parameters:
@@ -2667,78 +2702,78 @@ commands:
       target_env:
         type: string
     steps:
-    - checkout
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Generate Slack Message JSON
-        command: |
-          env_name=<< parameters.target_env >>
+      - checkout
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Generate Slack Message JSON
+          command: |
+            env_name=<< parameters.target_env >>
 
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-          else
-            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-              PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
             else
-              echo "No PR number found."
-              exit 0
+              COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+              if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+                PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+              else
+                echo "No PR number found."
+                exit 0
+              fi
             fi
-          fi
 
-          PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+            PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
-          PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
+            PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
 
-          PR_BODY=$(echo "$PR_DATA" | jq -r .body)
-          PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
+            PR_BODY=$(echo "$PR_DATA" | jq -r .body)
+            PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
 
-          extract_section() {
-            echo "$PR_BODY" | awk -v section="## $1" '
-              BEGIN {found=0}
-              $0 ~ section {found=1; next}
-              /^## / && found {exit}
-              found {print}
-            ' | head -c 600 | sed 's/^/> /'
-          }
+            extract_section() {
+              echo "$PR_BODY" | awk -v section="## $1" '
+                BEGIN {found=0}
+                $0 ~ section {found=1; next}
+                /^## / && found {exit}
+                found {print}
+              ' | head -c 600 | sed 's/^/> /'
+            }
 
-          DESC=$(extract_section "Description of change")
-          ISSUES=$(extract_section "Issue")
+            DESC=$(extract_section "Description of change")
+            ISSUES=$(extract_section "Issue")
 
-          jq -n \
-            --arg channel "<< parameters.slack_channel >>" \
-            --arg pr_number "#$PR_NUMBER" \
-            --arg pr_link "$PR_LINK" \
-            --arg title "$PR_TITLE" \
-            --arg desc "$DESC" \
-            --arg issues "$ISSUES" \
-            --arg env "$env_name" \
-            '{
-              channel: $channel,
-              blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of production PR <\($pr_link)|\($pr_number)> was successful!" } },
-                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
-                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
-                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
-                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
-              ]
-            }' > /tmp/message_file.json
-    - run:
-        name: Post Slack Message
-        command: |
-          if [ -f /tmp/message_file.json ]; then
-            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-              -H 'Content-type: application/json;charset=utf-8' \
-              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
-          else
-            echo "Skipping Slack notification because /tmp/message_file.json was not generated."
-          fi
+            jq -n \
+              --arg channel "<< parameters.slack_channel >>" \
+              --arg pr_number "#$PR_NUMBER" \
+              --arg pr_link "$PR_LINK" \
+              --arg title "$PR_TITLE" \
+              --arg desc "$DESC" \
+              --arg issues "$ISSUES" \
+              --arg env "$env_name" \
+              '{
+                channel: $channel,
+                blocks: [
+                  { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of production PR <\($pr_link)|\($pr_number)> was successful!" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                  { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+                ]
+              }' > /tmp/message_file.json
+      - run:
+          name: Post Slack Message
+          command: |
+            if [ -f /tmp/message_file.json ]; then
+              curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+                -H 'Content-type: application/json;charset=utf-8' \
+                --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+            else
+              echo "Skipping Slack notification because /tmp/message_file.json was not generated."
+            fi
 
   no-op:
     # placeholder command for no-op jobs
     steps:
-    - run:
-        command: echo "ok"
+      - run:
+          command: echo "ok"
