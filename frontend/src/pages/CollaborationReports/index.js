@@ -5,6 +5,7 @@ import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import LandingMessage from '../../components/LandingMessage';
 import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
 import { expandFilters } from '../../utils';
@@ -15,7 +16,7 @@ import './index.scss';
 
 const FILTER_KEY = 'collab-landing-filters';
 
-export const CollabReportsLanding = () => {
+const CollabReportsContent = () => {
   const { user } = useContext(UserContext);
   const {
     regions,
@@ -88,5 +89,11 @@ export const CollabReportsLanding = () => {
     </div>
   );
 };
+
+export const CollabReportsLanding = () => (
+  <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+    <CollabReportsContent />
+  </FilterContext.Provider>
+);
 
 export default CollabReportsLanding;

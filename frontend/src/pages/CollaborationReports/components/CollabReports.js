@@ -1,18 +1,22 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useEffect, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import FilterContext from '../../../FilterContext';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import useFetch from '../../../hooks/useFetch';
 import useRequestSort from '../../../hooks/useRequestSort';
 import useSessionSort from '../../../hooks/useSessionSort';
+import { filtersToQueryString } from '../../../utils';
 import CollabReportAlertsTable from './CollabReportAlertsTable';
 import CollabReportsTable from './CollabReportsTable';
 
 const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filters }) => {
+  const { filterKey } = useContext(FilterContext);
   const sortKey = useMemo(
     () => (isAlerts ? 'collabReportAlerts' : 'collabReportsTable'),
     [isAlerts]
   );
+  const filterQueryKey = `${filterKey}-${sortKey}-filter-query`;
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'id',
@@ -31,10 +35,16 @@ const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filter
     ? () => getAlerts(sortConfig, filters)
     : () => getReports(sortConfig, filters);
 
-  // reset pagination when filters change
+  const previousFilterQuery = useRef(window.sessionStorage.getItem(filterQueryKey));
+
   useEffect(() => {
-    setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
-  }, [filters, setSortConfig]);
+    const currentFilterQuery = filtersToQueryString(filters);
+    if (previousFilterQuery.current !== currentFilterQuery) {
+      setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+    }
+    window.sessionStorage.setItem(filterQueryKey, currentFilterQuery);
+    previousFilterQuery.current = currentFilterQuery;
+  }, [filterQueryKey, filters, setSortConfig]);
 
   const { data, setData, error, loading } = useFetch(
     { rows: [], count: 0 },
