@@ -92,6 +92,10 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'deliveryMethod',
         header: 'Delivery type',
       },
+      {
+        key: 'trainers',
+        header: 'Trainers',
+      },
     ],
   };
 
@@ -104,6 +108,7 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
       : '',
     recipients: Array.isArray(row.recipients) ? row.recipients.map((r) => r.label).join(', ') : '',
     participants: Array.isArray(row.participants) ? row.participants.join(', ') : '',
+    trainers: Array.isArray(row.trainers) ? row.trainers.map((t) => t.fullName).join(', ') : '',
   }));
 
   const csvData = stringify(transformedRows, options);
