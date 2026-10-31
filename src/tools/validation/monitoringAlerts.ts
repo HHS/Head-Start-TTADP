@@ -27,7 +27,10 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
   await sequelize.query(
     `
     -- Threshold checks look at complete periods only; the current week/month
-    -- is partial and would always false-alarm.
+    -- is partial and would always false-alarm. current_week_start/
+    -- current_month_start/last_complete_week/last_complete_month come from
+    -- validation_params (built by updateMonitoringTimeSeries, earlier this
+    -- run) rather than being recomputed here.
 
     -- Weekly review-creation totals per region over the last four complete weeks
     DROP TABLE IF EXISTS weekly_reviews;
@@ -38,11 +41,12 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       period_start,
       SUM(value) total
     FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
     WHERE feature_set = 'monitoring_reviews'
       AND period_type = 'week'
       AND stat_name = 'reviews_created'
-      AND period_start >= (date_trunc('week', NOW()) - INTERVAL '4 weeks')::date
-      AND period_start < date_trunc('week', NOW())::date
+      AND period_start >= (vp.current_week_start - INTERVAL '4 weeks')::date
+      AND period_start < vp.current_week_start
     GROUP BY 1, 2
     ;
 
@@ -56,12 +60,50 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       period_start,
       SUM(value) total
     FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
     WHERE feature_set = 'monitoring_findings'
       AND period_type = 'month'
       AND stat_name = 'findings_delivered'
       AND region_id = 0
-      AND period_start >= (date_trunc('month', NOW()) - INTERVAL '13 months')::date
-      AND period_start < date_trunc('month', NOW())::date
+      AND period_start >= (vp.current_month_start - INTERVAL '13 months')::date
+      AND period_start < vp.current_month_start
+    GROUP BY 1
+    ;
+
+    -- National Deficiency-type findings-delivered totals per month, same
+    -- window as monthly_findings above.
+    DROP TABLE IF EXISTS monthly_findings_deficiency;
+    CREATE TEMP TABLE monthly_findings_deficiency
+    AS
+    SELECT
+      period_start,
+      SUM(value) total
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_findings'
+      AND period_type = 'month'
+      AND stat_name = 'findings_delivered_deficiency'
+      AND region_id = 0
+      AND period_start >= (vp.current_month_start - INTERVAL '13 months')::date
+      AND period_start < vp.current_month_start
+    GROUP BY 1
+    ;
+
+    -- National finding-closure totals per month, same window.
+    DROP TABLE IF EXISTS monthly_closures;
+    CREATE TEMP TABLE monthly_closures
+    AS
+    SELECT
+      period_start,
+      SUM(value) total
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_finding_closure'
+      AND period_type = 'month'
+      AND stat_name = 'closure_count'
+      AND region_id = 0
+      AND period_start >= (vp.current_month_start - INTERVAL '13 months')::date
+      AND period_start < vp.current_month_start
     GROUP BY 1
     ;
 
@@ -148,13 +190,15 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     -- findings_delivered_month_spike
     WITH last_month AS (
     SELECT COALESCE(SUM(total), 0) total
-    FROM monthly_findings
-    WHERE period_start = (date_trunc('month', NOW()) - INTERVAL '1 month')::date
+    FROM monthly_findings mf
+    CROSS JOIN validation_params vp
+    WHERE mf.period_start = vp.last_complete_month
     ),
     previous_year AS (
     SELECT COALESCE(SUM(total), 0) total
-    FROM monthly_findings
-    WHERE period_start < (date_trunc('month', NOW()) - INTERVAL '1 month')::date
+    FROM monthly_findings mf
+    CROSS JOIN validation_params vp
+    WHERE mf.period_start < vp.last_complete_month
     )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
@@ -164,7 +208,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       jsonb_build_object(
         'feature_set', 'monitoring_findings',
         'stat_name', 'findings_delivered',
-        'period_start', (date_trunc('month', NOW()) - INTERVAL '1 month')::date,
+        'period_start', vp.last_complete_month,
         'value', lm.total,
         'previous_year_total', py.total
       ),
@@ -173,8 +217,278 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     FROM last_month lm
     CROSS JOIN previous_year py
     CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
     WHERE py.total > 0
       AND lm.total > 0.5 * py.total
+    ;
+
+    -- findings_delivered_deficiency_month_spike
+    WITH last_month AS (
+    SELECT COALESCE(SUM(total), 0) total
+    FROM monthly_findings_deficiency mf
+    CROSS JOIN validation_params vp
+    WHERE mf.period_start = vp.last_complete_month
+    ),
+    previous_year AS (
+    SELECT COALESCE(SUM(total), 0) total
+    FROM monthly_findings_deficiency mf
+    CROSS JOIN validation_params vp
+    WHERE mf.period_start < vp.last_complete_month
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'findings_delivered_deficiency_month_spike',
+      'Deficiency findings delivered in the last complete month exceeded 50% of the entire previous year',
+      jsonb_build_object(
+        'feature_set', 'monitoring_findings',
+        'stat_name', 'findings_delivered_deficiency',
+        'period_start', vp.last_complete_month,
+        'value', lm.total,
+        'previous_year_total', py.total
+      ),
+      NOW(),
+      NOW()
+    FROM last_month lm
+    CROSS JOIN previous_year py
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE py.total > 0
+      AND lm.total > 0.5 * py.total
+    ;
+
+    -- finding_closure_month_spike
+    WITH last_month AS (
+    SELECT COALESCE(SUM(total), 0) total
+    FROM monthly_closures mc
+    CROSS JOIN validation_params vp
+    WHERE mc.period_start = vp.last_complete_month
+    ),
+    previous_year AS (
+    SELECT COALESCE(SUM(total), 0) total
+    FROM monthly_closures mc
+    CROSS JOIN validation_params vp
+    WHERE mc.period_start < vp.last_complete_month
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_closure_month_spike',
+      'Findings closed in the last complete month exceeded 50% of the entire previous year',
+      jsonb_build_object(
+        'feature_set', 'monitoring_finding_closure',
+        'stat_name', 'closure_count',
+        'period_start', vp.last_complete_month,
+        'value', lm.total,
+        'previous_year_total', py.total
+      ),
+      NOW(),
+      NOW()
+    FROM last_month lm
+    CROSS JOIN previous_year py
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE py.total > 0
+      AND lm.total > 0.5 * py.total
+    ;
+
+    -- finding_closure_stalled. Backlog checked live against Citations.active,
+    -- not a stored measure - it's a gate on this one check, not a value
+    -- worth trending.
+    WITH recent_closures AS (
+    SELECT COALESCE(SUM(total), 0) total
+    FROM monthly_closures mc
+    CROSS JOIN validation_params vp
+    WHERE mc.period_start >= (vp.current_month_start - INTERVAL '2 months')::date
+    ),
+    open_backlog AS (
+    SELECT COUNT(*) total
+    FROM "Citations"
+    WHERE active
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'finding_closure_stalled',
+      'No findings were closed nationally in the last 2 complete months',
+      jsonb_build_object(
+        'feature_set', 'monitoring_finding_closure',
+        'stat_name', 'closure_count',
+        'window_months', 2,
+        'value', 0,
+        'open_backlog', ob.total
+      ),
+      NOW(),
+      NOW()
+    FROM recent_closures rc
+    CROSS JOIN open_backlog ob
+    CROSS JOIN validation_run cur
+    WHERE rc.total = 0
+      AND ob.total > 20
+    ;
+
+    -- import_lag_zscore_elevated / source_lag_zscore_elevated /
+    -- completion_gap_zscore_elevated
+    WITH latest AS (
+    SELECT
+      MAX(value) FILTER (WHERE stat_name = 'import_lag_elevated_z') z,
+      MAX(value) FILTER (WHERE stat_name = 'import_lag_elevated_count') elevated_count,
+      MAX(value) FILTER (WHERE stat_name = 'import_lag_sample_count') sample_count
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_report_delivery'
+      AND period_type = 'week'
+      AND region_id = 0
+      AND period_start = vp.last_complete_week
+      AND stat_name IN ('import_lag_elevated_z', 'import_lag_elevated_count', 'import_lag_sample_count')
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'import_lag_zscore_elevated',
+      l.elevated_count || ' of ' || l.sample_count
+        || ' reviews delivered in the last complete week had a gap between reportDeliveryDate '
+        || 'and arrival in TTA Hub of over 7 days',
+      jsonb_build_object(
+        'feature_set', 'monitoring_report_delivery',
+        'stat_name', 'import_lag_elevated_z',
+        'period_start', vp.last_complete_week,
+        'z_score', l.z,
+        'elevated_count', l.elevated_count,
+        'sample_count', l.sample_count
+      ),
+      NOW(),
+      NOW()
+    FROM latest l
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE l.z > 2
+    ;
+
+    WITH latest AS (
+    SELECT
+      MAX(value) FILTER (WHERE stat_name = 'source_lag_elevated_z') z,
+      MAX(value) FILTER (WHERE stat_name = 'source_lag_elevated_count') elevated_count,
+      MAX(value) FILTER (WHERE stat_name = 'source_lag_sample_count') sample_count
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_report_delivery'
+      AND period_type = 'week'
+      AND region_id = 0
+      AND period_start = vp.last_complete_week
+      AND stat_name IN ('source_lag_elevated_z', 'source_lag_elevated_count', 'source_lag_sample_count')
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'source_lag_zscore_elevated',
+      l.elevated_count || ' of ' || l.sample_count
+        || ' reviews delivered in the last complete week had a gap between reportDeliveryDate '
+        || 'and the upstream datestamp marking when it was applied to the review of over 5 days',
+      jsonb_build_object(
+        'feature_set', 'monitoring_report_delivery',
+        'stat_name', 'source_lag_elevated_z',
+        'period_start', vp.last_complete_week,
+        'z_score', l.z,
+        'elevated_count', l.elevated_count,
+        'sample_count', l.sample_count
+      ),
+      NOW(),
+      NOW()
+    FROM latest l
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE l.z > 2
+    ;
+
+    WITH latest AS (
+    SELECT
+      MAX(value) FILTER (WHERE stat_name = 'completion_gap_elevated_z') z,
+      MAX(value) FILTER (WHERE stat_name = 'completion_gap_elevated_count') elevated_count,
+      MAX(value) FILTER (WHERE stat_name = 'completion_gap_sample_count') sample_count
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_report_delivery'
+      AND period_type = 'week'
+      AND region_id = 0
+      AND period_start = vp.last_complete_week
+      AND stat_name IN ('completion_gap_elevated_z', 'completion_gap_elevated_count', 'completion_gap_sample_count')
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'completion_gap_zscore_elevated',
+      l.elevated_count || ' of ' || l.sample_count
+        || ' reviews delivered in the last complete week had a gap between being marked Complete '
+        || 'and the upstream datestamp marking when reportDeliveryDate was applied to the review '
+        || 'of over 2 days',
+      jsonb_build_object(
+        'feature_set', 'monitoring_report_delivery',
+        'stat_name', 'completion_gap_elevated_z',
+        'period_start', vp.last_complete_week,
+        'z_score', l.z,
+        'elevated_count', l.elevated_count,
+        'sample_count', l.sample_count
+      ),
+      NOW(),
+      NOW()
+    FROM latest l
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE l.z > 2
+    ;
+
+    -- review_lag_region_week_all_elevated. Reuses report_delivery_first_set/
+    -- review_complete_first_set, built earlier this run by
+    -- updateMonitoringTimeSeries.
+    WITH region_week AS (
+    SELECT
+      gr."regionId" region_id,
+      COUNT(DISTINCT mr.id) n,
+      COUNT(DISTINCT mr.id) FILTER (
+        WHERE (fds.set_date - mr."reportDeliveryDate"::date > 7)
+          OR (fds.source_set_date - mr."reportDeliveryDate"::date > 5)
+          OR (rcfs.data_id IS NOT NULL AND ABS(fds.source_set_date - rcfs.complete_date) > 2)
+      ) n_elevated
+    FROM "MonitoringReviews" mr
+    CROSS JOIN validation_params vp
+    JOIN report_delivery_first_set fds
+      ON fds.data_id = mr.id
+    JOIN "MonitoringReviewGrantees" mrg
+      ON mrg."reviewId" = mr."reviewId"
+      AND mrg."sourceDeletedAt" IS NULL
+      AND mrg."deletedAt" IS NULL
+    JOIN "Grants" gr
+      ON gr.number = mrg."grantNumber"
+      AND NOT gr.deleted
+    LEFT JOIN review_complete_first_set rcfs
+      ON rcfs.data_id = mr.id
+    WHERE mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
+      AND date_trunc('week', mr."reportDeliveryDate")::date = vp.last_complete_week
+    GROUP BY 1
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'review_lag_region_week_all_elevated',
+      'Region ' || rw.region_id || ': all ' || rw.n
+        || ' review(s) delivered in the last complete week had an elevated gap on at least one of: '
+        || 'reportDeliveryDate to arrival in TTA Hub, reportDeliveryDate to the upstream datestamp '
+        || 'marking when it was applied, or being marked Complete to that same upstream datestamp',
+      jsonb_build_object(
+        'region_id', rw.region_id,
+        'period_start', vp.last_complete_week,
+        'review_count', rw.n
+      ),
+      NOW(),
+      NOW()
+    FROM region_week rw
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE rw.n >= 2
+      AND rw.n = rw.n_elevated
     ;
 
     -- finding_category_missing. IS NOT DISTINCT FROM, not =, in the
