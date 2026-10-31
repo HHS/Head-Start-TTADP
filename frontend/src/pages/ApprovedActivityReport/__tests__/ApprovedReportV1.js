@@ -235,4 +235,16 @@ describe('Approved Activity Report V1 component', () => {
     expect(await screen.findByText('OHS / ECLKC resources')).toBeInTheDocument();
     expect(await screen.findByText('Non-ECLKC resources')).toBeInTheDocument();
   });
+  it('renders an incomplete draft with null participant counts', async () => {
+    render(
+      <ApprovedReportV1
+        data={{
+          ...report,
+          numberOfParticipants: null,
+          targetPopulations: null,
+        }}
+      />
+    );
+    expect(await screen.findByText(/TTA activity report Boat/)).toBeInTheDocument();
+  });
 });

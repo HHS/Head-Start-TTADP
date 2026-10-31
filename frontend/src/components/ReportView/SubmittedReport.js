@@ -22,7 +22,7 @@ export default function SubmittedReport({ data }) {
     .map((arRecipient) => arRecipient.name)
     .sort()
     .join(', ');
-  const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
+  const targetPopulations = (data.targetPopulations || []).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map((a) => a.fullName);
 
@@ -30,8 +30,8 @@ export default function SubmittedReport({ data }) {
   const languages = formatSimpleArray(data.language);
   const participantCount =
     deliveryMethod === 'hybrid'
-      ? data.numberOfParticipantsInPerson.toString()
-      : data.numberOfParticipants.toString();
+      ? String(data.numberOfParticipantsInPerson ?? '')
+      : String(data.numberOfParticipants ?? '');
 
   const participantVirtualCount = data.numberOfParticipantsVirtually
     ? data.numberOfParticipantsVirtually.toString()

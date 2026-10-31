@@ -16,6 +16,7 @@ import {
   getAlerts,
   getReport,
   getReports,
+  resetToDraft,
   reviewReport,
   saveReport,
   sendCollabReportCSV,
@@ -30,6 +31,8 @@ jest.mock('../../services/collabReports', () => ({
   deleteReport: jest.fn(),
   getCSVReports: jest.fn(),
   getReports: jest.fn(),
+  lockCollabReport: jest.fn(),
+  resetReportToDraft: jest.fn(),
 }));
 jest.mock('../../lib/mailer', () => ({
   collaboratorAssignedNotification: jest.fn(),
@@ -1703,6 +1706,82 @@ describe('Collaboration Reports Handlers', () => {
         mockError,
         expect.objectContaining({ namespace: 'SERVICE:COLLAB_REPORTS' })
       );
+    });
+  });
+
+  describe('resetToDraft', () => {
+    const mockReport = {
+      id: 1,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+    };
+
+    const mockPolicy = (canAdminReset: boolean) =>
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>).mockImplementation(
+        () => ({ canAdminReset: () => canAdminReset }) as unknown as jest.Mocked<CollabReportPolicy>
+      );
+
+    beforeEach(() => {
+      mockRequest.params = { collabReportId: '1' };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({
+        id: 123,
+        permissions: [{ scopeId: SCOPES.ADMIN, regionId: 14 }],
+      });
+    });
+
+    it('should return HTTP 404 when report is not found', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(CRServices.resetReportToDraft).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user cannot reset the report', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      mockPolicy(false);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(CRServices.resetReportToDraft).not.toHaveBeenCalled();
+    });
+
+    it('should reset the report and return it', async () => {
+      const draft = { id: 1, calculatedStatus: REPORT_STATUSES.DRAFT };
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.resetReportToDraft as jest.Mock).mockResolvedValue({ toJSON: () => draft });
+      mockPolicy(true);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.resetReportToDraft).toHaveBeenCalledWith(mockReport);
+      expect(mockJson).toHaveBeenCalledWith(draft);
+    });
+
+    it('should lock the report before reading it', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.resetReportToDraft as jest.Mock).mockResolvedValue({ toJSON: () => mockReport });
+      mockPolicy(true);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.lockCollabReport).toHaveBeenCalledWith('1');
+      expect((CRServices.lockCollabReport as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+        (CRServices.collabReportById as jest.Mock).mock.invocationCallOrder[0]
+      );
+    });
+
+    it('should call handleErrors when an exception occurs', async () => {
+      const error = new Error('Database error');
+      (CRServices.collabReportById as jest.Mock).mockRejectedValue(error);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(mockRequest, mockResponse, error, {
+        namespace: 'SERVICE:COLLAB_REPORTS',
+      });
     });
   });
 });

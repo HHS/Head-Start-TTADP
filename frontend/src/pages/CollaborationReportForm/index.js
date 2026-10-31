@@ -289,7 +289,14 @@ function CollaborationReport({ match, location }) {
               !isParticipant && approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
-            if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
+            // admins can read any report without being a participant or approver
+            const isReadOnlyViewer = !isParticipant && !isApproverFromFetched;
+
+            if (
+              isApproved ||
+              isReadOnlyViewer ||
+              (isSubmitted && !isApproverFromFetched && !isNeedsAction)
+            ) {
               // redirect to approved/submitted report view
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
               return;

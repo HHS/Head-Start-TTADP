@@ -203,8 +203,18 @@ describe('ActivityReport', () => {
   });
 
   describe('for read only users', () => {
-    it('redirects the user to the review page', async () => {
+    it('redirects users not on the report to the view page', async () => {
       const data = formData();
+      fetchMock.get('/api/activity-reports/1', data);
+      renderActivityReport('1', null, null, 2);
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
+    });
+
+    it('redirects approvers who cannot edit to the review page', async () => {
+      const data = {
+        ...formData(),
+        approvers: [{ status: 'approved', user: { id: 2 } }],
+      };
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', null, null, 2);
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));

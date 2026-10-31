@@ -1,6 +1,6 @@
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
-import { type Model, Op } from 'sequelize';
+import { type Model, Op, Transaction } from 'sequelize';
 import syncJoinRows from '../lib/syncJoinRows';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
@@ -224,6 +224,18 @@ async function update(newReport, oldReport) {
     fields: _.keys(fields),
   });
   return updatedReport;
+}
+
+/**
+ * Locks the collab report row for the rest of the caller's transaction (the ambient CLS
+ * transaction from `transactionWrapper`), so a concurrent approval can't change the report's
+ * status between reading and writing it.
+ */
+export async function lockCollabReport(collabReportId: number | string) {
+  return CollabReport.findByPk(collabReportId, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
 }
 
 // Get a CR by its id
@@ -629,6 +641,39 @@ export async function getReports({
     offset: Number(offset),
     distinct: true,
   });
+}
+
+/**
+ * Returns a submitted report to draft so its creator can edit and resubmit it. All approvals
+ * are cleared, so the resubmitted report must be reviewed again. Approvers who are the creator
+ * or a collaborator are removed, since they can never review the report and would block
+ * resubmission.
+ */
+export async function resetReportToDraft(report) {
+  // reset first, so changing approvers doesn't recalculate a submitted report's status
+  await CollabReport.update(
+    { submissionStatus: REPORT_STATUSES.DRAFT, calculatedStatus: REPORT_STATUSES.DRAFT },
+    { where: { id: report.id }, individualHooks: true }
+  );
+
+  // clear prior approvals, or resubmitting could approve the report without a new review
+  await CollabReportApprover.update(
+    { status: null },
+    { where: { collabReportId: report.id }, individualHooks: true }
+  );
+
+  const participantIds = [
+    report.userId,
+    ...(report.collabReportSpecialists || []).map((s) => s.specialistId),
+  ];
+  const approverIds = (report.approvers || []).map((a) => a.user.id);
+  const remainingApproverIds = approverIds.filter((id) => !participantIds.includes(id));
+
+  if (remainingApproverIds.length !== approverIds.length) {
+    await syncCRApprovers(report.id, remainingApproverIds);
+  }
+
+  return collabReportById(String(report.id));
 }
 
 export async function deleteReport(report: Model) {

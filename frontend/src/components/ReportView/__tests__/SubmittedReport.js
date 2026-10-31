@@ -163,6 +163,21 @@ describe('SubmittedReport', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('renders an incomplete draft with null participant counts', () => {
+    const draft = {
+      ...mockReport,
+      numberOfParticipants: null,
+      numberOfParticipantsInPerson: null,
+      numberOfParticipantsVirtually: null,
+      targetPopulations: null,
+    };
+
+    render(<SubmittedReport data={draft} />);
+    render(<SubmittedReport data={{ ...draft, deliveryMethod: 'hybrid' }} />);
+
+    expect(screen.getAllByText('TTA activity report R01-AR-123')).toHaveLength(2);
+  });
+
   it('handles virtual participant count when null', () => {
     const reportWithNullVirtualCount = {
       ...mockReport,
