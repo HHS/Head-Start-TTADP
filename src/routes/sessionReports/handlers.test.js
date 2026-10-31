@@ -1,4 +1,4 @@
-import { trSessionSubmittedForApproval } from '../../lib/mailer';
+import { trSessionChangesRequested, trSessionSubmittedForApproval } from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
@@ -29,6 +29,7 @@ import {
 import { checkUpdateSessionBody } from './middleware';
 
 jest.mock('../../lib/mailer', () => ({
+  trSessionChangesRequested: jest.fn(),
   trSessionSubmittedForApproval: jest.fn(),
 }));
 jest.mock('../../services/event');
@@ -465,6 +466,32 @@ describe('session report handlers', () => {
       trSessionSubmittedForApproval.mockClear();
       await updateHandler(mockRequest, mockResponse);
       expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
+    it('emails the owner when the session moves into needs action', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const needsActionSession = { ...mockSession, data: { status: 'needs_action' } };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'submitted' } });
+      updateSession.mockResolvedValue(needsActionSession);
+      trSessionChangesRequested.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionChangesRequested).toHaveBeenCalledWith(mockEvent, needsActionSession);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('does not email the owner when the session was already in needs action', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
+      updateSession.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
+      trSessionChangesRequested.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionChangesRequested).not.toHaveBeenCalled();
     });
 
     it('allows update for event role only', async () => {
