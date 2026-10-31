@@ -8,6 +8,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../components/Container';
 import NavLink from '../../components/NavLink';
 import { getFeatures, getUsers, updateUser } from '../../fetchers/Admin';
+import { HTTPError } from '../../fetchers';
 import { getActiveUsers } from '../../fetchers/users';
 import UserSection from './UserSection';
 
@@ -158,7 +159,12 @@ function Admin(props) {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log(e);
-      updateError('Unable to save user');
+      // a refused save, such as a second primary TTA request approver, says why
+      updateError(
+        e instanceof HTTPError && e.status === 400 && e.data?.message
+          ? e.data.message
+          : 'Unable to save user'
+      );
       return;
     }
     // update the FE view of all users with the updated user
@@ -287,7 +293,7 @@ function Admin(props) {
             )}
             {!selectedUser && <p className="margin-top-3 text-bold">Select a user...</p>}
             {selectedUser && (
-              <UserSection onSave={onSave} user={selectedUser} features={features} />
+              <UserSection onSave={onSave} user={selectedUser} users={users} features={features} />
             )}
           </Grid>
         </Grid>

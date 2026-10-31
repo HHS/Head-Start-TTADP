@@ -11,11 +11,18 @@ jest.mock('../logger', () => ({
 
 const CREATOR_ID = 1;
 
-const createUser = ({ id = CREATOR_ID, write = false, read = false, admin = false }) => {
+const createUser = ({
+  id = CREATOR_ID,
+  write = false,
+  read = false,
+  admin = false,
+  scopeIds = [] as number[],
+}) => {
   const permissions = [];
   if (write) {
-    permissions.push({ scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 1 });
+    permissions.push({ scopeId: SCOPES.READ_WRITE_TTA_REQUESTS, regionId: 1 });
   }
+  scopeIds.forEach((scopeId) => permissions.push({ scopeId, regionId: 1 }));
   if (read) {
     permissions.push({ scopeId: SCOPES.READ_REPORTS, regionId: 1 });
   }
@@ -48,6 +55,16 @@ describe('TtaRequest policy', () => {
       const policy = new TtaRequest(createUser({ write: true }), 2);
       expect(policy.canCreate()).toBe(false);
     });
+
+    it('is false with only activity report write permission', () => {
+      const policy = new TtaRequest(createUser({ scopeIds: [SCOPES.READ_WRITE_REPORTS] }), 1);
+      expect(policy.canCreate()).toBe(false);
+    });
+
+    it('is false with only a reviewing permission', () => {
+      const policy = new TtaRequest(createUser({ scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] }), 1);
+      expect(policy.canCreate()).toBe(false);
+    });
   });
 
   describe('canGet', () => {
@@ -68,6 +85,16 @@ describe('TtaRequest policy', () => {
 
     it('is true with read permission in the region when there is no request', () => {
       const policy = new TtaRequest(createUser({ id: 2, read: true }), 1);
+      expect(policy.canGet()).toBe(true);
+    });
+
+    it.each([
+      SCOPES.READ_WRITE_TTA_REQUESTS,
+      SCOPES.REVIEW_TTA_REQUESTS,
+      SCOPES.APPROVE_TTA_REQUESTS,
+      SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+    ])('is true with TTA request scope %i in the region when there is no request', (scopeId) => {
+      const policy = new TtaRequest(createUser({ id: 2, scopeIds: [scopeId] }), 1);
       expect(policy.canGet()).toBe(true);
     });
 

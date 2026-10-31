@@ -43,7 +43,7 @@ const renderForm = () =>
 describe('AllRegionsTtaRequestForm', () => {
   beforeEach(() => {
     fetchMock.get('begin:/api/goal-templates', []);
-    fetchMock.get('begin:/api/activity-reports/approvers', []);
+    fetchMock.get('begin:/api/tta-requests/region/', []);
     fetchMock.get('begin:/api/feeds/item', '');
   });
 
@@ -52,7 +52,7 @@ describe('AllRegionsTtaRequestForm', () => {
   });
 
   it('offers every recipient the user can see', async () => {
-    fetchMock.get('/api/recipient/user', RECIPIENTS);
+    fetchMock.get('/api/recipient/user/tta-requests', RECIPIENTS);
 
     renderForm();
 
@@ -62,7 +62,7 @@ describe('AllRegionsTtaRequestForm', () => {
     );
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/recipient/user')).toBe(true);
+      expect(fetchMock.called('/api/recipient/user/tta-requests')).toBe(true);
     });
 
     await selectEvent.select(screen.getByLabelText(/recipient/i), 'Children and Families First');
@@ -73,12 +73,12 @@ describe('AllRegionsTtaRequestForm', () => {
   });
 
   it('falls back to an empty list when the response has no body', async () => {
-    fetchMock.get('/api/recipient/user', { body: 'null', status: 200 });
+    fetchMock.get('/api/recipient/user/tta-requests', { body: 'null', status: 200 });
 
     renderForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/recipient/user')).toBe(true);
+      expect(fetchMock.called('/api/recipient/user/tta-requests')).toBe(true);
     });
 
     // the recipient select is still offered, it just has nothing in it
@@ -87,12 +87,12 @@ describe('AllRegionsTtaRequestForm', () => {
   });
 
   it('still renders when the recipients cannot be loaded', async () => {
-    fetchMock.get('/api/recipient/user', 500);
+    fetchMock.get('/api/recipient/user/tta-requests', 500);
 
     renderForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/recipient/user')).toBe(true);
+      expect(fetchMock.called('/api/recipient/user/tta-requests')).toBe(true);
     });
 
     expect(screen.getByLabelText(/recipient/i)).toBeVisible();
