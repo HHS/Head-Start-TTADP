@@ -1,7 +1,10 @@
 import { faker } from '@faker-js/faker';
+import { UniqueConstraintError } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
+import SCOPES from '../../middleware/scopeConstants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db, { Permission, Role, User, UserRole } from '../../models';
+import { createUser as createTestUser } from '../../testUtils';
 import {
   createUser,
   createUserRoles,
@@ -205,6 +208,100 @@ describe('User route handler', () => {
     const perm = permissions.find((p) => p.regionId === 1);
 
     expect(perm.toJSON()).toEqual(testUpdateUser.permissions[0]);
+  });
+
+  it('rejects approve and backup approve TTA request permissions in the same region', async () => {
+    const json = jest.fn();
+    const res = { ...mockResponse, status: jest.fn(() => ({ json })) };
+    mockRequest.body = {
+      ...mockUser,
+      permissions: [
+        { userId: mockUser.id, regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { userId: mockUser.id, regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+      ],
+    };
+
+    await updateUser(mockRequest, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith({
+      message: 'Mutually exclusive permissions are both set in region(s) 1',
+    });
+  });
+
+  describe('one primary TTA request approver per region', () => {
+    let primary;
+    let other;
+
+    beforeAll(async () => {
+      [primary, other] = await Promise.all([
+        createTestUser({ name: 'Monica Geller' }),
+        createTestUser({}),
+      ]);
+      await Permission.create({
+        userId: primary.id,
+        regionId: 3,
+        scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+      });
+    });
+
+    afterAll(async () => {
+      await Permission.destroy({ where: { userId: [primary.id, other.id] } });
+      await User.destroy({ where: { id: [primary.id, other.id] } });
+    });
+
+    it('rejects saving a second primary approver', async () => {
+      const json = jest.fn();
+      const res = { ...mockResponse, status: jest.fn(() => ({ json })) };
+      const req = {
+        ...mockRequest,
+        params: { userId: other.id },
+        body: {
+          ...other.toJSON(),
+          permissions: [{ userId: other.id, regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS }],
+        },
+      };
+
+      await updateUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({
+        message: 'Region 3 already has a primary COR approver: Monica Geller',
+      });
+      expect(
+        await Permission.count({
+          where: { userId: other.id, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        })
+      ).toBe(0);
+    });
+
+    it('returns a 400 when concurrent saves violate the primary approver index', async () => {
+      const uniquenessError = new UniqueConstraintError({
+        message: 'duplicate key',
+        fields: { regionId: 4 },
+        parent: { constraint: 'unique_primary_tta_approver_per_region' },
+      });
+      const bulkCreate = jest.spyOn(Permission, 'bulkCreate').mockRejectedValue(uniquenessError);
+
+      const req = {
+        ...mockRequest,
+        inTransactionWrapper: true,
+        params: { userId: other.id },
+        body: {
+          ...other.toJSON(),
+          permissions: [{ userId: other.id, regionId: 4, scopeId: SCOPES.APPROVE_TTA_REQUESTS }],
+        },
+      };
+
+      try {
+        await expect(updateUser(req, mockResponse)).rejects.toMatchObject({
+          statusCode: 400,
+          responseBody: { message: 'Region 4 already has a primary COR approver' },
+        });
+      } finally {
+        bulkCreate.mockRestore();
+      }
+    });
   });
 
   it('Deletes a user', async () => {

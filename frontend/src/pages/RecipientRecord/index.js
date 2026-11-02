@@ -15,7 +15,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import FeatureFlag from '../../components/FeatureFlag';
 import NewReportButton from '../../components/NewReportButton';
 import FilterContext from '../../FilterContext';
-import { canCreateCommunicationLog } from '../../permissions';
+import { canCreateCommunicationLog, canCreateTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
 import StandardGoalForm from '../StandardGoalForm';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
@@ -120,6 +120,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
   const canCreateCommLog = canCreateCommunicationLog(user, parseInt(regionId, DECIMAL_BASE));
+  const canCreateRequest = canCreateTtaRequest(user, parseInt(regionId, DECIMAL_BASE));
 
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
@@ -231,10 +232,12 @@ export default function RecipientRecord({ match, hasAlerts }) {
                   />
                 }
                 inlineHeadingChildren={
-                  <AddTtaRequestButton
-                    label="Add request"
-                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request/new`}
-                  />
+                  canCreateRequest && (
+                    <AddTtaRequestButton
+                      label="Add request"
+                      to={`/recipient-tta-records/${recipientId}/region/${regionId}/tta-request/new`}
+                    />
+                  )
                 }
               >
                 <TtaRequest recipientId={recipientId} regionId={regionId} />
