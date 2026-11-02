@@ -213,16 +213,22 @@ describe('activityReportExports', () => {
   describe('streaming real rows (activity-reports)', () => {
     const REGION_ID = 20;
     let report;
+    let authorlessReport;
 
     beforeAll(async () => {
       report = await createReport({
         regionId: REGION_ID,
         activityRecipients: [{ grantId: getUniqueId() }],
       });
+      authorlessReport = await createReport({
+        regionId: REGION_ID,
+        activityRecipients: [{ grantId: getUniqueId() }],
+      });
+      await authorlessReport.update({ userId: null });
     });
 
     afterAll(async () => {
-      await destroyReport(report);
+      await Promise.all([destroyReport(report), destroyReport(authorlessReport)]);
     });
 
     it('emits one CSV row for the in-scope report, with a BOM and header', async () => {
@@ -236,6 +242,16 @@ describe('activityReportExports', () => {
       expect(csv.charCodeAt(0)).toBe(0xfeff); // UTF-8 BOM
       expect(csv).toContain('report_id'); // header
       expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+    });
+
+    it('emits one CSV row for an approved report without an author', async () => {
+      const { csv, rowCount } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [authorlessReport.id],
+        regionIds: [REGION_ID],
+      });
+      expect(rowCount).toBe(1);
+      expect(csv).toContain(`R${REGION_ID}-AR-${authorlessReport.id}`);
     });
 
     it('excludes the report when its region is not permitted', async () => {

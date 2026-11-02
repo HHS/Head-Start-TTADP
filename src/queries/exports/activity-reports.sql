@@ -144,7 +144,7 @@ SELECT
   -- precise updatedAt, used only as the sort key for last_saved (not output)
   ar."updatedAt"::timestamp updated_at_et
 FROM "ActivityReports" ar
-JOIN "Users" u
+LEFT JOIN "Users" u
   ON ar."userId" = u.id
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
