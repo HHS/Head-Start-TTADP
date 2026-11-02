@@ -332,7 +332,8 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
 
 /*
  * Swaps the CTA label on archived notifications for the type's `archiveLabel` (e.g. "Take
- * action" -> "View AR"), since an archived notification no longer calls for action.
+ * action" -> "View AR"), since an archived notification no longer calls for action. Types
+ * with an `archiveLinkFn` also get a new link built from the notification's displayId.
  * Types without an `archiveLabel` keep their original label. Global notifications (null
  * `userId`) are skipped: their row is shared, so relabeling it would change the CTA for
  * users who haven't archived it.
@@ -340,20 +341,39 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
  * @returns {Promise<void>} Resolves once labels are updated.
  */
 async function applyArchiveLabels(
-  notifications: { id: number; type: NotificationType; userId: number | null }[]
+  notifications: {
+    id: number;
+    type: NotificationType;
+    userId: number | null;
+    displayId: string | null;
+  }[]
 ): Promise<void> {
   const idsByLabel = new Map<string, number[]>();
+  const linkUpdates: { id: number; link: string }[] = [];
 
-  notifications.forEach(({ id, type, userId }) => {
-    const archiveLabel = NOTIFICATION_CONFIGURATION[type]?.archiveLabel?.();
-    if (archiveLabel && userId) {
+  notifications.forEach(({ id, type, userId, displayId }) => {
+    if (!userId) {
+      return;
+    }
+
+    const config = NOTIFICATION_CONFIGURATION[type];
+    const archiveLabel = config?.archiveLabel?.();
+    if (archiveLabel) {
       idsByLabel.set(archiveLabel, [...(idsByLabel.get(archiveLabel) ?? []), id]);
+    }
+
+    const archiveLink = config?.archiveLinkFn?.({ displayId });
+    if (archiveLink) {
+      linkUpdates.push({ id, link: archiveLink });
     }
   });
 
-  await Promise.all(
-    [...idsByLabel].map(([label, ids]) => Notification.update({ label }, { where: { id: ids } }))
-  );
+  await Promise.all([
+    ...[...idsByLabel].map(([label, ids]) =>
+      Notification.update({ label }, { where: { id: ids } })
+    ),
+    ...linkUpdates.map(({ id, link }) => Notification.update({ link }, { where: { id } })),
+  ]);
 }
 
 /*
@@ -399,14 +419,19 @@ async function archiveNotificationsByUserEntityAndType(
   }
 
   const notifications = (await Notification.findAll({
-    attributes: ['id', 'type', 'userId'],
+    attributes: ['id', 'type', 'userId', 'displayId'],
     where: {
       entityId,
       type: { [Op.in]: notificationTypes },
       userId,
     },
     raw: true,
-  })) as unknown as { id: number; type: NotificationType; userId: number }[];
+  })) as unknown as {
+    id: number;
+    type: NotificationType;
+    userId: number;
+    displayId: string | null;
+  }[];
 
   if (!notifications.length) {
     return;
@@ -485,13 +510,18 @@ async function archiveNotificationsByEntityAndType(
   }
 
   const notifications = (await Notification.findAll({
-    attributes: ['id', 'userId', 'type'],
+    attributes: ['id', 'userId', 'type', 'displayId'],
     where: {
       entityId,
       type: { [Op.in]: notificationTypes },
     },
     raw: true,
-  })) as unknown as { id: number; userId: number | null; type: NotificationType }[];
+  })) as unknown as {
+    id: number;
+    userId: number | null;
+    type: NotificationType;
+    displayId: string | null;
+  }[];
 
   if (!notifications.length) {
     return;
