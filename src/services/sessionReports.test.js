@@ -1343,6 +1343,7 @@ describe('session reports service', () => {
             startDate: '01/15/2024',
             endDate: '01/16/2024',
             objectiveTopics: ['Topic A', 'Topic B'],
+            otherTrainers: 'Guest Trainer',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -1353,6 +1354,7 @@ describe('session reports service', () => {
             startDate: '01/10/2024',
             endDate: '01/11/2024',
             objectiveTopics: ['Topic C'],
+            otherTrainers: 'Other-only Trainer',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -1363,6 +1365,7 @@ describe('session reports service', () => {
             startDate: '01/20/2024',
             endDate: '01/21/2024',
             objectiveTopics: [],
+            otherTrainers: '   ',
             status: TRAINING_REPORT_STATUSES.COMPLETE,
           },
         }),
@@ -1988,6 +1991,47 @@ describe('session reports service', () => {
         expect(names.slice(3)).toEqual(
           expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
+      });
+    });
+
+    describe('trainers', () => {
+      let trainer;
+
+      beforeAll(async () => {
+        trainer = await createUser({});
+        await db.SessionReportPilotTrainer.create({
+          sessionReportPilotId: testSessions[0].id,
+          userId: trainer.id,
+        });
+      });
+
+      afterAll(async () => {
+        await db.SessionReportPilotTrainer.destroy({ where: { userId: trainer.id } });
+        await db.User.destroy({ where: { id: trainer.id } });
+      });
+
+      it('includes associated and other trainer names on each row', async () => {
+        const result = await getSessionReports({
+          'eventId.ctn': [testEventLongId],
+          limit: 'all',
+        });
+
+        const rowsBySession = result.rows.reduce(
+          (acc, row) => ({ ...acc, [row.sessionName]: row }),
+          {}
+        );
+        const expectedTrainer = await db.User.findByPk(trainer.id, {
+          include: [{ model: db.Role, as: 'roles' }],
+        });
+
+        expect(rowsBySession['Alpha Session'].trainers.map((t) => t.fullName)).toEqual([
+          expectedTrainer.fullName,
+          'Guest Trainer',
+        ]);
+        expect(rowsBySession['Beta Session'].trainers).toEqual([
+          { fullName: 'Other-only Trainer' },
+        ]);
+        expect(rowsBySession['Gamma Session'].trainers).toEqual([]);
       });
     });
 

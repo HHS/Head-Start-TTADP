@@ -659,6 +659,7 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'otherTrainers\''), 'otherTrainers'],
   // Selected raw so participantCount can be derived with getActivityReportParticipantCount,
   // the same helper the dashboards and overview widget use. Casting these to ::integer in SQL
   // fails on the empty strings the session form writes into the fields that don't apply to the
@@ -778,6 +779,11 @@ async function fetchSessionReports(
         through: { attributes: [] },
         required: false,
       },
+      {
+        ...userInclude('trainers'),
+        through: { attributes: [] },
+        required: false,
+      },
     ],
     order: orderClause,
     subQuery: false,
@@ -786,6 +792,8 @@ async function fetchSessionReports(
   // Transform rows to plain objects with goalTemplates included
   const rows = result.map((row: Model) => {
     const plain = row.get({ plain: true });
+    const otherTrainers =
+      typeof plain.otherTrainers === 'string' ? plain.otherTrainers.trim() : '';
     return {
       id: plain.id,
       eventId: plain.eventId,
@@ -800,6 +808,10 @@ async function fetchSessionReports(
       participants: plain.participants,
       participantCount: getActivityReportParticipantCount(plain),
       deliveryMethod: plain.deliveryMethod,
+      trainers: [
+        ...(plain.trainers || []),
+        ...(otherTrainers ? [{ fullName: otherTrainers }] : []),
+      ],
     };
   });
 
