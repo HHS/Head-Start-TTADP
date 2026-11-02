@@ -39,11 +39,19 @@ const eventIcons: Partial<Record<RecipientTimelineEvent['eventType'], IconDefini
   'Monitoring report received': faFileMagnifyingGlass,
 };
 
+const goalCycleActions: Partial<Record<RecipientTimelineEvent['eventType'], string>> = {
+  'Goal added': 'added',
+  'Goal reopened': 'reopened',
+  'Goal closed': 'closed',
+};
+
 interface TimelineEventProps {
   event: RecipientTimelineEvent;
   /** Omit the connector after the final event in a group. */
   isLast?: boolean;
   defaultExpanded?: boolean;
+  /** Show goal-cycle boundaries in the Monitoring and RTTAPA grouped views. */
+  showGoalCycleDivider?: boolean;
 }
 
 /** Renders the shared presentation contract without depending on a particular source model. */
@@ -51,6 +59,7 @@ function TimelineEvent({
   event,
   isLast = false,
   defaultExpanded = false,
+  showGoalCycleDivider = false,
 }: TimelineEventProps): React.ReactElement {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [id] = useState(() => uniqueId('timeline-event-'));
@@ -59,6 +68,22 @@ function TimelineEvent({
   const hasDetails = details.length > 0 || event.links.length > 0;
   const hasDuration = Number.isFinite(event.durationHours) && event.durationHours >= 0;
   const icon = eventIcons[event.eventType] ?? faUsersSolid;
+  const goalNumber = event.details.find(({ label }) => label === 'Goal number')?.items[0]?.text;
+  const cycleAction = goalCycleActions[event.eventType];
+  const dividerLabel =
+    showGoalCycleDivider &&
+    event.source === 'goalStatusChange' &&
+    /^G-[1-9]\d*$/.test(goalNumber ?? '') &&
+    cycleAction
+      ? `Goal ${goalNumber} ${cycleAction}`
+      : null;
+  const divider = dividerLabel ? (
+    <div className="display-flex flex-align-center flex-gap-1 font-sans-2xs">
+      <span aria-hidden="true" className="border-top smart-hub-border-base-lighter flex-fill" />
+      <span>{dividerLabel}</span>
+      <span aria-hidden="true" className="border-top smart-hub-border-base-lighter flex-fill" />
+    </div>
+  ) : null;
 
   return (
     <article
@@ -81,6 +106,7 @@ function TimelineEvent({
         )}
       </div>
       <div className="ttahub-timeline-event__content flex-fill padding-bottom-3">
+        {divider && cycleAction === 'closed' && <div className="margin-bottom-3">{divider}</div>}
         <div className="display-flex flex-wrap flex-gap-1 text-base-dark font-sans-2xs">
           {date.isValid() ? (
             <time dateTime={date.format('YYYY-MM-DD')}>{date.format('MMMM D, YYYY')}</time>
@@ -139,7 +165,7 @@ function TimelineEvent({
                     <FontAwesomeIcon
                       aria-hidden="true"
                       className="flex-align-self-start margin-top-05"
-                      color={colors.warning}
+                      color={colors.error}
                       icon={faFlag}
                       focusable="false"
                     />
@@ -216,6 +242,7 @@ function TimelineEvent({
             </div>
           </>
         )}
+        {divider && cycleAction !== 'closed' && <div className="margin-top-3">{divider}</div>}
       </div>
     </article>
   );

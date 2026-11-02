@@ -50,6 +50,7 @@ export interface NotificationMetadata {
   author?: string;
   approver?: string;
   hasApproved?: boolean;
+  sessionName?: string;
 }
 
 export type EmailFrequencyValue =

@@ -20,6 +20,21 @@ const mockResponse = () => {
 };
 
 describe('checkRecipientTimelineQuery', () => {
+  it.each(['chronological', 'monitoring', 'goals'])('accepts the %s view', (view) => {
+    const res = mockResponse();
+    const next = jest.fn();
+    checkRecipientTimelineQuery({ query: { view } }, res, next);
+    expect(res.locals.recipientTimelineQuery.view).toBe(view);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects unknown views', () => {
+    const res = mockResponse();
+    const next = jest.fn();
+    checkRecipientTimelineQuery({ query: { view: 'unknown' } }, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -52,11 +67,7 @@ describe('checkRecipientTimelineQuery', () => {
         'date.win': '08/01/2025-08/01/2026',
         'purpose.nin': ['General Check-In', 'New TTA request'],
         'standard.in': 'Monitoring',
-        'eventType.in': [
-          'Email communication',
-          'Phone communication',
-          'In person communication',
-        ],
+        'eventType.in': ['Email communication', 'Phone communication', 'In person communication'],
         excludeMultiRecipientCommunications: 'true',
       },
     };
@@ -116,9 +127,10 @@ describe('checkRecipientTimelineQuery', () => {
     ['unsupported sort field', { sortBy: 'title' }],
     ['unsupported direction', { direction: 'sideways' }],
     ['invalid checkbox', { excludeMultiRecipientCommunications: 'sometimes' }],
-    ...[[], ['Unknown purpose'], [null], [42], ["General Check-In') OR TRUE --"]].map(
-      (query) => ['invalid purpose selection', { 'purpose.in': query }]
-    ),
+    ...[[], ['Unknown purpose'], [null], [42], ["General Check-In') OR TRUE --"]].map((query) => [
+      'invalid purpose selection',
+      { 'purpose.in': query },
+    ]),
     ['removed JSON filters parameter', { filters: '{"topic":"date"}' }],
     ['unsupported topic', { 'recipient.in': ['1'] }],
     ['unsupported condition', { 'purpose.ctn': ['General Check-In'] }],

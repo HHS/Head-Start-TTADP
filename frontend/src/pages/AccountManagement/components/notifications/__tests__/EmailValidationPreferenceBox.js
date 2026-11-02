@@ -1,11 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter, Route } from 'react-router-dom';
+import UserContext from '../../../../../UserContext';
 import EmailValidationPreferenceBox from '../EmailValidationPreferenceBox';
 
-jest.mock('../../../EmailVerifier', () => () => <div data-testid="email-verifier" />);
-
 describe('EmailValidationPreferenceBox', () => {
+  const user = {
+    id: 1,
+    validationStatus: [{ type: 'email', validatedAt: null }],
+  };
+
   const defaultProps = {
     emailVerificationSent: false,
     emailValidated: false,
@@ -18,19 +23,32 @@ describe('EmailValidationPreferenceBox', () => {
     render(
       <MemoryRouter initialEntries={[initialEntry]}>
         <Route path="/account/notifications/:token?">
-          <EmailValidationPreferenceBox {...defaultProps} {...props} />
+          <UserContext.Provider value={{ user }}>
+            <EmailValidationPreferenceBox {...defaultProps} {...props} />
+          </UserContext.Provider>
         </Route>
       </MemoryRouter>
     );
 
   afterEach(() => {
     jest.clearAllMocks();
+    fetchMock.restore();
   });
 
-  it('renders nothing when email is already validated', () => {
+  it('does not show verification prompts when email is already validated', () => {
+    renderBox({ emailValidated: true });
+
+    expect(screen.queryByText(/your email address isn't verified/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /verification email/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/verify email address/i)).not.toBeInTheDocument();
+  });
+
+  it('does not render an empty email verification card for verified users without a token', () => {
     const { container } = renderBox({ emailValidated: true });
 
-    expect(container.firstChild).toBeNull();
+    expect(
+      container.querySelector('.bg-white.radius-md.shadow-2.margin-bottom-3')
+    ).not.toBeInTheDocument();
   });
 
   it('shows a warning alert when email is unverified and no verification email has been sent', () => {
@@ -82,8 +100,45 @@ describe('EmailValidationPreferenceBox', () => {
   });
 
   it('renders EmailVerifier when a token route param is present', () => {
+    fetchMock.post('/api/users/verify-email/token123', new Promise(() => {}));
     renderBox({}, '/account/notifications/token123');
 
-    expect(screen.getByTestId('email-verifier')).toBeInTheDocument();
+    expect(screen.getByText(/please wait while your email is being verified/i)).toBeInTheDocument();
+  });
+
+  it('keeps the verification success alert after updating user context', async () => {
+    fetchMock.post('/api/users/verify-email/token123', 200);
+
+    function StatefulPreferenceBox() {
+      const [currentUser, setCurrentUser] = React.useState(user);
+      const emailValidated = Boolean(
+        currentUser.validationStatus.find(({ type }) => type === 'email')?.validatedAt
+      );
+
+      return (
+        <UserContext.Provider value={{ user: currentUser }}>
+          <span data-testid="email-validated-context">{String(emailValidated)}</span>
+          <EmailValidationPreferenceBox
+            {...defaultProps}
+            emailValidated={emailValidated}
+            updateUser={setCurrentUser}
+          />
+        </UserContext.Provider>
+      );
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/account/notifications/token123']}>
+        <Route path="/account/notifications/:token?">
+          <StatefulPreferenceBox />
+        </Route>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('email-validated-context')).toHaveTextContent('true');
+    });
+    expect(await screen.findByText(/your email has been verified/i)).toBeInTheDocument();
+    expect(screen.queryByText(/your email address isn't verified/i)).not.toBeInTheDocument();
   });
 });

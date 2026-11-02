@@ -301,9 +301,7 @@ describe('resource', () => {
         const recoverUrl = 'http://lookup-failure-recovery.test';
         const findAllSpy = jest.spyOn(Resource, 'findAll').mockRejectedValueOnce(error);
 
-        await expect(findOrCreateResources(['http://lookup-failure.test'])).rejects.toThrow(
-          error
-        );
+        await expect(findOrCreateResources(['http://lookup-failure.test'])).rejects.toThrow(error);
         findAllSpy.mockRestore();
 
         try {
@@ -1173,7 +1171,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReport', () => {
       let resources;
-      beforeAll(async () => { });
+      beforeAll(async () => {});
       beforeEach(async () => {
         const urls = [
           'http://google.com',

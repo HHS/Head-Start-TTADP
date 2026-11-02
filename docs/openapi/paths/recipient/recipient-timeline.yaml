@@ -38,6 +38,9 @@ get:
     if URL signing fails, the filename remains without a link. Other TTA staff and next-step
     arrays are not card sections. A View communication log link opens the recipient's log view.
     Goal events use source `goalStatusChange` and the status-change row ID as `sourceId`.
+    When the associated goal is available, details include a `Goal number` entry with text
+    `G-<goalId>`. This is the goal ID, not the status-change sourceId. Grouped timeline views
+    use it to label cycle dividers for Goal added, Goal reopened, and Goal closed events.
     Initial non-draft statuses and transitions out of Draft are Goal added events;
     transitions to Suspended or Closed are Goal suspended or Goal closed events;
     transitions from Suspended or Closed to Not Started or In Progress are Goal reopened events.
@@ -60,6 +63,20 @@ get:
     reason, context, and grant number details. Missing optional values are omitted from details;
     missing subtitle/byline values are null. Standard tags and a View goal link are included
     when available.
+    The optional view control accepts chronological (default), monitoring, and goals.
+    Monitoring enforces a positive Monitoring standard constraint. Goals enforces membership
+    in categories of this recipient's non-draft, unmerged standard or legacy RTTAPA goals in this region.
+    Curated standard templates qualify without requiring the legacy isRttapa flag, which the
+    current standard-goal creation flow leaves unset.
+    View constraints combine with user filters before counts and pagination. Grouped responses
+    include categories sorted alphabetically. Each category's statuses array contains at most
+    one value: the current status of its eligible goal with the latest status change, using
+    performedAt or the history row's createdAt. Goals without history use their creation date;
+    timestamp ties use the higher goal ID. A missing status produces an empty array. Header
+    status is independent of event filters and pagination. An event
+    can be displayed under several matching categories but counts once. Event pages retain
+    date ordering; clients group the loaded slices by category. Omitted view retains the
+    original response shape. Removing a user category filter cannot bypass a view constraint.
   operationId: getRecipientTimeline
   parameters:
     - in: path
@@ -97,6 +114,13 @@ get:
         enum:
           - date
         default: date
+    - in: query
+      name: view
+      required: false
+      schema:
+        type: string
+        enum: [chronological, monitoring, goals]
+        default: chronological
     - in: query
       name: direction
       required: false
@@ -250,6 +274,19 @@ get:
               - count
               - events
             properties:
+              categories:
+                type: array
+                description: Category metadata for monitoring and goals views; omitted for chronological.
+                items:
+                  type: object
+                  required: [label, statuses]
+                  properties:
+                    label:
+                      type: string
+                    statuses:
+                      type: array
+                      items:
+                        type: string
               count:
                 type: integer
                 minimum: 0

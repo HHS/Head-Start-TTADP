@@ -46,9 +46,9 @@ export default function RootCauseFeiGoals({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    ['Root_cause'], // stringColumns
+    EMPTY_ARRAY, // stringColumns
     EMPTY_ARRAY, // dateColumns
-    EMPTY_ARRAY // keyColumns
+    ['Root_cause'] // keyColumns
   );
 
   const { exportRows } = useWidgetExport(
@@ -95,16 +95,17 @@ export default function RootCauseFeiGoals({ data }) {
       tableData.push({
         heading: dataset.rootCause,
         id: `${dataset.rootCause} - ${index + 1}`,
+        sortKey: dataset.rootCause,
         data: [
           {
             value: dataset.response_count,
-            title: 'Root cause',
-            sortKey: 'Root_cause',
+            title: 'Number',
+            sortKey: 'Number',
           },
           {
             value: `${String(dataset.percentage)}%`,
-            title: 'Number',
-            sortKey: 'Number',
+            title: 'Percentage',
+            sortKey: 'Percentage',
           },
         ],
       });

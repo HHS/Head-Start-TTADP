@@ -304,10 +304,8 @@ export const notifyApproverReportApproved = (job, transport = defaultTransport) 
 export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
-  const { report, programSpecialists, recipients } = job.data;
+  const { report, programSpecialists } = job.data;
   const { id, displayId } = report;
-  const recipientNames = recipients.map((r) => r.name);
-  const recipientNamesDisplay = recipientNames.join(', ').trim();
 
   logger.info(
     `MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`
@@ -323,7 +321,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
       message: { to: toEmails },
-      locals: { reportPath, displayId, recipientNamesDisplay },
+      locals: { reportPath, displayId },
     });
   });
 };
@@ -577,7 +575,7 @@ export const trSessionCreated = async (event, sessionId) => {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
-    const { eventId } = event.data;
+    const { eventId } = event;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
@@ -609,6 +607,61 @@ export const trSessionCreated = async (event, sessionId) => {
         return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
       })
     );
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * Notifies the session approver that a TR session was submitted for their approval,
+ * provided they have opted in to receiving this email immediately.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionSubmittedForApproval = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const { approverId } = session;
+    if (!approverId) return;
+
+    const setting = await userSettingOverridesById(
+      approverId,
+      EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
+    const approver = await userById(approverId, true);
+    if (!approver) {
+      throw new Error(
+        `Unable to notify approver ${approverId} that session ${session.id} was submitted, a user with that ID does not exist`
+      );
+    }
+
+    const { eventId } = event;
+    const emailTo = filterAndDeduplicateEmails([approver.email]);
+
+    if (emailTo.length === 0) {
+      logger.info(
+        `Did not send tr session submitted notification for ${eventId} preferences are not set or marked as "no-send"`
+      );
+      return;
+    }
+
+    const data = {
+      displayId: eventId,
+      sessionName: session.data.sessionName,
+      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${session.id}`,
+      emailTo,
+      debugMessage: `MAILER: Notifying ${approver.email} that session ${session.id} for TR ${event.id} was submitted for approval`,
+      templatePath: 'tr_session_submitted',
+      report: {
+        displayId: eventId,
+      },
+      ...referenceData(),
+    };
+
+    await notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -940,11 +993,11 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     const reports = await activityReportsApprovedByDate(null, date);
     const reportIds = reports.map((r) => r.id);
 
-    // Get all specialists that are subscribed to RECIPIENT_APPROVAL notifications given this freq.
+    // Get the program specialist for each approved report's grants.
     // FIXME: TTAHUB-1253
-    let specialists = await sequelize.query(
+    const rows = await sequelize.query(
       `
-      SELECT DISTINCT u.id
+      SELECT DISTINCT u.id AS "userId", a.id AS "reportId"
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar
       ON a.id = ar."activityReportId"
@@ -957,27 +1010,35 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
       { type: QueryTypes.SELECT }
     );
 
+    // Each specialist only receives reports on their own recipients' grants.
+    const reportIdsByUser = new Map();
+    rows.forEach(({ userId, reportId }) => {
+      if (!reportIdsByUser.has(userId)) reportIdsByUser.set(userId, new Set());
+      reportIdsByUser.get(userId).add(reportId);
+    });
+
     // Filter to only those who have opted into this notification setting and freq.
-    specialists = await Promise.all(
-      specialists.map(async (ps) => {
+    let specialistIds = await Promise.all(
+      [...reportIdsByUser.keys()].map(async (userId) => {
         const setting = await userSettingOverridesById(
-          ps.id,
+          userId,
           USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL
         );
 
-        if (setting && setting.value === freq) return ps;
+        if (setting && setting.value === freq) return userId;
         return null;
       })
     );
 
-    specialists = specialists.filter((s) => s !== null);
+    specialistIds = specialistIds.filter((id) => id !== null);
 
-    const users = await Promise.all(specialists.map(async (s) => userById(s.id, true)));
+    const users = await Promise.all(specialistIds.map(async (id) => userById(id, true)));
 
-    const records = users.map((user) => {
+    const records = users.map((user, i) => {
+      const userReportIds = reportIdsByUser.get(specialistIds[i]);
       const data = {
         user,
-        reports,
+        reports: reports.filter((r) => userReportIds.has(r.id)),
         type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
         freq,
         subjectFreq,
@@ -991,7 +1052,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     return Promise.all(records);
   } catch (err) {
     logger.info(
-      `MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`
+      `MAILER: RecipientApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL} freq ${freq} error ${err}`
     );
     throw err;
   }
@@ -1253,6 +1314,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
 const TR_EMAIL_ACTIONS = [
   EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
   EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+  EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
   EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
@@ -1317,7 +1379,7 @@ export const sendEmailVerificationRequestWithToken = (
     return null;
   }
 
-  const uri = `${process.env.TTA_SMART_HUB_URI}/notifications/verify-email/${token}`;
+  const uri = `${process.env.TTA_SMART_HUB_URI}/account/notifications/${token}`;
 
   return createEmailSender(transport).send({
     template: path.resolve(emailTemplatePath, 'email_verification'),

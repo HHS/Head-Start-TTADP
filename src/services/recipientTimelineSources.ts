@@ -558,6 +558,7 @@ async function populateGoalStatusChanges(
       );
       const standard = change.goal?.goalTemplate?.standard?.trim();
       const details = [
+        ['Goal number', change.goal ? `G-${change.goal.id}` : null],
         ['Previous status', change.oldStatus],
         ['New status', change.newStatus],
         ['Reason', change.reason],

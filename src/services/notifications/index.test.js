@@ -5,9 +5,11 @@ import {
   NOTIFICATION_TYPES,
 } from '../../constants';
 import db from '../../models';
+import Users from '../../policies/user';
 import { stateFilter } from '../../scopes/notifications/state';
 import {
   archiveApproverApprovedNotifications,
+  createRecipientReportApprovedNotificationForProgramSpecialists,
   createReportApprovedNotificationForApprovers,
 } from './activityReport';
 import {
@@ -21,6 +23,10 @@ import {
   getNotifications,
   updateNotificationState,
 } from './index';
+import {
+  archiveSessionNeedsActionNotifications,
+  createSessionNeedsActionNotificationForCollaborators,
+} from './trainingReport';
 
 const {
   ActivityReport,
@@ -399,6 +405,56 @@ describe('Notification service', () => {
           ).toBeNull();
         });
 
+        it('creates a fresh collaborator needs action notification for each request-changes cycle', async () => {
+          const flagSpy = jest
+            .spyOn(Users.prototype, 'canSeeBehindFeatureFlag')
+            .mockReturnValue(true);
+          const sessionId = faker.number.int({ min: 77001, max: 77999 });
+          const event = {
+            eventId: 'R01-TR-9999',
+            ownerId: otherUser.id,
+            collaboratorIds: [user.id],
+          };
+          const session = {
+            id: sessionId,
+            approverId: otherUser.id,
+            data: { sessionName: 'Opening session' },
+          };
+          const findCollaboratorNotifications = () =>
+            Notification.findAll({
+              where: {
+                userId: user.id,
+                entityId: sessionId,
+                type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+              },
+              order: [['id', 'ASC']],
+            });
+
+          try {
+            await createSessionNeedsActionNotificationForCollaborators(event, session);
+            const [first] = await findCollaboratorNotifications();
+            trackNotification(first);
+
+            // The collaborator never archives the first notification; resubmitting does.
+            await archiveSessionNeedsActionNotifications(sessionId);
+            await createSessionNeedsActionNotificationForCollaborators(event, session);
+
+            const notifications = await findCollaboratorNotifications();
+            notifications.forEach(trackNotification);
+            expect(notifications).toHaveLength(2);
+            expect(notifications[1].id).not.toBe(first.id);
+            expect(notifications[1].text).toBe(first.text);
+
+            const states = await NotificationUserState.findAll({
+              where: { notificationId: notifications.map((n) => n.id), userId: user.id },
+            });
+            expect(states.map((state) => state.notificationId)).toEqual([first.id]);
+            expect(states[0].archivedAt).not.toBeNull();
+          } finally {
+            flagSpy.mockRestore();
+          }
+        });
+
         it('creates a new notification when the existing notification is archived for the user', async () => {
           const metadata = activityMetadata();
           await createTrackedActivityReport({ id: metadata.id });
@@ -432,6 +488,48 @@ describe('Notification service', () => {
             },
           });
           expect(count).toBe(2);
+        });
+
+        it('creates a fresh unread recipient approval notification after it is archived', async () => {
+          const report = await createTrackedActivityReport();
+          const savedReport = {
+            id: report.id,
+            displayId: `R01-AR-${report.id}`,
+            activityRecipients: [{ name: 'Recipient A' }],
+          };
+          const [first] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(first);
+          const firstState = await NotificationUserState.create({
+            notificationId: first.id,
+            userId: user.id,
+            viewedAt: null,
+            archivedAt: null,
+          });
+
+          await archiveNotificationsByEntityAndType(
+            report.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED
+          );
+
+          await firstState.reload();
+          expect(firstState.archivedAt).not.toBeNull();
+          expect(firstState.viewedAt).toBeNull();
+
+          const [second] = await createRecipientReportApprovedNotificationForProgramSpecialists(
+            [user.id],
+            savedReport
+          );
+          trackNotification(second);
+
+          expect(second.id).not.toBe(first.id);
+          expect(
+            await NotificationUserState.findOne({
+              where: { notificationId: second.id, userId: user.id },
+            })
+          ).toBeNull();
         });
 
         it('reuses the existing notification when the user state is not archived', async () => {
@@ -1243,6 +1341,27 @@ describe('Notification service', () => {
       await NotificationUserState.destroy({
         where: { notificationId: [needsAction.id, otherType.id] },
       });
+    });
+
+    it('points the link at the archive link for types that have one', async () => {
+      const entityId = faker.number.int({ min: 99001, max: 99999 });
+      const needsAction = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+        label: 'Take action',
+        displayId: 'R01-TR-1234',
+        link: `/training-report/R01-TR-1234/session/${entityId}`,
+      });
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+      ]);
+
+      const updated = await Notification.findByPk(needsAction.id);
+      expect(updated.label).toBe('View TR');
+      expect(updated.link).toBe('/training-report/view/R01-TR-1234');
+
+      await NotificationUserState.destroy({ where: { notificationId: needsAction.id } });
     });
 
     it('does not relabel global notifications, since their row is shared across users', async () => {

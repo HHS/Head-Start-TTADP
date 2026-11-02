@@ -80,14 +80,14 @@ const findOrCreateResources = async (urls, transaction) => {
   const currentResources =
     filteredUrls.length > 0
       ? (await Resource.findAll({
-        where: {
-          url: {
-            [Op.in]: filteredUrls,
+          where: {
+            url: {
+              [Op.in]: filteredUrls,
+            },
           },
-        },
-        transaction,
-        raw: true,
-      })) || []
+          transaction,
+          raw: true,
+        })) || []
       : [];
   const currentResourceURLs = new Set(
     currentResources.map((currentResource) => currentResource.url)
@@ -101,7 +101,6 @@ const findOrCreateResources = async (urls, transaction) => {
   return resources;
 };
 
-
 // -----------------------------------------------------------------------------
 // Helper functions
 // -----------------------------------------------------------------------------
@@ -112,16 +111,16 @@ const calculateIsAutoDetected = (sourceFields, autoDetectedFields) =>
 // Remap the value of an object attribute to a new attribute
 const remapAttributes = (collection, from, to) =>
   Array.isArray(collection) &&
-    collection.length > 0 &&
-    typeof from === 'string' &&
-    typeof to === 'string'
+  collection.length > 0 &&
+  typeof from === 'string' &&
+  typeof to === 'string'
     ? collection.map((c) => {
-      const result = c;
-      result[to] = result[from];
-      result[from] = undefined;
-      delete result[from];
-      return result;
-    })
+        const result = c;
+        result[to] = result[from];
+        result[from] = undefined;
+        delete result[from];
+        return result;
+      })
     : [];
 
 // Use regex to find all urls within the field
@@ -140,27 +139,27 @@ const collectURLsFromField = (field) => {
 // Generate a colection of resoruce objects from the list of urls passed
 const resourcesFromField = (genericId, urlsFromField, field, seed = []) =>
   typeof genericId === 'number' &&
-    genericId === parseInt(genericId, 10) &&
-    typeof field === 'string' &&
-    Array.isArray(urlsFromField) &&
-    Array.isArray(seed)
+  genericId === parseInt(genericId, 10) &&
+  typeof field === 'string' &&
+  Array.isArray(urlsFromField) &&
+  Array.isArray(seed)
     ? urlsFromField.reduce((resources, url) => {
-      const exists = resources.find(
-        (resource) => resource.url === url && resource.genericId === genericId
-      );
-      if (exists) {
-        exists.sourceFields = [...new Set([...exists.sourceFields, field])];
-        return resources;
-      }
-      return [
-        ...resources,
-        {
-          genericId,
-          sourceFields: [field],
-          url,
-        },
-      ];
-    }, seed)
+        const exists = resources.find(
+          (resource) => resource.url === url && resource.genericId === genericId
+        );
+        if (exists) {
+          exists.sourceFields = [...new Set([...exists.sourceFields, field])];
+          return resources;
+        }
+        return [
+          ...resources,
+          {
+            genericId,
+            sourceFields: [field],
+            url,
+          },
+        ];
+      }, seed)
     : seed;
 
 const toSourceFieldList = (sourceFields) => {
@@ -189,26 +188,26 @@ const coerceSourceFieldList = (resource, clone = false) => {
 const mergeRecordsByUrlAndGenericId = (records) =>
   Array.isArray(records)
     ? records
-      .filter(
-        (resource) =>
-          typeof resource.genericId === 'number' &&
-          resource.genericId === parseInt(resource.genericId, 10) &&
-          typeof resource.url === 'string' &&
-          Array.isArray(resource.sourceFields) &&
-          resource.sourceFields.length > 0
-      )
-      .reduce((resources, resource) => {
-        const exists = resources.find(
-          (r) => r.genericId === resource.genericId && r.url === resource.url
-        );
-        if (exists) {
-          exists.sourceFields = Array.isArray(resource.sourceFields)
-            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
-            : exists.sourceFields;
-          return resources;
-        }
-        return [...resources, resource];
-      }, [])
+        .filter(
+          (resource) =>
+            typeof resource.genericId === 'number' &&
+            resource.genericId === parseInt(resource.genericId, 10) &&
+            typeof resource.url === 'string' &&
+            Array.isArray(resource.sourceFields) &&
+            resource.sourceFields.length > 0
+        )
+        .reduce((resources, resource) => {
+          const exists = resources.find(
+            (r) => r.genericId === resource.genericId && r.url === resource.url
+          );
+          if (exists) {
+            exists.sourceFields = Array.isArray(resource.sourceFields)
+              ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+              : exists.sourceFields;
+            return resources;
+          }
+          return [...resources, resource];
+        }, [])
     : [];
 
 // Merge all the records that share the same resourceId and genericId, collecting all
@@ -216,38 +215,38 @@ const mergeRecordsByUrlAndGenericId = (records) =>
 const mergeRecordsByResourceIdAndGenericId = (records) =>
   Array.isArray(records)
     ? records
-      .filter(
-        (resource) =>
-          typeof resource.genericId === 'number' &&
-          resource.genericId === parseInt(resource.genericId, 10) &&
-          typeof resource.resourceId === 'number' &&
-          resource.resourceId === parseInt(resource.resourceId, 10) &&
-          Array.isArray(resource.sourceFields) &&
-          resource.sourceFields.length > 0
-      )
-      .reduce((resources, resource) => {
-        const exists = resources.find(
-          (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
-        );
-        if (exists) {
-          exists.sourceFields = Array.isArray(resource.sourceFields)
-            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
-            : exists.sourceFields;
-          return resources;
-        }
-        return [...resources, resource];
-      }, [])
+        .filter(
+          (resource) =>
+            typeof resource.genericId === 'number' &&
+            resource.genericId === parseInt(resource.genericId, 10) &&
+            typeof resource.resourceId === 'number' &&
+            resource.resourceId === parseInt(resource.resourceId, 10) &&
+            Array.isArray(resource.sourceFields) &&
+            resource.sourceFields.length > 0
+        )
+        .reduce((resources, resource) => {
+          const exists = resources.find(
+            (r) => r.genericId === resource.genericId && r.resourceId === resource.resourceId
+          );
+          if (exists) {
+            exists.sourceFields = Array.isArray(resource.sourceFields)
+              ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+              : exists.sourceFields;
+            return resources;
+          }
+          return [...resources, resource];
+        }, [])
     : [];
 
 // Replace the url with the corresponding resourceId
 const transformRecordByURLToResource = (records, resources) =>
   Array.isArray(records) && Array.isArray(resources)
     ? records
-      .map(({ url, ...resource }) => ({
-        ...resource,
-        resourceId: resources.find((r) => r.url === url)?.id,
-      }))
-      .filter((resource) => resource.resourceId !== undefined && resource.resourceId !== null)
+        .map(({ url, ...resource }) => ({
+          ...resource,
+          resourceId: resources.find((r) => r.url === url)?.id,
+        }))
+        .filter((resource) => resource.resourceId !== undefined && resource.resourceId !== null)
     : [];
 
 // Compare the incomingResources and the currentResources to generate five sets of modifications:
@@ -548,28 +547,28 @@ const getResourcesForModel = async (
 ) =>
   includeAutoDetected
     ? model.findAll({
-      where: {
-        [resourceTableForeignKey]: genericId,
-      },
-      include: [
-        {
-          model: Resource,
-          as: 'resource',
+        where: {
+          [resourceTableForeignKey]: genericId,
         },
-      ],
-    })
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+      })
     : model.findAll({
-      where: {
-        [resourceTableForeignKey]: genericId,
-        sourceFields: { [Op.contains]: ['resource'] },
-      },
-      include: [
-        {
-          model: Resource,
-          as: 'resource',
+        where: {
+          [resourceTableForeignKey]: genericId,
+          sourceFields: { [Op.contains]: ['resource'] },
         },
-      ],
-    });
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+      });
 
 // Generic method for running the processFunction for an entity based on the data found at
 // the passed id
@@ -620,15 +619,15 @@ const genericProcessEntityForResources = async (
   const currentResources = entity[resourceTableAs]
     ? entity[resourceTableAs]
     : await resourceTableModel.findAll({
-      where: { [resourceTableForeignKey]: entity.id },
-      include: [
-        {
-          model: Resource,
-          as: 'resource',
-        },
-      ],
-      raw: true,
-    });
+        where: { [resourceTableForeignKey]: entity.id },
+        include: [
+          {
+            model: Resource,
+            as: 'resource',
+          },
+        ],
+        raw: true,
+      });
 
   // convert to generic genericId to use generic modifier methods
   const currentResourcesGeneric = remapAttributes(
@@ -651,10 +650,10 @@ const genericProcessEntityForResources = async (
   const incomingResourcesById =
     resourceIds && Array.isArray(resourceIds)
       ? resourceIds.map((resourceId) => ({
-        genericId: entity.id,
-        resourceId,
-        sourceFields: ['resource'],
-      }))
+          genericId: entity.id,
+          resourceId,
+          sourceFields: ['resource'],
+        }))
       : [];
 
   // Find or create resources for each of the urls collected.
@@ -738,12 +737,12 @@ const genericSyncResourcesForEntity = async (
     ...resources.destroy.map(async (resource) =>
       resource.resourceIds.length > 0
         ? resourceTableModel.destroy({
-          where: {
-            [resourceTableForeignKey]: resource[resourceTableForeignKey],
-            resourceId: { [Op.in]: resource.resourceIds },
-          },
-          individualHooks: true,
-        })
+            where: {
+              [resourceTableForeignKey]: resource[resourceTableForeignKey],
+              resourceId: { [Op.in]: resource.resourceIds },
+            },
+            individualHooks: true,
+          })
         : Promise.resolve()
     ),
   ]);

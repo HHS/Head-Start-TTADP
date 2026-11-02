@@ -1,6 +1,7 @@
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
 import { TIMELINE_EVENT_TYPES } from '@ttahub/common/src/constants';
 import type {
+  RecipientTimelineCategory,
   RecipientTimelineEvent,
   RecipientTimelineEventPresentation,
   RecipientTimelineFilter,
@@ -9,16 +10,19 @@ import type {
   RecipientTimelineResponse,
 } from '@ttahub/common/src/recipientTimeline';
 import moment from 'moment';
-import { QueryTypes } from 'sequelize';
+import { col, fn, Op, QueryTypes } from 'sequelize';
+import { CREATION_METHOD } from '../constants';
 import { serviceError } from '../lib/serviceError';
 import { auditLogger } from '../logger';
-import { sequelize } from '../models';
+import db from '../models';
 import {
   COMMUNICATION_LOG_TIMELINE_SOURCE,
   RECIPIENT_TIMELINE_SOURCES,
   type TimelineEventSource,
   type TimelineSourceBindings,
 } from './recipientTimelineSources';
+
+const { Goal, GoalStatusChange, GoalTemplate, Grant, sequelize } = db;
 
 interface RecipientTimelineEventIndex {
   source: string;
@@ -59,6 +63,77 @@ const DATE_INPUT_FORMATS = [
 ];
 
 const badTimelineRequest = (message: string) => serviceError(400, message, { message });
+
+/** Category membership is scoped to this recipient and region, independent of event pages. */
+export async function getTimelineGoalCategories(
+  recipientId: number,
+  regionId: number
+): Promise<RecipientTimelineCategory[]> {
+  const goals = await Goal.findAll({
+    attributes: ['id', 'status', 'createdAt'],
+    where: {
+      mapsToParentGoalId: null,
+      [Op.and]: [
+        { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+        // Current standard goals do not set the legacy isRttapa flag.
+        {
+          [Op.or]: [
+            { isRttapa: 'Yes' },
+            { '$goalTemplate.creationMethod$': CREATION_METHOD.CURATED },
+          ],
+        },
+      ],
+    },
+    include: [
+      {
+        model: Grant.unscoped(),
+        as: 'grant',
+        attributes: [],
+        required: true,
+        where: { recipientId, regionId },
+      },
+      { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: true },
+    ],
+  });
+  if (!goals.length) return [];
+  // Aggregate in one query: status history can be large and goal updatedAt also changes
+  // for edits unrelated to status. Do not derive header status from a filtered event page.
+  const changes = await GoalStatusChange.unscoped().findAll({
+    attributes: [
+      'goalId',
+      [fn('MAX', fn('COALESCE', col('performedAt'), col('createdAt'))), 'lastStatusChangedAt'],
+    ],
+    where: {
+      goalId: { [Op.in]: goals.map(({ id }) => id) },
+      newStatus: { [Op.ne]: null },
+      [Op.or]: [{ oldStatus: null }, { oldStatus: { [Op.ne]: col('newStatus') } }],
+    },
+    group: ['goalId'],
+    raw: true,
+  });
+  const changedAtByGoal = new Map(
+    changes.map((change) => [change.goalId, change.lastStatusChangedAt])
+  );
+  const categories = new Map<string, { status: string; changedAt: number; goalId: number }>();
+  goals.forEach((goal) => {
+    const label = goal.goalTemplate?.standard?.trim();
+    if (!label) return;
+    const date = changedAtByGoal.get(goal.id) ?? goal.createdAt;
+    const timestamp = date ? new Date(date).getTime() : 0;
+    const changedAt = Number.isFinite(timestamp) ? timestamp : 0;
+    const current = categories.get(label);
+    if (
+      !current ||
+      changedAt > current.changedAt ||
+      (changedAt === current.changedAt && goal.id > current.goalId)
+    ) {
+      categories.set(label, { status: goal.status?.trim() || '', changedAt, goalId: goal.id });
+    }
+  });
+  return [...categories]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, { status }]) => ({ label, statuses: status ? [status] : [] }));
+}
 
 const validateQueryOptions = ({
   sources,
@@ -537,6 +612,44 @@ export async function getRecipientTimeline(
     : RECIPIENT_TIMELINE_SOURCES.filter(
         ({ name }) => name !== COMMUNICATION_LOG_TIMELINE_SOURCE.name
       );
-  const index = await queryTimelineEventIndex({ ...params, sources });
-  return populateTimelineEventIndex(index, params, sources);
+  // Validate before querying category metadata, including for direct service callers.
+  validateQueryOptions({ ...params, sources });
+  if (
+    params.view !== undefined &&
+    !['chronological', 'monitoring', 'goals'].includes(params.view)
+  ) {
+    throw badTimelineRequest('Timeline view is invalid');
+  }
+  if (!params.view || params.view === 'chronological') {
+    const index = await queryTimelineEventIndex({ ...params, sources });
+    return populateTimelineEventIndex(index, params, sources);
+  }
+
+  const goalCategories = await getTimelineGoalCategories(params.recipientId, params.regionId);
+  const categories =
+    params.view === 'monitoring'
+      ? [
+          {
+            label: 'Monitoring',
+            statuses: goalCategories.find(({ label }) => label === 'Monitoring')?.statuses ?? [],
+          },
+        ]
+      : goalCategories;
+  validateFilters(params.filters, sources);
+  if (!categories.length) return { count: 0, events: [], categories: [] };
+  const viewParams = {
+    ...params,
+    // AND the view constraint with user filters. It cannot be bypassed by removing a pill.
+    filters: [
+      ...params.filters,
+      {
+        topic: 'standard' as const,
+        condition: 'is' as const,
+        query: categories.map(({ label }) => label),
+      },
+    ],
+  };
+  const index = await queryTimelineEventIndex({ ...viewParams, sources });
+  const result = await populateTimelineEventIndex(index, viewParams, sources);
+  return { ...result, categories };
 }

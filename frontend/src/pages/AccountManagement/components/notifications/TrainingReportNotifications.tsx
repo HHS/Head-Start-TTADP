@@ -28,6 +28,7 @@ export default function TrainingReportNotifications({
         ids: [
           'WhenAddedAsPocTrainingReport',
           'WhenAddedAsCollaboratorTrainingReport',
+          'WhenSessionSubmittedCollaboratorTrainingReport',
           'WhenSessionReviewRequestedTrainingReport',
           'WhenSessionChangesRequestedTrainingReport',
           'WhenSessionDetails20DaysCreatorCollaborator',
@@ -45,6 +46,11 @@ export default function TrainingReportNotifications({
         {
           id: 'WhenAddedAsCollaboratorTrainingReport',
           label: "I'm added as a collaborator on a Training Report.",
+        },
+        {
+          id: 'WhenSessionSubmittedCollaboratorTrainingReport',
+          label:
+            'Someone submits a Training Report session for approval that I am a collaborator on.',
         },
         {
           id: 'WhenSessionReviewRequestedTrainingReport',

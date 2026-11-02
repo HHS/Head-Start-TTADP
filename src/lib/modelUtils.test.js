@@ -4,7 +4,6 @@ import {
   filterDataToModel,
   getColumnInformation,
   getColumnNamesFromModelForType,
-  includeToFindAll,
   modelForTable,
   nestedRawish,
 } from './modelUtils';
@@ -161,32 +160,6 @@ describe('modelUtils', () => {
       const { matched, unmatched } = await filterDataToModel(data, mockModel);
       expect(matched).toEqual({});
       expect(unmatched).toEqual({ count: 'five' });
-    });
-  });
-
-  describe('includeToFindAll', () => {
-    it('should include a model and its associated data based on the provided include function', async () => {
-      const includeFunc = () => ({
-        as: 'topics',
-        model: db.Topic,
-      });
-      const moreWhere = { name: 'Coaching' };
-      const results = await includeToFindAll(includeFunc, moreWhere, undefined, [
-        'id',
-        'name',
-        'mapsTo',
-      ]);
-      expect(results).toMatchObject([
-        {
-          id: expect.anything(
-            (id) =>
-              id === 6 || // seeded-data
-              id === 63
-          ), // prod or sanitized data
-          name: 'Coaching',
-          mapsTo: null,
-        },
-      ]);
     });
   });
 

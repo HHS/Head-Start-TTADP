@@ -60,4 +60,43 @@ describe('RootCauseFeiGoals', () => {
     const table = await screen.findByRole('table');
     expect(table).toBeVisible();
   });
+
+  const showTable = async () => {
+    await userEvent.click(await screen.findByRole('button', { name: /open actions/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /display table/i }));
+  };
+
+  const rowText = () =>
+    Array.from(screen.getByRole('table').querySelectorAll('tbody tr'), (row) => row.textContent);
+
+  const firstCauseIn = (text) =>
+    ROOT_CAUSE_FEI_GOALS_DATA.records.find((r) => text.includes(r.rootCause)).rootCause;
+
+  it('sorts by root cause name when the root cause column is clicked', async () => {
+    render(<RootCauseFeiGoals data={ROOT_CAUSE_FEI_GOALS_DATA} />);
+    await showTable();
+
+    const names = ROOT_CAUSE_FEI_GOALS_DATA.records.map((r) => r.rootCause).sort();
+
+    await userEvent.click(screen.getByRole('button', { name: /^Root cause\. activate/i }));
+    expect(rowText().map(firstCauseIn)).toEqual([...names].reverse());
+
+    await userEvent.click(screen.getByRole('button', { name: /^Root cause\. activate/i }));
+    expect(rowText().map(firstCauseIn)).toEqual(names);
+  });
+
+  it.each([
+    ['Number', 'response_count'],
+    ['Percentage', 'percentage'],
+  ])('sorts the %s column by its own values', async (heading, field) => {
+    render(<RootCauseFeiGoals data={ROOT_CAUSE_FEI_GOALS_DATA} />);
+    await showTable();
+
+    await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${heading}`) }));
+
+    const expected = [...ROOT_CAUSE_FEI_GOALS_DATA.records]
+      .sort((a, b) => a[field] - b[field])
+      .map((r) => r.rootCause);
+    expect(rowText().map(firstCauseIn)).toEqual(expected);
+  });
 });

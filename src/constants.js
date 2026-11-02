@@ -245,6 +245,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenReportApproval',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED]: {
+    textFn: ({ recipientName, displayId }) => `${recipientName} ${displayId} is available to view.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    archiveLabel: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenRecipientReportApprovedProgramSpecialist',
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED]: {
     textFn: ({ recipientName }) =>
       `A revised Activity Report for ${recipientName} has been submitted for approval.`,
@@ -273,6 +282,47 @@ const NOTIFICATION_CONFIGURATION = {
     archiveLabel: () => 'View AR',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenCreatorReportSubmittedForReview',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_POC_ADDED]: {
+    textFn: () => 'You were added as a Regional point of contact on a Training Report.',
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    archiveLabel: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenAddedAsPocTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR]: {
+    textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionSubmittedCollaboratorTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the archived CTA reads "View TR", and the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
@@ -319,6 +369,7 @@ const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
@@ -336,6 +387,8 @@ const EMAIL_ACTIONS = {
   ADDED_AS_RECIPIENT_COMM_LOG: 'emailWhenAddedAsRecipientCommLog',
   ADDED_AS_POC_TRAINING_REPORT: 'emailWhenAddedAsPocTrainingReport',
   ADDED_AS_COLLABORATOR_TRAINING_REPORT: 'emailWhenAddedAsCollaboratorTrainingReport',
+  SESSION_SUBMITTED_COLLABORATOR_TRAINING_REPORT:
+    'emailWhenSessionSubmittedCollaboratorTrainingReport',
   SESSION_REVIEW_REQUESTED_TRAINING_REPORT: 'emailWhenSessionReviewRequestedTrainingReport',
   SESSION_CHANGES_REQUESTED_TRAINING_REPORT: 'emailWhenSessionChangesRequestedTrainingReport',
   SESSION_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenSessionDetails20DaysCreatorCollaborator',
@@ -376,6 +429,7 @@ const IN_APP_NOTIFICATION_SETTING_KEYS = [
   'inAppWhenAddedAsRecipientCommLog',
   'inAppWhenAddedAsPocTrainingReport',
   'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',

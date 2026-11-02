@@ -1,7 +1,7 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { frequencyValues } from '../..';
+import { frequencyValues } from './constants';
 import './NotificationsRow.css';
 
 export default function NotificationsRow({

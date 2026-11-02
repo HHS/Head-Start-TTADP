@@ -56,7 +56,7 @@ export const AccordionItem = ({
 };
 
 const AccordionItemProp = {
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   content: PropTypes.node.isRequired,
   expanded: PropTypes.bool,
   id: PropTypes.string.isRequired,

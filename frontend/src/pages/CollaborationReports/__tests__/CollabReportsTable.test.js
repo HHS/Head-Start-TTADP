@@ -93,6 +93,27 @@ describe('CollabReportsTable', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
+  it.each([
+    [/report.id\. activate to sort/i, 'Report_ID'],
+    [/activity name\. activate to sort/i, 'Activity_name'],
+    [/date started\. activate to sort/i, 'Date_started'],
+    [/creator\. activate to sort/i, 'Creator'],
+    [/created date\. activate to sort/i, 'Created_date'],
+    [/collaborators\. activate to sort/i, 'Collaborators'],
+    [/last saved\. activate to sort/i, 'Last_saved'],
+  ])('requests a sort by the backend key when %s is clicked', (label, sortKey) => {
+    const requestSort = jest.fn();
+    render(
+      <MemoryRouter>
+        <CollabReportsTable {...defaultProps} data={mockReportData} requestSort={requestSort} />
+      </MemoryRouter>
+    );
+
+    userEvent.click(screen.getByRole('button', { name: label }));
+
+    expect(requestSort).toHaveBeenCalledWith(sortKey);
+  });
+
   it('shows loading state when loading is true', () => {
     render(<CollabReportsTable {...defaultProps} loading />);
     expect(screen.getByLabelText('Collaboration reports table loading')).toBeInTheDocument();
