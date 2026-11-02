@@ -4,7 +4,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { respondWithServiceError } from '../../lib/serviceError';
 import TtaRequestPolicy from '../../policies/ttaRequest';
 import filtersToScopes from '../../scopes';
-import { setReadRegions } from '../../services/accessValidation';
+import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createTtaRequest as createTtaRequestService,
@@ -12,6 +12,7 @@ import {
   lockTtaRequest,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
@@ -26,7 +27,7 @@ export async function getTtaRequests(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     // filter the query so that only regions the user has permission to are included
-    const query = await setReadRegions(req.query, userId);
+    const query = await setTtaRequestReadRegions(req.query, userId);
     const { ttaRequest: scopes } = await filtersToScopes(query, { userId });
 
     const ttaRequests = await getTtaRequestsService(scopes, userId);
@@ -52,6 +53,25 @@ export async function getTtaRequestsByRecipient(req: Request, res: Response) {
 
     const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId));
     res.json(ttaRequests);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getTtaRequestReviewers(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const reviewers = await ttaRequestReviewers(Number(regionId));
+    res.json(reviewers);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

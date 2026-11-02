@@ -2,9 +2,12 @@ import { faker } from '@faker-js/faker';
 import SCOPES from '../middleware/scopeConstants';
 import db, { EventReportPilot, Permission, Role, User, UserRole } from '../models';
 import {
+  activeUsersWithScopesInRegion,
   findAllUsersWithScope,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
+  primaryApproverConflicts,
+  regionsWithExclusiveScopeConflicts,
   setFlag,
   userByEmail,
   userById,
@@ -760,6 +763,157 @@ describe('Users DB service', () => {
     it('returns empty array when no users match role in region', async () => {
       const results = await usersByRoles(['Wiggler'], 999);
       expect(results.length).toBe(0);
+    });
+  });
+
+  describe('activeUsersWithScopesInRegion', () => {
+    let both;
+    let one;
+    let otherScope;
+    let otherRegion;
+    let inactive;
+
+    beforeAll(async () => {
+      [both, one, otherScope, otherRegion, inactive] = await Promise.all(
+        ['both', 'one', 'otherScope', 'otherRegion', 'inactive'].map((name) =>
+          User.create({
+            id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+            name: `activeUsersWithScopesInRegion ${name}`,
+            email: `${name}@test.gov`,
+            hsesUsername: faker.string.sample(),
+            hsesUserId: faker.string.sample(),
+            lastLogin: new Date(),
+          })
+        )
+      );
+
+      const active = [both, one, otherScope, otherRegion];
+
+      await Permission.bulkCreate([
+        ...active.map((user) => ({ userId: user.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS })),
+        { userId: both.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+        { userId: both.id, regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { userId: one.id, regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        { userId: otherScope.id, regionId: 1, scopeId: SCOPES.READ_WRITE_TTA_REQUESTS },
+        { userId: otherRegion.id, regionId: 2, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+        { userId: inactive.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS },
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [both, one, otherScope, otherRegion, inactive].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
+
+    it('returns active users holding any of the scopes in the region, once each', async () => {
+      const results = await activeUsersWithScopesInRegion(
+        [
+          SCOPES.REVIEW_TTA_REQUESTS,
+          SCOPES.APPROVE_TTA_REQUESTS,
+          SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+        ],
+        1
+      );
+      const ids = results.map((u) => u.id);
+
+      expect(ids.filter((id) => id === both.id)).toHaveLength(1);
+      expect(ids).toContain(one.id);
+      [otherScope, otherRegion, inactive].forEach((user) => {
+        expect(ids).not.toContain(user.id);
+      });
+    });
+  });
+
+  describe('regionsWithExclusiveScopeConflicts', () => {
+    it('lists the regions holding both approve and backup approve', () => {
+      expect(
+        regionsWithExclusiveScopeConflicts([
+          { regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 1, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+          { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 3, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        ])
+      ).toEqual([1, 3]);
+    });
+
+    it('allows approve in one region and backup approve in another', () => {
+      expect(
+        regionsWithExclusiveScopeConflicts([
+          { regionId: 1, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 2, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        ])
+      ).toEqual([]);
+    });
+
+    it("ignores the admin page's all regions stand-in", () => {
+      expect(
+        regionsWithExclusiveScopeConflicts([
+          { regionId: 15, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+          { regionId: 15, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+        ])
+      ).toEqual([]);
+    });
+
+    it('is empty without permissions', () => {
+      expect(regionsWithExclusiveScopeConflicts()).toEqual([]);
+    });
+  });
+
+  describe('primaryApproverConflicts', () => {
+    let primary;
+    let other;
+
+    beforeAll(async () => {
+      [primary, other] = await Promise.all(
+        ['Monica Geller', 'primaryApproverConflicts other'].map((name) =>
+          User.create({
+            id: faker.number.int({ min: 30000, max: 30000 + 99999 }),
+            name,
+            hsesUsername: faker.string.sample(),
+            hsesUserId: faker.string.sample(),
+          })
+        )
+      );
+      await Permission.create({
+        userId: primary.id,
+        regionId: 3,
+        scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+      });
+    });
+
+    afterAll(async () => {
+      await Permission.destroy({ where: { userId: [primary.id, other.id] } });
+      await User.destroy({ where: { id: [primary.id, other.id] } });
+    });
+
+    it('names the primary approver a second one would clash with', async () => {
+      const conflicts = await primaryApproverConflicts(other.id, [
+        { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+        { regionId: 4, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual(['Region 3 already has a primary COR approver: Monica Geller']);
+    });
+
+    it('allows backup approvers alongside the primary', async () => {
+      const conflicts = await primaryApproverConflicts(other.id, [
+        { regionId: 3, scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual([]);
+    });
+
+    it("doesn't count the primary approver against themselves", async () => {
+      const conflicts = await primaryApproverConflicts(primary.id, [
+        { regionId: 3, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual([]);
+    });
+
+    it("ignores the admin page's all regions stand-in", async () => {
+      const conflicts = await primaryApproverConflicts(other.id, [
+        { regionId: 15, scopeId: SCOPES.APPROVE_TTA_REQUESTS },
+      ]);
+      expect(conflicts).toEqual([]);
     });
   });
 });

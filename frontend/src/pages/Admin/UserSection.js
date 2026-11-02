@@ -5,7 +5,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
-import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import {
+  primaryApproversByRegion,
+  userGlobalPermissions,
+  userRegionalPermissions,
+  withoutExclusivePartners,
+} from './PermissionHelpers';
 import UserFeatureFlags from './UserFeatureFlags';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
@@ -18,9 +23,10 @@ const NUMBER_FIELDS = ['homeRegionId'];
  * are not created in this component, nor anywhere in the Admin UI. New users are created
  * automatically the first time they attempt to login to the Smart Hub
  */
-function UserSection({ user, onSave, features }) {
+function UserSection({ user, users, onSave, features }) {
   const [formUser, updateUser] = useState();
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
+  const primaryApprovers = useMemo(() => primaryApproversByRegion(users, user.id), [users, user]);
 
   useEffect(() => {
     updateUser(user);
@@ -70,7 +76,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, REGIONS),
           { userId: user.id, scopeId: scope, regionId: region },
           ...REGIONS.map((r) => ({ userId: user.id, scopeId: scope, regionId: r })),
         ],
@@ -79,7 +85,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, [region]),
           { userId: user.id, scopeId: scope, regionId: region },
         ],
       });
@@ -136,6 +142,7 @@ function UserSection({ user, onSave, features }) {
         onGlobalPermissionChange={onGlobalPermissionChange}
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
+        primaryApprovers={primaryApprovers}
       />
       <UserFeatureFlags
         onFeaturesChange={onFeaturesChange}
@@ -165,6 +172,19 @@ UserSection.propTypes = {
       })
     ),
   }).isRequired,
+  // every user, to find each region's primary TTA request approver
+  users: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      permissions: PropTypes.arrayOf(
+        PropTypes.shape({
+          regionId: PropTypes.number,
+          scopeId: PropTypes.number,
+        })
+      ),
+    })
+  ),
   features: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
@@ -174,6 +194,7 @@ UserSection.propTypes = {
 };
 
 UserSection.defaultProps = {
+  users: [],
   features: [],
 };
 
