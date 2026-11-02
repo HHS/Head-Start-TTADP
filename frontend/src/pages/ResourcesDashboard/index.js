@@ -3,7 +3,6 @@
 
 import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
-import PropTypes from 'prop-types';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -264,23 +263,3 @@ export default function ResourcesDashboard() {
     </FilterContext.Provider>
   );
 }
-
-ResourcesDashboard.propTypes = {
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-    homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(
-      PropTypes.shape({
-        userId: PropTypes.number,
-        scopeId: PropTypes.number,
-        regionId: PropTypes.number,
-      })
-    ),
-  }),
-};
-
-ResourcesDashboard.defaultProps = {
-  user: null,
-};
