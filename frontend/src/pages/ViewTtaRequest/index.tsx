@@ -25,14 +25,6 @@ const recipientAwareLabel = (recipientAware: boolean | null) => {
   return recipientAware ? 'Yes' : 'No';
 };
 
-const goalLabel = (goalTemplate: TtaRequestResponse['goalTemplate']) => {
-  if (!goalTemplate) {
-    return '';
-  }
-  const { standard, templateName } = goalTemplate;
-  return standard ? `(${standard}) ${templateName}` : templateName;
-};
-
 const citationLabel = ({ citation, findingType }: TtaRequestResponse['citations'][number]) =>
   findingType ? `${findingType} - ${citation}` : citation;
 
@@ -206,7 +198,8 @@ export default function ViewTtaRequest({
           sections={[
             {
               data: {
-                "Recipient's Goal": goalLabel(ttaRequest.goalTemplate),
+                // curated template names already lead with their standard, e.g. "(Monitoring) ..."
+                "Recipient's Goal": ttaRequest.goalTemplate?.templateName ?? '',
                 'Request background or context': ttaRequest.context ?? '',
                 ...(citations.length
                   ? {

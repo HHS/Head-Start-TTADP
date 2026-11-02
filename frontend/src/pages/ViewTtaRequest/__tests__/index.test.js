@@ -34,7 +34,7 @@ const SUBMITTED_REQUEST = {
   ],
   goalTemplate: {
     id: 5,
-    templateName: 'The recipient will develop and implement a QIP/CAP',
+    templateName: '(Monitoring) The recipient will develop and implement a QIP/CAP',
     standard: 'Monitoring',
   },
   citations: [
@@ -104,6 +104,7 @@ describe('ViewTtaRequest', () => {
     expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
     const context = screen.getByText('Lorem ipsum dolor sit amet');
     expect(context).toBeVisible();
+    // the template name already carries the standard, so it isn't prefixed again
     const goal = screen.getByText(
       '(Monitoring) The recipient will develop and implement a QIP/CAP'
     );
@@ -160,18 +161,6 @@ describe('ViewTtaRequest', () => {
 
     await screen.findByRole('heading', { name: 'Goal and context' });
     expect(screen.queryByRole('heading', { name: 'Notes summary' })).toBeNull();
-  });
-
-  it('shows the goal without a standard prefix when the goal has no standard', async () => {
-    fetchMock.get(URL, {
-      ...SUBMITTED_REQUEST,
-      goalTemplate: { ...SUBMITTED_REQUEST.goalTemplate, standard: null },
-    });
-    renderView();
-
-    expect(
-      await screen.findByText('The recipient will develop and implement a QIP/CAP')
-    ).toBeVisible();
   });
 
   it('sends the user to the error page when the request cannot load', async () => {
