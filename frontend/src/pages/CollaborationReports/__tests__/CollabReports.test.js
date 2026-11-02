@@ -7,7 +7,6 @@ import { NOOP } from '../../../Constants';
 import FilterContext from '../../../FilterContext';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import UserContext from '../../../UserContext';
-import { filtersToQueryString } from '../../../utils';
 import CollabReports from '../components/CollabReports';
 
 jest.mock('../../../fetchers/collaborationReports');
@@ -101,18 +100,21 @@ describe('CollabReports', () => {
 
   test('preserves the saved page when returning to the reports table', async () => {
     const filterKey = 'collab-pagination-test';
-    const filterQueryKey = `${filterKey}-collabReportsTable-filter-query`;
     const savedSort = { sortBy: 'id', direction: 'desc', activePage: 3, offset: 20, perPage: 10 };
     sessionStorage.setItem(filterKey, '[]');
     sessionStorage.setItem(`${filterKey}-collabReportsTable-sorting`, JSON.stringify(savedSort));
-    sessionStorage.setItem(filterQueryKey, filtersToQueryString([]));
     getReports.mockResolvedValue({ count: 30, rows: [] });
 
-    const renderTable = (filters) => (
+    const setResetPagination = jest.fn();
+    const renderTable = (filters, resetPagination = false) => (
       <FilterContext.Provider value={{ filterKey }}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
           <UserContext.Provider value={{ user: { id: 1 } }}>
-            <CollabReports filters={filters} />
+            <CollabReports
+              filters={filters}
+              resetPagination={resetPagination}
+              setResetPagination={setResetPagination}
+            />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
       </FilterContext.Provider>
@@ -133,36 +135,38 @@ describe('CollabReports', () => {
     );
 
     const filters = [{ id: 'region', topic: 'region', condition: 'is', query: '1' }];
-    rerender(renderTable(filters));
+    rerender(renderTable(filters, true));
     await waitFor(() => {
       expect(getReports).toHaveBeenLastCalledWith(
         expect.objectContaining({ activePage: 1, offset: 0 }),
         filters
       );
     });
+    expect(setResetPagination).toHaveBeenCalledWith(false);
 
     unmount();
     sessionStorage.removeItem(filterKey);
     sessionStorage.removeItem(`${filterKey}-collabReportsTable-sorting`);
-    sessionStorage.removeItem(filterQueryKey);
   });
 
-  test('resets the saved page when returning with different filters', async () => {
+  test('resets the saved page when requested on mount', async () => {
     const filterKey = 'collab-pagination-different-filters-test';
-    const filterQueryKey = `${filterKey}-collabReportsTable-filter-query`;
     const savedSort = { sortBy: 'id', direction: 'desc', activePage: 3, offset: 20, perPage: 10 };
-    const oldFilters = [{ topic: 'region', condition: 'is', query: '2' }];
     const currentFilters = [{ id: 'region', topic: 'region', condition: 'is', query: '1' }];
+    const setResetPagination = jest.fn();
     sessionStorage.setItem(filterKey, '[]');
     sessionStorage.setItem(`${filterKey}-collabReportsTable-sorting`, JSON.stringify(savedSort));
-    sessionStorage.setItem(filterQueryKey, filtersToQueryString(oldFilters));
     getReports.mockResolvedValue({ count: 1, rows: mockReports.slice(0, 1) });
 
     render(
       <FilterContext.Provider value={{ filterKey }}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
           <UserContext.Provider value={{ user: { id: 1 } }}>
-            <CollabReports filters={currentFilters} />
+            <CollabReports
+              filters={currentFilters}
+              resetPagination
+              setResetPagination={setResetPagination}
+            />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
       </FilterContext.Provider>
@@ -175,9 +179,8 @@ describe('CollabReports', () => {
       );
     });
 
-    expect(sessionStorage.getItem(filterQueryKey)).toBe(filtersToQueryString(currentFilters));
+    expect(setResetPagination).toHaveBeenCalledWith(false);
     sessionStorage.removeItem(filterKey);
     sessionStorage.removeItem(`${filterKey}-collabReportsTable-sorting`);
-    sessionStorage.removeItem(filterQueryKey);
   });
 });

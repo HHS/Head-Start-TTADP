@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
@@ -7,6 +7,7 @@ import selectEvent from 'react-select-event';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import CollabReportsLanding from '../index';
 
 jest.mock('../../../fetchers/collaborationReports');
@@ -132,9 +133,15 @@ const selectParticipantFilter = async (participants) => {
 describe('CollabReportsLanding integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    sessionStorage.clear();
     useFilters.default.mockImplementation((...args) => {
       const filterConfig = args[4];
-      const [filters, setFilters] = React.useState([]);
+      const onFiltersChange = args[5];
+      const [filters, setFiltersInHook] = React.useState([]);
+      const setFilters = (newFilters) => {
+        onFiltersChange();
+        setFiltersInHook(newFilters);
+      };
 
       return {
         regions: [1],
@@ -168,6 +175,7 @@ describe('CollabReportsLanding integration', () => {
     const filterKey = 'collab-landing-filters';
     const sortingKey = `${filterKey}-${tableKey}-sorting`;
     sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(`${filterKey}-${tableKey}-filter-query`, filtersToQueryString([]));
     sessionStorage.setItem(
       sortingKey,
       JSON.stringify({ sortBy: 'id', direction: 'desc', activePage: 3, offset: 20 })
@@ -185,6 +193,70 @@ describe('CollabReportsLanding integration', () => {
     unmount();
     sessionStorage.removeItem(filterKey);
     sessionStorage.removeItem(sortingKey);
+  });
+
+  it('resets both saved pages when returning with different filters', async () => {
+    const filterKey = 'collab-landing-filters';
+    sessionStorage.setItem(filterKey, '[]');
+    const previousFilters = [{ topic: 'region', condition: 'is', query: '2' }];
+    ['collabReportAlerts', 'collabReportsTable'].forEach((tableKey) => {
+      sessionStorage.setItem(
+        `${filterKey}-${tableKey}-sorting`,
+        JSON.stringify({ sortBy: 'id', direction: 'desc', activePage: 3, offset: 50, perPage: 25 })
+      );
+      sessionStorage.setItem(
+        `${filterKey}-${tableKey}-filter-query`,
+        filtersToQueryString(previousFilters)
+      );
+    });
+
+    renderLanding();
+
+    await waitFor(() => {
+      [getAlerts, getReports].forEach((fetcher) => {
+        expect(fetcher).toHaveBeenLastCalledWith(
+          expect.objectContaining({ activePage: 1, offset: 0, perPage: 25 }),
+          []
+        );
+      });
+    });
+    ['collabReportAlerts', 'collabReportsTable'].forEach((tableKey) => {
+      expect(sessionStorage.getItem(`${filterKey}-${tableKey}-filter-query`)).toBe(
+        filtersToQueryString([])
+      );
+    });
+  });
+
+  it('resets both tables through the useFilters callback without a filter-query change', async () => {
+    const filterKey = 'collab-landing-filters';
+    sessionStorage.setItem(filterKey, '[]');
+    ['collabReportAlerts', 'collabReportsTable'].forEach((tableKey) => {
+      sessionStorage.setItem(
+        `${filterKey}-${tableKey}-sorting`,
+        JSON.stringify({ sortBy: 'id', direction: 'desc', activePage: 3, offset: 20, perPage: 10 })
+      );
+    });
+    renderLanding();
+
+    await waitFor(() => {
+      [getAlerts, getReports].forEach((fetcher) => {
+        expect(fetcher).toHaveBeenLastCalledWith(
+          expect.objectContaining({ activePage: 3, offset: 20 }),
+          []
+        );
+      });
+    });
+
+    act(() => useFilters.default.mock.calls.at(-1)[5]());
+
+    await waitFor(() => {
+      [getAlerts, getReports].forEach((fetcher) => {
+        expect(fetcher).toHaveBeenLastCalledWith(
+          expect.objectContaining({ activePage: 1, offset: 0, perPage: 10 }),
+          []
+        );
+      });
+    });
   });
 
   it.each([
