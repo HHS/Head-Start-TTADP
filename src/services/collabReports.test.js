@@ -2,6 +2,8 @@
 import { faker } from '@faker-js/faker';
 import { COLLAB_REPORT_PARTICIPANTS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { CREATION_METHOD } from '../constants';
+import { collabReportToCsvRecord } from '../lib/transform';
 import db, {
   CollabReport,
   CollabReportActivityState,
@@ -178,6 +180,32 @@ describe('Collab Reports Service', () => {
 
       const result = await collabReportById(createdReport.id);
       expect(result.name).toEqual(reportObject.name);
+    });
+
+    it('returns the actual approval date for an approved report', async () => {
+      const approvedAt = new Date('2025-01-25T09:15:00.000Z');
+      const report = await CollabReport.create(
+        {
+          ...reportObject,
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+        { hooks: false }
+      );
+      await CollabReportApprover.create(
+        {
+          collabReportId: report.id,
+          userId: mockUserTwo.id,
+          status: REPORT_STATUSES.APPROVED,
+          updatedAt: approvedAt,
+        },
+        { hooks: false, silent: true }
+      );
+
+      const result = await collabReportById(String(report.id));
+
+      expect(result.approvedAt).toEqual(approvedAt);
+      expect(result.toJSON().approvedAt).toEqual(approvedAt);
     });
 
     it('returns null when given an invalid ID', async () => {
@@ -509,6 +537,7 @@ describe('Collab Reports Service', () => {
 
   describe('getCSVReports', () => {
     let csvReportIds = [];
+    let csvGoalTemplate;
 
     beforeAll(async () => {
       // Create 11 records — one more than REPORTS_PER_PAGE (10) — so that the
@@ -524,6 +553,41 @@ describe('Collab Reports Service', () => {
       );
 
       const [report1] = reports;
+
+      await CollabReportReason.bulkCreate([
+        { collabReportId: reports[1].id, reasonId: 'support_coordination' },
+        { collabReportId: reports[1].id, reasonId: 'agg_regional_data' },
+        { collabReportId: reports[1].id, reasonId: 'participate_work_groups' },
+      ]);
+
+      csvGoalTemplate = await db.GoalTemplate.create(
+        {
+          id: -report1.id,
+          templateName: `(CSV supporting goal ${report1.id}) Test template`,
+          hash: faker.string.uuid(),
+          creationMethod: CREATION_METHOD.CURATED,
+          templateNameModifiedAt: new Date(),
+        },
+        { hooks: false }
+      );
+
+      await Promise.all([
+        CollabReportActivityState.create({ collabReportId: report1.id, activityStateCode: 'VA' }),
+        CollabReportDataUsed.create({
+          collabReportId: report1.id,
+          collabReportDatum: 'census_data',
+        }),
+        CollabReportReason.create({ collabReportId: report1.id, reasonId: 'agg_regional_data' }),
+        db.CollabReportGoal.create({
+          collabReportId: report1.id,
+          goalTemplateId: csvGoalTemplate.id,
+        }),
+        CollabReportStep.create({
+          collabReportId: report1.id,
+          collabStepDetail: 'Share findings',
+          collabStepCompleteDate: '2026-02-15',
+        }),
+      ]);
 
       await CollabReportSpecialist.create({
         collabReportId: report1.id,
@@ -546,7 +610,17 @@ describe('Collab Reports Service', () => {
         force: true,
       });
       await CollabReportApprover.destroy({ where: { collabReportId: csvReportIds }, force: true });
+      await Promise.all([
+        CollabReportActivityState.destroy({ where: { collabReportId: csvReportIds }, force: true }),
+        CollabReportDataUsed.destroy({ where: { collabReportId: csvReportIds }, force: true }),
+        CollabReportReason.destroy({ where: { collabReportId: csvReportIds }, force: true }),
+        CollabReportStep.destroy({ where: { collabReportId: csvReportIds }, force: true }),
+        db.CollabReportGoal.destroy({ where: { collabReportId: csvReportIds }, force: true }),
+      ]);
       await CollabReport.destroy({ where: { id: csvReportIds }, force: true });
+      if (csvGoalTemplate) {
+        await db.GoalTemplate.destroy({ where: { id: csvGoalTemplate.id }, force: true });
+      }
     });
 
     it('returns all reports when no filters are provided', async () => {
@@ -612,6 +686,73 @@ describe('Collab Reports Service', () => {
       expect(approver.user).toHaveProperty('id');
       expect(approver.user).toHaveProperty('name');
       expect(approver.user).toHaveProperty('fullName');
+    });
+
+    it('loads supporting information and approval metadata into CSV records', async () => {
+      const reports = await getCSVReports({ 'id.in': [csvReportIds[0]] });
+      const [report] = reports;
+
+      expect(report.activityStates[0].activityStateCode).toBe('VA');
+      expect(report.dataUsed[0].collabReportDatum).toBe('census_data');
+      expect(report.reportGoals[0].goalTemplate.standard).toBe(csvGoalTemplate.standard);
+      expect(report.approvedAt).toEqual(report.approvers[0].updatedAt);
+      expect(collabReportToCsvRecord(report)).toMatchObject({
+        creatorName: report.author.fullName,
+        collaborators: mockUserTwo.name,
+        approvers: mockUserTwo.name,
+        purpose: 'Aggregate, analyze, and/or present regional data',
+        dataUsed: 'Census data',
+        reportGoals: `CSV supporting goal ${csvReportIds[0]}`,
+        steps: 'Share findings',
+        stepsCompleteDate: '02/15/2026',
+        approvedAt: expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
+      });
+    });
+
+    it('preserves reason association order across CSV exports', async () => {
+      const reasons = await CollabReportReason.findAll({
+        where: { collabReportId: csvReportIds[1] },
+        order: [['id', 'ASC']],
+      });
+      const expectedReasons = reasons.map(({ reasonId }) => reasonId);
+      expect(expectedReasons).toEqual([
+        'support_coordination',
+        'agg_regional_data',
+        'participate_work_groups',
+      ]);
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const [report] = await getCSVReports({ 'id.in': [csvReportIds[1]] });
+        expect(report.get('reportReasons')).toEqual(expectedReasons);
+      }
+    });
+
+    it('orders list associations by id without overriding report sorting', async () => {
+      const findAll = jest.spyOn(CollabReport, 'findAll').mockResolvedValueOnce([]);
+
+      try {
+        await getCSVReports({ sortBy: 'Activity_name', sortDir: 'asc' });
+
+        expect(findAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            include: expect.arrayContaining(
+              ['activityStates', 'dataUsed', 'reportGoals'].map((as) =>
+                expect.objectContaining({
+                  as,
+                  separate: true,
+                  order: [['id', 'ASC']],
+                })
+              )
+            ),
+            order: [
+              ['name', 'asc'],
+              [{ model: CollabReportStep, as: 'steps' }, 'id', 'ASC'],
+            ],
+          })
+        );
+      } finally {
+        findAll.mockRestore();
+      }
     });
 
     it('respects limit parameter', async () => {

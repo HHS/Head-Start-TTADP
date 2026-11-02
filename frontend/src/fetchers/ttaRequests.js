@@ -15,6 +15,13 @@ export const getTtaRequests = async (filters) => {
   return ttaRequests.json();
 };
 
+export const getTtaRequestReviewers = async (regionId) => {
+  const reviewers = await get(
+    join(ttaRequestsUrl, 'region', regionId.toString(DECIMAL_BASE), 'reviewers')
+  );
+  return reviewers.json();
+};
+
 export const getTtaRequestsByRecipient = async (regionId, recipientId) => {
   const ttaRequests = await get(
     join(
