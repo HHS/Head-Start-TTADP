@@ -14,7 +14,6 @@ import TtaRequestNotesSummary, {
 import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
-import './ViewTtaRequest.css';
 
 const formatDate = (date: string | null | undefined) =>
   date ? moment(date).format(DATE_DISPLAY_FORMAT) : '';
@@ -159,25 +158,31 @@ export default function ViewTtaRequest({
       </div>
       <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
         <h1 className="font-serif-2xl margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
-        <div className="margin-bottom-4">
-          <p className="margin-top-0 margin-bottom-1">
-            <strong>Creator:</strong> {ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}
-          </p>
-          <p className="margin-top-0 margin-bottom-1">
-            <strong>Reviewer:</strong> {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
-          </p>
-          <p className="margin-top-0 margin-bottom-1">
-            <strong>Date Created:</strong> {formatDate(ttaRequest.createdAt)}
-          </p>
+        <dl className="margin-top-0 margin-bottom-4">
+          <div className="display-flex margin-bottom-1">
+            <dt className="text-bold margin-right-1">Creator:</dt>
+            <dd className="margin-0">{ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}</dd>
+          </div>
+          <div className="display-flex margin-bottom-1">
+            <dt className="text-bold margin-right-1">Reviewer:</dt>
+            <dd className="margin-0">
+              {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
+            </dd>
+          </div>
+          <div className="display-flex margin-bottom-1">
+            <dt className="text-bold margin-right-1">Date Created:</dt>
+            <dd className="margin-0">{formatDate(ttaRequest.createdAt)}</dd>
+          </div>
           {ttaRequest.submittedAt && (
-            <p className="margin-top-0 margin-bottom-1">
-              <strong>Date submitted:</strong> {formatDate(ttaRequest.submittedAt)}
-            </p>
+            <div className="display-flex margin-bottom-1">
+              <dt className="text-bold margin-right-1">Date submitted:</dt>
+              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
+            </div>
           )}
-        </div>
+        </dl>
         <ReadOnlyContent
           title="Who is the request for?"
-          className="ttahub-view-tta-request__section ttahub-view-tta-request__who"
+          spacing={{ section: 0, row: 3 }}
           sections={[
             {
               data: {
@@ -197,7 +202,7 @@ export default function ViewTtaRequest({
         />
         <ReadOnlyContent
           title="Goal and context"
-          className="ttahub-view-tta-request__section ttahub-view-tta-request__goal-and-context"
+          spacing={{ title: 2, section: 1 }}
           sections={[
             {
               data: {

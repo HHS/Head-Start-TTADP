@@ -34,6 +34,8 @@ describe('TtaRequestNotesSummary', () => {
     expect(within(item).getByText('Draft TTA Request')).toHaveClass('text-uppercase');
     expect(within(item).getByText('Rachel Green, ECS')).toBeVisible();
     expect(within(item).getByTestId('avatar')).toHaveTextContent('R');
+    // the initial repeats the author's name, so it's hidden from screen readers
+    expect(within(item).getByTestId('avatar').parentElement).toHaveAttribute('aria-hidden', 'true');
     expect(within(item).getByText('Creator')).toBeVisible();
     expect(within(item).getByText('June 23, 2026 • 9:32 UTC')).toBeVisible();
     expect(

@@ -86,10 +86,12 @@ describe('ViewTtaRequest', () => {
       '/tta-requests'
     );
 
-    expect(screen.getByText('Creator:').parentElement).toHaveTextContent('Avery Example, GS');
-    expect(screen.getByText('Reviewer:').parentElement).toHaveTextContent('Jordan Sample, TTAC');
-    expect(screen.getByText('Date Created:').parentElement).toHaveTextContent('06/23/2026');
-    expect(screen.getByText('Date submitted:').parentElement).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Creator:').nextElementSibling).toHaveTextContent('Avery Example, GS');
+    expect(screen.getByText('Reviewer:').nextElementSibling).toHaveTextContent(
+      'Jordan Sample, TTAC'
+    );
+    expect(screen.getByText('Date Created:').nextElementSibling).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Date submitted:').nextElementSibling).toHaveTextContent('06/23/2026');
 
     expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
     const grant = screen.getByText('Sample Recipient Agency - 14HP1234 - EHS');

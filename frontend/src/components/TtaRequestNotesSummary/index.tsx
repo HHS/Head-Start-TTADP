@@ -62,7 +62,10 @@ export default function TtaRequestNotesSummary({
                   <span aria-hidden className="flex-1 border-top-1px border-base-lighter" />
                 </div>
                 <div className="display-flex flex-align-start">
-                  <Avatar name={author} />
+                  {/* the author's name is read out right after, so the initial would repeat it */}
+                  <div aria-hidden>
+                    <Avatar name={author} />
+                  </div>
                   <div className="flex-1 margin-left-2">
                     <div className="ttahub-notes-summary__author text-bold">{author}</div>
                     <div className="font-sans-2xs">
