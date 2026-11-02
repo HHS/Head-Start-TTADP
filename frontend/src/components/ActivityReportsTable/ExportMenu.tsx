@@ -106,7 +106,7 @@ export default function ExportMenu({
       <button
         type="button"
         ref={triggerRef}
-        aria-label="Reports menu"
+        aria-label="Actions for activity report exports"
         aria-haspopup="menu"
         aria-expanded={open}
         className="usa-button usa-button--unstyled ttahub-ar-export__trigger font-sans-xs margin-left-1"
