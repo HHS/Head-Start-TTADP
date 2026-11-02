@@ -305,6 +305,7 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     SELECT COUNT(*) total
     FROM "Citations"
     WHERE active
+      AND "deletedAt" IS NULL
     )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT

@@ -272,7 +272,8 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     JOIN "Grants" gr
       ON gr.id = gc."grantId"
       AND NOT gr.deleted
-    WHERE c.initial_report_delivery_date >= :timeSeriesStart
+    WHERE c."deletedAt" IS NULL
+      AND c.initial_report_delivery_date >= :timeSeriesStart
       AND c.calculated_finding_type IN ('Area of Concern', 'Deficiency', 'Noncompliance')
     GROUP BY 1, 2, 3, 4
     ;
@@ -285,7 +286,8 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
       c.calculated_finding_type finding_type,
       COUNT(DISTINCT c.id) value
     FROM "Citations" c
-    WHERE c.initial_report_delivery_date >= :timeSeriesStart
+    WHERE c."deletedAt" IS NULL
+      AND c.initial_report_delivery_date >= :timeSeriesStart
       AND c.calculated_finding_type IN ('Area of Concern', 'Deficiency', 'Noncompliance')
     GROUP BY 1, 2
     ;
@@ -384,7 +386,8 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     JOIN "Grants" gr
       ON gr.id = gc."grantId"
       AND NOT gr.deleted
-    WHERE c.closed_date IS NOT NULL
+    WHERE c."deletedAt" IS NULL
+      AND c.closed_date IS NOT NULL
       AND c.closed_date >= :timeSeriesStart
     GROUP BY 1, 2, 3
     ;
@@ -396,7 +399,8 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
       date_trunc('month', c.closed_date)::date period_start,
       COUNT(DISTINCT c.id) value
     FROM "Citations" c
-    WHERE c.closed_date IS NOT NULL
+    WHERE c."deletedAt" IS NULL
+      AND c.closed_date IS NOT NULL
       AND c.closed_date >= :timeSeriesStart
     GROUP BY 1
     ;
@@ -634,39 +638,51 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
     }
   );
 
-  // elevated_count/sample_count are always inserted (0 is a meaningful
-  // value); elevated_z only where defined (value is NOT NULL on
-  // ValidationTimeSeries).
+  // Narrow (stat_name, period_start, value) shape so the reconcile below can
+  // key on exactly the rows this run produces per stat, including weeks where
+  // elevated_z has no value.
+  await sequelize.query(
+    `
+    DROP TABLE IF EXISTS report_delivery_lag_rows;
+    CREATE TEMP TABLE report_delivery_lag_rows
+    AS
+    SELECT 'import_lag_elevated_z' stat_name, period_start, import_elevated_z value
+    FROM report_delivery_lag_national_ts WHERE import_elevated_z IS NOT NULL
+    UNION ALL
+    SELECT 'import_lag_elevated_count', period_start, import_elevated_count
+    FROM report_delivery_lag_national_ts
+    UNION ALL
+    SELECT 'import_lag_sample_count', period_start, import_sample_count
+    FROM report_delivery_lag_national_ts
+    UNION ALL
+    SELECT 'source_lag_elevated_z', period_start, source_elevated_z
+    FROM report_delivery_lag_national_ts WHERE source_elevated_z IS NOT NULL
+    UNION ALL
+    SELECT 'source_lag_elevated_count', period_start, source_elevated_count
+    FROM report_delivery_lag_national_ts
+    UNION ALL
+    SELECT 'source_lag_sample_count', period_start, source_sample_count
+    FROM report_delivery_lag_national_ts
+    UNION ALL
+    SELECT 'completion_gap_elevated_z', period_start, completion_elevated_z
+    FROM report_delivery_lag_national_ts WHERE completion_elevated_z IS NOT NULL
+    UNION ALL
+    SELECT 'completion_gap_elevated_count', period_start, completion_elevated_count
+    FROM report_delivery_lag_national_ts
+    UNION ALL
+    SELECT 'completion_gap_sample_count', period_start, completion_sample_count
+    FROM report_delivery_lag_national_ts
+    ;
+    `,
+    { raw: true, transaction }
+  );
+
   const [, lagNationalMeta] = await sequelize.query(
     `
     INSERT INTO "ValidationTimeSeries"
       (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'import_lag_elevated_z', import_elevated_z, NOW(), NOW()
-    FROM report_delivery_lag_national_ts WHERE import_elevated_z IS NOT NULL
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'import_lag_elevated_count', import_elevated_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'import_lag_sample_count', import_sample_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'source_lag_elevated_z', source_elevated_z, NOW(), NOW()
-    FROM report_delivery_lag_national_ts WHERE source_elevated_z IS NOT NULL
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'source_lag_elevated_count', source_elevated_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'source_lag_sample_count', source_sample_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'completion_gap_elevated_z', completion_elevated_z, NOW(), NOW()
-    FROM report_delivery_lag_national_ts WHERE completion_elevated_z IS NOT NULL
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'completion_gap_elevated_count', completion_elevated_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
-    UNION ALL
-    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, 'completion_gap_sample_count', completion_sample_count, NOW(), NOW()
-    FROM report_delivery_lag_national_ts
+    SELECT 'monitoring_report_delivery', 'week', period_start, 0, 0, stat_name, value, NOW(), NOW()
+    FROM report_delivery_lag_rows
     ON CONFLICT (feature_set, period_type, period_start, region_id, geo_id, stat_name)
     DO UPDATE SET
       value = EXCLUDED.value,
@@ -692,8 +708,8 @@ const updateMonitoringTimeSeries = async (transaction: Transaction): Promise<num
       AND v.region_id = 0
       AND v.period_start >= date_trunc('week', p.time_series_start)::date
       AND NOT EXISTS (
-        SELECT 1 FROM report_delivery_lag_national_ts t
-        WHERE t.period_start = v.period_start
+        SELECT 1 FROM report_delivery_lag_rows t
+        WHERE t.period_start = v.period_start AND t.stat_name = v.stat_name
       )
     ;
     `,
