@@ -11,6 +11,7 @@ const {
   CommunicationLogRecipient,
   CommunicationLogStaff,
   CommunicationLogFile,
+  Grant,
 } = db;
 
 interface CommLogData {
@@ -218,6 +219,27 @@ const withOtherStaff = (log) => {
     }));
   delete plain.communicationLogStaff;
   return plain;
+};
+
+/**
+ * True when every recipient has a grant in the region (or in any of the regions).
+ * Recipient IDs come from the request body, so they are validated before any lookup.
+ */
+const recipientsInRegion = async (
+  recipientIds: number[],
+  regionId: number | number[]
+): Promise<boolean> => {
+  if (!recipientIds.length) return true;
+  if (!recipientIds.every((id) => Number.isInteger(id) && id > 0)) return false;
+  if (Array.isArray(regionId) && !regionId.length) return false;
+
+  const uniqueRecipientIds = [...new Set(recipientIds)];
+  const grants = await Grant.findAll({
+    attributes: ['recipientId'],
+    where: { recipientId: uniqueRecipientIds, regionId },
+  });
+  const found = new Set(grants.map((grant) => grant.recipientId));
+  return uniqueRecipientIds.every((id) => found.has(id));
 };
 
 const logById = async (id: number) => {
@@ -460,7 +482,9 @@ const updateLog = async (id: number, logData: CommLogData) => {
   // Only process recipients if array is provided and non-empty
   // This prevents accidental deletion of all recipients when recipients array is empty/undefined
   const recipientIds = Array.isArray(recipients)
-    ? recipients.map((recipient) => Number(recipient.value)).filter((rid) => rid > 0)
+    ? recipients
+        .map((recipient) => Number(recipient.value))
+        .filter((rid) => Number.isInteger(rid) && rid > 0)
     : [];
 
   // Reconcile recipients, staff, and the JSON data in a single transaction so an
@@ -551,5 +575,6 @@ export {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
   updateLog,
 };

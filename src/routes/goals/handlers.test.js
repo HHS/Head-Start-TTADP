@@ -70,9 +70,70 @@ describe('goal handlers', () => {
   afterAll(() => db.sequelize.close());
 
   describe('createGoals', () => {
+    const writer = (regionId = 2) => ({
+      permissions: [{ regionId, scopeId: SCOPES.READ_WRITE_REPORTS }],
+    });
+    const goalRequest = (goals) => ({ body: { goals }, session: { userId: 1 } });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      userById.mockReset();
+      // grant 7 is in region 2, grant 8 is in region 3
+      jest.spyOn(db.Grant, 'findAll').mockImplementation(async ({ where }) =>
+        [
+          { id: 7, regionId: 2, recipientId: 2 },
+          { id: 8, regionId: 3, recipientId: 3 },
+        ].filter(({ id }) => where.id.includes(id))
+      );
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
     afterAll(async () => {
       jest.clearAllMocks();
       userById.mockReset();
+    });
+
+    it('rejects a goal whose submitted region matches the user but whose grant does not', async () => {
+      userById.mockResolvedValueOnce(writer(2));
+
+      await createGoals(goalRequest([{ grantId: 8, recipientId: 3, regionId: 2 }]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoals).not.toHaveBeenCalled();
+    });
+
+    it('rejects a mixed batch without writing any goal', async () => {
+      userById.mockResolvedValueOnce(writer(2));
+
+      await createGoals(
+        goalRequest([
+          { grantId: 7, recipientId: 2, regionId: 2 },
+          { grantId: 8, recipientId: 3, regionId: 2 },
+        ]),
+        mockResponse
+      );
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoals).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown grant', async () => {
+      userById.mockResolvedValueOnce(writer(2));
+
+      await createGoals(goalRequest([{ grantId: 999, regionId: 2 }]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoals).not.toHaveBeenCalled();
+    });
+
+    it('rejects a goal without a valid grant', async () => {
+      userById.mockResolvedValueOnce(writer(2));
+
+      await createGoals(goalRequest([{ regionId: 2, recipientId: 2 }]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoals).not.toHaveBeenCalled();
     });
 
     it('checks permissions', async () => {
@@ -81,6 +142,7 @@ describe('goal handlers', () => {
           goals: [
             {
               goalId: 2,
+              grantId: 7,
               recipientId: 2,
             },
           ],
@@ -110,6 +172,7 @@ describe('goal handlers', () => {
           goals: [
             {
               goalId: 2,
+              grantId: 7,
               recipientId: 2,
               regionId: 2,
             },
@@ -141,6 +204,7 @@ describe('goal handlers', () => {
           goals: [
             {
               goalId: 2,
+              grantId: 7,
               recipientId: 2,
               regionId: 2,
             },
@@ -1149,6 +1213,92 @@ describe('goal handlers', () => {
   });
 
   describe('createGoalsForReport', () => {
+    const reportRegionId = 2;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      userById.mockReset();
+      jest
+        .spyOn(db.ActivityReport, 'findByPk')
+        .mockResolvedValue({ id: 1, regionId: reportRegionId });
+      // grants 7 and 9 are in region 2, grant 8 is in region 3
+      jest.spyOn(db.Grant, 'findAll').mockImplementation(async ({ where }) =>
+        [
+          { id: 7, regionId: 2, recipientId: 2 },
+          { id: 8, regionId: 3, recipientId: 3 },
+          { id: 9, regionId: 2, recipientId: 4 },
+        ].filter(({ id }) => where.id.includes(id))
+      );
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    const reportRequest = (grantIds, regionId = reportRegionId) => ({
+      body: {
+        activityReportId: 1,
+        regionId,
+        goals: [{ name: 'Goal 1', grantIds, objectives: [{ name: 'Objective 1' }] }],
+      },
+      session: { userId: 1 },
+    });
+    const writerIn = (regionId) => ({
+      permissions: [{ regionId, scopeId: SCOPES.READ_WRITE_REPORTS }],
+    });
+
+    it('authorizes against the stored report region, not the submitted one', async () => {
+      currentUserId.mockResolvedValueOnce(1);
+      // Writes in region 3 only; the body claims region 3, but the report is in region 2.
+      userById.mockResolvedValueOnce(writerIn(3));
+
+      await createGoalsForReport(reportRequest([7], 3), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoalsForActivityReport).not.toHaveBeenCalled();
+    });
+
+    it('rejects grants from another region even when the user can write to both', async () => {
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          { regionId: 2, scopeId: SCOPES.READ_WRITE_REPORTS },
+          { regionId: 3, scopeId: SCOPES.READ_WRITE_REPORTS },
+        ],
+      });
+
+      await createGoalsForReport(reportRequest([8]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoalsForActivityReport).not.toHaveBeenCalled();
+    });
+
+    it('rejects a mixed batch of grants without writing', async () => {
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce(writerIn(2));
+
+      await createGoalsForReport(reportRequest([7, 8]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+      expect(createOrUpdateGoalsForActivityReport).not.toHaveBeenCalled();
+    });
+
+    it('allows multiple grants in the report region', async () => {
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce(writerIn(2));
+      createOrUpdateGoalsForActivityReport.mockResolvedValueOnce([]);
+
+      await createGoalsForReport(reportRequest([7, 9]), mockResponse);
+
+      expect(createOrUpdateGoalsForActivityReport).toHaveBeenCalledWith(expect.any(Array), 1, 1);
+    });
+
+    it('returns not found for a missing report', async () => {
+      db.ActivityReport.findByPk.mockResolvedValueOnce(null);
+
+      await createGoalsForReport(reportRequest([7]), mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+      expect(createOrUpdateGoalsForActivityReport).not.toHaveBeenCalled();
+    });
     it('handles success', async () => {
       const req = {
         body: {
@@ -1157,6 +1307,7 @@ describe('goal handlers', () => {
           goals: [
             {
               name: 'Goal 1',
+              grantIds: [7],
               objectives: [
                 {
                   name: 'Objective 1',
@@ -1194,6 +1345,7 @@ describe('goal handlers', () => {
           goals: [
             {
               name: 'Goal 1',
+              grantIds: [7],
               objectives: [
                 {
                   name: 'Objective 1',
@@ -1224,6 +1376,7 @@ describe('goal handlers', () => {
           goals: [
             {
               name: 'Goal 1',
+              grantIds: [7],
               objectives: [
                 {
                   name: 'Objective 1',

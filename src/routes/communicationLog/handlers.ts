@@ -20,6 +20,7 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -52,6 +53,13 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
     policy: new Policy(user, Number(regionId), log),
   };
 };
+
+const parseRecipientIds = (recipients: unknown): number[] =>
+  Array.isArray(recipients)
+    ? recipients
+        .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
+        .filter((id: number) => Number.isInteger(id) && id > 0)
+    : [];
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
   const userId = await currentUserId(req, res);
@@ -262,6 +270,23 @@ const updateLogById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { data } = req.body;
 
+    // This route has no region param, so recipients must be in a region the user can write to.
+    // Admins can write to any region.
+    const recipientIds = parseRecipientIds(data?.recipients);
+    if (recipientIds.length && !policy.isAdmin()) {
+      const writableRegionIds = [
+        ...new Set(
+          policy.user.permissions
+            .filter(({ scopeId }) => scopeId === SCOPES.READ_WRITE_REPORTS)
+            .map(({ regionId }) => regionId)
+        ),
+      ];
+      if (!(await recipientsInRegion(recipientIds, writableRegionIds))) {
+        res.status(httpCodes.FORBIDDEN).send();
+        return;
+      }
+    }
+
     const updatedLog = await updateLog(Number(id), data);
     if (!updatedLog) {
       res.sendStatus(httpCodes.NOT_FOUND);
@@ -307,7 +332,12 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
       return;
     }
 
-    const { recipientId } = req.params;
+    const { recipientId, regionId } = req.params;
+    if (!(await recipientsInRegion([Number(recipientId)], Number(regionId)))) {
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
+    }
+
     const userId = await currentUserId(req, res);
     const { data } = req.body;
 
@@ -330,11 +360,11 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const { data } = req.body;
     const { recipients, ...fields } = data;
 
-    const recipientIds = Array.isArray(recipients)
-      ? recipients
-          .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
-          .filter((id: number) => Number.isInteger(id) && id > 0)
-      : [];
+    const recipientIds = parseRecipientIds(recipients);
+    if (!(await recipientsInRegion(recipientIds, Number(req.params.regionId)))) {
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
+    }
 
     const log = await createLog(recipientIds, userId, fields);
     res.status(httpCodes.CREATED).json(log);

@@ -14,6 +14,7 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -136,6 +137,7 @@ describe('communicationLog handlers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     currentUserId.mockImplementation(async (req) => req.session.userId);
+    recipientsInRegion.mockResolvedValue(true);
   });
 
   afterAll(() => sequelize.close());
@@ -1126,6 +1128,83 @@ describe('communicationLog handlers', () => {
         groups: [],
         recipients: [],
       });
+    });
+  });
+
+  describe('recipient region authorization', () => {
+    const request = (userId, params, data) => ({
+      session: { userId },
+      params,
+      body: { data },
+    });
+
+    beforeEach(() => {
+      recipientsInRegion.mockResolvedValue(false);
+      logById.mockResolvedValue({ id: 1, userId: authorizedToCreate.id });
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('rejects a cross-region recipient before creating a log by recipient', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      await createLogByRecipientId(
+        request(
+          authorizedToCreate.id,
+          { regionId: REGION_ID, recipientId: '99' },
+          { message: 'x' }
+        ),
+        { ...mockResponse }
+      );
+      expect(recipientsInRegion).toHaveBeenCalledWith([99], REGION_ID);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(createLog).not.toHaveBeenCalled();
+    });
+
+    it('rejects cross-region and mixed recipients before creating a log by region', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      await createLogByRegionId(
+        request(
+          authorizedToCreate.id,
+          { regionId: String(REGION_ID) },
+          { recipients: [{ value: 1 }, { value: 99 }], message: 'x' }
+        ),
+        { ...mockResponse }
+      );
+      expect(recipientsInRegion).toHaveBeenCalledWith([1, 99], REGION_ID);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(createLog).not.toHaveBeenCalled();
+    });
+
+    it('rejects recipients outside the regions the user can write to before updating', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      await updateLogById(
+        request(authorizedToCreate.id, { id: 1 }, { recipients: [{ value: 99 }], message: 'x' }),
+        { ...mockResponse }
+      );
+      expect(recipientsInRegion).toHaveBeenCalledWith([99], [REGION_ID]);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(updateLog).not.toHaveBeenCalled();
+    });
+
+    it('does not look up regions for an update without recipients', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      updateLog.mockResolvedValue({ id: 1 });
+      await updateLogById(request(authorizedToCreate.id, { id: 1 }, { message: 'x' }), {
+        ...mockResponse,
+      });
+      expect(recipientsInRegion).not.toHaveBeenCalled();
+      expect(updateLog).toHaveBeenCalled();
+    });
+
+    it('lets an admin update recipients without a region lookup', async () => {
+      userById.mockResolvedValue(admin);
+      updateLog.mockResolvedValue({ id: 1 });
+      await updateLogById(
+        request(admin.id, { id: 1 }, { recipients: [{ value: 99 }], message: 'x' }),
+        { ...mockResponse }
+      );
+      expect(recipientsInRegion).not.toHaveBeenCalled();
+      expect(updateLog).toHaveBeenCalled();
     });
   });
 

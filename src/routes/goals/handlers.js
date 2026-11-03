@@ -11,7 +11,9 @@ import {
   updateGoalStatusById,
 } from '../../goalServices/goals';
 import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
+import canWriteGoals from '../../goalServices/goalWriteAccess';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import { sequelize } from '../../models';
 import Goal from '../../policies/goals';
 import { currentUserId } from '../../services/currentUser';
@@ -25,19 +27,32 @@ const logContext = {
 
 export async function createGoalsForReport(req, res) {
   try {
-    const { goals, activityReportId, regionId } = req.body;
+    const { goals, activityReportId } = req.body;
+
+    // The report's stored region is authoritative; the region in the request body can be forged.
+    const reportId = parsePositiveInteger(activityReportId);
+    const report = reportId
+      ? await sequelize.models.ActivityReport.findByPk(reportId, { attributes: ['id', 'regionId'] })
+      : null;
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const canCreate = new Goal(user, null, regionId).canCreate();
+    const canCreate =
+      new Goal(user, null, report.regionId).canCreate() &&
+      (await canWriteGoals(user, goals, report.regionId));
 
     if (!canCreate) {
       res.sendStatus(401);
       return;
     }
 
-    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId, userId);
+    const newGoals = await createOrUpdateGoalsForActivityReport(goals, report.id, userId);
     res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
@@ -73,13 +88,8 @@ export async function createGoals(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    let canCreate = true;
-
-    goals.forEach((goal) => {
-      if (canCreate && !new Goal(user, null, parseInt(goal.regionId, DECIMAL_BASE)).canCreate()) {
-        canCreate = false;
-      }
-    });
+    // Authorize against the regions of the grants themselves, not the submitted region metadata.
+    const canCreate = await canWriteGoals(user, goals);
 
     if (!canCreate) {
       res.sendStatus(401);
