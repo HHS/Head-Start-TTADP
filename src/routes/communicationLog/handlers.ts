@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import parseSelectionIds from '../../lib/parseSelectionIds';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
@@ -272,12 +273,20 @@ const updateLogById = async (req: Request, res: Response) => {
     // The stored region decides who can read this log, so a request cannot change it.
     const data = submittedData && withRegion(submittedData, log.data?.regionId);
 
-    // This route has no region param, so recipients must be in a region the user can write to.
-    // Admins can write to any region.
+    // Recipients must belong to the region the log is saved under, since that region decides who
+    // can read it. Logs saved without a region fall back to the regions the user can write to,
+    // and admins can write to any region.
     const recipientIds = parseSelectionIds(data?.recipients);
-    if (recipientIds.length && !policy.isAdmin()) {
-      const writableRegionIds = policy.getWritableRegionIds();
-      if (!(await recipientsInRegion(recipientIds, writableRegionIds))) {
+    if (recipientIds.length) {
+      const storedRegionId = parsePositiveInteger(log.data?.regionId);
+      let allowedRegionIds: number[] | null = null;
+      if (storedRegionId) {
+        allowedRegionIds = [storedRegionId];
+      } else if (!policy.isAdmin()) {
+        allowedRegionIds = policy.getWritableRegionIds();
+      }
+
+      if (allowedRegionIds && !(await recipientsInRegion(recipientIds, allowedRegionIds))) {
         res.status(httpCodes.FORBIDDEN).send();
         return;
       }

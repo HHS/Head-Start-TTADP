@@ -1257,7 +1257,7 @@ describe('communicationLog handlers', () => {
       expect(updateLog).toHaveBeenCalled();
     });
 
-    it('lets an admin update recipients without a region lookup', async () => {
+    it('lets an admin update recipients on a log with no saved region without a region lookup', async () => {
       userById.mockResolvedValue(admin);
       updateLog.mockResolvedValue({ id: 1 });
       await updateLogById(
@@ -1266,6 +1266,59 @@ describe('communicationLog handlers', () => {
       );
       expect(recipientsInRegion).not.toHaveBeenCalled();
       expect(updateLog).toHaveBeenCalled();
+    });
+
+    describe('recipients on a log with a saved region', () => {
+      const SAVED_REGION_ID = 3;
+      const multiRegionCreator = {
+        id: 1,
+        permissions: [
+          { regionId: SAVED_REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS },
+          { regionId: REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS },
+        ],
+      };
+
+      beforeEach(() => {
+        logById.mockResolvedValue({
+          id: 1,
+          userId: multiRegionCreator.id,
+          data: { regionId: SAVED_REGION_ID },
+        });
+      });
+
+      it('rejects a recipient from another writable region', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        await updateLogById(
+          request(multiRegionCreator.id, { id: 1 }, { recipients: [{ value: 99 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([99], [SAVED_REGION_ID]);
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(updateLog).not.toHaveBeenCalled();
+      });
+
+      it('accepts recipients in the saved region', async () => {
+        recipientsInRegion.mockResolvedValue(true);
+        userById.mockResolvedValue(multiRegionCreator);
+        updateLog.mockResolvedValue({ id: 1 });
+        await updateLogById(
+          request(multiRegionCreator.id, { id: 1 }, { recipients: [{ value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([5], [SAVED_REGION_ID]);
+        expect(updateLog).toHaveBeenCalled();
+      });
+
+      it('checks recipients against the saved region for admins too', async () => {
+        userById.mockResolvedValue(admin);
+        await updateLogById(
+          request(admin.id, { id: 1 }, { recipients: [{ value: 99 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([99], [SAVED_REGION_ID]);
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(updateLog).not.toHaveBeenCalled();
+      });
     });
   });
 
