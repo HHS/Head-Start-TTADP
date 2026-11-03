@@ -1644,6 +1644,9 @@ jobs:
           config: "process-clear"
           success_message: ':broom: ttahub-process cleared'
           log_filter: "Verification counts"
+          # Cancelling a CircleCI job leaves its cloud.gov task running, so stop any restore or
+          # processing task (including the retry; see cf_process) before clearing
+          cancel_tasks: '["restore_s3:production->rds:ttahub-process", "process", "process-attempt2"]'
       - notify_slack:
           step_when: on_success
           best_effort: true
@@ -2592,6 +2595,10 @@ commands:
         description: "If set, print the task's recent log lines containing this text (only use for lines that carry no data values)"
         type: string
         default: ""
+      cancel_tasks:
+        description: "JSON array of exact task names to terminate (and wait for) before this task starts"
+        type: string
+        default: "[]"
     steps:
       - install_automation_deps
       - set_env_vars:
@@ -2621,6 +2628,7 @@ commands:
               --arg timeout_active_tasks "<< parameters.timeout >>" \
               --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
               --argjson args '<< parameters.task_args >>' \
+              --argjson cancel_tasks '<< parameters.cancel_tasks >>' \
               '{
                 directory: $directory,
                 config: $config,
@@ -2628,7 +2636,8 @@ commands:
                 command: $command,
                 timeout_active_tasks: $timeout_active_tasks,
                 timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
-                args: $args
+                args: $args,
+                cancel_tasks: $cancel_tasks
               }')
 
             # Set execute permission

@@ -553,6 +553,10 @@ If `restore_prod_to_temp` or `process_temp_db` fails or is cancelled, a `clear t
 service) and prints `Verification counts: tables=0 rows=0` to the job output. It posts to `#acf-head-start-alerts` when it
 clears the database, and alerts again if it cannot. The clear job does not run if the whole workflow is cancelled.
 
+Cancelling a CircleCI job does not stop the cloud.gov task it started, so before clearing, the clear job terminates any
+restore or processing task that is still running and waits for it to end. Likewise, when a task outlives its job's
+timeout, `cf_lambda.sh` terminates it by its task ID before failing the job.
+
 #### Database state after each failure
 
 | Failed job | `ttahub-process` after cleanup | Lower environments | Operator action |
