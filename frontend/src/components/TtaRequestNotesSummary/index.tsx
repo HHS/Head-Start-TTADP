@@ -62,7 +62,7 @@ export default function TtaRequestNotesSummary({
                 </div>
                 <div className="display-flex flex-align-start">
                   {/* the author's name is read out right after, so the initial would repeat it */}
-                  <div aria-hidden>
+                  <div aria-hidden className="ttahub-notes-summary__avatar">
                     <Avatar name={author} />
                   </div>
                   <div className="flex-1 margin-left-2">
@@ -71,7 +71,7 @@ export default function TtaRequestNotesSummary({
                       {submitted.format('MMMM D, YYYY')} • {submitted.format('H:mm')} UTC
                     </div>
                     {note && (
-                      <p className="ttahub-notes-summary__note margin-top-1 margin-bottom-0">
+                      <p className="ttahub-notes-summary__note margin-top-2 margin-bottom-0 padding-bottom-2">
                         {note}
                       </p>
                     )}
