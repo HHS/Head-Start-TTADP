@@ -907,8 +907,8 @@ export const processFiles = async () =>
 // Notification text is stored pre-rendered with user and recipient names, so it can't be
 // anonymized in place; remove notifications from non-production copies instead
 export const deleteNotifications = async () => {
-  await NotificationUserState.destroy({ where: {}, truncate: true });
-  await Notification.destroy({ where: {}, truncate: true, cascade: true });
+  await NotificationUserState.destroy({ where: {} });
+  await Notification.destroy({ where: {}, cascade: true });
 };
 
 // Function to process and anonymize sensitive data in Activity Reports by replacing specific
