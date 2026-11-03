@@ -4,6 +4,7 @@ import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
 import parsePositiveInteger from '../../lib/parsePositiveInteger';
+import parseSelectionIds from '../../lib/parseSelectionIds';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
@@ -53,6 +54,12 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
     log,
     policy: new Policy(user, Number(regionId), log),
   };
+};
+
+/** Returns the data with its saved region set to regionId, or with no region when undefined. */
+const withRegion = (data, regionId?: number | string) => {
+  const { regionId: _submittedRegionId, ...rest } = data;
+  return regionId === undefined || regionId === null ? rest : { ...rest, regionId };
 };
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
@@ -169,6 +176,14 @@ async function communicationLogById(req: Request, res: Response) {
     }
 
     const log = await logById(Number(id));
+
+    // The saved region decides who can read a log, so the region in the URL cannot widen access.
+    const storedRegionId = parsePositiveInteger(log?.data?.regionId);
+    if (storedRegionId && !new Policy(policy.user, storedRegionId, log).canReadLog()) {
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
+    }
+
     res.status(httpCodes.OK).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -262,7 +277,33 @@ const updateLogById = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { data } = req.body;
+    const { data: submittedData } = req.body;
+
+    // The saved region decides who can read this log, so a request cannot change it.
+    const data = submittedData && withRegion(submittedData, log.data?.regionId);
+
+    // Only newly added recipients are checked, so editing an older log is not blocked by
+    // recipients it already had. They must belong to the region the log is saved under; logs
+    // saved without a region fall back to the regions the user can write to, and admins can
+    // write to any region.
+    const existingRecipientIds = new Set((log.recipients ?? []).map(({ id: rid }) => rid));
+    const newRecipientIds = parseSelectionIds(data?.recipients).filter(
+      (recipientId) => !existingRecipientIds.has(recipientId)
+    );
+    if (newRecipientIds.length) {
+      const storedRegionId = parsePositiveInteger(log.data?.regionId);
+      let allowedRegionIds: number[] | null = null;
+      if (storedRegionId) {
+        allowedRegionIds = [storedRegionId];
+      } else if (!policy.isAdmin()) {
+        allowedRegionIds = policy.getWritableRegionIds();
+      }
+
+      if (allowedRegionIds && !(await recipientsInRegion(newRecipientIds, allowedRegionIds))) {
+        res.status(httpCodes.FORBIDDEN).send();
+        return;
+      }
+    }
 
     const updatedLog = await updateLog(Number(id), data);
     if (!updatedLog) {
@@ -349,18 +390,14 @@ const createLogByRegionId = async (req: Request, res: Response) => {
       return;
     }
 
-    const recipientIds = Array.isArray(recipients)
-      ? recipients
-          .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
-          .filter((id: number) => Number.isInteger(id) && id > 0)
-      : [];
+    const recipientIds = parseSelectionIds(recipients);
 
     if (!(await recipientsInRegion(recipientIds, regionId))) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
-    const log = await createLog([...new Set(recipientIds)], userId, { ...fields, regionId });
+    const log = await createLog(recipientIds, userId, { ...fields, regionId });
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

@@ -160,6 +160,30 @@ describe('communicationLog handlers', () => {
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
     });
 
+    it('rejects a log saved under a region the user cannot read', async () => {
+      const mockRequest = {
+        session: { userId: authorizedToReadOnly.id },
+        params: { id: 1, regionId: REGION_ID },
+      };
+      userById.mockResolvedValue(authorizedToReadOnly);
+      logById.mockResolvedValue({ id: 1, data: { regionId: REGION_ID + 1 } });
+      await communicationLogById(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(statusJson).not.toHaveBeenCalled();
+    });
+
+    it('returns a log saved under a region the user can read', async () => {
+      const mockRequest = {
+        session: { userId: authorizedToReadOnly.id },
+        params: { id: 1, regionId: REGION_ID },
+      };
+      const log = { id: 1, data: { regionId: REGION_ID } };
+      userById.mockResolvedValue(authorizedToReadOnly);
+      logById.mockResolvedValue(log);
+      await communicationLogById(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith(log);
+    });
+
     it('unauthorized', async () => {
       const mockRequest = {
         session: {
@@ -675,6 +699,130 @@ describe('communicationLog handlers', () => {
       updateLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await updateLogById(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+    });
+
+    describe('region and recipient authorization', () => {
+      const SAVED_REGION_ID = 3;
+      const multiRegionCreator = {
+        id: 1,
+        permissions: [
+          { regionId: SAVED_REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS },
+          { regionId: REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS },
+        ],
+      };
+      const request = (user, data) => ({
+        session: { userId: user.id },
+        params: { id: 1, regionId: REGION_ID },
+        body: { data },
+      });
+      const savedLog = (data, recipients = []) => ({
+        id: 1,
+        userId: multiRegionCreator.id,
+        recipients,
+        data,
+      });
+
+      beforeEach(() => {
+        recipientsInRegion.mockResolvedValue(false);
+        updateLog.mockResolvedValue({ id: 1 });
+      });
+
+      it('keeps the saved region when an update submits a different one', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }));
+        await updateLogById(request(multiRegionCreator, { message: 'x', regionId: 99 }), {
+          ...mockResponse,
+        });
+        expect(updateLog).toHaveBeenCalledWith(1, { message: 'x', regionId: SAVED_REGION_ID });
+      });
+
+      it('does not add a region to a log that has none', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({}));
+        await updateLogById(request(multiRegionCreator, { message: 'x', regionId: 99 }), {
+          ...mockResponse,
+        });
+        expect(updateLog).toHaveBeenCalledWith(1, { message: 'x' });
+      });
+
+      it('rejects a new recipient from another writable region', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }));
+        await updateLogById(
+          request(multiRegionCreator, { recipients: [{ value: 99 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([99], [SAVED_REGION_ID]);
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(updateLog).not.toHaveBeenCalled();
+      });
+
+      it('accepts a new recipient in the saved region', async () => {
+        recipientsInRegion.mockResolvedValue(true);
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }));
+        await updateLogById(
+          request(multiRegionCreator, { recipients: [{ value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([5], [SAVED_REGION_ID]);
+        expect(updateLog).toHaveBeenCalled();
+      });
+
+      it('checks new recipients against the saved region for admins too', async () => {
+        userById.mockResolvedValue(admin);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }));
+        await updateLogById(request(admin, { recipients: [{ value: 99 }], message: 'x' }), {
+          ...mockResponse,
+        });
+        expect(recipientsInRegion).toHaveBeenCalledWith([99], [SAVED_REGION_ID]);
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      });
+
+      it('does not recheck recipients the log already has', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(
+          savedLog({ regionId: SAVED_REGION_ID }, [{ id: 99 }, { id: 5 }])
+        );
+        await updateLogById(
+          request(multiRegionCreator, { recipients: [{ value: 99 }, { value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).not.toHaveBeenCalled();
+        expect(updateLog).toHaveBeenCalled();
+      });
+
+      it('only checks the new recipients when some are already on the log', async () => {
+        recipientsInRegion.mockResolvedValue(true);
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }, [{ id: 99 }]));
+        await updateLogById(
+          request(multiRegionCreator, { recipients: [{ value: 99 }, { value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([5], [SAVED_REGION_ID]);
+      });
+
+      it('falls back to the writable regions for a log with no saved region', async () => {
+        userById.mockResolvedValue(multiRegionCreator);
+        logById.mockResolvedValue(savedLog({}));
+        await updateLogById(
+          request(multiRegionCreator, { recipients: [{ value: 99 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).toHaveBeenCalledWith([99], [SAVED_REGION_ID, REGION_ID]);
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      });
+
+      it('lets an admin add recipients to a log with no saved region without a lookup', async () => {
+        userById.mockResolvedValue(admin);
+        logById.mockResolvedValue(savedLog({}));
+        await updateLogById(request(admin, { recipients: [{ value: 99 }], message: 'x' }), {
+          ...mockResponse,
+        });
+        expect(recipientsInRegion).not.toHaveBeenCalled();
+        expect(updateLog).toHaveBeenCalled();
+      });
     });
 
     it('returns not found when update target no longer exists', async () => {
