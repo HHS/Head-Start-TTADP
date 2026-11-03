@@ -94,12 +94,12 @@ export default function ApprovedReportV1({ data }) {
     .map((arRecipient) => arRecipient.name)
     .sort()
     .join(', ');
-  const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
+  const targetPopulations = (data.targetPopulations || []).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map((a) => a.fullName);
 
   const attendees = formatSimpleArray(data.participants);
-  const participantCount = data.numberOfParticipants.toString();
+  const participantCount = String(data.numberOfParticipants ?? '');
   const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');

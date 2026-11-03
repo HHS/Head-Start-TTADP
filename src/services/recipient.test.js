@@ -46,6 +46,7 @@ import {
   recipientById,
   recipientLeadership,
   recipientsByName,
+  recipientsByTtaRequestUserId,
   recipientsByUserId,
   reduceObjectivesForRecipientRecord,
   reduceTopicsOfDifferingType,
@@ -1241,6 +1242,7 @@ describe('Recipient DB service', () => {
       await Permission.bulkCreate([
         { userId: user.id, regionId: region.id, scopeId: SCOPES.READ_WRITE_REPORTS },
         { userId: user.id, regionId: readOnlyRegion.id, scopeId: SCOPES.READ_REPORTS },
+        { userId: user.id, regionId: readOnlyRegion.id, scopeId: SCOPES.READ_WRITE_TTA_REQUESTS },
         { userId: readOnlyUser.id, regionId: region.id, scopeId: SCOPES.READ_REPORTS },
       ]);
 
@@ -1326,9 +1328,16 @@ describe('Recipient DB service', () => {
       expect(grants.length).toBe(2);
     });
 
-    it('excludes recipients in regions the user can only read', async () => {
+    it('excludes recipients outside the user’s activity-report write regions', async () => {
       const foundRecipients = await recipientsByUserId(user.id);
       expect(foundRecipients.map((r) => r.id)).not.toContain(readOnlyRecipient.id);
+    });
+
+    it('finds recipients in the user’s TTA-request write regions only', async () => {
+      const foundRecipients = await recipientsByTtaRequestUserId(user.id);
+      expect(foundRecipients.map((r) => r.id)).toEqual([readOnlyRecipient.id]);
+      expect(foundRecipients[0].grants).toHaveLength(1);
+      expect(foundRecipients[0].grants[0].regionId).toBe(readOnlyRegion.id);
     });
 
     it('returns an empty array if the user has no write regions', async () => {

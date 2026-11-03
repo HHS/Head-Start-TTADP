@@ -14,9 +14,14 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
+import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
 import type {
   CreateEventRequest,
   EventShape,
@@ -120,7 +125,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     throw new Error('Missing required field: data.eventId');
   }
 
-  return EventReportPilot.create({
+  const created = await EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
@@ -128,6 +133,14 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     eventId,
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () => createNotificationForNewPocs(created, [], pocIds),
+    `Error creating POC added notifications for event ${created.id}:`
+  );
+
+  return created;
 }
 
 /**
@@ -137,6 +150,17 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
+  await runInSavepoint(async () => {
+    const sessions = await SessionReportPilot.findAll({
+      where: { eventId: id },
+      attributes: ['id'],
+    });
+    await Promise.all(
+      sessions.map((session) =>
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
+      )
+    );
+  }, `Error archiving session notifications for event ${id}:`);
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
     await SessionReportPilot.destroy({ where: { eventId: id } });
@@ -454,6 +478,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   } = (evt.data ?? {}) as Record<string, unknown>;
 
   const persistedData = { ...storedData, ...incomingData };
+  const previousPocIds = event.pocIds ?? [];
 
   await evt.update(
     {
@@ -465,6 +490,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       data: cast(JSON.stringify(persistedData), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
+  );
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () =>
+      createNotificationForNewPocs(
+        { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+        previousPocIds,
+        pocIds
+      ),
+    `Error creating POC added notifications for event ${evt.id}:`
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
@@ -1160,7 +1196,7 @@ export async function csvImport(buffer: Buffer) {
       // (the single source of truth); it is not persisted back into the JSONB `data`.
       delete data.eventId;
 
-      await db.EventReportPilot.create({
+      const created = await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
@@ -1170,6 +1206,12 @@ export async function csvImport(buffer: Buffer) {
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,
       });
+
+      // a notification failure must never fail the import
+      await runInSavepoint(
+        () => createNotificationForNewPocs(created, [], pocs),
+        `Error creating POC added notifications for event ${created.id}:`
+      );
 
       return true;
     } catch (error) {
