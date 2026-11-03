@@ -145,7 +145,7 @@ export default function ViewTtaRequest({
         <title>TTA Request {displayId}</title>
       </Helmet>
       <BackLink to={backLinkTo}>Back to TTA Requests</BackLink>
-      <div className="margin-top-2">
+      <div>
         <ApprovedReportSpecialButtons />
       </div>
       <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
