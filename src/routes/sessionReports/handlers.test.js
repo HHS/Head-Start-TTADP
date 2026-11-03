@@ -603,6 +603,7 @@ describe('session report handlers', () => {
           participantCount: 13,
           deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
+          trainers: [{ fullName: 'Jane Trainer, SS' }, { fullName: 'John Trainer, ECS' }],
         },
         {
           id: 2,
@@ -614,6 +615,7 @@ describe('session report handlers', () => {
           participantCount: 8,
           deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
+          trainers: [],
         },
       ],
     };
@@ -724,6 +726,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topics');
       expect(csvOutput).toContain('Participant Count');
       expect(csvOutput).toContain('Delivery type');
+      expect(csvOutput).toContain('Trainers');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -734,6 +737,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topic 2');
       expect(csvOutput).toContain('13');
       expect(csvOutput).toContain('hybrid');
+      expect(csvOutput).toContain('"Jane Trainer, SS, John Trainer, ECS"');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');

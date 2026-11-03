@@ -1,3 +1,9 @@
+import {
+  ALL_STATES_FLATTENED,
+  COLLAB_REPORT_CONDUCT_METHODS,
+  COLLAB_REPORT_DATA,
+  COLLAB_REPORT_REASONS,
+} from '@ttahub/common';
 import { convert } from 'html-to-text';
 import { uniq } from 'lodash';
 import md5 from 'md5';
@@ -605,8 +611,52 @@ const logTransformers = [
   transformRelatedModelPropNested('data', 'specialistNextSteps', 'note'),
 ];
 
+function transformCollabReportDetails(report) {
+  return {
+    purpose: (report.reportReasons || [])
+      .map((reason) => COLLAB_REPORT_REASONS[reason] || '')
+      .join('\n'),
+    activityType: report.isStateActivity ? 'State' : 'Regional',
+    statesInvolved: report.isStateActivity
+      ? (report.activityStates || [])
+          .map(({ activityStateCode }) => {
+            const state = ALL_STATES_FLATTENED.find(({ value }) => value === activityStateCode);
+            return state ? state.label.replace(/ \([A-Z]{2}\)$/, '') : '';
+          })
+          .join('\n')
+      : '',
+    method:
+      COLLAB_REPORT_CONDUCT_METHODS.find(({ value }) => value === report.conductMethod)?.label ||
+      '',
+    participants: (report.participants || [])
+      .map((participant) =>
+        participant === 'Other' && report.otherParticipants
+          ? `Other: ${report.otherParticipants}`
+          : participant
+      )
+      .join('\n'),
+    dataUsed:
+      (report.dataUsed || [])
+        .map(({ collabReportDatum }) =>
+          collabReportDatum === 'other'
+            ? `Other: ${report.otherDataUsed || ''}`
+            : COLLAB_REPORT_DATA[collabReportDatum] || ''
+        )
+        .join('\n') || 'None',
+    reportGoals:
+      (report.reportGoals || []).map((goal) => goal.goalTemplate?.standard || '').join('\n') ||
+      'None',
+  };
+}
+
 const collabReportTransformers = [
   'displayId',
+  'creatorName',
+  transformCollaborators('collaboratingSpecialists', 'fullName', 'collaborators'),
+  transformApproversModel('fullName'),
+  transformDate('createdAt'),
+  transformDate('submittedAt'),
+  transformDate('approvedAt'),
   'regionId',
   'name',
   'descriptionFormatted',
@@ -616,6 +666,18 @@ const collabReportTransformers = [
   'startDate',
   'endDate',
   'status',
+  transformCollabReportDetails,
+  transformHTML('description'),
+  (report) => {
+    const steps = report.steps || [];
+    const records = Array.isArray(steps) ? steps : [steps];
+    return {
+      steps: records
+        .map(({ collabStepDetail }) => (collabStepDetail || '').replace(/\r\n|\r|\n/g, ' '))
+        .join('\n'),
+      stepsCompleteDate: records.map(({ collabStepCompleteDate }) => collabStepCompleteDate).join('\n'),
+    };
+  },
 ];
 
 /**
@@ -705,7 +767,7 @@ function communicationLogToCsvRecord(log) {
 }
 
 function collabReportToCsvRecord(report) {
-  return toCSVRecord(report, collabReportTransformers);
+  return toCSVRecord(report.toJSON ? report.toJSON() : report, collabReportTransformers);
 }
 
 export {
