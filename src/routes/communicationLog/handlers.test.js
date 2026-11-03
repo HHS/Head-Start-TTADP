@@ -458,6 +458,67 @@ describe('communicationLog handlers', () => {
     });
   });
 
+  describe.each([
+    ['recipient route', createLogByRecipientId],
+    ['region route', createLogByRegionId],
+  ])('creation region binding: %s', (_name, handler) => {
+    beforeEach(() => {
+      userById.mockResolvedValue(authorizedToCreate);
+      recipientsInRegion.mockResolvedValue(true);
+      createLog.mockResolvedValue({ id: 1 });
+    });
+
+    it.each([{ recipients: [{ value: 1 }] }, { recipients: [] }, {}])(
+      'rejects a forged body region before writing, including empty recipients: %j',
+      async (data) => {
+        await handler(
+          {
+            session: { userId: authorizedToCreate.id },
+            params: { regionId: String(REGION_ID), recipientId: '1' },
+            body: { data: { ...data, regionId: REGION_ID + 1 } },
+          },
+          mockResponse
+        );
+        expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createLog).not.toHaveBeenCalled();
+        expect(statusJson).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each([REGION_ID, String(REGION_ID), undefined])(
+      'persists the authorized URL region for body region %s',
+      async (regionId) => {
+        await handler(
+          {
+            session: { userId: authorizedToCreate.id },
+            params: { regionId: String(REGION_ID), recipientId: '1' },
+            body: { data: { regionId, recipients: [{ value: 1 }], message: 'test' } },
+          },
+          mockResponse
+        );
+        expect(createLog).toHaveBeenCalledWith(
+          expect.any(Array),
+          authorizedToCreate.id,
+          expect.objectContaining({ regionId: REGION_ID, message: 'test' })
+        );
+        expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      }
+    );
+
+    it.each([null, '15junk', [REGION_ID]])('rejects malformed body region %j', async (regionId) => {
+      await handler(
+        {
+          session: { userId: authorizedToCreate.id },
+          params: { regionId: String(REGION_ID), recipientId: '1' },
+          body: { data: { regionId } },
+        },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(createLog).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createLogByRecipientId', () => {
     beforeEach(() => {
       recipientsInRegion.mockResolvedValue(true);
@@ -1196,7 +1257,10 @@ describe('communicationLog handlers', () => {
       await createLogByRegionId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
       expect(recipientsInRegion).toHaveBeenCalledWith([1, 2], REGION_ID);
-      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
     });
 
     it('unauthorized', async () => {
@@ -1257,7 +1321,10 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       createLog.mockResolvedValue({ id: 44 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
       expect(statusJson).toHaveBeenCalledWith({ id: 44 });
     });
 
@@ -1279,7 +1346,10 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       createLog.mockResolvedValue({ id: 55 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
       expect(statusJson).toHaveBeenCalledWith({ id: 55 });
     });
 

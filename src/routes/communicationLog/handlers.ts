@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
@@ -311,13 +312,19 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     const { recipientId } = req.params;
     const userId = await currentUserId(req, res);
     const { data } = req.body;
+    const regionId = Number(req.params.regionId);
 
-    if (!(await recipientsInRegion([Number(recipientId)], Number(req.params.regionId)))) {
+    if (data?.regionId !== undefined && parsePositiveInteger(data.regionId) !== regionId) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
-    const log = await createLog([Number(recipientId)], userId, data);
+    if (!(await recipientsInRegion([Number(recipientId)], regionId))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const log = await createLog([Number(recipientId)], userId, { ...data, regionId });
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -335,6 +342,12 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
     const { recipients, ...fields } = data;
+    const regionId = Number(req.params.regionId);
+
+    if (fields.regionId !== undefined && parsePositiveInteger(fields.regionId) !== regionId) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
 
     const recipientIds = Array.isArray(recipients)
       ? recipients
@@ -342,12 +355,12 @@ const createLogByRegionId = async (req: Request, res: Response) => {
           .filter((id: number) => Number.isInteger(id) && id > 0)
       : [];
 
-    if (!(await recipientsInRegion(recipientIds, Number(req.params.regionId)))) {
+    if (!(await recipientsInRegion(recipientIds, regionId))) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
-    const log = await createLog([...new Set(recipientIds)], userId, fields);
+    const log = await createLog([...new Set(recipientIds)], userId, { ...fields, regionId });
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

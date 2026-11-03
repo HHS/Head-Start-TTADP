@@ -1194,7 +1194,8 @@ export async function goalRegionsById(goalIds) {
     include: [
       {
         attributes: ['id', 'grantId'],
-        model: Goal,
+        // Authorization must cover mapped goals as well as visible goals.
+        model: Goal.unscoped(),
         as: 'goals',
         // Stored prompt responses can outlive a soft-deleted goal. Its region must
         // still be part of the authorization boundary for a mixed goal-ID request.
