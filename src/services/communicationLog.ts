@@ -1,8 +1,8 @@
 import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import { Op, type WhereOptions } from 'sequelize';
-import { SORT_DIR } from '../constants';
 import parseSelectionIds from '../lib/parseSelectionIds';
+import normalizeSortDir from '../lib/normalizeSortDir';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
 
@@ -85,9 +85,7 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
  * @returns string[] Sequelize order by array
  */
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
-  const direction = [SORT_DIR.ASC, SORT_DIR.DESC].includes(sortDir.toUpperCase())
-    ? sortDir.toUpperCase()
-    : SORT_DIR.DESC; // default fallback
+  const direction = normalizeSortDir(sortDir);
   const ALLOWED_SORT_FIELDS = Object.values(COMMUNICATION_LOG_SORT_KEYS);
 
   const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy)
