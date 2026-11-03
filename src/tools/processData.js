@@ -37,7 +37,7 @@ const normalizeEmail = (email) => (email || '').trim().toLowerCase();
 
 // Predefined list of users from HSES (Head Start Enterprise System) with their details such as
 // name, username, user ID, and email
-const hsesUsers = [
+export const hsesUsers = [
   {
     name: 'Adam tta',
     hsesUsername: 'test.tta.adam',
@@ -858,6 +858,9 @@ export const bootstrapUsers = async () => {
   }
 };
 
+// Audit tables that hold audit configuration rather than audited row data, so they are kept
+export const KEPT_AUDIT_TABLES = ['ZALDDL', 'ZALZADescriptor', 'ZALZAFilter'];
+
 // Function to truncate audit tables in the database while disabling and re-enabling triggers
 export const truncateAuditTables = async () => {
   // Query the database to find all audit tables (tables starting with 'ZAL') except for specific
@@ -867,9 +870,9 @@ export const truncateAuditTables = async () => {
     SELECT table_name FROM information_schema.tables
     WHERE
       table_name like 'ZAL%' AND
-      table_name not in ('ZALDDL', 'ZALZADescriptor', 'ZALZAFilter')
+      table_name not in (:keptAuditTables)
   `,
-    { raw: true }
+    { raw: true, replacements: { keptAuditTables: KEPT_AUDIT_TABLES } }
   );
 
   // Iterate through each table and perform truncation

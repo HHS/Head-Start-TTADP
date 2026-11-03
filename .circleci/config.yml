@@ -269,6 +269,16 @@ workflows:
         serial-group: "tta-automation-lock"
         requires:
         - restore_prod_to_temp
+    - clear_temp_db:
+        name: clear ttahub-process (restore failed)
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp: [failed, canceled]
+    - clear_temp_db:
+        name: clear ttahub-process (process failed)
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db: [failed, canceled]
     - backup_temp_db:
         serial-group: "tta-automation-lock"
         requires:
@@ -324,6 +334,16 @@ workflows:
         serial-group: "tta-automation-lock"
         requires:
         - restore_prod_to_temp
+    - clear_temp_db:
+        name: clear ttahub-process (restore failed)
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp: [failed, canceled]
+    - clear_temp_db:
+        name: clear ttahub-process (process failed)
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db: [failed, canceled]
     - backup_temp_db:
         serial-group: "tta-automation-lock"
         requires:
@@ -1530,6 +1550,7 @@ jobs:
         rds_service_name: ttahub-prod
         s3_service_name: ttahub-db-backups
         backup_prefix: production
+    - notify_job_failure
 
   restore_prod_to_temp:
     executor: docker-executor
@@ -1540,6 +1561,8 @@ jobs:
         rds_service_name: ttahub-process
         s3_service_name: ttahub-db-backups
         backup_prefix: production
+    - notify_job_failure:
+        details: "ttahub-process may hold partial unanonymized production data until the clear job runs."
 
   process_temp_db:
     executor: docker-executor
@@ -1555,6 +1578,8 @@ jobs:
         yarn build
     - cf_process:
         target_env: prod
+    - notify_job_failure:
+        details: "ttahub-process holds unanonymized production data until the clear job runs. Lower environments are not restored."
 
   backup_temp_db:
     executor: docker-executor
@@ -1565,6 +1590,29 @@ jobs:
         rds_service_name: ttahub-process
         s3_service_name: ttahub-db-backups
         backup_prefix: processed
+    - notify_job_failure
+
+  clear_temp_db:
+    # runs only when restoring or processing ttahub-process failed, so unanonymized production
+    # data never stays in it; see docs/guides/infrastructure.md
+    executor: docker-executor
+    steps:
+    - checkout
+    - cf_automation_task:
+        task_name: "clear_rds:ttahub-process"
+        target_env: prod
+        task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_clear.sh"
+        task_args: '["ttahub-process"]'
+        config: "process-clear"
+        success_message: ':broom: ttahub-process cleared'
+        log_filter: "Verification counts"
+    - notify_slack:
+        step_when: on_success
+        best_effort: true
+        slack_channel: acf-head-start-alerts
+        message_text: ":broom: ttahub-process was cleared after a failed DB refresh (counts are in the job output). Workflow: https://app.circleci.com/pipelines/workflows/${CIRCLE_WORKFLOW_ID}"
+    - notify_job_failure:
+        details: "ttahub-process may still hold unanonymized production data. Clear it manually: see docs/guides/infrastructure.md."
 
   restore_db_job:
     executor: docker-executor
@@ -1581,6 +1629,7 @@ jobs:
     - cf_migrate:
         app_name: "tta-smarthub-<< parameters.target_env >>"
         target_env: << parameters.target_env >>
+    - notify_job_failure
 
   run_cmd:
     # run given command in the target environment
@@ -2331,6 +2380,9 @@ commands:
         success_message: ':database: Restored data processed'
         directory: "./"
         timeout: "3000"
+        # processData runs in one transaction, so a rerun starts from the same raw data
+        attempts: 2
+        log_filter: "verifyProcessedData counts"
 
   cf_restore:
     description: "Restore db from S3 to << parameters.target_env >>"
@@ -2355,12 +2407,6 @@ commands:
         config: "<< parameters.backup_prefix >>-restore"
         success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
-    - run:
-        when: on_fail
-        command: |
-          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
-
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -2403,10 +2449,13 @@ commands:
             -s ${cg_space}
     - run:
         name: "Migrate database: << parameters.app_name >>"
+        no_output_timeout: 30m
         command: |
+          TASK_NAME="migrate-${CIRCLE_BUILD_NUM}"
           cf run-task << parameters.app_name >> \
             --command "yarn db:migrate:prod" \
-            --name "migrate"
+            --name "${TASK_NAME}"
+          ./bin/watch-task.js << parameters.app_name >> "${TASK_NAME}"
 
   install_automation_deps:
     steps:
@@ -2498,6 +2547,14 @@ commands:
         description: 'directory to root to push'
         type: string
         default: "./automation"
+      attempts:
+        description: "Times to run the task before failing; each retry gets its own task name"
+        type: integer
+        default: 1
+      log_filter:
+        description: "If set, print the task's recent log lines containing this text (only use for lines that carry no data values)"
+        type: string
+        default: ""
     steps:
     - install_automation_deps
     - set_env_vars:
@@ -2539,7 +2596,24 @@ commands:
 
           # Set execute permission
           find ./automation -name "*.sh" -exec chmod +x {} \;
-          ./automation/ci/scripts/cf_lambda.sh "$json_data"
+          attempt=1
+          until ./automation/ci/scripts/cf_lambda.sh "$json_data"; do
+            if [ "${attempt}" -ge << parameters.attempts >> ]; then
+              echo "Task failed after ${attempt} attempt(s)"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            echo "Task failed; starting attempt ${attempt} of << parameters.attempts >>"
+            json_data=$(echo "$json_data" | jq --arg name "<< parameters.task_name >>-attempt${attempt}" '.task_name = $name')
+          done
+    - when:
+        condition: << parameters.log_filter >>
+        steps:
+        - run:
+            name: Show task log lines matching "<< parameters.log_filter >>"
+            when: always
+            command: |
+              cf logs tta-automation --recent | grep -F "<< parameters.log_filter >>" || echo "No matching log lines found"
     - run:
         name: Logout of service account
         command: |
@@ -2654,6 +2728,20 @@ commands:
             fi
           fi
 
+
+  notify_job_failure:
+    description: "Alert the team channel when a DB refresh job fails, with the job name and links"
+    parameters:
+      details:
+        description: "Extra context to append to the alert (no data values)"
+        type: string
+        default: ""
+    steps:
+    - notify_slack:
+        step_when: on_fail
+        best_effort: true
+        slack_channel: acf-head-start-alerts
+        message_text: ":red_circle: DB refresh job ${CIRCLE_JOB} failed. << parameters.details >> Job: ${CIRCLE_BUILD_URL} Workflow: https://app.circleci.com/pipelines/workflows/${CIRCLE_WORKFLOW_ID}"
 
   notify_slack_deploy:
     parameters:
