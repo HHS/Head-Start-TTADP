@@ -2586,13 +2586,14 @@ describe('mailer tests', () => {
 
       await trOwnerAdded(
         {
+          eventId: 'tr-1234',
           data,
         },
         jsonTransport
       );
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
-        expect.any(Object)
+        expect.objectContaining({ displayId: 'tr-1234' })
       );
     });
 
@@ -2617,6 +2618,7 @@ describe('mailer tests', () => {
 
       await trOwnerAdded(
         {
+          eventId: 'tr-1234',
           data,
         },
         1
@@ -2636,9 +2638,8 @@ describe('mailer tests', () => {
         {
           collaboratorIds: [],
           pocIds: [],
-          data: {
-            eventId: 'tr-1234',
-          },
+          eventId: 'tr-1234',
+          data: {},
         },
         jsonTransport
       );
@@ -2667,13 +2668,14 @@ describe('mailer tests', () => {
           ownerId: 1,
           collaboratorIds: [2],
           pocIds: [3],
+          eventId: 'tr-1234',
           data,
         },
         jsonTransport
       );
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-        expect.any(Object)
+        expect.objectContaining({ displayId: 'tr-1234' })
       );
     });
 
@@ -2706,14 +2708,18 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-        expect.any(Object)
+        expect.objectContaining({
+          displayId: 'tr-1234',
+          reportPath: expect.stringContaining('/training-report/tr-1234'),
+        })
       );
     });
     it('trCollaboratorAdded error', async () => {
@@ -2728,7 +2734,8 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );
@@ -2741,7 +2748,8 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify({ eventId: 'tr-1234' }) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );

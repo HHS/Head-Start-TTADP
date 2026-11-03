@@ -10,7 +10,6 @@ import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import { sequelize } from '../../models';
-import safeParse from '../../models/helpers/safeParse';
 import {
   activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
@@ -796,9 +795,7 @@ export const trCollaboratorAdded = async (report, newCollaboratorId) => {
       );
     }
 
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = safeParse(report); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = report;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
@@ -840,9 +837,7 @@ export const trOwnerAdded = async (report, ownerId) => {
   try {
     const owner = await userById(ownerId, true);
 
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = safeParse(report); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = report;
     if (!eventId) {
       throw new Error(
         `Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`
@@ -880,8 +875,7 @@ export const trEventComplete = async (event) => {
       (id) => id && id !== event.ownerId
     );
 
-    const parsedData = safeParse(event); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = event;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
