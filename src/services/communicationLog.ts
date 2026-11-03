@@ -2,6 +2,7 @@ import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import { Op, type WhereOptions } from 'sequelize';
 import { SORT_DIR } from '../constants';
+import parseSelectionIds from '../lib/parseSelectionIds';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
 
@@ -481,11 +482,7 @@ const updateLog = async (id: number, logData: CommLogData) => {
 
   // Only process recipients if array is provided and non-empty
   // This prevents accidental deletion of all recipients when recipients array is empty/undefined
-  const recipientIds = Array.isArray(recipients)
-    ? recipients
-        .map((recipient) => Number(recipient.value))
-        .filter((rid) => Number.isInteger(rid) && rid > 0)
-    : [];
+  const recipientIds = parseSelectionIds(recipients);
 
   // Reconcile recipients, staff, and the JSON data in a single transaction so an
   // error partway through cannot leave the source-of-truth tables in an

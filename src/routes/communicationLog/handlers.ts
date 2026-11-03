@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
-import SCOPES from '../../middleware/scopeConstants';
+import parseSelectionIds from '../../lib/parseSelectionIds';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
@@ -53,13 +53,6 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
     policy: new Policy(user, Number(regionId), log),
   };
 };
-
-const parseRecipientIds = (recipients: unknown): number[] =>
-  Array.isArray(recipients)
-    ? recipients
-        .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
-        .filter((id: number) => Number.isInteger(id) && id > 0)
-    : [];
 
 /** Returns the data with its saved region set to regionId, or with no region when undefined. */
 const withRegion = (data, regionId?: number | string) => {
@@ -281,15 +274,9 @@ const updateLogById = async (req: Request, res: Response) => {
 
     // This route has no region param, so recipients must be in a region the user can write to.
     // Admins can write to any region.
-    const recipientIds = parseRecipientIds(data?.recipients);
+    const recipientIds = parseSelectionIds(data?.recipients);
     if (recipientIds.length && !policy.isAdmin()) {
-      const writableRegionIds = [
-        ...new Set(
-          policy.user.permissions
-            .filter(({ scopeId }) => scopeId === SCOPES.READ_WRITE_REPORTS)
-            .map(({ regionId }) => regionId)
-        ),
-      ];
+      const writableRegionIds = policy.getWritableRegionIds();
       if (!(await recipientsInRegion(recipientIds, writableRegionIds))) {
         res.status(httpCodes.FORBIDDEN).send();
         return;
@@ -374,7 +361,7 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const { data } = req.body;
     const { recipients, ...fields } = data;
 
-    const recipientIds = parseRecipientIds(recipients);
+    const recipientIds = parseSelectionIds(recipients);
     if (!(await recipientsInRegion(recipientIds, Number(req.params.regionId)))) {
       res.status(httpCodes.FORBIDDEN).send();
       return;
