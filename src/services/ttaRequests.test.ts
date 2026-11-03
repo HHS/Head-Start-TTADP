@@ -9,6 +9,7 @@ import {
   lockTtaRequest,
   submitTtaRequest,
   ttaRequestById,
+  ttaRequestReviewers,
   updateTtaRequest,
 } from './ttaRequests';
 
@@ -50,8 +51,9 @@ describe('ttaRequests service', () => {
       createGrant({ recipientId: recipient.id, regionId: 1 }),
       createGrant({ recipientId: recipient.id, regionId: 2 }),
       createGrant({ recipientId: otherRecipient.id, regionId: 1 }),
-      // the reviewer approves in region 1, where these requests are
-      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.APPROVE_REPORTS }),
+      // the reviewer is active and can review in region 1, where these requests are
+      Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS }),
+      Permission.create({ userId: reviewer.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
     ]);
   });
 
@@ -155,12 +157,12 @@ describe('ttaRequests service', () => {
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const saved = await createTtaRequest({ regionId: 1, reviewerId: creator.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
 
-    it('drops a reviewer who approves in another region', async () => {
+    it('drops a reviewer who can review in another region', async () => {
       const saved = await createTtaRequest({ regionId: 2, reviewerId: reviewer.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
     });
@@ -269,14 +271,89 @@ describe('ttaRequests service', () => {
     });
   });
 
+  describe('ttaRequestReviewers', () => {
+    let approver;
+    let backupApprover;
+    let writeOnly;
+    let readOnly;
+    let otherRegion;
+    let twoScopes;
+    let inactive;
+
+    const permit = (userId: number, scopeId: number, regionId = 1) =>
+      Permission.create({ userId, regionId, scopeId });
+
+    beforeAll(async () => {
+      [approver, backupApprover, writeOnly, readOnly, otherRegion, twoScopes, inactive] =
+        await Promise.all(Array.from({ length: 7 }, () => createUser({})));
+
+      // everyone but the inactive user can sign in
+      const active = [approver, backupApprover, writeOnly, readOnly, otherRegion, twoScopes];
+
+      await Promise.all([
+        ...active.map((user) => permit(user.id, SCOPES.SITE_ACCESS, 14)),
+        permit(approver.id, SCOPES.APPROVE_TTA_REQUESTS),
+        permit(backupApprover.id, SCOPES.BACKUP_APPROVE_TTA_REQUESTS),
+        permit(writeOnly.id, SCOPES.READ_WRITE_TTA_REQUESTS),
+        permit(readOnly.id, SCOPES.READ_REPORTS),
+        permit(otherRegion.id, SCOPES.REVIEW_TTA_REQUESTS, 2),
+        permit(twoScopes.id, SCOPES.REVIEW_TTA_REQUESTS),
+        permit(twoScopes.id, SCOPES.BACKUP_APPROVE_TTA_REQUESTS),
+        permit(inactive.id, SCOPES.REVIEW_TTA_REQUESTS),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [
+        approver,
+        backupApprover,
+        writeOnly,
+        readOnly,
+        otherRegion,
+        twoScopes,
+        inactive,
+      ].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
+
+    it('lists users who can review in the region, once each', async () => {
+      const reviewers = await ttaRequestReviewers(1);
+      const ids = reviewers.map((u) => u.id);
+
+      expect(ids).toEqual(expect.arrayContaining([reviewer.id, twoScopes.id]));
+      expect(ids.filter((id) => id === twoScopes.id)).toHaveLength(1);
+    });
+
+    it('leaves out approvers, inactive users and those without the review permission in the region', async () => {
+      const ids = (await ttaRequestReviewers(1)).map((u) => u.id);
+
+      [approver, backupApprover, writeOnly, readOnly, otherRegion, inactive, creator].forEach(
+        (user) => {
+          expect(ids).not.toContain(user.id);
+        }
+      );
+    });
+
+    it('drops a saved reviewer who can only approve in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: approver.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
+    });
+
+    it('drops a saved reviewer who can only write in the region', async () => {
+      const saved = await createTtaRequest({ regionId: 1, reviewerId: writeOnly.id }, creator.id);
+      expect(saved.reviewerId).toBeNull();
+    });
+  });
+
   describe('updateTtaRequest reviewer', () => {
-    it('saves an approver in the region as the reviewer', async () => {
+    it('saves a reviewer in the region as the reviewer', async () => {
       const created = await createTtaRequest({ regionId: 1 }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: reviewer.id }, creator.id);
       expect(updated.reviewer.id).toBe(reviewer.id);
     });
 
-    it('drops a reviewer who is not an approver in the region', async () => {
+    it('drops a reviewer who cannot review in the region', async () => {
       const created = await createTtaRequest({ regionId: 1, reviewerId: reviewer.id }, creator.id);
       const updated = await updateTtaRequest(created, { reviewerId: creator.id }, creator.id);
       expect(updated.reviewerId).toBeNull();
@@ -402,7 +479,7 @@ describe('ttaRequests service', () => {
       expect(submitted.context).toBe('<p>Context</p>');
     });
 
-    it('rejects a reviewer who cannot approve in the region', async () => {
+    it('rejects a reviewer who cannot review in the region', async () => {
       const draft = await createTtaRequest({ regionId: 1 }, creator.id);
 
       await expect(

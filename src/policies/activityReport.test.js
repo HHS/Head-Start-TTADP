@@ -356,6 +356,38 @@ describe('Activity Report policies', () => {
     });
   });
 
+  describe('canAdminReset', () => {
+    it.each([REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'is true for admins when the report is %s',
+      (status) => {
+        const report = activityReport(author.id, null, null, REPORT_STATUSES.SUBMITTED, status);
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canAdminReset()).toBeTruthy();
+      }
+    );
+
+    it.each([
+      [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DRAFT],
+      [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.APPROVED],
+    ])('is false for admins when the report is %s/%s', (submissionStatus, calculatedStatus) => {
+      const report = activityReport(author.id, null, null, submissionStatus, calculatedStatus);
+      const policy = new ActivityReport(admin, report);
+      expect(policy.canAdminReset()).toBeFalsy();
+    });
+
+    it('is false for non-admins', () => {
+      const report = activityReport(
+        author.id,
+        null,
+        null,
+        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
+      );
+      const policy = new ActivityReport(author, report);
+      expect(policy.canAdminReset()).toBeFalsy();
+    });
+  });
+
   describe('canGet', () => {
     describe('for unapproved reports', () => {
       it('is true for the author', () => {
@@ -382,10 +414,22 @@ describe('Activity Report policies', () => {
         expect(policy.canGet()).toBeFalsy();
       });
 
-      it('is false for an admin with no other permissions to the report', () => {
+      it('is true for an admin with no other permissions to the report', () => {
         const report = activityReport(author.id);
         const policy = new ActivityReport(admin, report);
-        expect(policy.canGet()).toBeFalsy();
+        expect(policy.canGet()).toBeTruthy();
+      });
+
+      it('is true for an admin on a report awaiting approval', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          null,
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.SUBMITTED
+        );
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canGet()).toBeTruthy();
       });
     });
 

@@ -1,3 +1,4 @@
+import { trSessionSubmittedForApproval } from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
@@ -27,6 +28,9 @@ import {
 } from './handlers';
 import { checkUpdateSessionBody } from './middleware';
 
+jest.mock('../../lib/mailer', () => ({
+  trSessionSubmittedForApproval: jest.fn(),
+}));
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
 jest.mock('../../policies/recipient');
@@ -425,6 +429,44 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('notifies the approver when the session becomes submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const submittedSession = { ...mockSession, submitted: true };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue(submittedSession);
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, submittedSession);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('does not notify the approver when the session was already submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: true });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: true });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
+    it('does not notify the approver when the session is not submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: false });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
     it('allows update for event role only', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
@@ -561,6 +603,7 @@ describe('session report handlers', () => {
           participantCount: 13,
           deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
+          trainers: [{ fullName: 'Jane Trainer, SS' }, { fullName: 'John Trainer, ECS' }],
         },
         {
           id: 2,
@@ -572,6 +615,7 @@ describe('session report handlers', () => {
           participantCount: 8,
           deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
+          trainers: [],
         },
       ],
     };
@@ -682,6 +726,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topics');
       expect(csvOutput).toContain('Participant Count');
       expect(csvOutput).toContain('Delivery type');
+      expect(csvOutput).toContain('Trainers');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -692,6 +737,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topic 2');
       expect(csvOutput).toContain('13');
       expect(csvOutput).toContain('hybrid');
+      expect(csvOutput).toContain('"Jane Trainer, SS, John Trainer, ECS"');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');

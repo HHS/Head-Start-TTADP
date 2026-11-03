@@ -4,11 +4,18 @@ import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForSessionSubmittedCollaborators,
+  createSessionNeedsActionNotification,
+  createSessionNeedsActionNotificationForCollaborators,
+} from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
   GetSessionReportsForRecipientParams,
@@ -175,6 +182,11 @@ export async function destroySession(id: number): Promise<void> {
   await SessionReportPilotSupportingAttachment.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true }
+  );
+
+  await runInSavepoint(
+    () => archiveSessionNeedsActionNotifications(id),
+    `Error archiving session needs action notifications for session ${id}:`
   );
 
   // Delete session.
@@ -370,7 +382,6 @@ export async function updateSession(id: number, request) {
     endDate: hasEndDate
       ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
       : (session.get('endDate') as unknown as Date | null),
-    data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
     approverId?: number | null;
@@ -390,10 +401,74 @@ export async function updateSession(id: number, request) {
     update.submitterId = Number(submitterId);
   }
 
+  // Only a first submission notifies collaborators (TR-3c); resubmissions after
+  // changes were requested are covered by TR-5c. `hasBeenSubmitted` is sticky:
+  // facilitation changes clear completion flags and the approver, and participant
+  // submits overwrite status, so neither tells us whether the session was ever submitted.
+  const wasSubmitted = isSessionSubmitted(event, {
+    approverId: session.approverId,
+    data: existingData,
+  } as unknown as SessionShape);
+  const isSubmitted = isSessionSubmitted(event, {
+    approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+    data: newData,
+  } as unknown as SessionShape);
+  // wasSubmitted and NEEDS_ACTION cover sessions submitted before the marker existed
+  const hasBeenSubmitted =
+    Boolean(existingData.hasBeenSubmitted) ||
+    wasSubmitted ||
+    existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isFirstSubmission = isSubmitted && !hasBeenSubmitted;
+
+  if (hasBeenSubmitted || isSubmitted) {
+    newData.hasBeenSubmitted = true;
+  }
+
+  update.data = cast(JSON.stringify(newData), 'jsonb');
+
   await SessionReportPilot.update(update, {
     where: { id },
     individualHooks: true,
   });
+
+  if (isFirstSubmission) {
+    await runInSavepoint(
+      () =>
+        createNotificationForSessionSubmittedCollaborators(event, {
+          id,
+          data: newData as { sessionName?: string },
+        }),
+      `Error creating session submitted notifications for session ${id}:`
+    );
+  }
+
+  const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
+
+  if (isNeedsAction && !wasNeedsAction) {
+    // the approver requested changes: TR-4a for the owner, TR-4c for collaborators
+    const needsActionSession = {
+      id,
+      approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+      data: newData as { sessionName?: string },
+    };
+    await runInSavepoint(
+      () => createSessionNeedsActionNotification(event, needsActionSession),
+      `Error creating session needs action notifications for session ${id}:`
+    );
+    await runInSavepoint(
+      () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
+      `Error creating session needs action collaborator notifications for session ${id}:`
+    );
+  } else if (isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted)) {
+    // resubmitted, so the owner no longer needs to act. A session reset by a facilitation
+    // change can leave needs action before it is complete, so also archive once it is
+    // submitted again.
+    await runInSavepoint(
+      () => archiveSessionNeedsActionNotifications(id),
+      `Error archiving session needs action notifications for session ${id}:`
+    );
+  }
 
   if (goalTemplates) {
     await updateSessionReportRelatedModels(
@@ -584,6 +659,7 @@ const sessionReportAttributes = [
   [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
   [sequelize.literal('"SessionReportPilot"."data"->\'duration\''), 'duration'],
   [sequelize.literal('"SessionReportPilot"."data"->>\'deliveryMethod\''), 'deliveryMethod'],
+  [sequelize.literal('"SessionReportPilot"."data"->>\'otherTrainers\''), 'otherTrainers'],
   // Selected raw so participantCount can be derived with getActivityReportParticipantCount,
   // the same helper the dashboards and overview widget use. Casting these to ::integer in SQL
   // fails on the empty strings the session form writes into the fields that don't apply to the
@@ -703,6 +779,11 @@ async function fetchSessionReports(
         through: { attributes: [] },
         required: false,
       },
+      {
+        ...userInclude('trainers'),
+        through: { attributes: [] },
+        required: false,
+      },
     ],
     order: orderClause,
     subQuery: false,
@@ -711,6 +792,8 @@ async function fetchSessionReports(
   // Transform rows to plain objects with goalTemplates included
   const rows = result.map((row: Model) => {
     const plain = row.get({ plain: true });
+    const otherTrainers =
+      typeof plain.otherTrainers === 'string' ? plain.otherTrainers.trim() : '';
     return {
       id: plain.id,
       eventId: plain.eventId,
@@ -725,6 +808,10 @@ async function fetchSessionReports(
       participants: plain.participants,
       participantCount: getActivityReportParticipantCount(plain),
       deliveryMethod: plain.deliveryMethod,
+      trainers: [
+        ...(plain.trainers || []),
+        ...(otherTrainers ? [{ fullName: otherTrainers }] : []),
+      ],
     };
   });
 

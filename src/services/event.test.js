@@ -25,6 +25,15 @@ import {
   updateEvent,
   validateFields,
 } from './event';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
+
+jest.mock('./notifications/trainingReport', () => ({
+  archiveSessionNeedsActionNotifications: jest.fn(),
+  createNotificationForNewPocs: jest.fn(),
+}));
 
 describe('event service', () => {
   const ownerIds = [98_989, 98_900, 11_111, 11_112, 11_113, 50_500, 50_501];
@@ -92,11 +101,84 @@ describe('event service', () => {
     });
 
   describe('createEvent', () => {
+    beforeEach(() => {
+      createNotificationForNewPocs.mockReset();
+    });
+
+    it('notifies new POCs with an empty previous list', async () => {
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [11_111],
+        collaboratorIds: [],
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          owner: { id: 98_989, name: 'Owner Name' },
+        },
+      });
+
+      expect(createNotificationForNewPocs).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [],
+        [11_111]
+      );
+
+      await destroyEvent(created.id);
+    });
+
+    it('does not throw when the notification helper rejects', async () => {
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      const created = await createAnEvent(98_989);
+      expect(created).toHaveProperty('id');
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('saves the event when a notification query fails inside the request transaction', async () => {
+      createNotificationForNewPocs.mockImplementationOnce(() =>
+        db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"')
+      );
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      // without a savepoint, the failed query aborts the transaction and the commit fails
+      const created = await db.sequelize.transaction(() => createAnEvent(98_989));
+
+      const saved = await db.EventReportPilot.findByPk(created.id);
+      expect(saved).not.toBeNull();
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('works', async () => {
       const created = await createAnEvent(98_989);
       expect(created).toHaveProperty('id');
       expect(created).toHaveProperty('ownerId', 98_989);
       await destroyEvent(created.id);
+    });
+
+    it('archives session needs action notifications for each session when destroyed', async () => {
+      const created = await createAnEvent(98_989);
+      const sessions = await Promise.all([
+        db.SessionReportPilot.create({ eventId: created.id, data: {} }),
+        db.SessionReportPilot.create({ eventId: created.id, data: {} }),
+      ]);
+      archiveSessionNeedsActionNotifications.mockClear();
+
+      await destroyEvent(created.id);
+
+      expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(2);
+      sessions.forEach((session) => {
+        expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(session.id, {
+          removeLink: true,
+        });
+      });
+      expect(await db.SessionReportPilot.count({ where: { eventId: created.id } })).toBe(0);
     });
 
     it('stores the eventId in the dedicated column and not in the JSONB data', async () => {
@@ -160,6 +242,56 @@ describe('event service', () => {
   });
 
   describe('updateEvent', () => {
+    beforeEach(() => {
+      createNotificationForNewPocs.mockReset();
+    });
+
+    it('notifies new POCs with the previous and new POCs', async () => {
+      const created = await createAnEvent(98_989);
+      createNotificationForNewPocs.mockClear();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active', owner: { id: 98_989, name: 'test' } },
+      });
+
+      expect(createNotificationForNewPocs).toHaveBeenCalledTimes(1);
+      const [evt, previous, current] = createNotificationForNewPocs.mock.calls[0];
+      expect(evt).toEqual(
+        expect.objectContaining({ id: created.id, eventId: created.eventId, ownerId: 98_989 })
+      );
+      expect(previous).toEqual([98_989]);
+      expect(current).toEqual([98_989, 11_111]);
+
+      await destroyEvent(created.id);
+    });
+
+    it('does not throw when the notification helper rejects', async () => {
+      const created = await createAnEvent(98_989);
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      const updated = await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: { status: 'active' },
+      });
+
+      expect(updated).toHaveProperty('id', created.id);
+      expect(errorSpy).toHaveBeenCalledWith(
+        `Error creating POC added notifications for event ${created.id}:`,
+        expect.any(Error)
+      );
+
+      errorSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('works', async () => {
       const created = await createAnEvent(98_989);
 
@@ -938,6 +1070,21 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
           id: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
         },
       });
+    });
+
+    it('notifies newly added POCs on import without failing the import on error', async () => {
+      createNotificationForNewPocs.mockReset();
+      createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
+
+      const result = await csvImport(Buffer.from(buildImport(email, `${eventId}-poc`)));
+
+      expect(result.errors).toEqual([]);
+      expect(result.count).toEqual(1);
+      expect(createNotificationForNewPocs).toHaveBeenCalledTimes(1);
+      const [evt, previous, current] = createNotificationForNewPocs.mock.calls[0];
+      expect(evt.eventId).toEqual(`${eventId}-poc`);
+      expect(previous).toEqual([]);
+      expect(current).toEqual([pocId]);
     });
 
     it('imports good data correctly', async () => {

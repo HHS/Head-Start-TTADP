@@ -65,6 +65,18 @@ put:
           schema:
             type: object
             $ref: '../index.yaml#/components/schemas/user'
+    400:
+      description: >-
+        The permissions can't be saved: the user would be both the primary and backup TTA
+        request approver (APPROVE_TTA_REQUESTS and BACKUP_APPROVE_TTA_REQUESTS) in a region,
+        or the primary approver in a region that already has one
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
 delete:
   tags:
     - admin

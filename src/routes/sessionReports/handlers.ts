@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
+import { trSessionSubmittedForApproval } from '../../lib/mailer';
 import EventReport from '../../policies/event';
 import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
@@ -91,6 +92,10 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
         key: 'deliveryMethod',
         header: 'Delivery type',
       },
+      {
+        key: 'trainers',
+        header: 'Trainers',
+      },
     ],
   };
 
@@ -103,6 +108,7 @@ async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response
       : '',
     recipients: Array.isArray(row.recipients) ? row.recipients.map((r) => r.label).join(', ') : '',
     participants: Array.isArray(row.participants) ? row.participants.join(', ') : '',
+    trainers: Array.isArray(row.trainers) ? row.trainers.map((t) => t.fullName).join(', ') : '',
   }));
 
   const csvData = stringify(transformedRows, options);
@@ -252,6 +258,12 @@ export const updateHandler = async (req: Request, res: Response) => {
     }
 
     const updatedSession = await updateSession(Number(id), req.body);
+
+    // Only notify on the transition into "submitted" so later saves don't resend.
+    if (!session?.submitted && updatedSession?.submitted) {
+      await trSessionSubmittedForApproval(event, updatedSession);
+    }
+
     return res.status(httpCodes.CREATED).send(updatedSession);
   } catch (error) {
     return handleErrors(req, res, error, logContext);

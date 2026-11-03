@@ -6,9 +6,9 @@ import Modal from './Modal';
 import './RegionPermissionModal.css';
 import { SUPPORT_LINK } from '../Constants';
 
-function RegionPermissionModal({ filters, user, showFilterWithMyRegions }) {
+function RegionPermissionModal({ filters, user, accessibleRegions, showFilterWithMyRegions }) {
   const modalRef = useRef();
-  const userRegions = getUserRegions(user);
+  const userRegions = accessibleRegions || getUserRegions(user);
 
   const missingRegions = useMemo(() => {
     const missing = [];
@@ -108,6 +108,7 @@ RegionPermissionModal.propTypes = {
       })
     ),
   }).isRequired,
+  accessibleRegions: PropTypes.arrayOf(PropTypes.number),
   showFilterWithMyRegions: PropTypes.func.isRequired,
 };
 
