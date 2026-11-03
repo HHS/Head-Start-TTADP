@@ -65,7 +65,7 @@ export default function TtaRequestNotesSummary({
                   <div aria-hidden className="ttahub-notes-summary__avatar">
                     <Avatar name={author} />
                   </div>
-                  <div className="flex-1 margin-left-2">
+                  <div className="flex-1 margin-left-1">
                     <div className="ttahub-notes-summary__author text-bold">{author}</div>
                     <div className="ttahub-notes-summary__meta font-sans-2xs">
                       {submitted.format('MMMM D, YYYY')} • {submitted.format('H:mm')} UTC
