@@ -12,3 +12,8 @@
 .ttahub-notes-summary__note {
   white-space: pre-line;
 }
+
+/* font-sans-2xs sets a 17.112px line height; design calls for 24px */
+.ttahub-notes-summary__meta {
+  line-height: 24px;
+}

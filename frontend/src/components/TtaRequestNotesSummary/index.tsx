@@ -56,7 +56,7 @@ export default function TtaRequestNotesSummary({
               <li key={key} className={note ? undefined : 'padding-bottom-2'}>
                 <div className="display-flex flex-align-center margin-bottom-2">
                   <span aria-hidden className="flex-1 border-top-1px border-base-lighter" />
-                  <span className="padding-x-2 text-uppercase text-bold text-base font-sans-2xs">
+                  <span className="ttahub-notes-summary__meta padding-x-2 text-uppercase text-bold text-base font-sans-2xs">
                     {phase}
                   </span>
                   <span aria-hidden className="flex-1 border-top-1px border-base-lighter" />
@@ -68,7 +68,7 @@ export default function TtaRequestNotesSummary({
                   </div>
                   <div className="flex-1 margin-left-2">
                     <div className="ttahub-notes-summary__author text-bold">{author}</div>
-                    <div className="font-sans-2xs">
+                    <div className="ttahub-notes-summary__meta font-sans-2xs">
                       {submitted.format('MMMM D, YYYY')} • {submitted.format('H:mm')} UTC
                     </div>
                     {note && (
