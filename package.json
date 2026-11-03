@@ -78,6 +78,7 @@
     "lint": "biome lint --diagnostic-level=error --no-errors-on-unmatched",
     "lint:shell": "bin/lint-shell",
     "deploy:env": "bin/deploy-env",
+    "lint:secret-printing": "node ./tools/checkSecretPrinting.js",
     "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched",
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter=summary --reporter=json-pretty --reporter-file=reports/lint.json .",
     "test": "yarn build && jest build/server/src --runInBand",
