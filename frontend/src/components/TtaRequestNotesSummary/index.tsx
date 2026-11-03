@@ -48,12 +48,11 @@ export default function TtaRequestNotesSummary({
             A consolidated view of all notes across the TTA request approval flow
           </p>
         </div>
-        <ol className="usa-list--unstyled padding-x-3 padding-y-2">
+        <ol className="usa-list--unstyled padding-x-3">
           {notes.map(({ key, phase, author, role, date, note }) => {
             const submitted = moment.utc(date);
             return (
-              // the note's own margin spaces the entry from the next one, so only an entry without one is padded
-              <li key={key} className={note ? undefined : 'padding-bottom-2'}>
+              <li key={key} className="padding-y-2">
                 <div className="display-flex flex-align-center margin-bottom-2">
                   <span aria-hidden className="flex-1 border-top-1px border-base-lighter" />
                   <span className="ttahub-notes-summary__meta padding-x-2 text-uppercase text-bold text-base font-sans-2xs">
@@ -72,7 +71,7 @@ export default function TtaRequestNotesSummary({
                       {submitted.format('MMMM D, YYYY')} • {submitted.format('H:mm')} UTC
                     </div>
                     {note && (
-                      <p className="ttahub-notes-summary__note margin-top-1 margin-bottom-2">
+                      <p className="ttahub-notes-summary__note margin-top-1 margin-bottom-0">
                         {note}
                       </p>
                     )}
