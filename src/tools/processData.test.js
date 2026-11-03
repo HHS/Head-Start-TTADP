@@ -359,6 +359,15 @@ describe('processData', () => {
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
     const file = await File.create(mockFile);
+    const notification = await Notification.create({
+      userId: null,
+      type: 'systemPlannedOutage',
+      text: 'Planned outage: the TTA Hub will be closed for maintenance',
+    });
+    await NotificationUserState.create({
+      notificationId: notification.id,
+      userId: mockUser.id,
+    });
     await processData(report);
     const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });
 
@@ -375,6 +384,7 @@ describe('processData', () => {
     expect(requestErrors.length).toBe(0);
 
     expect(await Notification.count()).toBe(0);
+    expect(await NotificationUserState.count()).toBe(0);
   });
 
   it('truncates audit tables', async () => {
