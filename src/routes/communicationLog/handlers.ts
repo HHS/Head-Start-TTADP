@@ -283,20 +283,24 @@ const updateLogById = async (req: Request, res: Response) => {
     const data = submittedData && withRegion(submittedData, log.data?.regionId);
 
     // Only newly added recipients are checked, so editing an older log is not blocked by
-    // recipients it already had. They must belong to the region the log is saved under; logs
-    // saved without a region fall back to the regions the user can write to, and admins can
-    // write to any region.
+    // recipients it already had. They must belong to the region the log is saved under, and
+    // the user needs write access there (being the creator is not enough). Logs saved without a
+    // region fall back to the regions the user can write to. Admins can write to any region.
     const existingRecipientIds = new Set((log.recipients ?? []).map(({ id: rid }) => rid));
     const newRecipientIds = parseSelectionIds(data?.recipients).filter(
       (recipientId) => !existingRecipientIds.has(recipientId)
     );
     if (newRecipientIds.length) {
       const storedRegionId = parsePositiveInteger(log.data?.regionId);
-      let allowedRegionIds: number[] | null = null;
-      if (storedRegionId) {
-        allowedRegionIds = [storedRegionId];
-      } else if (!policy.isAdmin()) {
-        allowedRegionIds = policy.getWritableRegionIds();
+      let allowedRegionIds: number[] | null = storedRegionId ? [storedRegionId] : null;
+
+      if (!policy.isAdmin()) {
+        const writableRegionIds = policy.getWritableRegionIds();
+        if (storedRegionId && !writableRegionIds.includes(storedRegionId)) {
+          res.status(httpCodes.FORBIDDEN).send();
+          return;
+        }
+        allowedRegionIds = allowedRegionIds ?? writableRegionIds;
       }
 
       if (allowedRegionIds && !(await recipientsInRegion(newRecipientIds, allowedRegionIds))) {

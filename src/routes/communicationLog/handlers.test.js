@@ -757,6 +757,37 @@ describe('communicationLog handlers', () => {
         expect(updateLog).not.toHaveBeenCalled();
       });
 
+      it('rejects new recipients when the user cannot write in the saved region', async () => {
+        recipientsInRegion.mockResolvedValue(true);
+        const creatorWithoutSavedRegionAccess = {
+          id: 1,
+          permissions: [{ regionId: REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS }],
+        };
+        userById.mockResolvedValue(creatorWithoutSavedRegionAccess);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }));
+        await updateLogById(
+          request(creatorWithoutSavedRegionAccess, { recipients: [{ value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(updateLog).not.toHaveBeenCalled();
+      });
+
+      it('lets a creator without saved region access edit without adding recipients', async () => {
+        const creatorWithoutSavedRegionAccess = {
+          id: 1,
+          permissions: [{ regionId: REGION_ID, scopeId: SCOPES.READ_WRITE_REPORTS }],
+        };
+        userById.mockResolvedValue(creatorWithoutSavedRegionAccess);
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }, [{ id: 5 }]));
+        await updateLogById(
+          request(creatorWithoutSavedRegionAccess, { recipients: [{ value: 5 }], message: 'x' }),
+          { ...mockResponse }
+        );
+        expect(recipientsInRegion).not.toHaveBeenCalled();
+        expect(updateLog).toHaveBeenCalled();
+      });
+
       it('accepts a new recipient in the saved region', async () => {
         recipientsInRegion.mockResolvedValue(true);
         userById.mockResolvedValue(multiRegionCreator);
