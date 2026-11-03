@@ -16,6 +16,8 @@ import {
   deleteReport,
   getCSVReports,
   getReports as getReportsService,
+  lockCollabReport,
+  resetReportToDraft,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -449,6 +451,34 @@ export async function createReport(req: Request, res: Response) {
       collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function resetToDraft(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    // Lock before reading, so a concurrent approval can't land between the status check and the reset
+    await lockCollabReport(collabReportId);
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canAdminReset()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    const savedReport = await resetReportToDraft(report);
+    res.json(savedReport.toJSON());
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

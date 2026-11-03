@@ -21,7 +21,9 @@ import {
   deleteReport,
   getCSVReports,
   getReports,
+  lockCollabReport,
   orderCollabReportsBy,
+  resetReportToDraft,
 } from './collabReports';
 
 const mockUser = {
@@ -264,6 +266,61 @@ describe('Collab Reports Service', () => {
       };
 
       await expect(createOrUpdateReport(reportObject, nonExistentReport)).rejects.toThrow();
+    });
+  });
+
+  describe('resetReportToDraft', () => {
+    let report;
+
+    beforeEach(async () => {
+      report = await CollabReport.create({
+        ...reportObject,
+        name: 'Test Report for Reset',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+      await CollabReportSpecialist.create({
+        collabReportId: report.id,
+        specialistId: mockUserTwo.id,
+      });
+      // the creator and a collaborator were assigned as approvers before that was disallowed
+      await Promise.all(
+        [mockUser.id, mockUserTwo.id, mockUserThree.id].map((userId) =>
+          CollabReportApprover.create({ collabReportId: report.id, userId })
+        )
+      );
+      await CollabReportApprover.update(
+        { status: 'approved' },
+        { where: { collabReportId: report.id, userId: mockUserThree.id } }
+      );
+    });
+
+    afterEach(async () => {
+      await CollabReportApprover.destroy({ where: { collabReportId: report.id }, force: true });
+      await CollabReportSpecialist.destroy({ where: { collabReportId: report.id }, force: true });
+      await CollabReport.destroy({ where: { id: report.id }, force: true });
+    });
+
+    it('returns to draft, clears approvals, and removes participant approvers', async () => {
+      const loaded = await collabReportById(String(report.id));
+
+      const reset = await resetReportToDraft(loaded);
+
+      expect(reset.submissionStatus).toBe(REPORT_STATUSES.DRAFT);
+      expect(reset.calculatedStatus).toBe(REPORT_STATUSES.DRAFT);
+      expect(reset.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
+      expect(reset.approvers[0].status).toBeNull();
+    });
+  });
+
+  describe('lockCollabReport', () => {
+    it('returns the locked report row', async () => {
+      const report = await CollabReport.create({ ...reportObject, name: 'Test Report for Lock' });
+
+      const locked = await db.sequelize.transaction(() => lockCollabReport(report.id));
+
+      expect(locked.id).toBe(report.id);
+      await CollabReport.destroy({ where: { id: report.id }, force: true });
     });
   });
 
