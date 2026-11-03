@@ -20,6 +20,7 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -311,6 +312,11 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
 
+    if (!(await recipientsInRegion([Number(recipientId)], Number(req.params.regionId)))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
     const log = await createLog([Number(recipientId)], userId, data);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
@@ -336,7 +342,12 @@ const createLogByRegionId = async (req: Request, res: Response) => {
           .filter((id: number) => Number.isInteger(id) && id > 0)
       : [];
 
-    const log = await createLog(recipientIds, userId, fields);
+    if (!(await recipientsInRegion(recipientIds, Number(req.params.regionId)))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const log = await createLog([...new Set(recipientIds)], userId, fields);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

@@ -1275,6 +1275,7 @@ describe('Goals DB service', () => {
             attributes: ['id', 'grantId'],
             model: Goal,
             as: 'goals',
+            paranoid: false,
             required: true,
             where: {
               id: mockGoalIds,

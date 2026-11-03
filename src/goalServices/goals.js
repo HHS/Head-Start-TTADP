@@ -1196,6 +1196,9 @@ export async function goalRegionsById(goalIds) {
         attributes: ['id', 'grantId'],
         model: Goal,
         as: 'goals',
+        // Stored prompt responses can outlive a soft-deleted goal. Its region must
+        // still be part of the authorization boundary for a mixed goal-ID request.
+        paranoid: false,
         required: true,
         where: {
           id: goalIds,

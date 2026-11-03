@@ -10,9 +10,10 @@ import {
   goalsByIdsAndActivityReport,
   updateGoalStatusById,
 } from '../../goalServices/goals';
+import canWriteGoals from '../../goalServices/goalWriteAccess';
 import { GoalStatusChangeBlockedError } from '../../goalServices/validateGoalStatusChange';
 import handleErrors from '../../lib/apiErrorHandler';
-import { sequelize } from '../../models';
+import { ActivityReport, sequelize } from '../../models';
 import Goal from '../../policies/goals';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -30,10 +31,16 @@ export async function createGoalsForReport(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const canCreate = new Goal(user, null, regionId).canCreate();
-
-    if (!canCreate) {
-      res.sendStatus(401);
+    const report = await ActivityReport.findByPk(activityReportId, {
+      attributes: ['id', 'regionId'],
+    });
+    if (
+      !report ||
+      Number(regionId) !== report.regionId ||
+      !new Goal(user, null, report.regionId).canCreate() ||
+      !(await canWriteGoals(user, goals, report.regionId))
+    ) {
+      res.sendStatus(403);
       return;
     }
 
@@ -73,16 +80,8 @@ export async function createGoals(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    let canCreate = true;
-
-    goals.forEach((goal) => {
-      if (canCreate && !new Goal(user, null, parseInt(goal.regionId, DECIMAL_BASE)).canCreate()) {
-        canCreate = false;
-      }
-    });
-
-    if (!canCreate) {
-      res.sendStatus(401);
+    if (!(await canWriteGoals(user, goals))) {
+      res.sendStatus(403);
       return;
     }
 

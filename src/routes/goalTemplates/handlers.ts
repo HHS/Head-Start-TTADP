@@ -2,7 +2,9 @@
 
 import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
+import { goalRegionsById } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import { respondWithServiceError } from '../../lib/serviceError';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -19,6 +21,7 @@ import {
   standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from '../../services/standardGoals';
+import { checkUserRegionAccess } from '../utils';
 
 export async function getStandardGoal(req: Request, res: Response) {
   try {
@@ -167,13 +170,28 @@ export async function getPrompts(req: Request, res: Response) {
     // this is a query string, i.e. the "goalIds=1&goalIds=2&goalIds=3"
     // the query can have one or more goal ids, and its hard to tell
     // until we parse it if it's a single value or an array
-    const parsedGoalIds = [goalIds]
-      .flat()
-      .map((id: string) => parseInt(id, DECIMAL_BASE))
-      .filter((id: number) => !Number.isNaN(id));
+    const parsedGoalIds = goalIds === undefined ? [] : [goalIds].flat().map(parsePositiveInteger);
+    if (
+      parsedGoalIds.some((id) => id === null) ||
+      (isForActivityReport !== undefined &&
+        isForActivityReport !== 'true' &&
+        isForActivityReport !== 'false')
+    ) {
+      res.sendStatus(400);
+      return;
+    }
+
+    if (parsedGoalIds.length) {
+      const regionIds = await goalRegionsById(parsedGoalIds);
+      if (!regionIds.length) {
+        res.sendStatus(403);
+        return;
+      }
+      if (!(await checkUserRegionAccess(req, res, regionIds))) return;
+    }
 
     let responsesWithPrompts;
-    if (isForActivityReport) {
+    if (isForActivityReport === 'true') {
       // If this is for an AR we need the prompts back in a different format.
       responsesWithPrompts = await getFieldPromptsForActivityReports(
         numericalGoalTemplateId,

@@ -7,6 +7,7 @@ import db from '../models';
 
 const {
   sequelize,
+  Grant,
   CommunicationLog,
   CommunicationLogRecipient,
   CommunicationLogStaff,
@@ -228,6 +229,19 @@ const logById = async (id: number) => {
 
   return withOtherStaff(log);
 };
+
+export async function recipientsInRegion(recipientIds: number[], regionId: number) {
+  if (!recipientIds.every((id) => Number.isSafeInteger(id) && id > 0)) return false;
+  if (!recipientIds.length) return true;
+
+  // Recipients can span regions. A grant in this region establishes the relationship.
+  const grants = await Grant.findAll({
+    attributes: ['recipientId'],
+    where: { recipientId: [...new Set(recipientIds)], regionId },
+  });
+  const regionalRecipientIds = new Set(grants.map((grant) => grant.recipientId));
+  return recipientIds.every((id) => regionalRecipientIds.has(id));
+}
 
 const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {
   const { otherStaff, ...jsonData } = data;

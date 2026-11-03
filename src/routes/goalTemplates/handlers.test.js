@@ -1,5 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { GOAL_STATUS } from '../../constants';
+import { goalRegionsById } from '../../goalServices/goals';
+import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   getCuratedTemplates,
@@ -25,6 +27,8 @@ import {
   useStandardGoal,
 } from './handlers';
 
+jest.mock('../../goalServices/goals');
+jest.mock('../../services/accessValidation');
 jest.mock('../../services/goalTemplates');
 jest.mock('../../services/standardGoals');
 jest.mock('../../services/currentUser');
@@ -412,13 +416,80 @@ describe('goalTemplates handlers', () => {
   });
 
   describe('getPrompts', () => {
+    beforeEach(() => {
+      goalRegionsById.mockResolvedValue([1]);
+      getUserReadRegions.mockResolvedValue([1]);
+    });
+
+    it.each(['false', 'true', undefined])(
+      'authorizes all goal regions before reading prompts (%s)',
+      async (flag) => {
+        goalRegionsById.mockResolvedValue([1, 2]);
+        const req = {
+          params: { goalTemplateId: '1' },
+          query: { goalIds: ['10', '20'], isForActivityReport: flag },
+        };
+        await getPrompts(req, mockResponse);
+        expect(goalRegionsById).toHaveBeenCalledWith([10, 20]);
+        expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+        expect(getFieldPromptsForActivityReports).not.toHaveBeenCalled();
+        expect(getFieldPromptsForCuratedTemplate).not.toHaveBeenCalled();
+        expect(mockResponse.json).not.toHaveBeenCalled();
+      }
+    );
+
+    it('rejects access when every goal is in another region', async () => {
+      goalRegionsById.mockResolvedValue([2]);
+      await getPrompts({ params: { goalTemplateId: '1' }, query: { goalIds: '20' } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
+    it('uses the curated branch for the string false', async () => {
+      getFieldPromptsForCuratedTemplate.mockResolvedValue(['curated']);
+      await getPrompts(
+        { params: { goalTemplateId: '1' }, query: { goalIds: '10', isForActivityReport: 'false' } },
+        mockResponse
+      );
+      expect(getFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(1, [10]);
+      expect(getFieldPromptsForActivityReports).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith([['curated'], null]);
+    });
+
+    it('returns template prompts when no goals are selected', async () => {
+      await getPrompts({ params: { goalTemplateId: '1' }, query: {} }, mockResponse);
+      expect(goalRegionsById).not.toHaveBeenCalled();
+      expect(getFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(1, []);
+    });
+
+    it('rejects goals without a resolvable region', async () => {
+      goalRegionsById.mockResolvedValue([]);
+      await getPrompts({ params: { goalTemplateId: '1' }, query: { goalIds: '20' } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(getFieldPromptsForCuratedTemplate).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { goalIds: '1junk' },
+      { goalIds: ['1', 'bad'] },
+      { goalIds: '-1' },
+      { goalIds: { value: '1' } },
+      { isForActivityReport: 'yes' },
+      { isForActivityReport: ['true', 'false'] },
+    ])('rejects malformed query parameters: %j', async (query) => {
+      await getPrompts({ params: { goalTemplateId: '1' }, query }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+      expect(getFieldPromptsForActivityReports).not.toHaveBeenCalled();
+      expect(getFieldPromptsForCuratedTemplate).not.toHaveBeenCalled();
+    });
+
     it('handles success', async () => {
       const req = {
         params: {
           goalTemplateId: 1,
         },
         query: {
-          goalIds: '1,2,3',
+          goalIds: ['1', '2', '3'],
         },
       };
 
@@ -436,7 +507,7 @@ describe('goalTemplates handlers', () => {
           goalTemplateId: 1,
         },
         query: {
-          goalIds: '1,2,3',
+          goalIds: ['1', '2', '3'],
         },
       };
 
@@ -453,8 +524,8 @@ describe('goalTemplates handlers', () => {
           goalTemplateId: 1,
         },
         query: {
-          goalIds: '1,2,3',
-          isForActivityReport: true,
+          goalIds: ['1', '2', '3'],
+          isForActivityReport: 'true',
         },
       };
 

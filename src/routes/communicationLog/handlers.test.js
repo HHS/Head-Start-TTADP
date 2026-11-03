@@ -14,6 +14,7 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -458,6 +459,24 @@ describe('communicationLog handlers', () => {
   });
 
   describe('createLogByRecipientId', () => {
+    beforeEach(() => {
+      recipientsInRegion.mockResolvedValue(true);
+    });
+
+    it('rejects recipients outside the requested region before writing', async () => {
+      recipientsInRegion.mockResolvedValue(false);
+      userById.mockResolvedValue(authorizedToCreate);
+      const req = {
+        session: { userId: authorizedToCreate.id },
+        params: { regionId: REGION_ID, recipientId: 10 },
+        body: { data: { recipients: [{ value: 10 }, { value: 20 }] } },
+      };
+      await createLogByRecipientId(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(createLog).not.toHaveBeenCalled();
+      expect(statusJson).not.toHaveBeenCalled();
+    });
+
     afterEach(async () => {
       jest.restoreAllMocks();
     });
@@ -469,6 +488,7 @@ describe('communicationLog handlers', () => {
         },
         params: {
           id: 1,
+          recipientId: 1,
           regionId: REGION_ID,
         },
         body: {
@@ -482,6 +502,7 @@ describe('communicationLog handlers', () => {
       createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await createLogByRecipientId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      expect(recipientsInRegion).toHaveBeenCalledWith([1], REGION_ID);
     });
 
     it('unauthorized', async () => {
@@ -491,6 +512,7 @@ describe('communicationLog handlers', () => {
         },
         params: {
           id: 1,
+          recipientId: 1,
           regionId: REGION_ID,
         },
         body: {
@@ -509,6 +531,7 @@ describe('communicationLog handlers', () => {
         },
         params: {
           id: 1,
+          recipientId: 1,
           regionId: REGION_ID,
         },
         body: {
@@ -528,6 +551,7 @@ describe('communicationLog handlers', () => {
         },
         params: {
           id: 1,
+          recipientId: 1,
           regionId: REGION_ID,
         },
         body: {
@@ -1130,6 +1154,24 @@ describe('communicationLog handlers', () => {
   });
 
   describe('createLogByRegionId', () => {
+    beforeEach(() => {
+      recipientsInRegion.mockResolvedValue(true);
+    });
+
+    it('rejects recipients outside the requested region before writing', async () => {
+      recipientsInRegion.mockResolvedValue(false);
+      userById.mockResolvedValue(authorizedToCreate);
+      const req = {
+        session: { userId: authorizedToCreate.id },
+        params: { regionId: REGION_ID, recipientId: 10 },
+        body: { data: { recipients: [{ value: 10 }, { value: 20 }] } },
+      };
+      await createLogByRegionId(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(createLog).not.toHaveBeenCalled();
+      expect(statusJson).not.toHaveBeenCalled();
+    });
+
     afterEach(async () => {
       jest.restoreAllMocks();
     });
@@ -1153,6 +1195,7 @@ describe('communicationLog handlers', () => {
       createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await createLogByRegionId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      expect(recipientsInRegion).toHaveBeenCalledWith([1, 2], REGION_ID);
       expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
     });
 
