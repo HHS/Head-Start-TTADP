@@ -1186,6 +1186,67 @@ describe('communicationLog handlers', () => {
       expect(updateLog).not.toHaveBeenCalled();
     });
 
+    it('saves the route region instead of a forged region when creating by recipient', async () => {
+      recipientsInRegion.mockResolvedValue(true);
+      userById.mockResolvedValue(authorizedToCreate);
+      createLog.mockResolvedValue({ id: 1 });
+      await createLogByRecipientId(
+        request(
+          authorizedToCreate.id,
+          { regionId: REGION_ID, recipientId: '5' },
+          { message: 'x', regionId: 2 }
+        ),
+        { ...mockResponse }
+      );
+      expect(createLog).toHaveBeenCalledWith([5], authorizedToCreate.id, {
+        message: 'x',
+        regionId: REGION_ID,
+      });
+    });
+
+    it('saves the route region instead of a forged region when creating by region', async () => {
+      recipientsInRegion.mockResolvedValue(true);
+      userById.mockResolvedValue(authorizedToCreate);
+      createLog.mockResolvedValue({ id: 1 });
+      await createLogByRegionId(
+        request(
+          authorizedToCreate.id,
+          { regionId: String(REGION_ID) },
+          { recipients: [{ value: 5 }], message: 'x', regionId: 2 }
+        ),
+        { ...mockResponse }
+      );
+      expect(createLog).toHaveBeenCalledWith([5], authorizedToCreate.id, {
+        message: 'x',
+        regionId: REGION_ID,
+      });
+    });
+
+    it('keeps the stored region when an update submits a different one', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      logById.mockResolvedValue({
+        id: 1,
+        userId: authorizedToCreate.id,
+        data: { regionId: REGION_ID },
+      });
+      updateLog.mockResolvedValue({ id: 1 });
+      await updateLogById(
+        request(authorizedToCreate.id, { id: 1 }, { message: 'x', regionId: 2 }),
+        { ...mockResponse }
+      );
+      expect(updateLog).toHaveBeenCalledWith(1, { message: 'x', regionId: REGION_ID });
+    });
+
+    it('does not let an update add a region to a log that has none', async () => {
+      userById.mockResolvedValue(authorizedToCreate);
+      updateLog.mockResolvedValue({ id: 1 });
+      await updateLogById(
+        request(authorizedToCreate.id, { id: 1 }, { message: 'x', regionId: 2 }),
+        { ...mockResponse }
+      );
+      expect(updateLog).toHaveBeenCalledWith(1, { message: 'x' });
+    });
+
     it('does not look up regions for an update without recipients', async () => {
       userById.mockResolvedValue(authorizedToCreate);
       updateLog.mockResolvedValue({ id: 1 });
@@ -1232,7 +1293,10 @@ describe('communicationLog handlers', () => {
       createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await createLogByRegionId(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({ id: 1 });
-      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
     });
 
     it('unauthorized', async () => {
@@ -1293,7 +1357,10 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       createLog.mockResolvedValue({ id: 44 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
       expect(statusJson).toHaveBeenCalledWith({ id: 44 });
     });
 
@@ -1315,7 +1382,10 @@ describe('communicationLog handlers', () => {
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       createLog.mockResolvedValue({ id: 55 });
       await createLogByRegionId(mockRequest, { ...mockResponse });
-      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, { message: 'test' });
+      expect(createLog).toHaveBeenCalledWith([], authorizedToCreate.id, {
+        message: 'test',
+        regionId: REGION_ID,
+      });
       expect(statusJson).toHaveBeenCalledWith({ id: 55 });
     });
 

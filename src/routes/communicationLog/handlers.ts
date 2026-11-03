@@ -61,6 +61,12 @@ const parseRecipientIds = (recipients: unknown): number[] =>
         .filter((id: number) => Number.isInteger(id) && id > 0)
     : [];
 
+/** Returns the data with its saved region set to regionId, or with no region when undefined. */
+const withRegion = (data, regionId?: number | string) => {
+  const { regionId: _submittedRegionId, ...rest } = data;
+  return regionId === undefined || regionId === null ? rest : { ...rest, regionId };
+};
+
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
@@ -268,7 +274,10 @@ const updateLogById = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { data } = req.body;
+    const { data: submittedData } = req.body;
+
+    // The stored region decides who can read this log, so a request cannot change it.
+    const data = submittedData && withRegion(submittedData, log.data?.regionId);
 
     // This route has no region param, so recipients must be in a region the user can write to.
     // Admins can write to any region.
@@ -341,7 +350,12 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
 
-    const log = await createLog([Number(recipientId)], userId, data);
+    // The saved region must be the authorized route region, not whatever the body claims.
+    const log = await createLog(
+      [Number(recipientId)],
+      userId,
+      data && withRegion(data, Number(regionId))
+    );
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -366,7 +380,11 @@ const createLogByRegionId = async (req: Request, res: Response) => {
       return;
     }
 
-    const log = await createLog(recipientIds, userId, fields);
+    const log = await createLog(
+      recipientIds,
+      userId,
+      withRegion(fields, Number(req.params.regionId))
+    );
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
