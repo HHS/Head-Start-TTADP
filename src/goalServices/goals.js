@@ -1197,8 +1197,6 @@ export async function goalRegionsById(goalIds) {
         model: Goal,
         as: 'goals',
         required: true,
-        // Soft-deleted goals still belong to their grant's region when authorizing stored data.
-        paranoid: false,
         where: {
           id: goalIds,
         },

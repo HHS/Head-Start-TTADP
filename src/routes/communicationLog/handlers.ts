@@ -3,8 +3,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
-import parsePositiveInteger from '../../lib/parsePositiveInteger';
-import parseSelectionIds from '../../lib/parseSelectionIds';
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
@@ -21,7 +20,6 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
-  recipientsInRegion,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -53,12 +51,6 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
     log,
     policy: new Policy(user, Number(regionId), log),
   };
-};
-
-/** Returns the data with its saved region set to regionId, or with no region when undefined. */
-const withRegion = (data, regionId?: number | string) => {
-  const { regionId: _submittedRegionId, ...rest } = data;
-  return regionId === undefined || regionId === null ? rest : { ...rest, regionId };
 };
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
@@ -268,29 +260,7 @@ const updateLogById = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { data: submittedData } = req.body;
-
-    // The stored region decides who can read this log, so a request cannot change it.
-    const data = submittedData && withRegion(submittedData, log.data?.regionId);
-
-    // Recipients must belong to the region the log is saved under, since that region decides who
-    // can read it. Logs saved without a region fall back to the regions the user can write to,
-    // and admins can write to any region.
-    const recipientIds = parseSelectionIds(data?.recipients);
-    if (recipientIds.length) {
-      const storedRegionId = parsePositiveInteger(log.data?.regionId);
-      let allowedRegionIds: number[] | null = null;
-      if (storedRegionId) {
-        allowedRegionIds = [storedRegionId];
-      } else if (!policy.isAdmin()) {
-        allowedRegionIds = policy.getWritableRegionIds();
-      }
-
-      if (allowedRegionIds && !(await recipientsInRegion(recipientIds, allowedRegionIds))) {
-        res.status(httpCodes.FORBIDDEN).send();
-        return;
-      }
-    }
+    const { data } = req.body;
 
     const updatedLog = await updateLog(Number(id), data);
     if (!updatedLog) {
@@ -337,21 +307,11 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
       return;
     }
 
-    const { recipientId, regionId } = req.params;
-    if (!(await recipientsInRegion([Number(recipientId)], Number(regionId)))) {
-      res.status(httpCodes.FORBIDDEN).send();
-      return;
-    }
-
+    const { recipientId } = req.params;
     const userId = await currentUserId(req, res);
     const { data } = req.body;
 
-    // The saved region must be the authorized route region, not whatever the body claims.
-    const log = await createLog(
-      [Number(recipientId)],
-      userId,
-      data && withRegion(data, Number(regionId))
-    );
+    const log = await createLog([Number(recipientId)], userId, data);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -370,17 +330,13 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const { data } = req.body;
     const { recipients, ...fields } = data;
 
-    const recipientIds = parseSelectionIds(recipients);
-    if (!(await recipientsInRegion(recipientIds, Number(req.params.regionId)))) {
-      res.status(httpCodes.FORBIDDEN).send();
-      return;
-    }
+    const recipientIds = Array.isArray(recipients)
+      ? recipients
+          .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
+          .filter((id: number) => Number.isInteger(id) && id > 0)
+      : [];
 
-    const log = await createLog(
-      recipientIds,
-      userId,
-      withRegion(fields, Number(req.params.regionId))
-    );
+    const log = await createLog(recipientIds, userId, fields);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
