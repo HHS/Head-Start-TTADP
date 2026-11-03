@@ -24,10 +24,76 @@ describe('Activity report export chooser', () => {
 
   it('labels the trigger Actions without an outlined button border', () => {
     render(<TestMenu />);
-    const trigger = screen.getByRole('button', { name: 'Reports menu' });
+    const trigger = screen.getByRole('button', { name: 'Actions for activity report exports' });
     expect(trigger).toHaveTextContent('Actions');
     expect(trigger).not.toHaveClass('usa-button--outline');
     expect(screen.queryByText('Export reports')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Activity report export' }).tagName).toBe('SECTION');
+  });
+
+  it('exports with Enter from the focused menu item and format button', async () => {
+    render(<TestMenu />);
+    userEvent.tab();
+    expect(screen.getByRole('button', { name: 'Actions for activity report exports' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByRole('menuitem', { name: 'Export selected rows' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: 'AR' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(onExport).toHaveBeenCalledWith('activity-reports', [1, 2, 3]);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'AR' })).toHaveFocus());
+  });
+
+  it('navigates menu items with vertical arrows, Home, and End', async () => {
+    render(<TestMenu />);
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
+    const selected = screen.getByRole('menuitem', { name: 'Export selected rows' });
+    const table = screen.getByRole('menuitem', { name: 'Export table' });
+    expect(selected).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(table).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(selected).toHaveFocus();
+    await userEvent.keyboard('{ArrowUp}');
+    expect(table).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(selected).toHaveFocus();
+    await userEvent.keyboard('{End}{Enter}');
+    expect(screen.getByRole('dialog', { name: 'Export entire table' })).toBeVisible();
+  });
+
+  it('navigates formats with horizontal arrows, Home, and End without exporting', async () => {
+    render(<TestMenu />);
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
+    await userEvent.keyboard('{Enter}');
+    const activityReports = screen.getByRole('button', { name: 'AR' });
+    const goals = screen.getByRole('button', { name: 'Goals' });
+    const objectives = screen.getByRole('button', { name: 'Objectives' });
+    await userEvent.keyboard('{ArrowRight}');
+    expect(goals).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(objectives).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(activityReports).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(objectives).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(activityReports).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    expect(objectives).toHaveFocus();
+    expect(onExport).not.toHaveBeenCalled();
+    await userEvent.keyboard('{Enter}');
+    expect(onExport).toHaveBeenCalledWith('objectives', [1, 2, 3]);
+    await waitFor(() => expect(activityReports).toBeEnabled());
+  });
+
+  it('skips disabled menu items during keyboard navigation', async () => {
+    render(<TestMenu count={0} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('menuitem', { name: 'Export selected rows' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowUp}');
+    expect(screen.getByRole('menuitem', { name: 'Export selected rows' })).toHaveFocus();
   });
 
   it.each([
@@ -36,10 +102,10 @@ describe('Activity report export chooser', () => {
     ['Objectives', 'objectives'],
   ])('exports selected reports as %s', async (label, dataSet) => {
     render(<TestMenu />);
-    await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
     const dialog = screen.getByRole('dialog', { name: 'Export selected rows' });
-    expect(dialog).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: 'AR' })).toHaveFocus();
     expect(
       within(dialog).getByText(
         'Exports include similar datasets but are focused on either the AR, goals, or objectives.'
@@ -60,7 +126,7 @@ describe('Activity report export chooser', () => {
     ['Objectives', 'objectives'],
   ])('exports the full table as %s', async (label, dataSet) => {
     render(<TestMenu />);
-    await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export table' }));
     const dialog = screen.getByRole('dialog', { name: 'Export entire table' });
     expect(
@@ -73,16 +139,17 @@ describe('Activity report export chooser', () => {
 
   it('does not offer selected-row export without a selection', async () => {
     render(<TestMenu selectedIds={[]} count={0} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
     expect(
       screen.queryByRole('menuitem', { name: 'Export selected rows' })
     ).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Export table' })).toBeDisabled();
+    expect(screen.getByRole('menu', { name: 'Export reports' })).toHaveFocus();
   });
 
   it('closes with Escape and returns focus to the trigger', async () => {
     render(<TestMenu />);
-    const trigger = screen.getByRole('button', { name: 'Reports menu' });
+    const trigger = screen.getByRole('button', { name: 'Actions for activity report exports' });
     await userEvent.click(trigger);
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
     await userEvent.keyboard('{Escape}');
@@ -100,7 +167,7 @@ describe('Activity report export chooser', () => {
         })
     );
     render(<TestMenu />);
-    await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
     await userEvent.click(screen.getByRole('button', { name: 'AR' }));
     expect(screen.getByRole('button', { name: 'Goals' })).toBeDisabled();
@@ -108,6 +175,7 @@ describe('Activity report export chooser', () => {
     await act(async () => rejectDownload(new Error('Please try again.')));
     expect(await screen.findByRole('alert')).toHaveTextContent('Please try again.');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Goals' })).toBeEnabled());
+    expect(screen.getByRole('button', { name: 'AR' })).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: 'Goals' }));
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });

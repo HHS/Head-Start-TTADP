@@ -24,6 +24,22 @@ const formats: { label: string; dataSet: ExportDataSet }[] = [
   { label: 'Objectives', dataSet: 'objectives' },
 ];
 
+function moveButtonFocus(event: React.KeyboardEvent<HTMLButtonElement>, keys: string[]) {
+  if (![...keys, 'Home', 'End'].includes(event.key)) return;
+  const buttons = Array.from(
+    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+      'button:not(:disabled)'
+    ) ?? []
+  );
+  const currentIndex = buttons.indexOf(event.currentTarget);
+  const direction = event.key === keys[0] ? -1 : 1;
+  let nextIndex = (currentIndex + direction + buttons.length) % buttons.length;
+  if (event.key === 'Home') nextIndex = 0;
+  if (event.key === 'End') nextIndex = buttons.length - 1;
+  event.preventDefault();
+  buttons[nextIndex]?.focus();
+}
+
 export default function ExportMenu({
   count,
   selectedIds,
@@ -35,7 +51,7 @@ export default function ExportMenu({
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState('');
-  const wrapperRef = useRef<HTMLFieldSetElement>(null);
+  const wrapperRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const chooserRef = useRef<HTMLDivElement>(null);
@@ -50,13 +66,19 @@ export default function ExportMenu({
   };
 
   useEffect(() => {
+    if (scope) setError('');
+  }, [scope]);
+
+  useEffect(() => {
+    if (isDownloading) return;
     if (scope) {
-      setError('');
-      chooserRef.current?.focus();
+      const button = chooserRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)');
+      (button ?? chooserRef.current)?.focus();
     } else if (menuOpen) {
-      menuRef.current?.focus();
+      const button = menuRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)');
+      (button ?? menuRef.current)?.focus();
     }
-  }, [scope, menuOpen]);
+  }, [scope, menuOpen, isDownloading]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -82,12 +104,11 @@ export default function ExportMenu({
       );
     } finally {
       setIsDownloading(false);
-      chooserRef.current?.focus();
     }
   };
 
   return (
-    <fieldset
+    <section
       ref={wrapperRef}
       aria-label="Activity report export"
       tabIndex={-1}
@@ -133,6 +154,7 @@ export default function ExportMenu({
                   role="menuitem"
                   className={`usa-button usa-button--unstyled text-no-underline display-block margin-bottom-2 ${selected ? 'text-bold' : 'text-ink'}`}
                   onClick={() => setScope('selected')}
+                  onKeyDown={(event) => moveButtonFocus(event, ['ArrowUp', 'ArrowDown'])}
                   disabled={isDownloading}
                   id={`${exportIdPrefix}export-reports`}
                 >
@@ -144,6 +166,7 @@ export default function ExportMenu({
                 role="menuitem"
                 className={`usa-button usa-button--unstyled text-no-underline display-block ${scope === 'all' ? 'text-bold' : 'text-ink'}`}
                 onClick={() => setScope('all')}
+                onKeyDown={(event) => moveButtonFocus(event, ['ArrowUp', 'ArrowDown'])}
                 disabled={isDownloading || count === 0}
                 id={`${exportIdPrefix}export-table`}
               >
@@ -186,6 +209,7 @@ export default function ExportMenu({
                       className="margin-0 padding-x-05"
                       disabled={isDownloading || exportCount === 0}
                       onClick={() => download(dataSet)}
+                      onKeyDown={(event) => moveButtonFocus(event, ['ArrowLeft', 'ArrowRight'])}
                     >
                       {label}
                     </Button>
@@ -201,6 +225,6 @@ export default function ExportMenu({
           )}
         </div>
       )}
-    </fieldset>
+    </section>
   );
 }
