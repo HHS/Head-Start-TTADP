@@ -73,6 +73,9 @@ describe('CommunicationLog', () => {
   afterEach(async () => {
     cleanup();
     fetchMock.restore();
+    sessionStorage.removeItem('communication-log-filters');
+    sessionStorage.removeItem('communication-log-filters-communication-log-table-5-1-sorting');
+    sessionStorage.removeItem('communication-log-filters-communication-log-table-5-2-sorting');
   });
 
   it('restores the saved page for this recipient without using another recipient page', async () => {
@@ -95,8 +98,6 @@ describe('CommunicationLog', () => {
     renderTest();
 
     await waitFor(() => expect(fetchMock.called(restoredUrl)).toBe(true));
-    sessionStorage.removeItem(sortingKey);
-    sessionStorage.removeItem(otherSortingKey);
   });
 
   it('renders the communication log appropriately', async () => {
@@ -140,7 +141,7 @@ describe('CommunicationLog', () => {
     const actions = await screen.findByRole('button', { name: 'Actions for R01-CL-00001' });
     act(() => userEvent.click(actions));
     await screen.findByRole('menu');
-    const deleteButton = await screen.findByRole('button', { name: /delete/i });
+    const deleteButton = await screen.findByRole('button', { name: /^delete$/i });
     act(() => userEvent.click(deleteButton));
 
     const confirmDeleteButton = await screen.findByRole('button', {
@@ -155,8 +156,6 @@ describe('CommunicationLog', () => {
         offset: 0,
       });
     });
-    sessionStorage.removeItem(filterKey);
-    sessionStorage.removeItem(sortingKey);
   });
 
   it('you can apply a filter', async () => {
